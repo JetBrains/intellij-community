@@ -59,23 +59,6 @@ object StrategyUtils {
     return offset
   }
 
-  internal fun trimLeadingQuotesAndSpaces(content: TextContent): TextContent? {
-    val text = content.toString()
-    var trimPrefix = quotesOffset(text)
-    var trimSuffix = text.length - trimPrefix
-    require(trimPrefix <= trimSuffix)
-
-    while (trimSuffix > trimPrefix && text[trimSuffix - 1].isWhitespace()) trimSuffix--
-    while (trimSuffix > trimPrefix && text[trimPrefix].isWhitespace()) trimPrefix++
-
-    if (trimSuffix <= trimPrefix) return null
-
-    if (trimPrefix > 0 || trimSuffix < text.length) {
-      return content.excludeRange(TextRange(trimSuffix, text.length)).excludeRange(TextRange(0, trimPrefix))
-    }
-    return content
-  }
-
   /**
    * Convert double spaces into one after removing absorb/stealth elements
    *
@@ -214,7 +197,7 @@ object StrategyUtils {
     return element.process(false) + listOf(element) + element.process(true)
   }
 
-  private fun quotesOffset(str: CharSequence): Int {
+  internal fun quotesOffset(str: CharSequence): Int {
     var index = 0
     while (index < str.length / 2) {
       if (str[index] != str[str.length - index - 1] || !Text.isQuote(str[index])) {
