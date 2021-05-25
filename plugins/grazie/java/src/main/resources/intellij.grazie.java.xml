@@ -4,7 +4,8 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <grammar.strategy language="JAVA" implementationClass="com.intellij.grazie.ide.language.java.JavaGrammarCheckingStrategy"/>
+    <textExtractor language="JAVA" implementationClass="com.intellij.grazie.ide.language.java.JavaTextExtractor"/>
+    <problemFilter language="JAVA" implementationClass="com.intellij.grazie.text.LiteralProblemFilter"/>
   </extensions>
 </idea-plugin>
 

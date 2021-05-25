@@ -4,7 +4,7 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <grammar.strategy language="Properties"
-                      implementationClass="com.intellij.grazie.ide.language.properties.PropertyGrammarCheckingStrategy"/>
+    <textExtractor language="Properties" implementationClass="com.intellij.grazie.ide.language.properties.PropertyTextExtractor"/>
+    <problemFilter language="Properties" implementationClass="com.intellij.grazie.ide.language.properties.PropertyProblemFilter"/>
   </extensions>
 </idea-plugin>
