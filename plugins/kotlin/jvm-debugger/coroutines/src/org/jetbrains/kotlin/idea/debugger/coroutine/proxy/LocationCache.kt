@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
+import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.jdi.GeneratedLocation
 import com.sun.jdi.AbsentInformationException
 import com.sun.jdi.Location
@@ -22,7 +23,7 @@ class LocationCache(val context: DefaultExecutionContext) {
     ): Location {
         if (line >= 0) {
             try {
-                val location = type.locationsOfLine(null, null, line).stream()
+                val location = DebuggerUtilsAsync.locationsOfLineSync(type, null, null, line).stream()
                         .filter { l: Location -> l.method().name() == methodName }
                         .findFirst().orElse(null)
                 if (location != null) {

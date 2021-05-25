@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils.*
 import com.intellij.debugger.engine.PositionManagerEx
 import com.intellij.debugger.engine.evaluation.EvaluationContext
+import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.debugger.requests.ClassPrepareRequestor
@@ -309,7 +310,7 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
 
             val line = position.line + 1
 
-            val locations = type.locationsOfLine(KOTLIN_STRATA_NAME, null, line)
+            val locations = DebuggerUtilsAsync.locationsOfLineSync(type, KOTLIN_STRATA_NAME, null, line)
             if (locations == null || locations.isEmpty()) {
                 throw NoDataException.INSTANCE
             }
