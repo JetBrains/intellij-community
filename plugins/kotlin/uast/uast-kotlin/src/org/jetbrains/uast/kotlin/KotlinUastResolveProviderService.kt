@@ -21,6 +21,9 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
     fun getReferenceVariants(ktElement: KtElement, nameHint: String): Sequence<DeclarationDescriptor>
 
+    override val baseKotlinConverter: BaseKotlinConverter
+        get() = KotlinConverter
+
     override fun convertParent(uElement: UElement): UElement? {
         return convertParentImpl(uElement)
     }

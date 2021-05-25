@@ -13,6 +13,9 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
 interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderService {
+    override val baseKotlinConverter: BaseKotlinConverter
+        get() = FirKotlinConverter
+
     override fun convertParent(uElement: UElement): UElement? {
         TODO("Not yet implemented")
     }
@@ -30,10 +33,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun getExpressionType(uExpression: UExpression): PsiType? {
-        TODO("Not yet implemented")
+        // TODO("Not yet implemented")
+        return null
     }
 
     override fun evaluate(uExpression: UExpression): Any? {
-        TODO("Not yet implemented")
+        // TODO("Not yet implemented")
+        return "not-yet-compile-time-constant"
     }
 }

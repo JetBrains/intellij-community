@@ -39,7 +39,7 @@ import org.jetbrains.uast.kotlin.psi.*
 import org.jetbrains.uast.util.ClassSet
 import org.jetbrains.uast.util.ClassSetsWrapper
 
-internal object KotlinConverter {
+internal object KotlinConverter : BaseKotlinConverter {
     internal tailrec fun unwrapElements(element: PsiElement?): PsiElement? = when (element) {
         is KtValueArgumentList -> unwrapElements(element.parent)
         is KtValueArgument -> unwrapElements(element.parent)
@@ -163,38 +163,16 @@ internal object KotlinConverter {
         return call.toUElementOfType<UMethod>()?.uastParameters?.firstOrNull()
     }
 
-    internal fun convertEntry(
-        entry: KtStringTemplateEntry,
-        givenParent: UElement?,
-        requiredType: Array<out Class<out UElement>>
-    ): UExpression? {
-        return with(requiredType) {
-            if (entry is KtStringTemplateEntryWithExpression) {
-                expr<UExpression> {
-                    convertOrEmpty(entry.expression, givenParent)
-                }
-            }
-            else {
-                expr<ULiteralExpression> {
-                    if (entry is KtEscapeStringTemplateEntry)
-                        KotlinStringULiteralExpression(entry, givenParent, entry.unescapedValue)
-                    else
-                        KotlinStringULiteralExpression(entry, givenParent)
-                }
-            }
-        }
-    }
-
     var forceUInjectionHost = Registry.`is`("kotlin.uast.force.uinjectionhost", false)
         @TestOnly
         set(value) {
             field = value
         }
 
-    internal fun convertExpression(
+    override fun convertExpression(
         expression: KtExpression,
         givenParent: UElement?,
-        requiredType: Array<out Class<out UElement>>
+        requiredTypes: Array<out Class<out UElement>>
     ): UExpression? {
         fun <P : PsiElement> build(ctor: (P, UElement?) -> UExpression): () -> UExpression? {
             return {
@@ -203,18 +181,18 @@ internal object KotlinConverter {
             }
         }
 
-        return with (requiredType) { when (expression) {
+        return with(requiredTypes) { when (expression) {
             is KtVariableDeclaration -> expr<UDeclarationsExpression>(build(::convertVariablesDeclaration))
 
             is KtStringTemplateExpression -> {
                 when {
-                    forceUInjectionHost || requiredType.contains(UInjectionHost::class.java) ->
+                    forceUInjectionHost || requiredTypes.contains(UInjectionHost::class.java) ->
                         expr<UInjectionHost> { KotlinStringTemplateUPolyadicExpression(expression, givenParent) }
                     expression.entries.isEmpty() -> {
                         expr<ULiteralExpression> { KotlinStringULiteralExpression(expression, givenParent, "") }
                     }
 
-                    expression.entries.size == 1 -> convertEntry(expression.entries[0], givenParent, requiredType)
+                    expression.entries.size == 1 -> convertEntry(expression.entries[0], givenParent, requiredTypes)
 
                     else ->
                         expr<KotlinStringTemplateUPolyadicExpression> { KotlinStringTemplateUPolyadicExpression(expression, givenParent) }
@@ -301,7 +279,7 @@ internal object KotlinConverter {
             }
             is KtAnnotatedExpression -> {
                 expression.baseExpression
-                    ?.let { convertExpression(it, givenParent, requiredType) }
+                    ?.let { convertExpression(it, givenParent, requiredTypes) }
                     ?: expr<UExpression>(build(::UnknownKotlinExpression))
             }
 
@@ -570,14 +548,6 @@ internal object KotlinConverter {
         alternative { KotlinUFile(element, kotlinUastPlugin) },
         alternative { element.findFacadeClass()?.let { KotlinUClass.create(it, givenParent) } }
     )
-
-    internal fun convertOrEmpty(expression: KtExpression?, parent: UElement?): UExpression {
-        return expression?.let { convertExpression(it, parent, DEFAULT_EXPRESSION_TYPES_LIST) } ?: UastEmptyExpression(parent)
-    }
-
-    internal fun convertOrNull(expression: KtExpression?, parent: UElement?): UExpression? {
-        return if (expression != null) convertExpression(expression, parent, DEFAULT_EXPRESSION_TYPES_LIST) else null
-    }
 
     internal fun KtPsiFactory.createAnalyzableExpression(text: String, context: PsiElement): KtExpression =
         createAnalyzableProperty("val x = $text", context).initializer ?: error("Failed to create expression from text: '$text'")

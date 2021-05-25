@@ -7,7 +7,6 @@ import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.expressions.KotlinLocalFunctionULambdaExpression
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
-import org.jetbrains.uast.kotlin.internal.toSourcePsiFakeAware
 
 class KotlinUReturnExpression(
     override val sourcePsi: KtReturnExpression,
