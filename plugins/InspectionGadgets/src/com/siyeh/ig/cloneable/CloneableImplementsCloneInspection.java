@@ -18,24 +18,28 @@ package com.siyeh.ig.cloneable;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
+import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
 import com.siyeh.HardcodedMethodConstants;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.fixes.RemoveCloneableFix;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
+import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import java.util.List;
 
 public class CloneableImplementsCloneInspection extends BaseInspection {
 
@@ -43,6 +47,14 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
    * @noinspection PublicField
    */
   public boolean m_ignoreCloneableDueToInheritance = true;
+
+  public boolean ignoreWhenCloneCalled = true;
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "ignoreWhenCloneCalled");
+    writeBooleanOption(node, "ignoreWhenCloneCalled", true);
+  }
 
   @Override
   @NotNull
@@ -58,28 +70,37 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message(
-      "cloneable.class.without.clone.ignore.option"), this, "m_ignoreCloneableDueToInheritance");
+    final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
+    panel.addCheckbox(InspectionGadgetsBundle.message("cloneable.class.without.clone.ignore.option"), "m_ignoreCloneableDueToInheritance");
+    panel.addCheckbox(InspectionGadgetsBundle.message("cloneable.class.without.clone.ignore.when.clone.called.option"), "ignoreWhenCloneCalled");
+    return panel;
   }
 
   @Override
-  protected InspectionGadgetsFix buildFix(Object... infos) {
+  protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
+    final List<InspectionGadgetsFix> fixes = new SmartList<>();
     final PsiClass aClass = (PsiClass)infos[0];
-    if (aClass.hasModifierProperty(PsiModifier.FINAL)) {
-      return null;
-    }
-    final PsiMethod[] superMethods = aClass.findMethodsByName(HardcodedMethodConstants.CLONE, true);
-    boolean generateTryCatch = false;
-    for (PsiMethod method : superMethods) {
-      if (CloneUtils.isClone(method)) {
-        if (method.hasModifierProperty(PsiModifier.FINAL)) {
-          return null;
+    if (!aClass.hasModifierProperty(PsiModifier.FINAL)) {
+      final PsiMethod[] superMethods = aClass.findMethodsByName(HardcodedMethodConstants.CLONE, true);
+      boolean generateTryCatch = true;
+      boolean createFix = true;
+      for (PsiMethod method : superMethods) {
+        if (CloneUtils.isClone(method)) {
+          if (method.hasModifierProperty(PsiModifier.FINAL)) {
+            createFix = false;
+          }
+          generateTryCatch &= MethodUtils.hasInThrows(method, "java.lang.CloneNotSupportedException");
         }
-        generateTryCatch = MethodUtils.hasInThrows(method, "java.lang.CloneNotSupportedException");
-        break;
+      }
+      if (createFix) {
+        fixes.add(new CreateCloneMethodFix(generateTryCatch));
       }
     }
-    return new CreateCloneMethodFix(generateTryCatch);
+    final boolean cloneCalled = (boolean)infos[1];
+    if (CloneUtils.isDirectlyCloneable(aClass) && !cloneCalled) {
+      fixes.add(RemoveCloneableFix.create(null));
+    }
+    return fixes.toArray(InspectionGadgetsFix.EMPTY_ARRAY);
   }
 
   private static class CreateCloneMethodFix extends InspectionGadgetsFix {
@@ -170,19 +191,20 @@ public class CloneableImplementsCloneInspection extends BaseInspection {
           return;
         }
       }
-      final boolean highlight = !m_ignoreCloneableDueToInheritance || CloneUtils.isDirectlyCloneable(aClass);
-      if (!highlight) {
-        if (!isOnTheFly()) {
-          return;
-        }
-        final PsiElement elementToHighlight =
-          aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier();
-        if (elementToHighlight != null) {
-          registerError(elementToHighlight, ProblemHighlightType.INFORMATION, aClass);
-        }
+      final boolean directlyCloneable = CloneUtils.isDirectlyCloneable(aClass);
+      final boolean cloneCalled = directlyCloneable && RemoveCloneableFix.isCloneCalledInChildren(aClass);
+      final boolean highlight = (!m_ignoreCloneableDueToInheritance || directlyCloneable) &&
+                                (!ignoreWhenCloneCalled || !cloneCalled);
+      if (!highlight && !isOnTheFly()) {
+        return;
       }
-      else {
-        registerClassError(aClass, aClass);
+      final PsiElement elementToHighlight =
+        aClass instanceof PsiAnonymousClass ? ((PsiAnonymousClass)aClass).getBaseClassReference() : aClass.getNameIdentifier();
+      if (elementToHighlight != null) {
+        registerError(elementToHighlight,
+                      highlight ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION,
+                      aClass,
+                      cloneCalled);
       }
     }
   }
