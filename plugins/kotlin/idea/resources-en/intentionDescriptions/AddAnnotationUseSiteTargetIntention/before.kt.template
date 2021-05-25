@@ -1,6 +1,6 @@
-annotation class Ann
+annotation class Inject
 
-class Foo(
-    <spot>@Ann</spot>
-    var bar: String
+class Request(
+    <spot>@Inject</spot>
+    var context: Context
 )
