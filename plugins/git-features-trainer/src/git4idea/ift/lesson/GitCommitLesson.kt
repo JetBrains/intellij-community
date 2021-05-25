@@ -47,6 +47,18 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
   private val firstFileName = "simple_cat.yml"
   private val secondFileName = "puss_in_boots.yml"
 
+  private val firstFileAddition = """
+    |
+    |    - play:
+    |        condition: boring
+    |        actions: [ run after favourite plush mouse ]""".trimMargin()
+
+  private val secondFileAddition = """
+    |
+    |    - play:
+    |        condition: boring
+    |        actions: [ run after mice or own tail ]""".trimMargin()
+
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
@@ -249,15 +261,8 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
   private fun TaskRuntimeContext.modifyFiles() = invokeLater {
     DocumentUtil.writeInRunUndoTransparentAction {
       val projectRoot = ProjectRootManager.getInstance(project).contentRoots.first()
-      appendToFile(projectRoot, firstFileName, """
-    - play:
-        condition: boring
-        actions: [ run after favourite plush mouse ]""")
-
-      appendToFile(projectRoot, secondFileName, """
-    - play:
-        condition: boring
-        actions: [ run after mice or own tail ]""")
+      appendToFile(projectRoot, firstFileName, firstFileAddition)
+      appendToFile(projectRoot, secondFileName, secondFileAddition)
     }
   }
 

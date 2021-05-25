@@ -45,6 +45,20 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   private lateinit var repository: GitRepository
   private val remoteProjectName = "RemoteLearningProject"
 
+  private val firstFileAddition = """
+    |
+    |    - steal:
+    |        condition: food was left unattended
+    |        action:
+    |          - steal a piece of food and hide""".trimMargin()
+
+  private val secondFileAddition = """
+    |
+    |    - care_for_weapon:
+    |        condition: favourite sword become blunt
+    |        actions:
+    |          - sharpen the sword using the stone""".trimMargin()
+
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
@@ -202,11 +216,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
                            ?: error("Learning project not found")
     val projectsRoot = learnProjectRoot.parent.toNioPath().toFile()
     val remoteProjectRoot = projectsRoot.listFiles()?.find { it.name == remoteProjectName }.let {
-      if (it != null) {
-        it.deleteRecursively()
-        it
-      }
-      else File(projectsRoot.absolutePath + File.separator + remoteProjectName)
+      it?.apply { deleteRecursively() } ?: File(projectsRoot.absolutePath + File.separator + remoteProjectName)
     }
     remoteProjectRoot.mkdir()
     return remoteProjectRoot
@@ -221,18 +231,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       gitChange(remoteProjectRoot, "user.name", "JonnyCatsville")
       gitChange(remoteProjectRoot, "user.email", "jonny.catsville@meow.com")
       createOneFileCommit(remoteProjectRoot, firstFile, "Add new fact about sphinx's behaviour") {
-        it.appendText("""
-    - steal:
-        condition: food was left unattended
-        action:
-          - steal a piece of food and hide""")
+        it.appendText(firstFileAddition)
       }
       createOneFileCommit(remoteProjectRoot, secondFile, "Add fact about Puss in boots") {
-        it.appendText("""
-    - care_for_weapon:
-        condition: favourite sword become blunt
-        actions:
-          - sharpen the sword using the stone""")
+        it.appendText(secondFileAddition)
       }
     }
     else error("Failed to find files to modify in $remoteProjectRoot")

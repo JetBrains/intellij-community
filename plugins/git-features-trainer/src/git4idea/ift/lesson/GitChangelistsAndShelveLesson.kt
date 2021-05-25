@@ -34,6 +34,12 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
   private val commentingLineText = "fur_type: long haired"
   private val commentText = "# debug: check another types (short haired, hairless)"
 
+  private val fileAddition = """
+    |
+    |    - eat:
+    |        condition: hungry
+    |        actions: [ fry self-grown potatoes ]""".trimMargin()
+
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 
   override val lessonContent: LessonContext.() -> Unit = {
@@ -207,11 +213,7 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
   private fun modifyFile(file: VirtualFile) = invokeLater {
     DocumentUtil.writeInRunUndoTransparentAction {
       val document = FileDocumentManager.getInstance().getDocument(file)!! // it's not directory or binary file and it isn't large
-      document.insertString(document.textLength, """
-    - eat:
-        condition: hungry
-        actions: [ fry self-grown potatoes ]""")
-
+      document.insertString(document.textLength, fileAddition)
       val offset = document.charsSequence.indexOf(commentingLineText)
       if (offset == -1) error("Not found '$commentingLineText' item in text")
       document.insertString(offset + commentingLineText.length, "  $commentText")
