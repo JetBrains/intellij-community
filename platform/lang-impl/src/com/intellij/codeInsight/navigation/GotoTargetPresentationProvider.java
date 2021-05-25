@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.navigation.TargetPresentation;
@@ -16,6 +16,10 @@ public interface GotoTargetPresentationProvider {
   @Internal
   ExtensionPointName<GotoTargetPresentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.gotoTargetPresentationProvider");
 
+  /**
+   * @see com.intellij.ide.util.PsiElementRenderingInfo#targetPresentation
+   * @see TargetPresentation#builder
+   */
   @RequiresReadLock
   @RequiresBackgroundThread
   @Nullable TargetPresentation getTargetPresentation(@NotNull PsiElement element, boolean differentNames);
