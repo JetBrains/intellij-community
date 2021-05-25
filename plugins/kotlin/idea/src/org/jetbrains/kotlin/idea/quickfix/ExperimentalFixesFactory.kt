@@ -26,7 +26,7 @@ import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.checkers.ExperimentalUsageChecker
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -119,8 +119,8 @@ object ExperimentalFixesFactory : KotlinIntentionActionsFactory() {
     }
 
     private val ModuleDescriptor.OPT_IN_FQ_NAME: FqName
-        get() = ExperimentalUsageChecker.OPT_IN_FQ_NAME.takeIf { fqNameIsExisting(it) }
-            ?: ExperimentalUsageChecker.OLD_USE_EXPERIMENTAL_FQ_NAME
+        get() = OptInNames.OPT_IN_FQ_NAME.takeIf { fqNameIsExisting(it) }
+            ?: OptInNames.OLD_USE_EXPERIMENTAL_FQ_NAME
 
     // Find the existing file-level annotation of the specified class if it exists
     private fun findFileAnnotation(file: KtFile, annotationFqName: FqName): KtAnnotationEntry? {
