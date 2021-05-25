@@ -57,7 +57,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import java.awt.*;
 import java.io.File;
@@ -243,9 +242,8 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   protected final JTree createTree(boolean dndAware) {
     Tree tree;
 
-    DefaultTreeModel treeModel = new DefaultTreeModel(new DefaultMutableTreeNode(""));
     if (dndAware) {
-      tree = new DnDAwareTree(treeModel) {
+      tree = new DnDAwareTree() {
         @Override
         public void addNotify() {
           super.addNotify();
@@ -299,7 +297,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
     else {
-      tree = new Tree(treeModel)  {
+      tree = new Tree()  {
         @Override
         public void addNotify() {
           super.addNotify();
