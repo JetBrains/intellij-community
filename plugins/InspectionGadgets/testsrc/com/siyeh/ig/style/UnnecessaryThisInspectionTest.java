@@ -191,6 +191,16 @@ public class UnnecessaryThisInspectionTest extends LightJavaInspectionTestCase {
            "}");
   }
 
+  public void testNewExpressionIsIgnored(){
+    doTest("class Outer {" +
+           "  class Nested {" +
+           "    void test(){" +
+           "      Outer.this.new Nested();" +
+           "    }" +
+           "  }" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new UnnecessaryThisInspection();

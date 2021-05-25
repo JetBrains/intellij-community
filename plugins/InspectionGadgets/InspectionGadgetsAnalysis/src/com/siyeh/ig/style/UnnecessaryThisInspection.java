@@ -21,7 +21,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -29,7 +28,6 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ClassUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.DeclarationSearchUtils;
@@ -73,9 +71,7 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
     public void doFix(Project project, ProblemDescriptor descriptor) {
       final PsiElement thisToken = descriptor.getPsiElement();
       final PsiElement thisParenthesized = findBiggestParenthesizedExpr(thisToken);
-      final PsiExpression parentExpression = (PsiExpression)thisParenthesized.getParent();
-      final String newExpression = StringUtil.trimStart(parentExpression.getText(), thisParenthesized.getText() + ".");
-      PsiReplacementUtil.replaceExpression(parentExpression, newExpression, new CommentTracker());
+      new CommentTracker().deleteAndRestoreComments(thisParenthesized);
     }
   }
 
@@ -101,7 +97,10 @@ public class UnnecessaryThisInspection extends BaseInspection implements Cleanup
       super.visitThisExpression(expression);
       PsiElement parenthesizedThis = findBiggestParenthesizedExpr(expression);
       if (parenthesizedThis.getParent() instanceof PsiNewExpression) {
-        registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        final PsiReference qualifier = expression.getQualifier();
+        if (qualifier == null || qualifier.resolve() == PsiTreeUtil.getParentOfType(expression, PsiClass.class)) {
+          registerError(expression, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+        }
       }
     }
 
