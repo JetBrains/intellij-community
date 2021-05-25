@@ -88,8 +88,14 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
         private PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
           if (!isActionOrGroupKey(text)) return null;
 
-          final int prefixEndIdx = text.indexOf('.') + 1;
-          String id = text.substring(prefixEndIdx, text.lastIndexOf('.'));
+          final int dotAfterPrefix = text.indexOf('.');
+          if (dotAfterPrefix == -1) return null;
+          final int prefixEndIdx = dotAfterPrefix + 1;
+
+          final int dotBeforeSuffix = text.lastIndexOf('.');
+          if (dotBeforeSuffix == -1) return null;
+
+          String id = text.substring(prefixEndIdx, dotBeforeSuffix);
           String prefix = text.substring(0, prefixEndIdx);
 
           return new ActionOrGroupIdReference(element, id, prefix);
