@@ -1,3 +1,3 @@
 <spot>@JvmOverloads</spot>
-fun foo(a: String = "") {
+fun example(name: String = "") {
 }
