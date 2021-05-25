@@ -1,4 +1,4 @@
-// "Change to val" "false"
+// "Change to 'val'" "false"
 // ACTION: Create extension function 'Delegate.getValue', function 'Delegate.setValue'
 // ACTION: Create member function 'Delegate.getValue', function 'Delegate.setValue'
 // ACTION: Introduce import alias

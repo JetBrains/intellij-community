@@ -1,4 +1,4 @@
-// "Change to var" "true"
+// "Change to 'var'" "true"
 fun exec(f: () -> Unit) = f()
 
 fun foo() {

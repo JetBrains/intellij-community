@@ -1,5 +1,5 @@
 // "class org.jetbrains.kotlin.idea.quickfix.LiftAssignmentOutOfTryFix" "false"
-// ACTION: Change to var
+// ACTION: Change to 'var'
 // DISABLE-ERRORS
 // WITH_RUNTIME
 

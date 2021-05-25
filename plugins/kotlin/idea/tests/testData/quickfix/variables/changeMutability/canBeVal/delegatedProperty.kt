@@ -1,4 +1,4 @@
-// "Change to val" "true"
+// "Change to 'val'" "true"
 import kotlin.reflect.KProperty
 
 fun test() {

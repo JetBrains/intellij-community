@@ -1,4 +1,4 @@
-// FIX: Change to val and delete initializer
+// FIX: Change to 'val' and delete initializer
 class Test {
     val foo: Int
         get() = 1

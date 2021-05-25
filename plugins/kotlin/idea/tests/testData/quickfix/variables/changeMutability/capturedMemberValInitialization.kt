@@ -1,4 +1,4 @@
-// "Change to var" "true"
+// "Change to 'var'" "true"
 
 class Test {
     val a: String

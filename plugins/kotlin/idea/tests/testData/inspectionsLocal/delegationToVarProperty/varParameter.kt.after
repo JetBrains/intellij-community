@@ -1,4 +1,4 @@
-// FIX: Change to val
+// FIX: Change to 'val'
 interface A {
     fun foo()
 }

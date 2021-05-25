@@ -1,4 +1,4 @@
-// "Change to var" "true"
+// "Change to 'var'" "true"
 val a = 4
 
 fun bar() {
