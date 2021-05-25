@@ -1014,7 +1014,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TESTING_VIEW) {
       return;
     }
-    if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(tools, this, new InspectionRVContentProviderImpl()))) {
+    if (myView == null && !InspectionResultsView.hasProblems(tools, this, new InspectionRVContentProviderImpl())) {
       return;
     }
     initializeViewIfNeeded().doWhenDone(() -> myView.addTools(tools));
