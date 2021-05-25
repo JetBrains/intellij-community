@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.config.SuppressingContext
@@ -11,6 +12,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
 import java.util.*
@@ -118,8 +120,12 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     val prevState = myState
     myState = VersionedState.migrate(state)
 
-    if (prevState != myState || prevState.availableLanguages != myState.availableLanguages) {
+    if (prevState != myState) {
       service<GrazieInitializerManager>().publisher.update(prevState, myState)
+
+      ProjectManager.getInstance().openProjects.forEach {
+        DaemonCodeAnalyzer.getInstance(it).restart()
+      }
     }
   }
 }

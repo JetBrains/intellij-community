@@ -37,11 +37,6 @@ internal class GrazieInitializerManager {
     connection.subscribe(topic, GrazieSpellchecker)
     connection.subscribe(topic, GrazieCommitInspection)
     connection.subscribe(topic, GrazieInspection)
-    connection.subscribe(topic, LanguageDetectionInspection)
-
-    ProjectManager.getInstance().openProjects.forEach {
-      DaemonCodeAnalyzer.getInstance(it).restart()
-    }
   }
 
   fun register(subscriber: GrazieStateLifecycle): MessageBusConnection {
