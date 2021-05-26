@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.findUsages.dialogs;
 
+import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesDialog;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,6 @@ import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinPropertyFindUsagesOptions> {
     public KotlinFindPropertyUsagesDialog(
@@ -39,7 +38,6 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
     private StateRestoringCheckBox writeAccesses;
     private StateRestoringCheckBox overrideUsages;
     private StateRestoringCheckBox expectedUsages;
-    private StateRestoringCheckBox searchForBase;
 
     @NotNull
     @Override
@@ -59,7 +57,6 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
         options.isReadAccess = isSelected(readAccesses);
         options.isWriteAccess = isSelected(writeAccesses);
         options.setSearchOverrides(isSelected(overrideUsages));
-        options.isSearchForBaseAccessors = isSelected(searchForBase);
         if (expectedUsages != null) {
             options.setSearchExpected(expectedUsages.isSelected());
         }
@@ -68,6 +65,7 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
     @Override
     protected JPanel createFindWhatPanel() {
         JPanel findWhatPanel = new JPanel();
+        findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group"), true));
         findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
         KotlinPropertyFindUsagesOptions options = getFindUsagesOptions();
@@ -84,16 +82,6 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                 findWhatPanel,
                 true
         );
-
-        PsiElement psiElement = getPsiElement();
-        if (psiElement instanceof KtParameter && ((KtParameter)psiElement).hasValOrVar()) {
-            searchForBase = createCheckbox(JavaBundle.message("find.options.include.accessors.base.checkbox"),
-                                               options.isSearchForBaseAccessors, true);
-            JComponent decoratedCheckbox = new ComponentPanelBuilder(searchForBase).
-                    withComment(JavaBundle.message("find.options.include.accessors.base.checkbox.comment")).createPanel();
-            decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-            findWhatPanel.add(decoratedCheckbox);
-        }
 
         return findWhatPanel;
     }
