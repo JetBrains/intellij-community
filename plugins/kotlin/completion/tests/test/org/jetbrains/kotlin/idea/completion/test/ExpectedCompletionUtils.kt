@@ -67,7 +67,18 @@ object ExpectedCompletionUtils {
 
         operator fun get(key: String): String? = map[key]
 
-        fun matches(expectedProposal: CompletionProposal): Boolean = expectedProposal.map.entries.none { it.value != map[it.key] }
+        fun matches(expectedProposal: CompletionProposal): Boolean {
+            return expectedProposal.map.entries.none { expected ->
+                val actualValues = when (expected.key) {
+                    "lookupString" -> {
+                        // FIR IDE adds `.` after package names in completion
+                        listOf(map[expected.key]?.removeSuffix("."), map[expected.key])
+                    }
+                    else -> listOf(map[expected.key])
+                }
+                expected.value !in actualValues
+            }
+        }
 
         override fun toString(): String {
             val jsonObject = JsonObject()
