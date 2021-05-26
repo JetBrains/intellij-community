@@ -244,7 +244,7 @@ class VcsLogFiltererImpl(private val logProviders: Map<VirtualFile, VcsLogProvid
   }
 
   private fun resolveCommit(dataPack: DataPack, root: VirtualFile, refName: String): CommitId? {
-    if (refName.length == FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(refName).matches()) {
+    if (VcsLogUtil.isFullHash(refName)) {
       val commitId = CommitId(HashImpl.build(refName), root)
       return if (storage.containsCommit(commitId)) commitId else null
     }
