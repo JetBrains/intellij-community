@@ -1040,8 +1040,13 @@ public class AllIcons {
   }
 
   public static final class Toolbar {
+    /** 16x16 */ public static final @NotNull Icon AddSlot = load("toolbar/addSlot.svg", 1430731334104066802L, 2);
+    /** 16x16 */ public static final @NotNull Icon Collapse = load("toolbar/collapse.svg", 4370618279390747985L, 2);
+    /** 16x16 */ public static final @NotNull Icon Expand = load("toolbar/expand.svg", 3799213482484983345L, 2);
     /** 16x16 */ public static final @NotNull Icon Filterdups = load("toolbar/filterdups.svg", 7814856965942396406L, 2);
     /** 16x16 */ public static final @NotNull Icon Locale = load("toolbar/locale.svg", 862613589331642871L, 2);
+    /** 16x16 */ public static final @NotNull Icon Pin = load("toolbar/pin.svg", -7623431009104566295L, 2);
+    /** 16x16 */ public static final @NotNull Icon RemoveSlot = load("toolbar/removeSlot.svg", 2058042260352087724L, 2);
     /** 16x16 */ public static final @NotNull Icon Unknown = load("toolbar/unknown.svg", -2160657314019007998L, 2);
     /** 16x16 */ public static final @NotNull Icon Xcode = load("toolbar/Xcode.svg", -5040536929822919298L, 2);
   }
