@@ -30,7 +30,7 @@ public class TemplateImpl extends TemplateBase implements SchemeElement {
     if (!(o instanceof TemplateImpl)) return false;
 
     final TemplateImpl template = (TemplateImpl) o;
-    if (myId != null && template.myId != null && myId.equals(template.myId)) return true;
+    if (myId != null && myId.equals(template.myId)) return true;
 
     if (isToReformat != template.isToReformat) return false;
     if (isToShortenLongNames != template.isToShortenLongNames) return false;
