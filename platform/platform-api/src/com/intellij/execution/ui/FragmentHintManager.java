@@ -23,6 +23,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -137,6 +138,9 @@ public class FragmentHintManager {
       myHintsShownTime = System.currentTimeMillis();
       for (SettingsEditorFragment<?, ?> fragment : myFragments) {
         JComponent component = fragment.getComponent();
+        if (!SunToolkit.getContainingWindow(component).isFocused()) {
+          return;
+        }
         if (fragment.isSelected() && fragment.getName() != null && component.getRootPane() != null) {
           JComponent hintComponent = createHintComponent(fragment);
           Rectangle rect = component.getVisibleRect();
