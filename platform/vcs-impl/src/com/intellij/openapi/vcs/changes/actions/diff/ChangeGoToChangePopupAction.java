@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestChain;
-import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -12,70 +11,42 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.ui.*;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory;
+import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeSelectionModel;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static com.intellij.util.containers.ContainerUtil.sorted;
-import static java.util.Comparator.comparing;
+/**
+ * @deprecated use {@link SimpleGoToChangePopupAction}
+ */
+@Deprecated
+public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain>
+  extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
 
-public abstract class ChangeGoToChangePopupAction extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
-  private final @NotNull List<? extends DiffRequestProducer> myProducers;
+  private final Chain myChain;
 
-  /**
-   * @deprecated use {@link #ChangeGoToChangePopupAction(List<? extends DiffRequestProducer>)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public ChangeGoToChangePopupAction(@NotNull DiffRequestChain chain) { this(chain.getRequests()); }
-
-  public ChangeGoToChangePopupAction(@NotNull List<? extends DiffRequestProducer> producers) { this.myProducers = producers; }
+  public ChangeGoToChangePopupAction(@NotNull Chain chain) {
+    myChain = chain;
+  }
 
   @Override
   protected boolean canNavigate() {
-    return myProducers.size() > 1;
+    return myChain.getRequests().size() > 1;
   }
 
   @NotNull
-  protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
-    MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = new MultiMap<>();
-    List<? extends DiffRequestProducer> producers = myProducers;
-
-    for (int i = 0; i < producers.size(); i++) {
-      ChangeDiffRequestChain.Producer producer = ObjectUtils.tryCast(producers.get(i), ChangeDiffRequestChain.Producer.class);
-      if (producer == null) {
-        throw new IllegalArgumentException(
-          "Only " + ChangeDiffRequestChain.Producer.class + " supported as " + DiffRequestProducer.class + " implementations");
-      }
-
-      FilePath filePath = producer.getFilePath();
-      FileStatus fileStatus = producer.getFileStatus();
-      ChangesBrowserNode.Tag tag = producer.getTag();
-      groups.putValue(tag, new GenericChangesBrowserNode(filePath, fileStatus, i));
-    }
-
-    MyTreeModelBuilder builder = new MyTreeModelBuilder(project, grouping);
-    for (ChangesBrowserNode.Tag tag : groups.keySet()) {
-      builder.setGenericNodes(groups.get(tag), tag);
-    }
-    return builder.build();
-  }
+  protected abstract DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping);
 
   protected abstract void onSelected(@Nullable ChangesBrowserNode object);
 
@@ -158,87 +129,6 @@ public abstract class ChangeGoToChangePopupAction extends GoToChangePopupBuilder
 
       ChangesBrowserNode selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selection));
-    }
-  }
-
-  public static class GenericChangesBrowserNode extends ChangesBrowserNode<FilePath> implements Comparable<GenericChangesBrowserNode> {
-    @NotNull private final FilePath myFilePath;
-    @NotNull private final FileStatus myFileStatus;
-    private final int myIndex;
-
-    public GenericChangesBrowserNode(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, int index) {
-      super(filePath);
-      myFilePath = filePath;
-      myFileStatus = fileStatus;
-      myIndex = index;
-    }
-
-    @NotNull
-    public FilePath getFilePath() {
-      return myFilePath;
-    }
-
-    @NotNull
-    public FileStatus getFileStatus() {
-      return myFileStatus;
-    }
-
-    public int getIndex() {
-      return myIndex;
-    }
-
-    @Override
-    protected boolean isFile() {
-      return !isDirectory();
-    }
-
-    @Override
-    protected boolean isDirectory() {
-      return myFilePath.isDirectory();
-    }
-
-    @Override
-    public void render(@NotNull ChangesBrowserNodeRenderer renderer, boolean selected, boolean expanded, boolean hasFocus) {
-      renderer.appendFileName(myFilePath.getVirtualFile(), myFilePath.getName(), myFileStatus.getColor());
-
-      if (renderer.isShowFlatten()) {
-        appendParentPath(renderer, myFilePath.getParentPath());
-      }
-
-      if (!renderer.isShowFlatten() && getFileCount() != 1 || getDirectoryCount() != 0) {
-        appendCount(renderer);
-      }
-
-      renderer.setIcon(myFilePath, myFilePath.isDirectory() || !isLeaf());
-    }
-
-    @Override
-    public String getTextPresentation() {
-      return myFilePath.getName();
-    }
-
-    @Override
-    public String toString() {
-      return FileUtil.toSystemDependentName(myFilePath.getPath());
-    }
-
-    @Override
-    public int compareTo(@NotNull GenericChangesBrowserNode o) {
-      return compareFilePaths(myFilePath, o.myFilePath);
-    }
-  }
-
-  public static class MyTreeModelBuilder extends TreeModelBuilder {
-    public MyTreeModelBuilder(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
-      super(project, grouping);
-    }
-
-    public void setGenericNodes(@NotNull Collection<GenericChangesBrowserNode> nodes, @Nullable ChangesBrowserNode.Tag tag) {
-      ChangesBrowserNode<?> parentNode = createTagNode(tag);
-
-      for (GenericChangesBrowserNode node : sorted(nodes, comparing(data -> data.getFilePath(), PATH_COMPARATOR))) {
-        insertChangeNode(node.getFilePath(), parentNode, node);
-      }
     }
   }
 }

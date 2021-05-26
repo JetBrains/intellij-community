@@ -16,7 +16,7 @@ abstract class SelectionAwareGoToChangePopupActionProvider {
   abstract fun getSelectedFilePath(): FilePath?
 
   fun createGoToChangeAction(): AnAction {
-    return object : ChangeGoToChangePopupAction(getActualProducers()) {
+    return object : SimpleGoToChangePopupAction(getActualProducers()) {
       override fun onSelected(node: ChangesBrowserNode<*>?) {
         if (node is GenericChangesBrowserNode) {
           selectFilePath(node.filePath)

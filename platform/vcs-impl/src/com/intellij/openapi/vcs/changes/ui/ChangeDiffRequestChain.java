@@ -12,7 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction;
+import com.intellij.openapi.vcs.changes.actions.diff.SimpleGoToChangePopupAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -52,10 +52,10 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
    * NB: {@code chain.getRequests()} MUST return instances of {@link Producer}
    */
   @NotNull
-  private static ChangeGoToChangePopupAction createGoToChangeAction(@NotNull List<? extends DiffRequestProducer> producers,
-                                                                    @NotNull Consumer<? super Integer> onSelected,
-                                                                    int defaultSelection) {
-    return new ChangeGoToChangePopupAction(producers) {
+  private static AnAction createGoToChangeAction(@NotNull List<? extends DiffRequestProducer> producers,
+                                                 @NotNull Consumer<? super Integer> onSelected,
+                                                 int defaultSelection) {
+    return new SimpleGoToChangePopupAction(producers) {
       @Override
       protected void onSelected(@Nullable ChangesBrowserNode object) {
         GenericChangesBrowserNode node = ObjectUtils.tryCast(object, GenericChangesBrowserNode.class);
@@ -65,7 +65,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
       @Override
       protected Condition<? super DefaultMutableTreeNode> initialSelection() {
         return node -> node instanceof GenericChangesBrowserNode &&
-                ((GenericChangesBrowserNode) node).getIndex() == defaultSelection;
+                       ((GenericChangesBrowserNode)node).getIndex() == defaultSelection;
       }
     };
   }
