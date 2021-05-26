@@ -213,8 +213,10 @@
     <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
 
     <extensionPoint name="toolWindowExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor" dynamic="true"/>
-
     <extensionPoint name="toolWindowContentExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor" dynamic="true"/>
+    <extensionPoint name="toolWindowExtractorMode"
+                    beanClass="com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP"
+                    dynamic="true"/>
 
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate" dynamic="true"/>
 
