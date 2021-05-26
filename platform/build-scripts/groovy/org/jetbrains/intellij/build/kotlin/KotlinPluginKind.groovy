@@ -15,8 +15,8 @@ enum KotlinPluginKind {
   IJ_CE("KotlinPluginCommunity", "kotlin.plugin.version"),
   MI("MobilePlugin",
      "kotlin.plugin.version",
-     "kotlin-ultimate.mobile-native.overrides",
-     "mobile-ide/mobile-native/overrides/resources",
+     "intellij.mobile.ide",
+     "mobile-ide/resources",
      [
        Couple.of("artifacts/kotlin-ocswift", "kotlin-ocswift"),
        Couple.of("artifacts/MobilePlugin", "Mobile")
