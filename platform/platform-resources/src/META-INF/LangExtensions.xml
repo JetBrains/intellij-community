@@ -1359,6 +1359,7 @@
 
     <toolWindow id="Problems View" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowProblemsEmpty" canCloseContents="true"
                 factoryClass="com.intellij.analysis.problemsView.toolWindow.ProblemsView"/>
+    <toolWindowExtractorMode id="Problems View" mode="per_client"/>
     <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStateManager"/>
     <notificationGroup id="Automatic Module Unloading" displayType="BALLOON"/>
     <notificationGroup id="Execution" displayType="NONE"/>

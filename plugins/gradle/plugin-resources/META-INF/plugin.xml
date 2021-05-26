@@ -115,6 +115,7 @@
 
     <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
+    <toolWindowExtractorMode id="Gradle" mode="mirror"/>
 
     <copyPastePreProcessor implementation="org.jetbrains.plugins.gradle.action.PasteMvnDependencyPreProcessor"/>
 
