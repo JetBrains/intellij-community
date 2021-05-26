@@ -274,7 +274,7 @@ abstract class GitFileStatusNodeProducerBase(val statusNode: GitFileStatusNode) 
     return statusNode.filePath.presentableUrl
   }
 
-  override fun getPopupTag(): ChangesBrowserNode.Tag? {
+  override fun getTag(): ChangesBrowserNode.Tag? {
     return getTag(kind)
   }
 

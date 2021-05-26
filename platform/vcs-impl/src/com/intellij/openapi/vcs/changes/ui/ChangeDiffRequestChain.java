@@ -78,8 +78,9 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
     FileStatus getFileStatus();
 
     /**
-     * @deprecated Use {@link #getTag()} instead.
+     * @deprecated Implement {@link #getTag()} instead.
      */
+    @SuppressWarnings("DeprecatedIsStillUsed")
     @Deprecated
     @Nullable
     default Object getPopupTag() {
