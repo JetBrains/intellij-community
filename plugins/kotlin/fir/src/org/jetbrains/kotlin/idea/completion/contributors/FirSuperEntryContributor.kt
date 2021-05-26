@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
-import org.jetbrains.kotlin.idea.completion.context.FirSuperTypeCallNameReferenceRawPositionContext
+import org.jetbrains.kotlin.idea.completion.context.FirSuperTypeCallNameReferencePositionContext
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirSuperEntriesProvider.getSuperClassesAvailableForSuperCall
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallLookupObject
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.SuperCallInsertionHandler
@@ -15,8 +15,8 @@ import org.jetbrains.kotlin.name.Name
 
 internal class FirSuperEntryContributor(
     basicContext: FirBasicCompletionContext,
-) : FirContextCompletionContributorBase<FirSuperTypeCallNameReferenceRawPositionContext>(basicContext) {
-    override fun KtAnalysisSession.complete(positionContext: FirSuperTypeCallNameReferenceRawPositionContext) {
+) : FirContextCompletionContributorBase<FirSuperTypeCallNameReferencePositionContext>(basicContext) {
+    override fun KtAnalysisSession.complete(positionContext: FirSuperTypeCallNameReferencePositionContext) {
         getSuperClassesAvailableForSuperCall(positionContext.nameExpression).forEach { superType ->
             val tailText = superType.classIdIfNonLocal?.asString()?.let { "($it)" }
             LookupElementBuilder.create(SuperLookupObject(superType.name, superType.classIdIfNonLocal), superType.name.asString())
