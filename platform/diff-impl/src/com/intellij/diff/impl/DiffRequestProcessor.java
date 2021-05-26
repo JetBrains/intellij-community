@@ -388,27 +388,22 @@ public abstract class DiffRequestProcessor implements Disposable {
       Separator.getInstance(),
       new MyPrevChangeAction(), new MyNextChangeAction());
 
-    AnAction goToChangeAction = doCreateGoToChangeAction();
-    ContainerUtil.addIfNotNull(actions, goToChangeAction);
+    AnAction goToChangeAction = createGoToChangeAction();
+    if (goToChangeAction != null) {
+      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
+        patchShortcutSet(goToChangeAction, "GotoClass", null);
+      }
+      ContainerUtil.addIfNotNull(actions, goToChangeAction);
+    }
 
     return actions;
   }
 
-  protected @Nullable GoToChangePopupBuilder.GoToChangeActionProvider getGoToChangeActionProvider(){
+  /**
+   * @see com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction
+   */
+  protected @Nullable AnAction createGoToChangeAction() {
     return null;
-  }
-
-  @Nullable
-  private AnAction doCreateGoToChangeAction() {
-    GoToChangePopupBuilder.GoToChangeActionProvider actionProvider = getGoToChangeActionProvider();
-    if (actionProvider == null) return null;
-
-    AnAction action = actionProvider.createGoToChangeAction();
-
-    if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
-      patchShortcutSet(action, "GotoClass", null);
-    }
-    return action;
   }
 
   //

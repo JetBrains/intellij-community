@@ -4,11 +4,13 @@ package git4idea.index.ui
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
+import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
@@ -51,9 +53,23 @@ class GitStageDiffPreview(project: Project, private val tree: GitStageTree, trac
 
   override fun getAllChanges(): Stream<Wrapper> = wrap(VcsTreeModelData.all(tree))
 
-  override fun getActualProducers(): List<DiffRequestProducer> {
-    return tree.statusNodesListSelection(true)
-      .map { createTwoSidesDiffRequestProducer(project, it) }.list
+  override fun createGoToChangeAction(): AnAction {
+    return MyGoToChangePopupProvider().createGoToChangeAction()
+  }
+
+  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
+    override fun getActualProducers(): List<DiffRequestProducer> {
+      return tree.statusNodesListSelection(true)
+        .map { createTwoSidesDiffRequestProducer(project, it) }.list
+    }
+
+    override fun selectFilePath(filePath: FilePath) {
+      this@GitStageDiffPreview.selectFilePath(filePath)
+    }
+
+    override fun getSelectedFilePath(): FilePath? {
+      return this@GitStageDiffPreview.selectedFilePath
+    }
   }
 
   private fun wrap(modelData: VcsTreeModelData): Stream<Wrapper> =

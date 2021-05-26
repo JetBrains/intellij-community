@@ -13,8 +13,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class CacheDiffRequestChainProcessor
-  extends CacheDiffRequestProcessor.Simple implements GoToChangePopupBuilder.GoToChangeActionProvider {
+public class CacheDiffRequestChainProcessor extends CacheDiffRequestProcessor.Simple {
   @NotNull private final DiffRequestChain myRequestChain;
   private int myIndex;
 
@@ -103,11 +102,6 @@ public class CacheDiffRequestChainProcessor
         setCurrentRequest(index);
       }
     }, myIndex);
-  }
-
-  @Override
-  protected @Nullable GoToChangePopupBuilder.GoToChangeActionProvider getGoToChangeActionProvider() {
-    return this;
   }
 
   private class MyChangeListener implements AsyncDiffRequestChain.Listener {

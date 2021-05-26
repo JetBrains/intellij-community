@@ -4,12 +4,15 @@ package git4idea.stash.ui
 import com.intellij.diff.FrameDiffTool
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
+import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.IdeBorderFactory
@@ -48,10 +51,24 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, paren
     return wrap(VcsTreeModelData.all(tree))
   }
 
-  override fun getActualProducers(): List<DiffRequestProducer> {
-    return VcsTreeModelData.all(tree)
-      .userObjects(Change::class.java)
-      .mapNotNull { ChangeDiffRequestProducer.create(project, it) }
+  override fun createGoToChangeAction(): AnAction {
+    return MyGoToChangePopupProvider().createGoToChangeAction()
+  }
+
+  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
+    override fun getActualProducers(): List<DiffRequestProducer> {
+      return VcsTreeModelData.all(tree)
+        .userObjects(Change::class.java)
+        .mapNotNull { ChangeDiffRequestProducer.create(project, it) }
+    }
+
+    override fun selectFilePath(filePath: FilePath) {
+      this@GitStashDiffPreview.selectFilePath(filePath)
+    }
+
+    override fun getSelectedFilePath(): FilePath? {
+      return this@GitStashDiffPreview.selectedFilePath
+    }
   }
 
   override fun selectChange(change: Wrapper) {

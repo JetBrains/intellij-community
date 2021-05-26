@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContentFactoryEx;
-import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
@@ -879,8 +878,7 @@ public class ShelvedChangesViewManager implements Disposable {
     }
   }
 
-  private static class MyShelvedPreviewProcessor extends CacheDiffRequestProcessor<ShelvedWrapper>
-    implements DiffPreviewUpdateProcessor, SelectionAwareGoToChangePopupActionProvider {
+  private static class MyShelvedPreviewProcessor extends CacheDiffRequestProcessor<ShelvedWrapper> implements DiffPreviewUpdateProcessor {
     @NotNull private final Project myProject;
     @NotNull private final ShelfTree myTree;
 
@@ -1020,49 +1018,51 @@ public class ShelvedChangesViewManager implements Disposable {
       return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
     }
 
-    @NotNull
     @Override
-    public List<? extends DiffRequestProducer> getActualProducers() {
-      DataContext dc = DataManager.getInstance().getDataContext(myTree);
-      ListSelection<? extends DiffRequestProducer> diffProducers = DiffShelvedChangesActionProvider.createDiffProducers(dc, false);
-      if (diffProducers == null) return emptyList();
-
-      return diffProducers.getList();
+    protected @Nullable AnAction createGoToChangeAction() {
+      return new MyGoToChangePopupProvider().createGoToChangeAction();
     }
 
-    @Override
-    public void selectFilePath(@NotNull FilePath filePath) {
-      ShelvedChangeList selectedList = getOnlyItem(getSelectedLists(myTree, it -> true));
-      if (selectedList == null) return;
+    private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
+      @NotNull
+      @Override
+      public List<? extends DiffRequestProducer> getActualProducers() {
+        DataContext dc = DataManager.getInstance().getDataContext(myTree);
+        ListSelection<? extends DiffRequestProducer> diffProducers = DiffShelvedChangesActionProvider.createDiffProducers(dc, false);
+        if (diffProducers == null) return emptyList();
 
-      ChangesBrowserNode<?> changeListNode = (ChangesBrowserNode<?>)TreeUtil.findNodeWithObject(myTree.getRoot(), selectedList);
-      TreeNode targetNode = TreeUtil.treeNodeTraverser(changeListNode).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
-        if (node instanceof DefaultMutableTreeNode) {
-          Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
-          if (userObject instanceof ShelvedWrapper) {
-            ShelvedWrapper shelvedWrapper = (ShelvedWrapper)userObject;
-            Change change = shelvedWrapper.getChange(myProject);
-            return ChangesUtil.getFilePath(change).equals(filePath);
-          }
-        }
-        return false;
-      });
-
-      if (targetNode != null) {
-        TreeUtil.selectNode(myTree, targetNode);
-        refresh(false);
+        return diffProducers.getList();
       }
-    }
 
-    @Nullable
-    @Override
-    public FilePath getSelectedFilePath() {
-      return myCurrentShelvedElement != null ? ChangesUtil.getFilePath(myCurrentShelvedElement.getChange(myProject)) : null;
-    }
+      @Override
+      public void selectFilePath(@NotNull FilePath filePath) {
+        ShelvedChangeList selectedList = getOnlyItem(getSelectedLists(myTree, it -> true));
+        if (selectedList == null) return;
 
-    @Override
-    protected @Nullable GoToChangePopupBuilder.GoToChangeActionProvider getGoToChangeActionProvider() {
-      return this;
+        ChangesBrowserNode<?> changeListNode = (ChangesBrowserNode<?>)TreeUtil.findNodeWithObject(myTree.getRoot(), selectedList);
+        TreeNode targetNode = TreeUtil.treeNodeTraverser(changeListNode).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
+          if (node instanceof DefaultMutableTreeNode) {
+            Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+            if (userObject instanceof ShelvedWrapper) {
+              ShelvedWrapper shelvedWrapper = (ShelvedWrapper)userObject;
+              Change change = shelvedWrapper.getChange(myProject);
+              return ChangesUtil.getFilePath(change).equals(filePath);
+            }
+          }
+          return false;
+        });
+
+        if (targetNode != null) {
+          TreeUtil.selectNode(myTree, targetNode);
+          refresh(false);
+        }
+      }
+
+      @Nullable
+      @Override
+      public FilePath getSelectedFilePath() {
+        return myCurrentShelvedElement != null ? ChangesUtil.getFilePath(myCurrentShelvedElement.getChange(myProject)) : null;
+      }
     }
 
     @NotNull

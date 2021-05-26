@@ -6,14 +6,14 @@ import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import kotlin.properties.Delegates
 
-open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?)
-  : CacheDiffRequestProcessor.Simple(project), SelectionAwareGoToChangePopupActionProvider {
+open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
 
   private val asyncChangeListener = AsyncDiffRequestChain.Listener {
     dropCaches()
@@ -78,17 +78,21 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
     return chain.requests.size > 1
   }
 
-  override fun getGoToChangeActionProvider() = this
-
-  override fun getActualProducers(): List<DiffRequestProducer> {
-    return chain?.requests ?: emptyList()
+  override fun createGoToChangeAction(): AnAction? {
+    return MyGoToChangePopupProvider().createGoToChangeAction()
   }
 
-  override fun getSelectedFilePath(): FilePath? {
-    val producer = chain?.requests?.getOrNull(currentIndex)
-    return if (producer is ChangeDiffRequestChain.Producer) producer.filePath else null
-  }
+  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
+    override fun getActualProducers(): List<DiffRequestProducer> {
+      return chain?.requests ?: emptyList()
+    }
 
-  //TODO implement: get relevant changes tree and select node
-  override fun selectFilePath(filePath: FilePath) {}
+    override fun getSelectedFilePath(): FilePath? {
+      val producer = chain?.requests?.getOrNull(currentIndex)
+      return if (producer is ChangeDiffRequestChain.Producer) producer.filePath else null
+    }
+
+    //TODO implement: get relevant changes tree and select node
+    override fun selectFilePath(filePath: FilePath) {}
+  }
 }

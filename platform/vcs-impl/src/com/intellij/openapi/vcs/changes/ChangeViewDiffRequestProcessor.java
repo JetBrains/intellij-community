@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
 import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
@@ -21,21 +20,18 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
-import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple
-  implements DiffPreviewUpdateProcessor, SelectionAwareGoToChangePopupActionProvider {
+public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestProcessor.Simple implements DiffPreviewUpdateProcessor {
 
   private static final int MANY_CHANGES_THRESHOLD = 10000;
 
@@ -187,13 +183,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return myCurrentChange;
   }
 
-  @Override
-  public @NotNull List<? extends DiffRequestProducer> getActualProducers() {
-    return Collections.emptyList();
-  }
-
-  @Override
-  public void selectFilePath(@NotNull FilePath filePath) {
+  /**
+   * In case of conflict, will select first change with this file path
+   */
+  @Deprecated
+  protected void selectFilePath(@NotNull FilePath filePath) {
     Wrapper changeToSelect = ContainerUtil.find(getAllChanges().iterator(), change -> change.getFilePath().equals(filePath));
 
     if (changeToSelect != null) {
@@ -203,14 +197,8 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
   }
 
   @Nullable
-  @Override
-  public FilePath getSelectedFilePath() {
+  protected FilePath getSelectedFilePath() {
     return myCurrentChange != null ? myCurrentChange.getFilePath() : null;
-  }
-
-  @Override
-  protected @Nullable GoToChangePopupBuilder.GoToChangeActionProvider getGoToChangeActionProvider() {
-    return this;
   }
 
   @Override
@@ -445,19 +433,19 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @NotNull
     @Override
     public Object getUserObject() {
-      return getFilePath();
+      return path;
     }
 
     @Nullable
     @Override
     public String getPresentableName() {
-      return getFilePath().getName();
+      return path.getName();
     }
 
     @Nullable
     @Override
     public DiffRequestProducer createProducer(@Nullable Project project) {
-      return UnversionedDiffRequestProducer.create(project, getFilePath());
+      return UnversionedDiffRequestProducer.create(project, path);
     }
   }
 
