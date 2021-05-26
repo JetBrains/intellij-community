@@ -177,7 +177,22 @@ public class KillableProcessHandler extends OSProcessHandler implements Killable
             OSProcessUtil.logSkippedActionWithTerminatedProcess(myProcess, "destroy", getCommandLine());
             return true;
           }
-          LOG.error("Failed to send Ctrl+C, fallback to default termination: " + getCommandLine(), e);
+          if (e.getMessage().contains(".exe terminated with exit code 6,")) {
+            // https://github.com/kohsuke/winp/blob/ec4ac6a988f6e3909c57db0abc4b02ff1b1d2e05/native/sendctrlc/main.cpp#L18
+            // WinP uses AttachConsole(pid) which might fail if the specified process does not have a console.
+            // In this case the error code returned is ERROR_INVALID_HANDLE (6).
+            // Let's fallback to the default termination without logging an error.
+            String msg = "Cannot send Ctrl+C to process without a console (fallback to default termination)";
+            if (LOG.isDebugEnabled()) {
+              LOG.debug(msg + " " + getCommandLine());
+            }
+            else {
+              LOG.info(msg);
+            }
+          }
+          else {
+            LOG.error("Cannot send Ctrl+C (fallback to default termination) " + getCommandLine(), e);
+          }
         }
       }
     }
