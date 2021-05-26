@@ -1004,7 +1004,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon TestIgnored = load("runConfigurations/testIgnored.svg", 6682967823487285741L, 0);
     /** 16x16 */ public static final @NotNull Icon TestMark = load("runConfigurations/testMark.svg", -728881308004144000L, 0);
     /** 16x16 */ public static final @NotNull Icon TestNotRan = load("runConfigurations/testNotRan.svg", -789681200569491786L, 0);
-    /** 16x16 */ public static final @NotNull Icon TestPassed = load("runConfigurations/testPassed.svg", -2517399281879006017L, 0);
+    /** 16x16 */ public static final @NotNull Icon TestPassed = load("runConfigurations/testPassed.svg", 4972281493010263166L, 0);
     /** 16x16 */ public static final @NotNull Icon TestPassedIgnored = load("runConfigurations/testPassedIgnored.svg", -7745522802914287125L, 0);
     /** 16x16 */ public static final @NotNull Icon TestPaused = load("runConfigurations/testPaused.svg", -8061842625938002652L, 0);
     /** 16x16 */ public static final @NotNull Icon TestSkipped = load("runConfigurations/testSkipped.svg", -2545611639014657363L, 0);
