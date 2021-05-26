@@ -15,6 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.TrailingCommaVisitor
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
@@ -28,6 +29,7 @@ import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import javax.swing.JComponent
 import kotlin.properties.Delegates
 
@@ -117,7 +119,7 @@ class TrailingCommaInspection(
         ) {
             val commaOwner = commaOrElement.parent as KtElement
             // case for KtFunctionLiteral, where PsiWhiteSpace after KtTypeParameterList isn't included in this list
-            val problemOwner = commaOwner.parent
+            val problemOwner = commonParent(commaOwner, commaOrElement)
             val highlightTypeWithAppliedCondition = highlightType.applyCondition(!checkTrailingCommaSettings || useTrailingComma)
             // INFORMATION shouldn't be reported in batch mode
             if (isOnTheFly || highlightTypeWithAppliedCondition != ProblemHighlightType.INFORMATION) {
@@ -136,7 +138,7 @@ class TrailingCommaInspection(
             elementForTextRange: PsiElement,
             highlightType: ProblemHighlightType,
         ) {
-            val problemElement = commaOwner.parent
+            val problemElement = commonParent(commaOwner, elementForTextRange)
             val highlightTypeWithAppliedCondition = highlightType.applyCondition(useTrailingComma)
             // INFORMATION shouldn't be reported in batch mode
             if (isOnTheFly || highlightTypeWithAppliedCondition != ProblemHighlightType.INFORMATION) {
@@ -149,6 +151,16 @@ class TrailingCommaInspection(
                 )
             }
         }
+
+        private fun commonParent(commaOwner: PsiElement, elementForTextRange: PsiElement): PsiElement =
+            PsiTreeUtil.findCommonParent(commaOwner, elementForTextRange)
+                ?: throw KotlinExceptionWithAttachments("Common parent not found")
+                    .withAttachment("commaOwner", commaOwner.text)
+                    .withAttachment("commaOwnerRange", commaOwner.textRange)
+                    .withAttachment("elementForTextRange", elementForTextRange.text)
+                    .withAttachment("elementForTextRangeRange", elementForTextRange.textRange)
+                    .withAttachment("parent", commaOwner.parent.text)
+                    .withAttachment("parentRange", commaOwner.parent.textRange)
 
         private fun ProblemHighlightType.applyCondition(condition: Boolean): ProblemHighlightType = when {
             ApplicationManager.getApplication().isUnitTestMode -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
