@@ -401,6 +401,14 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
       return Ref.create(getGenericTypeFromTypeVar(callSite, new Context(context)));
     }
 
+    if (initializedClass != null && callSite instanceof PyCallExpression && PyNames.DICT.equals(initializedClass.getQualifiedName())) {
+      final PyType inferredTypedDict =
+        PyTypedDictTypeProvider.Companion.inferTypedDictFromCallExpression((PyCallExpression)callSite, context);
+      if (inferredTypedDict != null) {
+        return Ref.create(inferredTypedDict);
+      }
+    }
+
     if (functionReturningCallSiteAsAType(function)) {
       return getAsClassObjectType(callSite, new Context(context));
     }
