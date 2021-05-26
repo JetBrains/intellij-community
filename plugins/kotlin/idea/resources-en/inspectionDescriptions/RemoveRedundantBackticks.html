@@ -3,22 +3,22 @@
 Reports redundant backticks in references.
 <p>
     Some of the Kotlin keywords are valid identifiers in Java: in, object, is, and other.
-    If a Java library uses a Kotlin keyword for a method, you can still call the method escaping it with the backtick (`) character, e.g.
+    If a Java library uses a Kotlin keyword for a method, you can still call the method escaping it with the backtick (`) character, for example,
     "foo.`is`(bar)".
-    Sometimes escaping is redundant and can be safely omitted. The inspection is aimed to discover and report such cases and
-    paired 'Remove redundant backticks' quick-fix allows to amend highlighted code snippet.
+    Sometimes escaping is redundant and can be safely omitted. The inspection discovers and reports such cases and is
+    paired with the 'Remove redundant backticks' quick-fix, which allows you to amend highlighted code snippet.
 </p>
 
 <p>Examples:</p>
 <pre><code>
    fun `is`(x: String) {}
    fun foo() {
-      `is`("bar") // <== 'is' is a keyword, backticks are required
+      `is`("bar") // 'is' is a keyword, backticks are required
    }
 
-   fun `test that smth works as designed`() // <== it's ok, complex identifier for readability improvement
+   fun `test that smth works as designed`() // it's ok, complex identifier for readability improvement
 
-   val `a` = 1  // <== no need for backticks
+   val `a` = 1  // no need for backticks
 </code></pre>
 </body>
 </html>
