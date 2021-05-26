@@ -12,7 +12,23 @@ import java.util.Set;
 public final class ClassLoaderConfigurationData {
   static final boolean SEPARATE_CLASSLOADER_FOR_SUB = Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "true"));
   static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_ONLY;
-  static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE;
+  private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE = ReferenceOpenHashSet.of(
+    PluginId.getId("org.jetbrains.kotlin"),
+    PluginId.getId("com.intellij.java"),
+    PluginId.getId("com.intellij.spring.batch"),
+    PluginId.getId("com.intellij.spring.integration"),
+    PluginId.getId("com.intellij.spring.messaging"),
+    PluginId.getId("com.intellij.spring.ws"),
+    PluginId.getId("com.intellij.spring.websocket"),
+    PluginId.getId("com.intellij.spring.webflow"),
+    PluginId.getId("com.intellij.spring.security"),
+    PluginId.getId("com.intellij.spring.osgi"),
+    PluginId.getId("com.intellij.spring.mvc"),
+    PluginId.getId("com.intellij.spring.data"),
+    PluginId.getId("com.intellij.spring.boot.run.tests"),
+    PluginId.getId("com.intellij.spring.boot"),
+    PluginId.getId("com.intellij.spring")
+  );
 
   static {
     String value = System.getProperty("idea.classloader.per.descriptor.only");
@@ -35,26 +51,7 @@ public final class ClassLoaderConfigurationData {
         SEPARATE_CLASSLOADER_FOR_SUB_ONLY.add(PluginId.getId(id));
       }
     }
-
-    SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE = new ReferenceOpenHashSet<>(new PluginId[]{
-      PluginId.getId("org.jetbrains.kotlin"),
-      PluginId.getId("com.intellij.java"),
-      PluginId.getId("com.intellij.spring.batch"),
-      PluginId.getId("com.intellij.spring.integration"),
-      PluginId.getId("com.intellij.spring.messaging"),
-      PluginId.getId("com.intellij.spring.ws"),
-      PluginId.getId("com.intellij.spring.websocket"),
-      PluginId.getId("com.intellij.spring.webflow"),
-      PluginId.getId("com.intellij.spring.security"),
-      PluginId.getId("com.intellij.spring.osgi"),
-      PluginId.getId("com.intellij.spring.mvc"),
-      PluginId.getId("com.intellij.spring.data"),
-      PluginId.getId("com.intellij.spring.boot.run.tests"),
-      PluginId.getId("com.intellij.spring.boot"),
-      PluginId.getId("com.intellij.spring"),
-    });
   }
-
 
   public static boolean isClassloaderPerDescriptorEnabled(@NotNull PluginId pluginId, @Nullable String packagePrefix) {
     if (!SEPARATE_CLASSLOADER_FOR_SUB || SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE.contains(pluginId)) {
