@@ -92,7 +92,7 @@ object EventLogExternalUploader {
 
     val tempDir = getOrCreateTempDir()
     val uploader = findUploader()
-    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging", "http-client")
+    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging")
 
     val libPaths = libs.map { it.path }.toMutableList()
     libPaths.add(findLibraryByClass(NotNull::class.java))
