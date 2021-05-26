@@ -31,7 +31,9 @@ target('updater-full': 'Build updater-full.jar which includes IDE updater with i
 target('default': 'The default target') {
   try {
     def options = new BuildOptions()
+/* Android Studio: doesn't work with un-stamped build
     options.buildNumber = null //we cannot provide consistent build number for IDEA Community if it's built separately so use *.SNAPSHOT number to avoid confusion
+Android Studio: doesn't work with un-stamped build */
   new AndroidStudioBuilder(home, options).buildDistributions()
   }
   catch (Throwable e) {

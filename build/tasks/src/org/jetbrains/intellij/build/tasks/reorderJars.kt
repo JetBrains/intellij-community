@@ -50,6 +50,7 @@ fun reorderJars(homeDir: Path,
       mainClass = "com.intellij.idea.Main",
       args = listOf("jarOrder", classLoadingLogFile.toString()),
       jvmArgs = listOfNotNull("-Xmx1024m",
+                              "-da",  // Android Studio: disable assertion added by Change I2bf44caf
                               "-Didea.record.classpath.info=true",
                               "-Didea.system.path=${ideaDirsParent.resolve("system")}",
                               "-Didea.config.path=${ideaDirsParent.resolve("config")}",
