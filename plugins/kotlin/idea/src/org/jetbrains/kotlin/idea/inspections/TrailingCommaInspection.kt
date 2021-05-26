@@ -7,7 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -193,9 +193,9 @@ class TrailingCommaInspection(
             }
     }
 
-    override fun createOptionsPanel(): JComponent? {
-        val panel = MultipleCheckboxOptionsPanel(this)
-        panel.addCheckbox(KotlinBundle.message("inspection.trailing.comma.report.also.a.missing.comma"), "addCommaWarning")
-        return panel
-    }
+    override fun createOptionsPanel(): JComponent = SingleCheckboxOptionsPanel(
+        KotlinBundle.message("inspection.trailing.comma.report.also.a.missing.comma"),
+        this,
+        "addCommaWarning",
+    )
 }
