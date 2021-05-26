@@ -105,32 +105,38 @@ public final class LambdaUtil {
   @Contract("null -> false")
   public static boolean isValidLambdaContext(@Nullable PsiElement context) {
     context = PsiUtil.skipParenthesizedExprUp(context);
-    if (isAssignmentOrInvocationContext(context) || context instanceof PsiTypeCastExpression) {
+    if (context instanceof PsiTypeCastExpression) {
       return true;
     }
-    if (context instanceof PsiConditionalExpression) {
-      context = PsiUtil.skipParenthesizedExprUp(context.getParent());
-      if (isAssignmentOrInvocationContext(context)) return true;
+
+    while (true) {
+      context = PsiUtil.skipParenthesizedExprUp(context);
+      if (isAssignmentOrInvocationContext(context)) {
+        return true;
+      }
       if (context instanceof PsiConditionalExpression) {
-        return isValidLambdaContext(context);
+        context = context.getParent();
+        continue;
       }
-    }
-    if (context instanceof PsiYieldStatement) {
-      PsiSwitchExpression switchExpression = ((PsiYieldStatement)context).findEnclosingExpression();
-      if (switchExpression != null) {
-        return isValidLambdaContext(switchExpression.getParent());
-      }
-    }
-    if (context instanceof PsiExpressionStatement) {
-      PsiElement parent = context.getParent();
-      if (parent instanceof PsiSwitchLabeledRuleStatement) {
-        PsiSwitchBlock switchBlock = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
-        if (switchBlock != null) {
-          return isValidLambdaContext(switchBlock.getParent());
+      if (context instanceof PsiYieldStatement) {
+        PsiSwitchExpression switchExpression = ((PsiYieldStatement)context).findEnclosingExpression();
+        if (switchExpression != null) {
+          context = switchExpression.getParent();
+          continue;
         }
       }
+      if (context instanceof PsiExpressionStatement) {
+        PsiElement parent = context.getParent();
+        if (parent instanceof PsiSwitchLabeledRuleStatement) {
+          PsiSwitchBlock switchBlock = ((PsiSwitchLabeledRuleStatement)parent).getEnclosingSwitchBlock();
+          if (switchBlock != null) {
+            context = switchBlock.getParent();
+            continue;
+          }
+        }
+      }
+      return false;
     }
-    return false;
   }
 
   @Contract("null -> false")
