@@ -166,7 +166,13 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
   }
 
   object PluginAwareEntityTypesResolver : EntityTypesResolver {
-    override fun getPluginId(clazz: Class<*>): String? = PluginManager.getInstance().getPluginOrPlatformByClassName(clazz.name)?.idString
+    override fun getPluginId(clazz: Class<*>): String? {
+      val className = clazz.name
+      if (className.startsWith("[")) {
+        return PluginManager.getInstance().getPluginOrPlatformByClassName(clazz.componentType.name)?.idString
+      }
+      return PluginManager.getInstance().getPluginOrPlatformByClassName(className)?.idString
+    }
 
     override fun resolveClass(name: String, pluginId: String?): Class<*> {
       val id = pluginId?.let { PluginId.getId(it) }
@@ -178,7 +184,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
         plugin.pluginClassLoader ?: ApplicationManager::class.java.classLoader
       }
 
-      if (name.startsWith("[")) return Class.forName(name)
+      if (name.startsWith("[")) return Class.forName(name, true, classloader)
       return classloader.loadClass(name)
     }
   }
