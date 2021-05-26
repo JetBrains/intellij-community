@@ -153,7 +153,5 @@
     <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ml.models.local" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.android.gradle.dsl.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.android.gradle.dsl.kotlin.impl" scope="RUNTIME" />
   </component>
 </module>
