@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.jdi.*;
 import com.sun.jdi.*;
 import com.sun.jdi.request.EventRequest;
@@ -351,8 +352,7 @@ public final class DebuggerUtilsAsync {
     if (eventRequestManager instanceof EventRequestManagerImpl && isAsyncEnabled()) {
       return ((EventRequestManagerImpl)eventRequestManager).setEnabledAsync(request, value);
     }
-    request.setEnabled(value);
-    return completedFuture(null);
+    return toCompletableFuture(() -> request.setEnabled(value));
   }
 
   /**
@@ -409,13 +409,23 @@ public final class DebuggerUtilsAsync {
     return res;
   }
 
-  public static Throwable unwrap(Throwable throwable) {
+  public static Throwable unwrap(@Nullable Throwable throwable) {
     return throwable instanceof CompletionException ? throwable.getCause() : throwable;
   }
 
-  private static <T, E extends Exception> CompletableFuture<T> toCompletableFuture(ThrowableComputable<? extends T, E> provider) {
+  public static <T, E extends Exception> CompletableFuture<T> toCompletableFuture(ThrowableComputable<? extends T, E> provider) {
     try {
       return completedFuture(provider.compute());
+    }
+    catch (Exception e) {
+      return CompletableFuture.failedFuture(e);
+    }
+  }
+
+  public static <E extends Exception> CompletableFuture<Void> toCompletableFuture(ThrowableRunnable<E> provider) {
+    try {
+      provider.run();
+      return completedFuture(null);
     }
     catch (Exception e) {
       return CompletableFuture.failedFuture(e);
