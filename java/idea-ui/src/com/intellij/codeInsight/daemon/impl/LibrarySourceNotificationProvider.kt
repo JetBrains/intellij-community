@@ -102,8 +102,12 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
   private fun methods(c: PsiClass) = (if (c is PsiExtensibleClass) c.ownMethods else c.methods.asList()).filterNot(::ignoreMethod)
 
   private fun ignoreMethod(m: PsiMethod): Boolean {
-    return m.isConstructor && m.parameterList.parametersCount == 0 // default constructor
-           || m.name.contains("$\$bridge") // org.jboss.bridger.Bridger adds ACC_BRIDGE | ACC_SYNTHETIC to such methods
+    if (m.isConstructor) {
+      return m.parameterList.parametersCount == 0 // default constructor
+    }
+    else {
+      return m.name.contains("$\$bridge") // org.jboss.bridger.Bridger adds ACC_BRIDGE | ACC_SYNTHETIC to such methods
+    }
   }
 
   private fun inners(c: PsiClass) = if (c is PsiExtensibleClass) c.ownInnerClasses else c.innerClasses.asList()
