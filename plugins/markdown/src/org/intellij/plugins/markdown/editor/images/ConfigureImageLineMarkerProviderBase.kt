@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.MergeableLineMarkerInfo
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
 import java.nio.file.Path
@@ -34,16 +33,6 @@ internal abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : L
    */
   abstract fun obtainOuterElement(element: PsiElement): T?
 
-  fun getAbsolutePath(element: PsiElement): String? {
-    val pathText = obtainPathText(element) ?: return null
-    if (FileUtil.isAbsolute(pathText)) {
-      return pathText
-    }
-    val containingFilePath = element.containingFile?.virtualFile?.path ?: return pathText
-    val parent = Path.of(containingFilePath).parent?.resolve(pathText)?.toAbsolutePath()?.normalize()
-    return parent?.toString() ?: pathText
-  }
-
   override fun getLineMarkerInfo(element: PsiElement): LineMarkerInfo<*>? {
     val leaf = obtainLeafElement(element) ?: return null
     return ConfigureImageLineMarkerInfo(element, leaf.textRange)
@@ -62,7 +51,7 @@ internal abstract class ConfigureImageLineMarkerProviderBase<T : PsiElement> : L
   }
 
   private fun getMarkerElementPresentation(element: PsiElement): String {
-    val fileName = getAbsolutePath(element)?.let { Path.of(it).fileName.toString() } ?: ""
+    val fileName = obtainPathText(element)?.let { Path.of(it).fileName.toString() } ?: ""
     return when {
       fileName.isEmpty() -> MarkdownBundle.message("markdown.setup.image.line.marker.text")
       else -> MarkdownBundle.message("markdown.configure.image.line.marker.presentation", fileName)

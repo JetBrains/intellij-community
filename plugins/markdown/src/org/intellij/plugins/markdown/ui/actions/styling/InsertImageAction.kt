@@ -16,11 +16,10 @@ import org.intellij.plugins.markdown.editor.images.ImageUtils
 import org.intellij.plugins.markdown.editor.images.MarkdownImageData
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import org.intellij.plugins.markdown.util.MarkdownFileUtil
-import java.io.File
 
 class InsertImageAction : AnAction(), DumbAware {
-  override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = MarkdownActionUtil.findMarkdownTextEditor(e)?.document?.isWritable == true
+  override fun update(event: AnActionEvent) {
+    event.presentation.isEnabled = MarkdownActionUtil.findMarkdownTextEditor(event)?.document?.isWritable == true
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -28,7 +27,7 @@ class InsertImageAction : AnAction(), DumbAware {
     val project = editor.project
     ConfigureImageDialog(project, MarkdownBundle.message("markdown.insert.image.dialog.title")).show { imageData ->
       val document = editor.document
-      val imageText = buildImageText(imageData, MarkdownFileUtil.getDirectory(project, document))
+      val imageText = buildImageText(imageData)
       try {
         WriteCommandAction.runWriteCommandAction(project, templateText, null, {
           editor.caretModel.runForEachCaret { caret ->
@@ -38,23 +37,23 @@ class InsertImageAction : AnAction(), DumbAware {
           }
         })
       }
-      catch (e: ReadOnlyModificationException) {
-        Messages.showErrorDialog(project, e.localizedMessage, RefactoringBundle.message("error.title"))
+      catch (exception: ReadOnlyModificationException) {
+        Messages.showErrorDialog(project, exception.localizedMessage, RefactoringBundle.message("error.title"))
       }
-      catch (e: ReadOnlyFragmentModificationException) {
-        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e)
+      catch (exception: ReadOnlyFragmentModificationException) {
+        EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(exception)
       }
     }
   }
 
-  private fun buildImageText(imageData: MarkdownImageData, currentDirectory: File?): String {
+  private fun buildImageText(imageData: MarkdownImageData): String {
     return when {
       imageData.shouldConvertToHtml -> {
-        ImageUtils.createHtmlImageText(imageData.copy(path = MarkdownFileUtil.getPathForHtmlImage(imageData.path)))
+        ImageUtils.createHtmlImageText(imageData)
       }
       else -> {
         val (path, _, _, title, description) = imageData
-        ImageUtils.createMarkdownImageText(description, MarkdownFileUtil.getPathForMarkdownImage(path, currentDirectory), title)
+        ImageUtils.createMarkdownImageText(description, path, title)
       }
     }
   }

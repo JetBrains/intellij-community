@@ -30,7 +30,7 @@ internal class ConfigureTextHtmlImageLineMarkerProvider : ConfigureImageLineMark
     return ConfigureImageDialog(
       image.project,
       MarkdownBundle.message("markdown.configure.image.line.marker.configure.command.name"),
-      path = getAbsolutePath(element),
+      path = obtainPathText(element),
       width = image.getAttributeValue("width"),
       height = image.getAttributeValue("height"),
       linkTitle = image.getAttributeValue("title"),

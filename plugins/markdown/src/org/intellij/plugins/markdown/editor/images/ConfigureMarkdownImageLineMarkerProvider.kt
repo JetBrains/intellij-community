@@ -8,8 +8,6 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImageImpl
-import org.intellij.plugins.markdown.util.MarkdownFileUtil
-import org.intellij.plugins.markdown.util.MarkdownFileUtil.getContainingDirectoryFile
 import org.intellij.plugins.markdown.util.hasType
 
 internal class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMarkerProviderBase<MarkdownImageImpl>() {
@@ -35,7 +33,7 @@ internal class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMark
     return ConfigureImageDialog(
       image.project,
       MarkdownBundle.message("markdown.configure.image.line.marker.configure.command.name"),
-      path = getAbsolutePath(element),
+      path = obtainPathText(element),
       linkTitle = image.collectLinkTitleText(),
       linkDescriptionText = image.collectLinkDescriptionText(),
       shouldConvertToHtml = false
@@ -47,11 +45,10 @@ internal class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMark
   }
 
   private fun createHtmlReplacement(element: PsiElement, imageData: MarkdownImageData): PsiElement {
-    val actualImageData = imageData.copy(path = MarkdownFileUtil.getPathForHtmlImage(imageData.path))
     // Inside paragraphs HTML is always represented by plain HTML_TAG element
     return when {
-      isInsideParagraph(element).also(::println) -> MarkdownPsiElementFactory.createHtmlImageTag(element.project, actualImageData)
-      else -> MarkdownPsiElementFactory.createHtmlBlockWithImage(element.project, actualImageData)
+      isInsideParagraph(element).also(::println) -> MarkdownPsiElementFactory.createHtmlImageTag(element.project, imageData)
+      else -> MarkdownPsiElementFactory.createHtmlBlockWithImage(element.project, imageData)
     }
   }
 
@@ -62,7 +59,7 @@ internal class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMark
       else -> MarkdownPsiElementFactory.createImage(
         project,
         imageData.description,
-        MarkdownFileUtil.getPathForMarkdownImage(imageData.path, element.getContainingDirectoryFile()),
+        imageData.path,
         imageData.title
       )
     }
