@@ -11,7 +11,7 @@ import java.util.Set;
 
 public final class ClassLoaderConfigurationData {
   static final boolean SEPARATE_CLASSLOADER_FOR_SUB = Boolean.parseBoolean(System.getProperty("idea.classloader.per.descriptor", "true"));
-  static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_ONLY;
+  private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new ReferenceOpenHashSet<>();
   private static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE = ReferenceOpenHashSet.of(
     PluginId.getId("org.jetbrains.kotlin"),
     PluginId.getId("com.intellij.java"),
@@ -31,25 +31,20 @@ public final class ClassLoaderConfigurationData {
   );
 
   static {
-    String value = System.getProperty("idea.classloader.per.descriptor.only");
-    if (value == null) {
-      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new ReferenceOpenHashSet<>(new PluginId[]{
-        PluginId.getId("org.jetbrains.plugins.ruby"),
-        PluginId.getId("PythonCore"),
-        PluginId.getId("com.jetbrains.rubymine.customization"),
-        PluginId.getId("JavaScript"),
-        PluginId.getId("Docker"),
-        PluginId.getId("com.intellij.diagram"),
-      });
-    }
-    else if (value.isEmpty()) {
-      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = Collections.emptySet();
-    }
-    else {
-      SEPARATE_CLASSLOADER_FOR_SUB_ONLY = new ReferenceOpenHashSet<>();
-      for (String id : value.split(",")) {
-        SEPARATE_CLASSLOADER_FOR_SUB_ONLY.add(PluginId.getId(id));
-      }
+    String property = System.getProperty("idea.classloader.per.descriptor.only");
+    String[] pluginIds = property == null ?
+                         new String[]{
+                           "org.jetbrains.plugins.ruby",
+                           "PythonCore",
+                           "com.jetbrains.rubymine.customization",
+                           "JavaScript",
+                           "Docker",
+                           "com.intellij.diagram"
+                         } :
+                         property.split(",");
+
+    for (String idString : pluginIds) {
+      SEPARATE_CLASSLOADER_FOR_SUB_ONLY.add(PluginId.getId(idString));
     }
   }
 
