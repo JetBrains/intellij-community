@@ -2018,9 +2018,10 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     }
 
     @Override
-    public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
+    public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
                                     @NotNull Collection<? extends VirtualFile> oldRoots,
-                                    @NotNull Collection<? extends VirtualFile> newRoots) {
+                                    @NotNull Collection<? extends VirtualFile> newRoots,
+                                    @NotNull String libraryNameForDebug) {
       changeHappened();
     }
   }

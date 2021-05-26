@@ -63,7 +63,7 @@ class IgnoredToExcludedSynchronizer(project: Project) : FilesProcessorImpl(proje
       override fun rootsChanged(event: ModuleRootEvent) = updateNotificationState()
     })
     project.messageBus.connect(this).subscribe(AdditionalLibraryRootsListener.TOPIC,
-                                               (AdditionalLibraryRootsListener { _, _, _ -> updateNotificationState() }))
+                                               (AdditionalLibraryRootsListener { _, _, _, _ -> updateNotificationState() }))
   }
 
   private fun updateNotificationState() {

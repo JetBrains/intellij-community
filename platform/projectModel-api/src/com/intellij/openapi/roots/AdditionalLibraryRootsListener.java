@@ -8,6 +8,7 @@ import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -17,29 +18,32 @@ public interface AdditionalLibraryRootsListener {
   @Topic.ProjectLevel
   Topic<AdditionalLibraryRootsListener> TOPIC = new Topic<>(AdditionalLibraryRootsListener.class, Topic.BroadcastDirection.NONE);
 
-  void libraryRootsChanged(@NotNull @Nls String presentableLibraryName,
+  void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
                            @NotNull Collection<? extends VirtualFile> oldRoots,
-                           @NotNull Collection<? extends VirtualFile> newRoots);
+                           @NotNull Collection<? extends VirtualFile> newRoots,
+                           @NotNull String libraryNameForDebug);
 
   /**
-   * Use {@link #fireAdditionalLibraryChanged(Project, String, Collection, Collection)} to notify platform about changes in roots
+   * Use {@link #fireAdditionalLibraryChanged(Project, String, Collection, Collection, String)} to notify platform about changes in roots
    * provided by a {@link SyntheticLibrary} from an {@link AdditionalLibraryRootsProvider}.
    * In particular {@code newRoots} would be indexed, and Project View tree would be refreshed. So in hypothetical case
    * when multiple {@link SyntheticLibrary} from same {@link AdditionalLibraryRootsProvider} were changed,
    * this method should be invoked multiple times, once for each library.
    * Due to some listeners method should be invoked under write lock.
    *
-   * @param presentableLibraryName - name of {@link SyntheticLibrary} returned by {@link AdditionalLibraryRootsProvider};
-   *                               used for UI only
-   * @param oldRoots               - roots that were in {@link SyntheticLibrary} before
-   * @param newRoots               - new roots in {@link SyntheticLibrary}
+   * @param presentableLibraryName name of {@link SyntheticLibrary} returned by {@link AdditionalLibraryRootsProvider}, may be omitted.
+   *                               Used for UI only: in progress titles of indexing, see AdditionalLibraryIndexableAddedFilesIterator.kt
+   * @param oldRoots               roots that were in {@link SyntheticLibrary} before
+   * @param newRoots               new roots in {@link SyntheticLibrary}
+   * @param libraryNameForDebug    some text, making it possible to identify the one who fired event in indexing logs
    */
   @RequiresWriteLock
   static void fireAdditionalLibraryChanged(@NotNull Project project,
-                                           @NotNull @Nls String presentableLibraryName,
+                                           @Nullable @Nls String presentableLibraryName,
                                            @NotNull Collection<? extends VirtualFile> oldRoots,
-                                           @NotNull Collection<? extends VirtualFile> newRoots) {
+                                           @NotNull Collection<? extends VirtualFile> newRoots,
+                                           @NotNull String libraryNameForDebug) {
     if (new HashSet<>(newRoots).equals(new HashSet<>(oldRoots))) return;
-    project.getMessageBus().syncPublisher(TOPIC).libraryRootsChanged(presentableLibraryName, oldRoots, newRoots);
+    project.getMessageBus().syncPublisher(TOPIC).libraryRootsChanged(presentableLibraryName, oldRoots, newRoots, libraryNameForDebug);
   }
 }

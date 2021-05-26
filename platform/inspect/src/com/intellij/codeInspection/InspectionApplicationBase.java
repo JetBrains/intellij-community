@@ -348,9 +348,10 @@ public class InspectionApplicationBase implements CommandLineInspectionProgressR
     connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
                          new AdditionalLibraryRootsListener() {
                            @Override
-                           public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
+                           public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
                                                            @NotNull Collection<? extends VirtualFile> oldRoots,
-                                                           @NotNull Collection<? extends VirtualFile> newRoots) {
+                                                           @NotNull Collection<? extends VirtualFile> newRoots,
+                                                           @NotNull String libraryNameForDebug) {
                              updateProjectStructure(counter, reportConverter, project, rootLogDir);
                            }
                          });

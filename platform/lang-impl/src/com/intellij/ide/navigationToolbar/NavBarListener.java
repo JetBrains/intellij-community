@@ -40,6 +40,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -256,9 +257,10 @@ public final class NavBarListener
   }
 
   @Override
-  public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
+  public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
                                   @NotNull Collection<? extends VirtualFile> oldRoots,
-                                  @NotNull Collection<? extends VirtualFile> newRoots) {
+                                  @NotNull Collection<? extends VirtualFile> newRoots,
+                                  @NotNull String libraryNameForDebug) {
     updateModel();
   }
 

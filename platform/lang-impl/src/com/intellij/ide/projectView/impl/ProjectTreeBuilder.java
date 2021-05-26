@@ -51,7 +51,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         queueUpdate();
       }
     });
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots) -> queueUpdate());
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> queueUpdate());
     connection.subscribe(BookmarksListener.TOPIC, new MyBookmarksListener());
 
     PsiManager.getInstance(project).addPsiTreeChangeListener(createPsiTreeChangeListener(project), this);

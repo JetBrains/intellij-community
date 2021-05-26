@@ -89,7 +89,7 @@ internal class AdditionalLibraryRootsContributor : IndexableFilesContributor {
 
   companion object {
     @JvmStatic
-    fun createIndexingIterator(presentableLibraryName: @Nls String, rootsToIndex: List<VirtualFile>): IndexableFilesIterator =
-      AdditionalLibraryIndexableAddedFilesIterator(presentableLibraryName, rootsToIndex)
+    fun createIndexingIterator(presentableLibraryName: @Nls String?, rootsToIndex: List<VirtualFile>, libraryNameForDebug: String): IndexableFilesIterator =
+      AdditionalLibraryIndexableAddedFilesIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug)
   }
 }

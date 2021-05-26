@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.NotNull
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) {
@@ -75,9 +76,10 @@ internal class ModuleVcsDetector(private val project: Project) {
       myMappingsForRemovedModules.addAll(getMappings(module))
     }
 
-    override fun libraryRootsChanged(presentableLibraryName: String,
+    override fun libraryRootsChanged(presentableLibraryName: String?,
                                      oldRoots: MutableCollection<out VirtualFile>,
-                                     newRoots: MutableCollection<out VirtualFile>) {
+                                     newRoots: MutableCollection<out VirtualFile>,
+                                     libraryNameForDebug: @NotNull String) {
       onRootsChanged()
     }
   }

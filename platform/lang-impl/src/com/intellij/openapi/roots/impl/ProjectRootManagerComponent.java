@@ -151,7 +151,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
 
 
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots) -> {
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
       if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) {
         return;
       }
@@ -172,7 +172,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       if (rootsToIndex.isEmpty()) return;
 
       List<IndexableFilesIterator> indexableFilesIterators =
-        Collections.singletonList(AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex));
+        Collections.singletonList(AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
 
       DumbService.getInstance(myProject).queueTask(new UnindexedFilesUpdater(myProject, indexableFilesIterators, "On updated roots of library '" + presentableLibraryName + "'"));
     });
