@@ -48,7 +48,7 @@ class EclipseProjectDetector extends ProjectDetector {
     for (String appLocation : getStandardAppLocations()) {
       collectProjects(projects, Path.of(appLocation));
     }
-    if (PropertiesComponent.getInstance().getBoolean("eclipse.scan.home.directory", false)) {
+    if (PropertiesComponent.getInstance().getBoolean("eclipse.scan.home.directory", true)) {
       visitFiles(new File(home), file1 -> scanForProjects(file1.getPath(), projects), 3);
     }
   }
