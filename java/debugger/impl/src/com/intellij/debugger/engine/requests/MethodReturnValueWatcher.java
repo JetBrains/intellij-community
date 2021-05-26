@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -56,7 +56,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
           LOG.debug("Now watching all");
           enableEntryWatching(true);
           myEntryMethod = null;
-          createExitRequest().enable();
+          DebuggerUtilsAsync.setEnabled(createExitRequest(), true);
         }
         else {
           return;
@@ -85,7 +85,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
         myExitRequest = createExitRequest();
         myExitRequest.addClassFilter(event.method().declaringType());
         myEntryMethod = event.method();
-        myExitRequest.enable();
+        DebuggerUtilsAsync.setEnabled(myExitRequest, true);
 
         if (LOG.isDebugEnabled()) {
           LOG.debug("Now watching only " + event.method());
@@ -101,7 +101,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
 
   private void enableEntryWatching(boolean enable) {
     if (myEntryRequest != null) {
-      myEntryRequest.setEnabled(enable);
+      DebuggerUtilsAsync.setEnabled(myEntryRequest, enable);
     }
   }
 
@@ -165,8 +165,8 @@ public class MethodReturnValueWatcher implements OverheadProducer {
         clear();
         myThread = thread;
 
-        createEntryRequest().enable();
-        createExitRequest().enable();
+        DebuggerUtilsAsync.setEnabled(createEntryRequest(), true);
+        DebuggerUtilsAsync.setEnabled(createExitRequest(), true);
       }
     }
     catch (ObjectCollectedException ignored) {
