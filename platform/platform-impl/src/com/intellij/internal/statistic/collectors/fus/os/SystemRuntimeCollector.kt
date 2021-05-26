@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.os
 
 import com.intellij.internal.DebugAttachDetector
@@ -111,7 +111,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
       "splash", "nosplash"
     )
 
-    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 10)
+    private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 11)
     private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
     private val CORES: EventId1<Int> = GROUP.registerEvent("cores", EventFields.Int("value"))
     private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", EventFields.Int("gigabytes"))
