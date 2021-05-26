@@ -1,7 +1,9 @@
 package test
 
 class Foo {
-
+  companion object {
+      val fooKlass: Class<Foo> = Foo::class.java
+  }
 }
 
 val SOME_FOO: Foo = Foo()

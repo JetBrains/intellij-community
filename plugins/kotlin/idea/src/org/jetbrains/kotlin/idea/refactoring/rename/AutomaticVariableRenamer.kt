@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.core.unquote
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
@@ -51,8 +52,7 @@ class AutomaticVariableRenamer(
                 KtParameter::class.java
             ) as KtCallableDeclaration? ?: continue
 
-            if (parameterOrVariable.name == null) continue
-            val variableName = parameterOrVariable.name!!
+            val variableName = parameterOrVariable.name ?: continue
             
             if (variableName.equals(newClassNameUnquoted, ignoreCase = true)) continue
             if (!StringUtil.containsIgnoreCase(variableName, oldClassName)) continue
@@ -118,6 +118,9 @@ class AutomaticVariableRenamer(
         ktElement: KtNamedDeclaration
     ): VariableKind? {
         if (ktElement is KtProperty && ktElement.isTopLevel && !ktElement.hasModifier(KtTokens.CONST_KEYWORD)) {
+            return null
+        }
+        if (ktElement.containingClassOrObject is KtObjectDeclaration) {
             return null
         }
         val psiVariable = ktElement.toLightElements().firstIsInstanceOrNull<PsiVariable>()

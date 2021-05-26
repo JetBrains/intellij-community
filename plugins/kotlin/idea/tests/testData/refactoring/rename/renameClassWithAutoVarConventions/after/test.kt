@@ -1,7 +1,9 @@
 package test
 
 class Bar {
-
+  companion object {
+      val barKlass: Class<Bar> = Bar::class.java
+  }
 }
 
 val SOME_Bar: Bar = Bar()
