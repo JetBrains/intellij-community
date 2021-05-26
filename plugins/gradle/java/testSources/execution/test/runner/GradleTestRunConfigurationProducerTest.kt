@@ -218,7 +218,6 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
     assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"]["test2"].element, 0)
   }
 
-  @Test
   fun `test execution action children in choose per test mode`() {
     currentExternalProjectSettings.testRunner = TestRunner.CHOOSE_PER_TEST
     val projectData = generateAndImportTemplateProject()
