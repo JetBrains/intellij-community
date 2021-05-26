@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -16,7 +16,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.progress.util.ProgressIndicatorBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.project.Project
@@ -25,7 +24,6 @@ import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNo
 import com.intellij.openapi.ui.MessageDialogBuilder.Companion.yesNoCancel
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.Messages.YesNoCancelResult
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.DialogMessage
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
@@ -42,6 +40,7 @@ import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
 import com.intellij.openapi.vcs.checkin.CheckinHandlerUtil.filterOutGeneratedAndExcludedFiles
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
@@ -49,6 +48,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ExceptionUtil.rethrowUnchecked
 import com.intellij.util.PairConsumer
+import com.intellij.util.progress.DelegatingProgressIndicatorEx
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
 import kotlinx.coroutines.Dispatchers
@@ -95,10 +95,11 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
     val files = filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
 
-    val codeSmells = withContext(Dispatchers.Default) {
-      ProgressManager.getInstance().runProcess(
-        Computable { CodeSmellDetector.getInstance(project).findCodeSmells(files) },
-        ProgressIndicatorBase().apply { isIndeterminate = false } // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
+    lateinit var codeSmells: List<CodeSmellInfo>
+    withContext(Dispatchers.Default) {
+      ProgressManager.getInstance().executeProcessUnderProgress(
+        { codeSmells = CodeSmellDetector.getInstance(project).findCodeSmells(files) },
+        TextToText2IndicatorEx(indicator as ProgressIndicatorEx) // [findCodeSmells] requires [ProgressIndicatorEx] set for thread
       )
     }
     return if (codeSmells.isNotEmpty()) CodeAnalysisCommitProblem(codeSmells) else null
@@ -206,6 +207,7 @@ class ProfileChooser(commitPanel: CheckinProjectPanel,
           templatePresentation.setText(profile.displayName, false)
           templatePresentation.icon = if (profileProperty.get() == profile.name) AllIcons.Actions.Checked else null
         }
+
         override fun actionPerformed(e: AnActionEvent) {
           profileProperty.set(profile.name)
           isLocalProperty.set(manager !is InspectionProjectProfileManager)
@@ -214,6 +216,11 @@ class ProfileChooser(commitPanel: CheckinProjectPanel,
       })
     }
   }
+}
+
+private class TextToText2IndicatorEx(indicator: ProgressIndicatorEx) : DelegatingProgressIndicatorEx(indicator) {
+  override fun setText(text: String?) = super.setText2(text)
+  override fun setText2(text: String?) = Unit
 }
 
 private class FindNewCodeSmellsTask(project: Project, private val files: List<VirtualFile>) :
