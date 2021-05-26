@@ -52,7 +52,8 @@ public class MethodReturnValueWatcher implements OverheadProducer {
     }
     try {
       if (myEntryMethod != null) {
-        if (myEntryMethod.equals(event.method())) {
+        // first check declaring type to avoid method calculation in some cases
+        if (myEntryMethod.declaringType().equals(event.location().declaringType()) && myEntryMethod.equals(event.method())) {
           LOG.debug("Now watching all");
           enableEntryWatching(true);
           myEntryMethod = null;
@@ -83,7 +84,7 @@ public class MethodReturnValueWatcher implements OverheadProducer {
     try {
       if (myEntryRequest != null && myEntryRequest.isEnabled()) {
         myExitRequest = createExitRequest();
-        myExitRequest.addClassFilter(event.method().declaringType());
+        myExitRequest.addClassFilter(event.location().declaringType());
         myEntryMethod = event.method();
         DebuggerUtilsAsync.setEnabled(myExitRequest, true);
 
