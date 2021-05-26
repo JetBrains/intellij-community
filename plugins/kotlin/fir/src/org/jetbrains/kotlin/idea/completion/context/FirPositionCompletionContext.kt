@@ -17,9 +17,15 @@ internal sealed class FirRawPositionCompletionContext {
     abstract val position: PsiElement
 }
 
+internal class FirClassifierNamePositionContext(
+    override val position: PsiElement,
+    val classLikeDeclaration: KtClassLikeDeclaration,
+) : FirRawPositionCompletionContext()
+
+
 internal class FirIncorrectPositionContext(
     override val position: PsiElement
-): FirRawPositionCompletionContext()
+) : FirRawPositionCompletionContext()
 
 internal class FirTypeConstraintNameInWhereClausePositionContext(
     override val position: PsiElement,
@@ -86,10 +92,26 @@ internal class FirUnknownPositionContext(
 internal object FirPositionCompletionContextDetector {
     fun detect(basicContext: FirBasicCompletionContext): FirRawPositionCompletionContext {
         val position = basicContext.parameters.position
+        return detectForPositionWithReference(position)
+            ?: detectForPositionWithoutReference(position)
+            ?: FirUnknownPositionContext(position)
+    }
+
+    private fun detectForPositionWithoutReference(position: PsiElement): FirRawPositionCompletionContext? {
+        val parent = position.parent
+        return when {
+            parent is KtClassLikeDeclaration && parent.nameIdentifier == position -> {
+                FirClassifierNamePositionContext(position, parent)
+            }
+            else -> null
+        }
+    }
+
+    private fun detectForPositionWithReference(position: PsiElement): FirRawPositionCompletionContext? {
         val reference = (position.parent as? KtSimpleNameExpression)?.mainReference
-            ?: return FirUnknownPositionContext(position)
+            ?: return null
         val nameExpression = reference.expression.takeIf { it !is KtLabelReferenceExpression }
-            ?: return FirUnknownPositionContext(position)
+            ?: return null
         val explicitReceiver = nameExpression.getReceiverExpression()
         val parent = nameExpression.parent
 
@@ -187,7 +209,8 @@ internal object FirPositionCompletionContextDetector {
             is FirImportDirectivePositionContext,
             is FirPackageDirectivePositionContext,
             is FirTypeConstraintNameInWhereClausePositionContext,
-            is FirIncorrectPositionContext -> {
+            is FirIncorrectPositionContext,
+            is FirClassifierNamePositionContext -> {
                 analyse(basicContext.originalKtFile, action)
             }
         }
