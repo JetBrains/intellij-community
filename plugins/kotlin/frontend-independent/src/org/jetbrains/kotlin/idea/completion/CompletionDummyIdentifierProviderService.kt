@@ -41,8 +41,17 @@ abstract class CompletionDummyIdentifierProviderService {
                 ?: specialInTypeArgsDummyIdentifier(tokenBefore)
                 ?: specialInArgumentListDummyIdentifier(tokenBefore)
                 ?: specialInBinaryExpressionDummyIdentifier(tokenBefore)
+                ?: isInTypeParametersList(tokenBefore)
                 ?: DEFAULT_DUMMY_IDENTIFIER
         }
+    }
+
+    private fun isInTypeParametersList(tokenBefore: PsiElement?): String? {
+        if (tokenBefore == null) return null
+        if (tokenBefore.parents.any { it is KtTypeParameterList }) {
+            return CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED
+        }
+        return null
     }
 
     private fun specialLambdaSignatureDummyIdentifier(tokenBefore: PsiElement?): String? {
