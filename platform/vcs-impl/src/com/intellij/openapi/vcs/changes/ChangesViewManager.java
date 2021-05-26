@@ -30,6 +30,7 @@ import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
+import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.ui.*;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
@@ -465,6 +466,11 @@ public class ChangesViewManager implements ChangesViewEx,
     @NotNull
     private EditorTabPreview installEditorPreview(@NotNull ChangesViewDiffPreviewProcessor changeProcessor) {
       EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
+        @Override
+        public void updateAvailability(@NotNull AnActionEvent e) {
+          ShowDiffFromLocalChangesActionProvider.updateAvailability(e);
+        }
+
         @Override
         protected String getCurrentName() {
           String changeName = changeProcessor.getCurrentChangeName();

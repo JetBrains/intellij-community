@@ -38,6 +38,10 @@ public class ShowDiffFromLocalChangesActionProvider implements AnActionExtension
 
   @Override
   public void update(@NotNull AnActionEvent e) {
+    updateAvailability(e);
+  }
+
+  public static void updateAvailability(@NotNull AnActionEvent e) {
     Project project = e.getData(CommonDataKeys.PROJECT);
     ChangesListView view = e.getRequiredData(ChangesListView.DATA_KEY);
 

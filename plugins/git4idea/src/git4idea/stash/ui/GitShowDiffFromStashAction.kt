@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash.ui
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -13,8 +13,15 @@ class GitShowDiffFromStashAction : AnActionExtensionProvider {
   }
 
   override fun update(e: AnActionEvent) {
-    e.presentation.isEnabled = e.project != null && e.getData(VcsDataKeys.CHANGES_SELECTION)?.isEmpty == false
-    e.presentation.isVisible = e.isFromActionToolbar || e.presentation.isEnabled
+    updateAvailability(e)
+  }
+
+  companion object {
+    @JvmStatic
+    fun updateAvailability(e: AnActionEvent) {
+      e.presentation.isEnabled = e.project != null && e.getData(VcsDataKeys.CHANGES_SELECTION)?.isEmpty == false
+      e.presentation.isVisible = e.isFromActionToolbar || e.presentation.isEnabled
+    }
   }
 
   override fun actionPerformed(e: AnActionEvent) {

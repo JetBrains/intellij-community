@@ -760,6 +760,11 @@ public class ShelvedChangesViewManager implements Disposable {
     private EditorTabPreview installEditorPreview(@NotNull MyShelvedPreviewProcessor changeProcessor) {
       EditorTabPreview editorPreview = new EditorTabPreview(changeProcessor) {
         @Override
+        public void updateAvailability(@NotNull AnActionEvent event) {
+          DiffShelvedChangesActionProvider.updateAvailability(event);
+        }
+
+        @Override
         protected String getCurrentName() {
           ShelvedWrapper myCurrentShelvedElement = changeProcessor.myCurrentShelvedElement;
           return myCurrentShelvedElement != null

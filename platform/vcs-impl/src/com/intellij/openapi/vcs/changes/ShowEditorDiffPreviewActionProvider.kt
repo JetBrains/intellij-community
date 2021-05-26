@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -14,7 +14,9 @@ open class ShowEditorDiffPreviewActionProvider : AnActionExtensionProvider {
            EditorTabDiffPreviewManager.getInstance(project).isEditorDiffPreviewAvailable()
   }
 
-  override fun update(e: AnActionEvent) {}
+  override fun update(e: AnActionEvent) {
+    getDiffPreview(e)?.run { updateAvailability(e) }
+  }
 
   override fun actionPerformed(e: AnActionEvent) {
     val diffPreview = getDiffPreview(e)!!

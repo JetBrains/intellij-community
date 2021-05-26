@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
 import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -33,6 +34,7 @@ import org.jetbrains.plugins.github.api.data.GHCommit
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.action.GHPRActionKeys
+import org.jetbrains.plugins.github.pullrequest.action.GHPRShowDiffActionProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRChangesProvider
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
@@ -350,6 +352,10 @@ internal class GHPRViewComponentFactory(private val actionManager: ActionManager
                                 model: SingleValueModel<List<Change>>,
                                 emptyTextText: String): JComponent {
     val editorDiffPreview = object : DiffPreview {
+      override fun updateAvailability(event: AnActionEvent) {
+        GHPRShowDiffActionProvider.updateAvailability(event)
+      }
+
       override fun setPreviewVisible(isPreviewVisible: Boolean, focus: Boolean) {
         if (isPreviewVisible) {
           viewController.openPullRequestDiff(dataProvider.id, focus)
