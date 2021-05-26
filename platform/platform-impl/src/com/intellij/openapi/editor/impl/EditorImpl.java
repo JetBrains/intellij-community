@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -28,7 +29,6 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -536,6 +536,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusModeModel = new FocusModeModel(this);
     Disposer.register(myDisposable, myFocusModeModel);
     myPopupHandlers.add(new DefaultPopupHandler());
+    PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null,
+                               () -> ContextMenuPopupHandler.getGroupForId(myContextMenuGroupId));
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
