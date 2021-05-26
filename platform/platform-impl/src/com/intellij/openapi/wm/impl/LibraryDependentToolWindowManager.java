@@ -54,7 +54,7 @@ final class LibraryDependentToolWindowManager implements StartupActivity {
 
     SimpleMessageBusConnection connection = project.getMessageBus().simpleConnect();
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, rootListener);
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, newRoots, oldRoots) -> checkToolWindowStatuses(project)));
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots) -> checkToolWindowStatuses(project)));
     LibraryDependentToolWindow.EXTENSION_POINT_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
       public void extensionAdded(@NotNull LibraryDependentToolWindow extension, @NotNull PluginDescriptor pluginDescriptor) {

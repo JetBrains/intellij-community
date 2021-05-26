@@ -83,8 +83,8 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
 
     @Override
     public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
-                                    @NotNull Collection<? extends VirtualFile> newRoots,
-                                    @NotNull Collection<? extends VirtualFile> oldRoots) {
+                                    @NotNull Collection<? extends VirtualFile> oldRoots,
+                                    @NotNull Collection<? extends VirtualFile> newRoots) {
       scheduleMappedRootsUpdate();
     }
   }

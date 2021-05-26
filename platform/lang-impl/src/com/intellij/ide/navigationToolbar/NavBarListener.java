@@ -257,8 +257,8 @@ public final class NavBarListener
 
   @Override
   public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
-                                  @NotNull Collection<? extends VirtualFile> newRoots,
-                                  @NotNull Collection<? extends VirtualFile> oldRoots) {
+                                  @NotNull Collection<? extends VirtualFile> oldRoots,
+                                  @NotNull Collection<? extends VirtualFile> newRoots) {
     updateModel();
   }
 

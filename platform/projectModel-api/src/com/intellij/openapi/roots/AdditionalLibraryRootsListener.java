@@ -18,8 +18,8 @@ public interface AdditionalLibraryRootsListener {
   Topic<AdditionalLibraryRootsListener> TOPIC = new Topic<>(AdditionalLibraryRootsListener.class, Topic.BroadcastDirection.NONE);
 
   void libraryRootsChanged(@NotNull @Nls String presentableLibraryName,
-                           @NotNull Collection<? extends VirtualFile> newRoots,
-                           @NotNull Collection<? extends VirtualFile> oldRoots);
+                           @NotNull Collection<? extends VirtualFile> oldRoots,
+                           @NotNull Collection<? extends VirtualFile> newRoots);
 
   /**
    * Use {@link #fireAdditionalLibraryChanged(Project, String, Collection, Collection)} to notify platform about changes in roots
@@ -31,15 +31,15 @@ public interface AdditionalLibraryRootsListener {
    *
    * @param presentableLibraryName - name of {@link SyntheticLibrary} returned by {@link AdditionalLibraryRootsProvider};
    *                               used for UI only
-   * @param newRoots               - new roots in {@link SyntheticLibrary}
    * @param oldRoots               - roots that were in {@link SyntheticLibrary} before
+   * @param newRoots               - new roots in {@link SyntheticLibrary}
    */
   @RequiresWriteLock
   static void fireAdditionalLibraryChanged(@NotNull Project project,
                                            @NotNull @Nls String presentableLibraryName,
-                                           @NotNull Collection<? extends VirtualFile> newRoots,
-                                           @NotNull Collection<? extends VirtualFile> oldRoots) {
+                                           @NotNull Collection<? extends VirtualFile> oldRoots,
+                                           @NotNull Collection<? extends VirtualFile> newRoots) {
     if (new HashSet<>(newRoots).equals(new HashSet<>(oldRoots))) return;
-    project.getMessageBus().syncPublisher(TOPIC).libraryRootsChanged(presentableLibraryName, newRoots, oldRoots);
+    project.getMessageBus().syncPublisher(TOPIC).libraryRootsChanged(presentableLibraryName, oldRoots, newRoots);
   }
 }

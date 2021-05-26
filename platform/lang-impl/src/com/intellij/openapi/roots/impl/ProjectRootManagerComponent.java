@@ -44,7 +44,6 @@ import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,7 +151,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
 
 
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, newRoots, oldRoots) -> {
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots) -> {
       if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) {
         return;
       }

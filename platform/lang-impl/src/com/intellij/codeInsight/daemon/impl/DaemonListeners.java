@@ -231,7 +231,7 @@ public final class DaemonListeners implements Disposable {
         stopDaemonAndRestartAllFiles("Project roots changed");
       }
     });
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, newRoots, oldRoots) -> {
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots) -> {
       stopDaemonAndRestartAllFiles("Additional libraries changed");
     });
 

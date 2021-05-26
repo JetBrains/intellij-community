@@ -82,7 +82,7 @@ public final class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         queueUpdate(true);
       }
     });
-    bus.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, newRoots, oldRoots) -> queueUpdate(true));
+    bus.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots) -> queueUpdate(true));
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeListener, this);
     FileStatusListener fileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener, this);

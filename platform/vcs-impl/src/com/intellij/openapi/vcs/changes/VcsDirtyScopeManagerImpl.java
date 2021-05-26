@@ -59,7 +59,7 @@ public final class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager impleme
         ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
       }
     });
-    busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, newRoots, oldRoots) -> {
+    busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots) -> {
       ApplicationManager.getApplication().invokeLater(() -> markEverythingDirty(), ModalityState.NON_MODAL, myProject.getDisposed());
     }));
   }

@@ -61,8 +61,8 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
   }
 
   private void libraryRootsChanged(@NotNull @Nls String presentableLibraryName,
-                                   @NotNull Collection<? extends VirtualFile> newRoots,
-                                   @NotNull Collection<? extends VirtualFile> oldRoots) {
+                                   @NotNull Collection<? extends VirtualFile> oldRoots,
+                                   @NotNull Collection<? extends VirtualFile> newRoots) {
     resetOnRootsSchanged();
   }
 

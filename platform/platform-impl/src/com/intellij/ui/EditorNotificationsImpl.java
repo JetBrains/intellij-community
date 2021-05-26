@@ -87,7 +87,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         updateAllNotifications();
       }
     });
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, newRoots, oldRoots) -> updateAllNotifications()));
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots) -> updateAllNotifications()));
 
     EP_PROJECT.getPoint(project).addExtensionPointListener(
       new ExtensionPointListener<>() {
