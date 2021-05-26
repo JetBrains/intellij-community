@@ -453,13 +453,22 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   protected void showNextStepPopup(PopupStep nextStep, Object parentValue) {
+    if (nextStep == null) {
+      String valueText = getListStep().getTextFor(parentValue);
+      String message = String.format("Cannot open submenu for '%s' item. PopupStep is null", valueText);
+      LOG.warn(message);
+      return;
+    }
+
     final Point point = myList.indexToLocation(myList.getSelectedIndex());
     SwingUtilities.convertPointToScreen(point, myList);
     myChild = createPopup(this, nextStep, parentValue);
-    if (myChild instanceof ListPopupImpl) {
+    if (myChild instanceof ListPopup) {
+      ListPopup child = (ListPopup)myChild;
       for (ListSelectionListener listener : myList.getListSelectionListeners()) {
-        ((ListPopupImpl)myChild).addListSelectionListener(listener);
+        child.addListSelectionListener(listener);
       }
+      child.setShowSubmenuOnHover(myShowSubmenuOnHover);
     }
     final JComponent container = getContent();
 

@@ -665,9 +665,11 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
 
-  public static class ActionItem implements ShortcutProvider, AnActionHolder {
+  public static class ActionItem implements ShortcutProvider, AnActionHolder, NumericMnemonicItem {
     private final AnAction myAction;
     private @NlsContexts.ListItem String myText;
+    private final Character myMnemonicChar;
+    private final boolean myMnemonicsEnabled;
     private final boolean myIsEnabled;
     private final Icon myIcon;
     private final Icon mySelectedIcon;
@@ -678,6 +680,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
     ActionItem(@NotNull AnAction action,
                @NotNull @NlsContexts.ListItem String text,
+               @Nullable Character mnemonicChar,
+               boolean mnemonicsEnabled,
                @Nullable @NlsContexts.DetailedDescription String description,
                boolean enabled,
                @Nullable Icon icon,
@@ -687,6 +691,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
                @Nullable @NlsContexts.ListItem String value) {
       myAction = action;
       myText = text;
+      myMnemonicChar = mnemonicChar;
+      myMnemonicsEnabled = mnemonicsEnabled;
       myIsEnabled = enabled;
       myIcon = icon;
       mySelectedIcon = selectedIcon;
@@ -699,6 +705,17 @@ public class PopupFactoryImpl extends JBPopupFactory {
           myText = myAction.getTemplatePresentation().getText();
         }
       });
+    }
+
+    @Nullable
+    @Override
+    public Character getMnemonicChar() {
+      return myMnemonicChar;
+    }
+
+    @Override
+    public boolean digitMnemonicsEnabled() {
+      return myMnemonicsEnabled;
     }
 
     @NotNull

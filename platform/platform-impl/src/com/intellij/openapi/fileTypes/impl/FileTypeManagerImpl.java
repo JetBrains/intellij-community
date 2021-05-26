@@ -69,7 +69,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
   static final String DEFAULT_IGNORED = "*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc;";
-  @NonNls static final String ELEMENT_EXTENSION_MAP = "extensionMap";
+  @NonNls private static final String ELEMENT_EXTENSION_MAP = "extensionMap";
 
   private final Set<FileType> myDefaultTypes = CollectionFactory.createSmallMemoryFootprintSet();
   private final FileTypeDetectionService myDetectionService;
@@ -122,7 +122,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         if (!duringLoad) {
           fireBeforeFileTypesChanged();
         }
-        AbstractFileType type = (AbstractFileType)loadFileType(element, false);
+        AbstractFileType type = (AbstractFileType)loadFileType("filetypes.xml", element, false);
         if (!duringLoad) {
           fireFileTypesChanged(type, null);
         }
@@ -185,7 +185,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       @Override
       public void extensionAdded(@NotNull FileTypeBean extension, @NotNull PluginDescriptor pluginDescriptor) {
         fireBeforeFileTypesChanged();
-        initializeMatchers(extension);
+        initializeMatchers(pluginDescriptor, extension);
         FileType fileType = mergeOrInstantiateFileTypeBean(extension);
 
         fileTypeChanged(fileType, ApplicationManager.getApplication().isUnitTestMode());
@@ -235,12 +235,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     FileTypeConsumer consumer = new FileTypeConsumer() {
       @Override
       public void consume(@NotNull FileType fileType) {
-        register(fileType, parse(fileType.getDefaultExtension()));
+        register(fileType, parseExtensions("filetypes.xml/"+fileType.getName(), fileType.getDefaultExtension()));
       }
 
       @Override
       public void consume(@NotNull FileType fileType, @NotNull String semicolonDelimitedExtensions) {
-        register(fileType, parse(semicolonDelimitedExtensions));
+        register(fileType, parseExtensions("filetypes.xml/"+fileType.getName(), semicolonDelimitedExtensions));
       }
 
       @Override
@@ -302,7 +302,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
             for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
               String fileTypeName = element.getAttributeValue(ATTRIBUTE_NAME);
               if (myPendingFileTypes.get(fileTypeName) != null) continue;
-              loadFileType(element, true);
+              loadFileType("defaultFileTypes.xml", element, true);
             }
           }
           else if (ELEMENT_EXTENSION_MAP.equals(e.getName())) {
@@ -332,7 +332,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     List<FileTypeBean> fileTypeBeans = EP_NAME.getExtensionList();
 
     for (FileTypeBean bean : fileTypeBeans) {
-      initializeMatchers(bean);
+      initializeMatchers(bean.getPluginDescriptor(), bean);
     }
 
     for (FileTypeBean bean : fileTypeBeans) {
@@ -364,11 +364,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
   }
 
-  private static void initializeMatchers(@NotNull FileTypeBean bean) {
-    bean.addMatchers(parse(StringUtil.notNullize(bean.extensions)));
-    bean.addMatchers(parse(StringUtil.notNullize(bean.fileNames), token -> new ExactFileNameMatcher(token)));
-    bean.addMatchers(parse(StringUtil.notNullize(bean.fileNamesCaseInsensitive), token -> new ExactFileNameMatcher(token, true)));
-    bean.addMatchers(parse(StringUtil.notNullize(bean.patterns), token -> FileNameMatcherFactory.getInstance().createMatcher(token)));
+  private static void initializeMatchers(@NotNull Object context, @NotNull FileTypeBean bean) {
+    bean.addMatchers(parseExtensions(context, StringUtil.notNullize(bean.extensions)));
+    bean.addMatchers(parse(context, StringUtil.notNullize(bean.fileNames), token -> new ExactFileNameMatcher(token)));
+    bean.addMatchers(parse(context, StringUtil.notNullize(bean.fileNamesCaseInsensitive), token -> new ExactFileNameMatcher(token, true)));
+    bean.addMatchers(parse(context, StringUtil.notNullize(bean.patterns), token -> FileNameMatcherFactory.getInstance().createMatcher(token)));
   }
 
   private void instantiatePendingFileTypes() {
@@ -549,7 +549,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     Pair<VirtualFile, FileType> old = FILE_TYPE_FIXED_TEMPORARILY.get();
     FILE_TYPE_FIXED_TEMPORARILY.set(new Pair<>(file, fileType));
     if (toLog()) {
-      log("F: freezeFileTypeTemporarilyIn(" + file.getName() + ") to " + fileType.getName()+" in "+Thread.currentThread());
+      log("F: freezeFileTypeTemporarilyIn(" + file.getName() + ") to " + fileType +" in "+Thread.currentThread());
     }
     try {
       runnable.run();
@@ -1113,20 +1113,25 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@NotNull String semicolonDelimitedExtensions) {
-    return parse(semicolonDelimitedExtensions, ext -> new ExtensionFileNameMatcher(ext));
+  private static List<FileNameMatcher> parseExtensions(@NotNull Object context, @NotNull String semicolonDelimitedExtensions) {
+    return parse(context, semicolonDelimitedExtensions, ext -> new ExtensionFileNameMatcher(ext));
   }
 
   @NotNull
-  private static List<FileNameMatcher> parse(@NotNull String semicolonDelimitedExtensions, @NotNull Function<? super String, ? extends FileNameMatcher> matcherFactory) {
-    if (semicolonDelimitedExtensions.isEmpty()) {
+  private static List<FileNameMatcher> parse(@NotNull Object context,
+                                             @NotNull String semicolonDelimitedTokens,
+                                             @NotNull Function<? super String, ? extends FileNameMatcher> matcherFactory) {
+    if (semicolonDelimitedTokens.isEmpty()) {
       return Collections.emptyList();
     }
-
-    StringTokenizer tokenizer = new StringTokenizer(semicolonDelimitedExtensions, FileTypeConsumer.EXTENSION_DELIMITER, false);
-    List<FileNameMatcher> list = new ArrayList<>(semicolonDelimitedExtensions.length() / "py;".length());
+    StringTokenizer tokenizer = new StringTokenizer(semicolonDelimitedTokens, FileTypeConsumer.EXTENSION_DELIMITER, false);
+    List<FileNameMatcher> list = new ArrayList<>(StringUtil.countChars(semicolonDelimitedTokens, ';')+1);
     while (tokenizer.hasMoreTokens()) {
-      list.add(matcherFactory.fun(tokenizer.nextToken().trim()));
+      String ext = tokenizer.nextToken().trim();
+      if (StringUtil.isEmpty(ext)) {
+        throw new InvalidDataException("Token must not be empty but got: '"+semicolonDelimitedTokens+"' in "+context);
+      }
+      list.add(matcherFactory.fun(ext));
     }
     return list;
   }
@@ -1134,7 +1139,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   /**
    * Registers a standard file type. Doesn't notifyListeners any change events.
    */
-  private void registerFileTypeWithoutNotification(@NotNull FileType fileType, @NotNull List<? extends FileNameMatcher> matchers, @NotNull List<String> hasBangPatterns, boolean addScheme) {
+  private void registerFileTypeWithoutNotification(@NotNull FileType fileType,
+                                                   @NotNull List<? extends FileNameMatcher> matchers,
+                                                   @NotNull List<String> hasBangPatterns,
+                                                   boolean addScheme) {
     if (addScheme) {
       mySchemeManager.addScheme(fileType);
     }
@@ -1183,7 +1191,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   }
 
   @NotNull
-  private FileType loadFileType(@NotNull Element typeElement, boolean isDefault) {
+  private FileType loadFileType(@NotNull Object context, @NotNull Element typeElement, boolean isDefault) {
     String fileTypeName = typeElement.getAttributeValue(ATTRIBUTE_NAME);
 
     String extensionsStr = StringUtil.notNullize(typeElement.getAttributeValue("extensions"));
@@ -1210,7 +1218,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     @NlsSafe String fileTypeDescr = typeElement.getAttributeValue(ATTRIBUTE_DESCRIPTION);
     String iconPath = typeElement.getAttributeValue("icon");
     setFileTypeAttributes((UserFileType<?>)type, fileTypeName, fileTypeDescr, iconPath);
-    registerFileTypeWithoutNotification(type, parse(extensionsStr), Collections.emptyList(), isDefault);
+    registerFileTypeWithoutNotification(type, parseExtensions(context, extensionsStr), Collections.emptyList(), isDefault);
 
     if (isDefault) {
       myDefaultTypes.add(type);
@@ -1252,7 +1260,10 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     return builder == null ? "" : builder.toString();
   }
 
-  private static void setFileTypeAttributes(@NotNull UserFileType<?> fileType, @Nullable String name, @Nullable @NlsContexts.Label String description, @Nullable String iconPath) {
+  private static void setFileTypeAttributes(@NotNull UserFileType<?> fileType,
+                                            @Nullable String name,
+                                            @Nullable @NlsContexts.Label String description,
+                                            @Nullable String iconPath) {
     if (!StringUtil.isEmptyOrSpaces(iconPath)) {
       fileType.setIconPath(iconPath);
     }

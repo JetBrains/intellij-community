@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.TaskBundle;
 import com.intellij.tasks.impl.RequestFailedException;
 import com.intellij.tasks.impl.TaskUtil;
+import com.intellij.util.Producer;
 import org.apache.commons.httpclient.HeaderElement;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.HttpStatus;
@@ -19,6 +20,7 @@ import org.apache.http.HttpResponse;
 import org.apache.http.client.ResponseHandler;
 import org.apache.http.protocol.HTTP;
 import org.apache.http.util.EntityUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -29,6 +31,8 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.IntPredicate;
 
 /**
  * @author Mikhail Golubev
@@ -94,11 +98,6 @@ public final class TaskResponseUtil {
   }
 
   @NotNull
-  public static RequestFailedException forStatusCode(int code) {
-    return new RequestFailedException(messageForStatusCode(code));
-  }
-
-  @NotNull
   public static String messageForStatusCode(int statusCode) {
     if (statusCode == HttpStatus.SC_UNAUTHORIZED) {
       return TaskBundle.message("failure.login");
@@ -109,92 +108,138 @@ public final class TaskResponseUtil {
     return TaskBundle.message("failure.http.error", statusCode, HttpStatus.getStatusText(statusCode));
   }
 
-  public static final class GsonSingleObjectDeserializer<T> implements ResponseHandler<T> {
+  @ApiStatus.Internal
+  public static class JsonResponseHandlerBuilder {
     private final Gson myGson;
-    private final Class<T> myClass;
-    private final boolean myIgnoreNotFound;
+    private IntPredicate mySuccessChecker = (code) -> code / 100 == 2;
+    private IntPredicate myIgnoreChecker = (code) -> false;
+    private Function<HttpResponse, ? extends RequestFailedException> myErrorExtractor;
 
-    public GsonSingleObjectDeserializer(@NotNull Gson gson, @NotNull Class<T> cls) {
-      this(gson, cls, false);
+    private JsonResponseHandlerBuilder(@NotNull Gson gson) {
+      myGson = gson;
     }
 
-    public GsonSingleObjectDeserializer(@NotNull Gson gson, @NotNull Class<T> cls, boolean ignoreNotFound) {
-      myGson = gson;
-      myClass = cls;
-      myIgnoreNotFound = ignoreNotFound;
+    @NotNull
+    public static JsonResponseHandlerBuilder fromGson(@NotNull Gson gson) {
+      return new JsonResponseHandlerBuilder(gson);
+    }
+
+    @NotNull
+    public JsonResponseHandlerBuilder successCode(@NotNull IntPredicate predicate) {
+      mySuccessChecker = predicate;
+      return this;
+    }
+
+    @NotNull
+    public JsonResponseHandlerBuilder ignoredCode(@NotNull IntPredicate predicate) {
+      myIgnoreChecker = predicate;
+      return this;
+    }
+
+    @NotNull
+    public JsonResponseHandlerBuilder errorHandler(@NotNull Function<HttpResponse, ? extends RequestFailedException> handler) {
+      myErrorExtractor = handler;
+      return this;
+    }
+
+    @NotNull
+    public <T> ResponseHandler<T> toSingleObject(@NotNull Class<T> cls) {
+      return new GsonResponseHandler<>(this,
+                                       s -> myGson.fromJson(s, cls),
+                                       r -> myGson.fromJson(r, cls),
+                                       () -> null);
+    }
+
+    @NotNull
+    public <T> ResponseHandler<List<T>> toMultipleObjects(@NotNull TypeToken<List<T>> typeToken) {
+      return new GsonResponseHandler<>(this,
+                                       s -> myGson.fromJson(s, typeToken.getType()),
+                                       r -> myGson.fromJson(r, typeToken.getType()),
+                                       () -> Collections.emptyList());
+    }
+
+    @NotNull
+    public ResponseHandler<Void> toNothing() {
+      return new GsonResponseHandler<>(this,
+                                       s -> null,
+                                       r -> null,
+                                       () -> null);
+    }
+  }
+
+  private static class GsonResponseHandler<T> implements ResponseHandler<T> {
+    private final JsonResponseHandlerBuilder myBuilder;
+    private final Function<String, T> myFromString;
+    private final Function<Reader, T> myFromReader;
+    private final Producer<T> myFallbackValue;
+
+    private GsonResponseHandler(@NotNull JsonResponseHandlerBuilder builder,
+                                @NotNull Function<String, T> fromString,
+                                @NotNull Function<Reader, T> fromReader,
+                                @NotNull Producer<T> fallbackValue) {
+      myBuilder = builder;
+      myFromString = fromString;
+      myFromReader = fromReader;
+      myFallbackValue = fallbackValue;
     }
 
     @Override
     public T handleResponse(HttpResponse response) throws IOException {
       int statusCode = response.getStatusLine().getStatusCode();
-      if (!isSuccessful(statusCode)) {
-        if (statusCode == HttpStatus.SC_NOT_FOUND && myIgnoreNotFound) {
-          return null;
+      if (!myBuilder.mySuccessChecker.test(statusCode)) {
+        if (myBuilder.myIgnoreChecker.test(statusCode)) {
+          return myFallbackValue.produce();
         }
-        throw forStatusCode(statusCode);
+        if (myBuilder.myErrorExtractor != null) {
+          RequestFailedException exception = myBuilder.myErrorExtractor.apply(response);
+          if (exception != null) {
+            throw exception;
+          }
+        }
+        throw RequestFailedException.forStatusCode(statusCode, messageForStatusCode(statusCode));
       }
       try {
         if (LOG.isDebugEnabled()) {
           String content = getResponseContentAsString(response);
           TaskUtil.prettyFormatJsonToLog(LOG, content);
-          return myGson.fromJson(content, myClass);
+          return myFromString.apply(content);
         }
         else {
-          return myGson.fromJson(getResponseContentAsReader(response), myClass);
+          return myFromReader.apply(getResponseContentAsReader(response));
         }
       }
       catch (JsonSyntaxException e) {
         LOG.warn("Malformed server response", e);
-        return null;
+        return myFallbackValue.produce();
       }
     }
   }
 
-  public static final class GsonMultipleObjectsDeserializer<T> implements ResponseHandler<List<T>> {
-    private final Gson myGson;
-    private final TypeToken<List<T>> myTypeToken;
-    private final boolean myIgnoreNotFound;
+  public static final class GsonSingleObjectDeserializer<T> extends GsonResponseHandler<T> {
+    public GsonSingleObjectDeserializer(@NotNull Gson gson, @NotNull Class<T> cls) {
+      this(gson, cls, false);
+    }
 
+    public GsonSingleObjectDeserializer(@NotNull Gson gson, @NotNull Class<T> cls, boolean ignoreNotFound) {
+      super(JsonResponseHandlerBuilder.fromGson(gson).ignoredCode(code -> ignoreNotFound && code == HttpStatus.SC_NOT_FOUND),
+            s -> gson.fromJson(s, cls),
+            r -> gson.fromJson(r, cls),
+            () -> null);
+    }
+  }
+
+  public static final class GsonMultipleObjectsDeserializer<T> extends GsonResponseHandler<List<T>> {
     public GsonMultipleObjectsDeserializer(Gson gson, TypeToken<List<T>> typeToken) {
       this(gson, typeToken, false);
     }
 
     public GsonMultipleObjectsDeserializer(@NotNull Gson gson, @NotNull TypeToken<List<T>> token, boolean ignoreNotFound) {
-      myGson = gson;
-      myTypeToken = token;
-      myIgnoreNotFound = ignoreNotFound;
-    }
-
-    @Override
-    public List<T> handleResponse(HttpResponse response) throws IOException {
-      int statusCode = response.getStatusLine().getStatusCode();
-      if (!isSuccessful(statusCode)) {
-        if (statusCode == HttpStatus.SC_NOT_FOUND && myIgnoreNotFound) {
-          return Collections.emptyList();
-        }
-        throw forStatusCode(statusCode);
-      }
-      try {
-        if (LOG.isDebugEnabled()) {
-          String content = getResponseContentAsString(response);
-          TaskUtil.prettyFormatJsonToLog(LOG, content);
-          return myGson.fromJson(content, myTypeToken.getType());
-        }
-        else {
-          return myGson.fromJson(getResponseContentAsReader(response), myTypeToken.getType());
-        }
-      }
-      catch (JsonSyntaxException e) {
-        LOG.warn("Malformed server response", e);
-        return Collections.emptyList();
-      }
-      catch (NumberFormatException e) {
-        LOG.error("NFE in response: " + getResponseContentAsString(response), e);
-        throw new RequestFailedException("Malformed response");
-      }
+      super(JsonResponseHandlerBuilder.fromGson(gson).ignoredCode(code -> ignoreNotFound && code == HttpStatus.SC_NOT_FOUND),
+            s -> gson.fromJson(s, token.getType()),
+            r -> gson.fromJson(r, token.getType()),
+            () -> Collections.emptyList());
     }
   }
-
 
   public static void prettyFormatResponseToLog(@NotNull Logger logger, @NotNull HttpMethod response) {
     if (logger.isDebugEnabled() && response.hasBeenUsed()) {

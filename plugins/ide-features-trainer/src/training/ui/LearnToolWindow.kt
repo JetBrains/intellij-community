@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.SimpleToolWindowPanel
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.components.JBScrollPane
@@ -26,20 +27,20 @@ class LearnToolWindow internal constructor(val project: Project, private val who
   : SimpleToolWindowPanel(true, true), DataProvider {
   val parentDisposable: Disposable = wholeToolWindow.disposable
 
-  private var scrollPane: JBScrollPane
-  var learnPanel: LearnPanel? = null
-    private set
+  val learnPanel: LearnPanel = LearnPanel(this)
   private val modulesPanel: ModulesPanel = ModulesPanel()
+  private val scrollPane: JBScrollPane = if (LangManager.getInstance().languages.isEmpty()) {
+    JBScrollPane(JLabel(LearnBundle.message("no.supported.languages.found")))
+  }
+  else {
+    JBScrollPane(modulesPanel)
+  }
+
+  private val stepAnimator by lazy { StepAnimator(scrollPane.verticalScrollBar, learnPanel.lessonMessagePane) }
 
   init {
     setChooseLanguageButton()
     reinitViewsInternal()
-    scrollPane = if (LangManager.getInstance().languages.isEmpty()) {
-      JBScrollPane(JLabel(LearnBundle.message("no.supported.languages.found")))
-    }
-    else {
-      JBScrollPane(modulesPanel)
-    }
     if (LessonManager.instance.lessonIsRunning()) {
       setLearnPanel()
     }
@@ -47,7 +48,6 @@ class LearnToolWindow internal constructor(val project: Project, private val who
   }
 
   private fun reinitViewsInternal() {
-    learnPanel = LearnPanel(this)
     modulesPanel.updateMainPanel()
   }
 
@@ -103,4 +103,23 @@ class LearnToolWindow internal constructor(val project: Project, private val who
     reinitViewsInternal()
     updateScrollPane()
   }
+
+  fun scrollToTheEnd() {
+    val vertical = scrollPane.verticalScrollBar
+    if (useAnimation()) stepAnimator.startAnimation(vertical.maximum)
+    else vertical.value = vertical.maximum
+  }
+
+  fun scrollToTheStart() {
+    scrollPane.verticalScrollBar.value = 0
+  }
+
+  fun scrollTo(needTo: Int) {
+    if (useAnimation()) stepAnimator.startAnimation(needTo)
+    else {
+      scrollPane.verticalScrollBar.value = needTo
+    }
+  }
+
+  private fun useAnimation() = Registry.`is`("ift.use.scroll.animation", false)
 }

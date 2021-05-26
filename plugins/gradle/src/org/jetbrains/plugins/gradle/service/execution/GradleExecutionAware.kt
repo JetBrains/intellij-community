@@ -18,6 +18,7 @@ import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemBuildE
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkException
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
 import com.intellij.openapi.externalSystem.service.notification.callback.OpenExternalSystemSettingsCallback
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -30,6 +31,8 @@ import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProvider.SdkInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.ConcurrencyUtil
+import com.intellij.util.PathMapper
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.PropertyKey
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -38,6 +41,7 @@ import org.jetbrains.plugins.gradle.util.getGradleJvmLookupProvider
 import org.jetbrains.plugins.gradle.util.nonblockingResolveGradleJvmInfo
 import java.lang.System.currentTimeMillis
 
+@ApiStatus.Internal
 class GradleExecutionAware : ExternalSystemExecutionAware {
   override fun prepareExecution(
     task: ExternalSystemTask,
@@ -49,19 +53,29 @@ class GradleExecutionAware : ExternalSystemExecutionAware {
     if (!isPreviewMode) prepareJvmForExecution(task, externalProjectPath, taskNotificationListener, project)
   }
 
-  override fun getEnvironmentConfiguration(runConfiguration: ExternalSystemRunConfiguration,
-                                           taskNotificationListener: ExternalSystemTaskNotificationListener,
-                                           project: Project): TargetEnvironmentConfiguration? {
+  override fun getEnvironmentConfigurationProvider(runConfiguration: ExternalSystemRunConfiguration,
+                                                   project: Project): TargetEnvironmentConfigurationProvider? {
+    val targetEnvironmentConfiguration = getEnvironmentConfiguration(runConfiguration, project) ?: return null
+    return GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration)
+  }
+
+  override fun getEnvironmentConfigurationProvider(projectPath: String,
+                                                   isPreviewMode: Boolean,
+                                                   project: Project): TargetEnvironmentConfigurationProvider? {
+    val targetEnvironmentConfiguration = localEnvironment() ?: return null
+    return GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration)
+  }
+
+  private class GradleEnvironmentConfigurationProvider(targetEnvironmentConfiguration: TargetEnvironmentConfiguration) : GradleServerConfigurationProvider {
+    override val environmentConfiguration = targetEnvironmentConfiguration
+    override val pathMapper: PathMapper? = null
+  }
+
+  private fun getEnvironmentConfiguration(runConfiguration: ExternalSystemRunConfiguration,
+                                          project: Project): TargetEnvironmentConfiguration? {
     val gradleRunConfiguration = runConfiguration as? GradleRunConfiguration ?: return null
     val targetName = gradleRunConfiguration.options.remoteTarget ?: return localEnvironment()
     return TargetEnvironmentsManager.getInstance(project).targets.findByName(targetName) ?: return localEnvironment()
-  }
-
-  override fun getEnvironmentConfiguration(projectPath: String,
-                                           isPreviewMode: Boolean,
-                                           taskNotificationListener: ExternalSystemTaskNotificationListener,
-                                           project: Project): TargetEnvironmentConfiguration? {
-    return localEnvironment()
   }
 
   private fun localEnvironment(): TargetEnvironmentConfiguration? =

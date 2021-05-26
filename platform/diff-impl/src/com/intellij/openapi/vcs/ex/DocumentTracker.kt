@@ -1013,23 +1013,27 @@ private class BlocksRefresher(val handlers: List<Handler>,
 
   private fun refreshMergedBlock(mergedBlock: MergedBlock, fastRefresh: Boolean): List<Block> {
     val freshBlocks = refreshBlock(mergedBlock.merged, fastRefresh)
+    if (mergedBlock.original.size == 1) return freshBlocks
+    if (!forceMergeNearbyBlocks) return freshBlocks
 
-    if (forceMergeNearbyBlocks && mergedBlock.original.size > 1) {
-      // try reuse original blocks to prevent occasional 'insertion' moves
-      val nonMergedFreshBlocks = mergedBlock.original.flatMap { block ->
-        if (block.isDirty) {
-          refreshBlock(block, fastRefresh)
-        }
-        else {
-          listOf(block)
-        }
+    // try reuse original blocks to prevent occasional 'insertion' moves
+    val nonMergedFreshBlocks = mergedBlock.original.flatMap { block ->
+      if (block.isDirty) {
+        refreshBlock(block, fastRefresh)
       }
-
-      val oldSize = calcSize(text1, text2, lineOffsets1, lineOffsets2, nonMergedFreshBlocks)
-      val newSize = calcSize(text1, text2, lineOffsets1, lineOffsets2, freshBlocks)
-      if (oldSize <= newSize) return nonMergedFreshBlocks
+      else {
+        listOf(block)
+      }
     }
 
+    val oldSize = calcNonWhitespaceSize(text1, text2, lineOffsets1, lineOffsets2, nonMergedFreshBlocks)
+    val newSize = calcNonWhitespaceSize(text1, text2, lineOffsets1, lineOffsets2, freshBlocks)
+    if (oldSize < newSize) return nonMergedFreshBlocks
+    if (oldSize > newSize) return freshBlocks
+
+    val oldTotalSize = calcSize(nonMergedFreshBlocks)
+    val newTotalSize = calcSize(freshBlocks)
+    if (oldTotalSize <= newTotalSize) return nonMergedFreshBlocks
     return freshBlocks
   }
 
@@ -1059,11 +1063,20 @@ private class BlocksRefresher(val handlers: List<Handler>,
     }
   }
 
-  private fun calcSize(text1: CharSequence,
-                       text2: CharSequence,
-                       lineOffsets1: LineOffsets,
-                       lineOffsets2: LineOffsets,
-                       blocks: List<Block>): Int {
+  private fun calcSize(blocks: List<Block>): Int {
+    var result = 0
+    for (block in blocks) {
+      result += block.range.end1 - block.range.start1
+      result += block.range.end2 - block.range.start2
+    }
+    return result
+  }
+
+  private fun calcNonWhitespaceSize(text1: CharSequence,
+                                    text2: CharSequence,
+                                    lineOffsets1: LineOffsets,
+                                    lineOffsets2: LineOffsets,
+                                    blocks: List<Block>): Int {
     var result = 0
     for (block in blocks) {
       for (line in block.range.start1 until block.range.end1) {

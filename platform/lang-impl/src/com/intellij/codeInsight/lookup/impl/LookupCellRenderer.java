@@ -7,6 +7,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupElementRenderer;
 import com.intellij.codeInsight.lookup.LookupFocusDegree;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -121,7 +122,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myBoldMetrics = myLookup.getTopLevelEditor().getComponent().getFontMetrics(myBoldFont);
     myAsyncRendering = new AsyncRendering(myLookup);
 
-    myLookupWidthUpdateAlarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems, 50, lookup, Alarm.ThreadToUse.SWING_THREAD,
+    myLookupWidthUpdateAlarm = new SingleAlarm(this::updateLookupWidthFromVisibleItems,
+                                               ApplicationManager.getApplication().isUnitTestMode() ? 0 : 50, lookup, Alarm.ThreadToUse.SWING_THREAD,
                                                ModalityState.stateForComponent(editorComponent));
 
     myShrinkLookup = Registry.is("ide.lookup.shrink");
@@ -150,6 +152,9 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     LookupElementPresentation presentation = myAsyncRendering.getLastComputed(item);
     for (ItemPresentationCustomizer customizer : myCustomizers) {
       presentation = customizer.customizePresentation(item, presentation);
+    }
+    if (presentation.getIcon() != null) {
+      setIconInsets(myNameComponent);
     }
 
     myNameComponent.clear();
@@ -559,8 +564,12 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
 
       myEmptyIcon = EmptyIcon.create(Math.max(icon.getIconWidth(), myEmptyIcon.getIconWidth()),
                                      Math.max(icon.getIconHeight(), myEmptyIcon.getIconHeight()));
-      myNameComponent.setIpad(JBUI.insetsLeft(6));
+      setIconInsets(myNameComponent);
     }
+  }
+
+  private static void setIconInsets(@NotNull SimpleColoredComponent component) {
+    component.setIpad(JBUI.insetsLeft(6));
   }
 
   private int updateMaximumWidth(LookupElementPresentation p, LookupElement item) {

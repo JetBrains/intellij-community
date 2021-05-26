@@ -4,6 +4,9 @@ package org.jetbrains.plugins.github.pullrequest.config
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
+import org.jetbrains.plugins.github.api.GHRepositoryPath
+import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountSerializer
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
@@ -19,6 +22,7 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
   class SettingsState : BaseState() {
     var selectedUrlAndAccountId by property<UrlAndAccount?>(null) { it == null }
     var recentSearchFilters by list<String>()
+    var recentNewPullRequestHead by property<RepoCoordinatesHolder?>(null) { it == null }
   }
 
   @Deprecated("Deprecated when moving to single-tab pull requests")
@@ -55,6 +59,12 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
     }
   }
 
+  var recentNewPullRequestHead: GHRepositoryCoordinates?
+    get() = state.recentNewPullRequestHead?.let { GHRepositoryCoordinates(it.server, GHRepositoryPath(it.owner, it.repository)) }
+    set(value) {
+      state.recentNewPullRequestHead = value?.let { RepoCoordinatesHolder(it) }
+    }
+
   override fun getStateModificationCount() = state.modificationCount
   override fun getState() = state
   override fun loadState(state: SettingsState) {
@@ -79,6 +89,19 @@ class GithubPullRequestsProjectUISettings(private val project: Project)
 
       operator fun component1() = url
       operator fun component2() = accountId
+    }
+
+    class RepoCoordinatesHolder private constructor() {
+
+      var server: GithubServerPath = GithubServerPath.DEFAULT_SERVER
+      var owner: String = ""
+      var repository: String = ""
+
+      constructor(coordinates: GHRepositoryCoordinates): this() {
+        server = coordinates.serverPath
+        owner = coordinates.repositoryPath.owner
+        repository = coordinates.repositoryPath.repository
+      }
     }
   }
 }

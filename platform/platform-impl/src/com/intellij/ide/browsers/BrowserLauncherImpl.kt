@@ -15,7 +15,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Urls
 import org.jetbrains.ide.BuiltInServerManager
 
-class BrowserLauncherImpl : BrowserLauncherAppless() {
+open class BrowserLauncherImpl : BrowserLauncherAppless() {
   override fun getEffectiveBrowser(browser: WebBrowser?): WebBrowser? {
     var effectiveBrowser = browser
     if (browser == null) {

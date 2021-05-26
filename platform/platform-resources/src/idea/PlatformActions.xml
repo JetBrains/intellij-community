@@ -594,8 +594,8 @@
         <separator/>
         <group id="ViewRecentActions">
           <action id="RecentFiles" class="com.intellij.ide.actions.ShowRecentFilesAction"/>
-          <action id="SwitcherRecentEditedChangedToggleCheckBox" class="com.intellij.ide.actions.Switcher$ToggleCheckBoxAction"/>
-          <action id="SwitcherIterateItems" class="com.intellij.ide.actions.Switcher$IterateItemsAction"/>
+          <action id="SwitcherRecentEditedChangedToggleCheckBox" class="com.intellij.ide.actions.SwitcherToggleOnlyEditedFilesAction"/>
+          <action id="SwitcherIterateItems" class="com.intellij.ide.actions.SwitcherIterateThroughItemsAction"/>
           <action id="RecentChangedFiles" class="com.intellij.ide.actions.ShowRecentlyEditedFilesAction"/>
           <action id="RecentLocations" class="com.intellij.ide.actions.RecentLocationsAction"/>
         </group>

@@ -5,26 +5,22 @@ import com.intellij.diff.util.FileEditorBase
 import com.intellij.openapi.fileEditor.FileEditor.PROP_VALID
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ui.codereview.diff.MutableDiffRequestChainProcessor
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
-import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelperImpl
 import java.awt.event.KeyEvent
 import javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW
 import javax.swing.KeyStroke
 
 internal class GHPRDiffFileEditor(project: Project,
-                                  dataContext: GHPRDataContext,
-                                  pullRequest: GHPRIdentifier) : FileEditorBase() {
+                                  private val diffRequestModel: GHPRDiffRequestModel,
+                                  private val file: GHRepoVirtualFile)
+  : FileEditorBase() {
 
   internal val diffProcessor = MutableDiffRequestChainProcessor(project, null)
 
-  private val dataProvider = dataContext.dataProviderRepository.getDataProvider(pullRequest, this)
-  private val diffHelper = GHPRChangesDiffHelperImpl(project, dataProvider,
-                                                     dataContext.avatarIconsProvider, dataContext.securityService.currentUser)
   private val diffChainUpdateQueue =
     MergingUpdateQueue("updateDiffChainQueue", 100, true, null, this).apply {
       setRestartTimerOnAdd(true)
@@ -40,11 +36,10 @@ internal class GHPRDiffFileEditor(project: Project,
                                                    },
                                                    KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), WHEN_IN_FOCUSED_WINDOW)
 
-    val changesSelectionHolder = dataProvider.diffController
-    changesSelectionHolder.addAndInvokeSelectionListener(diffChainUpdateQueue) {
-      val selection = changesSelectionHolder.selection
-      diffChainUpdateQueue.run(Update.create(changesSelectionHolder) {
-        diffProcessor.chain = selection?.let { diffHelper.getRequestChain(it) }
+    diffRequestModel.addAndInvokeRequestChainListener(diffChainUpdateQueue) {
+      val chain = diffRequestModel.requestChain
+      diffChainUpdateQueue.run(Update.create(diffRequestModel) {
+        diffProcessor.chain = chain
       })
     }
   }
@@ -55,4 +50,6 @@ internal class GHPRDiffFileEditor(project: Project,
   override fun getPreferredFocusedComponent() = diffProcessor.preferredFocusedComponent
 
   override fun selectNotify() = diffProcessor.updateRequest()
+
+  override fun getFile() = file
 }

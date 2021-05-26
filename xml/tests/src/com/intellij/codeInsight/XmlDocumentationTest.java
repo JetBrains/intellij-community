@@ -94,6 +94,15 @@ public class XmlDocumentationTest extends BasePlatformTestCase {
     doQuickDocGenerationTestWithCheckExpectedResult((Object)"rect", testName + ".svg");
   }
 
+  public void testSvgDoc2() throws Exception {
+    final String testName = getTestName(false);
+    doQuickDocGenerationTestWithCheckExpectedResult((Object)"stroke-width", testName + ".svg");
+  }
+
+  public void testSvgDoc3() throws Exception {
+    doQuickDocGenerationTestWithCheckExpectedResult(getTestName(false) + ".svg");
+  }
+
   private void doQuickDocGenerationTestWithCheckExpectedResult(final String... baseFileNames) throws Exception {
     doQuickDocGenerationTestWithCheckExpectedResult(null, baseFileNames);
   }

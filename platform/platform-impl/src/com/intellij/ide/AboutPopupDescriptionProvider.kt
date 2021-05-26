@@ -4,12 +4,13 @@ package com.intellij.ide
 import com.intellij.openapi.util.NlsContexts.DetailedDescription
 
 /**
- * Allows plugins to add additional details, which we want to see in Help -> About popup. The implementation of this interface
- * must be registered as an extension of 'com.intellij.aboutInfoProvider' extension point.
+ * Allows plugins to add additional details to display in *Help | About* popup.
+ * 
+ * Register in `com.intellij.aboutInfoProvider` extension point.
  */
-interface AboutPopupDescriptionProvider  {
-    /**
-     * Return additional info which should be shown in About popup.
-     */
-    fun getDescription() : @DetailedDescription String?
+interface AboutPopupDescriptionProvider {
+  /**
+   * Return additional info which should be shown in About popup.
+   */
+  fun getDescription(): @DetailedDescription String?
 }

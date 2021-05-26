@@ -434,7 +434,7 @@
     <registryKey key="git.enable.stage.line.status.tracker" defaultValue="true"
                  description="Show staged and unstaged changes in gutter markers." restartRequired="true"/>
     <registryKey key="git.shelve.load.base.in.batches" defaultValue="1000"
-                 description="If set to a value > 0, load base contents for shelving in batches: by reading the given number of files at once. If set to -1, contents are loaded as usual, one by one."/>
+                 description="If set to a value &gt; 0, load base contents for shelving in batches: by reading the given number of files at once. If set to -1, contents are loaded as usual, one by one."/>
     <registryKey key="git.allow.wsl1.executables" defaultValue="false"
                  description="If set to false, IDE will ignore configured WSL1 executables. See IDEA-242469"/>
     <registryKey key="git.enable.stash.toolwindow" defaultValue="false"

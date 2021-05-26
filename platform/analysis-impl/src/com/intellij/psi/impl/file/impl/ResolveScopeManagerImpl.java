@@ -192,9 +192,9 @@ public final class ResolveScopeManagerImpl extends ResolveScopeManager implement
 
     if (vDirectory == null) return allScope;
     final ProjectFileIndex projectFileIndex = myProjectRootManager.getFileIndex();
-    final Module module = projectFileIndex.getModuleForFile(vDirectory);
+    VirtualFile notNullVFile = virtualFile != null ? virtualFile : vDirectory;
+    final Module module = projectFileIndex.getModuleForFile(notNullVFile);
     if (module == null) {
-      VirtualFile notNullVFile = virtualFile != null ? virtualFile : vDirectory;
       final List<OrderEntry> entries = projectFileIndex.getOrderEntriesForFile(notNullVFile);
       if (entries.isEmpty() && (myAdditionalIndexableFileSet.isInSet(notNullVFile) || isFromAdditionalLibraries(notNullVFile))) {
         return allScope;

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -82,9 +82,8 @@ public class RefreshExternalProjectAction extends ExternalSystemNodeAction<Abstr
                                        : linkedProjectSettings.getExternalProjectPath();
 
     ImportSpecBuilder importSpec = new ImportSpecBuilder(project, projectSystemId);
-    if (!ExternalSystemUtil.confirmLoadingUntrustedProjectIfNeeded(project, projectSystemId)) {
-      importSpec.usePreviewMode();
+    if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, projectSystemId)) {
+      ExternalSystemUtil.refreshProject(externalProjectPath, importSpec);
     }
-    ExternalSystemUtil.refreshProject(externalProjectPath, importSpec);
   }
 }

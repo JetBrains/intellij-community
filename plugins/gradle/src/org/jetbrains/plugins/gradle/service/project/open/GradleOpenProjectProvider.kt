@@ -61,10 +61,6 @@ internal class GradleOpenProjectProvider : AbstractOpenProjectProvider() {
         .use(MODAL_SYNC)
     )
 
-    if (!project.isTrusted()) {
-      return
-    }
-
     ExternalProjectsManagerImpl.getInstance(project).runWhenInitialized {
       ExternalSystemUtil.ensureToolWindowInitialized(project, SYSTEM_ID)
       ExternalSystemUtil.refreshProject(

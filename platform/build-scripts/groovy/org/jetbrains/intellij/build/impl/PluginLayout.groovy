@@ -27,6 +27,8 @@ final class PluginLayout extends BaseLayout {
   Collection<String> scrambleClasspathPlugins = []
   BiPredicate<BuildContext, File> scrambleClasspathFilter = { context, file -> return true } as BiPredicate<BuildContext, File>
   String zkmScriptStub
+  Boolean pluginCompatibilityExactVersion = false
+  Boolean retainProductDescriptorForBundledPlugin = false
 
   private PluginLayout(String mainModule) {
     this.mainModule = mainModule
@@ -180,6 +182,22 @@ final class PluginLayout extends BaseLayout {
      */
     void doNotCreateSeparateJarForLocalizableResources() {
       layout.doNotCreateSeparateJarForLocalizableResources = true
+    }
+
+    /**
+     * This plugin will be compatible only with exactly the same IDE version.
+     * See {@link org.jetbrains.intellij.build.CompatibleBuildRange#EXACT}
+     */
+    void pluginCompatibilityExactVersion() {
+      layout.pluginCompatibilityExactVersion = true
+    }
+
+    /**
+     * <product-description> is usually removed for bundled plugins.
+     * Call this method to retain it in plugin.xml
+     */
+    void retainProductDescriptorForBundledPlugin() {
+      layout.retainProductDescriptorForBundledPlugin = true
     }
 
     /**

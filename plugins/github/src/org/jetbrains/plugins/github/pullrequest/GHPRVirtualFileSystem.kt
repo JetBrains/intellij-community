@@ -19,20 +19,25 @@ internal class GHPRVirtualFileSystem : ComplexPathVirtualFileSystem<GHPRVirtualF
 
   override fun findOrCreateFile(project: Project, path: GHPRFilePath): VirtualFile? {
     val filesManager = GHPRDataContextRepository.getInstance(project).findContext(path.repository)?.filesManager ?: return null
-    return if (path.isDiff) filesManager.findDiffFile(path.prId) else filesManager.findTimelineFile(path.prId)
+    val pullRequest = path.prId
+    return when {
+      pullRequest == null -> filesManager.newPRDiffFile
+      path.isDiff -> filesManager.findDiffFile(pullRequest)
+      else -> filesManager.findTimelineFile(pullRequest)
+    }
   }
 
   fun getPath(fileManagerId: String,
               project: Project,
               repository: GHRepositoryCoordinates,
-              id: GHPRIdentifier,
+              id: GHPRIdentifier?,
               isDiff: Boolean = false): String =
-    getPath(GHPRFilePath(fileManagerId, project.locationHash, repository, SimpleGHPRIdentifier(id), isDiff))
+    getPath(GHPRFilePath(fileManagerId, project.locationHash, repository, id?.let { SimpleGHPRIdentifier(it) }, isDiff))
 
   data class GHPRFilePath(override val sessionId: String,
                           override val projectHash: String,
                           val repository: GHRepositoryCoordinates,
-                          val prId: SimpleGHPRIdentifier,
+                          val prId: SimpleGHPRIdentifier?,
                           val isDiff: Boolean) : ComplexPath
 
   companion object {

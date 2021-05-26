@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service.execution
 
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
@@ -9,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyedExtensionCollector
-import com.intellij.util.PathMapper
 import org.jetbrains.annotations.ApiStatus
 
 /**
@@ -33,38 +31,30 @@ interface ExternalSystemExecutionAware {
   )
 
   @JvmDefault
-  fun getEnvironmentConfiguration(runConfiguration: ExternalSystemRunConfiguration,
-                                  taskNotificationListener: ExternalSystemTaskNotificationListener,
-                                  project: Project): TargetEnvironmentConfiguration? = null
+  fun getEnvironmentConfigurationProvider(runConfiguration: ExternalSystemRunConfiguration,
+                                          project: Project): TargetEnvironmentConfigurationProvider? = null
 
   @JvmDefault
-  fun getEnvironmentConfiguration(projectPath: String,
-                                  isPreviewMode: Boolean,
-                                  taskNotificationListener: ExternalSystemTaskNotificationListener,
-                                  project: Project): TargetEnvironmentConfiguration? = null
+  fun getEnvironmentConfigurationProvider(projectPath: String,
+                                          isPreviewMode: Boolean,
+                                          project: Project): TargetEnvironmentConfigurationProvider? = null
 
   @JvmDefault
-  fun getTargetPathMapper(projectPath: String): PathMapper? = null
+  fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project) = false
 
   companion object {
-    private val TARGET_ENVIRONMENT_CONFIGURATION: Key<TargetEnvironmentConfiguration> = Key.create("Target environment configuration")
-    private val TARGET_PATH_MAPPER: Key<PathMapper> = Key.create("Target path mapper")
+    private val TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER: Key<TargetEnvironmentConfigurationProvider> =
+      Key.create("Target environment configuration provider")
     private val EP_COLLECTOR = KeyedExtensionCollector<ExternalSystemExecutionAware, ProjectSystemId>("com.intellij.externalExecutionAware")
 
     @JvmStatic
-    fun getExtensions(systemId: ProjectSystemId): List<ExternalSystemExecutionAware> {
-      return EP_COLLECTOR.forKey(systemId)
-    }
+    fun getExtensions(systemId: ProjectSystemId): List<ExternalSystemExecutionAware> = EP_COLLECTOR.forKey(systemId)
 
-    fun ExternalSystemExecutionSettings.getEnvironmentConfiguration() = getUserData(TARGET_ENVIRONMENT_CONFIGURATION)
-
-    fun ExternalSystemExecutionSettings.getTargetPathMapper() = getUserData(TARGET_PATH_MAPPER)
+    fun ExternalSystemExecutionSettings.getEnvironmentConfigurationProvider() = getUserData(TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER)
 
     @ApiStatus.Internal
-    fun ExternalSystemExecutionSettings.setEnvironmentConfiguration(configuration: TargetEnvironmentConfiguration?,
-                                                                    targetPathMapper: PathMapper?) {
-      putUserData(TARGET_ENVIRONMENT_CONFIGURATION, configuration)
-      putUserData(TARGET_PATH_MAPPER, targetPathMapper)
+    fun ExternalSystemExecutionSettings.setEnvironmentConfigurationProvider(configuration: TargetEnvironmentConfigurationProvider?) {
+      putUserData(TARGET_ENVIRONMENT_CONFIGURATION_PROVIDER, configuration)
     }
   }
 }

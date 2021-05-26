@@ -21,10 +21,8 @@ public abstract class MnemonicsSearch<T> {
     @SuppressWarnings("unchecked") MnemonicNavigationFilter<T> filter = myPopup.getStep().getMnemonicNavigationFilter();
     if (filter == null) return;
     for (T each : filter.getValues()) {
-      int pos = filter.getMnemonicPos(each);
-      if (pos != -1) {
-        String text = filter.getTextFor(each);
-        String charText = text.substring(pos + 1, pos + 2);
+      String charText = filter.getMnemonicString(each);
+      if (charText != null) {
         myChar2ValueMap.put(Strings.toUpperCase(charText), each);
         myChar2ValueMap.put(Strings.toLowerCase(charText), each);
       }

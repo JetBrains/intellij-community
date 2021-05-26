@@ -4,6 +4,7 @@ package com.intellij.ui.components
 import com.intellij.icons.AllIcons
 import com.intellij.ui.scale.JBUIScale.scale
 import org.jetbrains.annotations.Nls
+import java.awt.Font
 import java.awt.event.ActionEvent
 import java.awt.event.ActionListener
 import javax.swing.Action
@@ -57,5 +58,10 @@ open class ActionLink() : JButton() {
     icon = anIcon
     iconTextGap = scale(if (atRight) 1 else 4)
     horizontalTextPosition = if (atRight) SwingConstants.LEADING else SwingConstants.TRAILING
+  }
+
+  fun withFont(font: Font): ActionLink {
+    setFont(font)
+    return this
   }
 }

@@ -9,7 +9,6 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -46,26 +45,31 @@ public final class DeviceIdManager {
     }
 
     if (appInfo.isVendorJetBrains() && SystemInfo.isWindows) {
-      deviceId = syncWithSharedFile(getSharedFile(recorderId), deviceId, prefs, preferenceKey);
+      if (isBaseRecorder(recorderId)) {
+        deviceId = syncWithSharedFile(DEVICE_ID_SHARED_FILE, deviceId, prefs, preferenceKey);
+      }
+      else {
+        deleteLegacySharedFile(recorderId + "_" + DEVICE_ID_SHARED_FILE);
+      }
     }
     return deviceId;
   }
 
   @NotNull
   private static String getPreferenceKey(@NotNull String recorderId) {
-    return "FUS".equals(recorderId) ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
+    return isBaseRecorder(recorderId) ? DEVICE_ID_PREFERENCE_KEY : StringUtil.toLowerCase(recorderId) + "_" + DEVICE_ID_PREFERENCE_KEY;
   }
 
-  @NotNull
-  private static String getSharedFile(@NotNull String recorderId) {
-    return "FUS".equals(recorderId) ? DEVICE_ID_SHARED_FILE : recorderId + "_" + DEVICE_ID_SHARED_FILE;
+  private static boolean isBaseRecorder(@NotNull String recorderId) {
+    return "FUS".equals(recorderId);
   }
 
+  @SuppressWarnings("SameParameterValue")
   @NotNull
-  public static String syncWithSharedFile(@NotNull String fileName,
-                                          @NotNull String installationId,
-                                          @NotNull Preferences prefs,
-                                          @NotNull String prefsKey) {
+  private static String syncWithSharedFile(@NotNull String fileName,
+                                           @NotNull String installationId,
+                                           @NotNull Preferences prefs,
+                                           @NotNull String prefsKey) {
     final String appdata = System.getenv("APPDATA");
     if (appdata != null) {
       final File dir = new File(appdata, "JetBrains");
@@ -90,6 +94,23 @@ public final class DeviceIdManager {
       }
     }
     return installationId;
+  }
+
+  private static void deleteLegacySharedFile(@NotNull String fileName) {
+    try {
+      String appdata = System.getenv("APPDATA");
+      if (appdata != null) {
+        File dir = new File(appdata, "JetBrains");
+        if (dir.exists()) {
+          File permanentIdFile = new File(dir, fileName);
+          if (permanentIdFile.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            permanentIdFile.delete();
+          }
+        }
+      }
+    }
+    catch (Exception ignored) { }
   }
 
   @NotNull

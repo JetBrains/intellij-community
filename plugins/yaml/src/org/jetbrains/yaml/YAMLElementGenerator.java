@@ -103,4 +103,16 @@ public class YAMLElementGenerator {
     assert at != null && at.getNode().getElementType() == YAMLTokenTypes.COLON;
     return at;
   }
+  @NotNull
+  public PsiElement createDocumentMarker() {
+    final YAMLFile file = createDummyYamlWithText("---");
+    PsiElement at = file.findElementAt(0);
+    assert at != null && at.getNode().getElementType() == YAMLTokenTypes.DOCUMENT_MARKER;
+    return at;
+  }
+
+  @NotNull
+  public PsiElement createSequenceItemMark() {
+    return PsiTreeUtil.getDeepestFirst(createDummyYamlWithText("- "));
+  }
 }

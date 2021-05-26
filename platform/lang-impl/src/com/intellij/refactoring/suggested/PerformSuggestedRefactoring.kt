@@ -3,6 +3,7 @@
 package com.intellij.refactoring.suggested
 
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeWithMe.isForeignClientOnServer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
@@ -71,7 +72,7 @@ internal fun performSuggestedRefactoring(
         }
       }
 
-      if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment) {
+      if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment || isForeignClientOnServer()) {
         doRefactor()
         return
       }
@@ -105,7 +106,7 @@ internal fun performSuggestedRefactoring(
 
       val newParameterData = refactoringSupport.ui.extractNewParameterData(refactoringData)
 
-      if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment) {
+      if (!showReviewBalloon || ApplicationManager.getApplication().isHeadlessEnvironment || isForeignClientOnServer()) {
         val newParameterValues = if (ApplicationManager.getApplication().isUnitTestMode) {
           // for testing
           newParameterData.indices.map {

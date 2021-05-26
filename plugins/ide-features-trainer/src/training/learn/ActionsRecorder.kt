@@ -24,6 +24,7 @@ import com.intellij.psi.PsiDocumentManager
 import training.dsl.TaskContext
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
+import training.statistic.StatisticBase
 import training.ui.LearningUiManager
 import training.util.DataLoader
 import java.awt.KeyboardFocusManager
@@ -314,6 +315,9 @@ class ActionsRecorder(private val project: Project,
           CourseManager.instance.openLesson(activeToolWindow.project, lesson)
         }
         LessonManager.instance.setRestoreNotification(notification)
+      }
+      if (!StatisticBase.isLearnProjectClosing) {
+        StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.CLOSE_FILE)
       }
       LessonManager.instance.stopLesson()
     }

@@ -1,30 +1,45 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.wsl
 
-import com.intellij.execution.wsl.WslDistributionManager
+import com.intellij.build.events.MessageEvent
+import com.intellij.build.issue.BuildIssue
+import com.intellij.build.issue.BuildIssueQuickFix
+import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import org.jetbrains.idea.maven.server.MavenDistribution
-import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory
+import com.intellij.pom.Navigatable
+import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
+import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport
-import org.jetbrains.idea.maven.server.RemotePathTransformerFactory
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenWslUtil
-import org.jetbrains.idea.maven.utils.MavenWslUtil.getDefaultMavenDistribution
 
 class WslMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
   override fun create(jdk: Sdk,
                       vmOptions: String?,
-                      mavenDistribution: MavenDistribution?,
+                      mavenDistribution: MavenDistribution,
                       project: Project,
                       debugPort: Int?): MavenRemoteProcessSupport {
     val wslDistribution = project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
                           ?: throw IllegalArgumentException("Project $project is not WSL based!")
-    //todo: replace this with settings
-    val tempDistribution = wslDistribution.getDefaultMavenDistribution() ?: throw IllegalStateException("Maven is not installed on WSL")
-    MavenLog.LOG.info("Use maven distribution at ${tempDistribution.pathToMaven}")
-    return WslMavenServerRemoteProcessSupport(wslDistribution, jdk, vmOptions, tempDistribution, project, debugPort)
+    MavenLog.LOG.info("Use WSL maven distribution at ${mavenDistribution}")
+    val wslMavenDistribution = toWslMavenDistribution(mavenDistribution, wslDistribution)
+    return WslMavenServerRemoteProcessSupport(wslDistribution, jdk, vmOptions, wslMavenDistribution, project, debugPort)
+  }
+
+  private fun toWslMavenDistribution(mavenDistribution: MavenDistribution, wslDistribution: WSLDistribution): WslMavenDistribution {
+    if (mavenDistribution is WslMavenDistribution) return mavenDistribution
+    if (mavenDistribution is LocalMavenDistribution) {
+      return wslDistribution.getWslPath(mavenDistribution.mavenHome.absolutePath)?.let {
+        WslMavenDistribution(wslDistribution, it, mavenDistribution.mavenHome.absolutePath)
+      } ?: throw IllegalArgumentException("Cannot use mavenDistribution ${mavenDistribution}")
+    }
+
+    throw IllegalArgumentException("Cannot use mavenDistribution ${mavenDistribution}")
+
   }
 
   override fun isApplicable(project: Project): Boolean {

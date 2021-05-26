@@ -71,7 +71,7 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
             def moduleDir = task.project.projectDir.path
             def debugPort = ForkedDebuggerHelper.setupDebugger('${id()}', task.path, '$parameters', moduleDir)
             def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}
-            jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + debugPort
+            jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + ForkedDebuggerHelper.addrFromProperty +':' + debugPort
             task.jvmArgs = jvmArgs
           }
           task.doLast {

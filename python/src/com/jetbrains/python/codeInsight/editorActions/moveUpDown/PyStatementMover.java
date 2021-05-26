@@ -18,10 +18,7 @@ package com.jetbrains.python.codeInsight.editorActions.moveUpDown;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineMover;
 import com.intellij.codeInsight.editorActions.moveUpDown.LineRange;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
@@ -31,6 +28,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,6 +67,14 @@ public class PyStatementMover extends LineMover {
     else if (PsiTreeUtil.isAncestor(elementToMove2, elementToMove1, false)) {
       elementToMove1 = elementToMove2;
     }
+    else {
+      PsiElement commonParent = PsiTreeUtil.findCommonParent(elementToMove1, elementToMove2);
+      if (commonParent == null) return false;
+      elementToMove1 = PyPsiUtils.getParentRightBefore(elementToMove1, commonParent);
+      elementToMove2 = PyPsiUtils.getParentRightBefore(elementToMove2, commonParent);
+      assert elementToMove1 != null && elementToMove2 != null;
+    }
+
     info.toMove = new MyLineRange(elementToMove1, elementToMove2);
     info.toMove2 = getDestinationScope(file, editor, down ? elementToMove2 : elementToMove1, down);
 

@@ -22,6 +22,7 @@ import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.AppIcon
 import com.intellij.util.ExceptionUtil
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.origin
 import com.intellij.util.io.referrer
 import com.intellij.util.net.NetUtils
@@ -157,6 +158,9 @@ abstract class RestService : HttpRequestHandler() {
     .maximumSize(1024)
     .expireAfterWrite(1, TimeUnit.DAYS)
     .build<String, Boolean>()
+  private val hostLocks = ContainerUtil.createConcurrentWeakKeyWeakValueMap<String, Any>()
+
+  private var isBlockUnknownHosts = false
 
   /**
    * Service url must be "/api/$serviceName", but to preserve backward compatibility, prefixless path could be also supported
@@ -259,31 +263,46 @@ abstract class RestService : HttpRequestHandler() {
       return false
     }
 
-    if (host != null) {
-      if (NetUtils.isLocalhost(host)) {
-        return true
-      }
-      else {
-        trustedOrigins.getIfPresent(host)?.let {
-          return it
+    val lock = hostLocks.computeIfAbsent(host ?: "") { Object() }
+    synchronized(lock) {
+      if (host != null) {
+        if (NetUtils.isLocalhost(host)) {
+          return true
+        }
+        else {
+          trustedOrigins.getIfPresent(host)?.let {
+            return it
+          }
         }
       }
-    }
+      else {
+        if (isBlockUnknownHosts) return false
+      }
 
-    var isTrusted = false
-    ApplicationManager.getApplication().invokeAndWait({
-                                                        AppIcon.getInstance().requestAttention(null, true)
-                                                        val message = if (host != null) {
-                                                          IdeBundle.message("warning.use.rest.api.0.and.trust.host.1", getServiceName(), host)
-                                                        } else {
-                                                          IdeBundle.message("warning.use.rest.api.0.and.trust.host.unknown", getServiceName())
-                                                        }
-                                                        isTrusted = showYesNoDialog(message, "title.use.rest.api")
-                                                        if (host != null) {
-                                                          trustedOrigins.put(host, isTrusted)
-                                                        }
-                                                      }, ModalityState.any())
-    return isTrusted
+      var isTrusted = false
+      ApplicationManager.getApplication().invokeAndWait(
+        {
+          AppIcon.getInstance().requestAttention(null, true)
+          val message = if (host != null) {
+            IdeBundle.message("warning.use.rest.api.0.and.trust.host.1", getServiceName(),
+                              host)
+          }
+          else {
+            IdeBundle.message("warning.use.rest.api.0.and.trust.host.unknown",
+                              getServiceName())
+          }
+          isTrusted = showYesNoDialog(message, "title.use.rest.api")
+          if (host != null) {
+            trustedOrigins.put(host, isTrusted)
+          }
+          else {
+            if (!isTrusted) {
+              isBlockUnknownHosts = showYesNoDialog(IdeBundle.message("warning.use.rest.api.block.unknown.hosts"), "title.use.rest.api")
+            }
+          }
+        }, ModalityState.any())
+      return isTrusted
+    }
   }
 
   /**

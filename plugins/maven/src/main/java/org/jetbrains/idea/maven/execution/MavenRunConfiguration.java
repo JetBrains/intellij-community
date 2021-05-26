@@ -23,6 +23,8 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
+import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -34,7 +36,10 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,6 +61,8 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenGeneralSettingsEditor;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenDistribution;
+import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
@@ -365,6 +372,35 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
     protected MavenCommandLineState(@NotNull ExecutionEnvironment environment, @NotNull MavenRunConfiguration configuration) {
       super(environment);
       myConfiguration = configuration;
+    }
+
+    @Override
+    public TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
+      try {
+        JavaParameters parameters = getJavaParameters();
+
+        WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters);
+        if (config == null || config.getDistribution() == null) {
+          return null;
+        }
+
+        MavenDistribution mavenDistribution =
+          MavenDistributionsCache.getInstance(myConfiguration.getProject()).getMavenDistribution(myConfiguration.getRunnerParameters()
+                                                                                                   .getWorkingDirPath());
+        String mavenHome = notNullize(config.getDistribution().getWslPath(mavenDistribution.getMavenHome().getPath()));
+        String mavenVersion = notNullize(mavenDistribution.getVersion());
+
+        MavenRuntimeTargetConfiguration mavenConfig = new MavenRuntimeTargetConfiguration();
+        mavenConfig.setHomePath(mavenHome);
+        mavenConfig.setVersionString(mavenVersion);
+        config.addLanguageRuntime(mavenConfig);
+
+        return new WslTargetEnvironmentFactory(config);
+      }
+      catch (ExecutionException e) {
+        // ignore
+      }
+      return null;
     }
 
     @Override

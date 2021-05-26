@@ -14,15 +14,19 @@ import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -38,7 +42,9 @@ import com.intellij.ui.components.OnOffButton;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
+import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -64,7 +70,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   @Nullable private final Project myProject;
   @Nullable private final WeakReference<Editor> myEditor;
   private final DataContext myDataContext;
-  private final UpdateSession myUpdateSession;
 
   private final ActionManager myActionManager = ActionManager.getInstance();
   private final GotoActionOrderStrategy myOrderStrategy = new GotoActionOrderStrategy();
@@ -88,11 +93,17 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return map;
     });
 
+  private final ModalityState myModality;
+
   public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor) {
+    this(project, component, editor, ModalityState.defaultModalityState());
+  }
+
+  public GotoActionModel(@Nullable Project project, @Nullable Component component, @Nullable Editor editor, @Nullable ModalityState modalityState) {
     myProject = project;
     myEditor = new WeakReference<>(editor);
+    myModality = modalityState;
     myDataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
-    myUpdateSession = Utils.getOrCreateUpdateSession(AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, null, myDataContext));
     buildActions();
   }
 
@@ -285,6 +296,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return new GotoActionListCellRenderer(this::getGroupName);
   }
 
+  String getActionId(@NotNull AnAction anAction) {
+    return myActionManager.getId(anAction);
+  }
+
   private int compareActions(@Nullable AnAction first, @Nullable AnAction second) {
     return myOrderStrategy.compare(first, second);
   }
@@ -313,6 +328,15 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     if (ChooseByNameBase.EXTRA_ELEM.equals(o1)) return 1;
     if (ChooseByNameBase.EXTRA_ELEM.equals(o2)) return -1;
     return ((MatchedValue)o1).compareWeights((MatchedValue)o2);
+  }
+
+  @NotNull
+  public static AnActionEvent updateActionBeforeShow(@NotNull AnAction anAction, @NotNull DataContext dataContext) {
+    Presentation presentation = new Presentation();
+    presentation.copyFrom(anAction.getTemplatePresentation());
+    AnActionEvent event = AnActionEvent.createFromDataContext(ActionPlaces.ACTION_SEARCH, presentation, dataContext);
+    ActionUtil.performDumbAwareUpdate(false, anAction, event, false);
+    return event;
   }
 
   /**
@@ -464,15 +488,26 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     return myDataContext;
   }
 
-  UpdateSession getUpdateSession() {
-    return myUpdateSession;
-  }
-
   @NotNull
   public SortedSet<Object> sortItems(@NotNull Set<Object> elements) {
     TreeSet<Object> objects = new TreeSet<>(this);
     objects.addAll(elements);
     return objects;
+  }
+
+  private void updateOnEdt(Runnable update) {
+    Semaphore semaphore = new Semaphore(1);
+    ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ApplicationManager.getApplication().invokeLater(() -> {
+      try {
+        update.run();
+      }
+      finally {
+        semaphore.up();
+      }
+    }, myModality, __ -> indicator != null && indicator.isCanceled());
+
+    ProgressIndicatorUtils.awaitWithCheckCanceled(semaphore, indicator);
   }
 
   public enum MatchMode {
@@ -535,12 +570,12 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
       return path != null ? getPathName(path) : null;
     }
 
-    private void updateBeforeShow(@NotNull UpdateSession session) {
+    private void updateBeforeShow(@NotNull DataContext context) {
       if (myBestNameComputed) return;
       myBestNameComputed = true;
 
       for (List<ActionGroup> path : myPaths) {
-        String name = getActualPathName(path, session);
+        String name = getActualPathName(path, context);
         if (name != null) {
           myBestGroupName = name;
           return;
@@ -565,10 +600,10 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     @Nls
     @Nullable
-    private String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull UpdateSession session) {
+    private String getActualPathName(@NotNull List<? extends ActionGroup> path, @NotNull DataContext context) {
       String name = "";
       for (ActionGroup group : path) {
-        Presentation presentation = session.presentation(group);
+        Presentation presentation = updateActionBeforeShow(group, context).getPresentation();
         if (!presentation.isVisible()) return null;
         name = appendGroupName(name, group, presentation);
       }
@@ -670,17 +705,25 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
 
     @NotNull
     public Presentation getPresentation() {
-      if (myPresentation != null) {
-        return myPresentation;
-      }
-      myPresentation = ReadAction.nonBlocking(() -> {
-        if (myGroupMapping != null) {
-          myGroupMapping.updateBeforeShow(myModel.getUpdateSession());
+      if (myPresentation != null) return myPresentation;
+      Runnable r = () -> {
+        DataContext dataContext = myModel.getDataContext();
+        myPresentation = updateActionBeforeShow(myAction, dataContext).getPresentation();
+        if (myGroupMapping != null) myGroupMapping.updateBeforeShow(dataContext);
+      };
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        try {
+          r.run();
         }
-        return myModel.getUpdateSession().presentation(myAction);
-      })
-        .executeSynchronously();
-      return myPresentation;
+        catch (Throwable e) {
+          LOG.error(e);
+        }
+      }
+      else {
+        myModel.updateOnEdt(r);
+      }
+
+      return ObjectUtils.notNull(myPresentation, myAction.getTemplatePresentation());
     }
 
     public boolean hasPresentation() {

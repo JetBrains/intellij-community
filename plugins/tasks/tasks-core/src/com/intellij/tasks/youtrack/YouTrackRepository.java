@@ -1,40 +1,43 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.youtrack;
 
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.io.StreamUtil;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.tasks.*;
+import com.intellij.tasks.CustomTaskState;
+import com.intellij.tasks.Task;
+import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.impl.BaseRepository;
-import com.intellij.tasks.impl.BaseRepositoryImpl;
-import com.intellij.tasks.impl.LocalTaskImpl;
-import com.intellij.tasks.impl.TaskUtil;
-import com.intellij.util.NullableFunction;
+import com.intellij.tasks.impl.RequestFailedException;
+import com.intellij.tasks.impl.gson.TaskGsonUtil;
+import com.intellij.tasks.impl.httpclient.NewBaseRepositoryImpl;
+import com.intellij.tasks.impl.httpclient.TaskResponseUtil;
+import com.intellij.tasks.impl.httpclient.TaskResponseUtil.JsonResponseHandlerBuilder;
+import com.intellij.tasks.youtrack.model.YouTrackCommandList;
+import com.intellij.tasks.youtrack.model.YouTrackErrorInfo;
+import com.intellij.tasks.youtrack.model.YouTrackIssue;
+import com.intellij.tasks.youtrack.model.YouTrackSingleIssueCommand;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.HttpRequests;
-import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xmlb.annotations.Tag;
-import org.apache.axis.utils.XMLChar;
-import org.apache.commons.httpclient.HttpClient;
-import org.apache.commons.httpclient.HttpMethod;
-import org.apache.commons.httpclient.UsernamePasswordCredentials;
-import org.apache.commons.httpclient.auth.AuthScope;
-import org.apache.commons.httpclient.methods.GetMethod;
-import org.apache.commons.httpclient.methods.PostMethod;
-import org.jdom.Element;
-import org.jdom.JDOMException;
-import org.jdom.input.SAXBuilder;
+import org.apache.http.HttpRequestInterceptor;
+import org.apache.http.HttpResponse;
+import org.apache.http.HttpStatus;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.client.utils.URIBuilder;
+import org.apache.http.entity.ContentType;
+import org.apache.http.entity.StringEntity;
+import org.apache.http.message.BasicHeader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
-import javax.swing.*;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Date;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
@@ -43,14 +46,19 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 @Tag("YouTrack")
-public class YouTrackRepository extends BaseRepositoryImpl {
+public class YouTrackRepository extends NewBaseRepositoryImpl {
+  //@formatter:off
+  private static final TypeToken<List<YouTrackIssue>> LIST_OF_ISSUES_TYPE = new TypeToken<>() {};
+  //@formatter:on
+
+  private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
 
   private String myDefaultSearch = "Assignee: me sort by: updated #Unresolved";
 
   /**
    * for serialization
    */
-  @SuppressWarnings({"UnusedDeclaration"})
+  @SuppressWarnings("UnusedDeclaration")
   public YouTrackRepository() {
   }
 
@@ -70,246 +78,124 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   @Override
-  public Task[] getIssues(@Nullable String request, int max, long since) throws Exception {
+  public Task[] getIssues(@Nullable String query,
+                          int offset,
+                          int limit,
+                          boolean withClosed,
+                          @NotNull ProgressIndicator cancelled) throws Exception {
+    List<YouTrackIssue> result = fetchIssues(query, offset, limit);
+    return ContainerUtil.map2Array(result, YouTrackTask.class, issue -> new YouTrackTask(this, issue));
+  }
 
-    String query = getDefaultSearch();
-    if (StringUtil.isNotEmpty(request)) {
-      query += " " + request;
+  @NotNull
+  private List<YouTrackIssue> fetchIssues(@Nullable String query, int offset, int limit) throws URISyntaxException, IOException {
+    String searchQuery = getDefaultSearch() + (StringUtil.isNotEmpty(query) ? " " + query : "");
+    URI endpoint = new URIBuilder(getRestApiUrl("api", "issues"))
+      .addParameter("query", searchQuery)
+      .addParameter("fields", YouTrackIssue.DEFAULT_FIELDS)
+      .addParameter("$skip", String.valueOf(offset))
+      .addParameter("$top", String.valueOf(limit))
+      .build();
+    try {
+      return getHttpClient().execute(new HttpGet(endpoint),
+                                     JsonResponseHandlerBuilder.fromGson(GSON)
+                                       .errorHandler(this::parseYouTrackError)
+                                       .toMultipleObjects(LIST_OF_ISSUES_TYPE));
     }
-    String requestUrl = "/rest/project/issues/?filter=" + encodeUrl(query) + "&max=" + max + "&updatedAfter" + since;
-    HttpMethod method = doREST(requestUrl, false);
-    try (Reader reader = new InputStreamReader(method.getResponseBodyAsStream(), StandardCharsets.UTF_8)) {
-      // todo workaround for http://youtrack.jetbrains.net/issue/JT-7984
-      String s = StreamUtil.readText(reader);
-      for (int i = 0; i < s.length(); i++) {
-        if (!XMLChar.isValid(s.charAt(i))) {
-          s = s.replace(s.charAt(i), ' ');
-        }
+    catch (YouTrackRequestFailedException e) {
+      if ("invalid_query".equals(e.getErrorInfo().getError())) {
+        return Collections.emptyList();
       }
-
-      Element element;
-      try {
-        //InputSource source = new InputSource(stream);
-        //source.setEncoding("UTF-8");
-        //element = new SAXBuilder(false).build(source).getRootElement();
-        element = new SAXBuilder(false).build(new StringReader(s)).getRootElement();
-      }
-      catch (JDOMException e) {
-        LOG.error("Can't parse YouTrack response for " + requestUrl, e);
+      else {
         throw e;
       }
-      if ("error".equals(element.getName())) {
-        throw new Exception("Error from YouTrack for " + requestUrl + ": '" + element.getText() + "'");
-      }
-
-      List<Element> children = element.getChildren("issue");
-
-      final List<Task> tasks = ContainerUtil.mapNotNull(children, (NullableFunction<Element, Task>)o -> createIssue(o));
-      return tasks.toArray(Task.EMPTY_ARRAY);
-    }
-    finally {
-      method.releaseConnection();
     }
   }
 
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    PostMethod method = new PostMethod(getUrl() + "/rest/user/login");
-    return new HttpTestConnection<>(method) {
+    return new HttpTestConnection(new HttpGet()) {
       @Override
-      protected void doTest(PostMethod method) throws Exception {
-        login(method);
+      protected void test() throws Exception {
+        URI endpoint = new URIBuilder(getRestApiUrl("api", "issues"))
+          .addParameter("query", myDefaultSearch)
+          .addParameter("fields", YouTrackIssue.DEFAULT_FIELDS)
+          .addParameter("$top", String.valueOf(10))
+          .build();
+        myCurrentRequest.setURI(endpoint);
+        getHttpClient().execute(myCurrentRequest,
+                                JsonResponseHandlerBuilder.fromGson(GSON)
+                                  .errorHandler(YouTrackRepository.this::parseYouTrackError)
+                                  .toNothing());
       }
     };
-  }
-
-  private HttpClient login(PostMethod method) throws Exception {
-    HttpClient client = getHttpClient();
-    client.getState().setCredentials(AuthScope.ANY, new UsernamePasswordCredentials(getUsername(), getPassword()));
-    configureHttpMethod(method);
-    method.addParameter("login", getUsername());
-    method.addParameter("password", getPassword());
-    client.getParams().setContentCharset("UTF-8");
-    client.executeMethod(method);
-    String response;
-    try {
-      if (method.getStatusCode() != 200) {
-        throw new HttpRequests.HttpStatusException("Cannot login", method.getStatusCode(), method.getPath());
-      }
-      response = method.getResponseBodyAsString(1000);
-    }
-    finally {
-      method.releaseConnection();
-    }
-    if (response == null) {
-      throw new NullPointerException();
-    }
-    if (!response.contains("<login>ok</login>")) {
-      int pos = response.indexOf("</error>");
-      int length = "<error>".length();
-      if (pos > length) {
-        response = response.substring(length, pos);
-      }
-      throw new Exception("Cannot login: " + response);
-    }
-    return client;
   }
 
   @Override
   @Nullable
   public Task findTask(@NotNull String id) throws Exception {
-    final Element element = fetchRequestAsElement(id);
-    return element.getName().equals("issue") ? createIssue(element) : null;
+    YouTrackIssue issue = fetchIssue(id);
+    return issue != null ? new YouTrackTask(this, issue) : null;
   }
 
-  @TestOnly
-  @NotNull
-  public Element fetchRequestAsElement(@NotNull String id) throws Exception {
-    final HttpMethod method = doREST("/rest/issue/byid/" + id, false);
-    try {
-      final InputStream stream = method.getResponseBodyAsStream();
-      return new SAXBuilder(false).build(stream).getRootElement();
-    }
-    finally {
-      method.releaseConnection();
-    }
-  }
-
-
-  HttpMethod doREST(String request, boolean post) throws Exception {
-    HttpClient client = login(new PostMethod(getUrl() + "/rest/user/login"));
-    String uri = getUrl() + request;
-    HttpMethod method = post ? new PostMethod(uri) : new GetMethod(uri);
-    configureHttpMethod(method);
-    int status = client.executeMethod(method);
-    if (status == 400) {
-      InputStream string = method.getResponseBodyAsStream();
-      Element element = new SAXBuilder(false).build(string).getRootElement();
-      TaskUtil.prettyFormatXmlToLog(LOG, element);
-      if ("error".equals(element.getName())) {
-        throw new Exception(element.getText());
-      }
-    }
-    return method;
+  @Nullable
+  private YouTrackIssue fetchIssue(@NotNull String issueId) throws URISyntaxException, IOException {
+    URI endpoint = new URIBuilder(getRestApiUrl("api", "issues", issueId))
+      .addParameter("fields", YouTrackIssue.DEFAULT_FIELDS)
+      .build();
+    return getHttpClient().execute(new HttpGet(endpoint),
+                                   JsonResponseHandlerBuilder.fromGson(GSON)
+                                     .errorHandler(this::parseYouTrackError)
+                                     .ignoredCode(code -> code == HttpStatus.SC_NOT_FOUND)
+                                     .toSingleObject(YouTrackIssue.class));
   }
 
   @Override
   public void setTaskState(@NotNull Task task, @NotNull CustomTaskState state) throws Exception {
-    doREST("/rest/issue/execute/" + task.getId() + "?command=" + encodeUrl("state " + state.getId()), true).releaseConnection();
+    HttpPost request = new HttpPost(getRestApiUrl("api", "commands"));
+    request.setEntity(new StringEntity(GSON.toJson(new YouTrackSingleIssueCommand(task.getId(), "state " + state.getId())),
+                                       ContentType.APPLICATION_JSON));
+    getHttpClient().execute(request,
+                            JsonResponseHandlerBuilder.fromGson(GSON)
+                              .errorHandler(this::parseYouTrackError)
+                              .toNothing());
   }
 
   @NotNull
   @Override
   public Set<CustomTaskState> getAvailableTaskStates(@NotNull Task task) throws Exception {
-    final HttpMethod method = doREST("/rest/issue/" + task.getId() + "/execute/intellisense?command=" + encodeUrl("state: "), false);
-    try {
-      final InputStream stream = method.getResponseBodyAsStream();
-      final Element element = new SAXBuilder(false).build(stream).getRootElement();
-      return ContainerUtil.map2Set(element.getChild("suggest").getChildren("item"), element1 -> {
-        final String stateName = element1.getChildText("option");
-        return new CustomTaskState(stateName, stateName);
-      });
-    }
-    finally {
-      method.releaseConnection();
-    }
+    return ContainerUtil.map2Set(fetchAvailableStates(task.getId()), suggestion -> new CustomTaskState(suggestion, suggestion));
   }
 
-  @Nullable
-  private Task createIssue(Element element) {
-    final String id = element.getAttributeValue("id");
-    if (id == null) return null;
-    //noinspection HardCodedStringLiteral
-    final String summary = element.getAttributeValue("summary");
-    if (summary == null) return null;
-    //noinspection HardCodedStringLiteral
-    final String description = element.getAttributeValue("description");
+  @NotNull
+  private List<String> fetchAvailableStates(@NotNull String issueId) throws URISyntaxException, IOException {
+    URI endpoint = new URIBuilder(getRestApiUrl("api", "commands", "assist"))
+      .addParameter("fields", YouTrackCommandList.DEFAULT_FIELDS)
+      .build();
 
-    String type = element.getAttributeValue("type");
-    TaskType taskType = TaskType.OTHER;
-    if (type != null) {
-      try {
-        taskType = TaskType.valueOf(StringUtil.toUpperCase(type));
-      }
-      catch (IllegalArgumentException e) {
-        // do nothing
-      }
+    String setStateCommandPrefix = "state ";
+    HttpPost request = new HttpPost(endpoint);
+    request.setEntity(new StringEntity(GSON.toJson(new YouTrackSingleIssueCommand(issueId, setStateCommandPrefix)),
+                                       ContentType.APPLICATION_JSON));
+    YouTrackCommandList commandList = getHttpClient().execute(request,
+                                                              JsonResponseHandlerBuilder.fromGson(GSON)
+                                                                .errorHandler(this::parseYouTrackError)
+                                                                .toSingleObject(YouTrackCommandList.class));
+    if (commandList == null) {
+      return Collections.emptyList();
     }
-    final TaskType finalTaskType = taskType;
 
-    final Date updated = new Date(Long.parseLong(element.getAttributeValue("updated")));
-    final Date created = new Date(Long.parseLong(element.getAttributeValue("created")));
-    final boolean resolved = element.getAttribute("resolved") != null;
+    return ContainerUtil.mapNotNull(commandList.getSuggestions(), suggestion -> {
+      String option = suggestion.getOption();
+      // YouTrack might return suggestions such as "state Fixed" or "state Won't fix".
+      return option.startsWith(setStateCommandPrefix) ? null : option;
+    });
+  }
 
-    return new Task() {
-      @Override
-      public boolean isIssue() {
-        return true;
-      }
-
-      @Override
-      public String getIssueUrl() {
-        return getUrl() + "/issue/" + getId();
-      }
-
-      @NotNull
-      @Override
-      public String getId() {
-        return id;
-      }
-
-      @NotNull
-      @Override
-      public String getSummary() {
-        return summary;
-      }
-
-      @Override
-      public String getDescription() {
-        return description;
-      }
-
-      @Override
-      public Comment @NotNull [] getComments() {
-        return Comment.EMPTY_ARRAY;
-      }
-
-      @NotNull
-      @Override
-      public Icon getIcon() {
-        return LocalTaskImpl.getIconFromType(getType(), isIssue());
-      }
-
-      @NotNull
-      @Override
-      public TaskType getType() {
-        return finalTaskType;
-      }
-
-      @Nullable
-      @Override
-      public Date getUpdated() {
-        return updated;
-      }
-
-      @Nullable
-      @Override
-      public Date getCreated() {
-        return created;
-      }
-
-      @Override
-      public boolean isClosed() {
-        // IDEA-118605
-        return resolved;
-      }
-
-      @Override
-      public TaskRepository getRepository() {
-        return YouTrackRepository.this;
-      }
-    };
+  @Override
+  protected @Nullable HttpRequestInterceptor createRequestInterceptor() {
+    return (request, context) -> request.addHeader(new BasicHeader("Accept", ContentType.APPLICATION_JSON.toString()));
   }
 
   public String getDefaultSearch() {
@@ -323,60 +209,64 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   }
 
   @Override
+  protected @NotNull HttpClient getHttpClient() {
+    return super.getHttpClient();
+  }
+
+  @Override
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
     YouTrackRepository repository = (YouTrackRepository)o;
     return Objects.equals(repository.getDefaultSearch(), getDefaultSearch());
   }
 
-  private static final Logger LOG = Logger.getInstance(YouTrackRepository.class);
-
-  @Override
-  public void updateTimeSpent(@NotNull LocalTask task, @NotNull String timeSpent, @NotNull String comment) throws Exception {
-    checkVersion();
-    String command = encodeUrl(String.format("work Today %s %s", timeSpent, comment));
-    final HttpMethod method = doREST("/rest/issue/execute/" + task.getId() + "?command=" + command, true);
-    try {
-      if (method.getStatusCode() != 200) {
-        InputStream stream = method.getResponseBodyAsStream();
-        String message = new SAXBuilder(false).build(stream).getRootElement().getText();
-        throw new Exception(message);
-      }
-    }
-    finally {
-      method.releaseConnection();
-    }
-  }
-
-  private void checkVersion() throws Exception {
-    HttpMethod method = doREST("/rest/workflow/version", false);
-    try {
-      InputStream stream = method.getResponseBodyAsStream();
-      Element element = new SAXBuilder(false).build(stream).getRootElement();
-      final boolean timeTrackingAvailable = element.getName().equals("version") && VersionComparatorUtil.compare(element.getChildText("version"), "4.1") >= 0;
-      if (!timeTrackingAvailable) {
-        throw new Exception("Time tracking is not supported in this version of Youtrack");
-      }
-    }
-    finally {
-      method.releaseConnection();
-    }
-  }
 
   @Override
   protected int getFeatures() {
-    return super.getFeatures() | TIME_MANAGEMENT | STATE_UPDATING;
-  }
-
-  @TestOnly
-  @Override
-  public HttpClient getHttpClient() {
-    return super.getHttpClient();
+    return super.getFeatures() | STATE_UPDATING;
   }
 
   @NotNull
   @Override
   protected String getDefaultScheme() {
     return "https";
+  }
+
+  @Override
+  public boolean isUseHttpAuthentication() {
+    return true;
+  }
+
+  private static class YouTrackRequestFailedException extends RequestFailedException {
+    private final YouTrackErrorInfo myErrorInfo;
+
+    private YouTrackRequestFailedException(@NotNull YouTrackRepository repository,
+                                           @NotNull YouTrackErrorInfo errorInfo) {
+      super(repository, mostDescriptiveMessage(errorInfo));
+      myErrorInfo = errorInfo;
+    }
+
+    @NotNull
+    private YouTrackErrorInfo getErrorInfo() {
+      return myErrorInfo;
+    }
+
+    @NotNull
+    private static @NlsSafe String mostDescriptiveMessage(@NotNull YouTrackErrorInfo errorInfo) {
+      return StringUtil.isNotEmpty(errorInfo.getErrorDescription()) ? errorInfo.getErrorDescription() :
+             StringUtil.isNotEmpty(errorInfo.getError()) ? errorInfo.getError() :
+             "Unknown error";
+    }
+  }
+
+  @NotNull
+  private RequestFailedException parseYouTrackError(@NotNull HttpResponse response) {
+    try {
+      return new YouTrackRequestFailedException(this, GSON.fromJson(TaskResponseUtil.getResponseContentAsReader(response),
+                                                                    YouTrackErrorInfo.class));
+    }
+    catch (IOException e) {
+      return new RequestFailedException(e);
+    }
   }
 }

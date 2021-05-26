@@ -4,10 +4,7 @@ package org.jetbrains.plugins.github.pullrequest
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFilePathWrapper
 import com.intellij.openapi.vfs.VirtualFileSystem
-import com.intellij.openapi.vfs.VirtualFileWithoutContent
-import com.intellij.testFramework.LightVirtualFileBase
 import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
@@ -17,11 +14,11 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
  * This is necessary to make the files appear in "Recent Files" correctly.
  * See [com.intellij.vcs.editor.ComplexPathVirtualFileSystem.ComplexPath.sessionId] for details.
  */
-abstract class GHPRVirtualFile(protected val fileManagerId: String,
-                               val project: Project,
-                               val repository: GHRepositoryCoordinates,
+abstract class GHPRVirtualFile(fileManagerId: String,
+                               project: Project,
+                               repository: GHRepositoryCoordinates,
                                val pullRequest: GHPRIdentifier)
-  : LightVirtualFileBase("", null, 0), VirtualFileWithoutContent, VirtualFilePathWrapper {
+  : GHRepoVirtualFile(fileManagerId, project, repository) {
 
   override fun enforcePresentableName() = true
 
@@ -36,19 +33,15 @@ abstract class GHPRVirtualFile(protected val fileManagerId: String,
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is GHPRVirtualFile) return false
+    if (!super.equals(other)) return false
 
-    if (fileManagerId != other.fileManagerId) return false
-    if (project != other.project) return false
-    if (repository != other.repository) return false
     if (pullRequest != other.pullRequest) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = fileManagerId.hashCode()
-    result = 31 * result + project.hashCode()
-    result = 31 * result + repository.hashCode()
+    var result = super.hashCode()
     result = 31 * result + pullRequest.hashCode()
     return result
   }

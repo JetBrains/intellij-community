@@ -101,13 +101,13 @@ public final class EventLogSystemLogger {
   }
 
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId, @NotNull FeatureUsageData data) {
-    StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
+    StatisticsEventLoggerProvider provider = StatisticsEventLogProviderUtil.getEventLogProvider(recorderId);
     String groupId = getGroupId(recorderId);
     provider.getLogger().logAsync(new EventLogGroup(groupId, provider.getVersion()), eventId, data.build(), false);
   }
 
   private static void logEvent(@NotNull String recorderId, @NotNull String eventId) {
-    StatisticsEventLoggerProvider provider = StatisticsEventLoggerKt.getEventLogProvider(recorderId);
+    StatisticsEventLoggerProvider provider = StatisticsEventLogProviderUtil.getEventLogProvider(recorderId);
     String groupId = getGroupId(recorderId);
     provider.getLogger().logAsync(new EventLogGroup(groupId, provider.getVersion()), eventId, false);
   }

@@ -3,28 +3,23 @@ package com.jetbrains.python.ift
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ex.ProjectRootManagerEx
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.jetbrains.python.configuration.PyConfigurableInterpreterList
-import com.jetbrains.python.psi.LanguageLevel
-import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.PreferredSdkComparator
+import com.jetbrains.python.sdk.PySdkSettings
 import com.jetbrains.python.sdk.configuration.PyProjectSdkConfiguration.setReadyToUseSdk
 import com.jetbrains.python.sdk.configuration.PyProjectVirtualEnvConfiguration
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
+import com.jetbrains.python.sdk.findBaseSdks
+import com.jetbrains.python.sdk.pythonSdk
 import com.jetbrains.python.statistics.modules
-import training.dsl.LessonUtil
 import training.lang.AbstractLangSupport
-import training.learn.LearnBundle
-import training.learn.exceptons.NoSdkException
 import training.project.ProjectUtils
 import training.project.ReadMeCreator
 import training.util.getFeedbackLink
@@ -75,35 +70,7 @@ class PythonLangSupport : AbstractLangSupport() {
 
   override fun getSdkForProject(project: Project): Sdk? {
     if (project.pythonSdk != null) return null  // sdk already configured
-    return if (useVenv) {
-      createVenv(project)
-    }
-    else {
-      findSystemWideSdk(project)
-    }
-  }
-
-  private fun findSystemWideSdk(project: Project): Sdk? {
-    val sdkList = ProgressManager.getInstance().runProcessWithProgressSynchronously<List<Sdk>, Exception>(
-      { findAllPythonSdks(Path.of(project.basePath)) },
-      LearnBundle.message("learn.project.initializing.python.sdk.finding.progress.title"),
-      false,
-      project
-    )
-    var preferredSdk = filterSystemWideSdks(sdkList)
-      .filter {
-        !(!isNoOlderThan27(it) || PythonSdkUtil.isInvalid(it) || PythonSdkUtil.isVirtualEnv(it)
-          || PythonSdkUtil.isCondaVirtualEnv(it) || PythonSdkUtil.isRemote(it))
-      }
-      .sortedWith(compareBy { sdk: Sdk -> PythonSdkUtil.isConda(sdk) }.thenComparing(PreferredSdkComparator.INSTANCE))
-      .firstOrNull()
-    if (preferredSdk == null) {
-      throw NoSdkException()
-    }
-    else if (preferredSdk is PyDetectedSdk) {
-      preferredSdk = SdkConfigurationUtil.createAndAddSDK(preferredSdk.homePath!!, PythonSdkType.getInstance())
-    }
-    return preferredSdk
+    return createVenv(project)
   }
 
   private fun createVenv(project: Project): Sdk? {
@@ -121,34 +88,12 @@ class PythonLangSupport : AbstractLangSupport() {
 
   override fun applyProjectSdk(sdk: Sdk, project: Project) {
     setReadyToUseSdk(project, project.modules.first(), sdk)
-    if (!useVenv && LessonUtil.productName != defaultProductName) {
-      // This is a workaround for IDEA SetupJavaProjectFromSourcesActivity that replaces our SDK with Java SDK
-      val rootManager = ProjectRootManagerEx.getInstanceEx(project)
-      rootManager.addProjectJdkListener {
-        if (rootManager.projectSdk?.sdkType !is PythonSdkType) {
-          setReadyToUseSdk(project, project.modules.first(), sdk)
-        }
-      }
-    }
   }
 
   private fun getExistingSdks(): List<Sdk> {
     return PyConfigurableInterpreterList.getInstance(null).allPythonSdks
       .sortedWith(PreferredSdkComparator.INSTANCE)
   }
-
-  private fun isNoOlderThan27(sdk: Sdk): Boolean {
-    val languageLevel = if (sdk is PyDetectedSdk) {
-      sdk.guessedLanguageLevel
-    }
-    else {
-      PythonSdkFlavor.getFlavor(sdk)?.getLanguageLevel(sdk)
-    }
-    return languageLevel?.isAtLeast(LanguageLevel.PYTHON27) ?: false
-  }
-
-  private val useVenv: Boolean
-    get() = Registry.`is`("ide.features.trainer.use.venv")
 
   override fun checkSdk(sdk: Sdk?, project: Project) {
   }

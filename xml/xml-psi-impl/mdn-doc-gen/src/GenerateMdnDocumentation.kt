@@ -1,9 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
-import com.google.gson.JsonPrimitive
+import com.google.gson.*
 import com.google.gson.stream.JsonReader
+import com.intellij.application.options.CodeStyle
 import com.intellij.documentation.mdn.*
 import com.intellij.ide.highlighter.HtmlFileType
 import com.intellij.lang.html.HTMLLanguage
@@ -17,12 +15,12 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
+import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings
 import com.intellij.psi.impl.source.html.HtmlFileImpl
 import com.intellij.psi.stubs.StubIndex
-import com.intellij.psi.xml.XmlAttribute
-import com.intellij.psi.xml.XmlElement
-import com.intellij.psi.xml.XmlTag
-import com.intellij.psi.xml.XmlText
+import com.intellij.psi.xml.*
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.castSafelyTo
 import com.intellij.util.text.NameUtilCore
@@ -60,7 +58,10 @@ val htmlSpecialMappings = mapOf(
 
 val webApiBlockList = setOf("index")
 
-const val YARI_BUILD_PATH = "/Users/piotr.tomiak/WebstormProjects/yari/client/build"
+val jsRuntimesMap = MdnJavaScriptRuntime.values().associateBy { it.mdnId }
+
+val MDN_CONTENT_ROOT = PathManager.getCommunityHomePath() + "/xml/xml-psi-impl/mdn-doc-gen/work/mdn-content/files"
+val YARI_BUILD_PATH = PathManager.getCommunityHomePath() + "/xml/xml-psi-impl/mdn-doc-gen/work/yari/client/build"
 const val BUILT_LANG = "en-us"
 const val WEB_DOCS = "docs/web"
 const val MDN_DOCS_URL_PREFIX = "\$MDN_URL\$"
@@ -69,12 +70,12 @@ const val OUTPUT_DIR = "xml/xml-psi-impl/gen/com/intellij/documentation/mdn/"
 /* It's so much easier to run a test, than to setup the whole IJ environment */
 class GenerateMdnDocumentation : BasePlatformTestCase() {
 
-  /* Run these tests to generate documentation */
+  /* Run these tests to generate documentation. Prepare MDN documentation repositories with `prepare-mdn.sh` */
   fun testGenHtml() {
-    val attributes = extractInformationSimple("html/global_attributes", this::extractAttributeDocumentation)
+    val attributes = extractInformationSimple("html/global_attributes", listOf('_', '-'), this::extractAttributeDocumentation)
     outputJson(MdnApiNamespace.Html.name, mapOf(
       "attrs" to attributes,
-      "tags" to extractInformationSimple("html/element", allowList = htmlSpecialMappings.keys) {
+      "tags" to extractInformationSimple("html/element", listOf('_', '-'), allowList = htmlSpecialMappings.keys) {
         this.extractElementDocumentation(it, attributes)
       },
       "tagAliases" to reversedAliasesMap(htmlSpecialMappings)
@@ -82,23 +83,23 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   }
 
   fun testGenMathML() {
-    val attributes = extractInformationSimple("mathml/attribute", this::extractAttributeDocumentation)
+    val attributes = extractInformationSimple("mathml/attribute", emptyList(), this::extractAttributeDocumentation)
     outputJson(MdnApiNamespace.MathML.name, mapOf(
       "attrs" to attributes,
-      "tags" to extractInformationSimple("mathml/element") { this.extractElementDocumentation(it, attributes) }
+      "tags" to extractInformationSimple("mathml/element", emptyList()) { this.extractElementDocumentation(it, attributes) }
     ))
   }
 
   fun testGenSvg() {
-    val attributes = extractInformationSimple("svg/attribute", this::extractAttributeDocumentation)
+    val attributes = extractInformationSimple("svg/attribute", listOf('_'), this::extractAttributeDocumentation)
     outputJson(MdnApiNamespace.Svg.name, mapOf(
       "attrs" to attributes,
-      "tags" to extractInformationSimple("svg/element") { this.extractElementDocumentation(it, attributes) }
+      "tags" to extractInformationSimple("svg/element", listOf('_')) { this.extractElementDocumentation(it, attributes) }
     ))
   }
 
   fun testGenJsWebApi() {
-    val symbols = extractInformation("api", blockList = webApiBlockList) { extractJavascriptDocumentation(it, it.name) }
+    val symbols = extractInformation("api", listOf('_', '-'), blockList = webApiBlockList) { extractJavascriptDocumentation(it, it.name) }
     val fragments = webApiFragmentStarts.map { Pair(it, sortedMapOf<String, MdnJsSymbolDocumentation>()) }.toMap(TreeMap())
     symbols.forEach { (name, doc) ->
       fragments.floorEntry(name[0]).value[name] = doc
@@ -117,12 +118,37 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
   fun testGenJsGlobalObjects() {
     outputJson(MdnApiNamespace.GlobalObjects.name, mapOf(
-      "symbols" to extractInformation("javascript/reference/global_objects") { extractJavascriptDocumentation(it, it.name) }
+      "symbols" to extractInformation("javascript/reference/global_objects", listOf('-', '_')) {
+        extractJavascriptDocumentation(it, it.name)
+      }
     ))
   }
 
   fun testGenCss() {
     outputJson(MdnApiNamespace.Css.name, buildCssDocs())
+  }
+
+  fun testGenDomEvents() {
+    outputJson(MdnApiNamespace.DomEvents.name, mapOf(
+      "events" to extractDomEvents(),
+    ))
+  }
+
+  override fun setUp() {
+    super.setUp()
+    val manager = CodeStyleSettingsManager.getInstance(project)
+    val currSettings = manager.currentSettings
+    val clone = CodeStyle.createTestSettings(currSettings)
+    manager.setTemporarySettings(clone)
+    val htmlSettings = clone.getCustomSettings(HtmlCodeStyleSettings::class.java)
+    htmlSettings.HTML_ATTRIBUTE_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    htmlSettings.HTML_TEXT_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP
+    clone.getCommonSettings(HTMLLanguage.INSTANCE).softMargins.clear()
+  }
+
+  override fun tearDown() {
+    CodeStyleSettingsManager.getInstance(project).dropTemporarySettings()
+    super.tearDown()
   }
 
   private fun outputJson(outputFile: String, data: Map<String, Any>) {
@@ -131,11 +157,12 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                            .toJson(additionalMetadata() + data))
   }
 
-  private fun <T> extractInformationSimple(mdnPath: String, extractor: (File) -> T): Map<String, T> =
-    extractInformationSimple(mdnPath, emptySet(), extractor)
+  private fun <T> extractInformationSimple(mdnPath: String, disallowedChars: List<Char>, extractor: (File) -> T): Map<String, T> =
+    extractInformationSimple(mdnPath, disallowedChars, emptySet(), extractor)
 
-  private fun <T> extractInformationSimple(mdnPath: String, allowList: Set<String>, extractor: (File) -> T): Map<String, T> =
-    extractInformation(mdnPath, allowList) { docDir ->
+  private fun <T> extractInformationSimple(mdnPath: String, disallowedChars: List<Char>,
+                                           allowList: Set<String>, extractor: (File) -> T): Map<String, T> =
+    extractInformation(mdnPath, disallowedChars, allowList) { docDir ->
       try {
         listOf(Pair(docDir.name, extractor(docDir)))
       }
@@ -149,16 +176,18 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     Path.of(YARI_BUILD_PATH, BUILT_LANG, WEB_DOCS, mdnPath).toFile()
 
   private fun <T> extractInformation(mdnPath: String,
+                                     disallowedChars: List<Char>,
                                      allowList: Set<String> = emptySet(),
                                      blockList: Set<String> = emptySet(),
                                      extractor: (File) -> List<Pair<String, T>>): Map<String, T> =
-    extractInformationFull(getMdnDir(mdnPath), allowList, blockList, extractor)
+    extractInformationFull(getMdnDir(mdnPath), disallowedChars, allowList, blockList, extractor)
 
   private fun <T> extractInformationFull(dir: File,
+                                         disallowedChars: List<Char>,
                                          allowList: Set<String> = emptySet(),
                                          blockList: Set<String> = emptySet(),
                                          extractor: (File) -> List<Pair<String, T>>): Map<String, T> =
-    extractInformationFull(dir, { ((!it.contains('-') && !it.contains('_')) || allowList.contains(it)) && !blockList.contains(it) },
+    extractInformationFull(dir, { (disallowedChars.none { ch -> it.contains(ch) } || allowList.contains(it)) && !blockList.contains(it) },
                            extractor)
 
   private fun <T> extractInformationFull(dir: File,
@@ -201,6 +230,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       .let { RawProse(it) }
 
     val status = extractStatus(compatData)
+    val compatibility = extractCompatibilityInfo(compatData)
     val doc = processElementDocumentation(elementDoc)
 
     val documentation = doc.first
@@ -212,22 +242,42 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
                        ?.second
                        ?.takeIf { it.isNotEmpty() }
 
-    return MdnHtmlElementDocumentation(getMdnDocsUrl(dir), status, documentation, properties,
+    return MdnHtmlElementDocumentation(getMdnDocsUrl(dir), status, compatibility, documentation, properties,
                                        buildAttributes(dir, attributesDoc, compatData, commonAttributes))
   }
 
   private fun extractAttributeDocumentation(dir: File): MdnHtmlAttributeDocumentation {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
     return MdnHtmlAttributeDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
+                                         extractCompatibilityInfo(compatData),
                                          extractDescription(indexDataProseValues), null)
+  }
+
+  private fun extractDomEvents(): Map<String, MdnDomEventDocumentation> {
+    val prefix = "/$BUILT_LANG/$WEB_DOCS/events/"
+    return redirects.asSequence().filter { it.key.startsWith(prefix) && !it.key.contains("_") && !it.value.contains("#") }
+      .mapNotNull {
+        Pair(it.key.substring(prefix.length),
+             extractDomEventDocumentation(Path.of(YARI_BUILD_PATH, it.value).toFile()) ?: return@mapNotNull null)
+      }
+      .toMap()
+  }
+
+  private fun extractDomEventDocumentation(dir: File): MdnDomEventDocumentation? {
+    val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
+    return MdnDomEventDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
+                                    extractCompatibilityInfo(compatData),
+                                 extractEventDescription(indexDataProseValues) ?: return null,
+                                    null)
   }
 
   private fun extractJavascriptDocumentation(dir: File, name: String): List<Pair<String, MdnJsSymbolDocumentation>> {
     try {
       val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
-      return extractInformationFull(dir, blockList = webApiBlockList) { subDir ->
+      return extractInformationFull(dir, listOf('_', '-'), blockList = webApiBlockList) { subDir ->
         extractJavascriptDocumentation(subDir, "$name.${subDir.name}")
       }.toList() + Pair(name, MdnJsSymbolDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
+                                                       extractCompatibilityInfo(compatData),
                                                        extractDescription(indexDataProseValues),
                                                        extractParameters(indexDataProseValues),
                                                        extractReturns(indexDataProseValues)?.patch(),
@@ -283,14 +333,15 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
     val url = getMdnDocsUrl(dir)
     val status = extractStatus(compatData)
+    val compatibility = extractCompatibilityInfo(compatData)
     val description = extractDescription(indexDataProseValues)
     val dirName = dir.name
     return when {
       dirName.startsWith('_') || dirName.endsWith("()") ->
-        MdnCssBasicSymbolDocumentation(url, status, description, null)
+        MdnCssBasicSymbolDocumentation(url, status, compatibility, description, null)
       dirName.startsWith('@') ->
         MdnCssAtRuleSymbolDocumentation(
-          url, status, description, null,
+          url, status, compatibility, description, null,
           extractInformationFull(dir,
                                  { !it.contains('_') },
                                  { docDir ->
@@ -305,13 +356,20 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         )
       else ->
         MdnCssPropertySymbolDocumentation(
-          url, status, description, extractPropertyValues(indexDataProseValues))
+          url, status, compatibility, description, extractPropertyValues(indexDataProseValues))
     }
   }
 
   private fun extractDescription(indexDataProseValues: List<JsonObject>): String =
     indexDataProseValues.first().getProseContent()
       .let { createHtmlFile(it).patchedText() }
+
+  private fun extractEventDescription(indexDataProseValues: List<JsonObject>): String? =
+    indexDataProseValues.first().getProseContent()
+      .let { createHtmlFile(it) }
+      .children[0].children.filter { it is XmlTag && it.name == "p" }
+      .takeIf { it.isNotEmpty() }
+      ?.joinToString("\n") { it.patchedText() }
 
   private fun filterProseById(sections: List<JsonObject>, vararg ids: String): Sequence<JsonObject> =
     sections.asSequence().filter { value ->
@@ -360,7 +418,10 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     }.toMap()
     val compatAttrs = elementCompatData?.entrySet()?.asSequence()
                         ?.filter { data -> !data.key.any { it == '_' || it == '-' } }
-                        ?.map { Pair(it.key.toLowerCase(), extractStatus(it.value.asJsonObject)) }
+                        ?.map {
+                          Pair(it.key.toLowerCase(),
+                               Pair(extractStatus(it.value.asJsonObject), extractCompatibilityInfo(it.value.asJsonObject)))
+                        }
                         ?.toMap() ?: emptyMap()
 
     val tagName = tagDir.name
@@ -373,7 +434,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     return docAttrs.keys.asSequence()
       .plus(compatAttrs.keys).distinct()
       .map { StringUtil.toLowerCase(it) }
-      .map { Pair(it, MdnHtmlAttributeDocumentation(urlPrefix + it, compatAttrs[it], docAttrs[it], null)) }
+      .map { Pair(it, MdnHtmlAttributeDocumentation(urlPrefix + it, compatAttrs[it]?.first, compatAttrs[it]?.second, docAttrs[it], null)) }
       .sortedBy { it.first }
       .toMap()
       .takeIf { it.isNotEmpty() }
@@ -417,9 +478,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   private fun createHtmlFile(contents: RawProse): HtmlFileImpl {
     val htmlFile = PsiFileFactory.getInstance(project)
       .createFileFromText("dummy.html", HTMLLanguage.INSTANCE, contents.content, false, true)
-    val toRemove = mutableSetOf<XmlElement>()
+    val toRemove = mutableSetOf<PsiElement>()
     val toSimplify = mutableSetOf<XmlTag>()
     htmlFile.acceptChildren(object : XmlRecursiveElementVisitor() {
+
+      override fun visitXmlComment(comment: XmlComment) {
+        toRemove.add(comment)
+      }
+
       override fun visitXmlTag(tag: XmlTag) {
         if (tag.name == "pre"
             && tag.getAttributeValue("class")?.matches(Regex("brush: ?(js|html|css|xml)[a-z0-9-;\\[\\] ]*")) == true) {
@@ -620,6 +686,68 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       ?.map { MdnApiStatus.valueOf(it.key.toPascalCase()) }
       ?.toSet()
 
+  @Suppress("UNCHECKED_CAST")
+  private fun extractCompatibilityInfo(compatData: JsonObject?): Map<MdnJavaScriptRuntime, String>? =
+    compatData?.get("__compat")
+      ?.castSafelyTo<JsonObject>()
+      ?.getAsJsonObject("support")
+      ?.entrySet()
+      ?.asSequence()
+      ?.mapNotNull { entry ->
+        jsRuntimesMap[entry.key]?.let { runtime ->
+          Pair(runtime, entry.value?.let { extractBrowserVersion(runtime, it) })
+        }
+      }
+      ?.toMap()
+      ?.takeIf { map -> map.values.any { it == null || it.isNotEmpty() } }
+      ?.filterValues { it != null } as Map<MdnJavaScriptRuntime, String>?
+
+  private fun extractBrowserVersion(runtime: MdnJavaScriptRuntime, versionInfo: JsonElement): String? {
+    fun extractVersion(element: JsonElement?): String? {
+      if (element == null || element.isJsonNull)
+        return null
+      else if (element is JsonPrimitive) {
+        if (element.isBoolean) {
+          return if (element.asBoolean) "" else null
+        }
+        else if (element.isString) {
+          val value = element.asString
+          return when {
+            value.isEmpty() -> null
+            value == runtime.firstVersion -> ""
+            else -> value.removePrefix("≤")
+          }
+        }
+      }
+      throw IllegalStateException(element.toString())
+    }
+
+    val versions = (if (versionInfo is JsonArray) versionInfo.asSequence() else sequenceOf(versionInfo))
+      .onEach { if (it !is JsonObject) throw IllegalStateException(it.toString()) }
+      .filterIsInstance<JsonObject>()
+      .filter { !it.has("prefix") && !it.has("flags") && !it.has("alternative_name") && !it.has("partial_implementation") }
+      .map {
+        Triple(extractVersion(it.get("version_added")), extractVersion(it.get("version_removed")), it.has("notes"))
+      }
+      .filter { it.first != null && it.second == null }
+      .sortedBy { it.first!! }
+      .toList()
+    if (versions.size > 1) {
+      if (versions.all { it.third }) {
+        return versions.joinToString(",") { it.first!! + "*" }
+      }
+      val withoutNotes = versions.filter { !it.third }
+      if (withoutNotes.size == 1) {
+        return withoutNotes[0].first!!
+      }
+      throw IllegalStateException(versionInfo.toString())
+    }
+    else if (versions.size == 1) {
+      return versions[0].first
+    }
+    return null
+  }
+
   private fun createDtsMdnIndex(symbols: Map<String, MdnJsSymbolDocumentation>): Map<String, String> {
     val context = JSCorePredefinedLibrariesProvider.getAllJSPredefinedLibraryFiles()
       .find { it.name == "lib.dom.d.ts" }
@@ -651,6 +779,17 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
       }
       .toMap(TreeMap())
   }
+
+  private val redirects = FileUtil.loadFile(Path.of(MDN_CONTENT_ROOT, BUILT_LANG, "_redirects.txt").toFile())
+    .splitToSequence('\n')
+    .mapNotNull { line ->
+      line.splitToSequence('\t')
+        .map { StringUtil.toLowerCase(it.trim()) }
+        .toList()
+        .takeIf { it.size == 2 && !it[0].startsWith("#") }
+        ?.let { Pair(it[0], it[1]) }
+    }
+    .toMap()
 }
 
 private fun XmlTag.innerHtml(): String = this.children.asSequence()
@@ -667,7 +806,7 @@ private data class RawProse(val content: String) {
   fun patch(): String = content.patchProse()
 }
 
-private fun PsiFile.patchedText() =
+private fun PsiElement.patchedText() =
   text.patchProse()
 
 private fun JsonObject.getProseContent(): RawProse =
@@ -678,6 +817,7 @@ private fun String.patchProse(): String =
   replace("/en-US/docs", MDN_DOCS_URL_PREFIX, true)
     .replace("&apos;", "'")
     .replace("&quot;", "\"")
+    .replace("&nbsp;", " ")
     .also { fixedProse ->
       Regex("&(?!lt|gt|amp)[a-z]*;").find(fixedProse)?.let {
         throw Exception("Unknown entity found in prose: ${it.value}")

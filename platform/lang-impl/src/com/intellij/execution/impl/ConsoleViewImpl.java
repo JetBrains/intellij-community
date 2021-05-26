@@ -1571,6 +1571,10 @@ public class ConsoleViewImpl extends JPanel implements ConsoleView, ObservableCo
     return myState.isRunning();
   }
 
+  public void addNotificationComponent(@NotNull JComponent notificationComponent) {
+    add(notificationComponent, BorderLayout.NORTH);
+  }
+
   @TestOnly
   @NotNull
   ConsoleState getState() {

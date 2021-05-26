@@ -1,22 +1,25 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.CollectionComboBoxModel
+import com.intellij.ui.ComboboxSpeedSearch
 import com.intellij.ui.MutableCollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.labels.LinkLabel
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitBranch
+import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -26,10 +29,12 @@ import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
+import org.jetbrains.plugins.github.util.GithubGitHelper
 import java.awt.event.ActionEvent
 import javax.swing.ComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JLabel
+import javax.swing.JPanel
 import javax.swing.event.ListDataEvent
 import javax.swing.event.ListDataListener
 
@@ -37,27 +42,58 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
                                           private val model: GHPRCreateDirectionModel) {
 
   fun create(): JComponent {
-    val base = LinkLabel<Any>("", null) { comp, _ ->
-      chooseBaseBranch(comp, model.baseRepo, model.baseBranch, model::baseBranch::set)
-    }.apply {
-      isFocusable = true
+    val base = ActionLink("")
+    base.addActionListener {
+      chooseBaseBranch(base, model.baseRepo, model.baseBranch, model::baseBranch::set)
     }
-    val head = LinkLabel<Any>("", null) { comp, _ ->
-      chooseHeadRepoAndBranch(comp, model.headRepo, model.headBranch, model::setHead)
-    }.apply {
-      isFocusable = true
+
+    val head = ActionLink("")
+    head.addActionListener {
+      chooseHeadRepoAndBranch(head, model.headRepo, model.headBranch) { repo, branch ->
+        model.setHead(repo, branch)
+        model.headSetByUser = true
+      }
     }
+
+    val changesWarningLabel = JLabel(AllIcons.General.Warning)
 
     model.addAndInvokeDirectionChangesListener {
-      val baseRepo = model.baseRepo.repository.repositoryPath
-      val headRepo = model.headRepo?.repository?.repositoryPath
-      val showRepoOwners = headRepo != null && baseRepo != headRepo
+      val baseRepoPath = model.baseRepo.repository.repositoryPath
+      val headRepo = model.headRepo
+      val headRepoPath = headRepo?.repository?.repositoryPath
+      val baseBranch = model.baseBranch
+      val headBranch = model.headBranch
+      val showRepoOwners = headRepoPath != null && baseRepoPath != headRepoPath
 
-      base.text = getRepoText(baseRepo, showRepoOwners, model.baseBranch)
-      head.text = getRepoText(headRepo, showRepoOwners, model.headBranch)
+      base.text = getRepoText(baseRepoPath, showRepoOwners, baseBranch)
+      head.text = getRepoText(headRepoPath, showRepoOwners, headBranch)
+
+      with(changesWarningLabel) {
+        if (headRepo != null && headBranch != null && headBranch is GitLocalBranch) {
+          val headRemote = headRepo.gitRemote
+          val pushTarget = GithubGitHelper.findPushTarget(headRemote.repository, headRemote.remote, headBranch)
+          if (pushTarget == null) {
+            toolTipText = GithubBundle.message("pull.request.create.warning.push", headBranch.name, headRemote.remote.name)
+            isVisible = true
+            return@with
+          }
+          else {
+            val repo = headRemote.repository
+            val localHash = repo.branches.getHash(headBranch)
+            val remoteHash = repo.branches.getHash(pushTarget.branch)
+            if (localHash != remoteHash) {
+              toolTipText = GithubBundle.message("pull.request.create.warning.not.synced", headBranch.name, pushTarget.branch.name)
+              isVisible = true
+              return@with
+            }
+          }
+        }
+        isVisible = false
+      }
     }
 
-    return NonOpaquePanel().apply {
+    return JPanel(null).apply {
+      isOpaque = false
       layout = MigLayout(LC()
                            .gridGap("0", "0")
                            .insets("0", "0", "0", "0"))
@@ -68,6 +104,7 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
         border = JBUI.Borders.empty(0, 5)
       })
       add(head, CC().minWidth("${UI.scale(30)}"))
+      add(changesWarningLabel, CC().gapLeft("${UI.scale(10)}"))
     }
   }
 
@@ -80,7 +117,7 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
       val branches = currentRepo.gitRemote.repository.branches.remoteBranches.filter {
         it.remote == remote
       }
-      replaceAll(branches.toList())
+      replaceAll(branches.sortedWith(BRANCHES_COMPARATOR))
       selectedItem = currentBranch.takeIf { it != null && branches.contains(it) }
     }
 
@@ -134,6 +171,8 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
 
     val branchComponent = ComboBox(branchModel).apply {
       renderer = SimpleListCellRenderer.create<GitBranch>("", GitBranch::getName)
+    }.also {
+      ComboboxSpeedSearch.installSpeedSearch(it, GitBranch::getName)
     }
 
     val panel = panel(LCFlags.fill) {
@@ -151,11 +190,13 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
         }
       }
     }.apply {
+      isFocusCycleRoot = true
       border = JBUI.Borders.empty(8, 8, 0, 8)
     }
 
     return JBPopupFactory.getInstance()
       .createComponentPopupBuilder(panel, repoComponent.takeIf { it.isEnabled } ?: branchComponent)
+      .setFocusable(false)
       .createPopup().apply {
         setRequestFocus(true)
       }.also { popup ->
@@ -190,11 +231,13 @@ class GHPRCreateDirectionComponentFactory(private val repositoriesManager: GHPro
       it.remote == remote
     }
 
-    val branches = repo.branches.localBranches + remoteBranches
+    val branches = repo.branches.localBranches.sortedWith(BRANCHES_COMPARATOR) + remoteBranches.sortedWith(BRANCHES_COMPARATOR)
     branchModel.replaceAll(branches)
+    branchModel.selectedItem = repo.currentBranch
   }
 
   companion object {
+    private val BRANCHES_COMPARATOR = Comparator<GitBranch> { b1, b2 -> StringUtil.naturalCompare(b1.name, b2.name) }
 
     @NlsSafe
     private fun getRepoText(repo: GHRepositoryPath?, showOwner: Boolean, branch: GitBranch?): String {

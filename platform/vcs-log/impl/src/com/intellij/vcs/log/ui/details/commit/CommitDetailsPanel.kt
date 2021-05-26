@@ -63,7 +63,7 @@ open class CommitDetailsPanel(private val project: Project, navigate: (CommitId)
 
   final override fun add(comp: Component?): Component = super.add(comp)
 
-  protected open fun setCommit(commit: CommitId, presentation: CommitPresentation) {
+  open fun setCommit(commit: CommitId, presentation: CommitPresentation) {
     messagePanel.updateMessage(presentation)
     hashAndAuthorPanel.updateHashAndAuthor(presentation)
   }

@@ -40,7 +40,11 @@ private class UpdateComponentWatcher : Disposable {
     // TODO: Use message bus once it will be provided by platform
     val multicaster = EditorFactory.getInstance().eventMulticaster
     if (multicaster is EditorEventMulticasterEx) {
-      multicaster.addFocusChangeListener(FocusChangeListener { editor -> scheduleUpdate(editor) }, this)
+      multicaster.addFocusChangeListener(object : FocusChangeListener {
+        override fun focusGained(editor: Editor) {
+          scheduleUpdate(editor)
+        }
+      }, this)
     }
   }
 

@@ -6,7 +6,6 @@ import com.intellij.internal.DebugAttachDetector
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.collectors.fus.os.OsVersionUsageCollector
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -65,8 +64,8 @@ internal class SystemStateMonitor : FeatureUsageStateEventTracker {
     val currentZoneOffset = OffsetDateTime.now().offset
     val currentZoneOffsetFeatureUsageData = FeatureUsageData().addData("value", currentZoneOffset.toString())
     osEvents.add(newMetric("os.timezone", currentZoneOffsetFeatureUsageData))
-    val machineId = MachineIdManager.getMachineId()
-    osEvents.add(newMetric("machine.id", FeatureUsageData().addData("value", anonymizeMachineId(machineId))))
+    val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsFUS", "")
+    osEvents.add(newMetric("machine.id", FeatureUsageData().addData("value", machineId ?: "unknown")))
     return FUStateUsagesLogger.logStateEventsAsync(OS_GROUP, osEvents)
   }
 
@@ -78,12 +77,6 @@ internal class SystemStateMonitor : FeatureUsageStateEventTracker {
     events.add(TEST.metric(StatisticsRecorderUtil.isTestModeEnabled("FUS"), app.isInternal, isTeamcityDetected()))
     events.add(HEADLESS.metric(app.isHeadlessEnvironment, app.isCommandLine))
     FUStateUsagesLogger.logStateEventsAsync(SESSION_GROUP, events)
-  }
-
-  private fun anonymizeMachineId(machineId: String?): String {
-    if (machineId == null) return "unknown"
-    val salt = System.getProperty("user.name") + "JetBrainsFUS"
-    return EventLogConfiguration.hashSha256(salt.toByteArray(), machineId)
   }
 
   private fun newDataWithOsVersion(): FeatureUsageData {

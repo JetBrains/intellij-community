@@ -25,6 +25,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
@@ -44,8 +45,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.ListIterator;
+
+import static com.intellij.openapi.actionSystem.ex.ActionUtil.getMnemonicAsShortcut;
 
 class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
 
@@ -53,6 +58,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
   private static final String COUNTER_PROPERTY = "debugger.speed.search.tree.option.hint.counter";
   private static final String CAN_EXPAND_PROPERTY = "debugger.speed.search.tree.option.can.expand";
   private MyActionButton mySearchOption = null;
+  private ShortcutSet myOptionShortcutSet;
 
   XDebuggerTreeSpeedSearch(XDebuggerTree tree, Convertor<? super TreePath, String> toStringConvertor) {
     super(tree, toStringConvertor, PropertiesComponent.getInstance().getBoolean(CAN_EXPAND_PROPERTY, false));
@@ -125,7 +131,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       final TreePath element = (TreePath) it.next();
       if (myComponent.isVisible(element) && isMatchingElement(element, _s)) return element;
     }
-    if (selectedIndex > 0) {
+    if (selectedIndex > 0 || myCanExpand) {
       while (it.hasPrevious()) it.previous();
       while (it.hasNext() && it.nextIndex() != selectedIndex) {
         final TreePath element = (TreePath) it.next();
@@ -133,15 +139,17 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       }
     }
 
-    while (it.hasNext()) {
-      final TreePath element = (TreePath) it.next();
-      if (isMatchingElement(element, _s)) return element;
-    }
-    if (selectedIndex > 0) {
-      while (it.hasPrevious()) it.previous();
-      while (it.hasNext() && it.nextIndex() != selectedIndex) {
-        final TreePath element = (TreePath) it.next();
+    if (myCanExpand) {
+      while (it.hasNext()) {
+        final TreePath element = (TreePath)it.next();
         if (isMatchingElement(element, _s)) return element;
+      }
+      if (selectedIndex > 0) {
+        while (it.hasPrevious()) it.previous();
+        while (it.hasNext() && it.nextIndex() != selectedIndex) {
+          final TreePath element = (TreePath)it.next();
+          if (isMatchingElement(element, _s)) return element;
+        }
       }
     }
 
@@ -165,9 +173,13 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       .setAwtTooltip(true)
       .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
       .setTextBg(HintUtil.getInformationColor())
-      .setShowImmediately(false);
-    final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    hint.show(component, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
+      .setShowImmediately(true);
+
+    ApplicationManager.getApplication().invokeLater(() -> {
+      final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
+      hint.show(component, point.x, point.y, owner instanceof JComponent ? (JComponent)owner : null, hintHint);
+    });
+
 
     propertiesComponent.setValue(COUNTER_PROPERTY, counter + 1, 0);
   }
@@ -181,13 +193,30 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     return TreeUtil.treePathTraverser(myComponent)
         .expand(n -> myComponent.isExpanded(n) || (myCanExpand && n.getPathCount() - initialLevel < SEARCH_DEPTH))
         .traverse()
-        .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode));
+        .filter(o -> !(o.getLastPathComponent() instanceof LoadingNode || o.equals(root.getPath())));
   }
 
   protected void setSearchOption(AnAction searchOption) {
     mySearchOption = new MyActionButton(searchOption, false);
+    myOptionShortcutSet = getMnemonicAsShortcut(searchOption);
   }
 
+  @Override
+  protected void processKeyEvent(KeyEvent e) {
+    if (mySearchOption.isShowing()) {
+      KeyStroke eventKeyStroke = KeyStroke.getKeyStrokeForEvent(e);
+      boolean match = Arrays.stream(myOptionShortcutSet.getShortcuts())
+        .filter(s -> s.isKeyboard())
+        .map(s -> ((KeyboardShortcut)s))
+        .anyMatch(s -> eventKeyStroke.equals(s.getFirstKeyStroke()) || eventKeyStroke.equals(s.getSecondKeyStroke()));
+      if (match) {
+        mySearchOption.click();
+        e.consume();
+        return;
+      }
+    }
+    super.processKeyEvent(e);
+  }
 
   @Override
   protected @NotNull SearchPopup createPopup(String s) {
@@ -211,7 +240,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
     protected void handleInsert(String newText) {
       if (findElement(newText) == null) {
         mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
-        if(!myCanExpand && isShowing()) {
+        if(!myCanExpand) {
           showHint(mySearchOption);
         }
       }
@@ -227,6 +256,7 @@ class XDebuggerTreeSpeedSearch extends TreeSpeedSearch {
       getTemplatePresentation().setIcon(AllIcons.General.Tree);
       getTemplatePresentation().setHoveredIcon(AllIcons.General.TreeHovered);
       getTemplatePresentation().setSelectedIcon(AllIcons.General.TreeSelected);
+      setShortcutSet(getMnemonicAsShortcut(this));
     }
 
     @Override

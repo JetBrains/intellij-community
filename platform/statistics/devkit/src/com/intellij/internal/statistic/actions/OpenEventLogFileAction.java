@@ -6,7 +6,7 @@ import com.intellij.ide.gdpr.ConsentConfigurable;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.eventLog.EventLogFile;
-import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerKt;
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationBuilder;
 import com.intellij.notification.NotificationType;
@@ -38,7 +38,7 @@ public class OpenEventLogFileAction extends DumbAwareAction {
       return;
     }
 
-    final EventLogFile logFile = StatisticsEventLoggerKt.getEventLogProvider(myRecorderId).getActiveLogFile();
+    final EventLogFile logFile = StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).getActiveLogFile();
     final VirtualFile logVFile = logFile != null ? LocalFileSystem.getInstance().findFileByIoFile(logFile.getFile()) : null;
     if (logVFile == null) {
       showNotification(project, NotificationType.WARNING, StatisticsBundle.message("stats.there.is.no.active.event.log"));

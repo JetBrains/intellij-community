@@ -55,6 +55,7 @@
         <dependency coords="${jps.bootstrap.library.xml.component.library.properties(maven-id)}"/>
         <dependency coords="com.jetbrains.intellij.platform:test-framework-core:${jps.bootstrap.library.version}"/>
         <dependency coords="commons-cli:commons-cli:1.2"/>
+        <dependency coords="de.pdark:decentxml:1.4"/>
       </resolver:dependencies>
       <resolver:path refid="classpath.buildscripts" classpath="runtime"/>
     </resolver:resolve>

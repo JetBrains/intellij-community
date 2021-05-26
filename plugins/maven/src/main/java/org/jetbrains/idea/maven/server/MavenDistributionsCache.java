@@ -52,7 +52,7 @@ public class MavenDistributionsCache {
 
   public @NotNull MavenDistribution getSettingsDistribution() {
     MavenWorkspaceSettings settings = MavenWorkspaceSettingsComponent.getInstance(myProject).getSettings();
-    MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.generalSettings.getMavenHome());
+    MavenDistribution distribution = new MavenDistributionConverter().fromString(settings.getGeneralSettings().getMavenHome());
     if (distribution == null) {
       MavenProjectsManager.getInstance(myProject).getSyncConsole().addWarning(SyncBundle.message("cannot.resolve.maven.home"), SyncBundle
         .message("is.not.correct.maven.home.reverting.to.embedded", settings.generalSettings.getMavenHome()));

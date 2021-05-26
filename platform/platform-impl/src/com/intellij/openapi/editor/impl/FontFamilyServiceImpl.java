@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.impl.AppEditorFontOptions;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +22,9 @@ import java.util.function.BiConsumer;
 
 final class FontFamilyServiceImpl extends FontFamilyService {
   private static final Logger LOG = Logger.getInstance(FontFamilyServiceImpl.class);
+  // DebugLogManager might be initialized after this class, so using the standard way to enable debug logging
+  // might have no effect on logging performed in constructor
+  private static final boolean VERBOSE_LOGGING = Boolean.getBoolean("font.family.service.verbose");
 
   private static final Method GET_FONT_2D_METHOD = ReflectionUtil.getDeclaredMethod(Font.class, "getFont2D");
   private static final Method GET_TYPO_FAMILY_METHOD = ReflectionUtil.getDeclaredMethod(Font2D.class, "getTypographicFamilyName");
@@ -30,6 +34,8 @@ final class FontFamilyServiceImpl extends FontFamilyService {
   private static final AffineTransform SYNTHETIC_ITALICS_TRANSFORM = AffineTransform.getShearInstance(-0.2, 0);
   private static final int PREFERRED_MAIN_WEIGHT = 400;
   private static final int PREFERRED_BOLD_WEIGHT_DIFF = 300;
+
+  private static final String[] ITALIC_NAMES = {"italic", "oblique", "inclined"};
 
   // Fira Code requires specific migration due to naming workaround in JBR used earlier
   private static final Map<String, String[]> FIRA_CODE_MIGRATION_MAP = Map.of(
@@ -54,13 +60,13 @@ final class FontFamilyServiceImpl extends FontFamilyService {
       Font[] fonts = GraphicsEnvironment.getLocalGraphicsEnvironment().getAllFonts();
       for (Font font : fonts) {
         Font2D font2D = (Font2D)GET_FONT_2D_METHOD.invoke(font);
-        String fontName = font.getFontName();
+        String fontName = font.getName();
         String font2DName = font2D.getFontName(null);
-        if (!fontName.equals(font2DName)) {
+        if (font2DName.startsWith(Font.DIALOG) && !fontName.startsWith(Font.DIALOG)) {
           // skip fonts that are declared as available, but cannot be used due to some reason,
-          // with JDK substituting them with a different font (on Windows)
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
+          // with JDK substituting them with Dialog logical font (on Windows)
+          if (VERBOSE_LOGGING) {
+            LOG.info("Skipping '" + fontName + "' as it's mapped to '" + font2DName + "' by the runtime");
           }
           continue;
         }
@@ -148,23 +154,23 @@ final class FontFamilyServiceImpl extends FontFamilyService {
           String boldTypoSubfamily = (String)GET_TYPO_SUBFAMILY_METHOD.invoke(boldFont2D);
 
           if (!family.equals(baseFamily) || !family.equals(boldFamily)) {
-            LOG.debug("Cannot migrate " + family + ": unexpected resolved families - " + baseFamily + ", " + boldFamily);
+            LOG.info("Cannot migrate " + family + ": unexpected resolved families - " + baseFamily + ", " + boldFamily);
           }
           else if (!Objects.equals(baseTypoFamily, boldTypoFamily)) {
-            LOG.debug("Cannot migrate " + family + ": normal and bold variations resolve to different typographic families - "
+            LOG.info("Cannot migrate " + family + ": normal and bold variations resolve to different typographic families - "
                       + baseTypoFamily + ", " + boldTypoFamily);
           }
           else {
             FontFamily fontFamily = myFamilies.get(baseTypoFamily);
             if (fontFamily == null) {
-              LOG.debug("Cannot migrate " + family + ": typographic font family not found - " + baseTypoFamily);
+              LOG.info("Cannot migrate " + family + ": typographic font family not found - " + baseTypoFamily);
             }
             else if (!fontFamily.hasSubFamily(baseTypoSubfamily)) {
-              LOG.debug("Cannot migrate " + family + ": subfamily " + baseTypoSubfamily
+              LOG.info("Cannot migrate " + family + ": subfamily " + baseTypoSubfamily
                         + " not found in typographic font family " + baseTypoFamily);
             }
             else if (!fontFamily.hasSubFamily(boldTypoSubfamily)) {
-              LOG.debug("Cannot migrate " + family + ": subfamily " + boldTypoSubfamily
+              LOG.info("Cannot migrate " + family + ": subfamily " + boldTypoSubfamily
                         + " not found in typographic font family " + baseTypoFamily);
             }
             else {
@@ -194,8 +200,8 @@ final class FontFamilyServiceImpl extends FontFamilyService {
     private FontFamily(@NotNull String family) {this.family = family;}
 
     private void addFont(@NotNull String subFamily, @NotNull Font font) {
-      if (LOG.isDebugEnabled()) {
-        LOG.debug("Adding " + font.getName() + " as " + subFamily + " variant to " + family + " family");
+      if (VERBOSE_LOGGING) {
+        LOG.info("Adding " + font.getName() + " as " + subFamily + " variant to " + family + " family");
       }
       members.put(subFamily, font);
     }
@@ -212,8 +218,8 @@ final class FontFamilyServiceImpl extends FontFamilyService {
           Font font = e.getValue();
           int weight = getWeight(font);
           boolean isItalic = isItalic(subFamily);
-          if (LOG.isDebugEnabled()) {
-            LOG.debug(family + "(" + subFamily + "): weight=" + weight + (isItalic ? ", italic" : ""));
+          if (VERBOSE_LOGGING) {
+            LOG.info(family + "(" + subFamily + "): weight=" + weight + (isItalic ? ", italic" : ""));
           }
           (isItalic ? italicsByWeight : nonItalicsByWeight).putValue(weight, subFamily);
         }
@@ -250,9 +256,7 @@ final class FontFamilyServiceImpl extends FontFamilyService {
           else {
             Collection<String> italicSubFamilyCandidates = italicsByWeight.get(weight);
             for (String italicCandidate : italicSubFamilyCandidates) {
-              if (italicSubFamily == null
-                  // try to match by name, assuming italic variant is named by adding a suffix to the base variant
-                  || italicCandidate.startsWith(subFamily)) {
+              if (italicSubFamily == null || isMatchingItalic(subFamily, italicCandidate)) {
                 italicSubFamily = italicCandidate;
               }
             }
@@ -277,7 +281,23 @@ final class FontFamilyServiceImpl extends FontFamilyService {
 
     private static boolean isItalic(String subFamily) {
       String name = subFamily.toLowerCase(Locale.ENGLISH);
-      return name.contains("italic") || name.contains("oblique") || name.contains("inclined");
+      return ContainerUtil.exists(ITALIC_NAMES, name::contains);
+    }
+
+    private static boolean isMatchingItalic(String mainSubFamily, String italicSubFamily) {
+      String main = mainSubFamily.toLowerCase(Locale.ENGLISH);
+      String candidate = italicSubFamily.toLowerCase(Locale.ENGLISH);
+      // assuming italic variant is named by adding a suffix to the base variant
+      for (String suffix : ITALIC_NAMES) {
+        if (candidate.endsWith(suffix)) {
+          candidate = candidate.substring(0, candidate.length() - suffix.length()).trim();
+          break;
+        }
+      }
+      return candidate.equals(main) ||
+             // 'Regular' is a special case,
+             // corresponding italic variant is usually called 'Italic', not 'Regular Italic'
+             "regular".equals(main) && candidate.isEmpty();
     }
 
     private static int getWeight(Font font) {

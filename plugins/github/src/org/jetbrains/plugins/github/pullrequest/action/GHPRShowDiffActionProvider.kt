@@ -7,16 +7,16 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.AnActionExtensionProvider
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.vcs.VcsDataKeys
-import org.jetbrains.plugins.github.pullrequest.ui.changes.GHPRChangesDiffHelper
+import org.jetbrains.plugins.github.util.DiffRequestChainProducer
 
 class GHPRShowDiffActionProvider : AnActionExtensionProvider {
 
-  override fun isActive(e: AnActionEvent): Boolean = e.getData(GHPRChangesDiffHelper.DATA_KEY) != null
+  override fun isActive(e: AnActionEvent): Boolean = e.getData(DiffRequestChainProducer.DATA_KEY) != null
 
   override fun update(e: AnActionEvent) {
     val project = e.project
     val selection = e.getData(VcsDataKeys.CHANGES_SELECTION)
-    val diffHelper = e.getData(GHPRChangesDiffHelper.DATA_KEY)
+    val diffHelper = e.getData(DiffRequestChainProducer.DATA_KEY)
     e.presentation.isEnabled = project != null && selection?.isEmpty == false && diffHelper != null
   }
 
@@ -25,8 +25,8 @@ class GHPRShowDiffActionProvider : AnActionExtensionProvider {
     val selection = e.getRequiredData(VcsDataKeys.CHANGES_SELECTION)
     if (selection.isEmpty) return
 
-    val diffHelper = e.getRequiredData(GHPRChangesDiffHelper.DATA_KEY)
-    val requestChain = diffHelper.getRequestChain(selection)
+    val chainProducer = e.getRequiredData(DiffRequestChainProducer.DATA_KEY)
+    val requestChain = chainProducer.getRequestChain(selection)
     DiffManager.getInstance().showDiff(project, requestChain, DiffDialogHints.DEFAULT)
   }
 }

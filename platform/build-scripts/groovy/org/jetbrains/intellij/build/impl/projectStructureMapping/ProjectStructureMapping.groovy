@@ -44,8 +44,10 @@ class ProjectStructureMapping {
     return mapping
   }
 
-  List<String> getIncludedModules() {
-    return entries.findAll { it instanceof ModuleOutputEntry }.collect { ((ModuleOutputEntry)it).moduleName }
+  Set<String> getIncludedModules() {
+    def result = new LinkedHashSet<String>()
+    entries.findAll { it instanceof ModuleOutputEntry }.collect(result) { ((ModuleOutputEntry)it).moduleName }
+    return result
   }
 
   void generateJsonFile(File file) {

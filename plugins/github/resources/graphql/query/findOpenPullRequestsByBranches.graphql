@@ -1,0 +1,12 @@
+query($repoOwner: String!, $repoName: String!, $baseBranch: String!, $headBranch: String!) {
+  repository(owner: $repoOwner, name: $repoName) {
+    pullRequests(states: [OPEN], baseRefName: $baseBranch, headRefName: $headBranch, first: 1) {
+      pageInfo {
+        ...pageInfo
+      }
+      nodes {
+        ...pullRequestInfo
+      }
+    }
+  }
+}

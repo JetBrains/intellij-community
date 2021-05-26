@@ -196,11 +196,9 @@ public final class GitChangeUtils {
    * of the merge, so changes are reported as difference with the first revision
    * listed on the the merge that has at least some changes.
    *
-   *
-   *
-   * @param project      the project file
-   * @param root         the git root
-   * @param revisionName the name of revision (might be tag)
+   * @param project           the project file
+   * @param root              the git root
+   * @param revisionName      the name of revision (might be tag)
    * @param skipDiffsForMerge
    * @param local
    * @param revertable
@@ -225,16 +223,14 @@ public final class GitChangeUtils {
   /**
    * Parse changelist
    *
-   *
-   *
-   * @param project the project
-   * @param root    the git root
-   * @param s       the scanner for log or show command output
+   * @param project           the project
+   * @param root              the git root
+   * @param s                 the scanner for log or show command output
    * @param skipDiffsForMerge
-   * @param handler the handler that produced the output to parse. - for debugging purposes.
-   * @param local   pass {@code true} to indicate that this revision should be an editable
-   *                {@link com.intellij.openapi.vcs.changes.CurrentContentRevision}.
-   *                Pass {@code false} for
+   * @param handler           the handler that produced the output to parse. - for debugging purposes.
+   * @param local             pass {@code true} to indicate that this revision should be an editable
+   *                          {@link com.intellij.openapi.vcs.changes.CurrentContentRevision}.
+   *                          Pass {@code false} for
    * @param revertable
    * @return the parsed changelist
    * @throws VcsException if there is a problem with running git
@@ -309,7 +305,7 @@ public final class GitChangeUtils {
                                            @Nullable @NonNls String oldRevision,
                                            @Nullable @NonNls String newRevision,
                                            @Nullable Collection<? extends FilePath> dirtyPaths) throws VcsException {
-    return getDiff(project, root, oldRevision, newRevision, dirtyPaths, true);
+    return getDiff(project, root, oldRevision, newRevision, dirtyPaths, true, false);
   }
 
   @NotNull
@@ -318,23 +314,31 @@ public final class GitChangeUtils {
                                             @Nullable @NonNls String oldRevision,
                                             @Nullable @NonNls String newRevision,
                                             @Nullable Collection<? extends FilePath> dirtyPaths,
-                                            boolean detectRenames) throws VcsException {
+                                            boolean detectRenames,
+                                            boolean threeDots) throws VcsException {
     LOG.assertTrue(oldRevision != null || newRevision != null, "Both old and new revisions can't be null");
     String range;
     GitRevisionNumber newRev;
     GitRevisionNumber oldRev;
+    String dots;
+    if (threeDots) {
+      dots = "...";
+    }
+    else {
+      dots = "..";
+    }
     if (newRevision == null) { // current revision at the right
-      range = oldRevision + "..";
+      range = oldRevision + dots;
       oldRev = resolveReference(project, root, oldRevision);
       newRev = null;
     }
     else if (oldRevision == null) { // current revision at the left
-      range = ".." + newRevision;
+      range = dots + newRevision;
       oldRev = null;
       newRev = resolveReference(project, root, newRevision);
     }
     else {
-      range = oldRevision + ".." + newRevision;
+      range = oldRevision + dots + newRevision;
       oldRev = resolveReference(project, root, oldRevision);
       newRev = resolveReference(project, root, newRevision);
     }
@@ -449,6 +453,7 @@ public final class GitChangeUtils {
 
   /**
    * Calls {@code git diff} on the given range.
+   *
    * @param project
    * @param root
    * @param diffRange  range or just revision (will be compared with current working tree).
@@ -506,7 +511,20 @@ public final class GitChangeUtils {
                                            @NotNull @NonNls String newRevision,
                                            boolean detectRenames) {
     try {
-      return getDiff(repository.getProject(), repository.getRoot(), oldRevision, newRevision, null, detectRenames);
+      return getDiff(repository.getProject(), repository.getRoot(), oldRevision, newRevision, null, detectRenames, false);
+    }
+    catch (VcsException e) {
+      LOG.info("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);
+      return null;
+    }
+  }
+
+  @NotNull
+  public static Collection<Change> getThreeDotDiff(@NotNull GitRepository repository,
+                                                   @NotNull @NonNls String oldRevision,
+                                                   @NotNull @NonNls String newRevision) {
+    try {
+      return getDiff(repository.getProject(), repository.getRoot(), oldRevision, newRevision, null, true, true);
     }
     catch (VcsException e) {
       LOG.info("Couldn't collect changes between " + oldRevision + " and " + newRevision, e);

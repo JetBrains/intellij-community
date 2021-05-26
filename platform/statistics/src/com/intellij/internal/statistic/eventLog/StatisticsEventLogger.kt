@@ -4,17 +4,12 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-
-private val LOG = Logger.getInstance(StatisticsEventLogger::class.java)
-private val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
 
 interface StatisticsEventLogger {
   @Deprecated("Use StatisticsEventLogger.logAsync()", ReplaceWith("logAsync(group, eventId, isState)"))
@@ -103,15 +98,8 @@ object EmptyEventLogFilesProvider: EventLogFilesProvider {
   override fun getLogFiles(): List<EventLogFile> = emptyList()
 }
 
-fun getEventLogProviders(): List<StatisticsEventLoggerProvider> {
-  return EP_NAME.extensionsIfPointIsRegistered
-}
-
+@Deprecated("Use StatisticsEventLogProviderUtil.getEventLogProvider(String)",
+            ReplaceWith("StatisticsEventLogProviderUtil.getEventLogProvider(recorderId)"))
 fun getEventLogProvider(recorderId: String): StatisticsEventLoggerProvider {
-  if (ApplicationManager.getApplication().extensionArea.hasExtensionPoint(EP_NAME.name)) {
-    EP_NAME.findFirstSafe { it.recorderId == recorderId }?.let { return it }
-  }
-  LOG.warn("Cannot find event log provider with recorder-id=${recorderId}")
-  return EmptyStatisticsEventLoggerProvider(recorderId)
+  return StatisticsEventLogProviderUtil.getEventLogProvider(recorderId)
 }
-

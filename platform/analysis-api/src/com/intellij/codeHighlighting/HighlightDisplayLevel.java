@@ -10,11 +10,11 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.IconManager;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.ColorizeProxyIcon;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -178,84 +178,42 @@ public class HighlightDisplayLevel {
     Color getColor();
   }
 
-  private static class SingleColorIcon implements Icon, ColoredIcon {
+  @Nullable
+  private static Color getColorFromAttributes(@NotNull TextAttributesKey key) {
+    final EditorColorsManager manager = EditorColorsManager.getInstance();
+    if (manager != null) {
+      TextAttributes attributes = manager.getGlobalScheme().getAttributes(key);
+      Color stripe = attributes == null ? null : attributes.getErrorStripeColor();
+      if (stripe != null) return stripe;
+      if (attributes != null) {
+        Color effectColor = attributes.getEffectColor();
+        if (effectColor != null) {
+          return effectColor;
+        }
+        Color foregroundColor = attributes.getForegroundColor();
+        if (foregroundColor != null) {
+          return foregroundColor;
+        }
+        return attributes.getBackgroundColor();
+      }
+      return null;
+    }
+    TextAttributes defaultAttributes = key.getDefaultAttributes();
+    if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;
+    return defaultAttributes.getErrorStripeColor();
+  }
+
+  private static final class ColorizedIcon extends ColorizeProxyIcon implements ColoredIcon {
     private final TextAttributesKey myKey;
 
-    private SingleColorIcon(@NotNull TextAttributesKey key) {
+    private ColorizedIcon(@NotNull TextAttributesKey key, @NotNull Icon baseIcon) {
+      super(baseIcon);
       myKey = key;
     }
 
     @Override
-    @NotNull
-    public Color getColor() {
-      return ObjectUtils.notNull(getColorInner(), JBColor.GRAY);
-    }
-
-    @Nullable
-    private Color getColorInner() {
-      final EditorColorsManager manager = EditorColorsManager.getInstance();
-      if (manager != null) {
-        TextAttributes attributes = manager.getGlobalScheme().getAttributes(myKey);
-        Color stripe = attributes == null ? null : attributes.getErrorStripeColor();
-        if (stripe != null) return stripe;
-        if (attributes != null) {
-          Color effectColor = attributes.getEffectColor();
-          if (effectColor != null) {
-            return effectColor;
-          }
-          Color foregroundColor = attributes.getForegroundColor();
-          if (foregroundColor != null) {
-            return foregroundColor;
-          }
-          return attributes.getBackgroundColor();
-        }
-        return null;
-      }
-      TextAttributes defaultAttributes = myKey.getDefaultAttributes();
-      if (defaultAttributes == null) defaultAttributes = TextAttributes.ERASE_MARKER;
-      return defaultAttributes.getErrorStripeColor();
-    }
-
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      g.setColor(getColor());
-      int shift = JBUIScale.scale(2);
-      int size = JBUIScale.scale(10);
-      g.fillRect(x + shift, y + shift, size, size);
-    }
-
-    @Override
-    public int getIconWidth() {
-      return getEmptyIconDim();
-    }
-
-    @Override
-    public int getIconHeight() {
-      return getEmptyIconDim();
-    }
-  }
-
-  private static final class ColorizedIcon extends SingleColorIcon {
-    private final Icon baseIcon;
-
-    private ColorizedIcon(@NotNull TextAttributesKey key, @NotNull Icon baseIcon) {
-      super(key);
-      this.baseIcon = baseIcon;
-    }
-
-    @Override
-    public void paintIcon(Component c, Graphics g, int x, int y) {
-      IconManager.getInstance().colorize((Graphics2D)g, baseIcon, getColor()).paintIcon(c, g, x, y);
-    }
-
-    @Override
-    public int getIconWidth() {
-      return baseIcon.getIconWidth();
-    }
-
-    @Override
-    public int getIconHeight() {
-      return baseIcon.getIconHeight();
+    public @NotNull Color getColor() {
+      return ObjectUtils.notNull(getColorFromAttributes(myKey), JBColor.GRAY);
     }
   }
 }

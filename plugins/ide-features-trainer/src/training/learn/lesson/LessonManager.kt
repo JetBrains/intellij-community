@@ -98,6 +98,7 @@ class LessonManager {
     if (cLesson.existedFile == null) {
       clearEditor(editor)
     }
+    LearningUiManager.activeToolWindow?.scrollToTheStart()
   }
 
   fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false) {
@@ -128,9 +129,7 @@ class LessonManager {
     cLesson.pass()
     LearningUiHighlightingManager.clearHighlights()
     val learnPanel = learnPanel ?: return
-    learnPanel.setLessonPassed()
     learnPanel.makeNextButtonSelected()
-    learnPanel.updateUI()
     stopLesson()
   }
 

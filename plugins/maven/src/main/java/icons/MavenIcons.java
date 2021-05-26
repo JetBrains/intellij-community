@@ -23,6 +23,6 @@ public final class MavenIcons {
   /** 16x16 */ public static final @NotNull Icon ParentProject = load("images/parentProject.svg", -1798119235733684936L, 2);
   /** 16x16 */ public static final @NotNull Icon PluginGoal = load("images/pluginGoal.svg", -1081745147707391267L, 0);
   /** 16x16 */ public static final @NotNull Icon ProfilesClosed = load("images/profilesClosed.svg", 1840465016142959383L, 0);
-  /** 16x16 */ public static final @NotNull Icon ToolWindowMaven = load("images/toolWindowMaven.svg", 5296073372187474736L, 2);
+  /** 13x13 */ public static final @NotNull Icon ToolWindowMaven = load("images/toolWindowMaven.svg", -2995189452956938648L, 2);
   /** 16x16 */ public static final @NotNull Icon UpdateFolders = load("images/updateFolders.svg", -1969809871307978388L, 2);
 }

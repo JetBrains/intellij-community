@@ -15,7 +15,7 @@ import java.util.concurrent.CompletableFuture
  * @see com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
  */
 object FeatureUsageLogger {
-  internal var loggerProvider = getEventLogProvider("FUS")
+  internal var loggerProvider = StatisticsEventLogProviderUtil.getEventLogProvider("FUS")
   @TestOnly internal set
 
   init {

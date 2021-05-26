@@ -508,13 +508,14 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
   }
 
   private void paintHoveredComponentBackground(Graphics g) {
-    if (myHoveredComponent != null && myHoveredComponent.isEnabled() &&
-        !(myHoveredComponent instanceof MemoryUsagePanel)) {
-      Rectangle bounds = myHoveredComponent.getBounds();
-      Point point = new RelativePoint(myHoveredComponent.getParent(), bounds.getLocation()).getPoint(this);
-      g.setColor(JBUI.CurrentTheme.StatusBar.hoverBackground());
-      g.fillRect(point.x, point.y, bounds.width, bounds.height);
-    }
+    if (myHoveredComponent == null || !myHoveredComponent.isEnabled()) return;
+    if (!UIUtil.isAncestor(this, myHoveredComponent)) return;
+    if (myHoveredComponent instanceof MemoryUsagePanel) return;
+
+    Rectangle bounds = myHoveredComponent.getBounds();
+    Point point = new RelativePoint(myHoveredComponent.getParent(), bounds.getLocation()).getPoint(this);
+    g.setColor(JBUI.CurrentTheme.StatusBar.hoverBackground());
+    g.fillRect(point.x, point.y, bounds.width, bounds.height);
   }
 
   @Override

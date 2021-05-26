@@ -51,6 +51,12 @@ final class WslDistributionDescriptor {
     this(msId, msId, null, msId);
   }
 
+  WslDistributionDescriptor(@NotNull String msId,
+                            @Nullable String executablePath,
+                            @NotNull String presentableName) {
+    this(msId, msId, executablePath, presentableName);
+  }
+
   WslDistributionDescriptor(@NotNull String id,
                             @NotNull String msId,
                             @Nullable String executablePath,

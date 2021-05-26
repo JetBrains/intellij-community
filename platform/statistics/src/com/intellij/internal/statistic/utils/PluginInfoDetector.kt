@@ -93,12 +93,12 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
 enum class PluginType {
   PLATFORM, JB_BUNDLED, JB_NOT_BUNDLED, LISTED, NOT_LISTED, UNKNOWN, FROM_SOURCES, JB_UPDATED_BUNDLED;
 
-  private fun isPlatformOrJBBundled(): Boolean {
+  fun isPlatformOrJetBrainsBundled(): Boolean {
     return this == PLATFORM || this == JB_BUNDLED || this == FROM_SOURCES || this == JB_UPDATED_BUNDLED
   }
 
   fun isDevelopedByJetBrains(): Boolean {
-    return isPlatformOrJBBundled() || this == JB_NOT_BUNDLED
+    return isPlatformOrJetBrainsBundled() || this == JB_NOT_BUNDLED
   }
 
   fun isSafeToReport(): Boolean {

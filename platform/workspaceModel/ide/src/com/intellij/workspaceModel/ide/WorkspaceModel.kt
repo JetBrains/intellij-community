@@ -69,7 +69,7 @@ interface WorkspaceModel {
   companion object {
     @JvmStatic
     val isEnabled: Boolean
-      get() = Registry.`is`("ide.new.project.model")
+      get() = !Registry.`is`("ide.old.project.model")
 
     @JvmStatic
     fun getInstance(project: Project): WorkspaceModel = project.service()

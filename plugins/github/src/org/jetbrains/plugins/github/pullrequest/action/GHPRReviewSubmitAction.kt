@@ -48,16 +48,21 @@ class GHPRReviewSubmitAction : JButtonAction(StringUtil.ELLIPSIS, GithubBundle.m
 
   override fun update(e: AnActionEvent) {
     val dataProvider = e.getData(GHPRActionKeys.PULL_REQUEST_DATA_PROVIDER)
-    val reviewData = dataProvider?.reviewData
-    val details = dataProvider?.detailsData?.loadedDetails
+    if (dataProvider == null) {
+      e.presentation.isEnabledAndVisible = false
+      return
+    }
+
+    val reviewData = dataProvider.reviewData
+    val details = dataProvider.detailsData.loadedDetails
     e.presentation.isVisible = true
-    val pendingReviewFuture = reviewData?.loadPendingReview()
-    e.presentation.isEnabled = (pendingReviewFuture?.isDone ?: false) && details != null
+    val pendingReviewFuture = reviewData.loadPendingReview()
+    e.presentation.isEnabled = pendingReviewFuture.isDone && details != null
     e.presentation.putClientProperty(PROP_PREFIX, getPrefix(e.place))
 
     if (e.presentation.isEnabledAndVisible) {
       val review = try {
-        pendingReviewFuture?.getNow(null)
+        pendingReviewFuture.getNow(null)
       }
       catch (e: Exception) {
         null

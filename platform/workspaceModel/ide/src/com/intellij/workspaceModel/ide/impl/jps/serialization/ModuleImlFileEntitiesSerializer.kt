@@ -57,7 +57,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
   protected open val skipLoadingIfFileDoesNotExist
     get() = false
 
-  override fun equals(other: Any?) = (other as? ModuleImlFileEntitiesSerializer)?.modulePath == modulePath
+  override fun equals(other: Any?) = other?.javaClass == javaClass && (other as ModuleImlFileEntitiesSerializer).modulePath == modulePath
 
   override fun hashCode() = modulePath.hashCode()
 

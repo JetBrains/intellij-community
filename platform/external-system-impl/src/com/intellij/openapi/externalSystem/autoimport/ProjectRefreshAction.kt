@@ -7,6 +7,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.DefaultExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.text.NaturalComparator
@@ -15,8 +16,12 @@ import javax.swing.Icon
 class ProjectRefreshAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project ?: return
-    val projectTracker = ExternalSystemProjectTracker.getInstance(project)
-    projectTracker.scheduleProjectRefresh()
+    val projectNotificationAware = ProjectNotificationAware.getInstance(project)
+    val systemIds = projectNotificationAware.getSystemIds()
+    if (ExternalSystemUtil.confirmLoadingUntrustedProject(project, systemIds)) {
+      val projectTracker = ExternalSystemProjectTracker.getInstance(project)
+      projectTracker.scheduleProjectRefresh()
+    }
   }
 
   override fun update(e: AnActionEvent) {

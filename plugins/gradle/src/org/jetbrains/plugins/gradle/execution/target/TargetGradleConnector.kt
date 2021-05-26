@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.target
 
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
-import com.intellij.util.PathMapper
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import org.gradle.internal.time.Time
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
@@ -14,11 +13,10 @@ import java.io.File
 import java.net.URI
 import java.util.concurrent.TimeUnit
 
-class TargetGradleConnector(environmentConfiguration: TargetEnvironmentConfiguration,
-                            targetPathMapper: PathMapper?,
+class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentConfigurationProvider,
                             taskId: ExternalSystemTaskId?,
                             taskListener: ExternalSystemTaskNotificationListener?) : GradleConnector(), ProjectConnectionCloseListener {
-  private val connectionFactory: ConnectionFactory = TargetConnectionFactory(environmentConfiguration, targetPathMapper, taskId, taskListener)
+  private val connectionFactory: ConnectionFactory = TargetConnectionFactory(environmentConfigurationProvider, taskId, taskListener)
   private val distributionFactory: DistributionFactory = DistributionFactory(Time.clock())
   private var distribution: Distribution? = null
   private val connections = mutableListOf<TargetProjectConnection>()

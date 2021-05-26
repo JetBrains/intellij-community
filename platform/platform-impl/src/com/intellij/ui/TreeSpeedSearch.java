@@ -72,7 +72,11 @@ public class TreeSpeedSearch extends SpeedSearchBase<JTree> {
 
   @Override
   protected int getSelectedIndex() {
+    if (myCanExpand) {
       return allPaths().indexOf(Conditions.equalTo(myComponent.getSelectionPath()));
+    }
+    int[] selectionRows = myComponent.getSelectionRows();
+    return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
 
   @NotNull

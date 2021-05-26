@@ -172,6 +172,9 @@ public abstract class DialogWrapper {
   private boolean myCrossClosesWindow = true;
   private JComponent myPreferredFocusedComponentFromPanel;
   private Computable<? extends Point> myInitialLocationCallback;
+  private final Rectangle myUserBounds = new Rectangle();
+  private boolean myUserLocationSet;
+  private boolean myUserSizeSet;
   private Dimension  myActualSize;
   private List<? extends ValidationInfo> myInfo = Collections.emptyList();
   private @Nullable DoNotAskOption myDoNotAsk;
@@ -1464,23 +1467,8 @@ public abstract class DialogWrapper {
    */
   @Nullable
   public Dimension getInitialSize() {
-    if (SystemInfo.isLinux) {
-      //Temporary workaround for IDEA-253643
-      return null;
-    }
-    List<JTable> tables = UIUtil.findComponentsOfType(getContentPanel(), JTable.class);
-    if (!tables.isEmpty()) {
-      Dimension size = getContentPanel().getPreferredSize();
-      for (JTable table : tables) {
-        Dimension tablePreferredSize = table.getPreferredSize();
-        size.width = Math.max(size.width, tablePreferredSize.width);
-        size.height = Math.max(size.height, size.height - table.getParent().getHeight() + tablePreferredSize.height);
-      }
-      size.width = Math.min(1000, Math.max(600, size.width));
-      size.height = Math.min(800, size.height);
-      return size;
-    }
-    return new Dimension(400, 0);
+    if (myUserSizeSet) return myUserBounds.getSize();
+    return null;
   }
 
   public Dimension getPreferredSize() {
@@ -1599,6 +1587,8 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
    * @see JDialog#setSize
    */
   public void setSize(int width, int height) {
+    myUserBounds.setSize(width, height);
+    myUserSizeSet = true;
     myPeer.setSize(width, height);
   }
 
@@ -1639,6 +1629,8 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
    * @see JDialog#setLocation(Point)
    */
   public void setLocation(@NotNull Point p) {
+    myUserBounds.setLocation(p);
+    myUserLocationSet = true;
     myPeer.setLocation(p);
   }
 
@@ -1648,6 +1640,8 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
    * @see JDialog#setLocation(int, int)
    */
   public void setLocation(int x, int y) {
+    myUserBounds.setLocation(x, y);
+    myUserLocationSet = true;
     myPeer.setLocation(x, y);
   }
 
@@ -1714,7 +1708,11 @@ protected final void setButtonsAlignment(@MagicConstant(intValues = {SwingConsta
    */
   @Nullable
   public Point getInitialLocation() {
-    return myInitialLocationCallback == null ? null : myInitialLocationCallback.compute();
+    return myInitialLocationCallback != null
+           ? myInitialLocationCallback.compute()
+           : myUserLocationSet
+             ? myUserBounds.getLocation()
+             : null;
   }
 
   public void setInitialLocationCallback(@NotNull Computable<? extends Point> callback) {

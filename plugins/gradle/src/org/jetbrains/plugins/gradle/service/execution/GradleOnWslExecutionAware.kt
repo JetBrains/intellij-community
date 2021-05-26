@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.execution
 
+import com.intellij.execution.target.HostPort
 import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslDistributionManager
@@ -10,9 +11,12 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTask
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
 import com.intellij.openapi.project.Project
 import com.intellij.util.PathMapper
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
   override fun prepareExecution(
     task: ExternalSystemTask,
@@ -23,21 +27,24 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
   ) {
   }
 
-  override fun getEnvironmentConfiguration(runConfiguration: ExternalSystemRunConfiguration,
-                                           taskNotificationListener: ExternalSystemTaskNotificationListener,
-                                           project: Project): TargetEnvironmentConfiguration? {
+  override fun getEnvironmentConfigurationProvider(runConfiguration: ExternalSystemRunConfiguration,
+                                                   project: Project): TargetEnvironmentConfigurationProvider? {
     val projectPath = runConfiguration.settings.externalProjectPath
-    return resolveWslEnvironment(projectPath)
+    return getWslEnvironmentProvider(projectPath)
   }
 
-  override fun getEnvironmentConfiguration(projectPath: String,
-                                           isPreviewMode: Boolean,
-                                           taskNotificationListener: ExternalSystemTaskNotificationListener,
-                                           project: Project): TargetEnvironmentConfiguration? {
-    return resolveWslEnvironment(projectPath)
+  override fun getEnvironmentConfigurationProvider(projectPath: String,
+                                                   isPreviewMode: Boolean,
+                                                   project: Project): TargetEnvironmentConfigurationProvider? {
+    return getWslEnvironmentProvider(projectPath)
   }
 
-  override fun getTargetPathMapper(projectPath: String): PathMapper? {
+  override fun isRemoteRun(runConfiguration: ExternalSystemRunConfiguration, project: Project): Boolean {
+    val projectPath = runConfiguration.settings.externalProjectPath
+    return resolveWslDistribution(projectPath) != null
+  }
+
+  private fun getTargetPathMapper(projectPath: String): PathMapper? {
     val wslDistribution = resolveWslDistribution(projectPath) ?: return null
     return object : PathMapper {
       override fun isEmpty(): Boolean = false
@@ -49,9 +56,15 @@ class GradleOnWslExecutionAware : ExternalSystemExecutionAware {
     }
   }
 
-  private fun resolveWslEnvironment(path: String): TargetEnvironmentConfiguration? {
+  private fun getWslEnvironmentProvider(path: String): GradleServerConfigurationProvider? {
     val wslDistribution = resolveWslDistribution(path) ?: return null
-    return WslTargetEnvironmentConfiguration(wslDistribution)
+    return object : GradleServerConfigurationProvider {
+      override val environmentConfiguration = WslTargetEnvironmentConfiguration(wslDistribution)
+      override val pathMapper = getTargetPathMapper(path)
+      override fun getServerBindingAddress(targetEnvironmentConfiguration: TargetEnvironmentConfiguration): HostPort {
+        return HostPort(wslDistribution.wslIp, 0)
+      }
+    }
   }
 
   private fun resolveWslDistribution(path: String): WSLDistribution? {

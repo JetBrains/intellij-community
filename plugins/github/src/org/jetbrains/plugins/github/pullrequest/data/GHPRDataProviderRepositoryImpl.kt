@@ -12,7 +12,7 @@ import org.jetbrains.plugins.github.api.data.GHIssueComment
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReview
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
-import org.jetbrains.plugins.github.pullrequest.GHPRDiffControllerImpl
+import org.jetbrains.plugins.github.pullrequest.GHPRDiffRequestModelImpl
 import org.jetbrains.plugins.github.pullrequest.data.provider.*
 import org.jetbrains.plugins.github.pullrequest.data.service.*
 import org.jetbrains.plugins.github.util.DisposalCountingHolder
@@ -125,7 +125,7 @@ internal class GHPRDataProviderRepositoryImpl(private val detailsService: GHPRDe
     })
 
     return GHPRDataProviderImpl(id, detailsData, stateData, changesData, commentsData, reviewData, timelineLoaderHolder,
-                                GHPRDiffControllerImpl())
+                                GHPRDiffRequestModelImpl())
   }
 
   override fun addDetailsLoadedListener(disposable: Disposable, listener: (GHPullRequest) -> Unit) {

@@ -103,8 +103,8 @@ object EventFields {
    * @param regexpRef reference to global regexp, e.g "integer" for "{regexp#integer}"
    */
   @JvmStatic
-  fun StringListValidatedByRegexp(@NonNls name: String, @NonNls regexpRef: String): StringEventField =
-    StringEventField.ValidatedByRegexp(name, regexpRef)
+  fun StringListValidatedByRegexp(@NonNls name: String, @NonNls regexpRef: String): StringListEventField =
+    StringListEventField.ValidatedByRegexp(name, regexpRef)
 
   /**
    * Creates a field for a list in which only a specific values are allowed
@@ -112,8 +112,8 @@ object EventFields {
    * @param allowedValues list of allowed values, e.g [ "bool", "int", "float"]
    */
   @JvmStatic
-  fun StringList(@NonNls name: String, allowedValues: List<String>): StringEventField =
-    StringEventField.ValidatedByAllowedValues(name, allowedValues)
+  fun StringList(@NonNls name: String, allowedValues: List<String>): StringListEventField =
+    StringListEventField.ValidatedByAllowedValues(name, allowedValues)
 
   @JvmStatic
   fun LongList(@NonNls name: String): LongListEventField = LongListEventField(name)

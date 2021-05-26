@@ -43,23 +43,7 @@ object Main {
   }
 
   private fun doMain() {
-    val targetHost = System.getenv("targetHost")
-    val inetAddressFactory: InetAddressFactory
-    if (targetHost.isNullOrBlank()) {
-      inetAddressFactory = InetAddressFactory()
-    }
-    else {
-      val inetAddresses = InetAddresses()
-      val inetAddress = inetAddresses.remote.find { it.hostName == targetHost || it.hostAddress == targetHost }
-      inetAddressFactory = object : InetAddressFactory() {
-        override fun getLocalBindingAddress(): InetAddress {
-          return inetAddress ?: super.getLocalBindingAddress()
-        }
-      }
-    }
-
-    serverConnector = TargetTcpServerConnector(DefaultExecutorFactory(), inetAddressFactory,
-                                               DaemonMessageSerializer.create(BuildActionSerializer.create()))
+    serverConnector = TargetTcpServerConnector(DaemonMessageSerializer.create(BuildActionSerializer.create()))
     incomingConnectionHandler = TargetIncomingConnectionHandler()
     val address = serverConnector.start(incomingConnectionHandler) { LOG.error("connection error") } as InetEndpoint
     println("Gradle target server hostName: ${address.candidates.first().hostName} port: ${address.port}")

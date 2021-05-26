@@ -25,7 +25,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
   : GHPRChangesProvider {
 
   override val changes = mutableListOf<Change>()
-  override val changesByCommits = mutableMapOf<GHCommit, List<Change>>()
+  override val changesByCommits = mutableMapOf<String, List<Change>>()
   override val linearHistory: Boolean
 
   private val diffDataByChange = Object2ObjectOpenCustomHashMap<Change, GHPRChangeDiffData>(object : Hash.Strategy<Change> {
@@ -104,7 +104,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
           diffDataByChange[change] = GHPRChangeDiffData.Commit(commitSha, patch.filePath, patch, cumulativePatch, fileHistory)
         }
       }
-      changesByCommits[commitWithPatches.commit] = commitChanges
+      changesByCommits[commitWithPatches.commit.oid] = commitChanges
       previousCommitSha = commitSha
     }
 
@@ -134,7 +134,7 @@ class GHPRChangesProviderImpl(private val repository: GitRepository,
       val previousCommitSha = commitWithPatches.parents.find { commitsBySha.contains(it) } ?: mergeBaseRef
       val commitSha = commitWithPatches.sha
       val commitChanges = commitWithPatches.commitPatches.map { createChangeFromPatch(previousCommitSha, commitSha, it) }
-      changesByCommits[commitWithPatches.commit] = commitChanges
+      changesByCommits[commitWithPatches.commit.oid] = commitChanges
     }
 
     for (patch in commitsBySha.getValue(lastCommit.oid).cumulativePatches) {

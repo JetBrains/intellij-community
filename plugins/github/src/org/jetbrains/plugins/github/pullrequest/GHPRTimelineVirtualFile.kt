@@ -10,6 +10,7 @@ import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.Icon
 import kotlin.properties.Delegates.observable
 
+@Suppress("EqualsOrHashCode")
 internal class GHPRTimelineVirtualFile(fileManagerId: String,
                                        project: Project,
                                        repository: GHRepositoryCoordinates,

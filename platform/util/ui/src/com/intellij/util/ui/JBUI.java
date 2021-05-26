@@ -25,7 +25,10 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
+import java.awt.font.TextAttribute;
 import java.lang.ref.WeakReference;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
@@ -393,6 +396,36 @@ public class JBUI {
       @NotNull
       public static Color hoverSeparatorColor() {
         return JBColor.namedColor("ActionButton.hoverSeparatorColor", new JBColor(Gray.xB3, Gray.x6B));
+      }
+    }
+
+    public static final class ActionsList {
+      public static final Color MNEMONIC_FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
+
+      @NotNull
+      public static Insets numberMnemonicInsets() {
+        return insets("ActionsList.mnemonicsBorderInsets", insets(0, 8, 1, 6));
+      }
+
+      @NotNull
+      public static Insets cellPadding() {
+        return insets("ActionsList.cellBorderInsets", insets(1, 12, 1, 12));
+      }
+
+      @NotNull
+      public static int elementIconGap() {
+        return new JBValue.UIInteger("ActionsList.icon.gap", scale(8)).get();
+      }
+
+      @NotNull
+      public static Font applyStylesForNumberMnemonic(Font font) {
+        if (SystemInfo.isWindows) {
+          Map<TextAttribute, Object> attributes = new HashMap<>(font.getAttributes());
+          attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+          return font.deriveFont(attributes);
+        }
+
+        return font;
       }
     }
 

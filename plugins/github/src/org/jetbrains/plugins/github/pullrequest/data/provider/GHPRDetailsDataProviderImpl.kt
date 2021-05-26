@@ -62,17 +62,14 @@ class GHPRDetailsDataProviderImpl(private val detailsService: GHPRDetailsService
 
   override fun adjustReviewers(indicator: ProgressIndicator,
                                delta: CollectionDelta<GHPullRequestRequestedReviewer>): CompletableFuture<Unit> {
-    indicator.text = GithubBundle.message("pull.request.details.adjusting.reviewers")
     return detailsService.adjustReviewers(indicator, pullRequestId, delta).notify()
   }
 
   override fun adjustAssignees(indicator: ProgressIndicator, delta: CollectionDelta<GHUser>): CompletableFuture<Unit> {
-    indicator.text = GithubBundle.message("pull.request.details.adjusting.assignees")
     return detailsService.adjustAssignees(indicator, pullRequestId, delta).notify()
   }
 
   override fun adjustLabels(indicator: ProgressIndicator, delta: CollectionDelta<GHLabel>): CompletableFuture<Unit> {
-    indicator.text = GithubBundle.message("pull.request.details.adjusting.labels")
     return detailsService.adjustLabels(indicator, pullRequestId, delta).notify()
   }
 

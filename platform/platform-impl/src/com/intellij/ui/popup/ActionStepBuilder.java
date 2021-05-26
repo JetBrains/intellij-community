@@ -74,7 +74,8 @@ class ActionStepBuilder {
     appendActionsFromGroup(actionGroup);
 
     if (myListModel.isEmpty()) {
-      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, null, false, null, null));
+      myListModel.add(new PopupFactoryImpl.ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, myShowNumbers, null,
+                                                      false, null, null, false, null, null));
     }
   }
 
@@ -133,15 +134,16 @@ class ActionStepBuilder {
     boolean enabled = presentation.isEnabled();
     if ((myShowDisabled || enabled) && presentation.isVisible()) {
       String text = presentation.getText();
+      Character mnemonic = null;
       if (myShowNumbers) {
         if (myCurrentNumber < 9) {
-          text = "&" + (myCurrentNumber + 1) + ". " + text;
+          mnemonic = Character.forDigit(myCurrentNumber + 1, 10);
         }
         else if (myCurrentNumber == 9) {
-          text = "&" + 0 + ". " + text;
+          mnemonic = '0';
         }
         else if (myUseAlphaAsNumbers) {
-          text = "&" + (char)('A' + myCurrentNumber - 10) + ". " + text;
+          mnemonic = (char)('A' + myCurrentNumber - 10);
         }
         myCurrentNumber++;
       }
@@ -181,7 +183,7 @@ class ActionStepBuilder {
       boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
       assert text != null : action + " has no presentation";
       myListModel.add(
-        new PopupFactoryImpl.ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
+        new PopupFactoryImpl.ActionItem(action, text, mnemonic, myShowNumbers, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
                                         enabled, icon, selectedIcon, prependSeparator, mySeparatorText,
                                         presentation.getClientProperty(Presentation.PROP_VALUE)));
       myPrependWithSeparator = false;

@@ -6,17 +6,21 @@ import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
 interface GHPRToolWindowTabComponentController {
 
-  fun createPullRequest()
+  fun createPullRequest(requestFocus: Boolean = true)
 
-  fun viewList()
+  fun resetNewPullRequestView()
+
+  fun viewList(requestFocus: Boolean = true)
 
   fun refreshList()
 
-  fun viewPullRequest(id: GHPRIdentifier, onShown: ((GHPRViewComponentController?) -> Unit)? = null)
+  fun viewPullRequest(id: GHPRIdentifier, requestFocus: Boolean = true, onShown: ((GHPRViewComponentController?) -> Unit)? = null)
 
   fun openPullRequestTimeline(id: GHPRIdentifier, requestFocus: Boolean)
 
   fun openPullRequestDiff(id: GHPRIdentifier, requestFocus: Boolean)
+
+  fun openNewPullRequestDiff(requestFocus: Boolean)
 
   companion object {
     val KEY = Key.create<GHPRToolWindowTabComponentController>("Github.PullRequests.Toolwindow.Controller")

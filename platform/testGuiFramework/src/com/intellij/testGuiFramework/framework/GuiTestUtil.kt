@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.framework
 
 import com.intellij.diagnostic.MessagePool
@@ -111,10 +111,7 @@ object GuiTestUtil {
   val bundledJdkLocation: String
     get() {
       val bundled = Path.of(PathManager.getBundledRuntimePath())
-      if (Files.isDirectory(bundled)) {
-        return (if (SystemInfo.isMac) bundled.resolve("Contents/Home") else bundled).toString()
-      }
-      return SystemProperties.getJavaHome()
+      if (Files.isDirectory(bundled)) return bundled.toString() else return SystemProperties.getJavaHome()
     }
 
   fun failIfIdeHasFatalErrors() {

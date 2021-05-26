@@ -204,7 +204,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
     else {
       for (BuildAction<List<Runnable>> buildAction : buildActions) {
-        addFetchedModelActions.addAll(controller.run(Collections.singleton(buildAction)));
+        addFetchedModelActions.add(buildAction.execute(controller));
       }
     }
 

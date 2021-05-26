@@ -7,13 +7,14 @@ import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.codereview.commits.CommitNodeComponent
 import com.intellij.util.ui.components.BorderLayoutPanel
+import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.graph.DefaultColorGenerator
 import org.jetbrains.plugins.github.api.data.GHCommit
 import java.awt.Component
 import javax.swing.JList
 import javax.swing.ListCellRenderer
 
-class GHPRCommitsListCellRenderer : ListCellRenderer<GHCommit> {
+class GHPRCommitsListCellRenderer : ListCellRenderer<VcsCommitMetadata> {
 
   private val nodeComponent = CommitNodeComponent().apply {
     foreground = DefaultColorGenerator().getColor(1)
@@ -21,13 +22,13 @@ class GHPRCommitsListCellRenderer : ListCellRenderer<GHCommit> {
   private val messageComponent = SimpleColoredComponent()
   val panel = BorderLayoutPanel().addToLeft(nodeComponent).addToCenter(messageComponent)
 
-  override fun getListCellRendererComponent(list: JList<out GHCommit>,
-                                            value: GHCommit?,
+  override fun getListCellRendererComponent(list: JList<out VcsCommitMetadata>,
+                                            value: VcsCommitMetadata?,
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
     messageComponent.clear()
-    messageComponent.append(value?.messageHeadline.orEmpty(),
+    messageComponent.append(value?.subject.orEmpty(),
                             SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, UIUtil.getListForeground(isSelected, cellHasFocus)))
     SpeedSearchUtil.applySpeedSearchHighlighting(list, messageComponent, true, isSelected)
 

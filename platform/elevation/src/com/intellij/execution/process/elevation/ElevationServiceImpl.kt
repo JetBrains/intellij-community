@@ -24,23 +24,21 @@ import kotlin.coroutines.EmptyCoroutineContext
 class ElevationServiceImpl : ElevationService, Disposable {
   private val coroutineScope = CoroutineScope(EmptyCoroutineContext)
 
-  private val connectionManager = run {
+  private val connectionManager = ProcessMediatorConnectionManager {
     val clientBuilder = ProcessMediatorClient.Builder(coroutineScope, ElevationSettings.getInstance().quotaOptions)
-    val daemonLauncher = ElevationDaemonProcessLauncher(clientBuilder)
 
-    ProcessMediatorConnectionManager {
-      val debug = false
-      if (debug) ProcessMediatorConnection.startInProcessServer(coroutineScope, clientBuilder = clientBuilder)
-      else daemonLauncher.launchWithProgress(ElevationBundle.message("progress.title.starting.elevation.daemon"))
-    }.apply {
-      ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
-        override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {
-          adjustQuota(newValue)
-        }
-      })
-    }.also {
-      Disposer.register(this, it)
-    }
+    val debug = false
+    if (debug) ProcessMediatorConnection.startInProcessServer(coroutineScope, clientBuilder = clientBuilder)
+    else ElevationDaemonProcessLauncher(clientBuilder)
+      .launchWithProgress(ElevationBundle.message("progress.title.starting.elevation.daemon"))
+  }.apply {
+    ElevationSettings.Listener.TOPIC.subscribe(this, object : ElevationSettings.Listener {
+      override fun onDaemonQuotaOptionsChanged(oldValue: QuotaOptions, newValue: QuotaOptions) {
+        adjustQuota(newValue)
+      }
+    })
+  }.also {
+    Disposer.register(this, it)
   }
 
   override fun authorizeService() {

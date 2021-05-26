@@ -69,7 +69,7 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     return createDataForSource(editor, offset, source);
   }
 
-  private @NotNull GotoData createDataForSource(@NotNull Editor editor, int offset, PsiElement source) {
+  protected @NotNull GotoData createDataForSource(@NotNull Editor editor, int offset, PsiElement source) {
     final PsiElement[] targets = findTargets(editor, offset, source);
     if (targets == null) {
       //canceled search

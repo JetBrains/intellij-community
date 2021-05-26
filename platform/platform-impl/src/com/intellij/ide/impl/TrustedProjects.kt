@@ -3,7 +3,6 @@
 
 package com.intellij.ide.impl
 
-import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.TrustedCheckResult.NotTrusted
 import com.intellij.ide.impl.TrustedCheckResult.Trusted
@@ -19,40 +18,21 @@ import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
-import org.jetbrains.annotations.Nls
 import java.nio.file.Path
 import java.nio.file.Paths
 
-fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String): OpenUntrustedProjectChoice {
+fun confirmOpeningUntrustedProject(
+  virtualFile: VirtualFile,
+  createDialog: () -> MessageDialogBuilder.YesNoCancel
+): OpenUntrustedProjectChoice {
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
-  val trustedCheckResult = isProjectTrusted(projectDir.toNioPath())
+  val trustedCheckResult = isProjectImplicitlyTrusted(projectDir.toNioPath())
   if (trustedCheckResult is Trusted) {
     return OpenUntrustedProjectChoice.IMPORT
   }
 
-  val url = (trustedCheckResult as NotTrusted).url
-  val origin = if (url == null) null else getOriginFromUrl(url)?.host
-  val dontAskAgain = if (origin != null) {
-    object : DialogWrapper.DoNotAskOption.Adapter() {
-      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
-        if (isSelected && exitCode == Messages.YES) {
-          service<TrustedHostsSettings>().setHostTrusted(origin, true)
-        }
-      }
-
-      override fun getDoNotShowMessage(): String {
-        return IdeBundle.message("untrusted.project.warning.trust.host.checkbox", origin)
-      }
-    }
-  }
-  else null
-
-  val choice = MessageDialogBuilder.yesNoCancel(title = IdeBundle.message("untrusted.project.warning.title", name),
-                                                message = IdeBundle.message("untrusted.project.open.warning.text", name))
-    .yesText(IdeBundle.message("untrusted.project.open.warning.button.import"))
-    .noText(IdeBundle.message("untrusted.project.open.warning.button.open.without.import"))
-    .cancelText(CommonBundle.getCancelButtonText())
-    .doNotAsk(dontAskAgain)
+  val choice = createDialog()
+    .doNotAsk(createDoNotAskOptionForHost(trustedCheckResult))
     .asWarning()
     .show(project = null)
 
@@ -67,24 +47,16 @@ fun confirmOpeningUntrustedProject(virtualFile: VirtualFile, name: @Nls String):
   }
 }
 
-fun confirmImportingUntrustedProject(project: Project,
-                                     @Nls buildSystemName: String,
-                                     @Nls yesButtonText: String,
-                                     @Nls noButtonText: String): Boolean {
-  val projectDir = project.basePath?.let { Paths.get(it) }
-  val trustedCheckResult = isProjectTrusted(projectDir)
+fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> MessageDialogBuilder.YesNo): Boolean {
+  val trustedCheckResult = isProjectImplicitlyTrusted(project)
   if (trustedCheckResult is Trusted) {
     project.setTrusted(true)
     return true
   }
 
-  val answer = MessageDialogBuilder.yesNo(title = IdeBundle.message("untrusted.project.import.warning.title", buildSystemName),
-                                          message = IdeBundle.message("untrusted.project.import.warning.text", buildSystemName))
-    .yesText(yesButtonText)
-    .noText(noButtonText)
+  val answer = createDialog()
     .asWarning()
     .ask(project)
-
   project.setTrusted(answer)
   return answer
 }
@@ -99,11 +71,48 @@ fun Project.isTrusted() = this.service<TrustedProjectSettings>().trustedState ==
 
 fun Project.getTrustedState() = this.service<TrustedProjectSettings>().trustedState
 
+fun Project.getExplicitTrustedStateOrByHostAndLocation(): ThreeState {
+  val explicit = getTrustedState()
+  if (explicit != ThreeState.UNSURE) return explicit
+
+  return if (isProjectImplicitlyTrusted(this) is Trusted) {
+    ThreeState.YES
+  }
+  else {
+    ThreeState.UNSURE
+  }
+}
+
 fun Project.setTrusted(value: Boolean) {
   this.service<TrustedProjectSettings>().trustedState = ThreeState.fromBoolean(value)
   if(value) {
     ApplicationManager.getApplication().messageBus.syncPublisher(TrustChangeNotifier.TOPIC).projectTrusted(this)
   }
+}
+
+fun createDoNotAskOptionForHost(project: Project): DialogWrapper.DoNotAskOption? {
+  return createDoNotAskOptionForHost(isProjectImplicitlyTrusted(project))
+}
+
+private fun createDoNotAskOptionForHost(trustedCheckResult: TrustedCheckResult): DialogWrapper.DoNotAskOption? {
+  if (trustedCheckResult !is NotTrusted) return null
+
+  val url = trustedCheckResult.url
+  val origin = if (url == null) null else getOriginFromUrl(url)?.host
+  return if (origin != null) {
+    object : DialogWrapper.DoNotAskOption.Adapter() {
+      override fun rememberChoice(isSelected: Boolean, exitCode: Int) {
+        if (isSelected && exitCode == Messages.YES) {
+          service<TrustedHostsSettings>().setHostTrusted(origin, true)
+        }
+      }
+
+      override fun getDoNotShowMessage(): String {
+        return IdeBundle.message("untrusted.project.warning.trust.host.checkbox", origin)
+      }
+    }
+  }
+  else null
 }
 
 private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
@@ -115,7 +124,9 @@ private sealed class TrustedCheckResult {
   class NotTrusted(val url: String?): TrustedCheckResult()
 }
 
-private fun isProjectTrusted(projectDir: Path?): TrustedCheckResult {
+private fun isProjectImplicitlyTrusted(project: Project): TrustedCheckResult = isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) })
+
+private fun isProjectImplicitlyTrusted(projectDir: Path?): TrustedCheckResult {
   if (isTrustedCheckDisabled()) {
     return Trusted
   }
@@ -136,6 +147,9 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
   class State : BaseState() {
     @get:Attribute
     var isTrusted by enum(ThreeState.UNSURE)
+
+    @get:Attribute
+    var hasCheckedIfOldProject by property(false)
   }
 
   var trustedState: ThreeState
@@ -143,14 +157,20 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
     set(value) {
       state.isTrusted = value
     }
+
+  var hasCheckedIfOldProject: Boolean
+    get() = state.hasCheckedIfOldProject
+    set(value) {
+      state.hasCheckedIfOldProject = value
+    }
 }
 
 interface TrustChangeNotifier {
-  fun projectTrusted(project: Project);
+  fun projectTrusted(project: Project)
   companion object {
     @JvmField
     @Topic.AppLevel
-    val TOPIC = Topic.create("Trusted project status", TrustChangeNotifier::class.java);
+    val TOPIC = Topic.create("Trusted project status", TrustChangeNotifier::class.java)
   }
 
 }

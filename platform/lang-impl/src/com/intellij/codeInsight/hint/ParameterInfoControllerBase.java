@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.CaretEvent;
@@ -114,6 +115,10 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
                                      PsiElement parameterOwner,
                                      @NotNull ParameterInfoHandler handler,
                                      boolean showHint) {
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      Logger.getInstance(ParameterInfoControllerBase.class).error("Constructor should be called on EDT");  // DEXP-575205
+    }
+
     myProject = project;
     myEditor = editor;
 
@@ -139,6 +144,9 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
         }
       }
     };
+  }
+
+  protected void setupListeners() {
     myEditor.getCaretModel().addCaretListener(myEditorCaretListener);
 
     myEditor.getDocument().addDocumentListener(new DocumentListener() {
@@ -148,7 +156,7 @@ public abstract class ParameterInfoControllerBase extends UserDataHolderBase imp
       }
     }, this);
 
-    MessageBusConnection connection = project.getMessageBus().connect(this);
+    MessageBusConnection connection = myProject.getMessageBus().connect(this);
     connection.subscribe(ExternalParameterInfoChangesProvider.TOPIC, (e, offset) -> {
       if (e != null && (e != myEditor || myLbraceMarker.getStartOffset() != offset)) return;
       updateWhenAllCommitted();

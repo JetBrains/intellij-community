@@ -20,12 +20,12 @@ public class EventLogInternalRecorderConfig implements EventLogRecorderConfig {
 
   @Override
   public boolean isSendEnabled() {
-    return StatisticsEventLoggerKt.getEventLogProvider(myRecorderId).isSendEnabled();
+    return StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).isSendEnabled();
   }
 
   @NotNull
   @Override
   public EventLogFilesProvider getLogFilesProvider() {
-    return StatisticsEventLoggerKt.getEventLogProvider(myRecorderId).getLogFilesProvider();
+    return StatisticsEventLogProviderUtil.getEventLogProvider(myRecorderId).getLogFilesProvider();
   }
 }

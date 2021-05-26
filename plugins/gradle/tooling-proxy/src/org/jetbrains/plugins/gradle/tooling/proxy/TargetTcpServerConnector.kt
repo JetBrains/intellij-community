@@ -4,15 +4,11 @@ package org.jetbrains.plugins.gradle.tooling.proxy
 import org.gradle.api.Action
 import org.gradle.api.UncheckedIOException
 import org.gradle.internal.concurrent.CompositeStoppable
-import org.gradle.internal.concurrent.ExecutorFactory
-import org.gradle.internal.id.UUIDGenerator
 import org.gradle.internal.remote.Address
 import org.gradle.internal.remote.ConnectionAcceptor
 import org.gradle.internal.remote.internal.ConnectCompletion
 import org.gradle.internal.remote.internal.IncomingConnector
 import org.gradle.internal.remote.internal.RemoteConnection
-import org.gradle.internal.remote.internal.inet.InetAddressFactory
-import org.gradle.internal.remote.internal.inet.TcpIncomingConnector
 import org.gradle.internal.serialize.Serializer
 import org.gradle.internal.serialize.Serializers
 import org.gradle.launcher.daemon.protocol.Message
@@ -24,10 +20,8 @@ import org.slf4j.LoggerFactory
 import java.util.concurrent.locks.Lock
 import java.util.concurrent.locks.ReentrantLock
 
-class TargetTcpServerConnector(executorFactory: ExecutorFactory,
-                               inetAddressFactory: InetAddressFactory,
-                               private val serializer: Serializer<Message>) : DaemonServerConnector {
-  private val incomingConnector: IncomingConnector = TcpIncomingConnector(executorFactory, inetAddressFactory, UUIDGenerator())
+class TargetTcpServerConnector(private val serializer: Serializer<Message>) : DaemonServerConnector {
+  private val incomingConnector: IncomingConnector = TargetIncomingConnector()
   private var started = false
   private var stopped = false
   private val lifecycleLock: Lock = ReentrantLock()

@@ -8,6 +8,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryCoordinates
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
 
+@Suppress("EqualsOrHashCode")
 internal class GHPRDiffVirtualFile(fileManagerId: String,
                                    project: Project,
                                    repository: GHRepositoryCoordinates,

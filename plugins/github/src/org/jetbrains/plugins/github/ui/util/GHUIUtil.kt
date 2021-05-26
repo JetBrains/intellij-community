@@ -36,10 +36,7 @@ import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor
-import java.awt.event.ActionListener
-import java.awt.event.KeyEvent
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
+import java.awt.event.*
 import java.beans.PropertyChangeListener
 import java.util.*
 import java.util.concurrent.CompletableFuture
@@ -333,6 +330,15 @@ object GHUIUtil {
     if (repos.size <= 1) return false
     val firstServer = repos.first().serverPath
     return repos.any { it.serverPath != firstServer }
+  }
+
+  fun registerFocusActions(component: JComponent) {
+    component.registerKeyboardAction({
+                                       component.transferFocus()
+                                     }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0), JComponent.WHEN_FOCUSED)
+    component.registerKeyboardAction({
+                                       component.transferFocusBackward()
+                                     }, KeyStroke.getKeyStroke(KeyEvent.VK_TAB, InputEvent.SHIFT_DOWN_MASK), JComponent.WHEN_FOCUSED)
   }
 }
 

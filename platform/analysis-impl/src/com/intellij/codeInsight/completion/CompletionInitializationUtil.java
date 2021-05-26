@@ -138,7 +138,7 @@ public final class CompletionInitializationUtil {
     Editor hostEditor = editor instanceof EditorWindow ? ((EditorWindow)editor).getDelegate() : editor;
     OffsetMap hostMap = topLevelOffsets.getOffsets();
 
-    PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile());
+    PsiFile hostCopy = obtainFileCopy(topLevelOffsets.getFile(), noWriteLock);
     Document copyDocument = Objects.requireNonNull(hostCopy.getViewProvider().getDocument());
 
     String dummyIdentifier = initContext.getDummyIdentifier();
@@ -257,9 +257,9 @@ public final class CompletionInitializationUtil {
     return insertedElement;
   }
 
-  private static PsiFile obtainFileCopy(PsiFile file) {
+  private static PsiFile obtainFileCopy(PsiFile file, Boolean forbidCaching) {
     final VirtualFile virtualFile = file.getVirtualFile();
-    boolean mayCacheCopy = file.isPhysical() &&
+    boolean mayCacheCopy = !forbidCaching && file.isPhysical() &&
                            // we don't want to cache code fragment copies even if they appear to be physical
                            virtualFile != null && virtualFile.isInLocalFileSystem();
     if (mayCacheCopy) {
