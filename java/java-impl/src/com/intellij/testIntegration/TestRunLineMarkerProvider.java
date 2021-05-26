@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,14 +29,14 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
         if (!isTestClass((PsiClass)element)) return null;
         String url = "java:suite://" + ClassUtil.getJVMClassName((PsiClass)element);
         TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
-        return getInfo(state, true);
+        return getInfo(state, true, PsiMethodUtil.findMainInClass((PsiClass)element) != null ? 1 : 0);
       }
       if (element instanceof PsiMethod) {
         PsiClass containingClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
         if (!isTestMethod(containingClass, (PsiMethod)element)) return null;
         String url = "java:test://" + ClassUtil.getJVMClassName(containingClass) + "/" + ((PsiMethod)element).getName();
         TestStateStorage.Record state = TestStateStorage.getInstance(e.getProject()).getState(url);
-        return getInfo(state, false);
+        return getInfo(state, false, 0);
       }
     }
     return null;
@@ -53,8 +54,8 @@ public class TestRunLineMarkerProvider extends RunLineMarkerContributor {
   }
 
   @NotNull
-  private static Info getInfo(TestStateStorage.Record state, boolean isClass) {
-    return new Info(getTestStateIcon(state, isClass), ExecutorAction.getActions(1), element -> ExecutionBundle.message("run.text"));
+  private static Info getInfo(TestStateStorage.Record state, boolean isClass, int order) {
+    return new Info(getTestStateIcon(state, isClass), ExecutorAction.getActions(order), element -> ExecutionBundle.message("run.text"));
   }
 
   protected boolean isIdentifier(PsiElement e) {
