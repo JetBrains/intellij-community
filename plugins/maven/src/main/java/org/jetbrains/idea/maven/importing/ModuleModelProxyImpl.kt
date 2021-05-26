@@ -9,7 +9,7 @@ import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.containers.map2Array
-import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader.createEntitySourceForModule
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleByEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.getInstance
@@ -83,10 +83,10 @@ class ModuleModelProxyImpl(private val diff: WorkspaceEntityStorageBuilder,
     val systemIndependentPath = FileUtil.toSystemIndependentName(path)
     val modulePath = ModulePath(systemIndependentPath, null)
     val name = modulePath.moduleName
-    val source = createEntitySourceForModule(project,
-                                             virtualFileManager.fromPath(
-                                               PathUtil.getParentPath(
-                                                 systemIndependentPath)), ExternalProjectSystemRegistry.getInstance().getSourceById(
+    val source = JpsEntitySourceFactory.createEntitySourceForModule(project,
+                                                                    virtualFileManager.fromPath(
+                                                                      PathUtil.getParentPath(
+                                                                        systemIndependentPath)), ExternalProjectSystemRegistry.getInstance().getSourceById(
       ExternalProjectSystemRegistry.MAVEN_EXTERNAL_SOURCE_ID))
     val moduleEntity = diff.addEntity(ModifiableModuleEntity::class.java, source) {
       this.name = name
