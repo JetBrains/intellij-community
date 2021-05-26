@@ -156,7 +156,7 @@ public final class RedundantCastUtil {
       if (rExpr instanceof PsiTypeCastExpression) {
         PsiExpression castOperand = getInnerMostOperand(rExpr);
         if (castOperand != null && lType != null) {
-          PsiExpression expected = getOpWithExpected(castOperand, lType);
+          PsiExpression expected = getOpWithExpectedType(castOperand, lType);
           PsiType opType = expected != null ? expected.getType() : null;
           if (opType != null) {
             if (expected instanceof PsiConditionalExpression) {
@@ -893,7 +893,7 @@ public final class RedundantCastUtil {
       addIfNarrowing(typeCast, opType, expectedTypeByParent);
     }
 
-    private static PsiExpression getOpWithExpected(PsiExpression operand, PsiType expectedTypeByParent) {
+    private static PsiExpression getOpWithExpectedType(PsiExpression operand, PsiType expectedTypeByParent) {
       if (expectedTypeByParent != null && !(operand instanceof PsiFunctionalExpression)) {
         try {
           final PsiExpression initializer = (PsiExpression)LambdaUtil.copyWithExpectedType(operand, expectedTypeByParent);
