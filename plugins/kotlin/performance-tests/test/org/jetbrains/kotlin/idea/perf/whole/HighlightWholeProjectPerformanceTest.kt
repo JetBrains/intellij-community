@@ -47,6 +47,7 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
         val maxFilesPerPart = System.getProperty("files.maxFilesPerPart", "300")!!.toInt()
         val warmUpIterations = System.getProperty("iterations.warmup", "0")!!.toInt()
         val numberOfIterations = System.getProperty("iterations.number", "1")!!.toInt()
+        val clearPsiCaches = System.getProperty("caches.clearPsi", "true")!!.toBoolean()
 
         val projectSpecs = projectSpecs()
         logMessage { "projectSpecs: $projectSpecs" }
@@ -100,11 +101,9 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
 
                                     try {
                                         fixture(file).use {
-                                            measure<List<HighlightInfo>>(it.fileName, clearCaches = false) {
+                                            measure<List<HighlightInfo>>(it.fileName, clearCaches = clearPsiCaches) {
                                                 test = {
-                                                    highlight(it).also { infos ->
-                                                        assertTrue("${it.fileName} has no highlighting infos", infos.isNotEmpty())
-                                                    }
+                                                    highlight(it)
                                                 }
                                             }
                                         }
