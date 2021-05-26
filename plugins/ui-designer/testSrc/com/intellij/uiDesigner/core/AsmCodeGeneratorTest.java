@@ -14,6 +14,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.rt.execution.application.AppMainV2;
+import com.intellij.testFramework.UsefulTestCaseKt;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBTabbedPane;
@@ -276,10 +277,6 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     return findMethod(parent, methodName, params);
   }
 
-  private static void setInternal(boolean value) {
-    System.getProperties().setProperty("idea.is.internal", Boolean.toString(value));
-  }
-
   public void testCardLayout() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestCardLayout.form", "BindingTest");
     assertTrue(rootComponent.getLayout() instanceof CardLayout);
@@ -367,9 +364,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   public void testTitledBorderInternal() throws Exception {
-    setInternal(true);
+    UsefulTestCaseKt.setInternalForTest(this);
     JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
-    setInternal(false);
 
     assertTrue(panel.getBorder() instanceof TitledBorder);
     TitledBorder border = (TitledBorder) panel.getBorder();
