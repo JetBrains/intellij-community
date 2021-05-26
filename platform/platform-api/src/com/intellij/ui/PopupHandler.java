@@ -20,6 +20,10 @@ import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Function;
 
+/**
+ * Prefer {@link #installPopupMenu(JComponent, ActionGroup, String)} or {@link #installPopupMenu(JComponent, String, String)}
+ * to direct implementation if no special handing is required.
+ */
 public abstract class PopupHandler extends MouseAdapter {
 
   private static final PopupHandler EMPTY_HANDLER = new PopupHandler() {
