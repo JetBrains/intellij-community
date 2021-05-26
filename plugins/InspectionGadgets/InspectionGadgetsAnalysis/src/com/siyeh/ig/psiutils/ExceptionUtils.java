@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2016 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -271,7 +271,21 @@ public final class ExceptionUtils {
         return;
       }
       final PsiType type = exception.getType();
-      if (type instanceof PsiClassType) {
+      if (type instanceof PsiDisjunctionType) {
+        final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
+        for (PsiType disjunction : disjunctionType.getDisjunctions()) {
+          if (disjunction instanceof PsiClassType) {
+            m_exceptionsThrown.add((PsiClassType)disjunction);
+          }
+        }
+      }
+      else if (PsiType.NULL.equals(type)) {
+        final PsiElementFactory factory = JavaPsiFacade.getElementFactory(statement.getProject());
+        final PsiClassType npeType = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_NULL_POINTER_EXCEPTION,
+                                                                     statement.getResolveScope());
+        m_exceptionsThrown.add(npeType);
+      }
+      else if (type instanceof PsiClassType) {
         m_exceptionsThrown.add((PsiClassType)type);
       }
     }
