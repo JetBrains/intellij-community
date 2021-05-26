@@ -11,3 +11,4 @@ val some_foo: Foo = Foo()
 val foo: Foo = Foo()
 
 val SomeFoo: Foo = Foo()
+val foo2 = Foo()
