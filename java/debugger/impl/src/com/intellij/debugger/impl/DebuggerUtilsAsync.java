@@ -33,7 +33,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public final class DebuggerUtilsAsync {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsAsync.class);
 
-  private static boolean isAsyncEnabled() {
+  public static boolean isAsyncEnabled() {
     return Registry.is("debugger.async.jdi");
   }
 
@@ -109,6 +109,51 @@ public final class DebuggerUtilsAsync {
       return reschedule(((ArrayReferenceImpl)ref).lengthAsync());
     }
     return completedFuture(ref.length());
+  }
+
+  public static CompletableFuture<List<Location>> locationsOfLine(@NotNull ReferenceType type, int lineNumber) {
+    return locationsOfLine(type, type.virtualMachine().getDefaultStratum(), null, lineNumber);
+  }
+
+  /**
+   * Drop-in replacement for the standard jdi version, but "parallel" inside, so a lot faster when type has lots of methods
+   */
+  public static List<Location> locationsOfLineSync(@NotNull ReferenceType type, int lineNumber)
+    throws AbsentInformationException {
+    return locationsOfLineSync(type, type.virtualMachine().getDefaultStratum(), null, lineNumber);
+  }
+
+  public static CompletableFuture<List<Location>> locationsOfLine(ReferenceType type, String stratum, String sourceName, int lineNumber) {
+    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
+      return reschedule(((ReferenceTypeImpl)type).locationsOfLineAsync(stratum, sourceName, lineNumber));
+    }
+    return toCompletableFuture(() -> type.locationsOfLine(stratum, sourceName, lineNumber));
+  }
+
+  /**
+   * Drop-in replacement for the standard jdi version, but "parallel" inside, so a lot faster when type has lots of methods
+   */
+  public static List<Location> locationsOfLineSync(ReferenceType type, String stratum, String sourceName, int lineNumber)
+    throws AbsentInformationException {
+    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
+      try {
+        return ((ReferenceTypeImpl)type).locationsOfLineAsync(stratum, sourceName, lineNumber).get();
+      }
+      catch (Exception e) {
+        if (e.getCause() instanceof AbsentInformationException) {
+          throw (AbsentInformationException)e.getCause();
+        }
+        LOG.warn(e);
+      }
+    }
+    return type.locationsOfLine(stratum, sourceName, lineNumber);
+  }
+
+  public static CompletableFuture<List<Location>> allLineLocationsAsync(Method method) {
+    if (method instanceof MethodImpl && isAsyncEnabled()) {
+      return reschedule(((MethodImpl)method).allLineLocationsAsync());
+    }
+    return toCompletableFuture(() -> method.allLineLocations());
   }
 
   public static CompletableFuture<Boolean> instanceOf(@Nullable Type subType, @NotNull String superType) {
@@ -287,42 +332,27 @@ public final class DebuggerUtilsAsync {
     return completedFuture(StreamEx.empty());
   }
 
-  public static CompletableFuture<List<Location>> locationsOfLine(@NotNull ReferenceType type, int lineNumber) {
-    return locationsOfLine(type, type.virtualMachine().getDefaultStratum(), null, lineNumber);
-  }
-
-  /**
-   * Drop-in replacement for the standard jdi version, but "parallel" inside, so a lot faster when type has lots of methods
-   */
-  public static List<Location> locationsOfLineSync(@NotNull ReferenceType type, int lineNumber)
-    throws AbsentInformationException {
-    return locationsOfLineSync(type, type.virtualMachine().getDefaultStratum(), null, lineNumber);
-  }
-
-  public static CompletableFuture<List<Location>> locationsOfLine(ReferenceType type, String stratum, String sourceName, int lineNumber) {
-    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
-      return ((ReferenceTypeImpl)type).locationsOfLineAsync(stratum, sourceName, lineNumber);
+  public static CompletableFuture<byte[]> bytecodes(Method method) {
+    if (method instanceof MethodImpl && isAsyncEnabled()) {
+      return ((MethodImpl)method).bytecodesAsync();
     }
-    return toCompletableFuture(() -> type.locationsOfLine(stratum, sourceName, lineNumber));
+    return toCompletableFuture(() -> method.bytecodes());
   }
 
-  /**
-   * Drop-in replacement for the standard jdi version, but "parallel" inside, so a lot faster when type has lots of methods
-   */
-  public static List<Location> locationsOfLineSync(ReferenceType type, String stratum, String sourceName, int lineNumber)
-    throws AbsentInformationException {
+  public static CompletableFuture<byte[]> constantPool(ReferenceType type) {
     if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
-      try {
-        return ((ReferenceTypeImpl)type).locationsOfLineAsync(stratum, sourceName, lineNumber).get();
-      }
-      catch (Exception e) {
-        if (e.getCause() instanceof AbsentInformationException) {
-          throw (AbsentInformationException)e.getCause();
-        }
-        LOG.warn(e);
-      }
+      return ((ReferenceTypeImpl)type).constantPoolAsync();
     }
-    return type.locationsOfLine(stratum, sourceName, lineNumber);
+    return toCompletableFuture(() -> type.constantPool());
+  }
+
+  public static CompletableFuture<Void> setEnabled(EventRequest request, boolean value) {
+    EventRequestManager eventRequestManager = request.virtualMachine().eventRequestManager();
+    if (eventRequestManager instanceof EventRequestManagerImpl && isAsyncEnabled()) {
+      return ((EventRequestManagerImpl)eventRequestManager).setEnabledAsync(request, value);
+    }
+    request.setEnabled(value);
+    return completedFuture(null);
   }
 
   /**

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.requests;
 
 import com.intellij.debugger.JavaDebuggerBundle;
@@ -22,9 +22,12 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.sun.jdi.*;
 import com.sun.jdi.event.ClassPrepareEvent;
 import com.sun.jdi.request.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
+import java.util.function.Function;
 
 /**
  * @author lex
@@ -274,24 +277,45 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
     }
   }
 
+  private static Function<EventRequest, CompletableFuture<Void>> getEventRequestEnabler(boolean sync) {
+    if (sync) {
+      return r -> {
+        r.enable();
+        return CompletableFuture.completedFuture(null);
+      };
+    }
+    else {
+      return request -> DebuggerUtilsAsync.setEnabled(request, true);
+    }
+  }
+
   @Override
-  public void callbackOnPrepareClasses(final ClassPrepareRequestor requestor, final SourcePosition classPosition) {
+  public void callbackOnPrepareClasses(ClassPrepareRequestor requestor, SourcePosition classPosition) {
+    callbackOnPrepareClasses(requestor, classPosition, getEventRequestEnabler(true));
+  }
+
+  public CompletableFuture<Void> callbackOnPrepareClassesAsync(ClassPrepareRequestor requestor, SourcePosition classPosition) {
+    return callbackOnPrepareClasses(requestor, classPosition, getEventRequestEnabler(false));
+  }
+
+  private CompletableFuture<Void> callbackOnPrepareClasses(ClassPrepareRequestor requestor,
+                                                           SourcePosition classPosition,
+                                                           Function<EventRequest, CompletableFuture<Void>> enabler) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
 
-    if (checkReadOnly(requestor)) return;
+    if (checkReadOnly(requestor)) return CompletableFuture.completedFuture(null);
 
     List<ClassPrepareRequest> prepareRequests = myDebugProcess.getPositionManager().createPrepareRequests(requestor, classPosition);
-    if(prepareRequests.isEmpty()) {
+    if (prepareRequests.isEmpty()) {
       setInvalid(requestor, JavaDebuggerBundle.message("status.invalid.breakpoint.out.of.class"));
-      return;
+      return CompletableFuture.completedFuture(null);
     }
 
-    for (ClassPrepareRequest prepareRequest : prepareRequests) {
-      if (prepareRequest != null) {
-        registerRequest(requestor, prepareRequest);
-        prepareRequest.enable();
-      }
-    }
+    return CompletableFuture.allOf(StreamEx.of(prepareRequests)
+                                     .nonNull()
+                                     .peek(r -> registerRequest(requestor, r))
+                                     .map(enabler)
+                                     .toArray(CompletableFuture[]::new));
   }
 
   @Override
@@ -313,6 +337,14 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
 
   @Override
   public void enableRequest(EventRequest request) {
+    enableRequest(request, getEventRequestEnabler(true));
+  }
+
+  public CompletableFuture<Void> enableRequestAsync(EventRequest request) {
+    return enableRequest(request, getEventRequestEnabler(false));
+  }
+
+  private CompletableFuture<Void> enableRequest(EventRequest request, Function<EventRequest, CompletableFuture<Void>> enabler) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
     LOG.assertTrue(findRequestor(request) != null);
     try {
@@ -328,7 +360,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
           ((MethodExitRequest)request).addThreadFilter(filterThread);
         }
       }
-      request.enable();
+      return enabler.apply(request);
     } catch (InternalException e) {
       switch (e.errorCode()) {
         case JvmtiError.DUPLICATE : LOG.info(e); break;
@@ -340,6 +372,7 @@ public class RequestManagerImpl extends DebugProcessAdapterImpl implements Reque
         default: LOG.error(e);
       }
     }
+    return CompletableFuture.completedFuture(null);
   }
 
   @Override

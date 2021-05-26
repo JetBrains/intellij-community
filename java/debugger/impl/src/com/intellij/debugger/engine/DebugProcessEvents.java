@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -323,7 +324,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   public static void enableRequestWithHandler(EventRequest request, Consumer<? super Event> handler) {
     request.putProperty(REQUEST_HANDLER, handler);
-    request.enable();
+    DebuggerUtilsAsync.setEnabled(request, true);
   }
 
   private static void enableNonSuspendingRequest(EventRequest request, Consumer<? super Event> handler) {
