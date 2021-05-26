@@ -8,15 +8,19 @@ fun main(args: Array<String>) {
     uploadAggregateResults(File(args[0]))
 }
 
-internal fun uploadAggregateResults(file: File) {
-    val groupBy = file.listFiles()
+internal fun uploadAggregateResults(folder: File) {
+    val groupBy = folder.listFiles()
         .filter { it.length() > 0 && it.name.startsWith("stats-") && it.extension == "json" }
         .groupBy { it.name.replace("stats-", "").split("_")[0] }
+
+    groupBy.forEach { (n, files) ->
+        files.map(File::loadBenchmark).writeCSV(n)
+    }
 
     groupBy.forEach { (k, v) ->
         if (v.isEmpty()) return@forEach
 
-        val benchmarks = v.map { it.loadBenchmark() }
+        val benchmarks = v.map(File::loadBenchmark)
 
         benchmarks.forEach { benchmark ->
             benchmark.metrics.firstOrNull { it.metricName == "" }?.let { metric ->

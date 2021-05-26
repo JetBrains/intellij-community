@@ -45,8 +45,9 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
         val emptyProfile = System.getProperty("emptyProfile", "false")!!.toBoolean()
         val percentOfFiles = System.getProperty("files.percentOfFiles", "10")!!.toInt()
         val maxFilesPerPart = System.getProperty("files.maxFilesPerPart", "300")!!.toInt()
-        val warmUpIterations = System.getProperty("iterations.warmup", "0")!!.toInt()
-        val numberOfIterations = System.getProperty("iterations.number", "1")!!.toInt()
+        val minFileSize = System.getProperty("files.minFileSize", "300")!!.toInt()
+        val warmUpIterations = System.getProperty("iterations.warmup", "1")!!.toInt()
+        val numberOfIterations = System.getProperty("iterations.number", "3")!!.toInt()
         val clearPsiCaches = System.getProperty("caches.clearPsi", "true")!!.toBoolean()
 
         val projectSpecs = projectSpecs()
@@ -89,7 +90,12 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
 
                                 logStatValue("number of kt files", ktFiles.size)
                                 val filesToProcess =
-                                    limitedFiles(ktFiles, percentOfFiles = percentOfFiles, maxFilesPerPart = maxFilesPerPart)
+                                    limitedFiles(
+                                        ktFiles,
+                                        percentOfFiles = percentOfFiles,
+                                        maxFilesPerPart = maxFilesPerPart,
+                                        minFileSize = minFileSize
+                                    )
                                 logStatValue("limited number of kt files", filesToProcess.size)
 
                                 filesToProcess.forEach {
@@ -120,16 +126,21 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
                 }
             }
         } finally {
-            File("out").takeIf { it.exists() }?.let {
+            pathToResource("").takeIf { it.exists() }?.let {
                 logMessage { "uploadAggregateResults: ${it.absolutePath}" }
                 uploadAggregateResults(it)
             }
         }
     }
 
-    private fun limitedFiles(ktFiles: Collection<VirtualFile>, percentOfFiles: Int, maxFilesPerPart: Int): Collection<VirtualFile> {
+    private fun limitedFiles(
+        ktFiles: Collection<VirtualFile>,
+        percentOfFiles: Int,
+        maxFilesPerPart: Int,
+        minFileSize: Int
+    ): Collection<VirtualFile> {
         val sortedBySize = ktFiles
-            .filter { Files.size(it.toNioPath()) > 0 }
+            .filter { Files.size(it.toNioPath()) > minFileSize }
             .map { it to Files.size(it.toNioPath()) }.sortedByDescending { it.second }
         val numberOfFiles = minOf((sortedBySize.size * percentOfFiles) / 100, maxFilesPerPart)
 

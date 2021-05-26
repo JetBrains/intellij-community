@@ -14,19 +14,26 @@ import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.BufferedWriter
 import java.io.File
 
-internal fun List<Metric>.writeCSV(name: String, header: Array<String>) {
-    fun Metric.append(prefix: String, output: BufferedWriter) {
-        val s = "$prefix ${this.metricName}".trim()
-        output.appendLine("$s,${metricValue ?: ""},")
-        metrics?.forEach {
-            it.append(s, output)
-        }
+internal fun List<Benchmark>.writeCSV(name: String) {
+    val header = listOf("buildId", "benchmark", "name", "value", "warmUp", "timestamp")
+    fun Benchmark.append(output: BufferedWriter) {
+        val s = listOf(
+            buildId?.toString() ?: "",
+            benchmark,
+            this.name,
+            metricValue,
+            metrics.firstOrNull { it.metricName == "_value" }?.let { metric ->
+                metric.rawMetrics?.firstOrNull { it.warmUp == true && it.index == 0 }?.metricValue?.toString()
+            } ?: "",
+            buildTimestamp
+        ).joinToString()
+        output.appendLine(s)
     }
 
     val statsFile = statsFile(name, "csv")
     statsFile.bufferedWriter().use { output ->
         output.appendLine(header.joinToString())
-        forEach { it.append("$name:", output) }
+        filterNot { it.name == Stats.GEOM_MEAN }.forEach { it.append(output) }
         output.flush()
     }
 }
