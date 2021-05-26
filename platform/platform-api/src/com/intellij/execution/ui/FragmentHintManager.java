@@ -4,7 +4,10 @@ package com.intellij.execution.ui;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.EmptyAction;
+import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.actionSystem.ShortcutSet;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
@@ -21,9 +24,9 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.awt.SunToolkit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -138,7 +141,8 @@ public class FragmentHintManager {
       myHintsShownTime = System.currentTimeMillis();
       for (SettingsEditorFragment<?, ?> fragment : myFragments) {
         JComponent component = fragment.getComponent();
-        if (!SunToolkit.getContainingWindow(component).isFocused()) {
+        Window window = UIUtil.getWindow(component);
+        if (window == null || !window.isFocused()) {
           return;
         }
         if (fragment.isSelected() && fragment.getName() != null && component.getRootPane() != null) {
