@@ -442,9 +442,13 @@ public final class ClasspathPanelImpl extends JPanel implements ClasspathPanel {
     EditExistingLibraryDialog dialog = EditExistingLibraryDialog.createDialog(this, provider, library, myState.getProject(),
                                                                               presentation, getStructureConfigurableContext());
     dialog.setContextModule(getRootModel().getModule());
-    dialog.show();
-    myEntryTable.repaint();
-    getProjectStructureConfigurable().getModulesConfig().getTree().repaint();
+    if (dialog.showAndGet()) {
+      if (table == null) {
+        rootsChanged();
+      }
+      myEntryTable.repaint();
+      getProjectStructureConfigurable().getModulesConfig().getTree().repaint();
+    }
   }
 
   private void removeSelectedItems(final List<Object[]> removedRows) {
