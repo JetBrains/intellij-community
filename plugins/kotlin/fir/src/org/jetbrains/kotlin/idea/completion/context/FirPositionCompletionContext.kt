@@ -16,6 +16,11 @@ internal sealed class FirRawPositionCompletionContext {
     abstract val position: PsiElement
 }
 
+internal class FirTypeConstraintNameInWhereClausePositionContext(
+    override val position: PsiElement,
+    val typeParametersOwner: KtTypeParameterListOwner
+) : FirRawPositionCompletionContext()
+
 internal sealed class FirNameReferencePositionContext : FirRawPositionCompletionContext() {
     abstract val reference: KtSimpleNameReference
     abstract val nameExpression: KtSimpleNameExpression
@@ -35,7 +40,6 @@ internal class FirPackageDirectivePositionContext(
     override val nameExpression: KtSimpleNameExpression,
     override val explicitReceiver: KtExpression?,
 ) : FirNameReferencePositionContext()
-
 
 
 internal class FirTypeNameReferencePositionContext(
@@ -105,6 +109,10 @@ internal object FirPositionCompletionContextDetector {
                     explicitReceiver,
                 )
             }
+            parent is KtTypeConstraint -> FirTypeConstraintNameInWhereClausePositionContext(
+                position,
+                position.parentOfType()!!,
+            )
             else -> {
                 FirExpressionNameReferencePositionContext(position, reference, nameExpression, explicitReceiver)
             }
@@ -166,7 +174,10 @@ internal object FirPositionCompletionContextDetector {
                 positionContext.nameExpression,
                 action
             )
-            is FirUnknownPositionContext, is FirImportDirectivePositionContext, is FirPackageDirectivePositionContext -> {
+            is FirUnknownPositionContext,
+            is FirImportDirectivePositionContext,
+            is FirPackageDirectivePositionContext,
+            is FirTypeConstraintNameInWhereClausePositionContext -> {
                 analyse(basicContext.originalKtFile, action)
             }
         }
