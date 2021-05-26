@@ -141,7 +141,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
         val textField = textField(
           { AdvancedSettings.getString(extension.id) },
           { AdvancedSettings.setString(extension.id, it) },
-          columns = 20
+          columns = 30
         )
         AdvancedSettingControl(
           textField,
