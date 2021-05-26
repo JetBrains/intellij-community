@@ -2,5 +2,13 @@
 <body>
 Reports <code>runCatching</code> call that is immediately followed by <code>getOrThrow</code>.
 Such a call can be replaced with just <code>run</code> call.
+<p><b>Example:</b></p>
+<pre><code>
+fun foo() = runCatching { doSomething() }.getOrThrow()
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun foo() = run { doSomething() }
+</code></pre>
 </body>
 </html>
