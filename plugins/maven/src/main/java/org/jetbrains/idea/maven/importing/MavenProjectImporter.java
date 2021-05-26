@@ -92,7 +92,6 @@ public class MavenProjectImporter {
     myImportModuleGroupsRequired = importModuleGroupsRequired;
     myModelsProvider = new ModifiableModelsProviderProxyImpl(modelsProvider, myProject);
     myImportingSettings = importingSettings;
-    myModuleModel = ((ModifiableModelsProviderProxyImpl)myModelsProvider).getModuleModel();
     myDiff = ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder();
     myDummyModule = dummyModule;
   }
@@ -101,8 +100,8 @@ public class MavenProjectImporter {
   public List<MavenProjectsProcessorTask> importProject() {
     if (MavenUtil.newModelEnabled(myProject)) {
       ((ModifiableModelsProviderProxyImpl)myModelsProvider).usingDiff(myDiff);
-      myModuleModel = ((ModifiableModelsProviderProxyImpl)myModelsProvider).getModuleModel();
     }
+    myModuleModel = ((ModifiableModelsProviderProxyImpl)myModelsProvider).getModuleModel();
     return importProjectOldWay();
   }
 

@@ -13,6 +13,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 
 interface ModifiableModelsProviderProxy {
@@ -64,7 +65,15 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
     get() = ModifiableModuleModelWrapper(moduleModel)
 
   override fun commit() {
+    val modules = moduleModel.modules
+    modules.forEach {
+      (delegate.getModifiableRootModel(it) as? ModifiableRootModelBridge)?.prepareForCommit()
+    }
     delegate.commit()
+    modules.forEach {
+      (delegate.getModifiableRootModel(it) as? ModifiableRootModelBridge)?.postCommit()
+    }
+
   }
 
   override fun dispose() {
