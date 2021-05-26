@@ -272,7 +272,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
   }
 
   private fun HashMultimap<Any, Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>>.find(entity: WorkspaceEntityData<out WorkspaceEntity>,
-                                                                                                    storage: AbstractEntityStorage): Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>? {
+                                                                                               storage: AbstractEntityStorage): Pair<WorkspaceEntityData<out WorkspaceEntity>, EntityId>? {
     val possibleValues = this[entity.identificator(storage)]
     val persistentId = entity.persistentId(storage)
     return if (persistentId != null) {
@@ -562,6 +562,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
       }
 
       LOG.debug { "5) Restore references in matching ids" }
+      val parentsWithSortedChildren = mutableSetOf<Pair<EntityId, ConnectionId>>()
       for (nodeId in replaceWithMatchedEntities.values()) {
         for ((connectionId, parentId) in replaceWith.refs.getParentRefsOfChild(nodeId.asChild())) {
           if (!sourceFilter(replaceWith.entityDataByIdOrDie(parentId.id).entitySource)) {
@@ -574,6 +575,9 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
               val localChildId = replaceMap.inverse().getValue(nodeId)
 
+              if (connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+                parentsWithSortedChildren += parentId.id to connectionId
+              }
               this.refs.updateParentOfChild(connectionId, localChildId.asChild(), parentId)
             }
             continue
@@ -582,7 +586,31 @@ internal class WorkspaceEntityStorageBuilderImpl(
           val localChildId = replaceMap.inverse().getValue(nodeId)
           val localParentId = replaceMap.inverse().getValue(parentId.id)
 
+          if (connectionId.connectionType == ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY) {
+            parentsWithSortedChildren += parentId.id to connectionId
+          }
           this.refs.updateParentOfChild(connectionId, localChildId.asChild(), localParentId.asParent())
+        }
+      }
+
+      // Try to sort children
+      // At the moment we sort only one-to-abstract-many children. This behaviour can be updated or removed at all
+      parentsWithSortedChildren.forEach { (parentId, connectionId) ->
+        val remoteParentId = replaceMap.getValue(parentId)
+        val children = replaceWith.refs.getOneToAbstractManyChildren(connectionId, remoteParentId.asParent())
+                         ?.mapNotNull { replaceMap.inverse().getValue(it.id) } ?: return@forEach
+        val localChildren = this.refs.getOneToAbstractManyChildren(connectionId, parentId.asParent())?.toMutableSet() ?: return@forEach
+        val savedLocalChildren = this.refs.getOneToAbstractManyChildren(connectionId, parentId.asParent()) ?: return@forEach
+        val newChildren = mutableListOf<ChildEntityId>()
+        for (child in children) {
+          val removed = localChildren.remove(child.asChild())
+          if (removed) {
+            newChildren += child.asChild()
+          }
+        }
+        newChildren.addAll(localChildren)
+        if (savedLocalChildren != newChildren) {
+          this.refs.updateChildrenOfParent(connectionId, parentId.asParent(), newChildren)
         }
       }
 
