@@ -71,7 +71,7 @@ class JavaToKotlinInlineHandler : AbstractCrossLanguageInlineHandler() {
 
         val unwrappedElement = unwrapElement(unwrappedUsage, referenced)
         val replacementStrategy = referenced.findUsageReplacementStrategy(withValidation = false) ?: kotlin.run {
-            LOG.error("Can't find strategy for ${unwrappedElement.getKotlinFqName()} => ${unwrappedElement.text}")
+            LOG.error("Can't find strategy for ${unwrappedElement::class} (${unwrappedElement.getKotlinFqName()}) => ${unwrappedElement.text}")
             return
         }
 
