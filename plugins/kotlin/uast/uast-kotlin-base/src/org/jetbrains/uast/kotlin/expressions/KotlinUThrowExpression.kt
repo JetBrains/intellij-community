@@ -7,8 +7,10 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UThrowExpression
 
 class KotlinUThrowExpression(
-        override val sourcePsi: KtThrowExpression,
-        givenParent: UElement?
+    override val sourcePsi: KtThrowExpression,
+    givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UThrowExpression, KotlinUElementWithType {
-    override val thrownExpression by lz { KotlinConverter.convertOrEmpty(sourcePsi.thrownExpression, this) }
+    override val thrownExpression by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.thrownExpression, this)
+    }
 }
