@@ -18,6 +18,7 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.concurrent.FutureTask;
 
@@ -25,6 +26,7 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
 
   private static final Logger LOG = Logger.getInstance(RearrangeCodeProcessor.class);
   private SelectionModel mySelectionModel;
+  private final Collection<TextRange> myRanges = new ArrayList<>();
 
   public RearrangeCodeProcessor(@NotNull AbstractLayoutCodeProcessor previousProcessor) {
     super(previousProcessor, CodeInsightBundle.message("command.rearrange.code"), getProgressText());
@@ -42,6 +44,16 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
 
   public RearrangeCodeProcessor(@NotNull PsiFile file) {
     super(file.getProject(), file, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
+  }
+
+  @SuppressWarnings("unused") // Used in Rider
+  public RearrangeCodeProcessor(@NotNull PsiFile file, TextRange[] ranges) {
+    super(file.getProject(), file, getProgressText(), CodeInsightBundle.message("command.rearrange.code"), false);
+    for (TextRange range : ranges) {
+      if (range != null) {
+        myRanges.add(range);
+      }
+    }
   }
 
   @SuppressWarnings("unused") // Required for compatibility with external plugins.
@@ -110,7 +122,7 @@ public class RearrangeCodeProcessor extends AbstractLayoutCodeProcessor {
       return VcsFacade.getInstance().getChangedTextRanges(myProject, file);
     }
 
-    return new SmartList<>(file.getTextRange());
+    return !myRanges.isEmpty() ? myRanges : new SmartList<>(file.getTextRange());
   }
 
   public static @NlsContexts.ProgressText String getProgressText() {
