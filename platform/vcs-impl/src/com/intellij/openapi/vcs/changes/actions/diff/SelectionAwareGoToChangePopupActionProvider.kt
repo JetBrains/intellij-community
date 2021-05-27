@@ -3,10 +3,8 @@ package com.intellij.openapi.vcs.changes.actions.diff
 
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.vcs.FilePath
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import javax.swing.tree.DefaultMutableTreeNode
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 
 abstract class SelectionAwareGoToChangePopupActionProvider {
   abstract fun getActualProducers(): List<@JvmWildcard DiffRequestProducer>
@@ -16,17 +14,16 @@ abstract class SelectionAwareGoToChangePopupActionProvider {
   abstract fun getSelectedFilePath(): FilePath?
 
   fun createGoToChangeAction(): AnAction {
-    return object : SimpleGoToChangePopupAction(getActualProducers()) {
-      override fun onSelected(node: ChangesBrowserNode<*>?) {
-        if (node is GenericChangesBrowserNode) {
-          selectFilePath(node.filePath)
-        }
-      }
+    val producers = getActualProducers().map {
+      it as? ChangeDiffRequestChain.Producer
+      ?: throw IllegalArgumentException("Only " + ChangeDiffRequestChain.Producer::class.java + " are supported implementations")
+    }
+    val selectedFilePath = getSelectedFilePath()
+    val selectedIndex = producers.indexOfFirst { it.filePath == selectedFilePath }
 
-      override fun initialSelection(): Condition<in DefaultMutableTreeNode> {
-        return Condition { node ->
-          node is GenericChangesBrowserNode && node.filePath == getSelectedFilePath()
-        }
+    return object : SimpleGoToChangePopupAction(producers, selectedIndex) {
+      override fun onSelected(selectedIndex: Int?) {
+        if (selectedIndex != null) selectFilePath(producers[selectedIndex].filePath)
       }
     }
   }

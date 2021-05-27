@@ -2,14 +2,12 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
-import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -34,32 +32,29 @@ import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.Comparator.comparing;
 
 public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
-  private final @NotNull List<? extends DiffRequestProducer> myProducers;
+  private final @NotNull List<? extends PresentableChange> myChanges;
+  private final int myInitialSelection;
 
-  public SimpleGoToChangePopupAction(@NotNull List<? extends DiffRequestProducer> producers) {
-    myProducers = producers;
+  public SimpleGoToChangePopupAction(@NotNull List<? extends PresentableChange> changes, int initialSelection) {
+    myChanges = changes;
+    myInitialSelection = initialSelection;
   }
 
   @Override
   protected boolean canNavigate() {
-    return myProducers.size() > 1;
+    return myChanges.size() > 1;
   }
 
   @NotNull
   protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
     MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = new MultiMap<>();
-    List<? extends DiffRequestProducer> producers = myProducers;
 
-    for (int i = 0; i < producers.size(); i++) {
-      PresentableChange producer = ObjectUtils.tryCast(producers.get(i), PresentableChange.class);
-      if (producer == null) {
-        throw new IllegalArgumentException(
-          "Only " + PresentableChange.class + " supported as " + DiffRequestProducer.class + " implementations");
-      }
+    for (int i = 0; i < myChanges.size(); i++) {
+      PresentableChange change = myChanges.get(i);
 
-      FilePath filePath = producer.getFilePath();
-      FileStatus fileStatus = producer.getFileStatus();
-      ChangesBrowserNode.Tag tag = producer.getTag();
+      FilePath filePath = change.getFilePath();
+      FileStatus fileStatus = change.getFileStatus();
+      ChangesBrowserNode.Tag tag = change.getTag();
       groups.putValue(tag, new GenericChangesBrowserNode(filePath, fileStatus, i));
     }
 
@@ -70,10 +65,7 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
     return builder.build();
   }
 
-  protected abstract void onSelected(@Nullable ChangesBrowserNode object);
-
-  @Nullable
-  protected abstract Condition<? super DefaultMutableTreeNode> initialSelection();
+  protected abstract void onSelected(@Nullable Integer selectedIndex);
 
   @NotNull
   @Override
@@ -116,12 +108,14 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
 
       myViewer.rebuildTree();
 
-      Condition<? super DefaultMutableTreeNode> selectionCondition = initialSelection();
-      if (selectionCondition != null) {
+      if (myInitialSelection != -1) {
         UiNotifyConnector.doWhenFirstShown(this, () -> {
-          DefaultMutableTreeNode node = TreeUtil.findNode(myViewer.getRoot(), selectionCondition);
-          if (node != null) {
-            TreeUtil.selectNode(myViewer, node);
+          DefaultMutableTreeNode toSelect = TreeUtil.findNode(myViewer.getRoot(), node -> {
+            return node instanceof GenericChangesBrowserNode &&
+                   ((GenericChangesBrowserNode)node).getIndex() == myInitialSelection;
+          });
+          if (toSelect != null) {
+            TreeUtil.selectNode(myViewer, toSelect);
           }
         });
       }
@@ -149,17 +143,19 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
     protected void onDoubleClick() {
       myRef.get().cancel();
 
-      ChangesBrowserNode selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selection));
+      ChangesBrowserNode<?> selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
+      GenericChangesBrowserNode node = ObjectUtils.tryCast(selection, GenericChangesBrowserNode.class);
+      Integer selectedIndex = node != null ? node.getIndex() : null;
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selectedIndex));
     }
   }
 
-  public static class GenericChangesBrowserNode extends ChangesBrowserNode<FilePath> implements Comparable<GenericChangesBrowserNode> {
+  private static class GenericChangesBrowserNode extends ChangesBrowserNode<FilePath> implements Comparable<GenericChangesBrowserNode> {
     @NotNull private final FilePath myFilePath;
     @NotNull private final FileStatus myFileStatus;
     private final int myIndex;
 
-    public GenericChangesBrowserNode(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, int index) {
+    GenericChangesBrowserNode(@NotNull FilePath filePath, @NotNull FileStatus fileStatus, int index) {
       super(filePath);
       myFilePath = filePath;
       myFileStatus = fileStatus;
@@ -221,8 +217,8 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
     }
   }
 
-  public static class MyTreeModelBuilder extends TreeModelBuilder {
-    public MyTreeModelBuilder(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
+  private static class MyTreeModelBuilder extends TreeModelBuilder {
+    MyTreeModelBuilder(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
       super(project, grouping);
     }
 

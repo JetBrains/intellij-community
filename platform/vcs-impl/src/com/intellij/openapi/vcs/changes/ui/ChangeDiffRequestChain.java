@@ -9,7 +9,7 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.vcs.changes.actions.diff.SimpleGoToChangePopupAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -17,7 +17,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.tree.DefaultMutableTreeNode;
 import java.util.List;
 import java.util.Objects;
 
@@ -46,24 +45,14 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
     return createGoToChangeAction(getRequests(), onSelected, defaultSelection);
   }
 
-  /**
-   * NB: {@code chain.getRequests()} MUST return instances of {@link Producer}
-   */
   @NotNull
-  private static AnAction createGoToChangeAction(@NotNull List<? extends DiffRequestProducer> producers,
+  private static AnAction createGoToChangeAction(@NotNull List<? extends Producer> producers,
                                                  @NotNull Consumer<? super Integer> onSelected,
                                                  int defaultSelection) {
-    return new SimpleGoToChangePopupAction(producers) {
+    return new SimpleGoToChangePopupAction(producers, defaultSelection) {
       @Override
-      protected void onSelected(@Nullable ChangesBrowserNode object) {
-        GenericChangesBrowserNode node = ObjectUtils.tryCast(object, GenericChangesBrowserNode.class);
-        onSelected.consume(node != null ? node.getIndex() : null);
-      }
-
-      @Override
-      protected Condition<? super DefaultMutableTreeNode> initialSelection() {
-        return node -> node instanceof GenericChangesBrowserNode &&
-                       ((GenericChangesBrowserNode)node).getIndex() == defaultSelection;
+      protected void onSelected(@Nullable Integer selectedIndex) {
+        onSelected.consume(selectedIndex);
       }
     };
   }
@@ -79,7 +68,13 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
     @Nullable
     @Override
     public AnAction createGoToChangeAction(@NotNull Consumer<? super Integer> onSelected, int defaultSelection) {
-      return ChangeDiffRequestChain.createGoToChangeAction(getRequests(), onSelected, defaultSelection);
+      List<? extends DiffRequestProducer> requests = getRequests();
+
+      // may contain other producers with intermediate MessageDiffRequest
+      List<Producer> producers = ContainerUtil.map(requests, it -> ObjectUtils.tryCast(it, Producer.class));
+      if (!ContainerUtil.all(producers, Conditions.notNull())) return null;
+
+      return ChangeDiffRequestChain.createGoToChangeAction(producers, onSelected, defaultSelection);
     }
   }
 }
