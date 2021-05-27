@@ -30,6 +30,8 @@ import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MavenServerCMDState extends CommandLineState {
   private static boolean setupThrowMainClass = false;
@@ -64,8 +66,7 @@ public class MavenServerCMDState extends CommandLineState {
     params.setWorkingDirectory(getWorkingDirectory());
 
 
-    Map<String, String> defs = new HashMap<>();
-    defs.putAll(getMavenOpts());
+    Map<String, String> defs = new HashMap<>(getMavenOpts());
 
     configureSslRelatedOptions(defs);
 
@@ -83,7 +84,8 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
 
-    boolean xmxSet = false;
+    String xmxProperty = null;
+    String xmsProperty = null;
 
     if (myVmOptions != null) {
       ParametersList mavenOptsList = new ParametersList();
@@ -91,7 +93,12 @@ public class MavenServerCMDState extends CommandLineState {
 
       for (String param : mavenOptsList.getParameters()) {
         if (param.startsWith("-Xmx")) {
-          xmxSet = true;
+          xmxProperty = param;
+          continue;
+        }
+        if (param.startsWith("-Xms")) {
+          xmsProperty = param;
+          continue;
         }
         params.getVMParametersList().add(param);
       }
@@ -110,13 +117,15 @@ public class MavenServerCMDState extends CommandLineState {
 
     String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
     if (embedderXmx != null) {
-      params.getVMParametersList().add("-Xmx" + embedderXmx);
+      xmxProperty = "-Xmx" + embedderXmx;
     }
     else {
-      if (!xmxSet) {
-        params.getVMParametersList().add("-Xmx768m");
+      if (xmxProperty == null) {
+        xmxProperty = getDefaultXmxProperty("-Xmx768m", xmsProperty);
       }
     }
+    params.getVMParametersList().add(xmsProperty);
+    params.getVMParametersList().add(xmxProperty);
 
 
     String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
@@ -132,6 +141,22 @@ public class MavenServerCMDState extends CommandLineState {
     //TODO: WSL
     //MavenUtil.addEventListener(mavenVersion, params);
     return params;
+  }
+
+  static String getDefaultXmxProperty(String xmxProperty, String xmsProperty) {
+    if (xmsProperty != null) {
+      Pattern pattern = Pattern.compile("^(-Xmx|-Xms)(\\d+)([kK]|[mM]|[gG])?$");
+      Matcher matcherXms = pattern.matcher(xmsProperty);
+      Matcher matcherXmx = pattern.matcher(xmxProperty);
+      if (matcherXms.find() && matcherXmx.find()) {
+        MemoryProperty xmsMemoryProperty = new MemoryProperty(matcherXms.group(1), matcherXms.group(2), matcherXms.group(3));
+        MemoryProperty xmxMemoryProperty = new MemoryProperty(matcherXmx.group(1), matcherXmx.group(2), matcherXmx.group(3));
+        if (xmsMemoryProperty.valueBytes > xmxMemoryProperty.valueBytes) {
+          xmxProperty = xmxMemoryProperty.updateValue(xmsMemoryProperty.valueBytes).toString(xmsMemoryProperty.unit);
+        }
+      }
+    }
+    return xmxProperty;
   }
 
   private void configureSslRelatedOptions(Map<String, String> defs) {
@@ -211,5 +236,38 @@ public class MavenServerCMDState extends CommandLineState {
   @TestOnly
   public static void resetThrowExceptionOnNextServerStart() {
     setupThrowMainClass = false;
+  }
+
+  private static class MemoryProperty {
+    final String type;
+    final long valueBytes;
+    final MemoryUnit unit;
+
+    MemoryProperty(@NotNull String type, @NotNull String value, @Nullable String unit) {
+      this.type = type;
+      this.unit = unit != null ? MemoryUnit.valueOf(unit.toUpperCase()) : MemoryUnit.B;
+      this.valueBytes = Long.parseLong(value) * this.unit.ratio;
+    }
+
+    MemoryProperty updateValue(long valueBytes) {
+      return new MemoryProperty(type, String.valueOf(valueBytes), null);
+    }
+
+    @Override
+    public String toString() {
+      return toString(unit);
+    }
+
+    public String toString(MemoryUnit unit) {
+      return type + valueBytes / unit.ratio + unit.name().toLowerCase();
+    }
+
+    private enum MemoryUnit {
+      B(1), K(B.ratio * 1024), M(K.ratio * 1024), G(M.ratio * 1024);
+      final int ratio;
+      MemoryUnit(int ratio) {
+        this.ratio = ratio;
+      }
+    }
   }
 }
