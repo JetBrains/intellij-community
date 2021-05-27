@@ -366,6 +366,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public void onTestIgnored(@NotNull final SMTestProxy test) {
+    if (test.isSuite()) {
+      // no event for suite ignored => need to fix it here:
+      // `updateOnTestIgnored` calls `++myIgnoredTestCount`
+      --myIgnoredTestCount;
+    }
     updateOnTestIgnored();
   }
 
