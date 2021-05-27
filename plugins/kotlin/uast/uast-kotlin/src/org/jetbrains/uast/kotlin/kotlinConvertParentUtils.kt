@@ -195,8 +195,8 @@ fun doConvertParent(element: UElement, parent: PsiElement?): UElement? {
         && element !is UBlockExpression
         && element !is UTypeReferenceExpression // when element is a type in extension methods
     ) {
-        return KotlinUBlockExpression.KotlinLazyUBlockExpression(result) { block ->
-          listOf(KotlinUImplicitReturnExpression(block).apply { returnExpression = element })
+        return KotlinLazyUBlockExpression(result) { block ->
+            listOf(KotlinUImplicitReturnExpression(block).apply { returnExpression = element })
         }.expressions.single()
     }
 
