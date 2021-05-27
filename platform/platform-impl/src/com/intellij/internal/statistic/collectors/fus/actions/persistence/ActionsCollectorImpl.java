@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -169,7 +168,9 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   /** @noinspection unused*/
   public static void onBeforeActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event) {
-    Stats stats = new Stats(event.getProject());
+    Project project = event.getProject();
+    DataContext context = getCachedDataContext(event);
+    Stats stats = new Stats(project, getHostEditorLanguage(context, project), getLanguage(context));
     ourStats.put(event, stats);
   }
 
@@ -186,7 +187,9 @@ public class ActionsCollectorImpl extends ActionsCollector {
     data.add(ActionsEventLogGroup.RESULT.with(reportedResult));
 
     Project project = stats != null ? stats.projectRef.get() : null;
-    addLanguageContextFields(project, event, data);
+    Language contextEditorBefore = stats != null ? stats.editor : null;
+    Language contextFileBefore = stats != null ? stats.file : null;
+    addLanguageContextFields(project, event, contextEditorBefore, contextFileBefore, data);
     if (action instanceof FusAwareAction) {
       List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
       data.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
@@ -216,22 +219,40 @@ public class ActionsCollectorImpl extends ActionsCollector {
     return new ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("unknown"));
   }
 
-  private static void addLanguageContextFields(@Nullable Project project, @NotNull AnActionEvent event, @NotNull List<EventPair<?>> data) {
-    // we try to avoid as many problems as possible, because
-    // 1. non-async dataContext can fail due to advanced event-count, or freeze EDT on slow GetDataRules
-    // 2. async dataContext can fail due to slow GetDataRules prohibition on EDT
-    DataContext dataContext = dataId -> Utils.getRawDataIfCached(event.getDataContext(), dataId);
+  private static void addLanguageContextFields(@Nullable Project project,
+                                               @NotNull AnActionEvent event,
+                                               @Nullable Language contextEditorBefore,
+                                               @Nullable Language contextFileBefore,
+                                               @NotNull List<EventPair<?>> data) {
+    DataContext dataContext = getCachedDataContext(event);
+    Language editor = getHostEditorLanguage(dataContext, project);
+    data.add(EventFields.CurrentFile.with(editor != null ? editor : contextEditorBefore));
 
-    Language hostFileLanguage = getHostFileLanguage(dataContext, project);
-    data.add(EventFields.CurrentFile.with(hostFileLanguage));
-    if (hostFileLanguage == null || hostFileLanguage == PlainTextLanguage.INSTANCE) {
-      PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-      Language language = file != null ? file.getLanguage() : null;
-      data.add(EventFields.Language.with(language));
-    }
+    Language file = getLanguage(dataContext);
+    data.add(EventFields.Language.with(file != null ? file : contextFileBefore));
   }
 
-  private static @Nullable Language getHostFileLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
+  /**
+   * Computing fields from data context might be slow and cause freezes.
+   * To avoid it, we report only those fields which were already computed
+   * in {@link AnAction#update} or {@link AnAction#actionPerformed(AnActionEvent)}
+   */
+  private static @NotNull DataContext getCachedDataContext(@NotNull AnActionEvent event) {
+    return dataId -> Utils.getRawDataIfCached(event.getDataContext(), dataId);
+  }
+
+  /**
+   * Returns language from {@link CommonDataKeys#PSI_FILE}
+   */
+  private static @Nullable Language getLanguage(DataContext dataContext) {
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    return file != null ? file.getLanguage() : null;
+  }
+
+  /**
+   * Returns language from {@link CommonDataKeys#HOST_EDITOR}
+   */
+  private static @Nullable Language getHostEditorLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
     if (project == null) return null;
     Editor editor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
     if (editor == null) return null;
@@ -244,9 +265,21 @@ public class ActionsCollectorImpl extends ActionsCollector {
     WeakReference<Project> projectRef;
     final Boolean isDumb;
 
-    private Stats(Project project) {
+    /**
+     * Language from {@link CommonDataKeys#HOST_EDITOR}
+     */
+    Language editor;
+
+    /**
+     * Language from {@link CommonDataKeys#PSI_FILE}
+     */
+    Language file;
+
+    private Stats(@Nullable Project project, @Nullable Language editor, @Nullable Language file) {
       this.projectRef = new WeakReference<>(project);
       this.isDumb = project != null && !project.isDisposed() ? DumbService.isDumb(project) : null;
+      this.editor = editor;
+      this.file = file;
     }
   }
 }
