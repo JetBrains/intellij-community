@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.platform.util.plugins.DataLoader
@@ -32,6 +32,10 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, pr
                                  readInto: RawPluginDescriptor?): RawPluginDescriptor {
     var resource = classLoader.getResourceAsStream(path)
     if (resource == null) {
+      // todo (deal with different plugin content for ultimate and community)
+      if (path == "intellij.profiler.ultimate.xml") {
+        return RawPluginDescriptor()
+      }
       if (isRunningFromSources && path.startsWith("intellij.") && dataLoader is LocalFsDataLoader) {
         try {
           resource = Files.newInputStream(dataLoader.basePath.parent.resolve("${path.substring(0, path.length - 4)}/$path"))
