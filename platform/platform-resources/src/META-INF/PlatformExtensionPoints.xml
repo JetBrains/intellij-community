@@ -424,5 +424,6 @@
       <with attribute="implementation" implements="com.intellij.ide.plugins.DependencyCollector"/>
     </extensionPoint>
     <extensionPoint name="dependencySupport" beanClass="com.intellij.ide.plugins.DependencySupportBean" dynamic="true"/>
+    <extensionPoint name="actionOnSaveInfoProvider" interface="com.intellij.ide.actionsOnSave.api.ActionOnSaveInfoProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>
