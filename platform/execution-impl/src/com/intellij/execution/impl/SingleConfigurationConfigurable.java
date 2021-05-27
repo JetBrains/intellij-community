@@ -199,10 +199,13 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     JComponent result = myComponent.getWholePanel();
     DataManager.registerDataProvider(result, dataId -> {
+      if (myComponent == null) {
+        return null; // disposed
+      }
       if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
         return getEditor();
       }
-      if (RUN_ON_TARGET_NAME_KEY.is(dataId) && myComponent != null) {
+      if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
         RunOnTargetComboBox runOnComboBox = (RunOnTargetComboBox)myComponent.myRunOnComboBox;
         if (runOnComboBox != null) {
           return runOnComboBox.getSelectedTargetName();
