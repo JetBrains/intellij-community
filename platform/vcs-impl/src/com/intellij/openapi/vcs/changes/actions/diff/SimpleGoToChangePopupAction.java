@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
+import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -32,25 +33,22 @@ import static com.intellij.util.containers.ContainerUtil.sorted;
 import static java.util.Comparator.comparing;
 
 public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
-  private final @NotNull List<? extends PresentableChange> myChanges;
-  private final int myInitialSelection;
-
-  public SimpleGoToChangePopupAction(@NotNull List<? extends PresentableChange> changes, int initialSelection) {
-    myChanges = changes;
-    myInitialSelection = initialSelection;
-  }
+  @NotNull
+  protected abstract ListSelection<? extends PresentableChange> getChanges();
 
   @Override
   protected boolean canNavigate() {
-    return myChanges.size() > 1;
+    return getChanges().getList().size() > 1;
   }
 
   @NotNull
-  protected DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping) {
+  protected DefaultTreeModel buildTreeModel(@NotNull Project project,
+                                            @NotNull ChangesGroupingPolicyFactory grouping,
+                                            @NotNull List<? extends PresentableChange> changes) {
     MultiMap<ChangesBrowserNode.Tag, GenericChangesBrowserNode> groups = new MultiMap<>();
 
-    for (int i = 0; i < myChanges.size(); i++) {
-      PresentableChange change = myChanges.get(i);
+    for (int i = 0; i < changes.size(); i++) {
+      PresentableChange change = changes.get(i);
 
       FilePath filePath = change.getFilePath();
       FileStatus fileStatus = change.getFileStatus();
@@ -65,7 +63,7 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
     return builder.build();
   }
 
-  protected abstract void onSelected(@Nullable Integer selectedIndex);
+  protected abstract void onSelected(@NotNull List<? extends PresentableChange> changes, @Nullable Integer selectedIndex);
 
   @NotNull
   @Override
@@ -99,20 +97,22 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
 
   private class MyChangesBrowser extends ChangesBrowserBase {
     @NotNull private final Ref<? extends JBPopup> myRef;
+    @NotNull private final ListSelection<? extends PresentableChange> myChanges;
 
     MyChangesBrowser(@NotNull Project project, @NotNull Ref<? extends JBPopup> popupRef) {
       super(project, false, false);
       myRef = popupRef;
+      myChanges = SimpleGoToChangePopupAction.this.getChanges();
       myViewer.setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
       init();
 
       myViewer.rebuildTree();
 
-      if (myInitialSelection != -1) {
+      if (myChanges.getSelectedIndex() != -1) {
         UiNotifyConnector.doWhenFirstShown(this, () -> {
           DefaultMutableTreeNode toSelect = TreeUtil.findNode(myViewer.getRoot(), node -> {
             return node instanceof GenericChangesBrowserNode &&
-                   ((GenericChangesBrowserNode)node).getIndex() == myInitialSelection;
+                   ((GenericChangesBrowserNode)node).getIndex() == myChanges.getSelectedIndex();
           });
           if (toSelect != null) {
             TreeUtil.selectNode(myViewer, toSelect);
@@ -124,7 +124,7 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
     @NotNull
     @Override
     protected DefaultTreeModel buildTreeModel() {
-      return SimpleGoToChangePopupAction.this.buildTreeModel(myProject, getGrouping());
+      return SimpleGoToChangePopupAction.this.buildTreeModel(myProject, getGrouping(), myChanges.getList());
     }
 
     @NotNull
@@ -146,7 +146,7 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
       ChangesBrowserNode<?> selection = VcsTreeModelData.selected(myViewer).nodesStream().findFirst().orElse(null);
       GenericChangesBrowserNode node = ObjectUtils.tryCast(selection, GenericChangesBrowserNode.class);
       Integer selectedIndex = node != null ? node.getIndex() : null;
-      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(selectedIndex));
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> onSelected(myChanges.getList(), selectedIndex));
     }
   }
 
