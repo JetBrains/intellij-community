@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -6,6 +6,7 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
@@ -894,7 +895,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         private int myCount;
         @Override
         public void visitFile(@NotNull PsiFile file) {
+          progressIndicator.setText(AbstractLayoutCodeProcessor.getPresentablePath(getProject(), file));
           progressIndicator.setFraction((double)++myCount / fileCount);
+
           if (isBinary(file)) return;
           final List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
           for (final Tools tools : inspectionTools) {
