@@ -705,7 +705,6 @@ class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.incremental-compilation-impl-tests"),
     jetbrainsLibrary("kotlinc.kotlin-build-common-tests"),
     jetbrainsLibrary("kotlinc.kotlin-compiler"),
-    jetbrainsLibrary("kotlinc.kotlin-coroutines-experimental-compat"),
     jetbrainsLibrary("kotlinc.kotlin-dist"),
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
     jetbrainsLibrary("kotlinc.kotlin-script-util"),
