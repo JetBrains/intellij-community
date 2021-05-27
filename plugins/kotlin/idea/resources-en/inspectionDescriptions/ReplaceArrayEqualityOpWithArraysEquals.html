@@ -1,5 +1,17 @@
 <html>
 <body>
 Reports usages of <code>==</code> or <code>!=</code> operator for arrays that should be replaced with <code>contentEquals</code>.
+<p>
+    The problem is that both operators compare array references but not the content.
+    "Replace with 'contentEquals'" quick-fix allows to amend the code.
+</p>
+<p>Examples:</p>
+<pre><code>
+   fun test() {
+      val a = arrayOf(1, 2, 3)
+      val b = arrayOf(1, 2, 3)
+      println(a == b) // can be replaced with 'a.contentEquals(b)'
+   }
+</code></pre>
 </body>
 </html>
