@@ -12,8 +12,11 @@ import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -43,6 +46,7 @@ import com.siyeh.ig.psiutils.ReorderingUtils;
 import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
@@ -92,6 +96,9 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
         if (dependencies.isEmpty()) continue;
         PsiExpression stripped = PsiUtil.skipParenthesizedExprDown(operand);
         if (stripped == null) continue;
+        DfaValueFactory factory = new DfaValueFactory(myHolder.getProject());
+        Set<DfaVariableValue> notNullValues = getNotNullValues(factory, operand);
+        if (notNullValues == null || !notNullValues.equals(getNotNullValues(factory, operands.get(index + 1)))) continue;
         String operandText = PsiExpressionTrimRenderer.render(stripped);
         String description =
           InspectionGadgetsBundle.message("inspection.condition.covered.by.further.condition.descr",
@@ -190,6 +197,44 @@ public class ConditionCoveredByFurtherConditionInspection extends AbstractBaseJa
     listener.myInterpreter = interpreter;
     RunnerResult result = interpreter.interpret(createMemoryState(factory));
     return result == RunnerResult.OK ? listener.values : Collections.emptyMap();
+  }
+
+  private static @Nullable Set<DfaVariableValue> getNotNullValues(@NotNull DfaValueFactory factory, @Nullable PsiExpression expression) {
+    if (expression == null) return null;
+    ControlFlow flow = ControlFlowAnalyzer.buildFlow(expression, factory, true);
+    if (flow == null) return null;
+    var listener = new DfaListener() {
+      final Map<DfaVariableValue, Boolean> result = new HashMap<>();
+
+      @Override
+      public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                              @NotNull DfaValue value,
+                              @NotNull ThreeState failed,
+                              @NotNull DfaMemoryState state) {
+        if (problem instanceof NullabilityProblemKind.NullabilityProblem &&
+            ((NullabilityProblemKind.NullabilityProblem<?>)problem).thrownException() != null &&
+            value instanceof DfaVariableValue) {
+          result.merge((DfaVariableValue)value, failed != ThreeState.NO, Boolean::logicalAnd);
+        }
+      }
+
+      @Override
+      public void beforePush(@NotNull DfaValue @NotNull [] args,
+                             @NotNull DfaValue value,
+                             @NotNull DfaAnchor anchor,
+                             @NotNull DfaMemoryState state) {
+        if (anchor instanceof JavaExpressionAnchor && ((JavaExpressionAnchor)anchor).getExpression() == expression) {
+          Set<DfaVariableValue> vars = result.keySet();
+          StreamEx.of(vars)
+            .filter(v -> DfaNullability.fromDfType(state.getDfType(v)) != DfaNullability.NOT_NULL)
+            .toSetAndThen(vars::removeAll);
+        }
+
+      }
+    };
+    var interpreter = new StandardDataFlowInterpreter(flow, listener);
+    if (interpreter.interpret(new JvmDfaMemoryStateImpl(factory)) != RunnerResult.OK) return null;
+    return StreamEx.ofKeys(listener.result, x -> x).toSet();
   }
 
   @NotNull
