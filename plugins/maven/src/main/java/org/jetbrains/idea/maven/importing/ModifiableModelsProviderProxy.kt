@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.importing
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 import com.intellij.openapi.externalSystem.model.project.ProjectId
+import com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProviderImpl
 import com.intellij.openapi.module.ModifiableModuleModel
@@ -33,7 +34,7 @@ interface ModifiableModelsProviderProxy {
 
   val modalityStateForQuestionDialogs: ModalityState
   fun registerModulePublication(module: Module, id: ProjectCoordinate)
-  fun getModifiableRootModel(module: Module?): ModifiableRootModel?
+  fun getModifiableRootModel(module: Module?): ModifiableRootModel
   val allLibraries: Array<Library?>
   fun removeLibrary(lib: Library?)
   fun createLibrary(name: String?, source: ProjectModelExternalSource?): Library?
@@ -84,9 +85,9 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
   }
 
   private fun workspaceCommit(diff: WorkspaceEntityStorageBuilder) {
-    //if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
-    //  updateSubstitutions()
-    //}
+    if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
+      delegate.forceUpdateSubstitutions()
+    }
 
     val projectLibrariesModel: LibraryTable.ModifiableModel = delegate.modifiableProjectLibrariesModel
     for ((fromLibrary, modifiableModel) in delegate.modifiableLibraryModels.entries) {
@@ -95,7 +96,7 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
       // Modifiable model for the new library which was disposed via ModifiableModel.removeLibrary should also be disposed
       // Modifiable model for the old library which was removed from ProjectLibraryTable should also be disposed
       val modifiableWorkspace = delegate.modifiableWorkspace
-      if (fromLibrary is LibraryEx && (fromLibrary as LibraryEx).isDisposed
+      if (fromLibrary is LibraryEx && fromLibrary.isDisposed
           || fromLibrary.table != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null
           || modifiableWorkspace != null && modifiableWorkspace.isSubstituted(fromLibrary.name)) {
         Disposer.dispose(modifiableModel)
@@ -148,10 +149,10 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
 
 
   override fun registerModulePublication(module: Module, id: ProjectCoordinate) {
-    delegate.registerModulePublication(module, id)
+    delegate.modifiableWorkspace?.register(id, module)
   }
 
-  override fun getModifiableRootModel(module: Module?): ModifiableRootModel? = delegate.getModifiableRootModel(module)
+  override fun getModifiableRootModel(module: Module?): ModifiableRootModel = delegate.getModifiableRootModel(module)
 
   override val allLibraries: Array<Library?>
     get() = delegate.allLibraries
@@ -198,7 +199,7 @@ class ModifiableModelsProviderProxyWrapper(val delegate: IdeModifiableModelsProv
     delegate.registerModulePublication(module, id)
   }
 
-  override fun getModifiableRootModel(module: Module?): ModifiableRootModel? = delegate.getModifiableRootModel(module)
+  override fun getModifiableRootModel(module: Module?): ModifiableRootModel = delegate.getModifiableRootModel(module)
 
   override val allLibraries: Array<Library?> = delegate.allLibraries
 

@@ -237,4 +237,8 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
   public Map<Module, ModifiableFacetModel> getModifiableFacetModels() {
     return myModifiableFacetModels;
   }
+
+  public void forceUpdateSubstitutions() {
+    updateSubstitutions();
+  }
 }
