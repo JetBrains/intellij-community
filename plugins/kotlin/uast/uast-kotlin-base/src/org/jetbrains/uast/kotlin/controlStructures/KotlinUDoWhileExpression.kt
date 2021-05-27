@@ -8,11 +8,15 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 
 class KotlinUDoWhileExpression(
-        override val sourcePsi: KtDoWhileExpression,
-        givenParent: UElement?
+    override val sourcePsi: KtDoWhileExpression,
+    givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UDoWhileExpression {
-    override val condition by lz { KotlinConverter.convertOrEmpty(sourcePsi.condition, this) }
-    override val body by lz { KotlinConverter.convertOrEmpty(sourcePsi.body, this) }
+    override val condition by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.condition, this)
+    }
+    override val body by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.body, this)
+    }
 
     override val doIdentifier: UIdentifier
         get() = KotlinUIdentifier(null, this)
