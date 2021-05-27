@@ -10,6 +10,8 @@ object CodeMetaInfoParser {
 
     val openingOrClosingRegex = """(${closingRegex.pattern}|${openingRegex.pattern})""".toRegex()
 
+    private val descriptionRegex = "\\(\".*?\"\\)".toRegex()
+
     /*
      * ([\S&&[^,(){}]]+) -- tag, allowing all non-space characters except bracers and curly bracers
      * ([{](.*?)[}])? -- list of platforms
@@ -52,17 +54,22 @@ object CodeMetaInfoParser {
             error("Opening and closing tags counts are not equals")
         }
         while (!openingMatchResults.isEmpty()) {
-            val openingMatchResult = openingMatchResults.pop()
-            val closingMatchResult = closingMatchResults.pop()
-            val metaInfoWithParams = openingMatchResult.groups[2]!!.value
-            val metaInfoWithoutParams = metaInfoWithParams.replace(descriptionRegex, "")
-            metaInfoWithoutParams.split(",").forEach {
-                val tag = platformRegex.replace(it, "").trim()
-                val platforms =
-                    if (platformRegex.containsMatchIn(it)) platformRegex.find(it)!!.destructured.component1().split(";") else listOf()
+            val openingMatchResult = openingMatchResults.removeLast()
+            val closingMatchResult = closingMatchResults.getValue(openingMatchResult)
+            val allMetaInfos = openingMatchResult.groups[2]!!.value
+            tagRegex.findAll(allMetaInfos).map { it.groups }.forEach {
+                val tag = it[1]!!.value
+                val platforms = it[3]?.value?.split(";") ?: emptyList()
+                val description = it[5]?.value
+
                 result.add(
                     ParsedCodeMetaInfo(
-                        openingMatchResult.range.first, closingMatchResult.range.first, platforms.toMutableList(), tag,
+                        openingMatchResult.range.first,
+                        closingMatchResult.range.first,
+                        platforms.toMutableList(),
+                        tag,
+                        descriptionRegex.find(allMetaInfos)?.value,
+                        description
                     )
                 )
             }
