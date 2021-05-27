@@ -86,7 +86,8 @@ internal class RecentProjectIconHelper {
     return IconDeferrer.getInstance().deferAutoUpdatable(EmptyIcon.create(projectIconSize()), Pair(path, isDark)) {
       val calculateIcon = calculateIcon(path = it.first, isDark = it.second)
       if (calculateIcon == null && generateFromName) {
-        val name = RecentProjectsManagerBase.instanceEx.getProjectName(path)
+        val projectManager = RecentProjectsManagerBase.instanceEx
+        val name = projectManager.getDisplayName(path) ?: projectManager.getProjectName(path)
         AvatarUtils.createRoundRectIcon(AvatarUtils.generateColoredAvatar(name, name, ProjectIconPalette), projectIconSize())
       }
       else calculateIcon
