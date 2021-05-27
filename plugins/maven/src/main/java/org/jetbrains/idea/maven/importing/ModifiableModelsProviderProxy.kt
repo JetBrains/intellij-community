@@ -12,8 +12,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.ProjectModelExternalSource
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.util.Disposer
+import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
+import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 
 interface ModifiableModelsProviderProxy {
@@ -37,7 +45,7 @@ interface ModifiableModelsProviderProxy {
   val modifiableModelsProvider: IdeModifiableModelsProvider?
 }
 
-class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModelsProvider,
+class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModelsProviderImpl,
                                         private val project: Project) : ModifiableModelsProviderProxy {
 
   constructor(project: Project) : this(IdeModifiableModelsProviderImpl(project), project)
@@ -65,15 +73,68 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
     get() = ModifiableModuleModelWrapper(moduleModel)
 
   override fun commit() {
-    val modules = moduleModel.modules
-    modules.forEach {
-      (delegate.getModifiableRootModel(it) as? ModifiableRootModelBridge)?.prepareForCommit()
-    }
-    delegate.commit()
-    modules.forEach {
-      (delegate.getModifiableRootModel(it) as? ModifiableRootModelBridge)?.postCommit()
-    }
+    val finalDiff = diff
+    if (finalDiff == null) {
+      delegate.commit()
+    } else {
+      ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring {
 
+        //if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
+        //  updateSubstitutions()
+        //}
+
+        val projectLibrariesModel: LibraryTable.ModifiableModel = delegate.modifiableProjectLibrariesModel
+        for ((fromLibrary, modifiableModel) in delegate.modifiableLibraryModels.entries) {
+          val libraryName = fromLibrary.name
+
+          // Modifiable model for the new library which was disposed via ModifiableModel.removeLibrary should also be disposed
+          // Modifiable model for the old library which was removed from ProjectLibraryTable should also be disposed
+          val modifiableWorkspace = delegate.modifiableWorkspace
+          if (fromLibrary is LibraryEx && (fromLibrary as LibraryEx).isDisposed
+              || fromLibrary.table != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null
+              || modifiableWorkspace != null && modifiableWorkspace.isSubstituted(fromLibrary.name)) {
+            Disposer.dispose(modifiableModel)
+          }
+          else {
+            (modifiableModel as LibraryModifiableModelBridge).prepareForCommit()
+          }
+        }
+
+
+        (projectLibrariesModel as ProjectModifiableLibraryTableBridge).prepareForCommit()
+        val rootModels: List<ModifiableRootModel>
+        val existingModules: Array<Module> = moduleModel.modules
+        for (module in existingModules) {
+          module.putUserData(IdeModifiableModelsProviderImpl.MODIFIABLE_MODELS_PROVIDER_KEY, null)
+        }
+        rootModels = existingModules.map { delegate.getModifiableRootModel(it) }.toList()
+        //moduleModel.prepareForCommit();
+
+        for (model in rootModels) {
+          assert(!model.isDisposed) { "Already disposed: $model" }
+        }
+        for (model in rootModels) {
+          (model as ModifiableRootModelBridge).prepareForCommit()
+        }
+
+        for ((key, value) in delegate.modifiableFacetModels.entries) {
+          if (!key.isDisposed) {
+            (value as ModifiableFacetModelBridge).prepareForCommit()
+          }
+        }
+        delegate.modifiableModels.values().forEach { it.commit() }
+
+        getInstance(project).updateProjectModel<Any?> { builder: WorkspaceEntityStorageBuilder ->
+          builder.addDiff(finalDiff)
+          null
+        }
+
+        for (model in rootModels) {
+          (model as ModifiableRootModelBridge).postCommit()
+        }
+      }
+
+    }
   }
 
   override fun dispose() {

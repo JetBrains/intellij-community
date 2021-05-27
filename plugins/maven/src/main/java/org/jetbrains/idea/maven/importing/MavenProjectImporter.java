@@ -90,7 +90,7 @@ public class MavenProjectImporter {
     myFileToModuleMapping = fileToModuleMapping;
     myProjectsToImportWithChanges = projectsToImportWithChanges;
     myImportModuleGroupsRequired = importModuleGroupsRequired;
-    myModelsProvider = new ModifiableModelsProviderProxyImpl(modelsProvider, myProject);
+    myModelsProvider = new ModifiableModelsProviderProxyImpl((IdeModifiableModelsProviderImpl)modelsProvider, myProject);
     myImportingSettings = importingSettings;
     myDiff = ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder();
     myDummyModule = dummyModule;
