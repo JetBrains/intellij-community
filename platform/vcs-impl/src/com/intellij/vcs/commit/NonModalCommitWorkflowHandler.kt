@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.util.registry.Registry
@@ -161,6 +162,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         if (isSkipCommitChecks()) return@executeDefault ReturnResult.COMMIT
 
         val indicator = IndeterminateIndicator(ui.commitProgressUi.startProgress())
+        indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+          override fun cancel() = this@launch.cancel()
+        })
         try {
           runAllHandlers(executor, indicator)
         }

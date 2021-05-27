@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.vcs
 
 import com.intellij.build.BuildView
@@ -18,8 +18,10 @@ import com.intellij.execution.testframework.TestsUIUtil.TestResultPresentation
 import com.intellij.execution.testframework.sm.ConfigurationBean
 import com.intellij.execution.testframework.sm.SmRunnerBundle
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
+import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
+import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer
 import com.intellij.execution.ui.ExecutionConsole
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.actionSystem.*
@@ -28,18 +30,18 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.changes.CommitContext
 import com.intellij.openapi.vcs.changes.ui.BooleanCommitOption
+import com.intellij.openapi.vcs.checkin.BaseCommitCheck
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.CheckinHandlerFactory
-import com.intellij.openapi.vcs.checkin.CommitCheck
 import com.intellij.openapi.vcs.checkin.CommitProblem
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -51,14 +53,9 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isBackgroundCommitChecks
 import com.intellij.vcs.commit.isNonModalCommit
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.withTimeout
+import kotlinx.coroutines.*
 import javax.swing.JComponent
-import kotlin.coroutines.Continuation
 import kotlin.coroutines.resume
-import kotlin.coroutines.suspendCoroutine
 
 private val LOG = logger<RunTestsCheckinHandlerFactory>()
 
@@ -114,17 +111,15 @@ data class FailureDescription(val historyFileName: String, val failed: Int, val 
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
 
-class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) :
-  CheckinHandler(), CommitCheck<FailedTestCommitProblem> {
-
+class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel) : BaseCommitCheck<FailedTestCommitProblem>() {
   private val project: Project get() = commitPanel.project
   private val settings: TestsVcsConfiguration get() = project.getService(TestsVcsConfiguration::class.java)
 
   override fun isEnabled(): Boolean = settings.myState.enabled
 
-  override suspend fun runCheck(indicator: ProgressIndicator): FailedTestCommitProblem? {
+  override suspend fun doRunCheck(): FailedTestCommitProblem? {
     val configurationSettings = getConfiguredRunConfiguration() ?: return null
-    indicator.text = SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name)
+    progress(name = SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
 
     return withContext(Dispatchers.IO) {
       val problems = ArrayList<FailureDescription>()
@@ -150,7 +145,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
                                          problems: ArrayList<FailureDescription>) {
     val environment = ExecutionUtil.createEnvironment(executor, configurationSettings)?.build() ?: return
     environment.setHeadless()
-    val console = suspendCoroutine<ExecutionConsole?> { continuation ->
+    val console = suspendCancellableCoroutine<ExecutionConsole?> { continuation ->
       val messageBus = project.messageBus
       messageBus.connect(environment).subscribe(ExecutionManager.EXECUTION_TOPIC, object : ExecutionListener {
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
@@ -168,7 +163,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
       }
     } ?: return
 
-    val form = console.component as? SMTestRunnerResultsForm
+    val form = console.resultsForm
     if (form != null) {
       reportProblem(form, problems, configurationSettings)
       if (form.testsRootNode.isDefect) {
@@ -179,25 +174,38 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     disposeConsole(console)
   }
 
-  private fun onProcessStarted(descriptor: RunContentDescriptor,
-                               continuation: Continuation<ExecutionConsole?>) {
+  private fun onProcessStarted(descriptor: RunContentDescriptor, continuation: CancellableContinuation<ExecutionConsole?>) {
     val handler = descriptor.processHandler
     if (handler != null) {
-      var executionConsole = descriptor.executionConsole
-      if (executionConsole is BuildView) {
-        executionConsole = executionConsole.consoleView
+      val executionConsole = descriptor.console
+      val processListener = object : ProcessAdapter() {
+        override fun processTerminated(event: ProcessEvent) = continuation.resume(executionConsole)
       }
 
-      handler.addProcessListener(object : ProcessAdapter() {
-        override fun processTerminated(event: ProcessEvent) {
-          continuation.resume(executionConsole)
-        }
+      handler.addProcessListener(processListener)
+      executionConsole?.resultsForm?.addEventsListener(object : TestResultsViewer.EventsListener {
+        override fun onTestNodeAdded(sender: TestResultsViewer, test: SMTestProxy) = progress(details = test.getFullName())
       })
+
+      continuation.invokeOnCancellation {
+        handler.removeProcessListener(processListener)
+        handler.destroyProcess()
+        executionConsole?.let { disposeConsole(it) }
+      }
     }
     else {
       continuation.resume(null)
     }
   }
+
+  private val ExecutionConsole.resultsForm: SMTestRunnerResultsForm? get() = component as? SMTestRunnerResultsForm
+
+  private val RunContentDescriptor.console: ExecutionConsole?
+    get() = executionConsole?.let { if (it is BuildView) it.consoleView else it }
+
+  private fun SMTestProxy.getFullName(): @NlsSafe String =
+    if (parent == null || parent is SMTestProxy.SMRootTestProxy) presentableName
+    else parent.getFullName() + "." + presentableName
 
   private suspend fun awaitSavingHistory(historyFileName: String) {
     withTimeout(timeMillis = 600000) {
