@@ -26,6 +26,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("doWhile.kt")
+    public void testDoWhile() throws Exception {
+        runTest("plugins/uast-kotlin-fir/testData/declaration/doWhile.kt");
+    }
+
     @TestMetadata("facade.kt")
     public void testFacade() throws Exception {
         runTest("testData/declaration/facade.kt");
