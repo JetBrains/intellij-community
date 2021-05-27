@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.diff.FrameDiffTool;
@@ -12,13 +12,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
@@ -75,8 +75,10 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
   private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
     @Override
     public @NotNull List<? extends DiffRequestProducer> getActualProducers() {
-      List<Change> changes = VcsTreeModelData.all(myBrowser.getViewer()).userObjects(Change.class);
-      return ContainerUtil.map(changes, change -> ChangeDiffRequestProducer.create(getProject(), change));
+      return getAllChanges()
+        .map(wrapper -> wrapper.createProducer(getProject()))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
     }
 
     @Override
