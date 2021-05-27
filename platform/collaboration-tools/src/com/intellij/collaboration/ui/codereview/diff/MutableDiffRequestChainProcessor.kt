@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.diff
 
 import com.intellij.diff.chains.AsyncDiffRequestChain
@@ -82,6 +82,9 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
     return MyGoToChangePopupProvider().createGoToChangeAction()
   }
 
+  //TODO implement: get relevant changes tree and select node
+  open fun selectFilePath(filePath: FilePath) {}
+
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
     override fun getActualProducers(): List<DiffRequestProducer> {
       return chain?.requests ?: emptyList()
@@ -92,7 +95,8 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
       return if (producer is ChangeDiffRequestChain.Producer) producer.filePath else null
     }
 
-    //TODO implement: get relevant changes tree and select node
-    override fun selectFilePath(filePath: FilePath) {}
+    override fun selectFilePath(filePath: FilePath) {
+      this@MutableDiffRequestChainProcessor.selectFilePath(filePath)
+    }
   }
 }
