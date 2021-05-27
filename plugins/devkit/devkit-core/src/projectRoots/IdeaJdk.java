@@ -76,12 +76,6 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
   }
 
   @Override
-  @NotNull
-  public Icon getIconForAddAction() {
-    return DevkitIcons.Add_sdk;
-  }
-
-  @Override
   public String suggestHomePath() {
     return PathManager.getHomePath().replace(File.separatorChar, '/');
   }

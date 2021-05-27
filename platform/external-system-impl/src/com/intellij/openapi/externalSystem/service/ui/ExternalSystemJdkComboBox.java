@@ -137,7 +137,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
 
       if (group.getChildrenCount() == 0) {
         SimpleJavaSdkType javaSdkType = SimpleJavaSdkType.getInstance();
-        final AnAction addAction = new DumbAwareAction(javaSdkType.getPresentableName(), null, javaSdkType.getIconForAddAction()) {
+        final AnAction addAction = new DumbAwareAction(javaSdkType.getPresentableName(), null, javaSdkType.getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             jdksModel.doAdd(ExternalSystemJdkComboBox.this, selectedJdk, javaSdkType, updateTree);
