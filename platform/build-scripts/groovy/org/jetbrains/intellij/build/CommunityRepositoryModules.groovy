@@ -400,7 +400,7 @@ final class CommunityRepositoryModules {
     }
   }
 
-  static PluginLayout groovyPlugin(List<String> additionalModules) {
+  static PluginLayout groovyPlugin(List<String> additionalModules, @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure addition = {}) {
     plugin("intellij.groovy") {
       directoryName = "Groovy"
       mainJarName = "Groovy.jar"
@@ -416,6 +416,8 @@ final class CommunityRepositoryModules {
       additionalModules.each {
         withModule(it)
       }
+      addition.delegate = delegate
+      addition()
     }
   }
 }
