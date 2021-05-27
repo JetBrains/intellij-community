@@ -2,14 +2,15 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
+import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.diagnostics.Diagnostic
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
-class RemoveUselessIsCheckFixForWhen(element: KtWhenConditionIsPattern) : KotlinQuickFixAction<KtWhenConditionIsPattern>(element) {
+class RemoveUselessIsCheckFixForWhen(element: KtWhenConditionIsPattern) : KotlinPsiOnlyQuickFixAction<KtWhenConditionIsPattern>(element) {
     override fun getFamilyName() = KotlinBundle.message("remove.useless.is.check")
 
     override fun getText(): String = familyName
@@ -29,10 +30,10 @@ class RemoveUselessIsCheckFixForWhen(element: KtWhenConditionIsPattern) : Kotlin
         }
     }
 
-    companion object : KotlinSingleIntentionActionFactory() {
-        override fun createAction(diagnostic: Diagnostic): KotlinQuickFixAction<KtWhenConditionIsPattern>? {
-            val expression = diagnostic.psiElement.getNonStrictParentOfType<KtWhenConditionIsPattern>() ?: return null
-            return RemoveUselessIsCheckFixForWhen(expression)
+    companion object : QuickFixesPsiBasedFactory<PsiElement>(PsiElement::class, PsiElementSuitabilityCheckers.ALWAYS_SUITABLE) {
+        override fun doCreateQuickFix(psiElement: PsiElement): List<IntentionAction> {
+            val expression = psiElement.getNonStrictParentOfType<KtWhenConditionIsPattern>() ?: return emptyList()
+            return listOf(RemoveUselessIsCheckFixForWhen(expression))
         }
     }
 }
