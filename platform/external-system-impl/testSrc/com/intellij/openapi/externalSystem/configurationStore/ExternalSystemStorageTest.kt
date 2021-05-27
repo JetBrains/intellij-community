@@ -2,9 +2,9 @@
 package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.StoreReloadManager
-import com.intellij.facet.FacetManager
-import com.intellij.facet.FacetType
+import com.intellij.facet.*
 import com.intellij.facet.mock.MockFacet
+import com.intellij.facet.mock.MockFacetConfiguration
 import com.intellij.facet.mock.MockFacetType
 import com.intellij.facet.mock.MockSubFacetType
 import com.intellij.openapi.Disposable
@@ -25,10 +25,7 @@ import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.doNotEnableExternalStorageByDefaultInTests
 import com.intellij.openapi.project.getProjectCacheFileName
-import com.intellij.openapi.roots.ExternalProjectSystemRegistry
-import com.intellij.openapi.roots.LanguageLevelProjectExtension
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfo
@@ -45,7 +42,6 @@ import com.intellij.pom.java.LanguageLevel
 import com.intellij.project.stateStore
 import com.intellij.testFramework.*
 import com.intellij.testFramework.UsefulTestCase.assertOneElement
-import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
@@ -54,10 +50,8 @@ import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertTrue
+import org.junit.Assert.*
 import org.junit.Assume.assumeFalse
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -631,6 +625,81 @@ class ExternalSystemStorageTest {
     }
   }
 
+  @Test
+  fun `save regular and imported facets and sub-facets`() {
+    loadModifySaveAndCheck("singleModule", "singleModuleWithSubFacets") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      createFacetAndSubFacet(module, "web", null, null)
+      createFacetAndSubFacet(module, "spring", MOCK_EXTERNAL_SOURCE, MOCK_EXTERNAL_SOURCE)
+    }
+  }
+
+  @Test
+  fun `load regular and imported facets and sub-facets`() = loadProjectAndCheckResults("singleModuleWithSubFacets") { project ->
+    val module = ModuleManager.getInstance(project).modules.single()
+    checkFacetAndSubFacet(module, "web", null, null)
+    checkFacetAndSubFacet(module, "spring", MOCK_EXTERNAL_SOURCE, MOCK_EXTERNAL_SOURCE)
+  }
+
+  @Test
+  fun `imported facet and regular sub-facet`() {
+    loadModifySaveAndCheck("singleModule", "singleModuleWithRegularSubFacet") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      createFacetAndSubFacet(module, "spring", MOCK_EXTERNAL_SOURCE, null)
+    }
+  }
+
+  @Test
+  fun `load imported facet and regular sub-facet`() = loadProjectAndCheckResults("singleModuleWithRegularSubFacet") { project ->
+    val module = ModuleManager.getInstance(project).modules.single()
+    checkFacetAndSubFacet(module, "spring", MOCK_EXTERNAL_SOURCE, null)
+  }
+
+  @Test
+  fun `regular facet and imported sub-facet`() {
+    loadModifySaveAndCheck("singleModule", "singleModuleWithImportedSubFacet") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      createFacetAndSubFacet(module, "web", null, MOCK_EXTERNAL_SOURCE)
+    }
+  }
+
+  @Test
+  fun `load regular facet and imported sub-facet`() = loadProjectAndCheckResults("singleModuleWithImportedSubFacet") { project ->
+    val module = ModuleManager.getInstance(project).modules.single()
+    checkFacetAndSubFacet(module, "web", null, MOCK_EXTERNAL_SOURCE)
+  }
+
+  private fun createFacetAndSubFacet(module: Module, name: String, facetSource: ProjectModelExternalSource?,
+                                     subFacetSource: ProjectModelExternalSource?) {
+    val facetManager = FacetManager.getInstance(module)
+    val modifiableFacetModel = facetManager.createModifiableModel()
+
+    val parentFacet = MockFacet(module, name)
+    modifiableFacetModel.addFacet(parentFacet, facetSource)
+    parentFacet.configuration.data = "1"
+
+    val subFacet = Facet(MockSubFacetType.getInstance(), module, "sub_$name", MockFacetConfiguration(), parentFacet)
+    modifiableFacetModel.addFacet(subFacet, subFacetSource)
+    subFacet.configuration.data = "2"
+
+    WriteAction.runAndWait<RuntimeException> { modifiableFacetModel.commit() }
+    (facetManager as FacetManagerBase).checkConsistency()
+  }
+
+  private fun checkFacetAndSubFacet(module: Module, name: String, facetSource: ProjectModelExternalSource?,
+                                    subFacetSource: ProjectModelExternalSource?) {
+    val facetManager = FacetManager.getInstance(module)
+    val parentFacet = facetManager.findFacet(MockFacetType.ID, name)
+    assertNotNull(parentFacet)
+    assertEquals("1", parentFacet!!.configuration.data)
+    if (facetSource != null) assertEquals(facetSource.id, parentFacet.externalSource!!.id)
+
+    val subFacet = facetManager.findFacet(MockSubFacetType.ID, "sub_$name")
+    assertNotNull(subFacet)
+    assertEquals("2", (subFacet!!.configuration as MockFacetConfiguration).data)
+    if (subFacetSource != null) assertEquals(subFacetSource.id, subFacet.externalSource!!.id)
+  }
+
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
@@ -753,4 +822,11 @@ class ExternalSystemStorageTest {
       LoggedErrorProcessor.setNewInstance(oldInstance)
     }
   }
+}
+
+
+private val MOCK_EXTERNAL_SOURCE = object: ProjectModelExternalSource {
+  override fun getDisplayName() = "mock"
+
+  override fun getId() = "mock"
 }
