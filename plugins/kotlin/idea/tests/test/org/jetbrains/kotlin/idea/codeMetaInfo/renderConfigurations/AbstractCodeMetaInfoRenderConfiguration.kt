@@ -135,7 +135,7 @@ open class HighlightingConfiguration(
         if (!renderParams) return ""
 
         val params = mutableListOf<String>()
-        if (renderSeverity) {
+        if (renderSeverity)
             params.add("severity='${highlightingCodeMetaInfo.highlightingInfo.severity}'")
         if (renderDescription)
             params.add("descr='${sanitizeLineBreaks(highlightingCodeMetaInfo.highlightingInfo.description)}'")
