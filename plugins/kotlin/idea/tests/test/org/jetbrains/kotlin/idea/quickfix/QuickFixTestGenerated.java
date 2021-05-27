@@ -778,6 +778,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/addExclExclCall/typeMismatch/assignmentRValue.kt");
             }
 
+            @TestMetadata("initializer.kt")
+            public void testInitializer() throws Exception {
+                runTest("idea/testData/quickfix/addExclExclCall/typeMismatch/initializer.kt");
+            }
+
             @TestMetadata("memberAccessInExtension.kt")
             public void testMemberAccessInExtension() throws Exception {
                 runTest("testData/quickfix/addExclExclCall/typeMismatch/memberAccessInExtension.kt");
@@ -786,6 +791,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("memberAccessInExtensionAsAssignmentRValue.kt")
             public void testMemberAccessInExtensionAsAssignmentRValue() throws Exception {
                 runTest("testData/quickfix/addExclExclCall/typeMismatch/memberAccessInExtensionAsAssignmentRValue.kt");
+            }
+
+            @TestMetadata("memberAccessInExtensionAsInitializer.kt")
+            public void testMemberAccessInExtensionAsInitializer() throws Exception {
+                runTest("idea/testData/quickfix/addExclExclCall/typeMismatch/memberAccessInExtensionAsInitializer.kt");
             }
 
             @TestMetadata("nullArgument.kt")
