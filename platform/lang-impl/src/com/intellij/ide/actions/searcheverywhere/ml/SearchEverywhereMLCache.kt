@@ -30,7 +30,7 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
       }
       val features = mutableMapOf<String, Any>()
       features.putAll(buildCommonFeaturesMap(seSessionId, intArrayOf(), false, -1, -1, -1, -1, seTabId, project))
-      val itemInfo = fillActionItemInfo(0, System.nanoTime(), element, contributorId)
+      val itemInfo = fillActionItemInfo(element.matchingDegree, System.nanoTime(), element, contributorId)
       features.putAll(itemInfo.additionalData)
 
       itemInfo.id?.let {

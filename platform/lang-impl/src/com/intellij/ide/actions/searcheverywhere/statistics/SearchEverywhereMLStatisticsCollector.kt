@@ -70,8 +70,10 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                                        backspacesTyped, symbolsInQuery, tabId, myProject))
     val currentTime = System.currentTimeMillis()
 
-    // put listVersions: pattern length to elements in listModel
-    getListVersionsAndMlIdsAndDisposeCache(seSessionId, indexes, elements)
+    // put listVersions: pattern length to elements in listModel; and ML IDs
+    val listVersionsAndMLIds = getListVersionsAndMlIdsAndDisposeCache(seSessionId, indexes, elements)
+    data.putAll(listVersionsAndMLIds)
+    
     // put data for every item
     data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
       getListItemsNames(it, currentTime).toMap()
