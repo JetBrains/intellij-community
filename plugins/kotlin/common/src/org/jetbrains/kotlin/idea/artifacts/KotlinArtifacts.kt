@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.artifacts
 
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
 import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.utils.PathUtil
