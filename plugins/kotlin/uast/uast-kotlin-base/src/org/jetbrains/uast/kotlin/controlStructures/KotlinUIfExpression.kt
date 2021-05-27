@@ -8,12 +8,18 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
 
 class KotlinUIfExpression(
-        override val sourcePsi: KtIfExpression,
-        givenParent: UElement?
+    override val sourcePsi: KtIfExpression,
+    givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UIfExpression, KotlinUElementWithType, KotlinEvaluatableUElement {
-    override val condition by lz { KotlinConverter.convertOrEmpty(sourcePsi.condition, this) }
-    override val thenExpression by lz { KotlinConverter.convertOrNull(sourcePsi.then, this) }
-    override val elseExpression by lz { KotlinConverter.convertOrNull(sourcePsi.`else`, this) }
+    override val condition by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.condition, this)
+    }
+    override val thenExpression by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrNull(sourcePsi.then, this)
+    }
+    override val elseExpression by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrNull(sourcePsi.`else`, this)
+    }
     override val isTernary = false
 
     override val ifIdentifier: UIdentifier

@@ -36,6 +36,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/facade.kt");
     }
 
+    @TestMetadata("if.kt")
+    public void testIf() throws Exception {
+        runTest("plugins/uast-kotlin-fir/testData/declaration/if.kt");
+    }
+
     @TestMetadata("importOnDemand.kt")
     public void testImportOnDemand() throws Exception {
         runTest("testData/declaration/importOnDemand.kt");
