@@ -75,10 +75,6 @@ val kotlinUastPlugin: UastLanguagePlugin by lz {
         ?: KotlinUastLanguagePlugin()
 }
 
-@Suppress("NOTHING_TO_INLINE")
-internal inline fun String?.orAnonymous(kind: String = ""): String =
-    this ?: ("<anonymous" + (if (kind.isNotBlank()) " $kind" else "") + ">")
-
 internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
     (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
 
