@@ -1,16 +1,25 @@
 <html>
 <body>
 Reports <code>if</code>, <code>when</code> and <code>try</code> statements that can be converted to expressions
-by lifting a return or an assignment out. Typical example:
+by lifting a <code>return</code> or an assignment out.
 <br /><br />
-
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
 <b>fun</b> foo(arg: Boolean): String {
     <b>when</b> (arg) {
         <b>true</b> -> <b>return</b> "Truth"
         <b>false</b> -> <b>return</b> "Falsehood"
     }
 }
-</pre>
+</code></pre>
+After the quick-fix is applied:
+<pre><code>
+<b>fun</b> foo(arg: Boolean): String {
+    <b>return</b> <b>when</b> (arg) {
+        <b>true</b> -> "Truth"
+        <b>false</b> -> "Falsehood"
+    }
+}
+</code></pre>
 </body>
 </html>

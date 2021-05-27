@@ -1,5 +1,19 @@
 <html>
 <body>
 Reports when chained null-checks can be replaced with safe-calls.
+<br /><br />
+<p><b>Example:</b></p>
+<pre><code>
+fun test(my: My?) {
+    if (my != null && my.foo() != null) {}
+}
+</code></pre>
+After the quick-fix is applied:
+<pre><code>
+fun test(my: My?) {
+    if (my?.foo() != null) {}
+}
+</code></pre>
+
 </body>
 </html>
