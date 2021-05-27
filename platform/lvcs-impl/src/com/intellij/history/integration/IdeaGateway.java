@@ -93,7 +93,7 @@ public class IdeaGateway {
     return true;
   }
 
-  private static boolean isNonLocalVersioned(@NotNull VirtualFile f) {
+  public static boolean isNonLocalVersioned(@NotNull VirtualFile f) {
     return f.getFileSystem() instanceof VersionedFileSystem;
   }
 
