@@ -17,8 +17,6 @@ public final class ClassLoaderConfigurationData {
   static final Set<PluginId> SEPARATE_CLASSLOADER_FOR_SUB_EXCLUDE = new ReferenceOpenHashSet<>(new PluginId[]{
     PluginId.getId("org.jetbrains.kotlin"),
     PluginId.getId("com.intellij.java"),
-    PluginId.getId("com.intellij.spring.batch"),
-    PluginId.getId("com.intellij.spring.integration"),
     PluginId.getId("com.intellij.spring.messaging"),
     PluginId.getId("com.intellij.spring.ws"),
     PluginId.getId("com.intellij.spring.websocket"),
