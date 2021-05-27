@@ -4,6 +4,8 @@ package git4idea.config
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.dvcs.branch.DvcsSyncSettings
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
@@ -44,6 +46,7 @@ import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
+import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.i18n.GitBundle.message
 import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
@@ -365,6 +368,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
       updateProjectInfoFilter()
     }
+    createGpgSignRow(project, disposable!!)
   }
 
   private fun LayoutBuilder.updateProjectInfoFilter() {
@@ -454,7 +458,7 @@ internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
   fun JoinerFunction.join(vararg items: String): String = `fun`(items.toList())
 }
 
-private class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
+class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
   override fun addListener(listener: (Boolean) -> Unit) {
     project.messageBus.connect(disposable).subscribe(CommitModeManager.SETTINGS, object : CommitModeManager.SettingsListener {
       override fun settingsChanged() {
@@ -464,4 +468,13 @@ private class StagingAreaAvailablePredicate(val project: Project, val disposable
   }
 
   override fun invoke(): Boolean = canEnableStagingArea()
+}
+
+class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
+  override fun addListener(listener: (Boolean) -> Unit) {
+    project.messageBus.connect(disposable).subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED,
+                                                     VcsRepositoryMappingListener { listener(invoke()) })
+  }
+
+  override fun invoke(): Boolean = GitRepositoryManager.getInstance(project).repositories.size != 0
 }
