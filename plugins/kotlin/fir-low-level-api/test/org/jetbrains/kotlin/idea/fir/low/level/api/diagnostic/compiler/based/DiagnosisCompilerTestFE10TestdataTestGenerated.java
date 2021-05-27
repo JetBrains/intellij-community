@@ -841,6 +841,11 @@ public abstract class DiagnosisCompilerTestFE10TestdataTestGenerated extends Abs
                 runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter_16.kt");
             }
 
+            @TestMetadata("AnnotationForClassTypeParameter_typeUseFlag.kt")
+            public void testAnnotationForClassTypeParameter_typeUseFlag() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/annotations/AnnotationForClassTypeParameter_typeUseFlag.kt");
+            }
+
             @TestMetadata("AnnotationForFunctionTypeParameter.kt")
             public void testAnnotationForFunctionTypeParameter() throws Exception {
                 runTest(compilerTestData("compiler/testData/diagnostics/tests/annotations/AnnotationForFunctionTypeParameter.kt"));
