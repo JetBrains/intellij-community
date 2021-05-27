@@ -1226,6 +1226,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         EdtScheduledExecutorService.getInstance().schedule(() -> label.setIcon(icon), 500, TimeUnit.MILLISECONDS);
       }
     }
+    myForcedUpdateRequested = true;
     add(label);
   }
 
