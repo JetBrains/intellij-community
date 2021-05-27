@@ -15,6 +15,7 @@ import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionConfigurationCustomizer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
@@ -23,7 +24,6 @@ import com.intellij.openapi.keymap.impl.ModifierKeyDoubleClickHandler;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.FontUtil;
@@ -54,9 +54,9 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
           provider instanceof RunAnythingCommandExecutionProvider));
   }
 
-  static class ShortcutTracker implements StartupActivity, DumbAware {
+  static class ShortcutTracker implements ActionConfigurationCustomizer {
     @Override
-    public void runActivity(@NotNull Project project) {
+    public void customize(@NotNull ActionManager actionManager) {
       initShortcutTracker();
     }
   }
@@ -116,7 +116,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   }
 
   private static void initShortcutTracker() {
-    ApplicationManager.getApplication().invokeLater(RunAnythingAction::updateShortcut);
+    updateShortcut();
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
       @Override
       public void activeKeymapChanged(@Nullable Keymap keymap) {
