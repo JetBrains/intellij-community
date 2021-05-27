@@ -483,7 +483,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
   }
 
   override fun saveEntities(storage: WorkspaceEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter) {
-    val affectedFileFactories = HashSet<JpsModuleListSerializer>()
+    val affectedModuleListSerializers = HashSet<JpsModuleListSerializer>()
     val serializersToRun = HashMap<JpsFileEntitiesSerializer<*>, MutableMap<Class<out WorkspaceEntity>, MutableSet<WorkspaceEntity>>>()
 
     synchronized(lock) {
@@ -495,19 +495,19 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
       val affectedEntityTypeSerializers = HashSet<JpsFileEntityTypeSerializer<*>>()
 
-      fun processObsoleteSource(fileUrl: String, deleteObsoleteFilesFromFileFactories: Boolean) {
+      fun processObsoleteSource(fileUrl: String, deleteModuleFile: Boolean) {
         val obsoleteSerializers = fileSerializersByUrl.getValues(fileUrl)
         fileSerializersByUrl.removeKey(fileUrl)
         LOG.trace { "processing obsolete source $fileUrl: serializers = $obsoleteSerializers" }
         obsoleteSerializers.forEach {
           // Clean up module files content
-          val fileFactory = moduleSerializers.remove(it)
-          if (fileFactory != null) {
-            if (deleteObsoleteFilesFromFileFactories) {
-              fileFactory.deleteObsoleteFile(fileUrl, writer)
+          val moduleListSerializer = moduleSerializers.remove(it)
+          if (moduleListSerializer != null) {
+            if (deleteModuleFile) {
+              moduleListSerializer.deleteObsoleteFile(fileUrl, writer)
             }
-            LOG.trace { "affected file factory: $fileFactory" }
-            affectedFileFactories.add(fileFactory)
+            LOG.trace { "affected module list: $moduleListSerializer" }
+            affectedModuleListSerializers.add(moduleListSerializer)
           }
           // Remove libraries under `.idea/libraries` folder
           val directoryFactory = serializerToDirectoryFactory.remove(it)
@@ -647,7 +647,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
                 val newSerializer = moduleListSerializer.createSerializer(internalSource, virtualFileManager.fromUrl(url), moduleGroup)
                 fileSerializersByUrl.put(url, newSerializer)
                 moduleSerializers[newSerializer] = moduleListSerializer
-                affectedFileFactories.add(moduleListSerializer)
+                affectedModuleListSerializers.add(moduleListSerializer)
               }
             }
           }
@@ -674,7 +674,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
 
     }
 
-    if (affectedFileFactories.isNotEmpty()) {
+    if (affectedModuleListSerializers.isNotEmpty()) {
       moduleListSerializersByUrl.values.forEach {
         saveModulesList(it, storage, writer)
       }
