@@ -211,15 +211,23 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     }
 
     private fun GitIndexUtil.StagedFile.hash(): Hash = HashImpl.build(blobHash)
+
+    private fun writeInEdt(action: () -> Unit) {
+      ApplicationManager.getApplication().invokeLater {
+        ApplicationManager.getApplication().runWriteAction {
+          action()
+        }
+      }
+    }
   }
 
-  private inner class IndexFileData internal constructor(private val file: GitIndexVirtualFile,
-                                                         private val oldHash: Hash?,
-                                                         private val newHash: Hash?,
-                                                         oldLength: Long,
-                                                         private val newLength: Long,
-                                                         private val newExecutable: Boolean,
-                                                         oldModificationStamp: Long) {
+  private inner class IndexFileData(private val file: GitIndexVirtualFile,
+                                    private val oldHash: Hash?,
+                                    private val newHash: Hash?,
+                                    oldLength: Long,
+                                    private val newLength: Long,
+                                    private val newExecutable: Boolean,
+                                    oldModificationStamp: Long) {
     val event: VFileContentChangeEvent = VFileContentChangeEvent(null, file, oldModificationStamp, -1,
                                                                  0, 0,
                                                                  oldLength, newLength, true)
@@ -237,12 +245,4 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private data class Key(val root: VirtualFile, val filePath: FilePath)
-}
-
-fun writeInEdt(action: () -> Unit) {
-  ApplicationManager.getApplication().invokeLater {
-    ApplicationManager.getApplication().runWriteAction {
-      action()
-    }
-  }
 }
