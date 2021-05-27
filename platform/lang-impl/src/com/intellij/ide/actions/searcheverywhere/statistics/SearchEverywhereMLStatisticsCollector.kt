@@ -119,7 +119,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         result[ADDITIONAL_DATA_KEY] = additionalData
       }
       id?.let {
-        result += "id" to it
+        result += ACTION_ID_KEY to it
       }
       return result
     }
@@ -174,6 +174,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
     internal const val ADDITIONAL_DATA_KEY = "additionalData"
     internal const val CONTRIBUTOR_ID_KEY = "contributorId"
+    internal const val ACTION_ID_KEY = "id"
     private fun withUpperBound(value: Int): Int {
       if (value > 100) return 101
       return value

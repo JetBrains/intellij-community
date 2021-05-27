@@ -2,6 +2,7 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.buildCommonFeaturesMap
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.fillActionItemInfo
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -29,8 +30,12 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
       }
       val features = mutableMapOf<String, Any>()
       features.putAll(buildCommonFeaturesMap(seSessionId, intArrayOf(), false, -1, -1, -1, -1, seTabId, project))
-      val additionalData = fillActionItemInfo(0, System.nanoTime(), element, contributorId).additionalData
-      features.putAll(additionalData)
+      val itemInfo = fillActionItemInfo(0, System.nanoTime(), element, contributorId)
+      features.putAll(itemInfo.additionalData)
+
+      itemInfo.id?.let {
+        features.put(SearchEverywhereMLStatisticsCollector.ACTION_ID_KEY, it)
+      }
       model.predict(features)
     }
   }
