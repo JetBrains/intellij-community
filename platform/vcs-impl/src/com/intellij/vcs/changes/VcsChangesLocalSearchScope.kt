@@ -11,7 +11,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.scope.RangeBasedLocalSearchScope
-import com.intellij.util.containers.toArray
 import com.intellij.util.text.CharArrayUtil
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -21,83 +20,55 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
                                  displayName: @Nls String,
                                  private val myGivenVirtualFiles: Array<VirtualFile>?,
                                  ignoreInjectedPsi: Boolean) : RangeBasedLocalSearchScope(displayName, ignoreInjectedPsi), WeighedItem {
-  private var myPsiElements: Array<PsiElement>? = null
-  private var myRangesMap: HashMap<PsiFile, List<TextRange>>? = null
-  private var myPsiFiles: List<PsiFile>? = null
-  private var myVirtualFiles: Array<VirtualFile>? = null
 
-  private fun initFilesAndRanges() {
-    if (myPsiFiles != null) return
-    synchronized(this) {
-      if (myPsiFiles != null) return
-      val changeListManager = ChangeListManager.getInstance(myProject)
-      val vcsFacade = VcsFacade.getInstance()
-      val psiManager = PsiManager.getInstance(myProject)
-      myVirtualFiles = myGivenVirtualFiles ?: changeListManager.affectedFiles.toTypedArray()
-      val psiFiles = myVirtualFiles!!.mapNotNull { psiManager.findFile(it) }.toMutableList()
-      myRangesMap = HashMap()
-      for (i in psiFiles.indices.reversed()) {
-        val file = psiFiles[i]
-        val info = vcsFacade.getChangedRangesInfo(file)
-        if (info != null) {
-          val document = file.viewProvider.document
-          val ranges = ArrayList<TextRange>()
-          for (range in info.allChangedRanges) {
-            val startLine = document.getLineNumber(range.startOffset)
-            val endLine = document.getLineNumber(range.endOffset)
-            var startOffset = document.getLineStartOffset(startLine)
-            var endOffset = document.getLineEndOffset(endLine)
-            startOffset = CharArrayUtil.shiftForward(document.charsSequence, startOffset, endOffset, " /t")
-            if (startOffset == endOffset) continue
-            endOffset = CharArrayUtil.shiftBackward(document.charsSequence, startOffset, endOffset, " /t")
-            val lineRange = TextRange(startOffset, endOffset)
-            ranges.add(lineRange)
-          }
-          myRangesMap!![file] = ranges
+  private val rangeMap: HashMap<PsiFile, List<TextRange>> by lazy {
+    val changeListManager = ChangeListManager.getInstance(myProject)
+    val vcsFacade = VcsFacade.getInstance()
+    val psiManager = PsiManager.getInstance(myProject)
+    val psiFiles =
+      (myGivenVirtualFiles ?: changeListManager.affectedFiles.toTypedArray())
+        .mapNotNull { psiManager.findFile(it) }.toMutableList()
+
+    val result = HashMap<PsiFile, List<TextRange>>()
+    for (file in psiFiles) {
+      val info = vcsFacade.getChangedRangesInfo(file)
+      if (info != null) {
+        val document = file.viewProvider.document
+        val ranges = ArrayList<TextRange>()
+
+        for (range in info.allChangedRanges) {
+          val startLine = document.getLineNumber(range.startOffset)
+          val endLine = document.getLineNumber(range.endOffset)
+          var startOffset = document.getLineStartOffset(startLine)
+          var endOffset = document.getLineEndOffset(endLine)
+          startOffset = CharArrayUtil.shiftForward(document.charsSequence, startOffset, endOffset, " /t")
+          if (startOffset == endOffset) continue
+          endOffset = CharArrayUtil.shiftBackward(document.charsSequence, startOffset, endOffset, " /t")
+          val lineRange = TextRange(startOffset, endOffset)
+          ranges.add(lineRange)
         }
-        else {
-          psiFiles.removeAt(i)
-        }
+
+        result[file] = ranges
       }
-      myPsiFiles = psiFiles
+    }
+    result
+  }
+
+  override fun getVirtualFiles(): Array<VirtualFile> = rangeMap.keys.map { it.virtualFile }.toTypedArray()
+
+  private val psiElementsLazy: Array<PsiElement> by lazy {
+    ReadAction.compute<Array<PsiElement>, RuntimeException> {
+      val elements: List<PsiElement> = ArrayList()
+
+      this.rangeMap.forEach { (psiFile, ranges) ->
+        ranges.forEach { CollectPsiElementsAtRange(psiFile, elements, it.startOffset, it.endOffset) }
+      }
+
+      elements.toTypedArray()
     }
   }
 
-  private fun init() {
-    if (myPsiElements != null) return
-    ReadAction.run<RuntimeException> {
-      synchronized(this) {
-        if (myPsiElements != null) return@run
-        initFilesAndRanges()
-        val psiFiles = myPsiFiles
-        myPsiElements =
-          if (psiFiles != null) {
-            val elements: List<PsiElement> = ArrayList()
-            for (psiFile in psiFiles) {
-              val ranges = myRangesMap!![psiFile]
-              if (ranges != null) {
-                for (range in ranges) {
-                  CollectPsiElementsAtRange(psiFile, elements, range.startOffset, range.endOffset)
-                }
-              }
-            }
-            elements.toArray(PsiElement.EMPTY_ARRAY)
-          }
-          else PsiElement.EMPTY_ARRAY
-      }
-    }
-  }
-
-  override fun getPsiElements(): Array<PsiElement> {
-    init()
-    return myPsiElements!!
-  }
-
-  // Do not instantiate LocalSearchScope for getVirtualFiles, calcHashCode, equals, toString and containsRange.
-  override fun getVirtualFiles(): Array<VirtualFile> {
-    initFilesAndRanges()
-    return myVirtualFiles!!
-  }
+  override fun getPsiElements(): Array<PsiElement> = psiElementsLazy
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -140,14 +111,12 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
   }
 
   override fun getRanges(file: VirtualFile): Array<TextRange> {
-    initFilesAndRanges()
     return ReadAction.compute<Array<TextRange>, RuntimeException> {
       PsiManager.getInstance(myProject).findFile(file)?.let { getRanges(it) } ?: TextRange.EMPTY_ARRAY
     }
   }
 
   private fun getRanges(psiFile: PsiFile): Array<TextRange> {
-    initFilesAndRanges()
-    return myRangesMap!![psiFile]?.toTypedArray() ?: TextRange.EMPTY_ARRAY
+    return rangeMap[psiFile]?.toTypedArray() ?: TextRange.EMPTY_ARRAY
   }
 }
