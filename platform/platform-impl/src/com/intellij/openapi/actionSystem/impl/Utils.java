@@ -59,8 +59,7 @@ public final class Utils {
     EMPTY_MENU_FILLER.getTemplatePresentation().setText(CommonBundle.messagePointer("empty.menu.filler"));
   }
 
-  public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
-    if (!Registry.is("actionSystem.update.actions.async")) return dataContext;
+  public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
     Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof DataManagerImpl.MyDataContext) {
       return new PreCachedDataContext(component);
@@ -72,6 +71,11 @@ public final class Utils {
       return wrapped;
     }
     return dataContext;
+  }
+
+  public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
+    if (!Registry.is("actionSystem.update.actions.async")) return dataContext;
+    return wrapToAsyncDataContext(dataContext);
   }
 
   @ApiStatus.Internal

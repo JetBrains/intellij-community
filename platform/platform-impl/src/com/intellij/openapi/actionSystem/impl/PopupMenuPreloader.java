@@ -86,8 +86,7 @@ public final class PopupMenuPreloader implements Runnable {
       dispose(-1);
       return;
     }
-    DataContext dataContext = Utils.wrapDataContext(DataManager.getInstance().getDataContext(component));
-    if (!Utils.isAsyncDataContext(dataContext)) return;
+    DataContext dataContext = Utils.wrapToAsyncDataContext(DataManager.getInstance().getDataContext(component));
     boolean isInModalContext = ModalityState.stateForComponent(component).dominates(ModalityState.NON_MODAL);
     long start = System.nanoTime();
     CancellablePromise<List<AnAction>> promise = Utils.expandActionGroupAsync(
