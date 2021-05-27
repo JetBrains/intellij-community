@@ -25,10 +25,7 @@ enum KotlinPluginKind {
     "AppCodeMobilePlugin",
     "kotlin.plugin.version",
     "kotlin-ultimate.appcode-with-mobile",
-    "CIDR-appcode/appcode-with-mobile/resources",
-    [
-      Couple.of("artifacts/AppCodeMobilePlugin", "AppCodeMobilePlugin")
-    ]
+    "CIDR-appcode/appcode-with-mobile/resources"
   ),
   AC("AppCodeKotlinPlugin",
      "kotlin.plugin.version",
