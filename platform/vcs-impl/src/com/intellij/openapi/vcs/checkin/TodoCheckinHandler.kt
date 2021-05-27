@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
@@ -152,7 +152,7 @@ class TodoCheckinHandler(private val commitPanel: CheckinProjectPanel) : Checkin
   }
 }
 
-private class TextToText2Indicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
+internal class TextToText2Indicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
   override fun setText(text: String?) = super.setText2(text)
   override fun setText2(text: String?) = Unit
 }

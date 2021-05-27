@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.checkin
 
 import com.intellij.analysis.AnalysisScope
 import com.intellij.codeInsight.FileModificationService
+import com.intellij.codeInspection.CommonProblemDescriptor
 import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.InspectionProfile
 import com.intellij.codeInspection.actions.PerformFixesTask
@@ -14,10 +15,11 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.CommandProcessorEx
 import com.intellij.openapi.command.UndoConfirmationPolicy
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vcs.CheckinProjectPanel
 import com.intellij.openapi.vcs.VcsBundle.message
@@ -67,27 +69,28 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
 
   override suspend fun runCheck(indicator: ProgressIndicator): CommitProblem? {
     indicator.text = message("progress.text.inspecting.code")
-    val cleanupProblems = findProblems()
+    val cleanupProblems = findProblems(indicator)
 
     indicator.text = message("progress.text.applying.fixes")
-    applyFixes(cleanupProblems)
+    indicator.text2 = ""
+    applyFixes(cleanupProblems, indicator)
 
     return null
   }
 
   override fun showDetails(problem: CommitProblem) = Unit
 
-  private suspend fun findProblems(): CleanupProblems {
+  private suspend fun findProblems(indicator: ProgressIndicator): CleanupProblems {
     val files = filterOutGeneratedAndExcludedFiles(panel.virtualFiles, project)
     val globalContext = InspectionManager.getInstance(project).createNewGlobalContext() as GlobalInspectionContextImpl
     val profile = getProfile()
     val scope = AnalysisScope(project, files)
-    val indicator = EmptyProgressIndicator()
+    val wrapper = TextToText2Indicator(ProgressWrapper.wrap(indicator))
 
     return withContext(Dispatchers.Default) {
       ProgressManager.getInstance().runProcess(
-        Computable { globalContext.findProblems(scope, profile, indicator) { true } },
-        indicator
+        Computable { globalContext.findProblems(scope, profile, wrapper) { true } },
+        wrapper
       )
     }
   }
@@ -103,7 +106,7 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
     return InspectionProjectProfileManager.getInstance(project).currentProfile
   }
 
-  private suspend fun applyFixes(cleanupProblems: CleanupProblems) {
+  private suspend fun applyFixes(cleanupProblems: CleanupProblems, indicator: ProgressIndicator) {
     if (cleanupProblems.files.isEmpty()) return
     if (!FileModificationService.getInstance().preparePsiElementsForWrite(cleanupProblems.files)) return
 
@@ -113,10 +116,10 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
 
       val runner = SequentialModalProgressTask(project, "", true)
       runner.setMinIterationTime(200)
-      runner.setTask(PerformFixesTask(project, cleanupProblems.problemDescriptors, null))
+      runner.setTask(ApplyFixesTask(project, cleanupProblems.problemDescriptors, indicator))
 
       withContext(Dispatchers.IO) {
-        runner.doRun(EmptyProgressIndicator())
+        runner.doRun(NoTextIndicator(indicator))
       }
     }
   }
@@ -129,5 +132,13 @@ private class CodeCleanupCheckinHandler(private val panel: CheckinProjectPanel) 
     finally {
       finishCommand(commandToken, null)
     }
+  }
+}
+
+private class ApplyFixesTask(project: Project, descriptors: List<CommonProblemDescriptor>, private val indicator: ProgressIndicator) :
+  PerformFixesTask(project, descriptors, null) {
+
+  override fun beforeProcessing(descriptor: CommonProblemDescriptor) {
+    indicator.text2 = getPresentableText(descriptor)
   }
 }
