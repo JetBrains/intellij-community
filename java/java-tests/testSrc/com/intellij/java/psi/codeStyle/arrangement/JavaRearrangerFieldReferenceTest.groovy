@@ -545,4 +545,25 @@ public class Test {
       ]
     )
   }
+
+  void testIdea218936() {
+    doTest(
+      initial:  '''
+public class TestOne {
+    int value;
+    public int a = 0, b = value;
+}
+''',
+      expected: '''
+public class TestOne {
+    int value;
+    public int a = 0, b = value;
+}
+''',
+      rules: [
+        rule(PUBLIC),
+        rule(PACKAGE_PRIVATE)
+      ]
+    )
+  }
 }

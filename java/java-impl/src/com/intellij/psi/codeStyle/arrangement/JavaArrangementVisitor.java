@@ -165,8 +165,8 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
   public void visitField(PsiField field) {
     boolean isSectionCommentsDetected = registerSectionComments(field);
 
-    // There is a possible case that more than one field is declared for the same type like 'int i, j;'. We want to process only
-    // the first one then.
+    // There is a possible case that more than one field is declared for the same type like 'int i, j;'.
+    // the case is handled in getFieldWithSiblings().
     PsiElement fieldPrev = getPreviousNonWsComment(field.getPrevSibling(), 0);
     if (PsiUtil.isJavaToken(fieldPrev, JavaTokenType.COMMA)) {
       return;
@@ -229,10 +229,42 @@ public class JavaArrangementVisitor extends JavaRecursiveElementVisitor {
     processEntry(entry, field, field.getInitializer());
     myInfo.onFieldEntryCreated(field, entry);
 
-    List<PsiField> referencedFields = getReferencedFields(field);
+    List<PsiField> referencedFields = new ArrayList<>();
+    for (PsiField adjacentField : getFieldWithSiblings(field)) {
+      referencedFields.addAll(getReferencedFields(adjacentField));
+    }
     for (PsiField referencedField : referencedFields) {
       myInfo.registerFieldInitializationDependency(field, referencedField);
     }
+  }
+
+  /*
+   * Process cases like int a,b,c;
+   */
+  private static List<PsiField> getFieldWithSiblings(@NotNull PsiField field) {
+    List<PsiField> fields = new ArrayList<>();
+    fields.add(field);
+    PsiElement next = getNextAfterWsOrComment(field);
+    while (next != null && PsiUtil.isJavaToken(next, JavaTokenType.COMMA)) {
+      next = getNextAfterWsOrComment(next);
+      if (next instanceof PsiField) {
+        fields.add((PsiField)next);
+      }
+      else {
+        break;
+      }
+      next = getNextAfterWsOrComment(next);
+    }
+    return fields;
+  }
+
+  @Nullable
+  private static PsiElement getNextAfterWsOrComment(@NotNull PsiElement element) {
+    PsiElement next = element.getNextSibling();
+    while (next instanceof PsiWhiteSpace || next instanceof PsiComment) {
+      next = next.getNextSibling();
+    }
+    return next;
   }
 
   @NotNull
