@@ -29,7 +29,7 @@ import java.util.concurrent.TimeUnit
 internal object PluginSignatureChecker {
   private val LOG = logger<PluginSignatureChecker>()
 
-  private val cache = Caffeine
+  private val jetBrainsCertificateRevokedCache = Caffeine
     .newBuilder()
     .expireAfterWrite(1, TimeUnit.HOURS)
     .build<String, Optional<Boolean>>()
@@ -83,7 +83,7 @@ internal object PluginSignatureChecker {
     certificates: List<Certificate> = emptyList()
   ): Boolean {
     val jbCert = jetbrainsCertificate ?: return false
-    val isRevoked = runCatching { isCertificatesRevoked(jbCert) }.getOrNull() ?: return false
+    val isRevoked = runCatching { isJetBrainsCertificateRevoked() }.getOrNull() ?: return false
     if (isRevoked) {
       LOG.info("Plugin ${pluginFile.name} has revoked JetBrains certificate")
       return false
@@ -99,7 +99,7 @@ internal object PluginSignatureChecker {
   ): Boolean {
     val jbCert = jetbrainsCertificate ?: return processSignatureWarning(descriptor, IdeBundle.message("jetbrains.certificate.not.found"))
     val isRevoked = try {
-      isCertificatesRevoked(jbCert)
+      isJetBrainsCertificateRevoked()
     }
     catch (e: IllegalArgumentException) {
       return processSignatureWarning(descriptor, e.message ?: IdeBundle.message("jetbrains.certificate.invalid"))
@@ -112,14 +112,14 @@ internal object PluginSignatureChecker {
     return isSignedBy(descriptor, pluginFile, showAcceptDialog = true, *allCerts.toTypedArray())
   }
 
-  private fun isCertificatesRevoked(vararg certificates: Certificate): Boolean {
-    val isRevokedCached = cache.getIfPresent(this.javaClass.name)?.get()
+  private fun isJetBrainsCertificateRevoked(): Boolean {
+    val isRevokedCached = jetBrainsCertificateRevokedCache.getIfPresent(this.javaClass.name)?.get()
     if (isRevokedCached != null) return isRevokedCached
-    val cert509Lists = certificates.mapNotNull { it as? X509Certificate }
+    val cert509Lists = listOfNotNull(jetbrainsCertificate as? X509Certificate)
     val lists = getRevocationLists(cert509Lists)
     val revokedCertificates = CertificateUtils.findRevokedCertificate(cert509Lists, lists)
     val isRevoked = revokedCertificates != null
-    cache.put(this.javaClass.name, Optional.of(isRevoked))
+    jetBrainsCertificateRevokedCache.put(this.javaClass.name, Optional.of(isRevoked))
     return isRevoked
   }
 
