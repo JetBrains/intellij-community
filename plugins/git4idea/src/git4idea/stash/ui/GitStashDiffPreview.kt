@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash.ui
 
 import com.intellij.diff.FrameDiffTool
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -22,6 +21,7 @@ import com.intellij.vcs.log.runInEdtAsync
 import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
 import java.util.*
 import java.util.stream.Stream
+import kotlin.streams.asSequence
 
 class GitStashDiffPreview(project: Project, private val tree: ChangesTree, parentDisposable: Disposable) :
   ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
@@ -57,9 +57,7 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, paren
 
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
     override fun getActualProducers(): List<DiffRequestProducer> {
-      return VcsTreeModelData.all(tree)
-        .userObjects(Change::class.java)
-        .mapNotNull { ChangeDiffRequestProducer.create(project, it) }
+      return allChanges.asSequence().mapNotNull { wrapper -> wrapper.createProducer(project) }.toList()
     }
 
     override fun selectFilePath(filePath: FilePath) {
