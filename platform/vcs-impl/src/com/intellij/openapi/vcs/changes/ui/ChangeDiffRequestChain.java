@@ -10,8 +10,6 @@ import com.intellij.openapi.ListSelection;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.SimpleGoToChangePopupAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -70,27 +68,7 @@ public class ChangeDiffRequestChain extends DiffRequestChainBase implements GoTo
     };
   }
 
-  public interface Producer extends DiffRequestProducer {
-    @NotNull
-    FilePath getFilePath();
-
-    @NotNull
-    FileStatus getFileStatus();
-
-    /**
-     * @deprecated Implement {@link #getTag()} instead.
-     */
-    @SuppressWarnings("DeprecatedIsStillUsed")
-    @Deprecated
-    @Nullable
-    default Object getPopupTag() {
-      return null;
-    }
-
-    @Nullable
-    default ChangesBrowserNode.Tag getTag() {
-      return ChangesBrowserNode.WrapperTag.wrap(getPopupTag());
-    }
+  public interface Producer extends DiffRequestProducer, PresentableChange {
   }
 
   public static abstract class Async extends AsyncDiffRequestChain implements GoToChangePopupBuilder.Chain {

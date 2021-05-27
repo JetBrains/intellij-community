@@ -36,7 +36,9 @@ import static java.util.Comparator.comparing;
 public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder.BaseGoToChangePopupAction {
   private final @NotNull List<? extends DiffRequestProducer> myProducers;
 
-  public SimpleGoToChangePopupAction(@NotNull List<? extends DiffRequestProducer> producers) { this.myProducers = producers; }
+  public SimpleGoToChangePopupAction(@NotNull List<? extends DiffRequestProducer> producers) {
+    myProducers = producers;
+  }
 
   @Override
   protected boolean canNavigate() {
@@ -49,10 +51,10 @@ public abstract class SimpleGoToChangePopupAction extends GoToChangePopupBuilder
     List<? extends DiffRequestProducer> producers = myProducers;
 
     for (int i = 0; i < producers.size(); i++) {
-      ChangeDiffRequestChain.Producer producer = ObjectUtils.tryCast(producers.get(i), ChangeDiffRequestChain.Producer.class);
+      PresentableChange producer = ObjectUtils.tryCast(producers.get(i), PresentableChange.class);
       if (producer == null) {
         throw new IllegalArgumentException(
-          "Only " + ChangeDiffRequestChain.Producer.class + " supported as " + DiffRequestProducer.class + " implementations");
+          "Only " + PresentableChange.class + " supported as " + DiffRequestProducer.class + " implementations");
       }
 
       FilePath filePath = producer.getFilePath();
