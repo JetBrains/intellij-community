@@ -366,12 +366,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public void onTestIgnored(@NotNull final SMTestProxy test) {
-    if (test.isSuite()) {
-      // no event for suite ignored => need to fix it here:
-      // `updateOnTestIgnored` calls `++myIgnoredTestCount`
-      --myIgnoredTestCount;
-    }
-    updateOnTestIgnored();
+    updateOnTestIgnored(test);
   }
 
   /**
@@ -531,7 +526,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myFailedTestCount;
   }
 
-  protected int getIgnoredTestCount() {
+  public int getIgnoredTestCount() {
     return myIgnoredTestCount;
   }
 
@@ -737,8 +732,11 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateStatusLabel(false);
   }
 
-  private void updateOnTestIgnored() {
-    myIgnoredTestCount++;
+  private void updateOnTestIgnored(@NotNull final SMTestProxy test) {
+    if (!test.isSuite()) {
+      // no event for suite ignored => need to fix it here
+      myIgnoredTestCount++;
+    }
     updateProgressOnTestDone();
     updateStatusLabel(false);
   }
