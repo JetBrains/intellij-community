@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationStarter;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -65,7 +66,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Override
   public Icon getIcon() {
-    return DevkitIcons.Sdk_closed;
+    return AllIcons.Nodes.Plugin;
   }
 
   @NotNull
