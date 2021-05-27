@@ -25,7 +25,7 @@ enum KotlinPluginKind {
     "AppCodeMobilePlugin",
     "kotlin.plugin.version",
     "kotlin-ultimate.appcode-with-mobile",
-    "CIDR-appcode/appcode-kotlin-native/appcode-with-mobile/resources",
+    "CIDR-appcode/appcode-with-mobile/resources",
     [
       Couple.of("artifacts/kotlin-ocswift", "kotlin-ocswift"),
       Couple.of("artifacts/AppCodeMobilePlugin", "AppCodeMobilePlugin")
