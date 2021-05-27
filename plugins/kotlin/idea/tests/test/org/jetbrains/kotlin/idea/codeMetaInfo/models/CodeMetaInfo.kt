@@ -27,19 +27,19 @@ interface CodeMetaInfo {
 class DiagnosticCodeMetaInfo(
     override val start: Int,
     override val end: Int,
-    renderConfiguration: DiagnosticCodeMetaInfoRenderConfiguration,
+    renderConfiguration: DiagnosticCodeMetaInfoConfiguration,
     val diagnostic: Diagnostic
 ) : CodeMetaInfo {
     constructor(
         range: TextRange,
-        renderConfiguration: DiagnosticCodeMetaInfoRenderConfiguration,
+        renderConfiguration: DiagnosticCodeMetaInfoConfiguration,
         diagnostic: Diagnostic
     ) : this(range.startOffset, range.endOffset, renderConfiguration, diagnostic)
 
-    override var renderConfiguration: DiagnosticCodeMetaInfoRenderConfiguration = renderConfiguration
+    override var renderConfiguration: DiagnosticCodeMetaInfoConfiguration = renderConfiguration
         private set
 
-    fun replaceRenderConfiguration(renderConfiguration: DiagnosticCodeMetaInfoRenderConfiguration) {
+    fun replaceRenderConfiguration(renderConfiguration: DiagnosticCodeMetaInfoConfiguration) {
         this.renderConfiguration = renderConfiguration
     }
 
@@ -52,7 +52,7 @@ class DiagnosticCodeMetaInfo(
 }
 
 class LineMarkerCodeMetaInfo(
-    override val renderConfiguration: LineMarkerRenderConfiguration,
+    override val renderConfiguration: LineMarkerConfiguration,
     val lineMarker: LineMarkerInfo<*>
 ) : CodeMetaInfo {
     override val start: Int
@@ -69,7 +69,7 @@ class LineMarkerCodeMetaInfo(
 }
 
 class HighlightingCodeMetaInfo(
-    override val renderConfiguration: HighlightingRenderConfiguration,
+    override val renderConfiguration: HighlightingConfiguration,
     val highlightingInfo: HighlightInfo
 ) : CodeMetaInfo {
     override val start: Int
@@ -110,7 +110,7 @@ class ParsedCodeMetaInfo(
     }
 
     fun copy(): ParsedCodeMetaInfo {
-        return ParsedCodeMetaInfo(start, end, attributes.toMutableList(), tag, description)
+        return ParsedCodeMetaInfo(start, end, attributes.toMutableList(), tag, params, description)
     }
 }
 
