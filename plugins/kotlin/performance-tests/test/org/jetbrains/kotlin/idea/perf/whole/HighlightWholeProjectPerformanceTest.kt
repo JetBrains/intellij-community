@@ -57,7 +57,10 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
                 val projectName = projectSpec.name
                 val projectPath = projectSpec.path
 
-                suite(suiteName = "allKtFilesIn-$projectName") {
+                val suiteName =
+                    listOfNotNull("allKtFilesIn", "emptyProfile".takeIf { emptyProfile }, projectName)
+                        .joinToString(separator = "-")
+                suite(suiteName = suiteName) {
                     app {
                         warmUpProject()
 
