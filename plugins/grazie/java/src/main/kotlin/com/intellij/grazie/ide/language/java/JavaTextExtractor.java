@@ -1,9 +1,9 @@
 package com.intellij.grazie.ide.language.java;
 
-import com.intellij.grazie.grammar.strategy.StrategyUtils;
 import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
+import com.intellij.grazie.utils.PsiUtilsKt;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
@@ -43,7 +43,7 @@ public class JavaTextExtractor extends TextExtractor {
     }
 
     if (root instanceof PsiCommentImpl && allowedDomains.contains(COMMENTS)) {
-      List<PsiElement> roots = StrategyUtils.getNotSoDistantSimilarSiblings(root, TokenSet.WHITE_SPACE,
+      List<PsiElement> roots = PsiUtilsKt.getNotSoDistantSimilarSiblings(root, TokenSet.WHITE_SPACE,
         e -> JAVA_PLAIN_COMMENT_BIT_SET.contains(PsiUtilCore.getElementType(e)));
       return TextContent.joinWithWhitespace(ContainerUtil.mapNotNull(roots, c ->
         TextContentBuilder.FromPsi.removingIndents(" \t*/").build(c, COMMENTS)));

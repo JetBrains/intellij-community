@@ -1,17 +1,16 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.grazie.grammar.strategy
 
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
 import com.intellij.grazie.ide.language.LanguageGrammarChecking
-import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.utils.LinkedSet
 import com.intellij.grazie.utils.Text
 import com.intellij.lang.LanguageExtensionPoint
 import com.intellij.lang.LanguageParserDefinitions
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.elementType
 
 
@@ -40,40 +39,6 @@ object StrategyUtils {
       parser.commentTokens.contains(root.elementType) -> TextDomain.COMMENTS
       else -> default
     }
-  }
-
-  /**
-   * Delete leading and trailing quotes with spaces
-   *
-   * @return deleted leading offset
-   */
-  internal fun trimLeadingQuotesAndSpaces(str: StringBuilder): Int = with(str) {
-    var offset = quotesOffset(this)
-
-    setLength(length - offset) // remove closing quotes and whitespaces
-    while (isNotEmpty() && get(length - 1).isWhitespace()) deleteCharAt(length - 1)
-
-    while (offset < length && get(offset).isWhitespace()) offset++
-    repeat(offset) { deleteCharAt(0) } // remove opening quotes and whitespace
-
-    return offset
-  }
-
-  /**
-   * Convert double spaces into one after removing absorb/stealth elements
-   *
-   * @param position position in StringBuilder
-   * @return true if deleted
-   */
-  internal fun deleteRedundantSpace(str: StringBuilder, position: Int): Boolean = with(str) {
-    if (position in 1 until length) {
-      if (get(position - 1) == ' ' && (Text.isPunctuation(get(position)) || get(position) == ' ')) {
-        deleteCharAt(position - 1)
-        return true
-      }
-    }
-
-    return false
   }
 
   /**
@@ -116,6 +81,7 @@ object StrategyUtils {
    * @param types possible types of siblings
    * @return sequence of siblings with whitespace tokens
    */
+  @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) =
     getNotSoDistantSiblingsOfTypes(strategy, element) { type -> type in types }
 
@@ -127,6 +93,7 @@ object StrategyUtils {
    * @param checkType predicate to check if type is accepted
    * @return sequence of siblings with whitespace tokens
    */
+  @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, checkType: (IElementType?) -> Boolean) =
     getNotSoDistantSimilarSiblings(strategy, element) { sibling -> checkType(sibling.elementType) }
 
@@ -138,6 +105,7 @@ object StrategyUtils {
    * @param checkSibling predicate to check if sibling is accepted
    * @return sequence of siblings with whitespace tokens
    */
+  @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSimilarSiblings(strategy: GrammarCheckingStrategy, element: PsiElement, checkSibling: (PsiElement?) -> Boolean) =
     sequence {
     fun PsiElement.process(checkSibling: (PsiElement?) -> Boolean, next: Boolean) = sequence<PsiElement> {
@@ -167,34 +135,6 @@ object StrategyUtils {
     yieldAll(element.process(checkSibling, false).toList().asReversed())
     yield(element)
     yieldAll(element.process(checkSibling, true))
-  }
-
-  /**
-   * Get all siblings of [element] that are accepted by [checkSibling]
-   * which are separated by whitespace containing at most one line break
-   */
-  @JvmStatic
-  fun getNotSoDistantSimilarSiblings(element: PsiElement, whitespaceTokens: TokenSet, checkSibling: (PsiElement) -> Boolean): List<PsiElement> {
-    require(checkSibling(element))
-    fun PsiElement.process(next: Boolean): List<PsiElement> {
-      val result = arrayListOf<PsiElement>()
-      var newLinesBetweenSiblingsCount = 0
-
-      var sibling: PsiElement = this@process
-      while (true) {
-        sibling = (if (next) sibling.nextSibling else sibling.prevSibling) ?: break
-        if (checkSibling(sibling)) {
-          newLinesBetweenSiblingsCount = 0
-          result.add(sibling)
-        } else if (sibling.elementType in whitespaceTokens) {
-          newLinesBetweenSiblingsCount += sibling.text.count { char -> char == '\n' }
-          if (newLinesBetweenSiblingsCount > 1) break
-        } else break
-      }
-      return result
-    }
-
-    return element.process(false) + listOf(element) + element.process(true)
   }
 
   internal fun quotesOffset(str: CharSequence): Int {

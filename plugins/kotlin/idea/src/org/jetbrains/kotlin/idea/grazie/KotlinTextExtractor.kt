@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.grazie
 
-import com.intellij.grazie.grammar.strategy.StrategyUtils.getNotSoDistantSimilarSiblings
 import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextContent.TextDomain.*
 import com.intellij.grazie.text.TextContentBuilder
 import com.intellij.grazie.text.TextExtractor
+import com.intellij.grazie.utils.getNotSoDistantSimilarSiblings
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.PsiCommentImpl
 import com.intellij.psi.tree.TokenSet
