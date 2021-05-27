@@ -8,6 +8,8 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.TimeoutUtil;
@@ -26,7 +28,9 @@ import java.util.function.Supplier;
 public final class PopupMenuPreloader implements Runnable {
   private static final Logger LOG = Logger.getInstance(PopupMenuPreloader.class);
 
-  private final @NotNull Supplier<? extends ActionGroup> myGroupSupplier;
+  private static int ourEditorContextMenuPreloadCount;
+
+  private final Supplier<? extends ActionGroup> myGroupSupplier;
   private final String myPlace;
   private final WeakReference<JComponent> myComponentRef;
   private final WeakReference<PopupHandler> myPopupHandlerRef;
@@ -36,8 +40,12 @@ public final class PopupMenuPreloader implements Runnable {
                              @NotNull String actionPlace,
                              @Nullable PopupHandler popupHandler,
                              @NotNull Supplier<? extends ActionGroup> groupSupplier) {
+    if (component instanceof EditorComponentImpl && ourEditorContextMenuPreloadCount > 4) {
+      return;
+    }
     Runnable runnable = () -> {
-      if (popupHandler != null && !ArrayUtil.contains(popupHandler, component.getMouseListeners())) {
+      if (popupHandler != null && !ArrayUtil.contains(popupHandler, component.getMouseListeners()) ||
+          component instanceof EditorComponentImpl && !EditorUtil.isRealFileEditor(((EditorComponentImpl)component).getEditor())) {
         return;
       }
       PopupMenuPreloader preloader = new PopupMenuPreloader(component, actionPlace, popupHandler, groupSupplier);
@@ -92,6 +100,10 @@ public final class PopupMenuPreloader implements Runnable {
     myDisposed = true;
     IdeEventQueue.getInstance().removeIdleListener(this);
     if (millis != -1) {
+      if (myComponentRef.get() instanceof EditorComponentImpl) {
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        ourEditorContextMenuPreloadCount ++;
+      }
       LOG.info("Popup menu preloaded for `" + myPlace + "` in " + millis + " ms");
     }
   }
