@@ -8,7 +8,6 @@ import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -34,6 +33,7 @@ import git4idea.index.actions.runProcess
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import training.dsl.*
+import training.project.ProjectUtils
 import java.io.File
 import javax.swing.JDialog
 
@@ -211,7 +211,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   }
 
   private fun TaskRuntimeContext.reCreateRemoteProjectDir(): File {
-    val learnProjectPath = ProjectRootManager.getInstance(project).contentRoots[0].toNioPath()
+    val learnProjectPath = ProjectUtils.getProjectRoot(project).toNioPath()
     val learnProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(learnProjectPath)
                            ?: error("Learning project not found")
     val projectsRoot = learnProjectRoot.parent.toNioPath().toFile()

@@ -6,7 +6,6 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
@@ -34,6 +33,7 @@ import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import git4idea.ift.GitLessonsUtil.showWarningIfGitWindowClosed
 import training.dsl.*
+import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
@@ -260,7 +260,7 @@ class GitCommitLesson : GitLesson("Git.Commit", GitLessonsBundle.message("git.co
 
   private fun TaskRuntimeContext.modifyFiles() = invokeLater {
     DocumentUtil.writeInRunUndoTransparentAction {
-      val projectRoot = ProjectRootManager.getInstance(project).contentRoots.first()
+      val projectRoot = ProjectUtils.getProjectRoot(project)
       appendToFile(projectRoot, firstFileName, firstFileAddition)
       appendToFile(projectRoot, secondFileName, secondFileAddition)
     }

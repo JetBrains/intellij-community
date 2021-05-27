@@ -279,9 +279,8 @@ internal object OpenLessonActivities {
   }
 
   private fun openReadme(project: Project) {
-    val manager = ProjectRootManager.getInstance(project)
-    val root = manager.contentRoots[0]
-    val readme = root?.findFileByRelativePath("README.md") ?: return
+    val root = ProjectUtils.getProjectRoot(project)
+    val readme = root.findFileByRelativePath("README.md") ?: return
     val editors = FileEditorManager.getInstance(project).openFile(readme, true, true)
     (editors.singleOrNull() as? TextEditor)?.editor?.let {
       val action = ActionManager.getInstance().getAction(
@@ -423,8 +422,8 @@ internal object OpenLessonActivities {
         val existedFile = lesson.existedFile ?: lesson.module.primaryLanguage?.projectSandboxRelativePath
         val manager = ProjectRootManager.getInstance(learnProject)
         if (existedFile != null) {
-          val root = manager.contentRoots[0]
-          val findFileByRelativePath = root?.findFileByRelativePath(existedFile)
+          val root = ProjectUtils.getProjectRoot(learnProject)
+          val findFileByRelativePath = root.findFileByRelativePath(existedFile)
           if (findFileByRelativePath != null) return findFileByRelativePath
         }
 

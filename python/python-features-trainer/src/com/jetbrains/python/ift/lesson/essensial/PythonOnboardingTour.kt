@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
@@ -59,6 +58,7 @@ import training.learn.course.LessonProperties
 import training.learn.lesson.LessonManager
 import training.learn.lesson.general.run.clearBreakpoints
 import training.learn.lesson.general.run.toggleBreakpointTask
+import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.util.invokeActionForFocusContext
@@ -103,7 +103,7 @@ class PythonOnboardingTour :
     prepareRuntimeTask {
       configurations().forEach { runManager().removeConfiguration(it) }
 
-      val root = ProjectRootManager.getInstance(project).contentRoots[0]
+      val root = ProjectUtils.getProjectRoot(project)
       if (root.findChild(demoFileName) == null) invokeLater {
         runWriteAction {
           root.createChildData(this, demoFileName)
