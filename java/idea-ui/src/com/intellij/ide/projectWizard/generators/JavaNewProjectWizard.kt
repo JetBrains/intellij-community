@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.LabelAndComponent
 import com.intellij.ide.NewProjectWizard
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -59,7 +60,7 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
     ).plus(buildSystemAdvancedSettings)
   }
 
-  override fun setupProject(project: Project?, settings: JavaSettings) {
+  override fun setupProject(project: Project?, settings: JavaSettings, context: WizardContext) {
     settings.buildSystemProperty.get().setupProject(settings)
   }
 }

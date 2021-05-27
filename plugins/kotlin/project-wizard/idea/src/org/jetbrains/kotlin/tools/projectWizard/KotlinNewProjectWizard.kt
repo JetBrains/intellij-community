@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.LabelAndComponent
 import com.intellij.ide.NewProjectWizard
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -57,7 +58,7 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
     )
   }
 
-  override fun setupProject(project: Project?, settings: KotlinSettings) {
+  override fun setupProject(project: Project?, settings: KotlinSettings, context: WizardContext) {
     settings.buildSystemProperty.get().setupProject(settings)
   }
 }

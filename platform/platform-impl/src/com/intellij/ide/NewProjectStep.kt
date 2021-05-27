@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.ide.NewProjectWizard.Companion.EP_WIZARD
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
@@ -51,7 +52,7 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
     var settings : T = settingsFactory.invoke()
 
     fun settingsList() = settingsList(settings)
-    fun setupProject(project: Project?) = setupProject(project, settings)
+    fun setupProject(project: Project?, context: WizardContext) = setupProject(project, settings, context)
   }
 }
 
