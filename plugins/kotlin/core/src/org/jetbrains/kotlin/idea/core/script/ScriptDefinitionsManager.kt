@@ -91,7 +91,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     // it is safe, since both services are in same plugin
     @Volatile
     private var configurations: CompositeScriptConfigurationManager? =
-        ScriptConfigurationManager.getInstance(project) as CompositeScriptConfigurationManager
+        ScriptConfigurationManager.compositeScriptConfigurationManager(project)
 
     override fun findDefinition(script: SourceCode): ScriptDefinition? {
         val locationId = script.locationId ?: return null
@@ -377,12 +377,9 @@ fun loadDefinitionsFromTemplatesByPaths(
             if (e is ControlFlowException) throw e
 
             val message = "Cannot load script definition class $templateClassName"
-            val thirdPartyPlugin = PluginManagerCore.getPluginByClassName(templateClassName)
-            if (thirdPartyPlugin != null) {
-                scriptingErrorLog(message, PluginException(message, e, thirdPartyPlugin))
-            } else {
-                scriptingErrorLog(message, e)
-            }
+            PluginManagerCore.getPluginByClassName(templateClassName)?.let {
+                scriptingErrorLog(message, PluginException(message, e, it))
+            } ?: scriptingErrorLog(message, e)
             null
         }
     }
