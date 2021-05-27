@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author Eugene Zhuravlev
@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.DebuggerManagerThreadImpl;
 import com.intellij.debugger.engine.DebuggerUtils;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.attach.SAJDWPRemoteConnection;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
@@ -216,15 +217,12 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     }
     clearCaches();
     LOG.debug("before resume VM");
-    try {
-      myVirtualMachine.resume();
-    }
-    catch (InternalException e) {
-      // ok to ignore. Although documentation says it is safe to invoke resume() on running VM,
-      // sometimes this leads to com.sun.jdi.InternalException: Unexpected JDWP Error: 13 (THREAD_NOT_SUSPENDED)
-      LOG.info(e);
-    }
-    LOG.debug("VM resumed");
+    DebuggerUtilsAsync.resume(myVirtualMachine).whenComplete((unused, throwable) -> {
+      if (throwable != null) {
+        LOG.error(throwable);
+      }
+      LOG.debug("VM resumed");
+    });
     //logThreads();
   }
 

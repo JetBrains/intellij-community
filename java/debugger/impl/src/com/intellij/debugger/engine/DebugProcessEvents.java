@@ -166,7 +166,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 }
 
                 if (processed == eventSet.size()) {
-                  eventSet.resume();
+                  DebuggerUtilsAsync.resume(eventSet);
                   return;
                 }
 
@@ -183,7 +183,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       }
                       if (!DebuggerSession.enableBreakpointsDuringEvaluation()) {
                         notifySkippedBreakpoints(locatableEvent, true);
-                        eventSet.resume();
+                        DebuggerUtilsAsync.resume(eventSet);
                         return;
                       }
                     }
@@ -192,7 +192,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
                 if (!isCurrentVirtualMachine(myVmProxy)) {
                   notifySkippedBreakpoints(locatableEvent, false);
-                  eventSet.resume();
+                  DebuggerUtilsAsync.resume(eventSet);
                   return;
                 }
 

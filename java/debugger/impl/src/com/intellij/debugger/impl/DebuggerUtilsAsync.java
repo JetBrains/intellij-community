@@ -14,6 +14,7 @@ import com.intellij.psi.CommonClassNames;
 import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.jdi.*;
 import com.sun.jdi.*;
+import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import one.util.streamex.StreamEx;
@@ -353,6 +354,27 @@ public final class DebuggerUtilsAsync {
       return ((EventRequestManagerImpl)eventRequestManager).setEnabledAsync(request, value);
     }
     return toCompletableFuture(() -> request.setEnabled(value));
+  }
+
+  public static CompletableFuture<Void> resume(VirtualMachine vm) {
+    if (vm instanceof VirtualMachineImpl && isAsyncEnabled()) {
+      return ((VirtualMachineImpl)vm).resumeAsync();
+    }
+    return toCompletableFuture(() -> vm.resume());
+  }
+
+  public static CompletableFuture<Void> resume(ThreadReference thread) {
+    if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
+      return ((ThreadReferenceImpl)thread).resumeAsync();
+    }
+    return toCompletableFuture(() -> thread.resume());
+  }
+
+  public static CompletableFuture<Void> resume(EventSet eventSet) {
+    if (eventSet instanceof EventSetImpl && isAsyncEnabled()) {
+      return ((EventSetImpl)eventSet).resumeAsync();
+    }
+    return toCompletableFuture(() -> eventSet.resume());
   }
 
   /**
