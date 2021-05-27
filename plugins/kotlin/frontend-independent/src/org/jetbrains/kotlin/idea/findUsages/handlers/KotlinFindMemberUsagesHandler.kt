@@ -27,14 +27,14 @@ import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.*
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightMethods
 import org.jetbrains.kotlin.idea.KotlinBundleIndependent
+import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightMethods
 import org.jetbrains.kotlin.idea.findUsages.*
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.getTopMostOverriddenElementsToHighlight
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isDataClassComponentFunction
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinFindFunctionUsagesDialog
 import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinFindPropertyUsagesDialog
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.excludeKotlinSources
@@ -61,6 +61,13 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
     ) : KotlinFindMemberUsagesHandler<KtFunction>(declaration, elementsToSearch, factory) {
 
         override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions = factory.findFunctionOptions
+
+        override fun getPrimaryElements(): Array<PsiElement> =
+            if (factory.findFunctionOptions.isSearchForBaseMethod) {
+                val supers = KotlinFindUsagesSupport.getSuperMethods(psiElement as KtFunction, null)
+                if (supers.contains(psiElement)) supers.toTypedArray() else (supers + psiElement).toTypedArray()
+            }
+            else super.getPrimaryElements()
 
         override fun getFindUsagesDialog(
             isSingleFile: Boolean,
@@ -126,6 +133,13 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                     propertyDeclaration.parent.parent is KtPrimaryConstructor &&
                     propertyDeclaration.parent.parent.parent.let { it is KtClass && it.isData() }
         }
+
+        override fun getPrimaryElements(): Array<PsiElement> =
+            if (factory.findPropertyOptions.isSearchForBaseAccessors) {
+                val supers = KotlinFindUsagesSupport.getSuperMethods(psiElement as KtNamedDeclaration, null)
+                if (supers.contains(psiElement)) supers.toTypedArray() else (supers + psiElement).toTypedArray()
+            }
+            else super.getPrimaryElements()
 
         override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions = factory.findPropertyOptions
 

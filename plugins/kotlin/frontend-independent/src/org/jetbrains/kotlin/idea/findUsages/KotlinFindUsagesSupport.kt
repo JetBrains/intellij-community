@@ -36,6 +36,9 @@ interface KotlinFindUsagesSupport {
             @Nls actionString: String
         ): List<PsiElement> = getInstance(declaration.project).checkSuperMethods(declaration, ignore, actionString)
 
+        fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement> =
+            getInstance(declaration.project).getSuperMethods(declaration, ignore)
+
         fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope =
             getInstance(project).sourcesAndLibraries(delegate, project)
     }
@@ -55,6 +58,8 @@ interface KotlinFindUsagesSupport {
         ignore: Collection<PsiElement>?,
         @Nls actionString: String
     ): List<PsiElement>
+
+    fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement>
 
     fun sourcesAndLibraries(delegate: GlobalSearchScope, project: Project): GlobalSearchScope
 }

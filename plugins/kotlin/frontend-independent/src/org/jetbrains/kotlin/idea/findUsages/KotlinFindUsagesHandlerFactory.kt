@@ -11,9 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.KotlinBundleIndependent
 import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightMethods
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.checkSuperMethods
 import org.jetbrains.kotlin.idea.findUsages.handlers.DelegatingFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindMemberUsagesHandler
@@ -65,13 +63,7 @@ class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactor
             is KtParameter -> {
                 if (!forHighlightUsages) {
                     if (element.hasValOrVar()) {
-                        val declarationsToSearch = checkSuperMethods(
-                            element,
-                            null,
-                            KotlinBundleIndependent.message("find.usages.action.text.find.usages.of")
-                        )
-
-                        return handlerForMultiple(element, declarationsToSearch)
+                        return handlerForMultiple(element, listOf(element))
                     }
                     val function = element.ownerFunction
                     if (function != null && function.isOverridable()) {
@@ -101,14 +93,7 @@ class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactor
                 if (forHighlightUsages) {
                     return KotlinFindMemberUsagesHandler.getInstance(declaration, factory = this)
                 }
-
-                val declarationsToSearch = checkSuperMethods(
-                    declaration,
-                    null,
-                    KotlinBundleIndependent.message("find.usages.action.text.find.usages.of")
-                )
-
-                return handlerForMultiple(declaration, declarationsToSearch)
+                return handlerForMultiple(declaration, listOf(declaration))
             }
 
             is KtTypeParameter ->
