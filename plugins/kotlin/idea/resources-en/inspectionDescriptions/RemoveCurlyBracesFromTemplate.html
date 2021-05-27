@@ -6,12 +6,12 @@ Reports usages of curly braces in a string template around a simple identifier.
 <pre><code>
 fun correctUsage() {
    val x = "x"
-   val y = "${x.length}" // <== Ok
+   val y = "${x.length}" // &lt;== Ok
 }
 
 fun redundant() {
    val x = 4
-   val y = "${x}" // <== redundant, quick-fix simplifies the string to "$x"
+   val y = "${x}" // &lt;== redundant, quick-fix simplifies the string to "$x"
 }
 </code></pre>
 </body>

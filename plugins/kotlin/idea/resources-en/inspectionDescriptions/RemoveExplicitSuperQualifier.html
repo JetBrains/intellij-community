@@ -16,7 +16,7 @@ open class B {
 
 class A : B() {
    override fun foo() {
-      super&lt;B&gt;.foo() // <== redundant since 'B' is the single supertype, can be replaced with 'super.foo()'
+      super&lt;B&gt;.foo() // &lt;== redundant since 'B' is the single supertype, can be replaced with 'super.foo()'
    }
 }
 
@@ -26,7 +26,7 @@ interface I {
 
 class C : B(), I {
     override fun foo() {
-        super&lt;B&gt;.foo() // <== here &lt;B&gt; qualifier is needed to denote 'B.foo()' from 'I.foo()'
+        super&lt;B&gt;.foo() // &lt;== here &lt;B&gt; qualifier is needed to denote 'B.foo()' from 'I.foo()'
     }
 }
 </code></pre>

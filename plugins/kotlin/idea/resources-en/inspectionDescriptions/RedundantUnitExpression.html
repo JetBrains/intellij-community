@@ -5,13 +5,13 @@ Reports redundant <code>Unit</code> expression which can be omitted.
 <pre><code>
     fun redundantUnitExp(b: Boolean): Unit = if (b) {
         class A
-        Unit // <= is redundant here
+        Unit // &lt;= is redundant here
     } else {
     }
 
     fun neededUnitExp(b: Boolean): Unit = if (b) {
         1
-        Unit // <= while here it's needed
+        Unit // &lt;= while here it's needed
     } else {
     }
 

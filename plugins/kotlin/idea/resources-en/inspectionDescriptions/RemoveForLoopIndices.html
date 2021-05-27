@@ -5,7 +5,7 @@ Reports <code>for</code> loops iterating over a collection using <code>withIndex
 <p>Examples:</p>
 <pre><code>
 fun foo(bar: List&lt;String&gt;) {
-  for ((index : Int, value: String) in bar.withIndex()) { // <== 'index' is unused
+  for ((index : Int, value: String) in bar.withIndex()) { // &lt;== 'index' is unused
 
   }
 }
@@ -13,7 +13,7 @@ fun foo(bar: List&lt;String&gt;) {
 <p>After quick-fix:</p>
 <pre><code>
 fun foo(bar: List&lt;String&gt;) {
-   for (value: String in bar) { // <== '.withIndex()' and 'index' are removed
+   for (value: String in bar) { // &lt;== '.withIndex()' and 'index' are removed
 
    }
 }
