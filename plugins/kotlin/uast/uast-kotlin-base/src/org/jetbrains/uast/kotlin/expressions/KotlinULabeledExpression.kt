@@ -8,8 +8,8 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.ULabeledExpression
 
 class KotlinULabeledExpression(
-        override val sourcePsi: KtLabeledExpression,
-        givenParent: UElement?
+    override val sourcePsi: KtLabeledExpression,
+    givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), ULabeledExpression {
     override val label: String
         get() = sourcePsi.getLabelName().orAnonymous("label")
@@ -17,5 +17,7 @@ class KotlinULabeledExpression(
     override val labelIdentifier: UIdentifier?
         get() = sourcePsi.getTargetLabel()?.let { KotlinUIdentifier(it, this) }
 
-    override val expression by lz { KotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this) }
+    override val expression by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.baseExpression, this)
+    }
 }
