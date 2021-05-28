@@ -15,7 +15,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.CollectionComboBoxModel;
+import com.intellij.ui.MutableCollectionComboBoxModel;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.util.text.VersionComparatorUtil;
@@ -352,7 +352,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                 version -> isLessOrEqual(version, upperBound) && !version.isUnsupported() ? new VersionView.Specific(version) : null
         );
 
-        apiVersionComboBox.setModel(new CollectionComboBoxModel<>(permittedAPIVersions));
+        apiVersionComboBox.setModel(new MutableCollectionComboBoxModel<>(permittedAPIVersions));
 
         apiVersionComboBox.setSelectedItem(
                 VersionComparatorUtil.compare(selectedAPIVersion.getVersionString(), upperBound.getVersionString()) <= 0
@@ -616,7 +616,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     private static void setSelectedItem(JComboBox<VersionView> comboBox, VersionView versionView) {
         // Imported projects might have outdated language/api versions - we display them as well (see createVersionValidator() for details)
-        int index = ((DefaultComboBoxModel<VersionView>) comboBox.getModel()).getIndexOf(versionView);
+        int index = ((MutableCollectionComboBoxModel<VersionView>) comboBox.getModel()).getElementIndex(versionView);
         if (index == -1) {
             comboBox.addItem(versionView);
         }
@@ -739,9 +739,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     }
 
     private void createUIComponents() {
-        // Explicit use of DefaultComboBoxModel guarantees that setSelectedItem() can make safe cast.
-        languageVersionComboBox = new ComboBox<>(new DefaultComboBoxModel<>());
-        apiVersionComboBox = new ComboBox<>(new DefaultComboBoxModel<>());
+        // Explicit use of MutableCollectionComboBoxModel guarantees that setSelectedItem() can make safe cast.
+        languageVersionComboBox = new ComboBox<>(new MutableCollectionComboBoxModel<>());
+        apiVersionComboBox = new ComboBox<>(new MutableCollectionComboBoxModel<>());
 
         createVersionValidator(languageVersionComboBox, "configuration.warning.text.language.version.unsupported");
         createVersionValidator(apiVersionComboBox, "configuration.warning.text.api.version.unsupported");
