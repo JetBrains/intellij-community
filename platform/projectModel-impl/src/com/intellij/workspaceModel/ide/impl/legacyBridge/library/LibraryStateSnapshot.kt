@@ -15,10 +15,10 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
-import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleLibraryTableBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
+import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.toExternalSource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
@@ -44,7 +44,8 @@ class LibraryStateSnapshot(
   private val excludedRootsContainer = if (libraryEntity.excludedRoots.isNotEmpty()) {
     FileContainerDescription(libraryEntity.excludedRoots,
                              emptyList())
-  } else null
+  }
+  else null
 
   private val kindProperties by lazy {
     val customProperties = libraryEntity.getCustomProperties()

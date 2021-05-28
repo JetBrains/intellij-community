@@ -3,6 +3,6 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.module.ModifiableModuleModel
 
-interface ModifiableModuleModelBridge: ModifiableModuleModel {
+interface ModifiableModuleModelBridge : ModifiableModuleModel {
   fun prepareForCommit()
 }

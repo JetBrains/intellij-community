@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 object WorkspaceModelInitialTestContent {
   private val initialContent: AtomicReference<WorkspaceEntityStorage?> = AtomicReference(null)
+
   @Volatile
   var hasInitialContent = false
     private set
@@ -28,7 +29,8 @@ object WorkspaceModelInitialTestContent {
     hasInitialContent = true
     try {
       return block()
-    } finally {
+    }
+    finally {
       hasInitialContent = false
       if (initialContent.getAndSet(null) != null) {
         error("Initial content was not used")

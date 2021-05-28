@@ -87,7 +87,8 @@ class WorkspaceModelTopics : Disposable {
           innerActivity.end()
         }
       }
-    } else {
+    }
+    else {
       allEvents.forEach { queue -> queue.collectToQueue = false }
     }
     allEvents.clear()

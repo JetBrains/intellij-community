@@ -62,8 +62,8 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   }
 
   companion object {
-    internal fun <F: Facet<C>, C: FacetConfiguration> createFacetFromStateRaw(module: Module, type: FacetType<F, C>,
-                             state: FacetState, underlyingFacet: Facet<*>?): F {
+    internal fun <F : Facet<C>, C : FacetConfiguration> createFacetFromStateRaw(module: Module, type: FacetType<F, C>,
+                                                                                state: FacetState, underlyingFacet: Facet<*>?): F {
       val configuration: C = type.createDefaultConfiguration()
       val config = state.configuration
       FacetUtil.loadFacetConfiguration(configuration, config)

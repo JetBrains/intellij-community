@@ -84,6 +84,7 @@ class LibraryBridgeImpl(
 
   override val libraryId: LibraryId
     get() = entityId
+
   override fun getTable(): LibraryTable? = if (libraryTable is ModuleLibraryTableBridge) null else libraryTable
   override fun getRootProvider(): RootProvider = this
   override fun getPresentableName(): String = LibraryImpl.getPresentableName(this)
@@ -95,9 +96,11 @@ class LibraryBridgeImpl(
   override fun getModifiableModel(): LibraryEx.ModifiableModelEx {
     return getModifiableModel(WorkspaceEntityStorageBuilder.from(librarySnapshot.storage))
   }
+
   override fun getModifiableModel(builder: WorkspaceEntityStorageBuilder): LibraryEx.ModifiableModelEx {
     return LibraryModifiableModelBridgeImpl(this, librarySnapshot, builder, targetBuilder, false)
   }
+
   override fun getSource(): Library? = null
   override fun getExternalSource(): ProjectModelExternalSource? = librarySnapshot.externalSource
   override fun getInvalidRootUrls(type: OrderRootType): List<String> = librarySnapshot.getInvalidRootUrls(type)
@@ -130,6 +133,7 @@ class LibraryBridgeImpl(
   override fun addRootSetChangedListener(listener: RootSetChangedListener, parentDisposable: Disposable) {
     dispatcher.addListener(listener, parentDisposable)
   }
+
   override fun removeRootSetChangedListener(listener: RootSetChangedListener) = dispatcher.removeListener(listener)
 
   override fun isDisposed(): Boolean = disposed

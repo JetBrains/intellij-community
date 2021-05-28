@@ -4,7 +4,7 @@ package com.intellij.workspaceModel.ide.legacyBridge
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.ModificationTracker
 
-interface ModifiableRootModelBridge: ModifiableRootModel, ModificationTracker {
+interface ModifiableRootModelBridge : ModifiableRootModel, ModificationTracker {
   fun prepareForCommit()
   fun postCommit()
 }

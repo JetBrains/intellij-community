@@ -77,7 +77,8 @@ internal class RootsChangeWatcher(val project: Project) {
               val protocolEnd = parentUrl.indexOf(URLUtil.SCHEME_SEPARATOR)
               val url = if (protocolEnd != -1) {
                 parentUrl.substring(0, protocolEnd) + URLUtil.SCHEME_SEPARATOR + event.path
-              } else {
+              }
+              else {
                 VfsUtilCore.pathToUrl(event.path)
               }
               val virtualFileUrl = virtualFileManager.fromUrl(url)
@@ -97,8 +98,10 @@ internal class RootsChangeWatcher(val project: Project) {
               if (event is VFilePropertyChangeEvent) propertyChanged(event)
               val (oldUrl, newUrl) = getUrls(event) ?: return@forEach
               if (oldUrl != newUrl) {
-                calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(oldUrl), ProjectRootManagerImpl.RootsChangeType.GENERIC)
-                calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(newUrl), ProjectRootManagerImpl.RootsChangeType.GENERIC)
+                calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(oldUrl),
+                                                 ProjectRootManagerImpl.RootsChangeType.GENERIC)
+                calculateRootsChangeTypeIfNeeded(entityStorage, virtualFileManager.fromUrl(newUrl),
+                                                 ProjectRootManagerImpl.RootsChangeType.GENERIC)
                 changedUrlsList.add(Pair(oldUrl, newUrl))
               }
             }

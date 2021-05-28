@@ -98,9 +98,9 @@ internal object SourceRootPropertiesHelper {
   }
 
   internal fun <P : JpsElement> addPropertiesEntity(diff: WorkspaceEntityStorageDiffBuilder,
-                                                     sourceRootEntity: SourceRootEntity,
-                                                     properties: P,
-                                                     serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
+                                                    sourceRootEntity: SourceRootEntity,
+                                                    properties: P,
+                                                    serializer: JpsModuleSourceRootPropertiesSerializer<P>) {
     when (serializer.typeId) {
       JpsModuleRootModelSerializer.JAVA_SOURCE_ROOT_TYPE_ID, JpsModuleRootModelSerializer.JAVA_TEST_ROOT_TYPE_ID -> diff.addJavaSourceRootEntity(
         sourceRoot = sourceRootEntity,

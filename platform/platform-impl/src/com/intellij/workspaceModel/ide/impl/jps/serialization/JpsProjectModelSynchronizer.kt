@@ -196,7 +196,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("project model changes saving (in queue)")
       return builder.toStorage() to sourcesToUpdate
-    } else {
+    }
+    else {
       childActivity?.end()
       childActivity = null
       activity?.end()

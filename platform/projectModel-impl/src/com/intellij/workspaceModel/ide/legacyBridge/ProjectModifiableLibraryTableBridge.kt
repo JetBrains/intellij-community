@@ -3,6 +3,6 @@ package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.roots.libraries.LibraryTable
 
-interface ProjectModifiableLibraryTableBridge: LibraryTable.ModifiableModel {
+interface ProjectModifiableLibraryTableBridge : LibraryTable.ModifiableModel {
   fun prepareForCommit()
 }

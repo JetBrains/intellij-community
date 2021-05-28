@@ -22,6 +22,7 @@ import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: ModifiableRootModelBridgeImpl)
   : ModuleLibraryTableBase(), ModuleLibraryTableBridge {
   private val copyToOriginal = HashMap<LibraryBridge, LibraryBridge>()
+
   init {
     val storage = modifiableModel.moduleBridge.entityStorage.current
     libraryEntities()
@@ -31,7 +32,8 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
           //if a module-level library from ModifiableRootModel is changed, the changes must not be committed to the model until
           //ModifiableRootModel is committed. So we place copies of LibraryBridge instances to the modifiable model. If the model is disposed
           //these copies are disposed; if the model is committed they'll be included to the model, and the original instances will be disposed.
-          val modifiableCopy = LibraryBridgeImpl(this, modifiableModel.project, libraryEntry.persistentId(), modifiableModel.entityStorageOnDiff,
+          val modifiableCopy = LibraryBridgeImpl(this, modifiableModel.project, libraryEntry.persistentId(),
+                                                 modifiableModel.entityStorageOnDiff,
                                                  modifiableModel.diff)
           copyToOriginal[modifiableCopy] = originalLibrary
           modifiableModel.diff.mutableLibraryMap.addMapping(libraryEntry, modifiableCopy)
@@ -75,7 +77,8 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
       modifiableModel.diff.addLibraryPropertiesEntity(
         library = libraryEntity,
         libraryType = type.kindId,
-        propertiesXmlTag = LegacyBridgeModifiableBase.serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG, type.createDefaultProperties())
+        propertiesXmlTag = LegacyBridgeModifiableBase.serializeComponentAsString(JpsLibraryTableSerializer.PROPERTIES_TAG,
+                                                                                 type.createDefaultProperties())
       )
     }
 
@@ -102,7 +105,9 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
   private fun getTableId() = LibraryTableId.ModuleLibraryTableId(modifiableModel.moduleEntity.persistentId())
 
-  internal fun addLibraryCopy(original: LibraryBridgeImpl, exported: Boolean, scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
+  internal fun addLibraryCopy(original: LibraryBridgeImpl,
+                              exported: Boolean,
+                              scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
     val tableId = getTableId()
     val libraryEntityName = LibraryNameGenerator.generateLibraryEntityName(original.name) { existsName ->
       modifiableModel.diff.resolve(LibraryId(existsName, tableId)) != null
@@ -150,7 +155,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     libraryIterator.forEach {
       val originalLibrary = copyToOriginal[it]
       //originalLibrary may be null if the library was added after the table was created
-      if (originalLibrary != null)  {
+      if (originalLibrary != null) {
         val mutableLibraryMap = modifiableModel.diff.mutableLibraryMap
         mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(it as LibraryBridge).single(), originalLibrary)
       }

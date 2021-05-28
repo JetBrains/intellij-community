@@ -43,7 +43,8 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
   private val cacheFile by lazy { initCacheFile() }
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate").toFile() }
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
-  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
+  private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager,
+                                                                                WorkspaceModelCacheImpl::collectExternalCacheVersions)
 
   init {
     if (enabled) {
@@ -194,6 +195,7 @@ class WorkspaceModelCacheImpl(private val project: Project) : Disposable, Worksp
     private val LOG = logger<WorkspaceModelCacheImpl>()
     internal const val DATA_DIR_NAME = "project-model-cache"
     private var forceEnableCaching = false
+
     @TestOnly
     var testCacheFile: File? = null
 

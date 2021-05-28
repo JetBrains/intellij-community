@@ -11,7 +11,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 class JpsProjectLoadingManagerImpl : JpsProjectLoadingManager {
   @TestOnly
   fun isProjectLoaded(): Boolean = projectLoaded.get()
-  
+
   private val projectLoaded = AtomicBoolean(false)
   private val projectActivities = ContainerUtil.createConcurrentList<Runnable>()
 

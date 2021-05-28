@@ -261,7 +261,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
   override fun prepareForCommit() {
     ApplicationManager.getApplication().assertWriteAccessAllowed()
-    myUncommittedModulesToDispose.forEach {module -> Disposer.dispose(module) }
+    myUncommittedModulesToDispose.forEach { module -> Disposer.dispose(module) }
   }
 
   fun collectChanges(): WorkspaceEntityStorageBuilder {
@@ -328,7 +328,7 @@ internal class ModifiableModuleModelBridgeImpl(
         moduleGroupEntity != null && groupPathList == null -> diff.removeEntity(moduleGroupEntity)
 
         moduleGroupEntity != null && groupPathList != null -> diff.modifyEntity(ModifiableModuleGroupPathEntity::class.java,
-          moduleGroupEntity) {
+                                                                                moduleGroupEntity) {
           path = groupPathList
         }
 
