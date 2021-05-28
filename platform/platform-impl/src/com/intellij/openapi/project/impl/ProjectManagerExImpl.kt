@@ -98,7 +98,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
 
         // this null assertion is required to overcome bug in new version of KT compiler: KT-40034
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, this)) {
+        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, options.projectName, this)) {
           return CompletableFuture.completedFuture(null)
         }
       }
@@ -310,6 +310,7 @@ private fun message(e: Throwable): String {
 private fun checkExistingProjectOnOpen(projectToClose: Project,
                                        callback: ProjectOpenedCallback?,
                                        projectDir: Path?,
+                                       projectName: String?,
                                        projectManager: ProjectManagerExImpl): Boolean {
   val settings = GeneralSettings.getInstance()
   val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
@@ -350,7 +351,8 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
         }
       }
 
-      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectDir?.fileName?.toString() ?: projectDir?.toString())
+      val projectNameValue = projectName ?: projectDir?.fileName?.toString() ?: projectDir?.toString()
+      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectNameValue)
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         if (!projectManager.closeAndDispose(projectToClose)) {
           result = true
