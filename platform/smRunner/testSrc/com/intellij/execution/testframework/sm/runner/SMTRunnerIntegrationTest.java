@@ -139,21 +139,21 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
                            int ignoredTests,
                            int topLevelChildrenCount,
                            @NotNull Color statusColor) {
+    assertEquals(stringify(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, statusColor),
+                 stringify(myResultsViewer.getFinishedTestCount(),
+                           myResultsViewer.getFailedTestCount(),
+                           myResultsViewer.getIgnoredTestCount(),
+                           myRootNode.getChildren().size(),
+                           myResultsViewer.getTestsStatusColor()));
+  }
 
-    String format = "finishedTests=%d failedTests=%d ignoredTests=%d topLevelChildrenCount=%d color=%s";
-    assertEquals(String.format(Locale.US, format,
-                               finishedTests,
-                               failedTests,
-                               ignoredTests,
-                               topLevelChildrenCount,
-                               statusColor),
-
-                 String.format(format,
-                               myResultsViewer.getFinishedTestCount(),
-                               myResultsViewer.getFailedTestCount(),
-                               myResultsViewer.getIgnoredTestCount(),
-                               myRootNode.getChildren().size(),
-                               myResultsViewer.getTestsStatusColor()));
+  private static String stringify(int finishedTests,
+                                  int failedTests,
+                                  int ignoredTests,
+                                  int topLevelChildrenCount,
+                                  @NotNull Color statusColor) {
+    return String.format(Locale.US, "finishedTests=%d failedTests=%d ignoredTests=%d topLevelChildrenCount=%d color=%s",
+                         finishedTests, failedTests, ignoredTests, topLevelChildrenCount, statusColor);
   }
 
   private void notifyStdoutLineAvailable(@NotNull String line) {
