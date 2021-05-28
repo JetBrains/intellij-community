@@ -611,7 +611,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
         newChildren.addAll(localChildren)
         if (savedLocalChildren != newChildren) {
-          this.refs.updateChildrenOfParent(connectionId, notThisParentId.id.asParent(), newChildren)
+          this.refs.updateChildrenOfParent(connectionId, thisParentId.id.asParent(), newChildren)
         }
       }
 
