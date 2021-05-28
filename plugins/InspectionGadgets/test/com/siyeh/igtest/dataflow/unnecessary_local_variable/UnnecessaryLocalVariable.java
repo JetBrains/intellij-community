@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-class C {
+class UnnecessaryLocalVariable {
   void m() throws Exception {
     String <warning descr="Local variable 's1' is redundant">s1</warning> = null;
     String <warning descr="Local variable 's2' is redundant">s2</warning> = s1, s3 = null;
@@ -224,4 +209,13 @@ class Test {
     arr[0] = null;
     return res;
   }
+}
+class FooBar {
+  private final long myVar = 0;
+  void bar() {
+    final long local_var = myVar;    // local to prevent capture of this
+    Runnable r = () -> doSmth(local_var);
+  }
+
+  private static void doSmth(long var) {}
 }
