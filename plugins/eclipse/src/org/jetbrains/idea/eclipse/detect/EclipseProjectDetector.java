@@ -6,7 +6,6 @@ import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.RecentProjectsManagerBase;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
@@ -73,13 +72,15 @@ class EclipseProjectDetector extends ProjectDetector {
         RecentProjectsManagerBase manager = (RecentProjectsManagerBase)RecentProjectsManager.getInstance();
         @Nls String groupName = EclipseBundle.message("eclipse.projects");
         ProjectGroup group = ContainerUtil.find(manager.getGroups(), g -> groupName.equals(g.getName()));
-        if (group == null && !ConfigImportHelper.isFirstSession()) {
+        String property = "eclipse.projects.detected";
+        if (group == null && PropertiesComponent.getInstance().isValueSet(property)) {
           // the group was removed by user
           return;
         }
 
         List<String> projects = new ArrayList<>();
         new EclipseProjectDetector().collectProjectPaths(projects);
+        PropertiesComponent.getInstance().setValue(property, "");
         projects.removeAll(manager.getRecentPaths());
         if (projects.isEmpty()) return;
         HashSet<String> set = new HashSet<>(projects);
