@@ -34,7 +34,9 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, pr
     if (resource == null) {
       // todo (deal with different plugin content for ultimate and community)
       if (path == "intellij.profiler.ultimate.xml") {
-        return RawPluginDescriptor()
+        val descriptor = RawPluginDescriptor()
+        descriptor.`package` = "com.intellij.profiler.ultimate"
+        return descriptor
       }
       if (isRunningFromSources && path.startsWith("intellij.") && dataLoader is LocalFsDataLoader) {
         try {

@@ -144,7 +144,9 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
     if (input == null) {
       // todo (deal with different plugin content for ultimate and community)
       if (path == "intellij.profiler.ultimate.xml") {
-        return RawPluginDescriptor()
+        val descriptor = RawPluginDescriptor()
+        descriptor.`package` = "com.intellij.profiler.ultimate"
+        return descriptor
       }
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
     }
