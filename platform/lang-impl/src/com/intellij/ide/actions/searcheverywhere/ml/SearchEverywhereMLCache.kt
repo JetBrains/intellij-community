@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector
+import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.ML_WEIGHT_KEY
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.buildCommonFeaturesMap
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.fillActionItemInfo
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -13,7 +14,7 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
   val listVersions: MutableList<Pair<Int, List<Int>>> = ArrayList()
   private var idCounter = 0
   private val elementIds = IdentityHashMap<Any, Int>()
-  private val elementIdsToWeights = mutableMapOf<Int, Double>()
+  private val elementIdsToFeatures = mutableMapOf<Int, Map<String, Any>>()
   private val model: SearchEverywhereActionsRankingModel
 
   init {
@@ -24,20 +25,26 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
   @Suppress("UNCHECKED_CAST")
   fun getMLWeight(element: Any, contributorId: String, project: Project?, seTabId: String, patternLength: Int): Double {
     val mlId = getMLId(element)
-    return elementIdsToWeights.computeIfAbsent(mlId) {
+    return elementIdsToFeatures.computeIfAbsent(mlId) {
       if (element !is GotoActionModel.MatchedValue) {
         throw NotImplementedError("Not supported for objects other than GotoActionModel.MatchedValue")
       }
       val features = mutableMapOf<String, Any>()
-      features.putAll(buildCommonFeaturesMap(seSessionId,patternLength, seTabId, project))
+      features.putAll(buildCommonFeaturesMap(seSessionId, patternLength, seTabId, project))
       val itemInfo = fillActionItemInfo(element.matchingDegree, System.nanoTime(), element, contributorId)
       features.putAll(itemInfo.additionalData)
 
       itemInfo.id?.let {
         features.put(SearchEverywhereMLStatisticsCollector.ACTION_ID_KEY, it)
       }
-      model.predict(features)
-    }
+      features[ML_WEIGHT_KEY] = model.predict(features)
+      features
+    }[ML_WEIGHT_KEY] as Double
+  }
+  
+  fun getFeatures(element: Any): Map<String, Any>? {
+    val id = elementIds[element] ?: return null
+    return elementIdsToFeatures[id]
   }
 
   fun getMLId(element: Any): Int {

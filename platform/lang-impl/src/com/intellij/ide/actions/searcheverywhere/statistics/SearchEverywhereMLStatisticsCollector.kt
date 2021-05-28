@@ -168,6 +168,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
     private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
     private const val SE_TAB_ID_KEY = "seTabId"
+    internal const val ML_WEIGHT_KEY = "mlWeight"
 
     private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
     private const val LOCAL_USAGE_COUNT_DATA_KEY = "usage"
