@@ -20,6 +20,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.containers.DisposableWrapperList
+import org.jetbrains.annotations.TestOnly
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -72,6 +73,11 @@ class UnlinkedProjectNotificationAware(private val project: Project) : Persisten
     notification.notify(project)
 
     LOG.debug("Notified unlinked ${projectId.readableName} project notification")
+  }
+
+  @TestOnly
+  fun getProjectsWithNotification(): Set<ExternalSystemProjectId> {
+    return notifiedNotifications.toSet()
   }
 
   override fun getState(): State {

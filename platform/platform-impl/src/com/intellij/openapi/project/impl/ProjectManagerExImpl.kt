@@ -274,6 +274,8 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       }
     }
 
+    project.putUserData(PlatformProjectOpenProcessor.PROJECT_NEWLY_OPENED, options.isNewProject)
+
     @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
     if (options.beforeOpen != null && !options.beforeOpen!!(project)) {
       return null

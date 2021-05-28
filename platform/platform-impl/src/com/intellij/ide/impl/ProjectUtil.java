@@ -316,7 +316,7 @@ public final class ProjectUtil {
       else {
         Ref<ProjectOpenProcessor> ref = new Ref<>();
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          ref.set(new SelectProjectOpenProcessorDialog(processors, virtualFile).showAndGetChoice());
+          ref.set(SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile));
         });
         processor = ref.get();
         if (processor == null) {
@@ -346,7 +346,7 @@ public final class ProjectUtil {
       }
       else {
         processorFuture = CompletableFuture.supplyAsync(() -> {
-          return new SelectProjectOpenProcessorDialog(processors, virtualFile).showAndGetChoice();
+          return SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile);
         }, ApplicationManager.getApplication()::invokeLater);
       }
     }

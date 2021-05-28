@@ -47,12 +47,19 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmField
     val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR = Key.create<Boolean>("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
 
+    @JvmField
+    val PROJECT_NEWLY_OPENED = Key.create<Boolean>("PROJECT_NEWLY_OPENED")
+
     fun Project.isOpenedByPlatformProcessor(): Boolean {
       return getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
     }
 
     fun Project.isConfiguredByPlatformProcessor(): Boolean {
       return getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
+    }
+
+    fun Project.isNewProject(): Boolean {
+      return getUserData(PROJECT_NEWLY_OPENED) == true
     }
 
     @JvmStatic
