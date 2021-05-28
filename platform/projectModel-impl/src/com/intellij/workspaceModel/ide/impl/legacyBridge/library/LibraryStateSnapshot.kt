@@ -27,7 +27,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryRoot
 import com.intellij.workspaceModel.storage.bridgeEntities.getCustomProperties
 import java.io.StringReader
 
-internal class LibraryStateSnapshot(
+class LibraryStateSnapshot(
   val libraryEntity: LibraryEntity,
   val storage: WorkspaceEntityStorage,
   val libraryTable: LibraryTable,

@@ -22,7 +22,7 @@ import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
 
-internal class ProjectLibraryTableBridgeImpl(
+class ProjectLibraryTableBridgeImpl(
   private val parentProject: Project
 ) : ProjectLibraryTableBridge, Disposable {
 
@@ -118,7 +118,7 @@ internal class ProjectLibraryTableBridgeImpl(
     })
   }
 
-  internal fun loadLibraries() {
+  fun loadLibraries() {
     val storage = entityStorage.current
     val libraries = storage
       .entities(LibraryEntity::class.java)
@@ -236,12 +236,12 @@ internal class ProjectLibraryTableBridgeImpl(
 
     private const val LIBRARY_BRIDGE_MAPPING_ID = "intellij.libraries.bridge"
 
-    internal val WorkspaceEntityStorage.libraryMap: ExternalEntityMapping<LibraryBridge>
+    val WorkspaceEntityStorage.libraryMap: ExternalEntityMapping<LibraryBridge>
       get() = getExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)
-    internal val WorkspaceEntityStorageDiffBuilder.mutableLibraryMap: MutableExternalEntityMapping<LibraryBridge>
+    val WorkspaceEntityStorageDiffBuilder.mutableLibraryMap: MutableExternalEntityMapping<LibraryBridge>
       get() = getMutableExternalMapping(LIBRARY_BRIDGE_MAPPING_ID)
 
-    internal fun WorkspaceEntityStorage.findLibraryEntity(library: LibraryBridge) =
+    fun WorkspaceEntityStorage.findLibraryEntity(library: LibraryBridge) =
       libraryMap.getEntities(library).firstOrNull() as LibraryEntity?
   }
 }

@@ -41,8 +41,8 @@ interface LibraryBridge : LibraryEx {
 }
 
 @ApiStatus.Internal
-internal class LibraryBridgeImpl(
-  internal var libraryTable: LibraryTable,
+class LibraryBridgeImpl(
+  var libraryTable: LibraryTable,
   val project: Project,
   initialId: LibraryId,
   initialEntityStorage: VersionedEntityStorage,
@@ -52,7 +52,7 @@ internal class LibraryBridgeImpl(
   override fun getModule(): Module? = (libraryTable as? ModuleLibraryTableBridge)?.module
 
   var entityStorage: VersionedEntityStorage = initialEntityStorage
-    internal set(value) {
+    set(value) {
       ApplicationManager.getApplication().assertWriteAccessAllowed()
       field = value
     }
@@ -76,7 +76,7 @@ internal class LibraryBridgeImpl(
     )
   }
 
-  internal val librarySnapshot: LibraryStateSnapshot
+  val librarySnapshot: LibraryStateSnapshot
     get() {
       checkDisposed()
       return entityStorage.cachedValue(librarySnapshotCached)

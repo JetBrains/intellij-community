@@ -8,8 +8,9 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.impl.DummyVersionedEntityStorage
 
-abstract class LegacyBridgeModifiableBase(internal val diff: WorkspaceEntityStorageBuilder, cacheStorageResult: Boolean) {
-  internal val entityStorageOnDiff = if (cacheStorageResult) VersionedEntityStorageOnBuilder(diff)
+//todo restore internal visibility for members of this class after other classes will be moved to this module
+abstract class LegacyBridgeModifiableBase(val diff: WorkspaceEntityStorageBuilder, cacheStorageResult: Boolean) {
+  val entityStorageOnDiff = if (cacheStorageResult) VersionedEntityStorageOnBuilder(diff)
   else DummyVersionedEntityStorage(diff)
 
   private var committedOrDisposed = false
@@ -21,7 +22,7 @@ abstract class LegacyBridgeModifiableBase(internal val diff: WorkspaceEntityStor
       committedOrDisposed = true
     }
 
-  internal fun assertModelIsLive() {
+  fun assertModelIsLive() {
     if (committedOrDisposed) {
       error("${javaClass.simpleName} was already committed or disposed" )
     }
@@ -29,10 +30,11 @@ abstract class LegacyBridgeModifiableBase(internal val diff: WorkspaceEntityStor
 
   companion object {
     // TODO Some common mechanics?
-    internal val assertChangesApplied
+    @JvmStatic
+    val assertChangesApplied
       get() = true
 
-    internal fun serializeComponentAsString(rootElementName: String, component: PersistentStateComponent<*>?): String? {
+    fun serializeComponentAsString(rootElementName: String, component: PersistentStateComponent<*>?): String? {
       val state = component?.state ?: return null
       val propertiesElement = serialize(state) ?: return null
       propertiesElement.name = rootElementName
