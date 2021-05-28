@@ -10,6 +10,8 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Internal
 interface WorkspaceModelCache {
+  val enabled: Boolean
+
   fun loadCache(): WorkspaceEntityStorage?
 
   /**
@@ -19,6 +21,6 @@ interface WorkspaceModelCache {
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project): WorkspaceModelCache? = project.getService(WorkspaceModelCache::class.java)
+    fun getInstance(project: Project): WorkspaceModelCache? = project.getService(WorkspaceModelCache::class.java)?.takeIf { it.enabled }
   }
 }

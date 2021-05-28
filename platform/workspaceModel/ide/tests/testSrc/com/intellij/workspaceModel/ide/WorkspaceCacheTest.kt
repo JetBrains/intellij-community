@@ -42,14 +42,13 @@ class WorkspaceCacheTest {
 
   @Before
   fun setUp() {
-    WorkspaceModelImpl.forceEnableCaching = true
+    WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
     serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
   }
 
   @After
   fun tearDown() {
-    WorkspaceModelImpl.forceEnableCaching = false
     WorkspaceModelCacheImpl.testCacheFile = null
   }
 

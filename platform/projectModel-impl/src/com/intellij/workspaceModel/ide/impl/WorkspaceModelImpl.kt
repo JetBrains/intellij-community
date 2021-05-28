@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
@@ -19,9 +18,8 @@ import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageImpl
 import kotlin.system.measureTimeMillis
 
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
-  private val cacheEnabled = (!ApplicationManager.getApplication().isUnitTestMode && WorkspaceModelImpl.cacheEnabled) || forceEnableCaching
   override val cache: WorkspaceModelCache?
-    get() = if (cacheEnabled) WorkspaceModelCache.getInstance(project) else null
+    get() = WorkspaceModelCache.getInstance(project)
 
   /** specifies ID of a entity which changes should be printed to the log */
   private val entityToTrace = System.getProperty("idea.workspace.model.track.facet.id")?.let {
@@ -42,7 +40,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     log.debug { "Loading workspace model" }
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
-    val cache = if (cacheEnabled) WorkspaceModelCache.getInstance(project) else null
+    val cache = WorkspaceModelCache.getInstance(project)
     val projectEntities = when {
       initialContent != null -> initialContent
       cache != null -> {
@@ -144,10 +142,6 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
 
   companion object {
     private val log = logger<WorkspaceModelImpl>()
-    const val ENABLED_CACHE_KEY = "ide.new.project.model.cache"
-
-    var forceEnableCaching = false
-    val cacheEnabled = Registry.`is`(ENABLED_CACHE_KEY)
 
     private val PRE_UPDATE_HANDLERS = ExtensionPointName.create<WorkspaceModelPreUpdateHandler>("com.intellij.workspaceModel.preUpdateHandler")
     private const val PRE_UPDATE_LOOP_BLOCK = 100
