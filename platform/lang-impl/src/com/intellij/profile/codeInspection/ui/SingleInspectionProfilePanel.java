@@ -101,6 +101,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     @Override
     protected void filterChanged() {
       filterTree();
+      updateEmptyText();
     }
   };
   private boolean myModified;
@@ -549,14 +550,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     }, myDisposable);
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
-
-    for (EmptyInspectionTreeLinkProvider provider : EmptyInspectionTreeLinkProvider.EP_NAME.getExtensionList()) {
-      myTreeTable.getEmptyText().appendLine(
-        provider.getText(),
-        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-        provider.getActionListener(this)
-      );
-    }
+    updateEmptyText();
 
     final TreeTableTree tree = myTreeTable.getTree();
     tree.putClientProperty(DefaultTreeUI.LARGE_MODEL_ALLOWED, true);
@@ -1240,6 +1234,26 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public JComponent getPreferredFocusedComponent() {
     return myTreeTable;
+  }
+
+  private void updateEmptyText() {
+    final var emptyText = myTreeTable.getEmptyText();
+    emptyText.setText(AnalysisBundle.message("inspections.settings.empty.text"));
+    if (!myInspectionsFilter.isEmptyFilter()) {
+      emptyText.appendLine(
+        AnalysisBundle.message("inspections.settings.empty.text.link"),
+        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+        e -> { myInspectionsFilter.reset(); }
+      );
+    } else {
+      for (EmptyInspectionTreeLinkProvider provider : EmptyInspectionTreeLinkProvider.EP_NAME.getExtensionList()) {
+        emptyText.appendLine(
+          provider.getText(),
+          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+          provider.getActionListener(this)
+        );
+      }
+    }
   }
 
   private final class MyFilterComponent extends FilterComponent {

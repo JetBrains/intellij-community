@@ -140,8 +140,7 @@ public final class InspectionsConfigTreeTable extends TreeTable {
       updateUI();
     }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
-    final StatusText emptyText = getEmptyText();
-    emptyText.setText(AnalysisBundle.message("inspections.settings.empty.text"));
+    getEmptyText().setText(AnalysisBundle.message("inspections.settings.empty.text"));
   }
 
   @Nullable
