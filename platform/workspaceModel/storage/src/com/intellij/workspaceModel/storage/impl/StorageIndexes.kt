@@ -217,7 +217,7 @@ internal class MutableStorageIndexes(
   }
 
   fun applyExternalMappingChanges(diff: WorkspaceEntityStorageBuilderImpl,
-                                  replaceMap: HashBiMap<EntityId, EntityId>,
+                                  replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
                                   target: WorkspaceEntityStorageBuilderImpl) {
     diff.indexes.externalMappings.keys.asSequence().filterNot { it in externalMappings.keys }.forEach {
       externalMappings[it] = MutableExternalEntityMappingImpl<Any>()
