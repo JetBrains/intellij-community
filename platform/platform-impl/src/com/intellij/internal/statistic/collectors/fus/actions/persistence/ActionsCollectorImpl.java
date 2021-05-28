@@ -170,7 +170,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static void onBeforeActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event) {
     Project project = event.getProject();
     DataContext context = getCachedDataContext(event);
-    Stats stats = new Stats(project, getHostEditorLanguage(context, project), getLanguage(context));
+    Stats stats = new Stats(project, getFileLanguage(context), getInjectedOrFileLanguage(project, context));
     ourStats.put(event, stats);
   }
 
@@ -187,9 +187,9 @@ public class ActionsCollectorImpl extends ActionsCollector {
     data.add(ActionsEventLogGroup.RESULT.with(reportedResult));
 
     Project project = stats != null ? stats.projectRef.get() : null;
-    Language contextEditorBefore = stats != null ? stats.editor : null;
-    Language contextFileBefore = stats != null ? stats.file : null;
-    addLanguageContextFields(project, event, contextEditorBefore, contextFileBefore, data);
+    Language contextBefore = stats != null ? stats.fileLanguage : null;
+    Language injectedContextBefore = stats != null ? stats.injectedFileLanguage : null;
+    addLanguageContextFields(project, event, contextBefore, injectedContextBefore, data);
     if (action instanceof FusAwareAction) {
       List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
       data.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
@@ -221,15 +221,15 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   private static void addLanguageContextFields(@Nullable Project project,
                                                @NotNull AnActionEvent event,
-                                               @Nullable Language contextEditorBefore,
-                                               @Nullable Language contextFileBefore,
+                                               @Nullable Language contextBefore,
+                                               @Nullable Language injectedContextBefore,
                                                @NotNull List<EventPair<?>> data) {
     DataContext dataContext = getCachedDataContext(event);
-    Language editor = getHostEditorLanguage(dataContext, project);
-    data.add(EventFields.CurrentFile.with(editor != null ? editor : contextEditorBefore));
+    Language language = getFileLanguage(dataContext);
+    data.add(EventFields.CurrentFile.with(language != null ? language : contextBefore));
 
-    Language file = getLanguage(dataContext);
-    data.add(EventFields.Language.with(file != null ? file : contextFileBefore));
+    Language injectedLanguage = getInjectedOrFileLanguage(project, dataContext);
+    data.add(EventFields.Language.with(injectedLanguage != null ? injectedLanguage : injectedContextBefore));
   }
 
   /**
@@ -242,21 +242,39 @@ public class ActionsCollectorImpl extends ActionsCollector {
   }
 
   /**
-   * Returns language from {@link CommonDataKeys#PSI_FILE}
+   * Returns language from {@link InjectedDataKeys#EDITOR}, {@link InjectedDataKeys#PSI_FILE}
+   * or {@link CommonDataKeys#PSI_FILE} if there's no information about injected fragment
    */
-  private static @Nullable Language getLanguage(DataContext dataContext) {
-    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-    return file != null ? file.getLanguage() : null;
+  private static @Nullable Language getInjectedOrFileLanguage(@Nullable Project project, @NotNull DataContext dataContext) {
+    Language injected = getInjectedLanguage(dataContext, project);
+    return injected != null ? injected : getFileLanguage(dataContext);
+  }
+
+  @Nullable
+  private static Language getInjectedLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
+    PsiFile file = InjectedDataKeys.PSI_FILE.getData(dataContext);
+    if (file != null) {
+      return file.getLanguage();
+    }
+
+    if (project != null) {
+      Editor editor = InjectedDataKeys.EDITOR.getData(dataContext);
+      Editor hostEditor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
+      if (editor != null && hostEditor != null && hostEditor != editor && !project.isDisposed()) {
+        PsiFile injectedFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+        if (injectedFile != null) {
+          return injectedFile.getLanguage();
+        }
+      }
+    }
+    return null;
   }
 
   /**
-   * Returns language from {@link CommonDataKeys#HOST_EDITOR}
+   * Returns language from {@link CommonDataKeys#PSI_FILE}
    */
-  private static @Nullable Language getHostEditorLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
-    if (project == null) return null;
-    Editor editor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
-    if (editor == null) return null;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+  private static @Nullable Language getFileLanguage(@NotNull DataContext dataContext) {
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     return file != null ? file.getLanguage() : null;
   }
 
@@ -266,20 +284,20 @@ public class ActionsCollectorImpl extends ActionsCollector {
     final Boolean isDumb;
 
     /**
-     * Language from {@link CommonDataKeys#HOST_EDITOR}
-     */
-    Language editor;
-
-    /**
      * Language from {@link CommonDataKeys#PSI_FILE}
      */
-    Language file;
+    Language fileLanguage;
 
-    private Stats(@Nullable Project project, @Nullable Language editor, @Nullable Language file) {
+    /**
+     * Language from {@link InjectedDataKeys#EDITOR}, {@link InjectedDataKeys#PSI_FILE} or {@link CommonDataKeys#PSI_FILE}
+     */
+    Language injectedFileLanguage;
+
+    private Stats(@Nullable Project project, @Nullable Language fileLanguage, @Nullable Language injectedFileLanguage) {
       this.projectRef = new WeakReference<>(project);
       this.isDumb = project != null && !project.isDisposed() ? DumbService.isDumb(project) : null;
-      this.editor = editor;
-      this.file = file;
+      this.fileLanguage = fileLanguage;
+      this.injectedFileLanguage = injectedFileLanguage;
     }
   }
 }
