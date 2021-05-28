@@ -6,7 +6,7 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
@@ -19,10 +19,12 @@ import com.intellij.psi.util.PsiFormatUtil.*
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.LightColors
+import com.intellij.util.diff.Diff
 
 class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
 
   private companion object {
+    private val LOG = Logger.getInstance(LibrarySourceNotificationProvider::class.java)
     private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
     private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
 
@@ -56,27 +58,7 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
                 DiffManager.getInstance().showDiff(project, request)
               }
             }
-            if (ApplicationManager.getApplication().isInternal) {
-              val cls = offender.originalElement
-              if (cls is PsiClass) {
-                @Suppress("HardCodedStringLiteral")
-                panel.createActionLabel("Show member diff") {
-                  if (!project.isDisposed && clsFile.isValid) {
-                    val sourceMembers = formatMembers(offender)
-                    val clsMembers = formatMembers(cls)
-                    val cf = DiffContentFactory.getInstance()
-                    val request = SimpleDiffRequest(
-                      null,
-                      cf.create(project, clsMembers),
-                      cf.create(project, sourceMembers),
-                      clsFile.path,
-                      file.path
-                    )
-                    DiffManager.getInstance().showDiff(project, request)
-                  }
-                }
-              }
-            }
+            logMembers(offender)
             return panel
           }
         }
@@ -118,10 +100,20 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
 
   private fun format(c: PsiClass) = formatClass(c, CLASS).removeSuffix(" extends java.lang.Object")
 
-  private fun formatMembers(c: PsiClass): String {
-    val members = fields(c).map(::format).sorted() +
-                  methods(c).map(::format).sorted() +
-                  inners(c).map(::format).sorted()
-    return members.joinToString(separator = "\n", postfix = "\n")
+  private fun logMembers(offender: PsiClass) {
+    if (!LOG.isTraceEnabled) {
+      return
+    }
+    val cls = offender.originalElement as? PsiClass ?: return
+    val sourceMembers = formatMembers(offender)
+    val clsMembers = formatMembers(cls)
+    val diff = Diff.linesDiff(sourceMembers.toTypedArray(), clsMembers.toTypedArray()) ?: return
+    LOG.trace("Class: ${cls.qualifiedName}\n$diff")
+  }
+
+  private fun formatMembers(c: PsiClass): List<String> {
+    return fields(c).map(::format).sorted() +
+           methods(c).map(::format).sorted() +
+           inners(c).map(::format).sorted()
   }
 }
