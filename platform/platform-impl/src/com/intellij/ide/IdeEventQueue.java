@@ -461,11 +461,9 @@ public final class IdeEventQueue extends EventQueue {
           }
           if (eventWatcher != null &&
               runnableClass != FLUSH_NOW_CLASS) {
-            eventWatcher.logTimeMillis(
-              runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
-              startedAt,
-              runnableClass
-            );
+            eventWatcher.logTimeMillis(runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
+                                       startedAt,
+                                       runnableClass);
           }
         }
 
