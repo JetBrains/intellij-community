@@ -17354,6 +17354,11 @@ public abstract class DiagnosisCompilerTestFE10TestdataTestGenerated extends Abs
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
 
+                @TestMetadata("inferenceFrom.kt")
+                public void testInferenceFrom() throws Exception {
+                    runTest(compilerTestData("compiler/testData/diagnostics/tests/platformTypes/genericVarianceViolation/inferenceFrom.kt"));
+                }
+
                 @TestMetadata("listSuperType.kt")
                 public void testListSuperType() throws Exception {
                     runTest(compilerTestData("compiler/testData/diagnostics/tests/platformTypes/genericVarianceViolation/listSuperType.kt"));
