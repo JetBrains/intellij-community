@@ -58,7 +58,7 @@ class SuppressKotlinCodeStyleState : BaseState() {
 }
 
 @Service(Service.Level.PROJECT)
-@State(name = "SuppressKotlinCodeStyleNotification", storages = [Storage(StoragePathMacros.CACHE_FILE)])
+@State(name = "SuppressKotlinCodeStyleNotification")
 class SuppressKotlinCodeStyleComponent : SimplePersistentStateComponent<SuppressKotlinCodeStyleState>(SuppressKotlinCodeStyleState()) {
     companion object {
         fun getInstance(project: Project): SuppressKotlinCodeStyleComponent = project.service()
