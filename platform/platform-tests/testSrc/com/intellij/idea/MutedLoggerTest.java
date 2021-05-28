@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.openapi.diagnostic.DefaultLogger;
@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.*;
 
-public class MutedErrorLoggerTest extends BareTestFixtureTestCase {
+public class MutedLoggerTest extends BareTestFixtureTestCase {
   private static final Integer FREQUENCY = 5;
   private static final String HASH_PATTERN = ".* '-?\\d+'";
 
@@ -39,14 +39,14 @@ public class MutedErrorLoggerTest extends BareTestFixtureTestCase {
 
   @After
   public void dropCaches() {
-    MutedErrorLogger.dropCaches();
+    MutedLogger.dropCaches();
   }
 
   @Test
   public void testDoesNotLogExceptionTwice() {
     List<Pair<String, Throwable>> errors = ContainerUtil.createConcurrentList();
     Throwable t = new Throwable();
-    Logger logger = MutedErrorLogger.of(getDelegate(errors));
+    Logger logger = MutedLogger.of(getDelegate(errors));
 
     logger.error(t);
     logger.error(t);
@@ -65,7 +65,7 @@ public class MutedErrorLoggerTest extends BareTestFixtureTestCase {
   public void testLogsRecurringExceptionHash() {
     List<Pair<String, Throwable>> errors = ContainerUtil.createConcurrentList();
     Throwable t = new Throwable();
-    Logger logger = MutedErrorLogger.of(getDelegate(errors));
+    Logger logger = MutedLogger.of(getDelegate(errors));
 
     for (int i = 0; i < FREQUENCY; i++) {
       logger.error(t);
@@ -89,11 +89,11 @@ public class MutedErrorLoggerTest extends BareTestFixtureTestCase {
   public void testLogsResultsOnDropCaches() throws InterruptedException {
     List<Pair<String, Throwable>> errors = ContainerUtil.createConcurrentList();
     Throwable t = new Throwable();
-    Logger logger = MutedErrorLogger.of(getDelegate(errors));
+    Logger logger = MutedLogger.of(getDelegate(errors));
 
     logger.error(t);
     logger.error(t);
-    MutedErrorLogger.dropCaches();
+    MutedLogger.dropCaches();
 
     long deadline = System.nanoTime() + TimeUnit.SECONDS.toNanos(1);
     while (errors.size() != 3 && System.nanoTime() < deadline) TimeUnit.MILLISECONDS.sleep(1);  // cache maintenance is performed on pooled thread

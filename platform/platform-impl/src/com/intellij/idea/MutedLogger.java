@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -24,15 +24,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public final class MutedErrorLogger extends DelegatingLogger<Logger> {
+public final class MutedLogger extends DelegatingLogger<Logger> {
   private static final int EXPIRATION = Integer.getInteger("ide.muted.error.logger.expiration", 5);
   private static final int FREQUENCY = Integer.getInteger("ide.muted.error.logger.frequency", 10);
 
   private static final class LoggerWithCounter {
-    private final MutedErrorLogger logger;
+    private final MutedLogger logger;
     private final AtomicInteger counter = new AtomicInteger();
 
-    private LoggerWithCounter(MutedErrorLogger logger) {
+    private LoggerWithCounter(MutedLogger logger) {
       this.logger = logger;
     }
   }
@@ -57,7 +57,7 @@ public final class MutedErrorLogger extends DelegatingLogger<Logger> {
 
   @Contract("_ -> new")
   public static @NotNull Logger of(@NotNull Logger delegate) {
-    return new MutedErrorLogger(delegate);
+    return new MutedLogger(delegate);
   }
 
   public static boolean isEnabled() {
@@ -73,7 +73,7 @@ public final class MutedErrorLogger extends DelegatingLogger<Logger> {
     }
   }
 
-  private MutedErrorLogger(Logger delegate) {
+  private MutedLogger(Logger delegate) {
     super(delegate);
   }
 
