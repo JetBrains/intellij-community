@@ -93,6 +93,40 @@ public class SMTRunnerIntegrationTest extends LightPlatformTestCase {
     assertState(1, 0, 1, ColorProgressBar.GREEN);
   }
 
+  public void testSuitePassedFailedIgnored() {
+    notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
+    notifyStdoutLineAvailable("##teamcity[testingStarted]");
+
+    int finishedTests = 0;
+    int failedTests = 0;
+    int ignoredTests = 0;
+    int topLevelChildrenCount = 0;
+    {
+      notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='1' parentNodeId='0' name='test1']");
+      topLevelChildrenCount++;
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+      notifyStdoutLineAvailable("##teamcity[testFinished nodeId='1']");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+    }
+    {
+      notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='2' parentNodeId='0' name='test2']");
+      topLevelChildrenCount++;
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.GREEN);
+      notifyStdoutLineAvailable("##teamcity[testFailed nodeId='2' message='failed']");
+      failedTests++;
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.RED);
+    }
+    {
+      notifyStdoutLineAvailable("##teamcity[testSuiteStarted nodeId='3' parentNodeId='0' name='test3']");
+      topLevelChildrenCount++;
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.RED);
+      notifyStdoutLineAvailable("##teamcity[testIgnored nodeId='3']");
+      assertState(finishedTests, failedTests, ignoredTests, topLevelChildrenCount, ColorProgressBar.RED);
+    }
+
+    notifyStdoutLineAvailable("##teamcity[testingFinished]");
+  }
+
   public void testIgnoredTestings() {
     notifyStdoutLineAvailable("##teamcity[enteredTheMatrix]");
     notifyStdoutLineAvailable("##teamcity[testingStarted]");
