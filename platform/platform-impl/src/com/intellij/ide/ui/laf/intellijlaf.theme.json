@@ -577,6 +577,9 @@
       "Checkbox.Background.Selected": "#4F9EE3",
       "Checkbox.Border.Selected": "#4B97D9"
     }
-  }
+  },
+
+  "WelcomeScreen.Projects.actions.selectionBackground": "#3587E5",
+  "WelcomeScreen.Projects.actions.background": "#DCEDFE"
 
 }
