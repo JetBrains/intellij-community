@@ -36,13 +36,6 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
   public ExcludedFilesList() {
     super();
     myFileListDecorator = ToolbarDecorator.createDecorator(this)
-      .setAddAction(
-        new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            addDescriptor();
-          }
-        })
       .setRemoveAction(
         new AnActionButtonRunnable() {
           @Override
@@ -50,14 +43,6 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
             removeDescriptor();
           }
         })
-      .setEditAction(
-        new AnActionButtonRunnable() {
-          @Override
-          public void run(AnActionButton button) {
-            editDescriptor();
-          }
-        }
-      )
       .disableUpDownActions();
     addListSelectionListener(new ListSelectionListener() {
       @Override
@@ -113,6 +98,7 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
     return myFileListDecorator;
   }
 
+  @SuppressWarnings("unused")
   private void addDescriptor() {
     assert mySchemesModel != null;
     List<NamedScope> availableScopes = getAvailableScopes();

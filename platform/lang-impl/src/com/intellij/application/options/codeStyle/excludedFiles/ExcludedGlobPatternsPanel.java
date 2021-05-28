@@ -5,6 +5,7 @@ import com.intellij.CodeStyleBundle;
 import com.intellij.formatting.fileSet.FileSetDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.ui.components.BrowserLink;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -19,12 +20,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class ExcludedGlobPatternsPanel extends JPanel {
+public class ExcludedGlobPatternsPanel extends ExcludedFilesPanelBase {
 
   private final static String PATTERN_SEPARATOR = ";";
 
   private final ExpandableTextField myPatternsField;
-  private final JLabel              myConversionMessageLabel;
+  private final JComponent          myConversionMessage;
 
   public ExcludedGlobPatternsPanel() {
     setLayout(new GridBagLayout());
@@ -42,19 +43,31 @@ public class ExcludedGlobPatternsPanel extends JPanel {
     myPatternsField = new ExpandableTextField(s -> toStringList(s), strings -> StringUtil.join(strings, PATTERN_SEPARATOR));
     add(myPatternsField, c);
     c.gridy = 1;
-    c.insets = JBUI.insetsLeft(5);
-    JLabel hintLabel = new JLabel(CodeStyleBundle.message("excluded.files.glob.patterns.hint"));
-    hintLabel.setFont(JBUI.Fonts.smallFont());
-    hintLabel.setForeground(UIUtil.getContextHelpForeground());
-    add(hintLabel, c);
+    add(createLinkComponent(), c);
     c.gridy ++;
-    c.gridx = 0;
-    c.gridwidth = 2;
-    myConversionMessageLabel = new JLabel(CodeStyleBundle.message("excluded.files.migration.message"));
-    add(myConversionMessageLabel, c);
-    myConversionMessageLabel.setVisible(false);
+    c.gridx = 1;
+    c.insets = JBUI.insetsTop(5);
+    myConversionMessage = createWarningMessage(CodeStyleBundle.message("excluded.files.migration.message"));
+    add(myConversionMessage, c);
+    myConversionMessage.setVisible(false);
   }
 
+  private static JComponent createLinkComponent() {
+    JPanel linkPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
+    String message = CodeStyleBundle.message("excluded.files.glob.patterns.hint");
+    String textPart = message.replaceFirst("<a>.*</a>", "").trim();
+    String linkPart = message.replaceFirst("^.*<a>","").replaceFirst("</a>.*$","");
+    JLabel hintLabel = new JLabel(textPart);
+    hintLabel.setFont(JBUI.Fonts.smallFont());
+    hintLabel.setForeground(UIUtil.getContextHelpForeground());
+    linkPanel.add(hintLabel);
+    BrowserLink link = new BrowserLink(linkPart, "https://en.wikipedia.org/wiki/Glob_(programming)");
+    link.setFont(JBUI.Fonts.smallFont());
+    link.setIconTextGap(0);
+    link.setHorizontalTextPosition(SwingConstants.LEFT);
+    linkPanel.add(link);
+    return linkPanel;
+  }
 
   public void apply(@NotNull CodeStyleSettings settings) {
     settings.getExcludedFiles().setDescriptors(GlobPatternDescriptor.TYPE, getDescriptors());
@@ -66,7 +79,7 @@ public class ExcludedGlobPatternsPanel extends JPanel {
 
   public boolean isModified(@NotNull CodeStyleSettings settings) {
     boolean modified = !settings.getExcludedFiles().getDescriptors(GlobPatternDescriptor.TYPE).equals(getDescriptors());
-    if (!modified) myConversionMessageLabel.setVisible(false);
+    if (!modified) myConversionMessage.setVisible(false);
     return modified;
   }
 
@@ -74,7 +87,7 @@ public class ExcludedGlobPatternsPanel extends JPanel {
     List<String> patterns =
       new ArrayList<>(ContainerUtil.map(settings.getExcludedFiles().getDescriptors(GlobPatternDescriptor.TYPE), d -> d.getPattern()));
     List<String> convertedPatterns = getConvertedPatterns(settings);
-    myConversionMessageLabel.setVisible(convertedPatterns.size() > 0);
+    myConversionMessage.setVisible(convertedPatterns.size() > 0);
     patterns.addAll(convertedPatterns);
     return StringUtil.join(patterns, PATTERN_SEPARATOR);
   }
