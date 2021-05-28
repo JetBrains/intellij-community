@@ -1,5 +1,25 @@
 <html>
 <body>
 Reports explicit calls of <code>get</code> or <code>set</code> functions which can be replaced by an indexing operator <code>[]</code>.
+<p>
+    Kotlin allows to provide custom implementations for the predefined set of operators on types.
+    To overload an operator one can mark the corresponding function with the <code>operator</code> modifier:
+    <pre><code>
+    operator fun get(index: Int)
+    operator fun set(index: Int, value: Int)
+    </code></pre>
+
+Since operators have predefined symbolic representation the functions above correspond to the indexing one.
+
+<p>Example:</p>
+<pre><code>
+   class Test {
+      operator fun get(i: Int): Int = 0
+   }
+
+   fun test() {
+      Test().get(0) // can be replaced with 'Test()[0]'
+   }
+</code></pre>
 </body>
 </html>
