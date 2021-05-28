@@ -2857,17 +2857,17 @@ public final class ContainerUtil {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> Map<K,V> createWeakKeySoftValueMap() {
-    return new WeakKeySoftValueHashMap<>();
+    return CollectionFactory.createWeakKeySoftValueMap();
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> Map<K,V> createWeakKeyWeakValueMap() {
-    return new WeakKeyWeakValueHashMap<>();
+    return CollectionFactory.createWeakKeyWeakValueMap();
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> Map<K,V> createSoftKeySoftValueMap() {
-    return new SoftKeySoftValueHashMap<>();
+    return CollectionFactory.createSoftKeySoftValueMap();
   }
 
   /**
@@ -2898,14 +2898,7 @@ public final class ContainerUtil {
    */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> Map<K,V> createSoftMap() {
-    //noinspection deprecation
-    return new SoftHashMap<>(4);
-  }
-
-  @Contract(value = "_ -> new", pure = true)
-  static @NotNull <K,V> Map<K,V> createSoftMap(@NotNull HashingStrategy<? super K> strategy) {
-    //noinspection deprecation
-    return new SoftHashMap<>(strategy);
+    return CollectionFactory.createSoftMap();
   }
 
   /**

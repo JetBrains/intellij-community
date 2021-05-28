@@ -54,6 +54,21 @@ public final class CollectionFactory {
     return new WeakHashMap<>(initialCapacity, loadFactor, hashingStrategy);
   }
 
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K,V> Map<K,V> createWeakKeySoftValueMap() {
+    return new WeakKeySoftValueHashMap<>();
+  }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K,V> Map<K,V> createWeakKeyWeakValueMap() {
+    return new WeakKeyWeakValueHashMap<>();
+  }
+
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K,V> Map<K,V> createSoftKeySoftValueMap() {
+    return new SoftKeySoftValueHashMap<>();
+  }
+
   @Contract(value = "_,_,_ -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeySoftValueIdentityMap(int initialCapacity,
                                                                                                 float loadFactor,
@@ -303,6 +318,23 @@ public final class CollectionFactory {
   public static <K> @NotNull Set<K> createSmallMemoryFootprintSet(@NotNull Collection<? extends K> collection) {
     //noinspection SSBasedInspection
     return new ObjectOpenHashSet<>(collection);
+  }
+
+  /**
+   * Soft keys hard values hash map.
+   * Null keys are NOT allowed
+   * Null values are allowed
+   */
+  @Contract(value = " -> new", pure = true)
+  public static @NotNull <K,V> Map<K,V> createSoftMap() {
+    //noinspection deprecation
+    return new SoftHashMap<>(4);
+  }
+
+  @Contract(value = "_ -> new", pure = true)
+  static @NotNull <K,V> Map<K,V> createSoftMap(@NotNull HashingStrategy<? super K> strategy) {
+    //noinspection deprecation
+    return new SoftHashMap<>(strategy);
   }
 
   @Contract(value = " -> new", pure = true)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +9,7 @@ import java.util.Map;
 
 final class WeakKeySoftValueHashMap<K,V> extends RefKeyRefValueHashMap<K,V> implements Map<K,V>{
   WeakKeySoftValueHashMap() {
-    super((RefHashMap<K, ValueReference<K, V>>)ContainerUtil.<K, ValueReference<K, V>>createWeakMap());
+    super((RefHashMap<K, ValueReference<K, V>>)CollectionFactory.<K, ValueReference<K, V>>createWeakMap());
   }
 
   private static final class SoftValueReference<K,V> extends SoftReference<V> implements ValueReference<K,V> {
