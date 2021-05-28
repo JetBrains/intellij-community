@@ -3,6 +3,9 @@ package com.intellij.openapi.externalSystem.configurationStore
 
 import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.facet.*
+import com.intellij.facet.FacetManager
+import com.intellij.facet.FacetType
+import com.intellij.facet.impl.FacetUtil
 import com.intellij.facet.mock.MockFacet
 import com.intellij.facet.mock.MockFacetConfiguration
 import com.intellij.facet.mock.MockFacetType
@@ -238,15 +241,16 @@ class ExternalSystemStorageTest {
 
   @Test
   fun `save regular facet in imported module`() = saveProjectInExternalStorageAndCheckResult("regularFacetInImportedModule") { project, projectDir ->
-    val imported = ModuleManager.getInstance(project).newModule(projectDir.resolve("imported.iml").systemIndependentPath, ModuleTypeId.JAVA_MODULE)
-    FacetManager.getInstance(imported).addFacet(MockFacetType.getInstance(), "regular", null)
-    ExternalSystemModulePropertyManager.getInstance(imported).setMavenized(true)
+    val module = ModuleManager.getInstance(project).newModule(projectDir.resolve("test.iml").systemIndependentPath, ModuleTypeId.JAVA_MODULE)
+    ModuleRootModificationUtil.addContentRoot(module, projectDir.systemIndependentPath)
+    FacetManager.getInstance(module).addFacet(MockFacetType.getInstance(), "regular", null)
+    ExternalSystemModulePropertyManager.getInstance(module).setMavenized(true)
   }
 
   @Test
   fun `load regular facet in imported module`() = loadProjectAndCheckResults("regularFacetInImportedModule") { project ->
     val module = ModuleManager.getInstance(project).modules.single()
-    assertThat(module.name).isEqualTo("imported")
+    assertThat(module.name).isEqualTo("test")
     assertThat(ExternalSystemModulePropertyManager.getInstance(module).isMavenized()).isTrue()
     val facet = FacetManager.getInstance(module).allFacets.single()
     assertThat(facet.name).isEqualTo("regular")
@@ -311,6 +315,14 @@ class ExternalSystemStorageTest {
       addFacet(module, "GRADLE", "imported")
       runBlocking { project.stateStore.save() }
       addFacet(module, null, "regular")
+    }
+  }
+
+  @Test
+  fun `remove regular facet from imported module in external storage`() {
+    loadModifySaveAndCheck("regularFacetInImportedModule", "singleModuleAfterMavenization") { project ->
+      val module = ModuleManager.getInstance(project).modules.single()
+      FacetUtil.deleteFacet(FacetManager.getInstance(module).allFacets.single())
     }
   }
 

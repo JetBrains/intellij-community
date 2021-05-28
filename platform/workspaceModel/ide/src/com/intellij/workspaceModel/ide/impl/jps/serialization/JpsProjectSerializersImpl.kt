@@ -530,11 +530,16 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         .filter { !it.storedExternally }
         .associateBy { it.internalFile }
       val internalSourcesOfCustomModuleEntitySources = affectedSources.mapNotNullTo(HashSet()) { (it as? CustomModuleEntitySource)?.internalSource }
-      //entities added via JPS and imported entities stored in internal storage must be passed to serializers together, otherwise incomplete data will be stored
+
+      /* Entities added via JPS and imported entities stored in internal storage must be passed to serializers together, otherwise incomplete
+         data will be stored.
+         It isn't necessary to save entities stored in external storage when their internal parts are affected, but add them to the list
+         to ensure that obsolete *.iml files will be removed if their modules are stored in external storage.
+      */
       val entitiesToSave = storage.entitiesBySource { source ->
         source in affectedSources
         || source in sourcesStoredInternally
-        || source is JpsImportedEntitySource && !source.storedExternally && source.internalFile in affectedSources
+        || source is JpsImportedEntitySource && source.internalFile in affectedSources
         || source in internalSourcesOfCustomModuleEntitySources
         || source is CustomModuleEntitySource && source.internalSource in affectedSources
       }
@@ -548,7 +553,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       val internalSourceConvertedToImported = affectedSources.filterIsInstance<JpsImportedEntitySource>().mapTo(HashSet()) {
         it.internalFile
       }
-      val sourcesStoredExternally = affectedSources.asSequence().filterIsInstance<JpsImportedEntitySource>()
+      val sourcesStoredExternally = entitiesToSave.keys.asSequence().filterIsInstance<JpsImportedEntitySource>()
         .filter { it.storedExternally }
         .associateBy { it.internalFile }
 
@@ -560,12 +565,14 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           val affectedImportedSourceStoredExternally = when {
             source is JpsImportedEntitySource && source.storedExternally -> sourcesStoredInternally[source.internalFile]
             source is JpsImportedEntitySource && !source.storedExternally -> sourcesStoredExternally[source.internalFile]
+            source is JpsFileEntitySource -> sourcesStoredExternally[source]
             else -> null
           }
-          // Cleanup old entity source in the following cases:
-          // 1) If it was changed from [JpsFileEntitySource] to [JpsImportedEntitySource] e.g Mavenize
-          // 2) If [JpsImportedEntitySource#storedExternally] property changed from false to true e.g changing Gradle property for storing in external_build_system folder
-          // 3) We shouldn't clean up JpsImportedEntitySource if there are entities in the store with the same JpsFileEntitySource
+          // When user removes module from project we don't delete corresponding *.iml file located under project directory by default
+          // (because it may be included in other projects). However we do remove the module file if module actually wasn't removed, just
+          // its storage has been changed, e.g. if module was marked as imported from external system, or the place where module imported
+          // from external system was changed, or part of a module configuration is imported from external system and data stored in *.iml
+          // file was removed.
           val deleteObsoleteFile = source in internalSourceConvertedToImported || (affectedImportedSourceStoredExternally != null &&
                                                                                    affectedImportedSourceStoredExternally !in obsoleteSources)
           processObsoleteSource(fileUrl, deleteObsoleteFile)
