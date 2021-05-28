@@ -24,9 +24,22 @@ import kotlin.math.round
 
 internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
   private val myIsReporting: Boolean
+  private val myLastToolWindowId: String?
 
   init {
     myIsReporting = isEnabled()
+    // report tool windows' ids
+    myLastToolWindowId = if (myProject != null) {
+      val twm = ToolWindowManager.getInstance(myProject)
+      var id: String? = null
+      ApplicationManager.getApplication().invokeAndWait {
+        id = twm.lastActiveToolWindowId
+      }
+      id
+    }
+    else {
+      null
+    }
   }
 
   private fun isEnabled(): Boolean {
@@ -66,7 +79,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     val data = mutableMapOf<String, Any>()
     // put common data
     data.putAll(buildContextData(indexes, closePopup, elements.size, symbolsTyped, backspacesTyped))
-    data.putAll(buildCommonFeaturesMap(seSessionId, symbolsInQuery, tabId, myProject))
+    data.putAll(buildCommonFeaturesMap(seSessionId, symbolsInQuery, tabId, myLastToolWindowId, myProject))
     val currentTime = System.currentTimeMillis()
     
     // put data for every item
@@ -256,13 +269,17 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data[SELECTED_INDEXES_DATA_KEY] = indexes.map { it.toString() }
       }
       data[CLOSE_POPUP_KEY] = closePopup
-      if (size != -1) data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = size
-      if (symbolsTyped != -1) data[TYPED_SYMBOL_KEYS] = symbolsTyped
-      if (backspacesTyped != -1) data[TYPED_BACKSPACES_DATA_KEY] = backspacesTyped
+      data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = size
+      data[TYPED_SYMBOL_KEYS] = symbolsTyped
+      data[TYPED_BACKSPACES_DATA_KEY] = backspacesTyped
       return data
     }
 
-    fun buildCommonFeaturesMap(seSessionId: Int, symbolsInQuery: Int, tabId: String, project: Project?): Map<String, Any> {
+    fun buildCommonFeaturesMap(seSessionId: Int,
+                               symbolsInQuery: Int,
+                               tabId: String,
+                               lastToolwindowId: String?,
+                               project: Project?): Map<String, Any> {
       val data = hashMapOf<String, Any>()
       data[SESSION_ID_LOG_DATA_KEY] = seSessionId
       data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = symbolsInQuery
@@ -277,9 +294,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
 
       project?.let {
         // report tool windows' ids
-        val twm = ToolWindowManager.getInstance(it)
-        ApplicationManager.getApplication().invokeAndWait {
-          twm.lastActiveToolWindowId?.let { id -> data[LAST_ACTIVE_TOOL_WINDOW_KEY] = id }
+        lastToolwindowId?.let {
+          data[LAST_ACTIVE_TOOL_WINDOW_KEY] = lastToolwindowId
         }
 
         // report types of open files in editor: fileType -> amount

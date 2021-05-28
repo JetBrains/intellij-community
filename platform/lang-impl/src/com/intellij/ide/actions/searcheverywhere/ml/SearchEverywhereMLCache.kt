@@ -6,7 +6,9 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLSt
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.buildCommonFeaturesMap
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.fillActionItemInfo
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.wm.ToolWindowManager
 import java.util.*
 
 class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
@@ -14,6 +16,7 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
   private val elementIds = IdentityHashMap<Any, Int>()
   private val elementIdsToFeatures = mutableMapOf<Int, Map<String, Any>>()
   private val model: SearchEverywhereActionsRankingModel
+  private lateinit var lastToolwindowId: String //bound to the current session
 
   init {
     val provider = SearchEverywhereActionsRankingModelProvider()
@@ -24,19 +27,7 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
   fun getMLWeight(element: Any, contributorId: String, project: Project?, seTabId: String, patternLength: Int): Double {
     val mlId = getMLId(element)
     return elementIdsToFeatures.computeIfAbsent(mlId) {
-      if (element !is GotoActionModel.MatchedValue) {
-        throw NotImplementedError("Not supported for objects other than GotoActionModel.MatchedValue")
-      }
-      val features = mutableMapOf<String, Any>()
-      features.putAll(buildCommonFeaturesMap(seSessionId, patternLength, seTabId, project))
-      val itemInfo = fillActionItemInfo(element.matchingDegree, System.nanoTime(), element, contributorId)
-      features.putAll(itemInfo.additionalData)
-
-      itemInfo.id?.let {
-        features.put(SearchEverywhereMLStatisticsCollector.ACTION_ID_KEY, it)
-      }
-      features[ML_WEIGHT_KEY] = model.predict(features)
-      features
+      computeWeight(element, contributorId, project, seTabId, patternLength)
     }[ML_WEIGHT_KEY] as Double
   }
 
@@ -47,6 +38,40 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
 
   fun getMLId(element: Any): Int {
     return elementIds.computeIfAbsent(element) { idCounter++ }
+  }
+
+  private fun computeWeight(element: Any, contributorId: String, project: Project?, seTabId: String, patternLength: Int): MutableMap<String, Any> {
+    if (element !is GotoActionModel.MatchedValue) {
+      throw NotImplementedError("Not supported for objects other than GotoActionModel.MatchedValue")
+    }
+
+    val features = mutableMapOf<String, Any>()
+    features.putAll(buildCommonFeaturesMap(seSessionId, patternLength, seTabId, getLastTWId(project), project))
+    val itemInfo = fillActionItemInfo(element.matchingDegree, System.nanoTime(), element, contributorId)
+    features.putAll(itemInfo.additionalData)
+
+    itemInfo.id?.let {
+      features.put(SearchEverywhereMLStatisticsCollector.ACTION_ID_KEY, it)
+    }
+    features[ML_WEIGHT_KEY] = model.predict(features)
+    return features
+  }
+
+  private fun getLastTWId(project: Project?): String? {
+    if (!this::lastToolwindowId.isInitialized) {
+      lastToolwindowId = if (project != null) {
+        val twm = ToolWindowManager.getInstance(project)
+        var id: String? = null
+        ApplicationManager.getApplication().invokeAndWait {
+          id = twm.lastActiveToolWindowId
+        }
+        id ?: ""
+      }
+      else {
+        ""
+      }
+    }
+    return lastToolwindowId.ifEmpty { null }
   }
 
   companion object {
