@@ -8,62 +8,22 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.hover.TableHoverListener;
-import com.intellij.util.ui.*;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.table.TableCellEditor;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
-class ActionOnSaveColumnInfo extends ColumnInfo<ActionOnSaveInfo, ActionOnSaveInfo> {
-
-  private final TableCellRenderer myCellRenderer;
-  private final TableCellEditor myTableCellEditor;
-
+class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSaveInfo> {
   ActionOnSaveColumnInfo() {
     super(IdeBundle.message("actions.on.save.table.column.name.action"));
-
-    myCellRenderer = (table, value, selected, focused, row, column) -> {
-      return getActionOnSaveCellComponent((ActionOnSaveInfo)value, TableHoverListener.getHoveredRow(table) == row);
-    };
-
-    myTableCellEditor = new AbstractTableCellEditor() {
-      @Override
-      public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
-        return getActionOnSaveCellComponent((ActionOnSaveInfo)value, true);
-      }
-
-      @Override
-      public Object getCellEditorValue() {
-        return null;
-      }
-    };
   }
 
   @Override
-  public ActionOnSaveInfo valueOf(ActionOnSaveInfo info) {
-    return info;
-  }
-
-  @Override
-  public boolean isCellEditable(ActionOnSaveInfo actionOnSaveInfo) {
-    return true;
-  }
-
-  @Override
-  public TableCellRenderer getRenderer(ActionOnSaveInfo actionOnSaveInfo) {
-    return myCellRenderer;
-  }
-
-  @Override
-  public TableCellEditor getEditor(ActionOnSaveInfo actionOnSaveInfo) {
-    return myTableCellEditor;
-  }
-
-  private static @NotNull JComponent getActionOnSaveCellComponent(@NotNull ActionOnSaveInfo info, boolean hovered) {
+  protected @NotNull JComponent getCellComponent(@NotNull ActionOnSaveInfo info, boolean hovered) {
     JPanel resultPanel = new JPanel(new GridBagLayout());
     resultPanel.setBorder(JBUI.Borders.empty(6, 8, 0, 0));
 
@@ -85,17 +45,12 @@ class ActionOnSaveColumnInfo extends ColumnInfo<ActionOnSaveInfo, ActionOnSaveIn
       }
     }
 
-    DropDownLink<?> dropDownLink = info.getDropDownLink();
+    DropDownLink<?> dropDownLink = info.getInPlaceConfigDropDownLink();
     if (dropDownLink != null) {
       resultPanel.add(dropDownLink, c);
     }
 
-    Color bgColor = hovered ? JBUI.CurrentTheme.Table.Hover.background(true)
-                            : UIUtil.getTableBackground(false, false);
-    UIUtil.setOpaqueRecursively(resultPanel, false);
-    resultPanel.setOpaque(true);
-    resultPanel.setBackground(bgColor);
-
+    setupTableCellBackground(resultPanel, hovered);
     return resultPanel;
   }
 
@@ -135,5 +90,13 @@ class ActionOnSaveColumnInfo extends ColumnInfo<ActionOnSaveInfo, ActionOnSaveIn
     }
 
     return panel;
+  }
+
+  static void setupTableCellBackground(@NotNull JComponent component, boolean hovered) {
+    Color bgColor = hovered ? JBUI.CurrentTheme.Table.Hover.background(true)
+                            : UIUtil.getTableBackground(false, false);
+    UIUtil.setOpaqueRecursively(component, false);
+    component.setOpaque(true);
+    component.setBackground(bgColor);
   }
 }

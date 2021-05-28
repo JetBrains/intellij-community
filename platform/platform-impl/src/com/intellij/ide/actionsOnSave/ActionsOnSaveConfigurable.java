@@ -15,14 +15,12 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.hover.TableHoverListener;
 import com.intellij.ui.table.TableView;
-import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -62,7 +60,7 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
   }
 
   private static @NotNull TableView<ActionOnSaveInfo> createTable() {
-    TableView<ActionOnSaveInfo> table = new TableView<>(new ListTableModel<>(new ActionOnSaveColumnInfo(), createActivatedOnColumn()));
+    TableView<ActionOnSaveInfo> table = new TableView<>(new ListTableModel<>(new ActionOnSaveColumnInfo(), new ActivatedOnColumnInfo()));
     table.getTableHeader().setReorderingAllowed(false);
     table.setShowGrid(false);
     table.setRowSelectionAllowed(false);
@@ -83,26 +81,6 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
     }.addTo(table);
 
     return table;
-  }
-
-  private static ColumnInfo<ActionOnSaveInfo, ActionOnSaveInfo> createActivatedOnColumn() {
-    return new ColumnInfo<>(IdeBundle.message("actions.on.save.table.column.name.activated.on")) {
-      @Override
-      public String getMaxStringValue() {
-        // Affects column width
-        return "Explicit save (Ctrl + S)  []";
-      }
-
-      @Override
-      public @Nullable ActionOnSaveInfo valueOf(ActionOnSaveInfo info) {
-        return info;
-      }
-
-      @Override
-      public TableCellRenderer getRenderer(ActionOnSaveInfo actionOnSaveInfo) {
-        return (table, value, isSelected, hasFocus, row, column) -> new JLabel(""); // TODO implement
-      }
-    };
   }
 
   @Override
