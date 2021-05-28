@@ -27,11 +27,8 @@ class PluginSet(
       addWithV1Modules(enabledPluginAndV1ModuleMap, descriptor)
 
       for (module in descriptor.content.modules) {
-        if (module.configFile == null) {
-          val duplicate = moduleMap.putIfAbsent(module.name, module)
-          if (duplicate != null) {
-            throw RuntimeException("Duplicated module name (first=$duplicate, second=$module)")
-          }
+        moduleMap.putIfAbsent(module.name, module)?.let {
+          throw RuntimeException("Duplicated module name (first=$it, second=$module)")
         }
       }
 
