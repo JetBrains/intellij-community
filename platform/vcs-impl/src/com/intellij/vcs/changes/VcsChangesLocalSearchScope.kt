@@ -58,20 +58,16 @@ class VcsChangesLocalSearchScope(private val myProject: Project,
 
   override fun getVirtualFiles(): Array<VirtualFile> = rangeMap.keys.toTypedArray()
 
-  private val psiElementsLazy: Array<PsiElement> by lazy {
-    ReadAction.compute<Array<PsiElement>, RuntimeException> {
-      val elements: List<PsiElement> = ArrayList()
-      val psiManager = PsiManager.getInstance(myProject)
-      this.rangeMap.forEach { (virtualFile, ranges) ->
-        val psiFile = psiManager.findFile(virtualFile)
-        ranges.forEach { collectPsiElementsAtRange(psiFile, elements, it.startOffset, it.endOffset) }
-      }
-
-      elements.toTypedArray()
+  override fun getPsiElements(): Array<PsiElement> = ReadAction.compute<Array<PsiElement>, RuntimeException> {
+    val elements: List<PsiElement> = ArrayList()
+    val psiManager = PsiManager.getInstance(myProject)
+    this.rangeMap.forEach { (virtualFile, ranges) ->
+      val psiFile = psiManager.findFile(virtualFile)
+      ranges.forEach { collectPsiElementsAtRange(psiFile, elements, it.startOffset, it.endOffset) }
     }
-  }
 
-  override fun getPsiElements(): Array<PsiElement> = psiElementsLazy
+    elements.toTypedArray()
+  }
 
   override fun equals(other: Any?): Boolean
     = this === other ||
