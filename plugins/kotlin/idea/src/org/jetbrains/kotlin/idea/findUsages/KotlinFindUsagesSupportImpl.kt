@@ -26,9 +26,6 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun isConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean =
         psiReference.isConstructorUsage(ktClassOrObject)
 
-    override fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, actionString: String): List<PsiElement> =
-        org.jetbrains.kotlin.idea.refactoring.checkSuperMethods(declaration, ignore, actionString)
-
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> =
         org.jetbrains.kotlin.idea.refactoring.getSuperMethods(declaration, ignore)
 
