@@ -5,6 +5,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.TypeUtils;
 
 import java.util.Objects;
 
@@ -36,7 +38,20 @@ public final class BulkMethodInfo {
       return false;
     }
     PsiClass methodClass = method.getContainingClass();
-    return methodClass != null && InheritanceUtil.isInheritor(methodClass, myClassName);
+    if (methodClass == null || !InheritanceUtil.isInheritor(methodClass, myClassName)) return false;
+    return haveBulkMethod(methodClass);
+  }
+
+  private boolean haveBulkMethod(PsiClass aClass) {
+    return ContainerUtil.or(aClass.findMethodsByName(myBulkName, true), method -> {
+      PsiParameter[] parameters = method.getParameterList().getParameters();
+      if (parameters.length != 1) return false;
+      PsiParameter parameter = parameters[0];
+      if (myClassName.equals(JAVA_UTIL_MAP)) {
+        return TypeUtils.variableHasTypeOrSubtype(parameter, JAVA_UTIL_MAP);
+      }
+      return TypeUtils.variableHasTypeOrSubtype(parameter, JAVA_LANG_ITERABLE, JAVA_UTIL_COLLECTION);
+    });
   }
 
   public boolean isSupportedIterable(PsiExpression qualifier, PsiExpression iterable, boolean useArraysAsList) {
