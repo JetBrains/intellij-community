@@ -2,7 +2,7 @@ import ctypes
 import os
 from _pydev_bundle import pydev_log, pydev_monkey
 from _pydevd_bundle.pydevd_constants import get_frame, IS_PY2, IS_PY37_OR_GREATER, IS_CPYTHON, IS_WINDOWS, IS_LINUX, IS_MACOS, \
-    IS_64BIT_PROCESS
+    IS_64BIT_PROCESS, IS_PYCHARM_ATTACH
 from _pydev_imps._pydev_saved_modules import thread, threading
 
 try:
@@ -173,6 +173,14 @@ def set_trace_to_threads(tracing_func):
         # a call for threading.current_thread() was previously done in that thread,
         # in which case a dummy thread would've been created for it).
         thread_idents = set(sys._current_frames().keys())
+
+        if IS_WINDOWS and IS_PYCHARM_ATTACH:
+            # On Windows, when attaching to a process, some existing threads may not
+            # appear in sys._current_frames()` but be available through the `threading`
+            # facilities. See: PY-44778.
+            thread_idents = thread_idents.union(
+                set(t.ident for t in threading.enumerate()))
+
         thread_idents = thread_idents.difference(
             # Ignore pydevd threads.
             set(t.ident for t in threading.enumerate() if getattr(t, 'pydev_do_not_trace', False))
