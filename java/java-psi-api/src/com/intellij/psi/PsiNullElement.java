@@ -2,7 +2,7 @@
 package com.intellij.psi;
 
 /**
- * Represents pattern which is used in {@code instanceof} expressions or switch case labels.
+ * Represents {@code case null } in {@link PsiSwitchLabelStatementBase}
  */
-public interface PsiPattern extends PsiCaseLabelElement {
+public interface PsiNullElement extends PsiCaseLabelElement {
 }
