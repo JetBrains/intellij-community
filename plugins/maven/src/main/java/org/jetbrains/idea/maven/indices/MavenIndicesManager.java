@@ -38,8 +38,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class MavenIndicesManager implements Disposable {
@@ -90,7 +89,7 @@ public final class MavenIndicesManager implements Disposable {
     }
   }
 
-  private final AsyncPromise<IndexKeeper> myKeeper = new AsyncPromise<>();
+  private final CompletableFuture<IndexKeeper> myKeeper = new CompletableFuture<>();
 
   public enum IndexUpdatingState {
     IDLE, WAITING, UPDATING
@@ -139,43 +138,56 @@ public final class MavenIndicesManager implements Disposable {
 
   @NotNull
   private IndexKeeper ensureInitialized() {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> {
-      if (!myInitStarted.compareAndSet(false, true)) return;
+    if (myInitStarted.compareAndSet(false, true)) {
+      startInitialization();
+    }
 
-      MavenIndexerWrapper indexer = MavenServerManager.getInstance().createIndexer(myProject);
-      MavenServerDownloadListener downloadListener = new MavenServerDownloadListener() {
-        @Override
-        public void artifactDownloaded(File file, String relativePath) {
-          addArtifact(file, relativePath);
-        }
-      };
-      MavenIndices indices = new MavenIndices(indexer, getIndicesDir().toFile(), new MavenSearchIndex.IndexListener() {
-        @Override
-        public void indexIsBroken(@NotNull MavenSearchIndex index) {
-          if (index instanceof MavenIndex) {
-            scheduleUpdate(null, Collections.singletonList((MavenIndex)index), false);
-          }
-        }
-      });
-      ArrayList<MavenArchetype> archetypes = loadUserArchetypes(getUserArchetypesFile());
-      if (archetypes == null) {
-        archetypes = new ArrayList<>();
-      }
-      IndexKeeper keeper = new IndexKeeper(indexer, indices, archetypes, downloadListener);
-      Disposer.register(this, keeper);
-      myKeeper.setResult(keeper);
-    });
-
-    while (!myKeeper.isDone()) {
+    ApplicationManager.getApplication().assertIsNonDispatchThread();
+    do {
       ProgressManager.checkCanceled();
       try {
         IndexKeeper indexKeeper = myKeeper.get(10, TimeUnit.MILLISECONDS);
         if (indexKeeper != null) return indexKeeper;
+      } catch (TimeoutException ignore){
       }
-      catch (Exception ignore) {
+      catch (Exception e){
+        throw new RuntimeException(e);
       }
     }
-    return myKeeper.get(0, TimeUnit.MILLISECONDS);
+    while (true);
+  }
+
+  private void startInitialization() {
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      try {
+        MavenIndexerWrapper indexer = MavenServerManager.getInstance().createIndexer(myProject);
+        MavenServerDownloadListener downloadListener = new MavenServerDownloadListener() {
+          @Override
+          public void artifactDownloaded(File file, String relativePath) {
+            addArtifact(file, relativePath);
+          }
+        };
+        MavenIndices indices = new MavenIndices(indexer, getIndicesDir().toFile(), new MavenSearchIndex.IndexListener() {
+          @Override
+          public void indexIsBroken(@NotNull MavenSearchIndex index) {
+            if (index instanceof MavenIndex) {
+              scheduleUpdate(null, Collections.singletonList((MavenIndex)index), false);
+            }
+          }
+        });
+        ArrayList<MavenArchetype> archetypes = loadUserArchetypes(getUserArchetypesFile());
+        if (archetypes == null) {
+          archetypes = new ArrayList<>();
+        }
+        IndexKeeper keeper = new IndexKeeper(indexer, indices, archetypes, downloadListener);
+        Disposer.register(this, keeper);
+        myKeeper.complete(keeper);
+      }
+      catch (Exception e) {
+        MavenLog.LOG.error(e);
+        myKeeper.completeExceptionally(e);
+      }
+    });
   }
 
   @NotNull
