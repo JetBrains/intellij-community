@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -13,7 +13,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JdkUtil;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Disposer;
@@ -44,7 +45,6 @@ import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.*;
 import java.util.function.Predicate;
-import java.util.jar.Attributes;
 
 public final class MavenServerManager implements Disposable {
   public static final String BUNDLED_MAVEN_2 = "Bundled (Maven 2)";
@@ -266,12 +266,14 @@ public final class MavenServerManager implements Disposable {
   }
 
   public static boolean verifyMavenSdkRequirements(@NotNull Sdk jdk, String mavenVersion) {
-    String version = JdkUtil.getJdkMainAttribute(jdk, Attributes.Name.IMPLEMENTATION_VERSION);
-    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") >= 0
-        && StringUtil.compareVersionNumbers(version, "1.7") < 0) {
-      return false;
+    if (StringUtil.compareVersionNumbers(mavenVersion, "3.3.1") < 0) {
+      return true;
     }
-    return true;
+    JavaSdkVersion version = ((JavaSdk)jdk.getSdkType()).getVersion(jdk);
+    if (version == null || version.isAtLeast(JavaSdkVersion.JDK_1_7)) {
+      return true;
+    }
+    return false;
   }
 
   public static File getMavenEventListener() {
