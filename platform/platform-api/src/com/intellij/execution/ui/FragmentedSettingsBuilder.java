@@ -12,13 +12,12 @@ import com.intellij.openapi.options.CompositeSettingsBuilder;
 import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -26,11 +25,9 @@ import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WrapLayout;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -46,19 +43,12 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   public static final int TAG_VGAP = JBUI.scale(6);
   public static final int TAG_HGAP = JBUI.scale(2);
 
-  private Disposable myDisposable;
+  private final Disposable myDisposable;
   private final JPanel myPanel = new JPanel(new GridBagLayout()) {
     @Override
     public void addNotify() {
       super.addNotify();
-      myDisposable = Disposer.newDisposable();
       registerShortcuts();
-    }
-
-    @Override
-    public void removeNotify() {
-      super.removeNotify();
-      Disposer.dispose(myDisposable);
     }
   };
   private final GridBagConstraints myConstraints =
@@ -67,9 +57,11 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
   private final SettingsEditorFragment<Settings, ?> myMain;
   private DropDownLink<String> myLinkLabel;
 
-  FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments, SettingsEditorFragment<Settings, ?> main) {
+  FragmentedSettingsBuilder(Collection<? extends SettingsEditorFragment<Settings, ?>> fragments,
+                            SettingsEditorFragment<Settings, ?> main, @NotNull Disposable disposable) {
     myFragments = fragments;
     myMain = main;
+    myDisposable = disposable;
   }
 
   @Override
@@ -158,9 +150,11 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     myLinkLabel.setBorder(JBUI.Borders.emptyLeft(5));
     JPanel linkPanel = new JPanel(new BorderLayout());
     linkPanel.add(myLinkLabel, BorderLayout.CENTER);
-    CustomShortcutSet shortcut = KeymapUtil.getMnemonicAsShortcut(TextWithMnemonic.parse(message).getMnemonic());
-    if (shortcut != null) {
-      JLabel shortcutLabel = new JLabel(KeymapUtil.getFirstKeyboardShortcutText(shortcut));
+    CustomShortcutSet shortcutSet = KeymapUtil.getMnemonicAsShortcut(TextWithMnemonic.parse(message).getMnemonic());
+    if (shortcutSet != null) {
+      List<String> list = ContainerUtil.map(shortcutSet.getShortcuts(), shortcut -> KeymapUtil.getShortcutText(shortcut));
+      list.sort(Comparator.comparingInt(String::length));
+      JLabel shortcutLabel = new JLabel(list.get(0));
       shortcutLabel.setEnabled(false);
       shortcutLabel.setBorder(JBUI.Borders.empty(0, 5));
       linkPanel.add(shortcutLabel, BorderLayout.EAST);
@@ -173,7 +167,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     for (AnAction action : buildGroup(new Ref<>()).getChildActionsOrStubs()) {
       ShortcutSet shortcutSet = action.getShortcutSet();
       if (shortcutSet.getShortcuts().length > 0 && action instanceof ToggleFragmentAction) {
-        new AnAction(action.getTemplateText()) {
+        new DumbAwareAction(action.getTemplateText()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             SettingsEditorFragment<?, ?> fragment = ((ToggleFragmentAction)action).myFragment;
@@ -206,22 +200,10 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
                                                                           callback, -1);
     popup.addListSelectionListener(e -> {
       AnActionHolder data = (AnActionHolder)PlatformDataKeys.SELECTED_ITEM.getData((DataProvider)e.getSource());
-      popup.setAdText(wrapToSize(getHint(data == null ? null : data.getAction()), popup.getContent()), SwingConstants.LEFT);
+      popup.setAdText(getHint(data == null ? null : data.getAction()), SwingConstants.LEFT);
     });
-    popup.setAdText(wrapToSize(getHint(ContainerUtil.find(group.getChildren(null), action -> !(action instanceof Separator))), popup.getContent()),
-                               SwingConstants.LEFT);
+    popup.setAdText(getHint(ContainerUtil.find(group.getChildren(null), action -> !(action instanceof Separator))), SwingConstants.LEFT);
     return popup;
-  }
-
-  @NotNull
-  @Nls
-  private static String wrapToSize(@NotNull @Nls String hint, @NotNull JComponent component) {
-    if (StringUtil.isEmpty(hint)) return hint;
-
-    Dimension size = component.getPreferredSize();
-    JBInsets.removeFrom(size, component.getInsets());
-    int width = Math.max(JBUI.CurrentTheme.Popup.minimumHintWidth(), size.width);
-    return HtmlChunk.text(hint).wrapWith(HtmlChunk.div().attr("size", width)).wrapWith(HtmlChunk.html()).toString();
   }
 
   @NotNull
@@ -286,7 +268,7 @@ public class FragmentedSettingsBuilder<Settings> implements CompositeSettingsBui
     List<SettingsEditorFragment<Settings, ?>> list = ContainerUtil.filter(fragments, fragment -> fragment.getCommandLinePosition() > 0);
     if (list.isEmpty()) return;
     fragments.removeAll(list);
-    CommandLinePanel panel = new CommandLinePanel(list);
+    CommandLinePanel panel = new CommandLinePanel(list, myDisposable);
     addLine(panel, 0, -panel.getLeftInset(), TOP_INSET);
   }
 

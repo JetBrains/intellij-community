@@ -14,6 +14,7 @@ import com.intellij.space.chat.ui.discussion.SpaceChatDiscussionActionsFactory
 import com.intellij.space.chat.ui.getLink
 import com.intellij.space.chat.ui.thread.SpaceChatStandaloneThreadComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.vcs.review.details.SpaceReviewChange
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.comment.wrapComponentUsingRoundedPanel
@@ -58,6 +59,7 @@ internal class SpaceReviewCommentPanelFactory(
       discussionRecord.value.channel,
       pendingStateProvider,
       SpaceChatDiscussionActionsFactory(lifetime, workspace.client, discussionRecord),
+      statsPlace = SpaceStatsCounterCollector.SendMessagePlace.DIFF,
       messageConverter = { index, message ->
         message.convertToChatItem(
           message.getLink(),

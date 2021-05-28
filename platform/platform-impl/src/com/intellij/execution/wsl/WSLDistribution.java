@@ -569,6 +569,10 @@ public class WSLDistribution {
   }
 
   private @Nullable String readHostIp() {
+    String wsl1LoopbackAddress = getWsl1LoopbackAddress();
+    if (wsl1LoopbackAddress != null) {
+      return wsl1LoopbackAddress;
+    }
     final String releaseInfo = "/etc/resolv.conf"; // available for all distributions
     final ProcessOutput output;
     try {
@@ -590,6 +594,10 @@ public class WSLDistribution {
   }
 
   private @Nullable String readWslIp() {
+    String wsl1LoopbackAddress = getWsl1LoopbackAddress();
+    if (wsl1LoopbackAddress != null) {
+      return wsl1LoopbackAddress;
+    }
     final ProcessOutput output;
     try {
       output = executeOnWsl(List.of("ip", "addr", "show", "eth0"),
@@ -611,6 +619,10 @@ public class WSLDistribution {
       }
     }
     return null;
+  }
+
+  private @Nullable String getWsl1LoopbackAddress() {
+    return WSLUtil.isWsl1(this) == ThreeState.YES ? InetAddress.getLoopbackAddress().getHostAddress() : null;
   }
 
   public @NonNls @Nullable String getEnvironmentVariable(String name) {

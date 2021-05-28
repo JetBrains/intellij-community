@@ -9,6 +9,7 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.diagnostic.AttachmentFactory;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.application.ApplicationManager;
@@ -88,6 +89,11 @@ public class ListTemplatesHandler implements CodeInsightActionHandler {
         }
       }
       else {
+        if (!ClientId.isCurrentlyUnderLocalId() && prefixWithoutDots.isEmpty()) {
+          matchingTemplates.put(template, prefixWithoutDots);
+          continue;
+        }
+
         for (int i = templateKey.length(); i > 0; i--) {
           ProgressManager.checkCanceled();
           String prefix = templateKey.substring(0, i);

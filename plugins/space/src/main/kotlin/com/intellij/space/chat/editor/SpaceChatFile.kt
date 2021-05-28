@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.chat.editor
 
 import circlet.client.api.M2ChannelRecord
@@ -30,6 +30,7 @@ internal class SpaceChatFile(
   @NlsSafe val id: String,
   @NlsSafe path: String,
   @NlsContexts.TabTitle val displayName: String,
+  @NlsContexts.Tooltip val tabTooltip: String,
   val channelsVm: ChannelsVm,
   val chatRecord: Ref<M2ChannelRecord>,
   val headerDetailsBuilder: (Lifetime) -> SpaceChatHeaderDetails
@@ -68,12 +69,9 @@ internal class SpaceChatFile(
 }
 
 internal class SpaceChatFileTabTitleProvider : EditorTabTitleProvider {
-  override fun getEditorTabTitle(project: Project, file: VirtualFile): String? {
-    if (file !is SpaceChatFile) {
-      return null
-    }
-    return file.displayName
-  }
+  override fun getEditorTabTitle(project: Project, file: VirtualFile): String? = (file as? SpaceChatFile)?.displayName
+
+  override fun getEditorTabTooltipText(project: Project, virtualFile: VirtualFile): String? = (virtualFile as? SpaceChatFile)?.tabTooltip
 }
 
 internal class SpaceChatIconProvider : FileIconProvider {

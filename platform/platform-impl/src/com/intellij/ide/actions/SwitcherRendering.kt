@@ -32,6 +32,8 @@ private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyb
 
 
 internal interface SwitcherListItem {
+  val separatorAbove: Boolean get() = false
+
   val textAtLeft: String
   val textAtRight: String? get() = null
 
@@ -44,6 +46,7 @@ internal interface SwitcherListItem {
 
 
 internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : SwitcherListItem {
+  override val separatorAbove = true
   override val textAtLeft: String
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> message("recent.locations.changed.locations")
@@ -100,9 +103,10 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     left.clear()
     right.clear()
 
-    panel.border = when (!selected && value is SwitcherRecentLocations) {
-      true -> JBUI.Borders.customLine(SEPARATOR, 1, 0, 0, 0)
-      else -> JBUI.Borders.empty()
+    val border = JBUI.Borders.empty(0, 10)
+    panel.border = when (!selected && value?.separatorAbove == true) {
+      true -> JBUI.Borders.compound(border, JBUI.Borders.customLine(SEPARATOR, 1, 0, 0, 0))
+      else -> border
     }
     val item = value ?: return panel
     RenderingUtil.getForeground(list, selected).let {

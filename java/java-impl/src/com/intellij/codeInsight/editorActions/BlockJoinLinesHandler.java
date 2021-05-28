@@ -56,8 +56,22 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
       if (foundStatement != null) return -1;
       foundStatement = element;
     }
+    if (foundStatement == null) return -1;
+    PsiElement parent = codeBlock.getParent();
+    if (isPotentialShortIf(foundStatement) && parent instanceof PsiBlockStatement) {
+      PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiIfStatement &&
+          ((PsiIfStatement)grandParent).getThenBranch() == parent &&
+          ((PsiIfStatement)grandParent).getElseBranch() != null) {
+        /*
+         like "if(...) {if(...){...}} else {...}"
+         unwrapping the braces of outer 'if' then-branch will cause semantics change
+         */
+        return -1;
+      }
+    }
     try {
-      final PsiElement newStatement = codeBlock.getParent().replace(foundStatement);
+      final PsiElement newStatement = parent.replace(foundStatement);
 
       return newStatement.getTextRange().getStartOffset();
     }
@@ -65,6 +79,20 @@ public class BlockJoinLinesHandler implements JoinLinesHandlerDelegate {
       LOG.error(e);
     }
     return -1;
+  }
+
+  private static boolean isPotentialShortIf(PsiElement statement) {
+    while (true) {
+      // JLS 14.5
+      if (statement instanceof PsiLabeledStatement) {
+        statement = ((PsiLabeledStatement)statement).getStatement();
+      }
+      else if (statement instanceof PsiForStatement || statement instanceof PsiForeachStatement || statement instanceof PsiWhileStatement) {
+        statement = ((PsiLoopStatement)statement).getBody();
+      }
+      else break;
+    }
+    return statement instanceof PsiIfStatement;
   }
 
   private static int getForceBraceSetting(PsiElement statement) {

@@ -30,7 +30,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.io.HttpRequests
-import com.intellij.util.system.CpuArch
 import com.intellij.webcore.packaging.PackageManagementService
 import com.intellij.webcore.packaging.PackagesNotificationPanel
 import com.jetbrains.python.PyBundle
@@ -67,28 +66,15 @@ private fun getPy39ToInstallOnWindows(): PySdkToInstallOnWindows {
   val name = "Python $version"
   val hashFunction = Hashing.md5()
 
-  return if (CpuArch.isIntel32()) {
-    PySdkToInstallOnWindows(
-      name,
-      version,
-      "https://www.python.org/ftp/python/3.9.0/python-3.9.0.exe",
-      27066912,
-      "4a2812db8ab9f2e522c96c7728cfcccb",
-      hashFunction,
-      "python-3.9.0.exe"
-    )
-  }
-  else {
-    PySdkToInstallOnWindows(
-      name,
-      version,
-      "https://www.python.org/ftp/python/3.9.0/python-3.9.0-amd64.exe",
-      28158664,
-      "b61a33dc28f13b561452f3089c87eb63",
-      hashFunction,
-      "python-3.9.0-amd64.exe"
-    )
-  }
+  return PySdkToInstallOnWindows(
+    name,
+    version,
+    "https://www.python.org/ftp/python/3.9.2/python-3.9.2-amd64.exe",
+    28287512,
+    "efb20aa1b648a2baddd949c142d6eb06",
+    hashFunction,
+    "python-3.9.2-amd64.exe"
+  )
 }
 
 private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
@@ -96,28 +82,15 @@ private fun getPy38ToInstallOnWindows(): PySdkToInstallOnWindows {
   val name = "Python $version"
   val hashFunction = Hashing.md5()
 
-  return if (CpuArch.isIntel32()) {
-    PySdkToInstallOnWindows(
-      name,
-      version,
-      "https://www.python.org/ftp/python/3.8.6/python-3.8.6.exe",
-      26987416,
-      "02cd63bd5b31e642fc3d5f07b3a4862a",
-      hashFunction,
-      "python-3.8.6.exe"
-    )
-  }
-  else {
-    PySdkToInstallOnWindows(
-      name,
-      version,
-      "https://www.python.org/ftp/python/3.8.6/python-3.8.6-amd64.exe",
-      28076528,
-      "2acba3117582c5177cdd28b91bbe9ac9",
-      hashFunction,
-      "python-3.8.6-amd64.exe"
-    )
-  }
+  return PySdkToInstallOnWindows(
+    name,
+    version,
+    "https://www.python.org/ftp/python/3.8.8/python-3.8.8-amd64.exe",
+    28217976,
+    "77a54a14239b6d7d0dcbe2e3a507d2f0",
+    hashFunction,
+    "python-3.8.8-amd64.exe"
+  )
 }
 
 internal abstract class PySdkToInstall internal constructor(name: String, version: String)

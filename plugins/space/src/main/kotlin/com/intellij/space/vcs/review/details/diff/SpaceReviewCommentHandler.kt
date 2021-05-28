@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.space.vcs.review.details.diff
 
 import com.intellij.diff.FrameDiffTool
@@ -20,6 +20,7 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.chat.ui.SpaceChatNewMessageWithAvatarComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.codereview.comment.wrapComponentUsingRoundedPanel
 import com.intellij.util.ui.codereview.diff.AddCommentGutterIconRenderer
@@ -143,11 +144,14 @@ internal class SpaceDiffEditorGutterIconRendererFactory(
         val hideCallback = {
           inlay?.let { Disposer.dispose(it.disposable) }
           inlay = null
+          SpaceStatsCounterCollector.CLOSE_LEAVE_COMMENT.log()
         }
         val component = createComponent(side, line, hideCallback)
         val disposable = inlaysManager.insertAfter(editorLine, component) ?: return
         focusPanel(component)
         inlay = ComponentWithDisposable(component, disposable)
+
+        SpaceStatsCounterCollector.LEAVE_COMMENT.log()
       }
 
       fun createComponent(side: Side, line: Int, hideCallback: () -> Unit): JComponent {
@@ -168,6 +172,7 @@ internal class SpaceDiffEditorGutterIconRendererFactory(
         }
 
         val component = SpaceChatNewMessageWithAvatarComponent(commentSubmitter.lifetime, SpaceChatAvatarType.THREAD, model,
+                                                               SpaceStatsCounterCollector.SendMessagePlace.NEW_DISCUSSION,
                                                                hideCallback).apply {
           border = JBUI.Borders.empty(10)
         }

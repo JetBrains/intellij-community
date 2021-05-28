@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.wm.StartPagePromoter
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
@@ -67,6 +68,12 @@ open class RecentProjectListActionProvider {
         if (group.isExpanded) {
           actions.addAll(children)
         }
+      }
+    }
+
+    if (actions.isEmpty() && paths.size == 1) {
+      if (StartPagePromoter.START_PAGE_PROMOTER_EP.extensions.any { it.needToHideSingleProject(paths.single()) }) {
+        return emptyList()
       }
     }
 

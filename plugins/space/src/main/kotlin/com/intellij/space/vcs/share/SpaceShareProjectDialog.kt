@@ -6,19 +6,27 @@ import circlet.client.repoService
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.promo.promoPanel
+import com.intellij.space.settings.SpaceLoginState
+import com.intellij.space.stats.SpaceStatsCounterCollector
+import com.intellij.space.ui.LoginComponents.buildConnectingPanel
+import com.intellij.space.ui.LoginComponents.loginPanel
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.HorizontalLayout
+import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.JBUI
+import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.LifetimeSource
 import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.usingSource
@@ -29,12 +37,13 @@ import java.util.concurrent.CancellationException
 import javax.swing.*
 
 class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
+  private val contentWrapper: Wrapper = Wrapper().apply {
+    putClientProperty(IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY, false)
+  }
+
   private val lifetime: LifetimeSource = LifetimeSource()
 
   internal var result: Result? = null
-
-  // vm
-  private val shareProjectVM: SpaceShareProjectVM = SpaceShareProjectVM(lifetime)
 
   // ui
   private val projectComboBoxModel: CollectionComboBoxModel<PR_Project> = CollectionComboBoxModel()
@@ -43,6 +52,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
   }
   private val createNewProjectButton: JButton = JButton(SpaceBundle.message("share.project.dialog.new.button.text")).apply {
     addActionListener {
+      SpaceStatsCounterCollector.START_CREATING_NEW_PROJECT.log()
       val createProjectDialog = SpaceCreateProjectDialog(this@SpaceShareProjectDialog.contentPanel)
       if (createProjectDialog.showAndGet()) {
         createProjectDialog.result?.let {
@@ -74,30 +84,40 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
     init()
     Disposer.register(disposable, Disposable { lifetime.terminate() })
 
-    shareProjectVM.projectsListState.forEach(lifetime) { projectListState ->
-      when (projectListState) {
-        is SpaceShareProjectVM.ProjectListState.Loading -> {
-          loadingProjectsProgress.isVisible = true
+    SpaceWorkspaceComponent.getInstance().loginState.forEach(lifetime) { state ->
+      okAction.isEnabled = false
+      val view = when (state) {
+        is SpaceLoginState.Disconnected -> buildShareLoginPanel(state) { serverName ->
+          SpaceWorkspaceComponent.getInstance().signInManually(serverName, lifetime, contentWrapper)
         }
-        is SpaceShareProjectVM.ProjectListState.Error -> {
-          loadingProjectsProgress.isVisible = false
-          setErrorText(projectListState.error)
+        is SpaceLoginState.Connected -> {
+          okAction.isEnabled = true
+          buildShareProjectPanel(lifetime)
         }
-        is SpaceShareProjectVM.ProjectListState.Projects -> {
-          loadingProjectsProgress.isVisible = false
-          projectComboBoxModel.removeAll()
-          projectComboBoxModel.addAll(0, projectListState.projects)
-          if (projectListState.projects.isNotEmpty()) {
-            projectComboBox.selectedIndex = 0
-          }
+        is SpaceLoginState.Connecting -> buildConnectingPanel(state, SpaceStatsCounterCollector.LoginPlace.SHARE) {
+          state.cancel()
         }
+      }.apply {
+        border = JBUI.Borders.empty(8, 12)
       }
+      contentWrapper.setContent(view)
+      contentWrapper.validate()
+      contentWrapper.repaint()
+    }
+  }
+
+  private fun buildShareLoginPanel(state: SpaceLoginState.Disconnected, loginAction: (String) -> Unit): JComponent {
+    return panel {
+      loginPanel(state, SpaceStatsCounterCollector.LoginPlace.SHARE, isLoginActionDefault = true) {
+        loginAction(it)
+      }
+      promoPanel(SpaceStatsCounterCollector.ExplorePlace.SHARE)
     }
   }
 
   override fun doOKAction() {
     if (!okAction.isEnabled) return
-
+    SpaceStatsCounterCollector.SHARE_PROJECT.log()
     launch(lifetime, Ui) {
       okAction.isEnabled = false
       asyncProcessIcon.isVisible = true
@@ -115,7 +135,7 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
 
           val url = SpaceUrls.repo(prKey, repository.name)
 
-          result = Result(repository, details, url)
+          result = Result.ProjectCreated(repository, details, url)
           close(OK_EXIT_CODE)
         }
         catch (e: CancellationException) {
@@ -134,20 +154,48 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
     }
   }
 
-  override fun createCenterPanel(): JComponent = panel {
-    row {
-      cell(isFullWidth = true) {
-        JLabel(SpaceBundle.message("share.project.dialog.create.repository.label"))()
-        projectComboBox(pushX, growX)
-        loadingProjectsProgress()
-        createNewProjectButton()
+  override fun createCenterPanel(): JComponent = contentWrapper
+
+  override fun getPreferredFocusedComponent(): JComponent = contentWrapper
+
+  private fun buildShareProjectPanel(lifetime: Lifetime): DialogPanel {
+    val shareProjectVM = SpaceShareProjectVM(lifetime)
+
+    shareProjectVM.projectsListState.forEach(lifetime) { projectListState ->
+      when (projectListState) {
+        is SpaceShareProjectVM.ProjectListState.Loading -> {
+          loadingProjectsProgress.isVisible = true
+        }
+        is SpaceShareProjectVM.ProjectListState.Error -> {
+          loadingProjectsProgress.isVisible = false
+          setErrorText(projectListState.error)
+        }
+        is SpaceShareProjectVM.ProjectListState.Projects -> {
+          loadingProjectsProgress.isVisible = false
+          projectComboBoxModel.removeAll()
+          projectComboBoxModel.add(projectListState.projects)
+          if (projectListState.projects.isNotEmpty()) {
+            projectComboBox.selectedIndex = 0
+          }
+        }
       }
     }
-    row(SpaceBundle.message("share.project.dialog.repository.name.label")) {
-      repoNameField(pushX, growX)
-    }
-    row(SpaceBundle.message("share.project.dialog.repository.description.label")) {
-      repoDescription(pushX, growX)
+
+    return panel {
+      row {
+        cell(isFullWidth = true) {
+          JLabel(SpaceBundle.message("share.project.dialog.create.repository.label"))()
+          projectComboBox(pushX, growX)
+          loadingProjectsProgress()
+          createNewProjectButton()
+        }
+      }
+      row(SpaceBundle.message("share.project.dialog.repository.name.label")) {
+        repoNameField(pushX, growX)
+      }
+      row(SpaceBundle.message("share.project.dialog.repository.description.label")) {
+        repoDescription(pushX, growX)
+      }
     }
   }
 
@@ -174,10 +222,10 @@ class SpaceShareProjectDialog(project: Project) : DialogWrapper(project, true) {
 
   override fun getDimensionServiceKey(): String = "com.intellij.space.vcs.share.CircletShareProjectDialog"
 
-  data class Result(
-    val project: PR_RepositoryInfo,
-    val repo: RepoDetails,
-    val url: String
-  )
+  open class Result() {
+    data class ProjectCreated(val project: PR_RepositoryInfo, val repo: RepoDetails,  val url: String) : Result()
+    object Canceled : Result()
+    object NotCreated : Result()
+  }
 }
 

@@ -433,7 +433,7 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   // wildcardSegment |
   //   filterExpression | // standalone filter operator may be substituted by programmatic filter
   //   indexExpression | // supported only in some implementations
-  //   spliceExpression |
+  //   sliceExpression |
   //   indexesList
   static boolean nestedExpression_(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "nestedExpression_")) return false;
@@ -441,7 +441,7 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
     r = wildcardSegment(b, l + 1);
     if (!r) r = filterExpression(b, l + 1);
     if (!r) r = indexExpression(b, l + 1);
-    if (!r) r = spliceExpression(b, l + 1);
+    if (!r) r = sliceExpression(b, l + 1);
     if (!r) r = indexesList(b, l + 1);
     return r;
   }
@@ -783,24 +783,36 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // (INTEGER_NUMBER COLON INTEGER_NUMBER) |
+  // (INTEGER_NUMBER COLON INTEGER_NUMBER COLON INTEGER_NUMBER) |
+  //   (INTEGER_NUMBER COLON INTEGER_NUMBER) |
   //   (INTEGER_NUMBER COLON) |
   //   (COLON INTEGER_NUMBER)
-  public static boolean spliceExpression(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "spliceExpression")) return false;
-    if (!nextTokenIs(b, "<splice expression>", COLON, INTEGER_NUMBER)) return false;
+  public static boolean sliceExpression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "sliceExpression")) return false;
+    if (!nextTokenIs(b, "<slice expression>", COLON, INTEGER_NUMBER)) return false;
     boolean r;
-    Marker m = enter_section_(b, l, _NONE_, SPLICE_EXPRESSION, "<splice expression>");
-    r = spliceExpression_0(b, l + 1);
-    if (!r) r = spliceExpression_1(b, l + 1);
-    if (!r) r = spliceExpression_2(b, l + 1);
+    Marker m = enter_section_(b, l, _NONE_, SLICE_EXPRESSION, "<slice expression>");
+    r = sliceExpression_0(b, l + 1);
+    if (!r) r = sliceExpression_1(b, l + 1);
+    if (!r) r = sliceExpression_2(b, l + 1);
+    if (!r) r = sliceExpression_3(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
+  // INTEGER_NUMBER COLON INTEGER_NUMBER COLON INTEGER_NUMBER
+  private static boolean sliceExpression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "sliceExpression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokens(b, 0, INTEGER_NUMBER, COLON, INTEGER_NUMBER, COLON, INTEGER_NUMBER);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
   // INTEGER_NUMBER COLON INTEGER_NUMBER
-  private static boolean spliceExpression_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "spliceExpression_0")) return false;
+  private static boolean sliceExpression_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "sliceExpression_1")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, INTEGER_NUMBER, COLON, INTEGER_NUMBER);
@@ -809,8 +821,8 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   // INTEGER_NUMBER COLON
-  private static boolean spliceExpression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "spliceExpression_1")) return false;
+  private static boolean sliceExpression_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "sliceExpression_2")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, INTEGER_NUMBER, COLON);
@@ -819,8 +831,8 @@ public class JsonPathParser implements PsiParser, LightPsiParser {
   }
 
   // COLON INTEGER_NUMBER
-  private static boolean spliceExpression_2(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "spliceExpression_2")) return false;
+  private static boolean sliceExpression_3(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "sliceExpression_3")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = consumeTokens(b, 0, COLON, INTEGER_NUMBER);

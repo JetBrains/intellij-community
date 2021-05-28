@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.util;
 
@@ -22,6 +22,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -36,18 +37,18 @@ import java.util.function.Predicate;
  * @author Gregory.Shrago
  */
 public final class SpecialAnnotationsUtil {
-  public static JPanel createSpecialAnnotationsListControl(final List<String> list, final @NlsContexts.Separator String borderTitle) {
+  public static JPanel createSpecialAnnotationsListControl(final List<String> list, final @NlsContexts.Label String borderTitle) {
     return createSpecialAnnotationsListControl(list, borderTitle, false);
   }
 
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
-                                                           final @NlsContexts.Separator String borderTitle,
+                                                           final @NlsContexts.Label String borderTitle,
                                                            final boolean acceptPatterns) {
     return createSpecialAnnotationsListControl(list, borderTitle, acceptPatterns, aClass -> aClass.isAnnotationType());
   }
 
   public static JPanel createSpecialAnnotationsListControl(final List<String> list,
-                                                           final @NlsContexts.Separator String borderTitle,
+                                                           final @NlsContexts.Label String borderTitle,
                                                            final boolean acceptPatterns,
                                                            final Predicate<? super PsiClass> isApplicable) {
     @SuppressWarnings("Convert2Diamond")
@@ -81,7 +82,7 @@ public final class SpecialAnnotationsUtil {
     return createSpecialAnnotationsListControl(borderTitle, acceptPatterns, listModel, isApplicable);
   }
 
-  public static JPanel createSpecialAnnotationsListControl(final @NlsContexts.Separator String borderTitle,
+  public static JPanel createSpecialAnnotationsListControl(final @NlsContexts.Label String borderTitle,
                                                            final boolean acceptPatterns,
                                                            final SortedListModel<String> listModel,
                                                            final Predicate<? super PsiClass> isApplicable) {
@@ -132,8 +133,10 @@ public final class SpecialAnnotationsUtil {
     if (borderTitle == null) {
       return toolbarDecorator.createPanel();
     }
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(SeparatorFactory.createSeparator(borderTitle, null), BorderLayout.NORTH);
+    final JPanel panel = new JPanel(new BorderLayout());
+    final JLabel label = new JLabel(borderTitle);
+    label.setBorder(JBUI.Borders.emptyBottom(3));
+    panel.add(label, BorderLayout.NORTH);
     panel.add(toolbarDecorator.createPanel(), BorderLayout.CENTER);
     return panel;
   }

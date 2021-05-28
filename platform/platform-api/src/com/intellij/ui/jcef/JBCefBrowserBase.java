@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.jcef;
 
+import com.intellij.credentialStore.Credentials;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -15,6 +16,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
+import org.cef.callback.CefAuthCallback;
+import org.cef.callback.CefNativeAdapter;
 import org.cef.handler.*;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +27,7 @@ import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.beans.PropertyChangeListener;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -37,7 +41,24 @@ import static com.intellij.ui.scale.ScaleType.SYS_SCALE;
 /**
  * Base class for windowed and offscreen browsers.
  */
+@SuppressWarnings("unused")
 public abstract class JBCefBrowserBase implements JBCefDisposable {
+  /**
+   * @see #setProperty(String, Object)
+   */
+  public static class Properties {
+    /**
+     * Prevents the browser from providing credentials via the
+     * {@link CefRequestHandler#getAuthCredentials(CefBrowser, String, boolean, String, int, String, String, CefAuthCallback)} callback.
+     * <p></p>
+     * Accepts {@link Boolean} values. Use the property to handle the callback on your own.
+     */
+    public static final @NotNull String NO_DEFAULT_AUTH_CREDENTIALS = "JBCefBrowserBase.noDefaultAuthCredentials";
+
+    static {
+      PropertiesHelper.putType(NO_DEFAULT_AUTH_CREDENTIALS, Boolean.class);
+    }
+  }
 
   @NotNull protected static final String BLANK_URI = "about:blank";
   @NotNull private static final Icon ERROR_PAGE_ICON = AllIcons.General.ErrorDialog;
@@ -49,6 +70,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @NotNull private String myLastRequestedUrl = "";
   @NotNull private final Object myLastRequestedUrlLock = new Object();
   @Nullable private volatile ErrorPage myErrorPage;
+  @NotNull protected final PropertiesHelper myPropertiesHelper = new PropertiesHelper();
 
   private static final LazyInitializer.NotNullValue<String> ERROR_PAGE_READER =
     new LazyInitializer.NotNullValue<>() {
@@ -123,6 +145,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
         }
       }, getCefBrowser());
 
+      // check if the native browser has already been created (no onAfterCreated will be called then)
+      if (cefBrowser instanceof CefNativeAdapter && ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0) {
+        myIsCefBrowserCreated = true;
+      }
+
       cefClient.addLoadHandler(myLoadHandler = new CefLoadHandlerAdapter() {
         @Override
         public void onLoadEnd(CefBrowser browser, CefFrame frame, int httpStatusCode) {
@@ -135,7 +162,7 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
           String lastRequestedUrl = getLastRequestedUrl();
           if (errorPage != null && lastRequestedUrl.equals(failedUrl)) {
             String html = errorPage.create(errorCode, errorText, failedUrl);
-            UIUtil.invokeLaterIfNeeded(() -> compareLastRequestedUrlAndPerform(failedUrl, () -> loadHTML(html)));
+            if (html != null) UIUtil.invokeLaterIfNeeded(() -> compareLastRequestedUrlAndPerform(failedUrl, () -> loadHTML(html)));
           }
         }
       }, getCefBrowser());
@@ -151,12 +178,32 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
           setLastRequestedUrl(ObjectUtils.notNull(request.getURL(), ""));
           return super.onBeforeBrowse(browser, frame, request, user_gesture, is_redirect);
         }
+        @Override
+        public boolean getAuthCredentials(CefBrowser browser,
+                                          String origin_url,
+                                          boolean isProxy,
+                                          String host,
+                                          int port,
+                                          String realm,
+                                          String scheme, CefAuthCallback callback)
+        {
+          if (isProxy && !myPropertiesHelper.is(Properties.NO_DEFAULT_AUTH_CREDENTIALS)) {
+            Credentials credentials = JBCefProxyAuthenticator.getCredentials(JBCefBrowserBase.this, host, port);
+            if (credentials != null) {
+              callback.Continue(credentials.getUserName(), credentials.getPasswordAsString());
+              return true;
+            }
+            Logger.getInstance(JBCefBrowserBase.class).error("missing credentials to sign in to proxy");
+          }
+          return super.getAuthCredentials(browser, origin_url, isProxy, host, port, realm, scheme, callback);
+        }
       }, getCefBrowser());
     }
     else {
       myLifeSpanHandler = null;
       myLoadHandler = null;
       myRequestHandler = null;
+      myIsCefBrowserCreated = true; // if the browser comes from the outer - consider its native browser created
     }
   }
 
@@ -383,8 +430,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     /**
      * Returns an error page html.
+     * <p></p>
+     * To prevent showing the error page (e.g. filter out {@link CefLoadHandler.ErrorCode#ERR_ABORTED}) just return {@code null}.
+     * To fallback to default error page return {@link ErrorPage#DEFAULT#create(CefLoadHandler.ErrorCode, String, String)}.
      */
-    @NotNull
+    @Nullable
     String create(@NotNull @SuppressWarnings("unused") CefLoadHandler.ErrorCode errorCode, @NotNull String errorText, @NotNull String failedUrl);
   }
 
@@ -398,6 +448,37 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
    */
   public void setErrorPage(@Nullable ErrorPage errorPage) {
     myErrorPage = errorPage;
+  }
+
+  /**
+   * Supports {@link Properties}.
+   *
+   * @throws IllegalArgumentException if the value has wrong type or format
+   */
+  public void setProperty(@NotNull String name, @Nullable Object value) {
+    myPropertiesHelper.setProperty(name, value);
+  }
+
+  /**
+   * @see #setProperty(String, Object)
+   */
+  @Nullable
+  public Object getProperty(@NotNull String name) {
+    return myPropertiesHelper.getProperty(name);
+  }
+
+  /**
+   * @see #setProperty(String, Object)
+   */
+  void addPropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
+    myPropertiesHelper.addPropertyChangeListener(name, listener);
+  }
+
+  /**
+   * @see #setProperty(String, Object)
+   */
+  void removePropertyChangeListener(@NotNull String name, @NotNull PropertyChangeListener listener) {
+    myPropertiesHelper.removePropertyChangeListener(name, listener);
   }
 
   private final class LoadDeferrer {

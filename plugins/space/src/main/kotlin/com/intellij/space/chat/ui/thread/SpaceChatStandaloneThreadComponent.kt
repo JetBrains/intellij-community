@@ -12,6 +12,7 @@ import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.model.impl.SpaceChatItemImpl.Companion.convertToChatItem
 import com.intellij.space.chat.ui.SpaceChatContentPanelBase
 import com.intellij.space.chat.ui.getLink
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import libraries.coroutines.extra.Lifetime
 
 internal class SpaceChatStandaloneThreadComponent(
@@ -22,13 +23,15 @@ internal class SpaceChatStandaloneThreadComponent(
   chatRecord: Ref<M2ChannelRecord>,
   private val pendingStateProvider: () -> Boolean,
   private val threadActionsFactory: SpaceChatThreadActionsFactory,
+  private val statsPlace: SpaceStatsCounterCollector.SendMessagePlace = SpaceStatsCounterCollector.SendMessagePlace.THREAD,
   private val messageConverter: (index: Int, message: M2MessageVm) -> SpaceChatItem = { _, message ->
     message.convertToChatItem(message.getLink())
   }
 ) : SpaceChatContentPanelBase(lifetime, parent, channelsVm, chatRecord) {
   override fun onChatLoad(chatVm: M2ChannelVm) {
     stopLoadingContent(
-      createThreadComponent(project, lifetime, chatVm, pendingStateProvider, threadActionsFactory, messageConverter = messageConverter)
+      createThreadComponent(project, lifetime, chatVm, pendingStateProvider, threadActionsFactory, statsPlace = statsPlace,
+                            messageConverter = messageConverter)
     )
   }
 }

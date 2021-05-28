@@ -21,26 +21,13 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.math.max
 
-class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name")),
+class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurable.trusted.hosts.display.name"), TRUSTED_PROJECTS_HELP_TOPIC),
                                  SearchableConfigurable {
 
   private val EP_NAME = ExtensionPointName.create<TrustedHostsConfigurablePanelProvider>("com.intellij.trustedHostsConfigurablePanelProvider")
 
   override fun createPanel(): DialogPanel {
     return panel {
-      row {
-        label(IdeBundle.message("trusted.hosts.settings.label"))
-      }
-      row {
-        val trustedHostsSettings = service<TrustedHostsSettings>()
-        trustedLocationConfigurable(this,
-                                    getValuesFromSettings = { trustedHostsSettings.getTrustedHosts() },
-                                    setValuesToSettings = { trustedHostsSettings.setTrustedHosts(it) },
-                                    getNewValueFromUser = {
-                                      showInputDialog(it, null, IdeBundle.message("trusted.hosts.settings.add.new.host.dialog.title"), null)
-                                    })
-      }
-
       row {
         label(IdeBundle.message("trusted.folders.settings.label"))
       }
@@ -54,7 +41,7 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
 
       for (additionalPanel in EP_NAME.extensionList) {
         row {
-          component(additionalPanel.getPanel(this))
+          additionalPanel.getCellBuilder(this)
         }
       }
     }
@@ -112,5 +99,5 @@ class TrustedHostsConfigurable : BoundConfigurable(IdeBundle.message("configurab
  */
 @ApiStatus.Internal
 interface TrustedHostsConfigurablePanelProvider {
-  fun getPanel(row: Row) : JComponent
+  fun getCellBuilder(row: Row) : CellBuilder<JComponent>
 }

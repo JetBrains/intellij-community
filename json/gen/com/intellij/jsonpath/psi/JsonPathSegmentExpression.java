@@ -17,7 +17,7 @@ public interface JsonPathSegmentExpression extends PsiElement {
   JsonPathIndexesList getIndexesList();
 
   @Nullable
-  JsonPathSpliceExpression getSpliceExpression();
+  JsonPathSliceExpression getSliceExpression();
 
   @Nullable
   JsonPathWildcardSegment getWildcardSegment();

@@ -6,8 +6,8 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.Project
 import training.dsl.LearningBalloonConfig
+import training.dsl.RuntimeTextContext
 import training.dsl.TaskContext
-import training.dsl.TaskRuntimeContext
 import training.dsl.impl.ApplyTaskLessonContext
 import training.learn.CourseManager
 import training.learn.course.KLesson
@@ -37,7 +37,7 @@ private class TextCollector(private val buffer: StringBuffer, override val proje
     buffer.append('\n')
   }
 
-  override fun runtimeText(callback: TaskRuntimeContext.() -> String?) {
+  override fun runtimeText(callback: RuntimeTextContext.() -> String?) {
     // TODO: think how to dump it
   }
 }

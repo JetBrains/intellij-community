@@ -369,6 +369,9 @@ public class GeneralCommandLine implements UserDataHolder {
   public Process createProcess() throws ExecutionException {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Executing [" + getCommandLineString() + "]");
+      if (myWorkDirectory != null) {
+        LOG.debug("  working dir: " + myWorkDirectory.getAbsolutePath());
+      }
       LOG.debug("  environment: " + myEnvParams + " (+" + myParentEnvironmentType + ")");
       LOG.debug("  charset: " + myCharset);
     }

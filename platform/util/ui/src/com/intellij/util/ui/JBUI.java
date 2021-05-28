@@ -332,6 +332,26 @@ public class JBUI {
       return customLine(color, 1);
     }
 
+    public static @NotNull Border customLineTop(Color color) {
+      return customLine(color, 1, 0, 0, 0);
+    }
+
+    public static @NotNull Border customLineLeft(Color color) {
+      return customLine(color, 0, 1, 0, 0);
+    }
+
+    public static @NotNull Border customLineRight(Color color) {
+      return customLine(color, 0, 0, 0, 1);
+    }
+
+    public static @NotNull Border customLineBottom(Color color) {
+      return customLine(color, 0, 0, 1, 0);
+    }
+
+    public static @Nullable Border compound(@Nullable Border outside, @Nullable Border inside) {
+      return inside == null ? outside : outside == null ? inside : new CompoundBorder(outside, inside);
+    }
+
     @NotNull
     public static Border merge(@Nullable Border source, @NotNull Border extra, boolean extraIsOutside) {
       if (source == null) return extra;
@@ -947,7 +967,7 @@ public class JBUI {
 
       @NotNull
       public static Border advertiserBorder()  {
-        return new JBEmptyBorder(insets("SearchEverywhere.Advertiser.foreground", insetsLeft(8)));
+        return new JBEmptyBorder(insets("SearchEverywhere.Advertiser.borderInsets", insets(5, 10, 5, 15)));
       }
 
       @NotNull
@@ -957,8 +977,6 @@ public class JBUI {
     }
 
     public static final class Advertiser {
-      private static final JBInsets DEFAULT_AD_INSETS = JBInsets.create(8, 8);
-
       @NotNull
       public static Color foreground() {
         Color foreground = JBUI.CurrentTheme.BigPopup.advertiserForeground();
@@ -973,7 +991,7 @@ public class JBUI {
 
       @NotNull
       public static Border border() {
-        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", DEFAULT_AD_INSETS));
+        return new JBEmptyBorder(insets("Popup.Advertiser.borderInsets", insets(5, 10, 5, 15)));
       }
 
       @NotNull

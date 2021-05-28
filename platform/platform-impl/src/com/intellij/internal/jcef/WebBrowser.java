@@ -4,7 +4,6 @@ package com.intellij.internal.jcef;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
@@ -29,7 +28,7 @@ import java.util.List;
  * @author tav
  */
 public class WebBrowser extends AnAction implements DumbAware {
-  private static final String URL = "http://maps.google.com";
+  private static final String URL = "https://maps.google.com";
   private static final String myTitle = "Web Browser - JCEF";
   private static final String myCookieManagerText = "Cookie Manager";
 
@@ -57,6 +56,8 @@ public class WebBrowser extends AnAction implements DumbAware {
 
     final JBCefBrowser myJBCefBrowser = new JBCefBrowser(URL);
     myJBCefBrowser.setErrorPage(JBCefBrowserBase.ErrorPage.DEFAULT);
+    myJBCefBrowser.setProperty(JBCefBrowser.Properties.FOCUS_ON_SHOW, Boolean.TRUE);
+
     final CookieManagerDialog myCookieManagerDialog = new CookieManagerDialog(frame, myJBCefBrowser);
 
     frame.addWindowListener(new WindowAdapter() {
@@ -134,6 +135,17 @@ public class WebBrowser extends AnAction implements DumbAware {
         JTextField color = dialog.setComponent(new JTextField("lightgreen"));
         dialog.setOkAction(() -> myJBCefBrowser.setPageBackgroundColor(color.getText()), "Apply");
         dialog.show();
+      }
+    });
+
+    final JMenuItem menuItemFocus = new JMenuItem("Set focus on navigation", 'f');
+    menu.add(menuItemFocus);
+    menuItemFocus.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        boolean value = Boolean.TRUE.equals(myJBCefBrowser.getProperty(JBCefBrowser.Properties.FOCUS_ON_NAVIGATION));
+        myJBCefBrowser.setProperty(JBCefBrowser.Properties.FOCUS_ON_NAVIGATION, !value);
+        menuItemFocus.setText(value ? "Set focus on navigation" : "Unset focus on navigation");
       }
     });
 

@@ -118,5 +118,9 @@
                  description="Use scroll animation in IFT lessons."
                  defaultValue="TRUE"
                  restartRequired="false"/>
+    <registryKey key="ift.adapt.to.not.native.localization"
+                 description="Lessons logic will be changed like using not native localization."
+                 defaultValue="FALSE"
+                 restartRequired="false"/>
   </extensions>
 </idea-plugin>

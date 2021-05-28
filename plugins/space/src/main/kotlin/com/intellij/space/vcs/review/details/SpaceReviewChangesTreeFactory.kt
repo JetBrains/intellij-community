@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.VcsEditorTabFilesManager
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.details.diff.SpaceDiffFile
 import com.intellij.ui.ScrollPaneFactory
@@ -119,6 +120,7 @@ internal object SpaceReviewChangesTreeFactory {
     }
     tree.doubleClickHandler = Processor { e ->
       if (EditSourceOnDoubleClickHandler.isToggleEvent(tree, e)) return@Processor false
+      SpaceStatsCounterCollector.OPEN_REVIEW_DIFF.log(SpaceStatsCounterCollector.ReviewDiffPlace.EDITOR)
       val spaceDiffFile = spaceDiffFileProvider.getSpaceDiffFile()
       VcsEditorTabFilesManager.getInstance().openFile(project, spaceDiffFile, true)
       true

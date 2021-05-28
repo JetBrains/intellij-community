@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.vcs.SpaceRepoInfo
 import com.intellij.space.vcs.review.SpaceReviewDataKeys
 import git4idea.GitLocalBranch
@@ -55,6 +56,7 @@ class SpaceReviewCheckoutBranchAction : DumbAwareAction(SpaceBundle.messagePoint
 
     val sourceBranchInfo = detailsVm.sourceBranchInfo.value ?: return
 
+    SpaceStatsCounterCollector.CHECKOUT_BRANCH.log()
     val localBranch = detailsVm.mergeRequestBranchInfo.value.localBranch
 
     if (localBranch != null) {
@@ -169,6 +171,7 @@ class SpaceReviewUpdateBranchAction : DumbAwareAction(SpaceBundle.messagePointer
     val gitRepository = detailsVm.repoInfo.value?.repository ?: return
     val localBranch = detailsVm.mergeRequestBranchInfo.value.localBranch ?: return
 
+    SpaceStatsCounterCollector.UPDATE_BRANCH.log()
     GitBranchUtil.updateBranches(project, listOf(gitRepository), listOf(localBranch.name))
   }
 }

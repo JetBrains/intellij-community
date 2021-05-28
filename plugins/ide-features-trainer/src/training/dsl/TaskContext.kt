@@ -63,7 +63,7 @@ abstract class TaskContext : LearningDslBase {
   /** Insert text in the current position */
   open fun type(text: String) = Unit
   /** Write a text to the learn panel (panel with a learning tasks). */
-  open fun runtimeText(@Nls callback: TaskRuntimeContext.() -> String?) = Unit
+  open fun runtimeText(@Nls callback: RuntimeTextContext.() -> String?) = Unit
 
   /** Simply wait until an user perform particular action */
   open fun trigger(actionId: String) = Unit

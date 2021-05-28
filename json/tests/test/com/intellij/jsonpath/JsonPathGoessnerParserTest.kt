@@ -55,12 +55,16 @@ class JsonPathGoessnerParserTest : JsonPathParsingTestCase("goessner") {
     doCodeTest("\$..book[0,1]")
   }
 
-  fun testSpliceTo() {
+  fun testSliceTo() {
     doCodeTest("\$..book[:2]")
   }
 
-  fun testSpliceFrom() {
+  fun testSliceFrom() {
     doCodeTest("\$..book[2:]")
+  }
+
+  fun testSliceWithStep() {
+    doCodeTest("\$..book[0:3:1]")
   }
 
   fun testFilterWithAttribute() {

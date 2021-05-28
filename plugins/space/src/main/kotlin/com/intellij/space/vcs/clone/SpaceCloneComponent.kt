@@ -12,6 +12,7 @@ import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
 import com.intellij.execution.process.ProcessIOExecutorService
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
+import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.progress.ProgressIndicator
@@ -28,8 +29,16 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.settings.*
+import com.intellij.space.promo.bigPromoBanner
+import com.intellij.space.promo.promoPanel
+import com.intellij.space.settings.CloneType
+import com.intellij.space.settings.SpaceLoginState
+import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.settings.SpaceSettingsPanel
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.*
+import com.intellij.space.ui.LoginComponents.buildConnectingPanel
+import com.intellij.space.ui.LoginComponents.loginPanel
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceHttpPasswordState
 import com.intellij.space.vcs.SpaceKeysState
@@ -41,7 +50,7 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.layout.*
 import com.intellij.util.containers.ContainerUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.cloneDialog.ListWithSearchComponent
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import git4idea.GitUtil
@@ -69,9 +78,11 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
   init {
     Disposer.register(this, Disposable { uiLifetime.terminate() })
 
-    SpaceWorkspaceComponent.getInstance().loginState.forEach(uiLifetime) { st ->
+    val workspace = SpaceWorkspaceComponent.getInstance()
+    SpaceStatsCounterCollector.OPEN_SPACE_CLONE_TAB.log(SpaceStatsCounterCollector.LoginState.convert(workspace.loginState.value))
+
+    workspace.loginState.forEach(uiLifetime) { st ->
       val view = createView(uiLifetime, st)
-      view.border = JBUI.Borders.empty(8, 12)
       wrapper.setContent(view)
       wrapper.repaint()
     }
@@ -87,17 +98,35 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
         cloneView.getView()
       }
 
-      is SpaceLoginState.Connecting -> buildConnectingPanel(st) {
+      is SpaceLoginState.Connecting -> buildConnectingPanel(st, SpaceStatsCounterCollector.LoginPlace.CLONE) {
         st.cancel()
       }
 
-      is SpaceLoginState.Disconnected -> buildLoginPanel(st) { serverName ->
+      is SpaceLoginState.Disconnected -> buildCloneLoginPanel(st) { serverName ->
         SpaceWorkspaceComponent.getInstance().signInManually(serverName, lifetime, getView())
+      }
+    }.let { view ->
+      UIUtil.addInsets(view, UIUtil.PANEL_REGULAR_INSETS)
+      if (st is SpaceLoginState.Disconnected) ScrollPaneFactory.createScrollPane(view, true) else view
+    }
+  }
+
+  private fun buildCloneLoginPanel(st: SpaceLoginState.Disconnected, loginAction: (String) -> Unit): JComponent {
+    return panel {
+      loginPanel(st, SpaceStatsCounterCollector.LoginPlace.CLONE, isLoginActionDefault = true) {
+        loginAction(it)
+      }
+
+      promoPanel(SpaceStatsCounterCollector.ExplorePlace.CLONE)
+
+      bigPromoBanner(SpaceStatsCounterCollector.OverviewPlace.CLONE)?.let {
+        fullRow { it() }
       }
     }
   }
 
   override fun doClone(checkoutListener: CheckoutProvider.Listener) {
+    SpaceStatsCounterCollector.CLONE_REPO.log()
     cloneView.doClone(checkoutListener)
   }
 
@@ -112,6 +141,8 @@ internal class SpaceCloneComponent(val project: Project) : VcsCloneDialogExtensi
   }
 
   override fun getView(): Wrapper = wrapper
+
+  override fun getPreferredFocusedComponent(): JComponent = wrapper
 }
 
 private class CloneView(
@@ -287,7 +318,7 @@ private class CloneView(
                                             },
                                             showSeparatorAbove = true)
         menuItems += AccountMenuItem.Action(SpaceBundle.message("clone.dialog.logout.action"),
-                                            { SpaceWorkspaceComponent.getInstance().signOut() })
+                                            { SpaceWorkspaceComponent.getInstance().signOut(SpaceStatsCounterCollector.LogoutPlace.CLONE) })
 
         AccountsMenuListPopup(null, AccountMenuPopupStep(menuItems))
           .showUnderneathOf(accountLabel)

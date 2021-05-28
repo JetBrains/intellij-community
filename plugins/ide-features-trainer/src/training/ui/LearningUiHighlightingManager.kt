@@ -69,6 +69,7 @@ object LearningUiHighlightingManager {
   private fun highlightComponent(original: Component, clearPreviousHighlights: Boolean, init: (glassPane: JComponent) -> RepaintHighlighting<*>) {
     runInEdt {
       if (clearPreviousHighlights) clearHighlights()
+      if (!original.isShowing) return@runInEdt  // this check is required in rare cases when highlighting called after restore
       val glassPane = getGlassPane(original) ?: return@runInEdt
       val repaintByTimer = init(glassPane)
       repaintByTimer.reinitHighlightComponent()

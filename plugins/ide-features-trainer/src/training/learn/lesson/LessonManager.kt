@@ -75,7 +75,7 @@ class LessonManager {
 
   internal fun lessonIsRunning() : Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
 
-  internal fun stopLesson() {
+  fun stopLesson() {
     shownRestoreNotification = null
     currentLessonExecutor?.takeIf { !it.hasBeenStopped }?.let {
       it.lesson.onStop()
@@ -117,6 +117,10 @@ class LessonManager {
   fun resetMessagesNumber(number: Int) {
     shownRestoreNotification = null
     learnPanel?.resetMessagesNumber(number)
+  }
+
+  fun removeMessage(index: Int) {
+    learnPanel?.removeMessage(index)
   }
 
   fun messagesNumber(): Int = learnPanel?.messagesNumber() ?: 0

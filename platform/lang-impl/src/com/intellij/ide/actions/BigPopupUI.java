@@ -237,12 +237,6 @@ public abstract class BigPopupUI extends BorderLayoutPanel implements Disposable
       advertiser.addAdvertisement(s, null);  
     }
     advertiser.showRandomText();
-
-    JComponent hintLabel = advertiser.getAdComponent();
-    Dimension size = hintLabel.getPreferredSize();
-    size.height = JBUIScale.scale(17);
-    hintLabel.setPreferredSize(size);
-    
     return advertiser;
   }
 

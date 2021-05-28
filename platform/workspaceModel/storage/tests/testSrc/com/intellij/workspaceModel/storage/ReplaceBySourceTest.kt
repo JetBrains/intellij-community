@@ -542,6 +542,23 @@ class ReplaceBySourceTest {
     assertEquals("foo", child.parent.additionalProperty)
   }
 
+  @Test
+  fun `replace parents with completely different children`() {
+    val parentEntity = builder.addNamedEntity("PrimaryParent", source = AnotherSource)
+    builder.addNamedChildEntity(parentEntity, "PrimaryChild", source = MySource)
+    builder.addNamedEntity("SecondaryParent", source = AnotherSource)
+
+    val replacement = createEmptyBuilder()
+    replacement.addNamedEntity("PrimaryParent", source = AnotherSource)
+    val anotherParentEntity = replacement.addNamedEntity("SecondaryParent2", source = AnotherSource)
+    replacement.addNamedChildEntity(anotherParentEntity, source = MySource)
+
+    builder.replaceBySource({ it is AnotherSource }, replacement)
+
+    val primaryChild = builder.entities(NamedChildEntity::class.java).find { it.childProperty == "PrimaryChild" }!!
+    assertEquals("PrimaryParent", primaryChild.parent.name)
+  }
+
   private fun resetChanges() {
     builder = builder.toStorage().toBuilder() as WorkspaceEntityStorageBuilderImpl
   }

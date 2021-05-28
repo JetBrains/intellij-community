@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github
 
 import com.intellij.openapi.actionSystem.*
@@ -6,9 +6,9 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.util.hosting.GitHostingUrlUtil
 import org.jetbrains.plugins.github.util.GHGitRepositoryMapping
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
-import org.jetbrains.plugins.github.util.GithubUrlUtil
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -35,7 +35,7 @@ abstract class AbstractGithubUrlGroupingAction(dynamicText: Supplier<String?>, d
     val repositories = project.service<GHProjectRepositoriesManager>().knownRepositories
     return if (repositories.size > 1) {
       repositories.map {
-        object : DumbAwareAction(it.gitRemote.remote.name + ": " + GithubUrlUtil.removeProtocolPrefix(it.gitRemote.url)) {
+        object : DumbAwareAction(it.gitRemote.remote.name + ": " + GitHostingUrlUtil.removeProtocolPrefix(it.gitRemote.url)) {
           override fun actionPerformed(e: AnActionEvent) {
             actionPerformed(e, project, it)
           }

@@ -7,6 +7,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
+import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.utils.LifetimedDisposable
 import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.space.vcs.Context
@@ -19,6 +20,8 @@ import com.intellij.ui.content.ContentManager
 import icons.SpaceIcons
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.LifetimeSource
+import runtime.reactive.LoadingProperty
+import runtime.reactive.LoadingValue
 import runtime.reactive.Property
 import runtime.reactive.property.mapInit
 
@@ -28,16 +31,14 @@ internal class SpaceCodeReviewTabManager(private val project: Project) : Lifetim
   private var myReviewTabContentManager: SpaceCodeReviewTabContentManager? = null
 
   init {
-    project.service<SpaceProjectContext>().context.forEach(lifetime) { context ->
+    project.service<SpaceProjectContext>().probablyContainsSpaceRepo.forEach(lifetime) {
       val toolWindow: ToolWindow = ToolWindowManager
                                      .getInstance(project)
                                      .getToolWindow(SpaceReviewToolWindowFactory.ID) ?: return@forEach
-
-      val isAvailable = context.isAssociatedWithSpaceRepository
-      if (isAvailable && !toolWindow.isAvailable) {
+      if (it && !toolWindow.isAvailable) {
         toolWindow.isShowStripeButton = true
       }
-      toolWindow.isAvailable = isAvailable
+      toolWindow.isAvailable = it
     }
   }
 
@@ -55,13 +56,13 @@ internal class SpaceCodeReviewTabManager(private val project: Project) : Lifetim
 internal class SpaceCodeReviewTabContentManager(private val project: Project,
                                                 private val contentManager: ContentManager,
                                                 lifetime: Lifetime) {
-  private val context: Property<Context> = SpaceProjectContext.getInstance(project).context
+  private val context: LoadingProperty<Context> = SpaceProjectContext.getInstance(project).context
 
-  private val contents: Property<MutableMap<SpaceProjectInfo, Content>> = lifetime.mapInit(context, mutableMapOf()) { context ->
-    if (!context.isAssociatedWithSpaceRepository) {
+  private val contents: Property<MutableMap<SpaceProjectInfo, Content>> = lifetime.mapInit(context, mutableMapOf()) { loadingContext ->
+    if (loadingContext !is LoadingValue.Loaded || !loadingContext.value.isAssociatedWithSpaceRepository) {
       return@mapInit mutableMapOf<SpaceProjectInfo, Content>()
     }
-
+    val context = loadingContext.value
     val result = HashMap<SpaceProjectInfo, Content>()
     context.reposInProject.forEach {
       val content = createContent(project, it.key, it.value)
@@ -73,6 +74,9 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project,
   init {
     contents.forEachWithPrevious(lifetime) { prev: MutableMap<SpaceProjectInfo, Content>?, next: MutableMap<SpaceProjectInfo, Content> ->
       val previous = prev ?: emptyMap()
+      if (previous.isEmpty()) {
+        contentManager.removeAllContents(true)
+      }
       previous.keys
         .filter { key -> !next.keys.contains(key) }
         .forEach {
@@ -86,25 +90,41 @@ internal class SpaceCodeReviewTabContentManager(private val project: Project,
           contentManager.addContent(content)
           contentManager.setSelectedContent(content)
         }
+
+      if (next.isEmpty()) {
+        val loginContent = createEmptyContent(project)
+        contentManager.addContent(loginContent)
+        contentManager.setSelectedContent(loginContent)
+      }
     }
   }
 
-  private fun createContent(project: Project,
-                            spaceProjectInfo: SpaceProjectInfo,
-                            projectRepos: Set<SpaceRepoInfo>): Content {
+  private fun createEmptyContent(project: Project) = createDisposableContent { content, _, contentLifetime ->
+    content.component = SpaceReviewToolwindowEmptyComponent(project, contentLifetime)
+  }
+
+  private fun createContent(
+    project: Project,
+    spaceProjectInfo: SpaceProjectInfo,
+    projectRepos: Set<SpaceRepoInfo>
+  ): Content = createDisposableContent { content, disposable, contentLifetime ->
+    content.displayName = spaceProjectInfo.project.name // NON-NLS
+    content.isCloseable = false
+    content.icon = SpaceIcons.Main
+    val workspace = SpaceWorkspaceComponent.getInstance().workspace.value!!
+    content.component = SpaceReviewToolwindowTabComponent(disposable, contentLifetime, project, workspace, spaceProjectInfo, projectRepos)
+    content.description = spaceProjectInfo.key.key // NON-NLS
+  }
+
+  private fun createDisposableContent(modifier: (Content, Disposable, Lifetime) -> Unit): Content {
     val contentLifetime = LifetimeSource()
     val factory = ContentFactory.SERVICE.getInstance()
-
-    return factory.createContent(null, spaceProjectInfo.project.name, false).apply { // NON-NLS
+    return factory.createContent(null, null, false).apply {
       val disposable = Disposable {
         contentLifetime.terminate()
       }
-      isCloseable = false
       setDisposer(disposable)
-      icon = SpaceIcons.Main
-
-      component = ReviewLoginComponent(disposable, contentLifetime, project, spaceProjectInfo, projectRepos).view
-      description = spaceProjectInfo.key.key // NON-NLS
+      modifier(this, disposable, contentLifetime)
     }
   }
 }

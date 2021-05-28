@@ -32,16 +32,17 @@ import com.intellij.space.settings.SpaceLoginState
 import com.intellij.space.settings.SpaceServerSettings
 import com.intellij.space.settings.SpaceSettings
 import com.intellij.space.settings.log
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.utils.IdeaPasswordSafePersistence
 import com.intellij.space.utils.LifetimedDisposable
 import com.intellij.space.utils.LifetimedDisposableImpl
 import com.intellij.ui.AppIcon
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import libraries.coroutines.extra.Lifetime
 import libraries.coroutines.extra.launch
 import libraries.coroutines.extra.usingSource
-import libraries.coroutines.extra.withContext
 import libraries.klogging.KLogger
 import libraries.klogging.assert
 import libraries.klogging.logger
@@ -124,7 +125,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
 
 
   override suspend fun authFailed() {
-    signOut()
+    signOut(SpaceStatsCounterCollector.LogoutPlace.AUTH_FAIL)
     SpaceAuthNotifier.authFailed()
   }
 
@@ -149,7 +150,7 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
       return OAuthTokenResponse.Error(server, "", SpaceBundle.message("auth.error.cant.open.browser.label", server))
     }
 
-    val response = withContext(lifetime, AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
+    val response = withContext(AppExecutorUtil.getAppExecutorService().asCoroutineDispatcher()) {
       codeFlow.handleCodeFlowRedirect(redirectUrl.await())
     }
     if (response is OAuthTokenResponse.Success) {
@@ -206,7 +207,8 @@ internal class SpaceWorkspaceComponent : WorkspaceManagerHost(), LifetimedDispos
     return result
   }
 
-  fun signOut() {
+  fun signOut(statsPlace: SpaceStatsCounterCollector.LogoutPlace) {
+    SpaceStatsCounterCollector.LOG_OUT.log(statsPlace)
     val oldManager = manager.value
     oldManager?.signOut(true)
     workspacesLifetimes.clear()

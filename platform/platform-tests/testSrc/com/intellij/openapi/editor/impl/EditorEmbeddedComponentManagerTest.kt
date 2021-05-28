@@ -18,6 +18,7 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.*
+import com.intellij.util.DocumentUtil
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
@@ -232,6 +233,24 @@ class EditorEmbeddedComponentManagerTest {
     editor.component.size = Dimension(1000, 100)
     pollAssertions {
       assertThat(panel.width).isEqualTo(500)
+    }
+  }
+
+  @Test
+  fun `bulk mode`() = edt {
+    DocumentUtil.executeInBulk(editor.document, true) {
+      add(4, JPanel().apply { preferredSize = Dimension(19, 19) })
+      WriteCommandAction.runWriteCommandAction(projectRule.project) {
+        editor.document.insertString(editor.document.getLineStartOffset(3), "A new line.\n")
+      }
+      add(2, JPanel().apply { preferredSize = Dimension(13, 13) })
+    }
+
+    pollAssertions {
+      assertYShift(1, 0, "The line above the first component")
+      assertYShift(2, 13, "The line below the first component")
+      assertYShift(4, 13, "The line above the second component")
+      assertYShift(5, 13 + 19, "The line below the second component")
     }
   }
 

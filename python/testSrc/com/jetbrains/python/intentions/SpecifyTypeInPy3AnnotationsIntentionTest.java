@@ -29,6 +29,26 @@ public class SpecifyTypeInPy3AnnotationsIntentionTest extends PyIntentionTestCas
     doTestParam();
   }
 
+  // PY-31369
+  public void testAnnotatedParameterNoIntention() {
+    doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation"));
+  }
+
+  // PY-31369
+  public void testAnnotatedReturnTypeNoIntention() {
+    doNegativeTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"));
+  }
+
+  // PY-31369
+  public void testTypeCommentedParameterNoIntention() {
+    doNegativeTest(PyPsiBundle.message("INTN.specify.type.in.annotation"));
+  }
+
+  // PY-31369
+  public void testTypeCommentedReturnTypeNoIntention() {
+    doNegativeTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"));
+  }
+
 
   private void doTestReturnType() {
     doTest(PyPsiBundle.message("INTN.specify.return.type.in.annotation"), LanguageLevel.PYTHON34);

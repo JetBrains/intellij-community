@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.BrowserUtil;
@@ -81,14 +81,17 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     }
     else if (url != null) {
       boolean darkTheme = UIUtil.isUnderDarcula();
+      ApplicationInfo appInfo = ApplicationInfo.getInstance();
 
-      Url embeddedUrl = Urls.newFromEncoded(url)
-        .addParameters(Map.of("var", "embed"))
-        .addParameters(Map.of("utm_content", ApplicationInfo.getInstance().getMajorVersion()))
-        .addParameters(Map.of("utm_campaign", ApplicationInfo.getInstance().getBuild().getProductCode()));
+      Url embeddedUrl = Urls.newFromEncoded(url).addParameters(Map.of("var", "embed"));
       if (darkTheme) {
         embeddedUrl = embeddedUrl.addParameters(Map.of("theme", "dark"));
       }
+      embeddedUrl = embeddedUrl
+        .addParameters(Map.of("utm_source", "product"))
+        .addParameters(Map.of("utm_medium", "link"))
+        .addParameters(Map.of("utm_campaign", appInfo.getBuild().getProductCode()))
+        .addParameters(Map.of("utm_content", appInfo.getMajorVersion() + '.' + appInfo.getMinorVersionMainPart()));
 
       String timeoutContent = null;
       try (InputStream html = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {

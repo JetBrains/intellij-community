@@ -38,12 +38,66 @@ public class PyAnnotateTypesIntentionTest extends PyIntentionTestCase {
 
   // PY-30713
   public void testResolveAmbiguity() {
-    doNegativeTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"));
+    doNegativeTest();
   }
 
   // PY-30825
   public void testMethodAfterConstructorCall() {
     doIntentionTest(PyPsiBundle.message("INTN.add.type.hints.for.function", "method"));
+  }
+
+  // PY-31369
+  public void testFunctionParameterTypeAnnotationsNotChanged() {
+    doTest();
+  }
+
+  // PY-31369
+  public void testFunctionReturnValueAndFirstParameterTypeAnnotationsNotChanged() {
+    doTest();
+  }
+
+  // PY-31369
+  public void testFunctionReturnValueAndSecondParameterTypeAnnotationsNotChanged() {
+    doTest();
+  }
+
+  // PY-31369
+  public void testFunctionReturnValueTypeAnnotationNotChanged() {
+    doTest();
+  }
+
+  // PY-31369
+  public void testFunctionReturnValueComplexTypeAnnotationNotChanged() {
+    doTest();
+  }
+
+  // PY-31369
+  public void testFunctionAllTypeAnnotationsNoIntention() {
+    runWithLanguageLevel(LanguageLevel.getLatest(), () -> doNegativeTest());
+  }
+
+  // PY-31369
+  public void testFunctionHasTypeCommentNoIntention() {
+    doNegativeTest();
+  }
+
+  // PY-31369
+  public void testFunctionHasSameLineTypeCommentNoIntention() {
+    doNegativeTest();
+  }
+
+  // PY-31369
+  public void testFunctionSameLineNotTypeCommentNotBreakNextTypeComment() {
+    doNegativeTest();
+  }
+
+  // PY-31369
+  public void testFunctionSplitTypeCommentNoIntention() {
+    doNegativeTest();
+  }
+
+  private void doNegativeTest() {
+    doNegativeTest(PyPsiBundle.message("INTN.NAME.add.type.hints.for.function"));
   }
 
   // PY-41976

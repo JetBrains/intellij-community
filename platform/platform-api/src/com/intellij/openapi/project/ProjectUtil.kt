@@ -16,6 +16,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
+import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -36,6 +37,8 @@ import java.nio.file.Path
 import java.util.*
 import java.util.function.Consumer
 import javax.swing.JComponent
+
+val NOTIFICATIONS_SILENT_MODE = Key.create<Boolean>("NOTIFICATIONS_SILENT_MODE")
 
 val Module.rootManager: ModuleRootManager
   get() = ModuleRootManager.getInstance(this)
@@ -276,4 +279,8 @@ inline fun processOpenedProjects(processor: (Project) -> Unit) {
 
     processor(project)
   }
+}
+
+fun isNotificationSilentMode(project: Project?): Boolean {
+  return ApplicationManager.getApplication().isHeadlessEnvironment || NOTIFICATIONS_SILENT_MODE[project, false]
 }

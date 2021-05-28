@@ -62,11 +62,11 @@ public class GradleRelativeConfigCalculatingTest extends GradleJpsCompilingTestC
     }
   }
 
-  private static void assertConfigEquality() {
+  private void assertConfigEquality() {
     BuildManager buildManager = BuildManager.getInstance();
     if (buildManager == null) fail("BuildManager is disposed");
 
-    File buildSystemDirectory = new File(String.valueOf(buildManager.getBuildSystemDirectory()));
+    File buildSystemDirectory = new File(String.valueOf(buildManager.getBuildSystemDirectory(myProject)));
     if(!buildSystemDirectory.exists()) fail("compile-server folder does not exists");
 
     File[] dirs = buildSystemDirectory.listFiles();

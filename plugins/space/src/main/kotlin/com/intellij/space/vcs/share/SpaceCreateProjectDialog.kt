@@ -13,6 +13,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -62,6 +63,7 @@ internal class SpaceCreateProjectDialog(parent: JComponent) : DialogWrapper(pare
   override fun doOKAction() {
     if (!okAction.isEnabled) return
 
+    SpaceStatsCounterCollector.CREATE_NEW_PROJECT.log()
     launch(lifetime, Ui) {
       okAction.isEnabled = false
       asyncProcessIcon.isVisible = true

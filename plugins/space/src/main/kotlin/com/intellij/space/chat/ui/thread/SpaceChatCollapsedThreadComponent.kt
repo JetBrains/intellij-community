@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.space.chat.model.api.SpaceChatItem
 import com.intellij.space.chat.ui.SpaceChatAvatarType
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.SpaceAutoUpdatableComponentService
 import com.intellij.space.ui.SpaceAvatarProvider
 import com.intellij.space.utils.formatPrettyDateTime
@@ -71,7 +72,7 @@ internal fun createCollapsedThreadComponent(
     }
     else {
       if (threadPreview != null) {
-        val actionsComponent = createActionsComponent(lifetime, message, threadPreview, threadActionsFactory)
+        val actionsComponent = createActionsComponent(project, lifetime, message, threadPreview, threadActionsFactory)
         contentPanel.addToCenter(actionsComponent)
         threadPreview.messageCount.forEach(loadingThreadLifetime) { count ->
           contentPanel.isVisible = count > 0
@@ -88,6 +89,7 @@ internal fun createCollapsedThreadComponent(
 }
 
 private fun createActionsComponent(
+  project: Project,
   lifetime: Lifetime,
   message: SpaceChatItem,
   threadPreview: M2ThreadPreviewVm,
@@ -95,7 +97,7 @@ private fun createActionsComponent(
 ): JComponent {
   val authorsPanel = createThreadAuthorAvatarsComponent(lifetime, threadPreview)
   val dateComponent = createDateComponent(lifetime, threadPreview.lastReplyTime)
-  val repliesComponent = createRepliesLink(lifetime, threadPreview.messageCount) {
+  val repliesComponent = createRepliesLink(project, lifetime, threadPreview.messageCount) {
     launch(lifetime, Ui) {
       message.loadThread(lifetime)
     }
@@ -162,12 +164,15 @@ private fun createDateComponent(lifetime: Lifetime, lastReplyTime: Property<Long
   return contentPanel
 }
 
-private fun createRepliesLink(lifetime: Lifetime, messagesCount: Property<Int>, action: () -> Unit): JComponent {
+private fun createRepliesLink(project: Project, lifetime: Lifetime, messagesCount: Property<Int>, action: () -> Unit): JComponent {
   val contentPanel = BorderLayoutPanel().apply {
     isOpaque = false
   }
   messagesCount.forEach(lifetime) { count ->
-    val repliesLink = LinkLabel.create(SpaceBundle.message("chat.message.replies.link", count), action)
+    val repliesLink = LinkLabel.create(SpaceBundle.message("chat.message.replies.link", count)) {
+      SpaceStatsCounterCollector.OPEN_THREAD.log(project)
+      action()
+    }
     contentPanel.removeAll()
     contentPanel.addToCenter(repliesLink)
     contentPanel.revalidate()

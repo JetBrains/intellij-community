@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.review.SpaceReviewDataKeys.REVIEWS_LIST_VM
 import com.intellij.space.vcs.review.SpaceReviewDataKeys.SELECTED_REVIEW
@@ -22,8 +23,9 @@ import java.util.function.Supplier
 
 class SpaceRefreshReviewsListAction : DumbAwareAction(SpaceBundle.messagePointer("action.refresh.reviews.text")) {
   override fun actionPerformed(e: AnActionEvent) {
-    val listVm = e.getData(REVIEWS_LIST_VM)
-    listVm?.refresh()
+    val listVm = e.getData(REVIEWS_LIST_VM) ?: return
+    SpaceStatsCounterCollector.REFRESH_REVIEWS_ACTION.log(SpaceStatsCounterCollector.RefreshReviewsPlace.CONTEXT_MENU)
+    listVm.refresh()
   }
 }
 

@@ -32,7 +32,6 @@ import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.THashMap
 import io.netty.bootstrap.com.intellij.execution.configurations.ParameterTargetValuePart
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -111,8 +110,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
   }
 
   @Suppress("SameParameterValue")
-  @Deprecated("Temporary solution, while real download does not exist")
-  @ApiStatus.ScheduledForRemoval
   private fun requestDownloadFromTarget(downloadPathString: String,
                                         downloadPathIsFile: Boolean? = null): TargetValue<String> {
     val downloadPath = Paths.get(FileUtil.toSystemDependentName(downloadPathString))
@@ -133,10 +130,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest,
       val volume = environment.downloadVolumes.getValue(downloadRoot)
       try {
         val relativePath = if (isDir) "." else downloadPath.fileName.toString()
-        if (volume is TargetEnvironment.UploadableVolume) {
-          val resolvedTargetPath = volume.resolveTargetPath(relativePath)
-          result.resolve(resolvedTargetPath)
-        }
+        val resolvedTargetPath = volume.resolveTargetPath(relativePath)
+        result.resolve(resolvedTargetPath)
       }
       catch (t: Throwable) {
         LOG.warn(t)

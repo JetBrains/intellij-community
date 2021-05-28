@@ -4,5 +4,4 @@ package training.learn.course
 data class LessonProperties(
   val canStartInDumbMode: Boolean = false,
   val openFileAtStart: Boolean = true,
-  val showLearnToolwindowAtStart: Boolean = true,
 )

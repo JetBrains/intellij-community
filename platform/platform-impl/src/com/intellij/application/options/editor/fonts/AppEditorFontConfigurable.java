@@ -43,8 +43,7 @@ public final class AppEditorFontConfigurable implements SearchableConfigurable, 
 
   @Override
   public void apply() {
-    FontPreferences fontPreferences = getUIFontPreferences();
-    fontPreferences.copyTo(getStoredPreferences());
+    AppEditorFontOptions.getInstance().update(getUIFontPreferences());
     EditorFontCache.getInstance().reset();
     ((EditorColorsManagerImpl)EditorColorsManager.getInstance()).schemeChangedOrSwitched(null);
     EditorFactory.getInstance().refreshAllEditors();

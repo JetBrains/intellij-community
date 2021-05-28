@@ -22,9 +22,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 	head.attrs =
 		(	common.attrs
 #		&	head.attrs.profile?
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 #		head.attrs.profile =
 #			attribute profile {
@@ -106,11 +103,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	title.elem =
 		element title { title.inner & title.attrs }
 	title.attrs =
-		(	common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
-		)
+		( common.attrs )
 	title.inner =
 		( text )
 
@@ -159,15 +152,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	referrerpolicy?
 		&	link.attrs.sizes?
 		&	link.attrs.color?
+		&	link.attrs.disabled?
 		&	link.attrs.scope?
 		&	link.attrs.updateviacache?
 		&	link.attrs.workertype?
 		#	link.attrs.title included in common.attrs
 		&	embedded.content.attrs.crossorigin?
-		&	(	common.attrs.aria.role.link
-			|	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
+		&	common.attrs.aria.role.link?
 		)
 		link.attrs.href =
 			attribute href {
@@ -175,7 +166,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			}
 		link.attrs.rel =
 			attribute rel {
-				w:link-rel
+				string
 			}
 		link.attrs.as =
 			attribute as {
@@ -184,6 +175,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 			|	string "audioworklet"
 			|	string "document"
 			|	string "embed"
+			|	string "fetch"
 			|	string "font"
 			|	string "image"
 			|	string "manifest"
@@ -210,6 +202,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		link.attrs.color =
 			attribute color {
 				common.data.color
+			}
+		link.attrs.disabled =
+			attribute disabled {
+				w:string "disabled" | w:string ""
 			}
 		link.attrs.scope =
 			attribute scope {
@@ -242,9 +238,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	style.attrs.type?
 		&	style.attrs.media?
 		#	style.attrs.title included in common.attrs
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		style.attrs.type =
 			attribute type {
@@ -274,9 +267,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.microdata.itemscope?
 		&	common.attrs.microdata.itemtype?
 		&	common.attrs.microdata.itemid?
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		meta.name.attrs.name =
 			attribute name {
@@ -302,9 +292,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.other
 		&	meta.http-equiv.attrs.http-equiv.refresh
 		&	meta.http-equiv.attrs.content.refresh
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		meta.http-equiv.attrs.http-equiv.refresh =
 			attribute http-equiv {
@@ -329,9 +316,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.other
 		&	meta.http-equiv.attrs.http-equiv.default-style
 		&	meta.http-equiv.attrs.content.default-style
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		meta.http-equiv.attrs.http-equiv.default-style =
 			attribute http-equiv {
@@ -357,9 +341,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.other
 		&	meta.http-equiv.attrs.http-equiv.content-security-policy
 		&	meta.http-equiv.attrs.content.content-security-policy
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		meta.http-equiv.attrs.http-equiv.content-security-policy =
 			attribute http-equiv {
@@ -382,9 +363,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.other
 		&	meta.http-equiv.attrs.http-equiv.x-ua-compatible
 		&	meta.http-equiv.attrs.content.x-ua-compatible
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		meta.http-equiv.attrs.http-equiv.x-ua-compatible =
 			attribute http-equiv {
@@ -406,9 +384,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.present
 		&	common.attrs.other
 		&	meta.charset.attrs.charset
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		meta.charset.attrs.charset =
 			attribute charset {
@@ -430,9 +405,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.other
 		&	meta.http-equiv.attrs.http-equiv.content-type
 		&	meta.http-equiv.attrs.content.content-type
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		meta.http-equiv.attrs.http-equiv.content-type =
 			attribute http-equiv {

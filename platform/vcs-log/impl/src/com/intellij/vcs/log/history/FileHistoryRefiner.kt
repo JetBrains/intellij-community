@@ -10,6 +10,7 @@ import com.intellij.vcs.log.graph.utils.Dfs
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.getCorrespondingParent
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
+import java.util.*
 
 internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
                                   permanentGraphInfo: PermanentGraphInfo<Int>,
@@ -47,27 +48,44 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     }
 
     val visited = BitSetFlags(graph.nodesCount(), false)
-    val stack = Stack(Pair(startNode, startPath))
+    val starts: Queue<Pair<Int, MaybeDeletedFilePath>> = LinkedList<Pair<Int, MaybeDeletedFilePath>>().apply {
+      add(Pair(startNode, startPath))
+    }
 
-    outer@ while (!stack.empty()) {
-      val (currentNode, currentPath) = stack.peek()
-      val down = isDown(stack)
-      if (!visited.get(currentNode)) {
-        visited.set(currentNode, true)
-        pathsForCommits[permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))] = currentPath
+    iterateStarts@ while (starts.isNotEmpty()) {
+      val (nextStart, nextStartPath) = starts.poll()
+      if (visited.get(nextStart)) continue@iterateStarts
+
+      val stack = Stack(Pair(nextStart, nextStartPath))
+
+      iterateStack@ while (!stack.empty()) {
+        val (currentNode, currentPath) = stack.peek()
+        val down = isDown(stack)
+        if (!visited.get(currentNode)) {
+          visited.set(currentNode, true)
+          pathsForCommits[permanentCommitsInfo.getCommitId(visibleLinearGraph.getNodeId(currentNode))] = currentPath
+        }
+
+        for ((nextNode, nextPath) in getNextNodes(graph, visited, currentNode, currentPath, down)) {
+          if (!currentPath.deleted && nextPath.deleted) {
+            starts.add(Pair(nextNode, nextPath))
+          } else {
+            stack.push(Pair(nextNode, nextPath))
+            continue@iterateStack
+          }
+        }
+
+        for ((nextNode, nextPath) in getNextNodes(graph, visited, currentNode, currentPath, !down)) {
+          if (!currentPath.deleted && nextPath.deleted) {
+            starts.add(Pair(nextNode, nextPath))
+          } else {
+            stack.push(Pair(nextNode, nextPath))
+            continue@iterateStack
+          }
+        }
+
+        stack.pop()
       }
-
-      for ((nextNode, nextPath) in getNextNodes(graph, visited, currentNode, currentPath, down)) {
-        stack.push(Pair(nextNode, nextPath))
-        continue@outer
-      }
-
-      for ((nextNode, nextPath) in getNextNodes(graph, visited, currentNode, currentPath, !down)) {
-        stack.push(Pair(nextNode, nextPath))
-        continue@outer
-      }
-
-      stack.pop()
     }
   }
 

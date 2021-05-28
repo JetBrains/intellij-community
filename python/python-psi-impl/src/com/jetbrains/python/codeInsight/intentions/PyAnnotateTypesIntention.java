@@ -15,6 +15,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonUiService;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
@@ -38,11 +39,24 @@ public class PyAnnotateTypesIntention extends PyBaseIntentionAction {
     if (!(file instanceof PyFile) || file instanceof PyDocstringFile) return false;
 
     final PyFunction function = findSuitableFunction(editor, file);
-    if (function != null) {
-      setText(PyPsiBundle.message("INTN.add.type.hints.for.function", function.getName()));
-      return true;
+    if (function == null) return false;
+
+    if (function.getTypeComment() != null) {
+      return false;
     }
-    return false;
+
+    final PyAnnotation annotation = function.getAnnotation();
+    if (annotation != null) {
+      boolean allParametersAnnotated = ContainerUtil.and(function.getParameterList().getParameters(),
+                                                         it -> it instanceof PyNamedParameter &&
+                                                               ((PyNamedParameter)it).getAnnotation() != null);
+      if (allParametersAnnotated) {
+        return false;
+      }
+    }
+
+    setText(PyPsiBundle.message("INTN.add.type.hints.for.function", function.getName()));
+    return true;
   }
 
   @Override

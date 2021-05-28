@@ -2,6 +2,7 @@
 package com.intellij.ide.actions
 
 import com.intellij.ide.IdeBundle
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.editor.Editor
@@ -21,13 +22,14 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 import java.awt.Component
+import java.awt.event.MouseEvent
 
 internal class HideAllToolWindowsAction : DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.project
     if (project == null) return
     val toolWindowManager = ToolWindowManagerEx.getInstanceEx(e.project ?: return) as ToolWindowManagerImpl
-    val idsToHide = getIDsToHide(toolWindowManager);
+    val idsToHide = getIDsToHide(toolWindowManager)
     val window = e.getData(EditorWindow.DATA_KEY)
     val floatingEditor = (window != null && window.owner.isFloating)
     var maximizeEditor = null as Boolean?
@@ -86,10 +88,14 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
       return set
     }
 
+    fun AnActionEvent.isRelatedToSplits() : Boolean {
+      return place == ActionPlaces.EDITOR_TAB && (inputEvent as MouseEvent).clickCount == 2
+    }
+
     fun getSplittersToMaximize(e: AnActionEvent): Set<Pair<Splitter, Boolean>> {
       val project = e.project
-      val editor = e.getData(CommonDataKeys.HOST_EDITOR);
-      if (project == null || editor == null) {
+      val editor = e.getData(CommonDataKeys.HOST_EDITOR)
+      if (project == null || editor == null || !e.isRelatedToSplits()) {
         return emptySet()
       }
       return getSplittersToMaximize(project, editor)
@@ -120,8 +126,8 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
 
     fun getSplittersToNormalize(e: AnActionEvent): Set<Splitter> {
       val project = e.project
-      val editor = e.getData(CommonDataKeys.HOST_EDITOR);
-      if (project == null || editor == null) {
+      val editor = e.getData(CommonDataKeys.HOST_EDITOR)
+      if (project == null || editor == null || !e.isRelatedToSplits()) {
         return emptySet()
       }
       val set = HashSet<Splitter>()
@@ -140,7 +146,7 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
 
     fun isThereSplitter(e: AnActionEvent): Boolean {
       val project = e.project
-      val editor = e.getData(CommonDataKeys.HOST_EDITOR);
+      val editor = e.getData(CommonDataKeys.HOST_EDITOR)
       if (project == null || editor == null) return false
       val editorManager = FileEditorManager.getInstance(project) as? FileEditorManagerImpl ?: return false
       var comp = editor.component as Component

@@ -10,7 +10,7 @@ import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import org.jetbrains.concurrency.resolvedPromise
 
-@Deprecated(message = "Do not use")
+@Deprecated(message = "Use ProgramRunner directly")
 abstract class DefaultProgramRunner : ProgramRunner<RunnerSettings> {
   @Throws(ExecutionException::class)
   // cannot be final - https://plugins.jetbrains.com/plugin/9786-atlasbuildtool overrides

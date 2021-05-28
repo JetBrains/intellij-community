@@ -28,7 +28,7 @@ internal class ExternalStorageConfigurationManagerImpl(private val project: Proj
    */
   override fun setEnabled(value: Boolean) {
     state.enabled = value
-    if (WorkspaceModel.isEnabled) {
+    if (!project.isDefault && WorkspaceModel.isEnabled) {
       ApplicationManager.getApplication().invokeAndWait(Runnable {
         runWriteAction {
           WorkspaceModel.getInstance(project).updateProjectModel { updater ->

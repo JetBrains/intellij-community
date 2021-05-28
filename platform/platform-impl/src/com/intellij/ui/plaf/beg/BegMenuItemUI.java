@@ -9,8 +9,9 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -52,7 +53,6 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   @NonNls public static final String PLAY_SOUND_METHOD = "playSound";
   @NonNls public static final String AQUA_LOOK_AND_FEEL_CLASS_NAME = "apple.laf.AquaLookAndFeel";
   @NonNls public static final String GET_KEY_MODIFIERS_TEXT = "getKeyModifiersText";
-  public static final Key<String> CUSTOM_KEY_STROKE_TEXT = new Key<>("CUSTOM_KEY_STROKE_TEXT");
 
   private Border myAquaSelectedBackgroundPainter;
 
@@ -223,15 +223,9 @@ public final class BegMenuItemUI extends BasicMenuItemUI {
   }
 
   private static @NlsSafe String getKeyStrokeText(@NotNull JMenuItem item) {
-    if (item instanceof ActionMenuItem) {
-      AnAction action = ((ActionMenuItem)item).getAnAction();
-      if (action instanceof UserDataHolder) {
-        String customText = ((UserDataHolder)action).getUserData(CUSTOM_KEY_STROKE_TEXT);
-        if (!StringUtil.isEmptyOrSpaces(customText)) return customText;
-      }
-      return ((ActionMenuItem)item).getFirstShortcutText();
-    }
-    return getKeyStrokeText(item.getAccelerator());
+    return item instanceof ActionMenuItem
+           ? ((ActionMenuItem)item).getFirstShortcutText()
+           : getKeyStrokeText(item.getAccelerator());
   }
 
   @NlsSafe

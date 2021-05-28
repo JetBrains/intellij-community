@@ -42,10 +42,10 @@ import java.util.stream.Collectors;
 
 public class DataFlowRunner {
   private static final Logger LOG = Logger.getInstance(DataFlowRunner.class);
-  private static final int MERGING_BACK_BRANCHES_THRESHOLD = 50;
-  // Maximum allowed attempts to process instruction. Fail as too complex to process if certain instruction
-  // is executed more than this limit times.
-  static final int MAX_STATES_PER_BRANCH = 300;
+  // Default complexity limit (maximum allowed attempts to process instruction). 
+  // Fail as too complex to process if certain instruction is executed more than this limit times.
+  // Also used to calculate a threshold when states are forcibly merged.
+  protected static final int DEFAULT_MAX_STATES_PER_BRANCH = 300;
 
   private Instruction[] myInstructions;
   private final @NotNull MultiMap<PsiElement, DfaMemoryState> myNestedClosures = new MultiMap<>();
@@ -87,6 +87,15 @@ public class DataFlowRunner {
    */
   public final void cancel() {
     myCancelled = true;
+  }
+
+  /**
+   * @return a complexity limit number that allows to trade-off between analysis quality and CPU time used.
+   * If bigger number is returned, more complex methods could be analyzed, analysis quality is better but may require more CPU time.
+   * By default, returns {@link #DEFAULT_MAX_STATES_PER_BRANCH}.
+   */
+  protected int getComplexityLimit() {
+    return DEFAULT_MAX_STATES_PER_BRANCH;
   }
 
   private @Nullable Collection<DfaMemoryState> createInitialStates(@NotNull PsiElement psiBlock,
@@ -221,7 +230,7 @@ public class DataFlowRunner {
         myStats.startMerge();
         List<DfaInstructionState> states = queue.getNextInstructionStates(joinInstructions);
         myStats.endMerge();
-        if (states.size() > MAX_STATES_PER_BRANCH) {
+        if (states.size() > getComplexityLimit()) {
           LOG.trace("Too complex because too many different possible states");
           return RunnerResult.TOO_COMPLEX;
         }
@@ -246,7 +255,7 @@ public class DataFlowRunner {
             if (containsState(processed, instructionState)) {
               continue;
             }
-            if (processed.size() > MERGING_BACK_BRANCHES_THRESHOLD) {
+            if (processed.size() > getComplexityLimit() / 6) {
               myStats.startMerge();
               instructionState = mergeBackBranches(instructionState, processed);
               myStats.endMerge();
@@ -254,7 +263,7 @@ public class DataFlowRunner {
                 continue;
               }
             }
-            if (processed.size() > MAX_STATES_PER_BRANCH) {
+            if (processed.size() > getComplexityLimit()) {
               LOG.trace("Too complex because too many different possible states");
               return RunnerResult.TOO_COMPLEX;
             }

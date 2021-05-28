@@ -404,6 +404,7 @@
     <action id="IconsLoadTime" internal="true" class="com.intellij.internal.IconsLoadTime"/>
 
     <action id="CloseGotItTooltip" class="com.intellij.openapi.actionSystem.EmptyAction"/>
+    <action id="RestartIde" class="com.intellij.ide.actions.RestartIdeAction"/>
 
     <group id="MainMenu">
       <group id="FileMenu" popup="true">
@@ -442,7 +443,9 @@
         <separator/>
         <action id="SaveAll" class="com.intellij.ide.actions.SaveAllAction" icon="AllIcons.Actions.MenuSaveall"/>
         <action id="Synchronize" class="com.intellij.ide.actions.SynchronizeAction" icon="AllIcons.Actions.Refresh"/>
-        <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction"/>
+        <action id="InvalidateCaches" class="com.intellij.ide.actions.InvalidateCachesAction">
+          <synonym text="restart"/>
+        </action>
         <separator/>
         <group id="ExportImportGroup" popup="true">
           <action id="ImportSettings" class="com.intellij.configurationStore.ImportSettingsAction"/>

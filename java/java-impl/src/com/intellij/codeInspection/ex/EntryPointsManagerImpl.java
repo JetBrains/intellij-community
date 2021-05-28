@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.AnnotationTargetUtil;
@@ -11,12 +11,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiClass;
+import com.intellij.util.ui.JBUI;
 import org.jdom.Element;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
@@ -52,9 +53,13 @@ public class EntryPointsManagerImpl extends EntryPointsManagerBase implements Pe
 
       @Override
       protected JComponent createCenterPanel() {
-        final JPanel panel = new JPanel(new VerticalFlowLayout());
-        panel.add(listPanel);
-        panel.add(writtenAnnotationsPanel);
+        final JPanel panel = new JPanel(new GridBagLayout());
+        final var constraints = new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 1,
+                                                        GridBagConstraints.NORTHWEST, GridBagConstraints.BOTH,
+                                                        JBUI.emptyInsets(), 0, 0);
+        panel.add(listPanel, constraints);
+        constraints.insets.top = 13;
+        panel.add(writtenAnnotationsPanel, constraints);
         return panel;
       }
 

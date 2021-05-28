@@ -149,10 +149,11 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     }
   }
 
-  override fun runtimeText(callback: TaskRuntimeContext.() -> String?) {
-    val text = callback(runtimeContext)
+  override fun runtimeText(callback: RuntimeTextContext.() -> String?) {
+    val runtimeTextContext = RuntimeTextContext(runtimeContext)
+    val text = callback(runtimeTextContext)
     if (text != null) {
-      lessonExecutor.text(text)
+      lessonExecutor.text(text, runtimeTextContext.removeAfterDone)
     }
   }
 

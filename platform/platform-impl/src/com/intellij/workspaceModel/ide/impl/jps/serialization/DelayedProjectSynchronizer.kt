@@ -12,10 +12,10 @@ import kotlin.system.measureTimeMillis
 /**
  * Loading the real state of the project after loading from cache.
  *
- * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronize the state
- *   of workspace model with project model files (iml/xml).
+ * Initially IJ loads the state of workspace model from the cache. In this startup activity it synchronizes the state
+ * of workspace model with project model files (iml/xml).
  */
-class DelayedProjectSynchronizer : StartupActivity {
+class DelayedProjectSynchronizer : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
     if (WorkspaceModel.isEnabled) {
       val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)

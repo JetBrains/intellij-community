@@ -97,7 +97,6 @@ private class MnemonicPainter(val mnemonic: String) : RegionPainter<Component?> 
     val foreground = EditorColorsUtil.getColor(c, MNEMONIC_ICON_FOREGROUND)
     val background = EditorColorsUtil.getColor(c, MNEMONIC_ICON_BACKGROUND)
     val borderColor = EditorColorsUtil.getColor(c, MNEMONIC_ICON_BORDER_COLOR)
-    val thickness = if (borderColor == null || borderColor == background) 0 else 1
     val divisor = Registry.intValue("ide.mnemonic.icon.round", 0)
     val round = if (divisor > 0) width.coerceAtLeast(height) / divisor else null
     if (background != null) {
@@ -110,7 +109,7 @@ private class MnemonicPainter(val mnemonic: String) : RegionPainter<Component?> 
       val frc = g.fontRenderContext
       val font = EditorFontType.PLAIN.globalFont
 
-      val size1 = height - 2f * thickness
+      val size1 = .8f * height
       val vector1 = font.deriveFont(size1).createGlyphVector(frc, mnemonic)
       val bounds1 = vector1.visualBounds
 
@@ -122,7 +121,7 @@ private class MnemonicPainter(val mnemonic: String) : RegionPainter<Component?> 
       val dy = y - bounds2.y + .5 * (height - bounds2.height)
       g.drawGlyphVector(vector2, dx.toFloat(), dy.toFloat())
     }
-    if (thickness > 0) {
+    if (borderColor != null && borderColor != background) {
       g.paint = borderColor
       RectanglePainter.DRAW.paint(g, x, y, width, height, round)
     }

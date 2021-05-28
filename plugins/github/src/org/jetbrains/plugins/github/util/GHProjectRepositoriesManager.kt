@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.util
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.hosting.GitHostingUrlUtil
 import com.intellij.util.ui.update.MergingUpdateQueue
 import com.intellij.util.ui.update.Update
 import git4idea.repo.GitRepository
@@ -102,7 +103,7 @@ class GHProjectRepositoriesManager(private val project: Project) : Disposable {
 
   @RequiresEdt
   private fun scheduleEnterpriseServerDiscovery(remote: GitRemoteUrlCoordinates) {
-    val uri = GithubUrlUtil.getUriFromRemoteUrl(remote.url)
+    val uri = GitHostingUrlUtil.getUriFromRemoteUrl(remote.url)
     LOG.debug("Extracted URI $uri from remote ${remote.url}")
     if (uri == null) return
 

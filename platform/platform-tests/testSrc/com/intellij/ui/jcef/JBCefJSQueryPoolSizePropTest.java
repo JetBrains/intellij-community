@@ -2,6 +2,7 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
+import com.intellij.ui.jcef.JBCefClient.Properties;
 import com.intellij.ui.scale.TestScaleHelper;
 import org.jetbrains.annotations.NotNull;
 import org.junit.ClassRule;
@@ -16,7 +17,7 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
 import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
 
 /**
- * Tests {@link JBCefClient#JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP}.
+ * Tests {@link JBCefClient#JS_QUERY_POOL_SIZE}.
  *
  * @author tav
  */
@@ -32,7 +33,7 @@ public class JBCefJSQueryPoolSizePropTest {
     TestScaleHelper.assumeStandalone();
 
     test(client -> {
-      client.setProperty(JBCefClient.JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP, 1);
+      client.setProperty(Properties.JS_QUERY_POOL_SIZE, 1);
       return null;
     });
   }
@@ -42,7 +43,7 @@ public class JBCefJSQueryPoolSizePropTest {
     TestScaleHelper.assumeStandalone();
 
     JBCefJSQueryPoolSizePropTest.test(client -> {
-      client.setProperty(JBCefClient.JBCEFCLIENT_JSQUERY_POOL_SIZE_PROP, Integer.MAX_VALUE); // stress test
+      client.setProperty(Properties.JS_QUERY_POOL_SIZE, Integer.MAX_VALUE); // stress test
       return null;
     });
   }
@@ -54,7 +55,7 @@ public class JBCefJSQueryPoolSizePropTest {
     JBCefBrowser browser = new JBCefBrowser("chrome:version");
     setProperty.apply(browser.getJBCefClient());
 
-    JBCefJSQuery jsQuery_before = JBCefJSQuery.create(browser);
+    JBCefJSQuery jsQuery_before = JBCefJSQuery.create((JBCefBrowserBase)browser);
     jsQuery_before.addHandler(result -> {
       System.out.println("JBCefJSQuery [before] result: " + result);
       latchBefore.countDown();

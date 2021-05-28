@@ -13,43 +13,59 @@ import com.intellij.openapi.project.Project
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.utils.LifetimedDisposable
 import com.intellij.space.utils.LifetimedDisposableImpl
+import com.intellij.space.vcs.hosting.SpaceGitHostingChecker
 import git4idea.GitUtil
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
+import libraries.coroutines.extra.launch
+import runtime.Ui
 import runtime.async.backoff
-import runtime.reactive.MutableProperty
-import runtime.reactive.Property
-import runtime.reactive.awaitFirst
-import runtime.reactive.filter
+import runtime.reactive.*
 import runtime.reactive.property.mapInit
 
 @Service
 class SpaceProjectContext(project: Project) : LifetimedDisposable by LifetimedDisposableImpl() {
 
-  private val remoteUrls: MutableProperty<Set<GitRemoteUrlCoordinates>> = Property.createMutable(findRemoteUrls(project))
+  private val remoteUrls: MutableProperty<Set<GitRemoteUrlCoordinates>> = Property.createMutable(emptySet())
 
-  val context: Property<Context> = lifetime.mapInit(SpaceWorkspaceComponent.getInstance().workspace, remoteUrls, EMPTY) { ws, urls ->
-    ws ?: return@mapInit EMPTY
+  private val hostingChecker = SpaceGitHostingChecker()
+
+  val context: LoadingProperty<Context> = lifetime.load(SpaceWorkspaceComponent.getInstance().workspace, remoteUrls) { ws, urls ->
+    ws ?: return@load EMPTY
     ws.client.connectionStatus.filter { it is ConnectionStatus.Connected }.awaitFirst(ws.lifetime)
     reloadProjectKeys(ws, urls)
   }
+
+  // true if project is associated with Space repository
+  val probablyContainsSpaceRepo = lifetime.mapInit(remoteUrls, context, false) { urls, context ->
+    val loadedContext = (context as? LoadingValue.Loaded)?.value
+    (loadedContext != null && loadedContext.isAssociatedWithSpaceRepository) || hostingChecker.check(urls.map { it.remote }.toSet())
+  }
+
+  // use it as rare as possible
+  // prefer to subscribe on [context]
+  val currentContext: Context
+    get() = (context.value as? LoadingValue.Loaded)?.value ?: EMPTY
 
   init {
     project.messageBus
       .connect(this)
       .subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
-        val newUrls = findRemoteUrls(project)
-        remoteUrls.value = newUrls
+        launch(lifetime, Ui) {
+          val newUrls = findRemoteUrls(project)
+          remoteUrls.value = newUrls
+        }
       })
+    remoteUrls.value = findRemoteUrls(project)
   }
 
   fun getRepoDescriptionByUrl(remoteUrl: String): SpaceRepoInfo? {
-    val coordinates = context.value.repoByUrl.keys.find {
+    val coordinates = currentContext.repoByUrl.keys.find {
       it.url == remoteUrl
     }
 
-    return context.value.repoByUrl[coordinates]
+    return currentContext.repoByUrl[coordinates]
   }
   private fun findRemoteUrls(project: Project): Set<GitRemoteUrlCoordinates> {
     return GitUtil.getRepositoryManager(project).repositories.flatMap { gitRepo ->

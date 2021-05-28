@@ -11,10 +11,7 @@ import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ToolbarLabelAction;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.editor.EditorSettings;
-import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -50,10 +47,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.PairFunction;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -116,7 +110,7 @@ public class ImplementationViewComponent extends JPanel {
     factory = EditorFactory.getInstance();
     Document doc = factory.createDocument("");
     doc.setReadOnly(true);
-    myEditor = (EditorEx)factory.createEditor(doc, project);
+    myEditor = (EditorEx)factory.createEditor(doc, project, EditorKind.PREVIEW);
     tuneEditor();
 
     myBinarySwitch = new CardLayout();
@@ -387,6 +381,21 @@ public class ImplementationViewComponent extends JPanel {
     return myElements.length > 1 ? myFileChooser : myEditor.getContentComponent();
   }
 
+  @ApiStatus.Internal
+  public ComboBox<FileDescriptor> getFileChooserComboBox() {
+    return myFileChooser;
+  }
+
+  @ApiStatus.Internal
+  public JPanel getSingleEntryPanel() {
+    return mySingleEntryPanel;
+  }
+
+  @ApiStatus.Internal
+  public JPanel getViewingPanel() {
+    return myViewingPanel;
+  }
+
   private void updateControls() {
     updateCombo();
     updateEditorText();
@@ -436,7 +445,7 @@ public class ImplementationViewComponent extends JPanel {
   private void replaceEditor(Project project, VirtualFile vFile, ImplementationViewDocumentFactory documentFactory, Document document) {
     myViewingPanel.remove(myEditor.getComponent());
     factory.releaseEditor(myEditor);
-    myEditor = (EditorEx)factory.createEditor(document, project);
+    myEditor = (EditorEx)factory.createEditor(document, project, EditorKind.PREVIEW);
     tuneEditor(vFile);
     documentFactory.tuneEditorBeforeShow(myEditor);
     myViewingPanel.add(myEditor.getComponent(), TEXT_PAGE_KEY);

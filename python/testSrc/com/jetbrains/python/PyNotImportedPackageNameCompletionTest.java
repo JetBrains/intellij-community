@@ -4,15 +4,7 @@ package com.jetbrains.python;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 public class PyNotImportedPackageNameCompletionTest extends PyTestCase {
-  public void testDotAfterPackageName() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
-  }
-
-  public void testCompletionForAlias() {
+  public void testPackageNameBasicCompletion() {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject(testName, "");
     myFixture.configureByFile("main.py");

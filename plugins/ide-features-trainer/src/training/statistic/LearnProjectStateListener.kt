@@ -7,20 +7,22 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 import training.lang.LangManager
 import training.util.isLearningProject
 import training.util.trainerPluginConfigName
 
 internal class LearnProjectStateListener : ProjectManagerListener {
   override fun projectOpened(project: Project) {
+    val langSupport = LangManager.getInstance().getLangSupport() ?: return
+    if (!isLearningProject(project, langSupport)) return
+    CloseProjectWindowHelper.SHOW_WELCOME_FRAME_FOR_PROJECT.set(project, true)
+
     val learnProjectState = LearnProjectState.instance
     val way = learnProjectState.firstTimeOpenedWay
     if (way != null) {
-      val langSupport = LangManager.getInstance().getLangSupport() ?: return
-      if (!isLearningProject(project, langSupport)) {
-        StatisticBase.logNonLearningProjectOpened(way)
-        learnProjectState.firstTimeOpenedWay = null
-      }
+      StatisticBase.logNonLearningProjectOpened(way)
+      learnProjectState.firstTimeOpenedWay = null
     }
   }
 

@@ -12,7 +12,7 @@ import com.intellij.openapi.observable.operations.CompoundParallelOperationTrace
 import com.intellij.psi.ExternalChangeAction
 import com.intellij.util.EventDispatcher
 
-class DocumentsChangesProvider : FilesChangesProvider, DocumentListener {
+class DocumentsChangesProvider(private val isIgnoreExternalChanges: Boolean) : FilesChangesProvider, DocumentListener {
   private val eventDispatcher = EventDispatcher.create(FilesChangesListener::class.java)
 
   override fun subscribe(listener: FilesChangesListener, parentDisposable: Disposable) {
@@ -25,7 +25,7 @@ class DocumentsChangesProvider : FilesChangesProvider, DocumentListener {
     ApplicationManager.getApplication().hasWriteAction(ExternalChangeAction::class.java)
 
   override fun documentChanged(event: DocumentEvent) {
-    if (isExternalModification()) return
+    if (isIgnoreExternalChanges && isExternalModification()) return
     val document = event.document
     val fileDocumentManager = FileDocumentManager.getInstance()
     val file = fileDocumentManager.getFile(document) ?: return

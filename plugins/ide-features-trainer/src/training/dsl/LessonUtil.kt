@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl
 
-import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -29,7 +31,6 @@ import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.XDebuggerManager
 import org.fest.swing.timing.Timeout
 import org.jetbrains.annotations.Nls
-import training.dsl.*
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.ui.LearningUiHighlightingManager
@@ -298,6 +299,7 @@ fun LessonContext.highlightButtonById(actionId: String): CompletableFuture<Boole
 inline fun <reified ComponentType : Component> LessonContext.highlightAllFoundUi(
   clearPreviousHighlights: Boolean = true,
   highlightInside: Boolean = true,
+  usePulsation: Boolean = false,
   crossinline finderFunction: TaskRuntimeContext.(ComponentType) -> Boolean
 ) {
   prepareRuntimeTask {
@@ -310,7 +312,9 @@ inline fun <reified ComponentType : Component> LessonContext.highlightAllFoundUi
 
       invokeLater {
         for (ui in result) {
-          val options = LearningUiHighlightingManager.HighlightingOptions(clearPreviousHighlights = false, highlightInside = highlightInside)
+          val options = LearningUiHighlightingManager.HighlightingOptions(clearPreviousHighlights = false,
+                                                                          highlightInside = highlightInside,
+                                                                          usePulsation = usePulsation)
           LearningUiHighlightingManager.highlightComponent(ui, options)
         }
       }

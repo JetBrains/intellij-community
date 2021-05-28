@@ -13,15 +13,19 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.space.components.SpaceUserAvatarProvider
 import com.intellij.space.components.SpaceWorkspaceComponent
 import com.intellij.space.messages.SpaceBundle
-import com.intellij.space.settings.*
+import com.intellij.space.settings.SpaceLoginState
+import com.intellij.space.settings.SpaceSettings
+import com.intellij.space.settings.SpaceSettingsPanel
+import com.intellij.space.stats.SpaceStatsCounterCollector
 import com.intellij.space.ui.*
+import com.intellij.space.ui.LoginComponents.buildConnectingPanel
 import com.intellij.space.utils.SpaceUrls
 import com.intellij.space.vcs.SpaceProjectContext
 import com.intellij.space.vcs.clone.SpaceCloneAction
+import com.intellij.space.vcs.review.SpaceShowReviewsAction
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.Wrapper
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.cloneDialog.VcsCloneDialogUiSpec
 import libraries.coroutines.extra.Lifetime
 import runtime.reactive.view
@@ -57,6 +61,7 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
     val component = e.inputEvent.component
     val space = SpaceWorkspaceComponent.getInstance()
     val workspace = space.workspace.value
+    SpaceStatsCounterCollector.OPEN_MAIN_TOOLBAR_POPUP.log(SpaceStatsCounterCollector.LoginState.convert(space.loginState.value))
     if (workspace != null) {
       buildMenu(workspace, SpaceUserAvatarProvider.getInstance().avatars.value.circle, e.project!!)
         .showUnderneathOf(component)
@@ -68,12 +73,12 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
         .setFocusable(true)
         .createPopup()
       space.loginState.view(space.lifetime) { _: Lifetime, st: SpaceLoginState ->
-        val view = createView(st, component)
+        val view = createView(st, component) { popup.pack(true, true) }
         if (view == null) {
           popup.cancel()
           return@view
         }
-        view.border = JBUI.Borders.empty(8, 12)
+
         wrapper.setContent(view)
         wrapper.repaint()
         if (st is SpaceLoginState.Disconnected) {
@@ -84,15 +89,20 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
     }
   }
 
-  private fun createView(st: SpaceLoginState, component: Component): JComponent? {
+  private fun createView(st: SpaceLoginState, component: Component, packPopup: () -> Unit): JComponent? {
     return when (st) {
       is SpaceLoginState.Connected -> null
 
-      is SpaceLoginState.Connecting -> buildConnectingPanel(st) {
+      is SpaceLoginState.Connecting -> buildConnectingPanel(st, SpaceStatsCounterCollector.LoginPlace.MAIN_TOOLBAR, prettyBorder()) {
         st.cancel()
       }
 
-      is SpaceLoginState.Disconnected -> buildLoginPanel(st, true) { serverName ->
+      is SpaceLoginState.Disconnected -> buildLoginPanelWithPromo(
+        st,
+        SpaceStatsCounterCollector.ExplorePlace.MAIN_TOOLBAR,
+        SpaceStatsCounterCollector.LoginPlace.MAIN_TOOLBAR,
+        packPopup
+      ) { serverName ->
         val space = SpaceWorkspaceComponent.getInstance()
         space.signInManually(serverName, space.lifetime, component)
       }
@@ -112,15 +122,13 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
                                         { SpaceCloneAction.runClone(project) },
                                         showSeparatorAbove = true)
     val projectContext = SpaceProjectContext.getInstance(project)
-    val context = projectContext.context.value
+    val context = projectContext.currentContext
     if (context.isAssociatedWithSpaceRepository) {
       val descriptions = context.reposInProject.keys
+      menuItems += AccountMenuItem.Action(SpaceBundle.message("action.show.code.reviews.text"), {
+        SpaceShowReviewsAction.showCodeReviews(project)
+      })
       if (descriptions.size > 1) {
-        menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.code.reviews"), descriptions.map {
-          val reviewsUrl = SpaceUrls.reviews(it.key)
-          browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), reviewsUrl)
-        }.toList())
-
         menuItems += AccountMenuItem.Group(SpaceBundle.message("open.in.browser.group.checklists"), descriptions.map {
           val checklistsUrl = SpaceUrls.checklists(it.key)
           browseAction(SpaceBundle.message("open.in.browser.open.for.project.action", it.project.name), checklistsUrl)
@@ -133,7 +141,6 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
       }
       else if (descriptions.isNotEmpty()) {
         val projectKey = descriptions.first().key
-        menuItems += browseAction(SpaceBundle.message("main.toolbar.code.reviews.action"), SpaceUrls.reviews(projectKey))
         menuItems += browseAction(SpaceBundle.message("main.toolbar.checklists.action"), SpaceUrls.checklists(projectKey))
         menuItems += browseAction(SpaceBundle.message("main.toolbar.issues.action"), SpaceUrls.issues(projectKey))
       }
@@ -141,7 +148,9 @@ class SpaceMainToolBarAction : DumbAwareAction(), RightAlignedToolbarAction {
     menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.settings.action"),
                                         { SpaceSettingsPanel.openSettings(project) },
                                         showSeparatorAbove = true)
-    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.log.out.action"), { SpaceWorkspaceComponent.getInstance().signOut() })
+    menuItems += AccountMenuItem.Action(SpaceBundle.message("main.toolbar.log.out.action"), {
+      SpaceWorkspaceComponent.getInstance().signOut(SpaceStatsCounterCollector.LogoutPlace.MAIN_TOOLBAR)
+    })
 
     return AccountsMenuListPopup(project, AccountMenuPopupStep(menuItems))
   }

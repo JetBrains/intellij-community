@@ -16,6 +16,7 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.updateSettings.UpdateStrategyCustomization
 import com.intellij.openapi.util.NlsContexts.Label
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SeparatorComponent
 import com.intellij.ui.components.BrowserLink
@@ -76,7 +77,9 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         }
       }
 
-      row { checkBox(IdeBundle.message("updates.plugins.settings.checkbox"), settings.state::isPluginsCheckNeeded) }
+      row {
+        checkBox(IdeBundle.message("updates.plugins.settings.checkbox"), settings.state::isPluginsCheckNeeded)
+      }.largeGapAfter()
 
       row {
         cell {
@@ -116,7 +119,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
         }.largeGapAfter()
       }
 
-      if (manager != ExternalUpdateManager.TOOLBOX) {
+      if (!(manager == ExternalUpdateManager.TOOLBOX || Registry.`is`("ide.hide.toolbox.promo"))) {
         row(" ") { }
         row { component(SeparatorComponent()) }
         row {

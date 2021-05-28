@@ -7,7 +7,7 @@ JsonPathFile
       PsiElement(IDENTIFIER)('book')
     JsonPathSegmentExpressionImpl(SEGMENT_EXPRESSION)
       PsiElement([)('[')
-      JsonPathSpliceExpressionImpl(SPLICE_EXPRESSION)
+      JsonPathSliceExpressionImpl(SLICE_EXPRESSION)
         PsiElement(INTEGER_NUMBER)('-1')
         PsiElement(:)(':')
       PsiElement(])(']')

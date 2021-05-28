@@ -9,6 +9,7 @@ import circlet.code.api.CodeReviewService
 import circlet.code.api.ReviewIdentifier
 import circlet.code.codeReview
 import circlet.platform.client.KCircletClient
+import com.intellij.space.stats.SpaceStatsCounterCollector
 
 internal fun createSpaceReviewParticipantController(
   client: KCircletClient,
@@ -32,6 +33,7 @@ internal class SpaceReviewParticipantControllerImpl(
   private val codeReviewService: CodeReviewService = client.codeReview
 
   override suspend fun addParticipant(participant: TD_MemberProfile) {
+    SpaceStatsCounterCollector.EDIT_PARTICIPANT.log(role, SpaceStatsCounterCollector.ParticipantEditType.ADD)
     codeReviewService.addReviewParticipant(
       projectIdentifier,
       reviewIdentifier,
@@ -41,6 +43,7 @@ internal class SpaceReviewParticipantControllerImpl(
   }
 
   override suspend fun removeParticipant(participant: TD_MemberProfile) {
+    SpaceStatsCounterCollector.EDIT_PARTICIPANT.log(role, SpaceStatsCounterCollector.ParticipantEditType.REMOVE)
     codeReviewService.removeReviewParticipant(
       projectIdentifier,
       reviewIdentifier,

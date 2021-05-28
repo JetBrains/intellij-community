@@ -134,7 +134,10 @@ final class MacDmgBuilder {
     ant.copy(file: macZipPath, tofile: sitFile.path)
     ant.zip(destfile: sitFile.path, update: true) {
       zipfileset(dir: productJsonDir.toString(), prefix: zipRoot)
-      zipfileset(dir: macAdditionalDirPath, prefix: zipRoot)
+
+      if (macAdditionalDirPath != null) {
+        zipfileset(dir: macAdditionalDirPath, prefix: zipRoot)
+      }
     }
     if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.MAC_SIGN_STEP) || !isMac()) {
       ftpAction("mkdir") {}
@@ -332,14 +335,16 @@ final class MacDmgBuilder {
       )
     }
     catch (BuildException e) {
-      buildContext.messages.info("SSH command failed, retrieving log file")
+      buildContext.messages.error("SSH command failed, details are available in $logFileName: $e.message", e)
+    }
+    finally {
+      buildContext.messages.info("Retrieving log file from SSH command '$command' to $logFileName")
       ftpAction("get", true, null, 3) {
         ant.fileset(dir: artifactsPath) {
           include(name: '**/' + logFileName)
         }
       }
       buildContext.notifyArtifactWasBuilt(new File(artifactsPath, logFileName).toPath())
-      buildContext.messages.error("SSH command failed, details are available in $logFileName: $e.message", e)
     }
   }
 

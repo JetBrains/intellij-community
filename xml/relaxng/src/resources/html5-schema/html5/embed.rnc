@@ -10,26 +10,50 @@ namespace local = ""
 
 ## Images: <img>
 
-	img.elem =
-		element img { img.inner & img.attrs }
-	img.attrs =
+	shared-img.attrs =
 		(	common.attrs
 		&	img.attrs.src
 		&	img.attrs.srcset?
 		&	img.attrs.sizes?
-		&	img.attrs.alt? # ARIA: if alt empty, only allowed role value is "presentation"; check in assertions
+		&	img.attrs.generator-unable-to-provide-required-alt?
 		&	img.attrs.height?
 		&	img.attrs.width?
 		&	img.attrs.usemap?
 		&	img.attrs.ismap?
 		&	img.attrs.decoding?
+		&	img.attrs.loading?
 		&	img.attrs.border? # obsolete
 		&	referrerpolicy?
 		&	embedded.content.attrs.crossorigin?
+		)
+
+	img.elem =
+		element img { img.inner & img.attrs }
+	img.attrs =
+		(	shared-img.attrs
+		&	img.attrs.alt?
 		&	(	common.attrs.aria.implicit.img
-			|	common.attrs.aria
+			|	common.attrs.aria.role.button
+			|	common.attrs.aria.role.checkbox
+			|	common.attrs.aria.role.img
+			|	common.attrs.aria.role.link
+			|	common.attrs.aria.role.menuitem
+			|	common.attrs.aria.role.menuitemcheckbox
+			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.none
+			|	common.attrs.aria.role.option
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.progressbar
+			|	common.attrs.aria.role.scrollbar
+			|	common.attrs.aria.role.separator
+			|	common.attrs.aria.role.slider
+			|	common.attrs.aria.role.switch
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.treeitem
+			|	common.attrs.aria.role.doc-cover
 			)?
 		)
+
 		img.attrs.src =
 			attribute src {
 				common.data.uri.non-empty
@@ -45,6 +69,10 @@ namespace local = ""
 		img.attrs.alt =
 			attribute alt {
 				text
+			}
+		img.attrs.generator-unable-to-provide-required-alt =
+			attribute generator-unable-to-provide-required-alt {
+				string ""
 			}
 		img.attrs.height =
 			attribute height {
@@ -68,6 +96,10 @@ namespace local = ""
 				|	string "async"
 				|	string "auto"
 				)
+			}
+		img.attrs.loading =
+			attribute loading {
+				w:string "lazy" | w:string "eager"
 			}
 		img.attrs.border =
 			attribute border {
@@ -181,8 +213,7 @@ namespace local = ""
 			                    | inputmode
 			                    | nonce
 			                    | onabort
-			                    | onautocomplete
-			                    | onautocompleteerror
+			                    | onauxclick
 			                    | onblur
 			                    | oncancel
 			                    | oncanplay
@@ -191,12 +222,13 @@ namespace local = ""
 			                    | onclick
 			                    | onclose
 			                    | oncontextmenu
+			                    | oncopy
 			                    | oncuechange
+			                    | oncut
 			                    | ondblclick
 			                    | ondrag
 			                    | ondragend
 			                    | ondragenter
-			                    | ondragexit
 			                    | ondragleave
 			                    | ondragover
 			                    | ondragstart
@@ -208,6 +240,7 @@ namespace local = ""
 			                    | onfocus
 			                    | onfocusin
 			                    | onfocusout
+			                    | onformdata
 			                    | oninput
 			                    | oninvalid
 			                    | onkeydown
@@ -224,7 +257,7 @@ namespace local = ""
 			                    | onmouseout
 			                    | onmouseover
 			                    | onmouseup
-			                    | onwheel
+			                    | onpaste
 			                    | onpause
 			                    | onplay
 			                    | onplaying
@@ -233,17 +266,23 @@ namespace local = ""
 			                    | onreset
 			                    | onresize
 			                    | onscroll
+			                    | onsecuritypolicyviolation
 			                    | onseeked
 			                    | onseeking
+			                    | onslotchange
 			                    | onselect
-			                    | onsort
 			                    | onstalled
 			                    | onsubmit
 			                    | onsuspend
 			                    | ontimeupdate
 			                    | ontoggle
+			                    | ontransitioncancel
+			                    | ontransitionend
+			                    | ontransitionrun
+			                    | ontransitionstart
 			                    | onvolumechange
 			                    | onwaiting
+			                    | onwheel
 			                    | role
 			                    | aria-atomic
 			                    | aria-busy
@@ -278,6 +317,8 @@ namespace local = ""
 			                    | itemid
 			                    | name
 			                    | align
+			                    | hspace
+			                    | vspace
 			                    | about
 			                    | prefix
 			                    | property
@@ -369,7 +410,6 @@ namespace local = ""
 		&	(	common.attrs.aria.role.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.img
-			|	common.attrs.aria.role.presentation
 			)?
 		)
 		object.attrs.data =
@@ -416,9 +456,6 @@ namespace local = ""
 		(	common.attrs
 		&	param.attrs.name
 		&	param.attrs.value
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 		param.attrs.name =
 			attribute name {
@@ -442,10 +479,9 @@ namespace local = ""
 		&	iframe.attrs.name?
 		&	iframe.attrs.width?
 		&	iframe.attrs.height?
+		&	iframe.attrs.loading?
 		&	iframe.attrs.sandbox?
 		&	iframe.attrs.allowfullscreen?
-		&	iframe.attrs.allowpaymentrequest?
-		&	iframe.attrs.allowusermedia?
 		&	iframe.attrs.allow?
 		&	referrerpolicy?
 		&	(	common.attrs.aria.role.application
@@ -470,6 +506,10 @@ namespace local = ""
 			attribute height {
 				common.data.integer.non-negative
 			}
+		iframe.attrs.loading =
+			attribute loading {
+				w:string "lazy" | w:string "eager"
+			}
 		iframe.attrs.width =
 			attribute width {
 				common.data.integer.non-negative
@@ -481,14 +521,6 @@ namespace local = ""
 		iframe.attrs.allowfullscreen =
 			attribute allowfullscreen {
 				w:string "allowfullscreen" | w:string ""
-			} & v5only
-		iframe.attrs.allowpaymentrequest =
-			attribute allowpaymentrequest {
-				w:string "allowpaymentrequest" | w:string ""
-			} & v5only
-		iframe.attrs.allowusermedia =
-			attribute allowusermedia {
-				w:string "allowusermedia" | w:string ""
 			} & v5only
 		iframe.attrs.allow =
 			attribute allow {
@@ -511,9 +543,6 @@ namespace local = ""
 	map.attrs =
 		(	common.attrs
 		&	map.attrs.name
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		) # REVISIT make id required in Schematron
 		map.attrs.name =
 			attribute name {

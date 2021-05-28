@@ -12,19 +12,21 @@
 			|	common.attrs.aria.role.alert
 			|	common.attrs.aria.role.alertdialog
 			|	common.attrs.aria.role.application
-			|	common.attrs.aria.role.contentinfo
 			|	common.attrs.aria.role.dialog
 			|	common.attrs.aria.role.feed
 			|	common.attrs.aria.role.log
 			|	common.attrs.aria.role.marquee
+			|	common.attrs.aria.role.presentation
 			|	common.attrs.aria.role.region
 			|	common.attrs.aria.role.status
 			|	common.attrs.aria.role.tabpanel
 			|	common.attrs.aria.landmark.banner
 			|	common.attrs.aria.landmark.complementary
+			|	common.attrs.aria.landmark.contentinfo
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.landmark.main
 			|	common.attrs.aria.landmark.navigation
+			|	common.attrs.aria.landmark.note
 			|	common.attrs.aria.landmark.search
 			|	common.attrs.aria.role.doc-abstract
 			|	common.attrs.aria.role.doc-acknowledgments
@@ -38,10 +40,12 @@
 			|	common.attrs.aria.role.doc-credits
 			|	common.attrs.aria.role.doc-dedication
 			|	common.attrs.aria.role.doc-endnotes
+			|	common.attrs.aria.role.doc-epigraph
 			|	common.attrs.aria.role.doc-epilogue
 			|	common.attrs.aria.role.doc-errata
 			|	common.attrs.aria.role.doc-example
 			|	common.attrs.aria.role.doc-foreword
+			|	common.attrs.aria.role.doc-glossary
 			|	common.attrs.aria.role.doc-index
 			|	common.attrs.aria.role.doc-introduction
 			|	common.attrs.aria.role.doc-notice
@@ -112,6 +116,7 @@
 			|	common.attrs.aria.role.feed
 			|	common.attrs.aria.role.region
 			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.doc-dedication
 			|	common.attrs.aria.role.doc-example
 			|	common.attrs.aria.role.doc-footnote
 			|	common.attrs.aria.role.doc-pullquote
