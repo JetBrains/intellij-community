@@ -11,7 +11,7 @@ import com.intellij.util.Processor
 import org.jetbrains.plugins.groovy.lang.psi.util.getAccessorName
 import org.jetbrains.plugins.groovy.lang.psi.util.getPropertyName
 
-class GradleManagedPropertySetterReferenceSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>() {
+class GradleManagedPropertySetterReferenceSearcher : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>(true) {
 
   override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     val method = queryParameters.method
