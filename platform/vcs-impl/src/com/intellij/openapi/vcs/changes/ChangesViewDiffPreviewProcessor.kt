@@ -56,7 +56,7 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
         this@ChangesViewDiffPreviewProcessor.selectFilePath(filePath)
       }
       else {
-        changesView.getAllChangesFromSameChangelist(curChange.change)
+        (changesView.getAllChangesFromSameChangelist(curChange.change) ?: changesView.getAllChangesFromSameAmendNode(curChange.change))
           ?.find { ChangesUtil.getFilePath(it) == filePath }
           ?.let { change ->
             val changeToSelect = ChangeWrapper(change)

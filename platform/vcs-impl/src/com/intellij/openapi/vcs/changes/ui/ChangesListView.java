@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.DnDAware;
@@ -14,9 +14,11 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcs.commit.EditedCommitNode;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.StreamEx;
@@ -386,14 +388,26 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
 
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
+    return getAllChangesUnder(change, ChangesBrowserChangeListNode.class);
+  }
+
+  @Nullable
+  public List<Change> getAllChangesFromSameAmendNode(@NotNull Change change) {
+    return getAllChangesUnder(change, EditedCommitNode.class);
+  }
+
+  @Nullable
+  public List<Change> getAllChangesUnder(@NotNull Change change, Class<? extends ChangesBrowserNode<?>> @NotNull ... nodeClasses) {
     DefaultMutableTreeNode node = findNodeInTree(change);
+    boolean changeListNodeRequested = ArrayUtil.contains(ChangesBrowserChangeListNode.class, nodeClasses);
+
     while (node != null) {
-      if (node instanceof ChangesBrowserChangeListNode) {
-        return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
+      if (ArrayUtil.contains(node.getClass(), nodeClasses)) {
+        return ((ChangesBrowserNode<?>)node).getAllChangesUnder();
       }
       if (node == getRoot()) {
-        if (Registry.is("vcs.skip.single.default.changelist") ||
-            !ChangeListManager.getInstance(myProject).areChangeListsEnabled()) {
+        if (changeListNodeRequested && (Registry.is("vcs.skip.single.default.changelist") ||
+                                        !ChangeListManager.getInstance(myProject).areChangeListsEnabled())) {
           return getRoot().getAllChangesUnder();
         }
       }
