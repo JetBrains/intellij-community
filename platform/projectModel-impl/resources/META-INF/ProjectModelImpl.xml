@@ -22,5 +22,15 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
     <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModel"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl" preload="await"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.storage.url.VirtualFileUrlManager"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl"/>
+
+    <projectService serviceImplementation="com.intellij.workspaceModel.ide.WorkspaceModelTopics"/>
+
+    <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl"
+                    serviceInterface="com.intellij.workspaceModel.ide.JpsProjectLoadingManager"/>
+
+    <workspaceModel.preUpdateHandler implementation="com.intellij.workspaceModel.ide.impl.ModulePreUpdateHandler"/>
+
   </extensions>
 </idea-plugin>
