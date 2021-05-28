@@ -259,8 +259,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
     if (project != null) {
       Editor editor = InjectedDataKeys.EDITOR.getData(dataContext);
-      Editor hostEditor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
-      if (editor != null && hostEditor != null && hostEditor != editor && !project.isDisposed()) {
+      if (editor != null && !project.isDisposed()) {
         PsiFile injectedFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
         if (injectedFile != null) {
           return injectedFile.getLanguage();
