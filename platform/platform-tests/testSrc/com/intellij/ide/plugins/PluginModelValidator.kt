@@ -86,6 +86,15 @@ internal class PluginModelValidator {
         contentModuleInfo.descriptor.getChild("dependencies")?.let { dependencies ->
           checkDependencies(dependencies, contentModuleInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
         }
+
+        contentModuleInfo.descriptor.getChild("depends")?.let {
+          errors.add(PluginValidationError(
+            "Old format must be not used for a module: `depends` tag is used",
+            mapOf(
+              "descriptorFile" to contentModuleInfo.descriptorFile,
+              "depends" to it,
+            )))
+        }
       }
     }
     return getErrors()
@@ -119,6 +128,9 @@ internal class PluginModelValidator {
     System.getProperty("plugin.graph.out")?.let {
       val outFile = Path.of(it)
       Files.writeString(outFile, "@startjson\n$graphAsString\n@endjson")
+    }
+    System.getProperty("plugin.graph.echarts")?.let {
+      PluginGraphWriter(pluginIdToInfo).write(Path.of(it))
     }
   }
 
@@ -157,7 +169,7 @@ internal class PluginModelValidator {
             continue
           }
 
-          val ref = Reference(id, isPlugin = true)
+          val ref = Reference(id, isPlugin = true, dependency)
           assert(!referencingModuleInfo.dependencies.contains(ref))
           referencingModuleInfo.dependencies.add(ref)
           continue
@@ -205,7 +217,7 @@ internal class PluginModelValidator {
         continue
       }
 
-      referencingModuleInfo.dependencies.add(Reference(moduleName, isPlugin = false))
+      referencingModuleInfo.dependencies.add(Reference(moduleName, isPlugin = false, moduleInfo))
 
       for (dependsElement in referencingModuleInfo.descriptor.children) {
         if (dependsElement.name != "depends") {
@@ -368,7 +380,7 @@ internal data class ModuleInfo(
     get() = pluginId != null
 }
 
-internal data class Reference(val name: String, val isPlugin: Boolean)
+internal data class Reference(val name: String, val isPlugin: Boolean, val moduleInfo: ModuleInfo?)
 
 private data class PluginInfo(val pluginId: String,
                               val sourceModuleName: String,
@@ -495,7 +507,7 @@ private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo) {
   }
 }
 
-private fun pathToShortString(file: Path): String {
+internal fun pathToShortString(file: Path): String {
   return if (homePath.fileSystem === file.fileSystem) homePath.relativize(file).toString() else file.toString()
 }
 
@@ -540,6 +552,6 @@ private fun loadFileInModule(sourceModule: PluginModelValidator.Module, fileName
   return null
 }
 
-private fun hasContentOrDependenciesInV2Format(descriptor: XmlElement): Boolean {
+internal fun hasContentOrDependenciesInV2Format(descriptor: XmlElement): Boolean {
   return descriptor.children.any { it.name == "content" || it.name == "dependencies" }
 }

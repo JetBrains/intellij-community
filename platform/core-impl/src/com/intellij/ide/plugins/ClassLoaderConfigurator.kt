@@ -205,7 +205,7 @@ class ClassLoaderConfigurator(
       // Module dependency is always optional. If the module depends on an unavailable plugin, it will not be loaded.
       val descriptor = (pluginSet.findEnabledModule(item.name) ?: return).requireDescriptor()
       if (descriptor.classLoader !== coreLoader) {
-        loaders.add(descriptor.classLoader!!)
+        loaders.add(descriptor.classLoader ?: throw IllegalStateException("Class loader is not configured (module=$descriptor)"))
       }
     }
     for (item in module.dependencies.plugins) {

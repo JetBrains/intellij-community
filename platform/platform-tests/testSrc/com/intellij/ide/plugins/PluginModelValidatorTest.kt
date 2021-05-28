@@ -110,6 +110,22 @@ class PluginModelValidatorTest {
     return listOf(module)
   }
 
+  @Test
+  fun `module must not have dependencies in old format`() {
+    val root = inMemoryFs.fs.getPath("/")
+    val modules = producePluginWithContentModule(root) {
+      it.replace("</dependencies>", "</dependencies><depends>com.intellij.modules.lang</depends>")
+    }
+    val validator = PluginModelValidator()
+    validator.validate(modules)
+    assertThat(validator.getErrors().joinToString { it.message!! }).isEqualTo("""
+      Old format must be not used for a module: `depends` tag is used (
+        descriptorFile=/intellij.plugin.module/intellij.plugin.module.xml,
+        depends=XmlElement(name=depends, attributes={}, children=[], content=com.intellij.modules.lang)
+      )
+    """.trimIndent())
+  }
+
   private fun produceDependencyAndDependentPlugins(root: Path, mutator: (String) -> String): List<PluginModelValidator.Module> {
     val modules = mutableListOf<PluginModelValidator.Module>()
     modules.add(writePluginXml("intellij.dependency", root.resolve("dependency"), """
@@ -130,6 +146,28 @@ class PluginModelValidatorTest {
     return modules
   }
 
+  private fun producePluginWithContentModule(root: Path, mutator: (String) -> String): List<PluginModelValidator.Module> {
+    val modules = mutableListOf<PluginModelValidator.Module>()
+    modules.add(writePluginXml("intellij.plugin", root.resolve("plugin"), """
+      <!--suppress PluginXmlValidity -->
+      <idea-plugin package="plugin">
+        <id>plugin</id>
+        <content>
+          <module name="intellij.plugin.module"/>
+        </content>
+      </idea-plugin>
+    """))
+
+    modules.add(writeModuleXml("intellij.plugin.module", root.resolve("intellij.plugin.module"), mutator("""
+      <idea-plugin package="plugin.module">
+        <dependencies>
+          <plugin id="com.intellij.modules.lang"/>
+        </dependencies>
+      </idea-plugin>
+    """)))
+    return modules
+  }
+
   private fun assertThatErrorsToMatchSnapshot(validator: PluginModelValidator) {
     assertThat(getErrorsAsString(validator.getErrors(), includeStackTrace = false)).toMatchSnapshot(snapshot)
   }
@@ -137,6 +175,11 @@ class PluginModelValidatorTest {
 
 private fun writePluginXml(name: String, root: Path, @Language("xml") content: String): PluginModelValidator.Module {
   root.resolve("META-INF/plugin.xml").write(content.trimIndent())
+  return TestModule(name, listOf(root))
+}
+
+private fun writeModuleXml(name: String, root: Path, @Language("xml") content: String): PluginModelValidator.Module {
+  root.resolve("$name.xml").write(content.trimIndent())
   return TestModule(name, listOf(root))
 }
 
