@@ -44,7 +44,10 @@ public final class MutedLogger extends DelegatingLogger<Logger> {
       .expireAfterAccess(Math.max(EXPIRATION, 0), TimeUnit.MINUTES)
       .removalListener((@Nullable String key, @Nullable LoggerWithCounter value, RemovalCause cause) -> {
         if (key != null && value != null) {
-          value.logger.logOccurrences(key.substring(0, key.indexOf(':')), value.counter.get());
+          int errorIndex = key.indexOf(':');
+          String error = key.substring(0, errorIndex);
+          String hash = key.substring(errorIndex + 1, key.indexOf(':', errorIndex + 1));
+          value.logger.logOccurrences(Boolean.parseBoolean(error), hash, value.counter.get());
         }
       })
       .build();
@@ -77,18 +80,30 @@ public final class MutedLogger extends DelegatingLogger<Logger> {
     super(delegate);
   }
 
-  private void logOccurrences(String hash, int occurrences) {
+  private void logOccurrences(boolean error, String hash, int occurrences) {
     if (occurrences > 1) {
-      log("Exception with the following hash '" + hash + "' was reported " + occurrences + " times");
+      log(error, "Exception with the following hash '" + hash + "' was reported " + occurrences + " times");
     }
   }
 
-  private void log(@NotNull String message) {
-    if (myDelegate instanceof IdeaLogger) {
-      ((IdeaLogger)myDelegate).error(false, message, null);
+  private void log(boolean error, @NotNull String message) {
+    if (error) {
+      if (myDelegate instanceof IdeaLogger) {
+        ((IdeaLogger)myDelegate).error(false, message, null);
+      }
+      else {
+        myDelegate.error(message, (Throwable)null);
+      }
     }
     else {
-      myDelegate.error(message, (Throwable)null);
+      myDelegate.warn(message);
+    }
+  }
+
+  @Override
+  public void warn(String message, @Nullable Throwable t) {
+    if (shouldBeReported(false, t)) {
+      myDelegate.warn(message, t);
     }
   }
 
@@ -96,7 +111,7 @@ public final class MutedLogger extends DelegatingLogger<Logger> {
   public void error(Object message) {
     if (message instanceof IdeaLoggingEvent) {
       Throwable t = ((IdeaLoggingEvent)message).getThrowable();
-      if (!shouldBeReported(t)) {
+      if (!shouldBeReported(true, t)) {
         return;
       }
     }
@@ -105,42 +120,42 @@ public final class MutedLogger extends DelegatingLogger<Logger> {
 
   @Override
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
-    if (shouldBeReported(t)) {
+    if (shouldBeReported(true, t)) {
       myDelegate.error(message, t, attachments);
     }
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
-    if (shouldBeReported(t)) {
+    if (shouldBeReported(true, t)) {
       myDelegate.error(message, t, details);
     }
   }
 
   @Override
   public void error(String message, @Nullable Throwable t) {
-    if (shouldBeReported(t)) {
+    if (shouldBeReported(true, t)) {
       myDelegate.error(message, t);
     }
   }
 
   @Override
   public void error(@NotNull Throwable t) {
-    if (shouldBeReported(t)) {
+    if (shouldBeReported(true, t)) {
       myDelegate.error(t);
     }
   }
 
-  private boolean shouldBeReported(@Nullable Throwable t) {
+  private boolean shouldBeReported(boolean error, @Nullable Throwable t) {
     if (t == null || !LoadingState.COMPONENTS_LOADED.isOccurred()) {
       return true;
     }
 
     int hash = ThrowableInterner.computeAccurateTraceHashCode(t);
-    String key = hash + ":" + t;
+    String key = error + ":" + hash + ":" + t;
     LoggerWithCounter holder = MyCache.cache.get(key, __ -> new LoggerWithCounter(this));
     if (holder.counter.compareAndSet(0, 1)) {
-      log("Hash for the following exception is '" + hash + "': " + t);
+      log(error, "Hash for the following exception is '" + hash + "': " + t);
       return true;
     }
 
@@ -148,7 +163,7 @@ public final class MutedLogger extends DelegatingLogger<Logger> {
 
     int occurrences = holder.counter.incrementAndGet();
     if (occurrences % FREQUENCY == 0) {
-      logOccurrences(String.valueOf(hash), occurrences);
+      logOccurrences(error, String.valueOf(hash), occurrences);
     }
 
     return false;
