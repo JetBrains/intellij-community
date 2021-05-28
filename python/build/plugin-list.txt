@@ -6,7 +6,6 @@ intellij.cwm.plugin
 intellij.editorconfig
 intellij.emojipicker
 intellij.featuresTrainer
-intellij.vcs.git.featuresTrainer
 intellij.grazie
 intellij.markdown
 intellij.marketplace
@@ -21,6 +20,7 @@ intellij.terminal
 intellij.textmate
 intellij.vcs.changeReminder
 intellij.vcs.git
+intellij.vcs.git.featuresTrainer
 intellij.vcs.github
 intellij.vcs.hg
 intellij.vcs.svn
