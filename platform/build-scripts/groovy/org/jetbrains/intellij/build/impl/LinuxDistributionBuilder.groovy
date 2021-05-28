@@ -306,6 +306,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "--volume=${snapDir}/${customizer.snapName}.png:/build/prime/meta/gui/icon.png:ro")
         arg(value: "--volume=${snapDir}/result:/build/result")
         arg(value: "--volume=${buildContext.paths.distAll}:/build/dist.all:ro")
+        arg(value: "--volume=${unixSnapDistPath}/lib/classpath.txt:/build/dist.all/lib/classpath.txt:ro")
         arg(value: "--volume=${unixSnapDistPath}:/build/dist.unix:ro")
         arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
         arg(value: "--workdir=/build")
