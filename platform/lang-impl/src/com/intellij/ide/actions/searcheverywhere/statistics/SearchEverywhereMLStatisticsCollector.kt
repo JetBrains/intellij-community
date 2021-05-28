@@ -66,8 +66,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              seSessionId: Int) {
     val data = mutableMapOf<String, Any>()
     // put common data
-    data.putAll(buildCommonFeaturesMap(seSessionId, indexes, closePopup, elements.size, symbolsTyped,
-                                       backspacesTyped, symbolsInQuery, tabId, myProject))
+    data.putAll(buildContextData(indexes, closePopup, elements.size, symbolsTyped, backspacesTyped))
+    data.putAll(buildCommonFeaturesMap(seSessionId, symbolsInQuery, tabId, myProject))
     val currentTime = System.currentTimeMillis()
 
     // put listVersions: pattern length to elements in listModel; and ML IDs
@@ -234,11 +234,9 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
       }
       return ItemInfo(actionId, contributorId, data)
     }
-
-    fun buildCommonFeaturesMap(seSessionId: Int, indexes: IntArray, closePopup: Boolean, size: Int, symbolsTyped: Int, backspacesTyped: Int,
-                               symbolsInQuery: Int, tabId: String, project: Project?): Map<String, Any> {
+    
+    fun buildContextData(indexes: IntArray, closePopup: Boolean, size: Int, symbolsTyped: Int, backspacesTyped: Int): Map<String, Any> {
       val data = hashMapOf<String, Any>()
-      data[SESSION_ID_LOG_DATA_KEY] = seSessionId
       if (indexes.isNotEmpty()) {
         data[SELECTED_INDEXES_DATA_KEY] = indexes.map { it.toString() }
       }
@@ -246,7 +244,13 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
       if (size != -1) data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = size
       if (symbolsTyped != -1) data[TYPED_SYMBOL_KEYS] = symbolsTyped
       if (backspacesTyped != -1) data[TYPED_BACKSPACES_DATA_KEY] = backspacesTyped
-      if(symbolsInQuery != -1) data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = symbolsInQuery
+      return data
+    }
+
+    fun buildCommonFeaturesMap(seSessionId: Int, symbolsInQuery: Int, tabId: String, project: Project?): Map<String, Any> {
+      val data = hashMapOf<String, Any>()
+      data[SESSION_ID_LOG_DATA_KEY] = seSessionId
+      data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = symbolsInQuery
       data[SE_TAB_ID_KEY] = tabId
 
       val globalTotalStats = globalSummary.totalSummary

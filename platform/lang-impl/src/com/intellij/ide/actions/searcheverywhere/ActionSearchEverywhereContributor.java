@@ -112,7 +112,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
       final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
       if (Registry.is("mlse.enable.ranking") /*&& TODO flag should be here */) {
-        descriptor = getMLWeightedItemDescriptor(element, this.getSearchProviderId(), myProject);
+        descriptor = getMLWeightedItemDescriptor(element, this.getSearchProviderId(), myProject, pattern.length());
       }
       else {
         descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
@@ -231,12 +231,14 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
       KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), activeKeymap, window);
     });
   }
-  
+
   private static FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element,
-                                                                                        @NotNull String contributorId, @Nullable Project project) {
+                                                                                               @NotNull String contributorId,
+                                                                                               @Nullable Project project,
+                                                                                               int patternLength) {
     final SearchEverywhereSessionService service = ApplicationManager.getApplication().getService(SearchEverywhereSessionService.class);
     final double mlWeight = SearchEverywhereMLCache.getCache(service.getCurrentSessionId())
-      .getMLWeight(element, contributorId, project, "Actions" /*TODO Actions or All depending on the flag*/);
+      .getMLWeight(element, contributorId, project, "Actions", patternLength /*TODO Actions or All depending on the flag*/);
     return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
   }
 

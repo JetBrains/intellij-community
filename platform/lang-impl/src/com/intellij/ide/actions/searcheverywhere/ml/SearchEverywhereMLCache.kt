@@ -22,14 +22,14 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun getMLWeight(element: Any, contributorId: String, project: Project?, seTabId: String): Double {
+  fun getMLWeight(element: Any, contributorId: String, project: Project?, seTabId: String, patternLength: Int): Double {
     val mlId = getMLId(element)
     return elementIdsToWeights.computeIfAbsent(mlId) {
       if (element !is GotoActionModel.MatchedValue) {
         throw NotImplementedError("Not supported for objects other than GotoActionModel.MatchedValue")
       }
       val features = mutableMapOf<String, Any>()
-      features.putAll(buildCommonFeaturesMap(seSessionId, intArrayOf(), false, -1, -1, -1, -1, seTabId, project))
+      features.putAll(buildCommonFeaturesMap(seSessionId,patternLength, seTabId, project))
       val itemInfo = fillActionItemInfo(element.matchingDegree, System.nanoTime(), element, contributorId)
       features.putAll(itemInfo.additionalData)
 
