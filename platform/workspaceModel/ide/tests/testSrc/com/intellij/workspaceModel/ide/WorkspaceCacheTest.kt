@@ -66,7 +66,7 @@ class WorkspaceCacheTest {
       }
     }
 
-    WorkspaceModel.getInstance(project).cache?.saveCacheNow()
+    WorkspaceModelCache.getInstance(project)?.saveCacheNow()
 
     val project2 = loadProject(projectData.projectDir)
 
@@ -90,7 +90,7 @@ class WorkspaceCacheTest {
       }
     }
 
-    WorkspaceModel.getInstance(project).cache?.saveCacheNow()
+    WorkspaceModelCache.getInstance(project)?.saveCacheNow()
 
     val project2 = loadProject(projectData.projectDir)
 
@@ -115,7 +115,7 @@ class WorkspaceCacheTest {
       }
     }
 
-    WorkspaceModel.getInstance(project).cache?.saveCacheNow()
+    WorkspaceModelCache.getInstance(project)?.saveCacheNow()
 
     Disposer.dispose(pointDisposable)
     val anotherPointDisposable = Disposer.newDisposable(project, "Point disposable")

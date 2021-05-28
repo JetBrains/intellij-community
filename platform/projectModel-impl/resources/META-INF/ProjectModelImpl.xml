@@ -20,5 +20,7 @@
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexFacade"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectFileIndex"
                     serviceImplementation="com.intellij.openapi.roots.impl.ProjectFileIndexImpl"/>
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModel"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl" preload="await"/>
   </extensions>
 </idea-plugin>

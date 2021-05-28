@@ -12,7 +12,6 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.getProjectDataPath
 import com.intellij.openapi.project.projectsDataDir
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.io.exists
 import com.intellij.util.io.inputStream
@@ -35,15 +34,13 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Collectors
 
 @ApiStatus.Internal
-class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Disposable) : Disposable, WorkspaceModelCache {
+class WorkspaceModelCacheImpl(private val project: Project) : Disposable, WorkspaceModelCache {
   private val cacheFile: Path
   private val invalidateProjectCacheMarkerFile: File
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
   private val serializer: EntityStorageSerializer = EntityStorageSerializerImpl(PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
 
   init {
-    Disposer.register(parentDisposable, this)
-
     cacheFile = initCacheFile()
     invalidateProjectCacheMarkerFile = project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate").toFile()
 
@@ -104,7 +101,7 @@ class WorkspaceModelCacheImpl(private val project: Project, parentDisposable: Di
 
   override fun dispose() = Unit
 
-  fun loadCache(): WorkspaceEntityStorage? {
+  override fun loadCache(): WorkspaceEntityStorage? {
     try {
       if (!cacheFile.exists()) return null
 

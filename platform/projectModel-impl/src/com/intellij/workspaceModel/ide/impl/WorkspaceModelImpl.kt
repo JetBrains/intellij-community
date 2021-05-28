@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.diagnostic.ActivityCategory
@@ -20,7 +20,8 @@ import kotlin.system.measureTimeMillis
 
 class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposable {
   private val cacheEnabled = (!ApplicationManager.getApplication().isUnitTestMode && WorkspaceModelImpl.cacheEnabled) || forceEnableCaching
-  override val cache = if (cacheEnabled) WorkspaceModelCacheImpl(project, this) else null
+  override val cache: WorkspaceModelCache?
+    get() = if (cacheEnabled) WorkspaceModelCache.getInstance(project) else null
 
   /** specifies ID of a entity which changes should be printed to the log */
   private val entityToTrace = System.getProperty("idea.workspace.model.track.facet.id")?.let {
@@ -41,6 +42,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     log.debug { "Loading workspace model" }
 
     val initialContent = WorkspaceModelInitialTestContent.pop()
+    val cache = if (cacheEnabled) WorkspaceModelCache.getInstance(project) else null
     val projectEntities = when {
       initialContent != null -> initialContent
       cache != null -> {
@@ -72,7 +74,7 @@ class WorkspaceModelImpl(private val project: Project) : WorkspaceModel, Disposa
     loadedFromCache = false
   }
 
-  internal fun printInfoAboutTracedEntity(storage: WorkspaceEntityStorage, storageDescription: String) {
+  fun printInfoAboutTracedEntity(storage: WorkspaceEntityStorage, storageDescription: String) {
     if (entityToTrace != null) {
       log.info("Traced entity from $storageDescription: ${storage.resolve(entityToTrace)?.configurationXmlTag}")
     }
