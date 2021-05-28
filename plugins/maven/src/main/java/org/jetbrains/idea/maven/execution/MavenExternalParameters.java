@@ -118,7 +118,7 @@ public final class MavenExternalParameters {
                                                MavenServerUtil.findMavenBasedir(parameters.getWorkingDirFile()).getPath());
     }
 
-    String vmOptions = getRunVmOptions(runnerSettings, project, parameters);
+    String vmOptions = getRunVmOptions(runnerSettings, project, parameters.getWorkingDirPath());
     addVMParameters(params.getVMParametersList(), mavenHome, vmOptions);
 
     File confFile = MavenUtil.getMavenConfFile(new File(mavenHome));
@@ -162,12 +162,12 @@ public final class MavenExternalParameters {
     return params;
   }
 
-  private static @Nullable String getRunVmOptions(@Nullable MavenRunnerSettings runnerSettings,
-                                                  @Nullable Project project,
-                                                  @NotNull MavenRunnerParameters parameters) {
+  static @Nullable String getRunVmOptions(@Nullable MavenRunnerSettings runnerSettings,
+                                          @Nullable Project project,
+                                          @NotNull String workingDirPath) {
     if (runnerSettings != null && !StringUtil.isEmptyOrSpaces(runnerSettings.getVmOptions())) return runnerSettings.getVmOptions();
     if (project == null) return null;
-    String multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(parameters.getWorkingDirPath());
+    String multimoduleDirectory = MavenDistributionsCache.getInstance(project).getMultimoduleDirectory(workingDirPath);
     return readJvmConfigOptions(multimoduleDirectory);
   }
 
