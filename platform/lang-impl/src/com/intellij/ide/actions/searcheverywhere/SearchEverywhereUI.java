@@ -10,7 +10,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
@@ -139,7 +138,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     Runnable scopeChangedCallback = () -> {
       updateSearchFieldAdvertisement();
-      scheduleRebuildList();
+      scheduleRebuildList(RebuildReason.SCOPE_CHANGED);
     };
     myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
                                           shortcutSupplier, project == null ? null : new ShowInFindToolWindowAction(), this);
@@ -420,11 +419,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private static final long REBUILD_LIST_DELAY = 100;
   private final Alarm rebuildListAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
-  private void scheduleRebuildList() {
-    if (rebuildListAlarm.getActiveRequestCount() == 0) rebuildListAlarm.addRequest(() -> rebuildList(), REBUILD_LIST_DELAY);
+  private void scheduleRebuildList(RebuildReason reason) {
+    if (rebuildListAlarm.getActiveRequestCount() == 0) rebuildListAlarm.addRequest(() -> rebuildList(reason), REBUILD_LIST_DELAY);
   }
 
-  private void rebuildList() {
+  private void rebuildList(RebuildReason reason) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     stopSearching();
@@ -462,7 +461,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     }
 
-    SearchEverywhereMLCache.getCache(mySessionId).listRebuilt(rawPattern.length(), myListModel.getFoundElementsInfo());
+    myMLStatisticsCollector.recordListRebuilt(mySessionId, myHeader.getSelectedTab().getID(), reason, myListModel.getFoundElementsInfo());
 
     myListModel.expireResults();
     contributors.forEach(contributor -> myListModel.setHasMore(contributor, false));
@@ -574,7 +573,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
           }
         }
 
-        scheduleRebuildList();
+        scheduleRebuildList(RebuildReason.TEXT_CHANGED);
       }
     });
 
@@ -596,7 +595,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       public void exitDumbMode() {
         ApplicationManager.getApplication().invokeLater(() -> {
           updateSearchFieldAdvertisement();
-          scheduleRebuildList();
+          scheduleRebuildList(RebuildReason.EXIT_DUMB_MODE);
         });
       }
     });
@@ -1172,7 +1171,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (showResetFilter) {
         ActionListener clearFiltersAction = e -> {
           myHeader.getSelectedTab().clearFilter();
-          scheduleRebuildList();
+          scheduleRebuildList(RebuildReason.TAB_CHANGED);
         };
         if (firstPartAdded.get()) emptyStatus.appendText(", ");
         String resetFilterMessage = IdeBundle.message("searcheverywhere.reset.filters");

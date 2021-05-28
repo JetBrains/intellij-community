@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.ML_WEIGHT_KEY
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereMLStatisticsCollector.Companion.buildCommonFeaturesMap
@@ -11,7 +10,6 @@ import com.intellij.openapi.project.Project
 import java.util.*
 
 class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
-  val listVersions: MutableList<Pair<Int, List<Int>>> = ArrayList()
   private var idCounter = 0
   private val elementIds = IdentityHashMap<Any, Int>()
   private val elementIdsToFeatures = mutableMapOf<Int, Map<String, Any>>()
@@ -41,7 +39,7 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
       features
     }[ML_WEIGHT_KEY] as Double
   }
-  
+
   fun getFeatures(element: Any): Map<String, Any>? {
     val id = elementIds[element] ?: return null
     return elementIdsToFeatures[id]
@@ -49,13 +47,6 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
 
   fun getMLId(element: Any): Int {
     return elementIds.computeIfAbsent(element) { idCounter++ }
-  }
-
-  fun listRebuilt(patternLength: Int, infos: List<SearchEverywhereFoundElementInfo>) {
-    listVersions.add(patternLength to infos.map {
-      val obj = ((it.element as? GotoActionModel.MatchedValue)?.value as? GotoActionModel.ActionWrapper)?.action ?: it
-      getMLId(obj)
-    })
   }
 
   companion object {

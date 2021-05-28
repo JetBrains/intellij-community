@@ -2,10 +2,9 @@
 package com.intellij.ide.actions.searcheverywhere.statistics
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.RebuildReason
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache.Companion.removeCache
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.ide.util.gotoByName.GotoActionModel.MatchedValue
 import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger.log
@@ -49,7 +48,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                              tabId: String,
                              seSessionId: Int) {
-    if (myIsReporting && isActionOrAllTab(tabId)) {
+    if (isLoggingEnabled(tabId)) {
       val foundElements = elementsProvider.invoke()
       NonUrgentExecutor.getInstance().execute {
         reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, foundElements, tabId, seSessionId)
@@ -69,10 +68,6 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     data.putAll(buildContextData(indexes, closePopup, elements.size, symbolsTyped, backspacesTyped))
     data.putAll(buildCommonFeaturesMap(seSessionId, symbolsInQuery, tabId, myProject))
     val currentTime = System.currentTimeMillis()
-
-    // put listVersions: pattern length to elements in listModel; and ML IDs
-    val listVersionsAndMLIds = getListVersionsAndMlIdsAndDisposeCache(seSessionId, indexes, elements)
-    data.putAll(listVersionsAndMLIds)
     
     // put data for every item
     data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
@@ -101,6 +96,24 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                         seSessionId: Int) {
     reportElements(EMPTY, true, keysTyped, backspacesTyped, textLength, elementsProvider, tabId, seSessionId)
   }
+  
+  fun recordListRebuilt(seSessionId: Int, tabId: String, reason: RebuildReason, elements: List<SearchEverywhereFoundElementInfo>) {
+    if (isLoggingEnabled(tabId)) {
+      NonUrgentExecutor.getInstance().execute {
+        val data = hashMapOf<String, Any>()
+        data[SESSION_ID_LOG_DATA_KEY] = seSessionId
+        data[REBUILD_REASON_KEY] = reason
+        val currentTime = System.currentTimeMillis()
+        data[CURRENT_TIME_KEY] = currentTime
+        data[REBUILD_ELEMENTS] = elements.take(REPORTED_ITEMS_LIMIT).map {
+          getListItemsNames(it, currentTime).toMap()
+        }
+        log(LIST_REBUILT, data)
+      }
+    }
+  }
+
+  private fun isLoggingEnabled(tabId: String): Boolean = myIsReporting && isActionOrAllTab(tabId)
 
   private fun getListItemsNames(item: SearchEverywhereFoundElementInfo,
                                 currentTime: Long): ItemInfo {
@@ -137,10 +150,12 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val REPORTED_ITEMS_LIMIT = 50
 
     private const val SESSION_FINISHED = "sessionFinished"
+    private const val LIST_REBUILT = "listRebuilt"
     private const val TYPED_SYMBOL_KEYS = "typedSymbolKeys"
     private const val TYPED_BACKSPACES_DATA_KEY = "typedBackspaces"
     private const val SESSION_ID_LOG_DATA_KEY = "sessionId"
     private const val COLLECTED_RESULTS_DATA_KEY = "collectedItems"
+    private const val REBUILD_ELEMENTS = "rebuildElements"
     private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
 
     // context features
@@ -151,9 +166,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val LOCAL_MIN_USAGE_COUNT_KEY = "minUsage"
     private const val GLOBAL_MAX_USAGE_COUNT_KEY = "globalMaxUsage"
     private const val GLOBAL_MIN_USAGE_COUNT_KEY = "globalMinUsage"
-    private const val LIST_VERSIONS_KEY = "listVersions"
-    private const val SELECTED_ML_IDS_KEY = "selectedMlIds"
-
+    private const val REBUILD_REASON_KEY = "rebuildReason"
+    private const val CURRENT_TIME_KEY = "currentTime"
     // action features
     private const val IS_ACTION_DATA_KEY = "isAction"
     private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
@@ -273,23 +287,6 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data[OPEN_FILE_TYPES_KEY] = fem.openFiles.map { file -> file.fileType.name }.distinct()
       }
 
-      return data
-    }
-    
-    private fun getListVersionsAndMlIdsAndDisposeCache(seSessionId: Int, indexes: IntArray, 
-                                                       elements: List<SearchEverywhereFoundElementInfo>): Map<String, Any> {
-      val data = mutableMapOf<String, Any>()
-      val cache = SearchEverywhereMLCache.getCache(seSessionId)
-      data[LIST_VERSIONS_KEY] = cache.listVersions
-      // get mlId for each selected element
-      val selectedMlIds = indexes.map {
-        val obj = with(elements[it]) { ((element as? MatchedValue)?.value as? GotoActionModel.ActionWrapper)?.action ?: this }
-        cache.getMLId(obj)
-      }
-
-      data[SELECTED_ML_IDS_KEY] = selectedMlIds
-      // dispose it here otherwise it will be disposed before this place if we dispose in SearchEverywhereUI.dispose 
-      removeCache(seSessionId) 
       return data
     }
   }
