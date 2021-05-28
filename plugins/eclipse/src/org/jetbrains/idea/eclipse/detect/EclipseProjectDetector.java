@@ -82,14 +82,18 @@ class EclipseProjectDetector extends ProjectDetector {
         new EclipseProjectDetector().collectProjectPaths(projects);
         projects.removeAll(manager.getRecentPaths());
         if (projects.isEmpty()) return;
+        HashSet<String> set = new HashSet<>(projects);
         if (group == null) {
           group = new ProjectGroup(groupName);
           group.setBottomGroup(true);
+          group.setProjects(new ArrayList<>(set));
           manager.addGroup(group);
         }
-        ArrayList<String> list = new ArrayList<>(new HashSet<>(projects));
-        group.setProjects(list);
-        ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(list));
+        else {
+          group.getProjects().retainAll(set);
+        }
+        ProjectGroup finalGroup = group;
+        ApplicationManager.getApplication().invokeLater(() -> onFinish.accept(finalGroup.getProjects()));
       }
       catch (Exception e) {
         LOG.error(e);
