@@ -152,6 +152,14 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
   }
 }
 
+/**
+ * Keep in sync with KotlinPluginUtil.KNOWN_KOTLIN_PLUGIN_IDS
+ */
+private val KNOWN_KOTLIN_PLUGIN_IDS = setOf(
+  "org.jetbrains.kotlin",
+  "com.intellij.appcode.kmm",
+  "org.jetbrains.kotlin.native.appcode"
+)
 
 private fun readRootElementChild(reader: XMLStreamReader2,
                                  descriptor: RawPluginDescriptor,
@@ -165,7 +173,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
       if (descriptor.id == null) {
         descriptor.id = getNullifiedContent(reader)
       }
-      else if (descriptor.id != "org.jetbrains.kotlin") {
+      else if (!KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id)) {
         // no warn and no redefinition for kotlin - compiler.xml is a known issue
         LOG.warn("id redefinition (${reader.locationInfo})")
         descriptor.id = getNullifiedContent(reader)
@@ -178,7 +186,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
     "category" -> descriptor.category = getNullifiedContent(reader)
     "version" -> {
       // kotlin includes compiler.xml that due to some reasons duplicates version
-      if (descriptor.version == null || descriptor.id != "org.jetbrains.kotlin") {
+      if (descriptor.version == null || !KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id)) {
         descriptor.version = getNullifiedContent(reader)
       }
       else {
