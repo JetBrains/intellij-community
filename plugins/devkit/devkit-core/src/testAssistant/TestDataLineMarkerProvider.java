@@ -25,6 +25,7 @@ import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 import org.jetbrains.uast.*;
 
+import javax.swing.*;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -35,6 +36,11 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
   @Override
   public String getName() {
     return DevKitBundle.message("gutter.name.test.data.line.marker");
+  }
+
+  @Override
+  public Icon getIcon() {
+    return AllIcons.Nodes.Folder;
   }
 
   @Override
