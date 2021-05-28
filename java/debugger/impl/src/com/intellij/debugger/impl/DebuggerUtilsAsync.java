@@ -377,6 +377,13 @@ public final class DebuggerUtilsAsync {
     return toCompletableFuture(() -> eventSet.resume());
   }
 
+  public static CompletableFuture<List<ReferenceType>> allCLasses(VirtualMachine virtualMachine) {
+    if (virtualMachine instanceof VirtualMachineImpl && isAsyncEnabled()) {
+      return ((VirtualMachineImpl)virtualMachine).allClassesAsync();
+    }
+    return toCompletableFuture(() -> virtualMachine.allClasses());
+  }
+
   /**
    * Schedule future completion in a separate command with the same priority and suspend context (if available)
    * as in the command being processed at the moment

@@ -64,21 +64,8 @@ public class VirtualMachineProxyImpl implements JdiTimer, VirtualMachineProxy {
     canPopFrames();
 
     if (canBeModified()) { // no need to spend time here for read only sessions
-      try {
         // this will cache classes inside JDI and enable faster search of classes later
-        virtualMachine.allClasses();
-      }
-      catch (VMDisconnectedException e) {
-        throw e;
-      }
-      catch (Throwable e) {
-        // catch all exceptions in order not to break vm attach process
-        // Example:
-        // java.lang.IllegalArgumentException: Invalid JNI signature character ';'
-        //  caused by some bytecode "optimizers" which break type signatures as a side effect.
-        //  solution if you are using JAX-WS: add -Dcom.sun.xml.bind.v2.bytecode.ClassTailor.noOptimize=true to JVM args
-        LOG.info(e);
-      }
+        DebuggerUtilsAsync.allCLasses(virtualMachine);
     }
 
     virtualMachine.topLevelThreadGroups().forEach(this::threadGroupCreated);
