@@ -28,10 +28,10 @@ public class UsageViewPresentation {
     // Default value. to be overwritten in most cases.
   private @NlsContexts.ListItem String myNonCodeUsagesString = UsageViewBundle.message("node.non.code.usages");
   private @NlsContexts.ListItem String myCodeUsagesString = UsageViewBundle.message("node.found.usages");
-  private boolean myShowReadOnlyStatusAsRed = false;
-  private boolean myShowCancelButton = false;
+  private boolean myShowReadOnlyStatusAsRed;
+  private boolean myShowCancelButton;
   private boolean myOpenInNewTab = true;
-  private int myRerunHash = 0;//this value shouldn't be copied and doesn't affect equals/hashcode methods
+  private int myRerunHash;//this value shouldn't be copied and doesn't affect equals/hashcode methods
   private boolean myCodeUsages = true;
   private boolean myUsageTypeFilteringAvailable;
 
@@ -161,6 +161,7 @@ public class UsageViewPresentation {
    * @deprecated please avoid using this method, because it leads to string concatenations that are shown in UI
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public @Nls String getUsagesWord() {
     return UsageViewBundle.message("usage.name", 1);
@@ -171,7 +172,6 @@ public class UsageViewPresentation {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @SuppressWarnings("unused")
   public void setUsagesWord(@NotNull @Nls String usagesWord) {}
 
   public @NlsContexts.TabTitle String getTabName() {
