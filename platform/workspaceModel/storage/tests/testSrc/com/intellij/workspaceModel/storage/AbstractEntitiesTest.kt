@@ -122,7 +122,6 @@ class AbstractEntitiesTest {
   }
 
   @Test
-  @Ignore("Fails on TC, don't know why")
   fun `keep children ordering after rbs 1`() {
     val builder = WorkspaceEntityStorageBuilder.create()
     val middleEntity1 = builder.addMiddleEntity("Two")
@@ -139,7 +138,6 @@ class AbstractEntitiesTest {
   }
 
   @Test
-  @Ignore("Fails on TC, don't know why")
   fun `keep children ordering after rbs 2`() {
     val builder = WorkspaceEntityStorageBuilder.create()
     val middleEntity1 = builder.addMiddleEntity("Two")

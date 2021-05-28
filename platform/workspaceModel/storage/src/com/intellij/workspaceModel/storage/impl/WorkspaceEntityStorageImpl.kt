@@ -595,12 +595,13 @@ internal class WorkspaceEntityStorageBuilderImpl(
 
       // Try to sort children
       // At the moment we sort only one-to-abstract-many children. This behaviour can be updated or removed at all
-      parentsWithSortedChildren.forEach { (parentId, connectionId) ->
-        val remoteParentId = replaceMap.getValue(parentId)
-        val children = replaceWith.refs.getOneToAbstractManyChildren(connectionId, remoteParentId.asParent())
+      parentsWithSortedChildren.forEach { (notThisParentId, connectionId) ->
+        if (!replaceMap.containsValue(notThisParentId)) return@forEach
+        val thisParentId = replaceMap.inverse().getValue(notThisParentId)
+        val children = replaceWith.refs.getOneToAbstractManyChildren(connectionId, notThisParentId.asParent())
                          ?.mapNotNull { replaceMap.inverse().getValue(it.id) } ?: return@forEach
-        val localChildren = this.refs.getOneToAbstractManyChildren(connectionId, parentId.asParent())?.toMutableSet() ?: return@forEach
-        val savedLocalChildren = this.refs.getOneToAbstractManyChildren(connectionId, parentId.asParent()) ?: return@forEach
+        val localChildren = this.refs.getOneToAbstractManyChildren(connectionId, thisParentId.asParent())?.toMutableSet() ?: return@forEach
+        val savedLocalChildren = this.refs.getOneToAbstractManyChildren(connectionId, thisParentId.asParent()) ?: return@forEach
         val newChildren = mutableListOf<ChildEntityId>()
         for (child in children) {
           val removed = localChildren.remove(child.asChild())
@@ -610,7 +611,7 @@ internal class WorkspaceEntityStorageBuilderImpl(
         }
         newChildren.addAll(localChildren)
         if (savedLocalChildren != newChildren) {
-          this.refs.updateChildrenOfParent(connectionId, parentId.asParent(), newChildren)
+          this.refs.updateChildrenOfParent(connectionId, notThisParentId.asParent(), newChildren)
         }
       }
 
