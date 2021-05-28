@@ -143,11 +143,13 @@ public class MavenServerCMDState extends CommandLineState {
     return params;
   }
 
-  static String getDefaultXmxProperty(String xmxProperty, String xmsProperty) {
+  @NotNull
+  static String getDefaultXmxProperty(@NotNull String xmxProperty, @Nullable String xmsProperty) {
+    assert xmxProperty.startsWith("-Xmx");
     if (xmsProperty != null) {
-      Pattern pattern = Pattern.compile("^(-Xmx|-Xms)(\\d+)([kK]|[mM]|[gG])?$");
-      Matcher matcherXms = pattern.matcher(xmsProperty);
-      Matcher matcherXmx = pattern.matcher(xmxProperty);
+      assert xmsProperty.startsWith("-Xms");
+      Matcher matcherXms = MemoryProperty.MEMORY_PROPERTY_PATTERN.matcher(xmsProperty);
+      Matcher matcherXmx = MemoryProperty.MEMORY_PROPERTY_PATTERN.matcher(xmxProperty);
       if (matcherXms.find() && matcherXmx.find()) {
         MemoryProperty xmsMemoryProperty = new MemoryProperty(matcherXms.group(1), matcherXms.group(2), matcherXms.group(3));
         MemoryProperty xmxMemoryProperty = new MemoryProperty(matcherXmx.group(1), matcherXmx.group(2), matcherXmx.group(3));
@@ -239,6 +241,7 @@ public class MavenServerCMDState extends CommandLineState {
   }
 
   private static class MemoryProperty {
+    static final Pattern MEMORY_PROPERTY_PATTERN = Pattern.compile("^(-Xmx|-Xms)(\\d+)([kK]|[mM]|[gG])?$");
     final String type;
     final long valueBytes;
     final MemoryUnit unit;

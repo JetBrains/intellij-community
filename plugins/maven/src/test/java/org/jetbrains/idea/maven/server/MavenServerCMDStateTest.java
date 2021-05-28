@@ -47,4 +47,14 @@ public class MavenServerCMDStateTest {
     String xmxProperty = MavenServerCMDState.getDefaultXmxProperty("-Xmx1m", "-Xms1G");
     Assert.assertEquals("-Xmx1g", xmxProperty);
   }
+
+  @Test(expected = AssertionError.class)
+  public void testGetDefaultXmxPropertyError() {
+    MavenServerCMDState.getDefaultXmxProperty("-Xms1m", "-Xms1G");
+  }
+
+  @Test(expected = AssertionError.class)
+  public void testGetDefaultXmxPropertyError2() {
+    MavenServerCMDState.getDefaultXmxProperty("-Xmx1m", "-Xmx1G");
+  }
 }
