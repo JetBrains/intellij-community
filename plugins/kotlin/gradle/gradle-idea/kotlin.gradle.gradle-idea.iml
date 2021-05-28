@@ -45,7 +45,6 @@
     <orderEntry type="module" module-name="kotlin.native" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.objectSerializer.annotations" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
