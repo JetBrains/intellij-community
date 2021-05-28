@@ -17,6 +17,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.FilePath
@@ -130,16 +131,19 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
         val dataToApply = fileDataList.filter { !it.isOutdated() }
         if (dataToApply.isEmpty()) return@writeInEdtAndWait
 
-        val events = dataToApply.map { it.event }
-        ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
-        dataToApply.forEach { it.apply() }
-        ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
+        applyRefresh(dataToApply)
       }
     }
   }
 
   private fun readFromGit(file: GitIndexVirtualFile): IndexFileData? {
     val (oldHash, oldModificationStamp) = runReadAction { Pair(file.hash, file.modificationStamp) }
+    return readFromGit(file, oldHash, oldModificationStamp)
+  }
+
+  private fun readFromGit(file: GitIndexVirtualFile,
+                          oldHash: Hash?,
+                          oldModificationStamp: Long): IndexFileData? {
     val stagedFile = readMetadataFromGit(file.root, file.filePath)
     val newHash = stagedFile?.hash()
     if (oldHash != newHash) {
@@ -150,6 +154,13 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     return null
   }
 
+  private fun applyRefresh(fileDataList: List<IndexFileData>) {
+    val events = fileDataList.map { it.event }
+    ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
+    fileDataList.forEach { it.apply() }
+    ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
+  }
+
   internal fun write(file: GitIndexVirtualFile, requestor: Any?, newContent: ByteArray, newModificationStamp: Long) {
     try {
       val newModStamp = if (newModificationStamp > 0) newModificationStamp else LocalTimeCounter.currentTime()
@@ -157,20 +168,24 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(listOf(event))
 
       val oldHash = file.hash
-      val newHash = Ref<Hash>(null)
+      val oldModificationStamp = file.modificationStamp
 
-      PotemkinProgress(GitBundle.message("stage.vfs.write.process", file.name), project, null, null).runInBackground {
-        if (oldHash != readMetadataFromGit(file.root, file.filePath)?.hash()) {
-          LOG.warn("Skipping write for $file as it is not up to date")
-          return@runInBackground
+      val applyChanges = computeUnderPotemkinProgress(project, GitBundle.message("stage.vfs.write.process", file.name)) {
+        val indexFileData = readFromGit(file, oldHash, oldModificationStamp)
+        if (indexFileData != null) {
+          LOG.info("Detected memory-disk conflict in $file")
+          return@computeUnderPotemkinProgress {
+            applyRefresh(listOf(indexFileData))
+          }
         }
-        newHash.set(GitIndexUtil.write(project, file.root, file.filePath, ByteArrayInputStream(newContent), file.isExecutable))
+        val newHash = GitIndexUtil.write(project, file.root, file.filePath, ByteArrayInputStream(newContent), file.isExecutable)
         LOG.debug("Written $file. newHash=$newHash")
+        return@computeUnderPotemkinProgress {
+          file.setDataFromWrite(newHash, newContent.size.toLong(), newModStamp)
+        }
       }
 
-      if (newHash.get() != null) {
-        file.setDataFromWrite(newHash.get(), newContent.size.toLong(), newModStamp)
-      }
+      applyChanges.invoke()
 
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(listOf(event))
     }
@@ -252,6 +267,14 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
           action()
         }
       }
+    }
+
+    private fun <T> computeUnderPotemkinProgress(project: Project, @NlsContexts.ProgressTitle message: String, computation: () -> T): T {
+      val result = Ref<T>(null)
+      PotemkinProgress(message, project, null, null).runInBackground {
+        result.set(computation())
+      }
+      return result.get()
     }
   }
 
