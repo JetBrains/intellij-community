@@ -2,14 +2,14 @@
 
 package org.jetbrains.kotlin.idea.findUsages.dialogs;
 
-import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.find.findUsages.FindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesDialog;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.StateRestoringCheckBox;
 import org.jetbrains.annotations.NotNull;
@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.psiUtil.PsiUtilsKt;
 
 import javax.swing.*;
+import java.awt.*;
 
 public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinPropertyFindUsagesOptions> {
     public KotlinFindPropertyUsagesDialog(
@@ -36,8 +37,10 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
     private StateRestoringCheckBox readAccesses;
     private StateRestoringCheckBox writeAccesses;
+    private StateRestoringCheckBox searchForBase;
     private StateRestoringCheckBox overrideUsages;
     private StateRestoringCheckBox expectedUsages;
+    private StateRestoringCheckBox searchInOverridingMethods;
 
     @NotNull
     @Override
@@ -56,6 +59,8 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
         options.isReadAccess = isSelected(readAccesses);
         options.isWriteAccess = isSelected(writeAccesses);
+        options.isSearchForBaseAccessors = isSelected(searchForBase);
+        options.isSearchInOverridingMethods = isSelected(searchInOverridingMethods);
         options.setSearchOverrides(isSelected(overrideUsages));
         if (expectedUsages != null) {
             options.setSearchExpected(expectedUsages.isSelected());
@@ -65,7 +70,6 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
     @Override
     protected JPanel createFindWhatPanel() {
         JPanel findWhatPanel = new JPanel();
-        findWhatPanel.setBorder(IdeBorderFactory.createTitledBorder(FindBundle.message("find.what.group"), true));
         findWhatPanel.setLayout(new BoxLayout(findWhatPanel, BoxLayout.Y_AXIS));
 
         KotlinPropertyFindUsagesOptions options = getFindUsagesOptions();
@@ -96,6 +100,20 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
         super.addUsagesOptions(optionsPanel);
 
         KtNamedDeclaration property = (KtNamedDeclaration) getPsiElement();
+        if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD) || property.hasModifier(KtTokens.OPEN_KEYWORD) ||
+            property instanceof KtParameter && !((KtParameter)property).hasValOrVar()) {
+            searchForBase = createCheckbox(JavaBundle.message("find.options.include.accessors.base.checkbox"),
+                                           getFindUsagesOptions().isSearchForBaseAccessors, true);
+            JComponent decoratedCheckbox = new ComponentPanelBuilder(searchForBase).
+                    withComment(JavaBundle.message("find.options.include.accessors.base.checkbox.comment")).createPanel();
+            decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+            optionsPanel.add(decoratedCheckbox);
+        }
+
+        if (property instanceof KtParameter) {
+            searchInOverridingMethods = addCheckboxToPanel(JavaBundle.message("find.options.search.overriding.methods.checkbox"),
+                                                           getFindUsagesOptions().isSearchInOverridingMethods, optionsPanel, true);
+        }
 
         boolean isAbstract = property.hasModifier(KtTokens.ABSTRACT_KEYWORD);
         boolean isOpen = property.hasModifier(KtTokens.OPEN_KEYWORD);
@@ -136,7 +154,7 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
     @Override
     protected void update() {
-        setOKActionEnabled(isSelected(readAccesses) || isSelected(writeAccesses));
+        setOKActionEnabled(isSelected(readAccesses) || isSelected(writeAccesses) || isSelected(searchForBase));
     }
 
     private static final boolean disableComponentAndDestructionSearchDefault = false;

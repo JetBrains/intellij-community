@@ -238,6 +238,9 @@ public abstract class AbstractFindUsagesDialog extends DialogWrapper {
       panel.add(scopePanel, BorderLayout.SOUTH);
       return panel;
     }
+    else if (findWhatPanel != null && myFindOptionsCount <= 2) {
+      findWhatPanel.setBorder(JBUI.Borders.emptyTop(9));
+    }
 
     return findWhatPanel;
   }
