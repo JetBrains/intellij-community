@@ -48,9 +48,8 @@ public class ExpressionParser {
   private static final TokenSet ID_OR_SUPER = TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.SUPER_KEYWORD);
   private static final TokenSet TYPE_START = TokenSet.orSet(
     ElementType.PRIMITIVE_TYPE_BIT_SET, TokenSet.create(JavaTokenType.IDENTIFIER, JavaTokenType.AT));
-  private static final TokenSet PATTERN_MODIFIERS = TokenSet.create(JavaTokenType.FINAL_KEYWORD);
 
-  private static final Key<Boolean> CASE_LABEL = Key.create("java.parser.case.label.expr");
+  static final Key<Boolean> CASE_LABEL = Key.create("java.parser.case.label.expr");
 
   private final JavaParser myParser;
 
@@ -65,17 +64,10 @@ public class ExpressionParser {
 
   @Nullable
   public PsiBuilder.Marker parseCaseLabel(@NotNull PsiBuilder builder) {
-    CASE_LABEL.set(builder, Boolean.TRUE);
-    try {
-      return parseAssignment(builder);
-    }
-    finally {
-      CASE_LABEL.set(builder, null);
-    }
+    return myParser.getStatementParser().parseCaseLabel(builder).first;
   }
 
-  @Nullable
-  private PsiBuilder.Marker parseAssignment(final PsiBuilder builder) {
+  @Nullable PsiBuilder.Marker parseAssignment(final PsiBuilder builder) {
     final PsiBuilder.Marker left = parseConditional(builder);
     if (left == null) return null;
 
@@ -176,45 +168,6 @@ public class ExpressionParser {
   }
 
   @Nullable
-  private PsiBuilder.Marker parsePattern(final PsiBuilder builder) {
-    PsiBuilder.Marker typeTestPattern = parseSimpleTypeTest(builder);
-    if (typeTestPattern != null) return typeTestPattern;
-
-    PsiBuilder.Marker pattern = builder.mark();
-    PsiBuilder.Marker patternVariable = builder.mark();
-    PsiBuilder.Marker modifiers = myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS).first;
-
-    PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
-    if (type == null) {
-      patternVariable.drop();
-      pattern.drop();
-      modifiers.drop();
-      return null;
-    }
-    if (!expect(builder, JavaTokenType.IDENTIFIER)) {
-      patternVariable.drop();
-      modifiers.drop();
-    } else {
-      patternVariable.done(JavaElementType.PATTERN_VARIABLE);
-    }
-    pattern.done(JavaElementType.TYPE_TEST_PATTERN);
-    return pattern;
-  }
-
-  @Nullable
-  private PsiBuilder.Marker parseSimpleTypeTest(final PsiBuilder builder) {
-    PsiBuilder.Marker pattern = builder.mark();
-    PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
-    if (type == null || builder.getTokenType() == JavaTokenType.IDENTIFIER) {
-      pattern.rollbackTo();
-      return null;
-    }
-    pattern.done(JavaElementType.TYPE_TEST_PATTERN);
-    return pattern;
-  }
-
-
-  @Nullable
   private PsiBuilder.Marker parseBinary(final PsiBuilder builder, final ExprType type, final TokenSet ops) {
     PsiBuilder.Marker result = parseExpression(builder, type);
     if (result == null) return null;
@@ -269,12 +222,23 @@ public class ExpressionParser {
 
       final PsiBuilder.Marker expression = left.precede();
       advanceGtToken(builder, tokenType);
-
-      final PsiBuilder.Marker right = patternExpected ? parsePattern(builder) : parseExpression(builder, ExprType.SHIFT);
-      if (right == null) {
-        error(builder, JavaPsiBundle.message(patternExpected ? "expected.type" : "expected.expression"));
-        expression.done(toCreate);
-        return expression;
+      if (patternExpected) {
+        if (!myParser.getPatternParser().isPattern(builder)) {
+          PsiBuilder.Marker type = parseExpression(builder, ExprType.TYPE);
+          if (type == null) {
+            error(builder, JavaPsiBundle.message("expected.type"));
+          }
+          expression.done(toCreate);
+          return expression;
+        }
+        myParser.getPatternParser().parsePrimaryPattern(builder);
+      } else {
+        final PsiBuilder.Marker right = parseExpression(builder, ExprType.SHIFT);
+        if (right == null) {
+          error(builder, JavaPsiBundle.message("expected.expression"));
+          expression.done(toCreate);
+          return expression;
+        }
       }
 
       expression.done(toCreate);

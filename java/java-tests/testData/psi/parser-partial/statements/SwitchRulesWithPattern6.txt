@@ -1,13 +1,10 @@
-PsiJavaFile:SwitchRules12.java
+PsiJavaFile:SwitchRulesWithPattern6.java
   PsiSwitchLabeledRule
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
-    PsiExpressionList
-      PsiLiteralExpression:1
-        PsiJavaToken:INTEGER_LITERAL('1')
-      PsiJavaToken:COMMA(',')
-      PsiErrorElement:Expression, pattern, 'default' or 'null' expected
-        <empty list>
+    PsiCaseLabelElementList
+      PsiNullElementImpl
+        PsiJavaToken:NULL_KEYWORD('null')
     PsiWhiteSpace(' ')
     PsiJavaToken:ARROW('->')
     PsiWhiteSpace(' ')
