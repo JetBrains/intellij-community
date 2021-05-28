@@ -17,6 +17,8 @@ public interface GotoTargetPresentationProvider {
   ExtensionPointName<GotoTargetPresentationProvider> EP_NAME = ExtensionPointName.create("com.intellij.gotoTargetPresentationProvider");
 
   /**
+   * @param element        target to render in the popup
+   * @param differentNames whether all targets in the popup have the same name, which means their container should be rendered instead
    * @see com.intellij.ide.util.PsiElementRenderingInfo#targetPresentation
    * @see TargetPresentation#builder
    */
