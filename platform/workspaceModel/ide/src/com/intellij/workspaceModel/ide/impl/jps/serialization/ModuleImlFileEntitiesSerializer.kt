@@ -275,7 +275,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
         INHERITED_JDK_TYPE -> ModuleDependencyItem.InheritedSdkDependency
         LIBRARY_TYPE -> {
           val level = dependencyElement.getAttributeValueStrict(LEVEL_ATTRIBUTE)
-          val parentId = levelToLibraryTableId(level)
+          val parentId = LibraryNameGenerator.getLibraryTableId(level)
           val libraryId = LibraryId(dependencyElement.getAttributeValueStrict(NAME_ATTRIBUTE), parentId)
           ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
         }

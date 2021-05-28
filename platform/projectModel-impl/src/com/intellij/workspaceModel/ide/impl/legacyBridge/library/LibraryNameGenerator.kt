@@ -2,6 +2,8 @@
 package com.intellij.workspaceModel.ide.impl.legacyBridge.library
 
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryTableId
+import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer
 
 object LibraryNameGenerator {
   private const val UNIQUE_INDEX_LIBRARY_NAME_SUFFIX = "-d1a6f608-UNIQUE-INDEX-f29c-4df6-"
@@ -43,6 +45,12 @@ object LibraryNameGenerator {
 
       index++
     }
+  }
+
+  fun getLibraryTableId(level: String): LibraryTableId = when (level) {
+    JpsLibraryTableSerializer.MODULE_LEVEL -> error("this method isn't supposed to be used for module-level libraries")
+    JpsLibraryTableSerializer.PROJECT_LEVEL -> LibraryTableId.ProjectLibraryTableId
+    else -> LibraryTableId.GlobalLibraryTableId(level)
   }
 }
 
