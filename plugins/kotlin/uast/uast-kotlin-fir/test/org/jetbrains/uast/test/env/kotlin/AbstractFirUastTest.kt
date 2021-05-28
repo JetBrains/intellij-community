@@ -12,6 +12,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.registerServiceInstance
 import com.intellij.util.io.URLUtil
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
@@ -60,6 +61,11 @@ abstract class AbstractFirUastTest : KotlinLightCodeInsightFixtureTestCase(), Fi
     override fun setUp() {
         super.setUp()
         registerExtensionPointAndServiceIfNeeded()
+    }
+
+    override fun tearDown() {
+        project.invalidateCaches(file as? KtFile)
+        super.tearDown()
     }
 
     override fun isFirPlugin(): Boolean = true
