@@ -80,7 +80,7 @@ public final class TestDataLineMarkerProvider extends LineMarkerProviderDescript
       UElement uParent = uElement.getUastParent();
       if (uParent != null) {
         PsiElement psiClass = uParent.getJavaPsi();
-        TestFramework testFramework = psiClass instanceof PsiClass ? TestFrameworks.detectFramework((PsiClass)psiClass) : null;
+        TestFramework testFramework = psiClass instanceof PsiClass && getTestDataBasePath((PsiClass)psiClass) != null ? TestFrameworks.detectFramework((PsiClass)psiClass) : null;
         if (testFramework != null && testFramework.isTestMethod(uElement.getJavaPsi())) {
           return new RunLineMarkerContributor.Info(ActionManager.getInstance().getAction("TestData.Navigate"));
         }
