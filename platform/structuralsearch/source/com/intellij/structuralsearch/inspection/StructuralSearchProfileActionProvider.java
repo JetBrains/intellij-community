@@ -62,7 +62,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     return Arrays.asList(actionGroup, new RemoveInspectionAction(panel));
   }
 
-  public static void enableSSIfDisabled(@NotNull InspectionProfileModifiableModel profile, @NotNull Project project) {
+  private static void enableSSIfDisabled(@NotNull InspectionProfileModifiableModel profile, @NotNull Project project) {
     if (profile.getToolsOrNull(SSBasedInspection.SHORT_NAME, null) != null &&
         !profile.isToolEnabled(HighlightDisplayKey.find(SSBasedInspection.SHORT_NAME))) {
       profile.setToolEnabled(SSBasedInspection.SHORT_NAME, true, project, false);

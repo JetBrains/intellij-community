@@ -31,7 +31,6 @@ public class InspectionTreeAdvertiser extends EmptyInspectionTreeLinkProvider {
       public void actionPerformed(ActionEvent e) {
         final Project project = panel.getProject();
         final InspectionProfileModifiableModel profile = panel.getProfile();
-        StructuralSearchProfileActionProvider.enableSSIfDisabled(profile, project);
 
         final StructuralSearchDialog dialog = new StructuralSearchDialog(new SearchContext(project), false, true);
         if (!dialog.showAndGet()) return;
