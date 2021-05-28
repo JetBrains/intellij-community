@@ -224,7 +224,7 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
     val projectData = generateAndImportTemplateProject()
     assertGutterRunActionsSize(projectData["project"]["TestCase"].element, 2)
     assertGutterRunActionsSize(projectData["project"]["TestCase"]["test1"].element, 2)
-    assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"].element, 2)
+    //assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"].element, 2)
     assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"]["test2"].element, 2)
   }
 

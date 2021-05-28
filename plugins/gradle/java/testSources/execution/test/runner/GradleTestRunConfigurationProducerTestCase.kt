@@ -123,7 +123,7 @@ abstract class GradleTestRunConfigurationProducerTestCase : GradleImportingTestC
         @Test public void test1() {}
         @Test public void test2() {}
         @Test public void test3() {}
-        public static void main(args: Array<String>) {}
+        public static void main(String[] args) {}
       }
     """.trimIndent())
     val packageTestCaseFile = createProjectSubFile("src/test/java/pkg/TestCase.java", """
