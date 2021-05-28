@@ -8,7 +8,7 @@ import com.intellij.testFramework.VfsTestUtil
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.fixtures.PyTestCase
 import com.jetbrains.python.psi.PyFile
-import com.jetbrains.python.testing.PyTestFrameworkService
+import com.jetbrains.python.testing.PyTestFactory
 import com.jetbrains.python.testing.PythonTestConfigurationsModel
 import com.jetbrains.python.testing.TestRunnerService
 
@@ -45,7 +45,7 @@ class PyTestCreationModelTest : PyTestCase() {
   }
 
   fun testWithPyTest() {
-    service.projectConfiguration = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
+    service.projectConfiguration = PyTestFactory().id
     val modelToTestClass = getModel()!!
     assertEquals("test_create_tst.py", modelToTestClass.fileName)
     assertEquals("", modelToTestClass.className)

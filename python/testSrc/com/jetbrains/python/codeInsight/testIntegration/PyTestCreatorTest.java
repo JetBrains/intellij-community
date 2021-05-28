@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.testing.PyTestFactory;
 import com.jetbrains.python.testing.PythonTestConfigurationsModel;
 import com.jetbrains.python.testing.TestRunnerService;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +47,7 @@ public final class PyTestCreatorTest extends PyTestCase {
     final PyTestCreationModel model = prepareAndCreateModel();
     boolean p2k = LanguageLevel.forElement(myFixture.getFile()).isPython2();
     TestRunnerService testRunnerService = TestRunnerService.getInstance(myFixture.getModule());
-    testRunnerService.setProjectConfiguration(PyNames.PY_TEST);
+    testRunnerService.setProjectConfiguration(PyTestFactory.id);
 
     checkResult(model, (p2k ? "create_tst_class.expected_pytest_2k.py" : "create_tst_class.expected_pytest_3k.py"));
 
