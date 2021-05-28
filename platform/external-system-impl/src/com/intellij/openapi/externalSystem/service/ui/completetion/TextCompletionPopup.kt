@@ -21,6 +21,7 @@ import com.intellij.ui.popup.list.ListPopupImpl
 import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.awt.event.KeyEvent
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import javax.swing.text.JTextComponent
 
@@ -33,6 +34,8 @@ class TextCompletionPopup<C : JTextComponent>(
   private val parentComponent: C,
   private val contributor: TextCompletionContributor<C>
 ) {
+  private val isSkipNextUpdate = AtomicBoolean()
+
   private var popup: Popup? = null
   private val visibleCompletionVariants = ArrayList<TextCompletionInfo?>()
 
@@ -61,22 +64,15 @@ class TextCompletionPopup<C : JTextComponent>(
         }
       }
 
-      val hasVariances = visibleCompletionVariants[0] != null &&
-                         visibleCompletionVariants.any { it?.text != textToComplete }
-      val hasCompletedVariances = visibleCompletionVariants.any { it?.text == textToComplete }
+      val hasVariances = visibleCompletionVariants[0] != null
+      val hasUncompletedVariances = visibleCompletionVariants.any { it?.text != textToComplete }
       when (type) {
         UpdatePopupType.UPDATE -> popup?.update()
         UpdatePopupType.SHOW -> showPopup()
         UpdatePopupType.HIDE -> hidePopup()
         UpdatePopupType.SHOW_IF_HAS_VARIANCES ->
           when {
-            hasVariances -> showPopup()
-            else -> hidePopup()
-          }
-        UpdatePopupType.SHOW_IF_DOESNT_HAVE_COMPLETED_VARINCES ->
-          when {
-            hasCompletedVariances -> popup?.update()
-            hasVariances -> showPopup()
+            hasVariances && hasUncompletedVariances -> showPopup()
             else -> hidePopup()
           }
       }
@@ -84,22 +80,27 @@ class TextCompletionPopup<C : JTextComponent>(
   }
 
   private fun showPopup() {
-    if (popup == null) {
-      popup = Popup().also {
-        Disposer.register(it, Disposable { popup = null })
+    if (!isSkipNextUpdate.compareAndSet(true, false)) {
+      if (popup == null) {
+        popup = Popup().also {
+          Disposer.register(it, Disposable { popup = null })
+        }
+        popup?.showUnderneathOf(parentComponent)
       }
-      popup?.showUnderneathOf(parentComponent)
     }
     popup?.update()
   }
 
   private fun hidePopup() {
-    popup?.cancel()
-    popup = null
+    if (!isSkipNextUpdate.compareAndSet(true, false)) {
+      popup?.cancel()
+      popup = null
+    }
   }
 
   private fun fireVariantChosen(variant: TextCompletionInfo?) {
     if (variant != null) {
+      isSkipNextUpdate.set(true)
       contributor.fireVariantChosen(parentComponent, variant)
     }
   }
@@ -202,6 +203,6 @@ class TextCompletionPopup<C : JTextComponent>(
   }
 
   enum class UpdatePopupType {
-    UPDATE, SHOW, HIDE, SHOW_IF_HAS_VARIANCES, SHOW_IF_DOESNT_HAVE_COMPLETED_VARINCES
+    UPDATE, SHOW, HIDE, SHOW_IF_HAS_VARIANCES
   }
 }

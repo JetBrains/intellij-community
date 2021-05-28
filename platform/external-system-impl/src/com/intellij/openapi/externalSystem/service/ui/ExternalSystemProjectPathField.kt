@@ -6,7 +6,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
-import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup.UpdatePopupType.SHOW_IF_DOESNT_HAVE_COMPLETED_VARINCES
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup.UpdatePopupType.SHOW_IF_HAS_VARIANCES
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil

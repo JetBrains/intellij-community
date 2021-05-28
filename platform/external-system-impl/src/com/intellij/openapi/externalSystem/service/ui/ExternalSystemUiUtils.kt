@@ -112,7 +112,7 @@ fun JTextComponent.installJTextCompletionPopupTriggers(textCompletionPopup: Text
     // But we needed crop text completion by updated caret position
     // So invokeLater is here to postpone our completion popup update
     invokeLater {
-      textCompletionPopup.updatePopup(SHOW_IF_DOESNT_HAVE_COMPLETED_VARINCES)
+      textCompletionPopup.updatePopup(SHOW_IF_HAS_VARIANCES)
     }
   }
 }
