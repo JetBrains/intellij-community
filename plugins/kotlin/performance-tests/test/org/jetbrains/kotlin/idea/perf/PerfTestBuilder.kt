@@ -9,6 +9,7 @@ class PerfTestBuilder<SV, TV> {
     private lateinit var name: String
     private var warmUpIterations: Int = 5
     private var iterations: Int = 20
+    private var fastIterations: Boolean = false
     private var setUp: (TestData<SV, TV>) -> Unit = { }
     private lateinit var test: (TestData<SV, TV>) -> Unit
     private var tearDown: (TestData<SV, TV>) -> Unit = { }
@@ -20,6 +21,7 @@ class PerfTestBuilder<SV, TV> {
             testName = name,
             warmUpIterations = warmUpIterations,
             iterations = iterations,
+            fastIterations = fastIterations,
             setUp = setUp,
             test = test,
             tearDown = tearDown,
@@ -41,6 +43,10 @@ class PerfTestBuilder<SV, TV> {
 
     fun iterations(iterations: Int) {
         this.iterations = iterations
+    }
+
+    fun fastIterations(fastIterations: Boolean) {
+        this.fastIterations = fastIterations
     }
 
     fun setUp(setUp: (TestData<SV, TV>) -> Unit) {

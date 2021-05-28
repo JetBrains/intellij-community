@@ -47,7 +47,7 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
         val maxFilesPerPart = System.getProperty("files.maxFilesPerPart", "300")!!.toInt()
         val minFileSize = System.getProperty("files.minFileSize", "300")!!.toInt()
         val warmUpIterations = System.getProperty("iterations.warmup", "1")!!.toInt()
-        val numberOfIterations = System.getProperty("iterations.number", "3")!!.toInt()
+        val numberOfIterations = System.getProperty("iterations.number", "10")!!.toInt()
         val clearPsiCaches = System.getProperty("caches.clearPsi", "true")!!.toBoolean()
 
         val projectSpecs = projectSpecs()
@@ -67,6 +67,7 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
                         with(config) {
                             warmup = warmUpIterations
                             iterations = numberOfIterations
+                            fastIterations = true
                         }
 
                         try {

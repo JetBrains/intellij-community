@@ -81,12 +81,17 @@ class Stats(
     private fun toTimingsMs(statInfosArray: Array<StatInfos>) =
         statInfosArray.map { info -> info?.let { it[TEST_KEY] as? Long }?.nsToMs ?: 0L }.toLongArray()
 
-    private fun calcMean(statInfosArray: Array<StatInfos>): Mean = calcMean(toTimingsMs(statInfosArray))
+    private fun calcMean(statInfosArray: Array<StatInfos>): Mean =
+        calcMean(toTimingsMs(statInfosArray))
+
+    private fun stabilityPercentage(mean: Mean): Int =
+        round(mean.stdDev * 100.0 / mean.mean).toInt()
 
     fun <SV, TV> perfTest(
         testName: String,
         warmUpIterations: Int = 5,
         iterations: Int = 20,
+        fastIterations: Boolean = false,
         setUp: (TestData<SV, TV>) -> Unit = { },
         test: (TestData<SV, TV>) -> Unit,
         tearDown: (TestData<SV, TV>) -> Unit = { },
@@ -95,6 +100,7 @@ class Stats(
         val warmPhaseData = PhaseData(
             iterations = warmUpIterations,
             testName = testName,
+            fastIterations = fastIterations,
             setUp = setUp,
             test = test,
             tearDown = tearDown
@@ -102,6 +108,7 @@ class Stats(
         val mainPhaseData = PhaseData(
             iterations = iterations,
             testName = testName,
+            fastIterations = fastIterations,
             setUp = setUp,
             test = test,
             tearDown = tearDown
@@ -116,8 +123,7 @@ class Stats(
                 if (testName != WARM_UP) {
                     // do not estimate stability for warm-up
                     if (!testName.contains(WARM_UP)) {
-                        val calcMean = calcMean(statInfoArray)
-                        val stabilityPercentage = round(calcMean.stdDev * 100.0 / calcMean.mean).toInt()
+                        val stabilityPercentage = stabilityPercentage(calcMean(statInfoArray))
                         logMessage { "$testName stability is $stabilityPercentage %" }
                         val stabilityName = "$name: $testName stability"
 
@@ -302,6 +308,15 @@ class Stats(
                         PerformanceCounter.resetAllCounters()
                     }
                 }
+
+                if (phaseData.fastIterations && attempt > 0) {
+                    val subArray = statInfosArray.take(attempt + 1).toTypedArray()
+                    val stabilityPercentage = stabilityPercentage(calcMean(subArray))
+                    val stable = stabilityPercentage <= acceptanceStabilityLevel
+                    if (stable) {
+                        return subArray
+                    }
+                }
             }
         } catch (t: Throwable) {
             logMessage(t) { "error at ${phaseData.testName}" }
@@ -437,7 +452,8 @@ data class PhaseData<SV, TV>(
     val testName: String,
     val setUp: (TestData<SV, TV>) -> Unit,
     val test: (TestData<SV, TV>) -> Unit,
-    val tearDown: (TestData<SV, TV>) -> Unit
+    val tearDown: (TestData<SV, TV>) -> Unit,
+    val fastIterations: Boolean = false
 )
 
 data class TestData<SV, TV>(var setUpValue: SV?, var value: TV?) {

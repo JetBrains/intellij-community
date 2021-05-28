@@ -143,6 +143,7 @@ class PerformanceSuite {
                 stats(stats)
                 warmUpIterations(config.warmup)
                 iterations(config.iterations)
+                fastIterations(config.fastIterations)
                 setUp {
                     before()
                 }
@@ -236,7 +237,13 @@ class PerformanceSuite {
     }
 
 
-    class StatsScopeConfig(var name: String? = null, var warmup: Int = 2, var iterations: Int = 5, var profilerConfig: ProfilerConfig = ProfilerConfig())
+    class StatsScopeConfig(
+        var name: String? = null,
+        var warmup: Int = 2,
+        var iterations: Int = 5,
+        var fastIterations: Boolean = false,
+        var profilerConfig: ProfilerConfig = ProfilerConfig()
+    )
 
     class ProjectScopeConfig(val path: String, val openWith: ProjectOpenAction, val refresh: Boolean = false) {
         val name: String = path.lastPathSegment()
