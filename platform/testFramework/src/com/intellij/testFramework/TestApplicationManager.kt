@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
+
 package com.intellij.testFramework
 
 import com.intellij.ReviseWhenPortedToJDK
@@ -22,6 +23,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.command.WriteCommandAction
@@ -35,9 +37,11 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
@@ -54,7 +58,7 @@ import com.intellij.util.lang.Java11Shim
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.throwIfNotEmpty
 import com.intellij.util.ui.UIUtil
-import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeTestFrameworkUtils
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import junit.framework.AssertionFailedError
 import org.jetbrains.annotations.ApiStatus
 import sun.awt.AWTAutoShutdown
@@ -76,6 +80,7 @@ class TestApplicationManager private constructor() {
 
     @Volatile
     private var ourInstance: TestApplicationManager? = null
+
     @Volatile
     private var bootstrapError: Throwable? = null
     private val isBootstrappingAppNow = AtomicBoolean()
@@ -235,7 +240,7 @@ fun tearDownProjectAndApp(project: Project) {
   l.catchAndStoreExceptions { (project.serviceIfCreated<StructureViewFactory>() as StructureViewFactoryImpl?)?.cleanupForNextTest() }
 
   l.catchAndStoreExceptions { waitForProjectLeakingThreads(project) }
-  l.catchAndStoreExceptions { LegacyBridgeTestFrameworkUtils.dropCachesOnTeardown(project) }
+  l.catchAndStoreExceptions { dropModuleRootCaches(project) }
 
   // reset data provider before disposing project to ensure that disposed project is not accessed
   l.catchAndStoreExceptions { TestApplicationManager.getInstanceIfCreated()?.setDataProvider(null) }
@@ -255,6 +260,14 @@ fun tearDownProjectAndApp(project: Project) {
   }
 
   throwIfNotEmpty(l)
+}
+
+private fun dropModuleRootCaches(project: Project) {
+  WriteAction.runAndWait<RuntimeException> {
+    for (module in ModuleManager.getInstance(project).modules) {
+      (ModuleRootManager.getInstance(module) as ModuleRootComponentBridge).dropCaches()
+    }
+  }
 }
 
 /**
