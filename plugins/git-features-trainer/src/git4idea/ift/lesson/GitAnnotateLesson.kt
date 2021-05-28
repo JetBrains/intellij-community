@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.ift.lesson
 
+import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
@@ -112,7 +113,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
 
     prepareRuntimeTask l@{
       val window = UIUtil.getWindow(previous.ui) ?: return@l
-      val oldWindowLocation = WindowStateService.getInstance(project).getLocation("DiffContextDialog")
+      val oldWindowLocation = WindowStateService.getInstance(project).getLocation(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
       if (LessonUtil.adjustPopupPosition(project, window)) {
         backupDiffLocation = oldWindowLocation
       }
@@ -219,7 +220,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
     if (backupDiffLocation != null) {
       invokeLater {
-        WindowStateService.getInstance(project).putLocation("DiffContextDialog", backupDiffLocation)
+        WindowStateService.getInstance(project).putLocation(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY, backupDiffLocation)
         backupDiffLocation = null
       }
     }
