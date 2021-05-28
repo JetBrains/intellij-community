@@ -39,6 +39,23 @@ object StatisticsUtil {
   fun getNextPowerOfTwo(value: Int): Int = if (value <= 1) 1 else Integer.highestOneBit(value - 1) shl 1
 
   /**
+   * Anonymizes value by finding upper bound in provided bounds.
+   * Allows more fine tuning then `com.intellij.internal.statistic.utils.StatisticsUtil#getNextPowerOfTwo`
+   * but requires manual maintaining.
+   *
+   * @param bounds is an integer array sorted in ascending order (required, but not checked)
+   * @return value upper bound or next power of two if no bounds were provided (as fallback)
+   * */
+  @JvmStatic
+  fun getUpperBound(value: Int, bounds: IntArray): Int {
+    if (bounds.isEmpty()) return getNextPowerOfTwo(value)
+
+    for (bound in bounds)
+      if (value <= bound) return bound
+    return bounds.last()
+  }
+
+  /**
    * Anonymizes sensitive project properties by rounding it to the next value in steps list.
    * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
    */

@@ -16,7 +16,9 @@ class MavenActionsUsagesCollector {
     RunBuildAction,
     ExecuteMavenRunConfigurationAction,
     ShowMavenConnectors,
-    KillMavenConnector
+    KillMavenConnector,
+    StartLocalMavenServer,
+    StartWslMavenServer,
   }
 
   companion object {
@@ -40,6 +42,7 @@ class MavenActionsUsagesCollector {
     fun trigger(project: Project?, actionID: ActionID, event: AnActionEvent?, executor : Executor? = null) {
       trigger(project, actionID, event?.place, event?.isFromContextMenu ?: false, executor)
     }
+
 
     @JvmStatic
     fun trigger(project: Project?, feature: ActionID) {

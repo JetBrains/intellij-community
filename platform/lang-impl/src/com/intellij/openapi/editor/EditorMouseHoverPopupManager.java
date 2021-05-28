@@ -83,7 +83,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
   private static final Key<Boolean> DISABLE_BINDING = Key.create("EditorMouseHoverPopupManager.disable.binding");
   private static final TooltipGroup EDITOR_INFO_GROUP = new TooltipGroup("EDITOR_INFO_GROUP", 0);
   private static final int MAX_POPUP_WIDTH = 650;
-  private static final int MAX_QUICK_DOC_CHARACTERS = 100_000;
+  public static final int MAX_QUICK_DOC_CHARACTERS = 100_000;
 
   protected final Alarm myAlarm;
   private final MouseMovementTracker myMouseMovementTracker = new MouseMovementTracker();
@@ -764,6 +764,10 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
     public Info withQuickDocElement(PsiElement element) {
       return new Info(highlightInfo, tooltipAction, quickDocMessage, element, docProvider);
+    }
+
+    public Info withTooltip(TooltipAction tooltipAction) {
+      return new Info(highlightInfo, tooltipAction, quickDocMessage, quickDocElement.get(), docProvider);
     }
   }
 

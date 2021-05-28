@@ -93,7 +93,7 @@ class JsonPathEvaluateManager internal constructor(private val project: Project)
         id = EVALUATE_TOOLWINDOW_ID,
         anchor = ToolWindowAnchor.RIGHT,
         component = null,
-        icon = AllIcons.Toolwindows.ToolWindowFind, // todo icon
+        icon = AllIcons.Toolwindows.ToolWindowJsonPath,
         stripeTitle = JsonBundle.messagePointer("jsonpath.toolwindow.evaluate.stripe")
       )
     )

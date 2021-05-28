@@ -29,17 +29,16 @@ internal class MarkdownScriptsTableModel(
   }
 
   override fun setValueAt(aValue: Any?, rowIndex: Int, columnIndex: Int) {
+    if (columnIndex != ENABLED_COLUMN_INDEX) {
+      return
+    }
     val extension = extensions[rowIndex]
-    when (columnIndex) {
-      ENABLED_COLUMN_INDEX -> {
-        if (extension is MarkdownExtensionWithExternalFiles && !extension.isAvailable) {
-          if (extension.downloadLink != null) {
-            MarkdownSettingsUtil.downloadExtension(extension)
-          }
-        }
-        state[extension.id] = !state[extension.id]!!
-      }
-      else -> Unit
+    if (extension is MarkdownExtensionWithExternalFiles && !extension.isAvailable && extension.downloadLink != null) {
+      MarkdownSettingsUtil.downloadExtension(extension)
+      // Explicitly set state to prevent checkbox mark blinking
+      state[extension.id] = extension.isAvailable
+    } else {
+      state[extension.id] = !state[extension.id]!!
     }
   }
 

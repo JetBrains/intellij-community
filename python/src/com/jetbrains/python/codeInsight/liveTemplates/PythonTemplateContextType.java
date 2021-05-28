@@ -28,9 +28,9 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyParameterList;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.patterns.PlatformPatterns.psiElement;
@@ -104,6 +104,20 @@ public abstract class PythonTemplateContextType extends TemplateContextType {
     @Override
     protected boolean isInContext(@NotNull PsiElement element) {
       return PsiTreeUtil.getParentOfType(element, PyClass.class) != null;
+    }
+  }
+
+  public static class TopLevel extends PythonTemplateContextType {
+    public TopLevel() {
+      super("Python_Top_Level", PyBundle.message("live.template.context.top.level"), General.class);
+    }
+
+    @Override
+    protected boolean isInContext(@NotNull PsiElement element) {
+      ScopeOwner owner = ScopeUtil.getScopeOwner(element);
+      if (!(owner instanceof PyFile)) return false;
+      PyExpressionStatement statement = PsiTreeUtil.getParentOfType(element, PyExpressionStatement.class);
+      return statement != null && statement.getParent() instanceof PyFile;
     }
   }
 }

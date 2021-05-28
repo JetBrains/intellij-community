@@ -50,6 +50,8 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -134,7 +136,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     contentManager.addContent(myContent);
     contentManager.setSelectedContent(myContent);
 
-    ToolWindowManager.getInstance(getProject()).getToolWindow(ProblemsView.ID).activate(null);
+    ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(getProject());
+    ToolWindow toolWindow = toolWindowManager.getToolWindow(ProblemsView.ID);
+    if (toolWindow == null) { // TODO: compatibility mode for Rider where there's no problems view; remove in 2021.2
+      //noinspection deprecation
+      toolWindow = toolWindowManager.getToolWindow(ToolWindowId.INSPECTION);
+    }
+    if (toolWindow != null)
+      toolWindow.activate(null);
   }
 
   public void addView(@NotNull InspectionResultsView view) {

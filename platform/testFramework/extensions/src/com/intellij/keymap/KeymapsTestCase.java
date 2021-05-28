@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.keymap;
 
 import org.jetbrains.annotations.NonNls;
@@ -365,6 +365,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta F6",            "Diff.PrevChange", "PreviousTab"},
     { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "meta K",                   "FindNext", "Terminal.ClearBuffer"},
+    { "shift ctrl DOWN",          "EditorUnSelectWord", "ShowContent"},
     });
     put("Sublime Text", new String[][] {
     { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
@@ -390,7 +391,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore", "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
     { "shift ctrl T",             "ReopenClosedTab", "ServiceView.ShowServices"},
     { "shift ctrl UP",            "MoveLineUp", "ResizeToolWindowUp"},
-    { "ctrl L",                   "EditorSelectWord", "Terminal.ClearBuffer"},
+    { "ctrl L",                   "EditorSelectLine", "Terminal.ClearBuffer"},
     });
     put("Sublime Text (Mac OS X)", new String[][] {
     { "F2",                       "ChangesView.Rename", "Console.TableResult.EditValue", "Git.Reword.Commit", "Git.Rename.Local.Branch", "GotoNextBookmark", "GuiDesigner.EditComponent", "GuiDesigner.EditGroup", "ShelvedChanges.Rename", "XDebugger.SetValue"},
@@ -411,8 +412,9 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta D",             "Console.TableResult.CompareCells", "EditorDuplicate", "Uml.ShowDiff"},
     { "shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore",  "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
     { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
-    { "meta L",                   "EditorSelectWord", "Terminal.ClearBuffer"},
+    { "meta L",                   "EditorSelectLine", "Terminal.ClearBuffer"},
     { "meta K",                   "SECOND_STROKE_SHORTCUT", "Terminal.ClearBuffer"},
+    { "shift ctrl DOWN",          "EditorCloneCaretBelow", "ShowContent"},
     });
     put("macOS System Shortcuts", new String[][] {
       { "ctrl C",                   "Vcs.QuickListPopupAction", "org.jetbrains.r.console.RConsoleView.RInterruptAction"},

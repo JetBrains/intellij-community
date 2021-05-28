@@ -131,32 +131,20 @@ public class TableLayout extends TabLayout {
       for (TableRow eachRow : data.table) {
         eachX = insets.left;
 
-        int deltaToFit = 0;
-        boolean toAjust = false;
-        if (eachRow.width < data.toFitRec.width && data.table.size() > 1) {
-          deltaToFit = (int)Math.floor((double)(data.toFitRec.width - eachRow.width) / (double)eachRow.myColumns.size());
-          toAjust = true;
-        }
-
         for (int i = 0; i < eachRow.myColumns.size(); i++) {
           TabInfo tabInfo = eachRow.myColumns.get(i);
           final TabLabel label = myTabs.myInfo2Label.get(tabInfo);
-
-          label.putClientProperty(JBTabsImpl.STRETCHED_BY_WIDTH, Boolean.valueOf(toAjust));
 
           int width;
           if (label.isPinned() && showPinnedTabsSeparately) {
             width = label.getNotStrictPreferredSize().width;
           }
-          else if (i < eachRow.myColumns.size() - 1 || !toAjust) {
-            width = label.getPreferredSize().width + deltaToFit;
-          }
           else {
-            width = data.toFitRec.width + insets.left - eachX;
+            width = label.getPreferredSize().width;
           }
 
           myTabs.layout(label, eachX, eachY, width, myTabs.myHeaderFitSize.height);
-          label.setAlignmentToCenter(deltaToFit > 0);
+          label.setAlignmentToCenter(false);
 
           boolean lastCell = i == eachRow.myColumns.size() - 1;
           eachX += width + (lastCell ? 0 : myTabs.getTabHGap());

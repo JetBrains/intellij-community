@@ -3,6 +3,7 @@ package com.intellij.tasks.youtrack;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
@@ -52,6 +53,7 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
   //@formatter:on
 
   private static final Gson GSON = TaskGsonUtil.createDefaultBuilder().create();
+  private static final Logger LOG = Logger.getInstance(YouTrackRepository.class);
 
   private String myDefaultSearch = "Assignee: me sort by: updated #Unresolved";
 
@@ -104,6 +106,7 @@ public class YouTrackRepository extends NewBaseRepositoryImpl {
     }
     catch (YouTrackRequestFailedException e) {
       if ("invalid_query".equals(e.getErrorInfo().getError())) {
+        LOG.debug("Ignoring invalid query: " + searchQuery);
         return Collections.emptyList();
       }
       else {

@@ -76,6 +76,13 @@ bz2.BZ2File.readinto
 bz2.BZ2File.readlines
 bz2.BZ2File.write
 bz2.BZ2File.writelines
+# The following methods were changed in point releases from Python 3.6 to 3.9
+# as part of a security fix. These excludes can be removed when the GitHub
+# action workflow uses Python versions that include the fix (adding a
+# separator argument).
+cgi.FieldStorage.__init__
+cgi.parse
+cgi.parse_multipart
 codecs.BufferedIncrementalDecoder.decode
 codecs.CodecInfo.decode
 codecs.CodecInfo.encode
@@ -382,6 +389,7 @@ threading.Thread.__init__
 timeit.main
 tkinter.Misc.grid_propagate
 tkinter.Misc.pack_propagate
+tkinter.Tk.eval  # from __getattr__
 tkinter.Tk.report_callback_exception  # A bit of a lie, since it's actually a method, but typing it as an attribute allows it to be assigned to
 tkinter.Wm.wm_iconphoto  # Default value of argument can't be used without runtime error
 tkinter.font.Font.__getitem__  # Argument name differs (doesn't matter for __dunder__ methods)
@@ -405,6 +413,12 @@ unittest.mock.patch  # It's a complicated overload and I haven't been able to fi
 urllib.error.ContentTooShortError.__init__
 urllib.error.URLError.__init__
 urllib.parse._DefragResultBase.__new__
+# The following methods were changed in point releases from Python 3.6 to 3.9
+# as part of a security fix. These excludes can be removed when the GitHub
+# action workflow uses Python versions that include the fix (adding a
+# separator argument).
+urllib.parse.parse_qs
+urllib.parse.parse_qsl
 urllib.request.BaseHandler.http_error_nnn
 urllib.request.HTTPPasswordMgrWithPriorAuth.__init__
 urllib.robotparser.RobotFileParser.can_fetch

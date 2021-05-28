@@ -4,7 +4,9 @@ package org.intellij.plugins.markdown.extensions.jcef.mermaid
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.ColorUtil
+import com.intellij.util.io.DigestUtil
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
@@ -62,14 +64,24 @@ internal class MermaidCodeGeneratingProviderExtension(
 
   override val description: String = MarkdownBundle.message("markdown.extensions.mermaid.description")
 
-  override val downloadLink: String = Registry.stringValue("markdown.mermaid.download.link")
+  override val downloadLink: String = DOWNLOAD_URL
 
   override val downloadFilename: String = "mermaid.js"
 
+  private val actualFile
+    get() = Paths.get(directory.toString(), "mermaid", downloadFilename).toFile()
+
+  private fun isDistributionChecksumValid(): Boolean {
+    val got = StringUtil.toHexString(DigestUtil.md5().digest(actualFile.readBytes()))
+    return got == CHECKSUM
+  }
+
+  override val isAvailable: Boolean
+    get() = actualFile.exists() && isDistributionChecksumValid()
+
   override fun afterDownload(): Boolean {
-    val targetFile = Paths.get(directory.toString(), "mermaid", downloadFilename).toFile()
     val sourceFile = File(directory, downloadFilename)
-    sourceFile.copyTo(targetFile)
+    sourceFile.copyTo(actualFile, overwrite = true)
     return sourceFile.delete()
   }
 
@@ -116,5 +128,7 @@ internal class MermaidCodeGeneratingProviderExtension(
   companion object {
     private const val MAIN_SCRIPT_FILENAME = "mermaid/mermaid.js"
     private const val THEME_DEFINITION_FILENAME = "mermaid/themeDefinition.js"
+    private const val DOWNLOAD_URL = "https://unpkg.com/mermaid@8.9.1/dist/mermaid.js"
+    private const val CHECKSUM = "352791299c7f42ee02e774da58bead4a"
   }
 }

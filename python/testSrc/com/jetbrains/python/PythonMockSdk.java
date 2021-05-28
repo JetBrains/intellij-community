@@ -20,84 +20,92 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Comparator;
+import java.util.List;
 
 /**
  * @author yole
  */
 public final class PythonMockSdk {
-  @NonNls private static final String MOCK_SDK_NAME = "Mock Python SDK";
 
   private PythonMockSdk() {
   }
 
-  public static Sdk create(final String version, final VirtualFile @NotNull ... additionalRoots) {
-    final String mock_path = PythonTestUtil.getTestDataPath() + "/MockSdk" + version + "/";
+  public static @NotNull Sdk create(@NotNull String name) {
+    return create(name, LanguageLevel.getLatest());
+  }
 
-    String sdkHome = new File(mock_path, "bin/python" + version).getPath();
+  public static @NotNull Sdk create(@NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
+    return create("MockSdk", level, additionalRoots);
+  }
+
+  private static @NotNull Sdk create(@NotNull String name, @NotNull LanguageLevel level, VirtualFile @NotNull ... additionalRoots) {
+    final String mockSdkPath = PythonTestUtil.getTestDataPath() + "/" + name;
 
     MultiMap<OrderRootType, VirtualFile> roots = MultiMap.create();
-    OrderRootType classes = OrderRootType.CLASSES;
+    roots.putValues(OrderRootType.CLASSES, createRoots(mockSdkPath, level));
+    roots.putValues(OrderRootType.CLASSES, Arrays.asList(additionalRoots));
 
-    ContainerUtil.putIfNotNull(classes, LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(mock_path, "Lib")), roots);
-
-    ContainerUtil.putIfNotNull(classes, PyUserSkeletonsUtil.getUserSkeletonsDirectory(), roots);
-
-    final LanguageLevel level = LanguageLevel.fromPythonVersion(version);
-    final VirtualFile typeShedDir = PyTypeShed.INSTANCE.getDirectory();
-    PyTypeShed.INSTANCE
-      .findRootsForLanguageLevel(level)
-      .forEach(path -> ContainerUtil.putIfNotNull(classes, typeShedDir.findFileByRelativePath(path), roots));
-
-    String mock_stubs_path = mock_path + PythonSdkUtil.SKELETON_DIR_NAME;
-    ContainerUtil.putIfNotNull(classes, LocalFileSystem.getInstance().refreshAndFindFileByPath(mock_stubs_path), roots);
-
-    roots.putValues(classes, Arrays.asList(additionalRoots));
-
-    MockSdk sdk = new MockSdk(MOCK_SDK_NAME + " " + version, sdkHome, "Python " + version + " Mock SDK", roots, new PyMockSdkType(version));
+    MockSdk sdk = new MockSdk(
+      "Mock " + PyNames.PYTHON_SDK_ID_NAME + " " + level.toPythonVersion(),
+      mockSdkPath + "/bin/python",
+      toVersionString(level),
+      roots,
+      new PyMockSdkType(level)
+    );
 
     // com.jetbrains.python.psi.resolve.PythonSdkPathCache.getInstance() corrupts SDK, so have to clone
     return sdk.clone();
   }
 
+  private static @NotNull List<VirtualFile> createRoots(@NotNull @NonNls String mockSdkPath, @NotNull LanguageLevel level) {
+    final var result = new ArrayList<VirtualFile>();
+
+    final var localFS = LocalFileSystem.getInstance();
+    ContainerUtil.addIfNotNull(result, localFS.refreshAndFindFileByIoFile(new File(mockSdkPath, "Lib")));
+    ContainerUtil.addIfNotNull(result, localFS.refreshAndFindFileByIoFile(new File(mockSdkPath, PythonSdkUtil.SKELETON_DIR_NAME)));
+
+    ContainerUtil.addIfNotNull(result, PyUserSkeletonsUtil.getUserSkeletonsDirectory());
+
+    result.addAll(PyTypeShed.INSTANCE.findRootsForLanguageLevel(level));
+
+    return result;
+  }
+
+  private static @NotNull String toVersionString(@NotNull LanguageLevel level) {
+    return "Python " + level.toPythonVersion();
+  }
+
   private static final class PyMockSdkType implements SdkTypeId {
 
     @NotNull
-    private final String myVersionString;
-    private final String mySdkIdName;
+    private final LanguageLevel myLevel;
 
-    private PyMockSdkType(@NotNull String string) {
-      mySdkIdName = PyNames.PYTHON_SDK_ID_NAME;
-      myVersionString = string;
+    private PyMockSdkType(@NotNull LanguageLevel level) {
+      myLevel = level;
     }
 
     @NotNull
     @Override
     public String getName() {
-      return mySdkIdName;
+      return PyNames.PYTHON_SDK_ID_NAME;
     }
 
     @Nullable
     @Override
-    public String getVersionString(@NotNull Sdk sdk) {
-      return myVersionString;
+    public @NotNull String getVersionString(@NotNull Sdk sdk) {
+      return toVersionString(myLevel);
     }
 
     @Override
     public void saveAdditionalData(@NotNull SdkAdditionalData additionalData, @NotNull Element additional) {
-
     }
 
     @Nullable
     @Override
     public SdkAdditionalData loadAdditionalData(@NotNull Sdk currentSdk, @NotNull Element additional) {
       return null;
-    }
-
-    @Override
-    public boolean isLocalSdk(@NotNull Sdk sdk) {
-      return false;
     }
   }
 }

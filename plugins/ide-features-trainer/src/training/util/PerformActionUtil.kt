@@ -41,14 +41,20 @@ object PerformActionUtil {
   }
 
   @Throws(InterruptedException::class, ExecutionException::class)
-  fun performAction(actionName: String, editor: Editor, project: Project, runnable: Runnable) {
+  fun performAction(actionName: String, editor: Editor, project: Project, withWriteAccess: Boolean = true, callback: () -> Unit = {}) {
     val am: ActionManager = ActionManager.getInstance()
     val targetAction = am.getAction(actionName)
     val inputEvent = getInputEvent(actionName)
+    val runAction = {
+      am.tryToExecute(targetAction, inputEvent, editor.contentComponent, null, true).doWhenDone(callback)
+    }
     ApplicationManager.getApplication().invokeLater {
-      WriteCommandAction.runWriteCommandAction(project) {
-        am.tryToExecute(targetAction, inputEvent, editor.contentComponent, null, true).doWhenDone(runnable)
+      if (withWriteAccess) {
+        WriteCommandAction.runWriteCommandAction(project) {
+          runAction()
+        }
       }
+      else runAction()
     }
   }
 }

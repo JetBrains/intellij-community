@@ -40,7 +40,7 @@ public class PyTypingTest extends PyTestCase {
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   @Override
@@ -465,7 +465,7 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-22620
   public void testVariableTypeCommentInjectionTuple() {
-    doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> int",
                        "int, int");
   }
 
@@ -483,14 +483,14 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-22620
   public void testVariableTypeCommentInjectionParenthesisedTuple() {
-    doTestInjectedText("x, y = undefined()  # type: (int,<caret> int)", 
+    doTestInjectedText("x, y = undefined()  # type: (int,<caret> int)",
                        "(int, int)");
   }
 
   // PY-22620
   public void testForTypeCommentInjectionTuple() {
     doTestInjectedText("for x, y in undefined():  # type: int,<caret> int\n" +
-                       "    pass", 
+                       "    pass",
                        "int, int");
   }
 
@@ -555,7 +555,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(expr: Type):\n" +
            "    pass\n");
   }
-  
+
   // PY-18254
   public void testFunctionTypeComment() {
     doTest("(x: int, args: Tuple[float, ...], kwargs: Dict[str, str]) -> List[bool]",
@@ -720,7 +720,7 @@ public class PyTypingTest extends PyTestCase {
            "\n" +
            "expr = f");
   }
-  
+
   // PY-18386
   public void testRecursiveType() {
     doTest("Union[int, Any]",
@@ -1022,7 +1022,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Type[MyClass]): \n" +
            "    expr = x");
   }
-  
+
   // PY-20057
   public void testConstrainedClassObjectTypeOfParam() {
     doTest("Type[T]",
@@ -1033,7 +1033,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Type[T]):\n" +
            "    expr = x");
   }
-  
+
   // PY-20057
   public void testFunctionCreatesInstanceFromType() {
     doTest("int",
@@ -1068,7 +1068,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Type):\n" +
            "    expr = x");
   }
-  
+
   // PY-20057
   public void testTypingTypeOfAnyMapsToBuiltinType() {
     doTest("type",
@@ -1086,7 +1086,7 @@ public class PyTypingTest extends PyTestCase {
            "def f(x: Tuple[Type[42], Type[], Type[unresolved]]):\n" +
            "    expr = x");
   }
-  
+
   // PY-20057
   public void testUnionOfClassObjectTypes() {
     doTest("Type[Union[int, str]]",
@@ -1529,31 +1529,23 @@ public class PyTypingTest extends PyTestCase {
 
   // PY-41847
   public void testTypingAnnotated() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> {
-        doTest("int",
-               "from typing import Annotated\n" +
-               "A = Annotated[int, 'Some constraint']\n" +
-               "expr: A");
-        doTest("int",
-               "from typing_extensions import Annotated\n" +
-               "expr: Annotated[int, 'Some constraint'] = '5'");
-        doMultiFileStubAwareTest("int",
-                                 "from annotated import A\n" +
-                                 "expr: A = 'str'");
-      }
-    );
+    doTest("int",
+           "from typing import Annotated\n" +
+           "A = Annotated[int, 'Some constraint']\n" +
+           "expr: A");
+    doTest("int",
+           "from typing_extensions import Annotated\n" +
+           "expr: Annotated[int, 'Some constraint'] = '5'");
+    doMultiFileStubAwareTest("int",
+                             "from annotated import A\n" +
+                             "expr: A = 'str'");
   }
 
   // PY-35370
   public void testAnyArgumentsCallableInTypeComment() {
-    runWithLanguageLevel(
-      LanguageLevel.getLatest(),
-      () -> doTestInjectedText("from typing import Callable\n" +
-                               "a = b  # type: Call<caret>able[..., int]",
-                               "Callable[..., int]")
-    );
+    doTestInjectedText("from typing import Callable\n" +
+                       "a = b  # type: Call<caret>able[..., int]",
+                       "Callable[..., int]");
   }
 
   // PY-42334

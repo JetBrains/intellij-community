@@ -279,8 +279,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val externalStoragePath = project.getExternalConfigurationDir()
     //TODO:: Get rid of dependency on ExternalStorageConfigurationManager in order to use in build process
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
+    val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).entityStorage.current)
     val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false,
-                                                                        virtualFileManager, externalStorageConfigurationManager)
+                                                                        virtualFileManager, externalStorageConfigurationManager, fileInDirectorySourceNames)
 
     this.serializers.set(serializers)
     return serializers
@@ -350,6 +351,9 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
 
   override fun dispose() {
   }
+
+  @TestOnly
+  fun getSerializers(): JpsProjectSerializersImpl = serializers.get() as JpsProjectSerializersImpl
 
   companion object {
     fun getInstance(project: Project): JpsProjectModelSynchronizer? = project.getComponent(JpsProjectModelSynchronizer::class.java)

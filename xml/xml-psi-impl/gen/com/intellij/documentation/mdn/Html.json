@@ -336,7 +336,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;a&gt;</code> element</strong> (or <em>anchor</em> element), with <a href=\"#href\">its <code>href</code> attribute</a>, creates a hyperlink to web pages, files, email addresses, locations in the same page, or anything else a URL can address.</span> Content within each <code>&lt;a&gt;</code> <strong>should</strong> indicate the link's destination. If <span class=\"seoSummary\"><a href=\"#href\">the <code>href</code> attribute</a></span> is present, pressing the enter key while focused on the <code>&lt;a&gt;</code> element will activate it.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#interactive_content\" data-flaw=\"link3\">interactive content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link4\">Transparent</a>\n, containing either\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link5\">flow content</a>\n(excluding\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#interactive_content\" data-flaw=\"link6\">interactive content</a>\n) or\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link7\">phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -485,7 +485,7 @@
         "SafariIOS": ""
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Abbreviation element </strong>(<strong><code>&lt;abbr&gt;</code></strong>) represents an abbreviation or acronym; the optional <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-title\"><code>title</code></a> attribute can provide an expansion or description for the abbreviation.</span> If present, <code>title</code> must contain this full description and nothing else.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -500,7 +500,7 @@
       "status": [
         "Deprecated"
       ],
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>"
+      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div><p>The HTML Acronym Element (<code>&lt;acronym&gt;</code>) allows authors to clearly indicate a sequence of characters that compose an acronym or abbreviation for a word.</p>\n<div class=\"note notecard\">\n<p><strong>Usage note:</strong> This element has been removed in HTML5 and shouldn't be used anymore. Instead web developers should use the <a href=\"$MDN_URL$/Web/HTML/Element/abbr\"><code>&lt;abbr&gt;</code></a> element.</p>\n</div>"
     },
     "address": {
       "url": "$MDN_URL$/web/html/element/address",
@@ -508,7 +508,7 @@
         "StandardTrack"
       ],
       "doc": "<p id=\"Summary\"><span class=\"seoSummary\">The <strong>HTML <code>&lt;address&gt;</code> element</strong> indicates that the enclosed HTML provides contact information for a person or people, or for an organization.</span></p>\n<p>The contact information provided by an <code>&lt;address&gt;</code> element's contents can take whatever form is appropriate for the context, and may include any type of contact information that is needed, such as a physical address, URL, email address, phone number, social media handle, geographic coordinates, and so forth. The <code>&lt;address&gt;</code> element should include the name of the person, people, or organization to which the contact information refers.</p>\n<p><code>&lt;address&gt;</code> can be used in a variety of contexts, such as providing a business's contact information in the page header, or indicating the author of an article by including an <code>&lt;address&gt;</code> element within the <a href=\"$MDN_URL$/Web/HTML/Element/article\"><code>&lt;article&gt;</code></a>.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">Flow content</a>\n, but with no nested\n<code>&lt;address&gt;</code>\nelement, no heading content (\n<a href=\"$MDN_URL$/Web/HTML/Element/hgroup\"><code>&lt;hgroup&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h1\"><code>&lt;h1&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h2\"><code>&lt;h2&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h3\"><code>&lt;h3&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h4\"><code>&lt;h4&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h5\"><code>&lt;h5&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h6\"><code>&lt;h6&gt;</code></a>\n), no sectioning content (\n<a href=\"$MDN_URL$/Web/HTML/Element/article\"><code>&lt;article&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/aside\"><code>&lt;aside&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/section\"><code>&lt;section&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/nav\"><code>&lt;nav&gt;</code></a>\n), and no\n<a href=\"$MDN_URL$/Web/HTML/Element/header\"><code>&lt;header&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/footer\"><code>&lt;footer&gt;</code></a>\nelement.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -529,7 +529,7 @@
         "Safari": ""
       },
       "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<div class=\"notecard warning\">\n<p>The <code>&lt;applet&gt;</code> element was removed in <a href=\"https://bugzilla.mozilla.org/show_bug.cgi?id=1279218\" class=\"external\" rel=\" noopener\">Gecko 56</a> and <a href=\"https://bugs.chromium.org/p/chromium/issues/detail?id=470301\" class=\"external\" rel=\" noopener\">Chrome 47</a>.</p>\n<p>Removal is being considered in <a href=\"https://bugs.webkit.org/show_bug.cgi?id=157926\" class=\"external\" rel=\" noopener\">WebKit</a> and <a href=\"https://developer.microsoft.com/en-us/microsoft-edge/platform/issues/11946645/\" class=\"external\" rel=\" noopener\">Edge</a>.</p>\n</div>\n<p><span class=\"seoSummary\">The obsolete <strong>HTML Applet Element</strong> (<strong><code>&lt;applet&gt;</code></strong>) embeds a Java applet into the document; this element has been deprecated in favor of <a href=\"$MDN_URL$/Web/HTML/Element/object\"><code>&lt;object&gt;</code></a>.</span></p>\n<p>Use of Java applets on the Web is deprecated; most browsers no longer support use of plug-ins, including the Java plug-in.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#embedded_content\" data-flaw=\"link3\">embedded content</a>\n, interactive content, palpable content.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/param\"><code>&lt;param&gt;</code></a>\nelements, then\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link4\">transparent</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -725,7 +725,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;area&gt;</code> element</strong> defines an area inside an image map that has predefined clickable areas. An <dfn>image map</dfn> allows geometric areas on an image to be associated with <a href=\"$MDN_URL$/Glossary/Hyperlink\">hypertext link</a>.</p>\n<p>This element is used only within a <a href=\"$MDN_URL$/Web/HTML/Element/map\"><code>&lt;map&gt;</code></a> element.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "Must have a start tag and must not have an end tag.\n",
@@ -874,7 +874,7 @@
         "SafariIOS": "4.2"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;article&gt;</code> element</strong> represents a self-contained composition in a document, page, application, or site, which is intended to be independently distributable or reusable (e.g., in syndication).</span> Examples include: a forum post, a magazine or newspaper article, or a blog entry, a product card, a user-submitted comment, an interactive widget or gadget, or any other independent item of content.</p>\n<p>A given document can have multiple articles in it; for example, on a blog that shows the text of each article one after another as the reader scrolls, each post would be contained in an <code>&lt;article&gt;</code> element, possibly with one or more <code>&lt;section&gt;</code>s within.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#sectioning_content\">sectioning content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#palpable_content\">palpable content</a>\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -900,7 +900,7 @@
         "SafariIOS": "4.2"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;aside&gt;</code> element</strong> represents a portion of a document whose content is only indirectly related to the document's main content.</span> Asides are frequently presented as sidebars or call-out boxes.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#sectioning_content\" data-flaw=\"link2\">sectioning content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#palpable_content\" data-flaw=\"link3\">palpable content</a>\n.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link4\">Flow content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -1088,7 +1088,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Bring Attention To element (<code>&lt;b&gt;</code>)</strong> is used to draw the reader's attention to the element's contents, which are not otherwise granted special importance.</span> This was formerly known as the Boldface element, and most browsers still draw the text in boldface. However, you should not use <code>&lt;b&gt;</code> for styling text; instead, you should use the CSS <a href=\"$MDN_URL$/Web/CSS/font-weight\"><code>font-weight</code></a> property to create boldface text, or the <a href=\"$MDN_URL$/Web/HTML/Element/strong\"><code>&lt;strong&gt;</code></a> element to indicate that text is of special importance.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -1104,7 +1104,7 @@
         "StandardTrack"
       ],
       "doc": "<p id=\"Summary\"><span class=\"seoSummary\">The <strong>HTML <code>&lt;base&gt;</code> element</strong> specifies the base URL to use for all <em>relative</em> URLs in a document.</span> There can be only one <code>&lt;base&gt;</code> element in a document.</p>\n<p>A document's used base URL can be accessed by scripts with <a href=\"$MDN_URL$/Web/API/Node/baseURI\"><code>Node/baseURI</code></a>. If the document has no <code>&lt;base&gt;</code> elements, then <code>baseURI</code> defaults to <a href=\"$MDN_URL$/Web/API/Location/href\"><code>location.href</code></a>.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "Metadata content.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "There must be no closing tag.\n",
@@ -1170,7 +1170,7 @@
         "SafariIOS": "6"
       },
       "doc": "<p><span class=\"seoSummary\">The HTML <strong>Bidirectional Isolate element</strong> (<strong><code>&lt;bdi&gt;</code></strong>)  tells the browser's bidirectional algorithm to treat the text it contains in isolation from its surrounding text.</span> It's particularly useful when a website dynamically inserts some text and doesn't know the directionality of the text being inserted.</p>\n<p>Bidirectional text is text that may contain both sequences of characters that are arranged left-to-right (LTR) and sequences of characters that are arranged right-to-left (RTL), such as an Arabic quotation embedded in an English string. Browsers implement the <a href=\"https://www.w3.org/International/articles/inline-bidi-markup/uba-basics\" class=\"external\" rel=\" noopener\">Unicode Bidirectional Algorithm</a> to handle this. In this algorithm, characters are given an implicit directionality: for example, Latin characters are treated as LTR while Arabic characters are treated as RTL. Some other characters (such as spaces and some punctuation) are treated as neutral and are assigned directionality based on that of their surrounding characters.</p>\n<p>Usually, the bidirectional algorithm will do the right thing without the author having to provide any special markup but, occasionally, the algorithm needs help. That's where <code>&lt;bdi&gt;</code> comes in.</p>\n<p>The <code>&lt;bdi&gt;</code> element is used to wrap a span of text and instructs the bidirectional algorithm to treat this text in isolation from its surroundings. This works in two ways:</p>\n<ul>\n<li>The directionality of text embedded in <code>&lt;bdi&gt;</code> <em>does not influence</em> the directionality of the surrounding text.</li>\n<li>The directionality of text embedded in <code>&lt;bdi&gt;</code> <em>is not influenced by</em> the directionality of the surrounding text.</li>\n</ul>\n<p>For example, consider some text like:</p>\n<pre class=\"no-line-numbers notranslate\">EMBEDDED-TEXT - 1st place</pre>\n<p>If <code>EMBEDDED-TEXT</code> is LTR, this works fine. But if <code>EMBEDDED-TEXT</code> is RTL, then  <code> - 1</code> will be treated as RTL text (because it consists of neutral and weak characters). The result will be garbled:</p>\n<pre class=\"no-line-numbers notranslate\">1 - EMBEDDED-TEXTst place</pre>\n<p>If you know the directionality of <code>EMBEDDED-TEXT</code> in advance, you can fix this problem by wrapping <code>EMBEDDED-TEXT</code> in a <a href=\"$MDN_URL$/Web/HTML/Element/span\"><code>&lt;span&gt;</code></a> with the <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-dir\"><code>dir</code></a> attribute set to the known directionality. But if you don't know the directionality - for example, because <code>EMBEDDED-TEXT</code> is being read from a database or entered by the user - you should use <code>&lt;bdi&gt;</code> to prevent the directionality of <code>EMBEDDED-TEXT</code> from affecting its surroundings.</p>\n<p>Though the same visual effect can be achieved using the CSS rule <a href=\"$MDN_URL$/Web/CSS/unicode-bidi\"><code>unicode-bidi</code></a><code>: isolate</code> on a <a href=\"$MDN_URL$/Web/HTML/Element/span\"><code>&lt;span&gt;</code></a> or another text-formatting element, HTML authors should not use this approach because it is not semantic and browsers are allowed to ignore CSS styling.</p>\n<p>Embedding the characters in <code>&lt;span dir=\"auto\"&gt;</code> has the same effect as using <code>&lt;bdi&gt;</code>, but its semantics are less clear.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -1186,7 +1186,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Bidirectional Text Override element</strong> (<strong><code>&lt;bdo&gt;</code></strong>) overrides the current directionality of text, so that the text within is rendered in a different direction.</span></p>\n<p>The text's characters are drawn from the starting point in the given direction; the individual characters' orientation is not affected (so characters don't get drawn backward, for example).</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -1251,7 +1251,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;blockquote&gt;</code> Element</strong> (or <em>HTML Block Quotation Element</em>) indicates that the enclosed text is an extended quotation. Usually, this is rendered visually by indentation (see <a href=\"#usage_notes\" rel=\"internal\" data-flaw=\"link1\">Notes</a> for how to change it). A URL for the source of the quotation may be given using the <strong>cite</strong> attribute, while a text representation of the source can be given using the <a href=\"$MDN_URL$/Web/HTML/Element/cite\"><code>&lt;cite&gt;</code></a> element.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">Flow content</a>\n, sectioning root, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link3\">Flow content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -1276,7 +1276,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;body&gt;</code> Element</strong> represents the content of an HTML document. There can be only one <code>&lt;body&gt;</code> element in a document.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Using_HTML_sections_and_outlines#sectioning_roots\" data-flaw=\"link1\">Sectioning root</a>\n.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">Flow content</a>\n.\n",
         "Tag omission": "The start tag may be omitted if the first thing inside it is not a space character, comment,\n<a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a>\nelement or\n<a href=\"$MDN_URL$/Web/HTML/Element/style\"><code>&lt;style&gt;</code></a>\nelement. The end tag may be omitted if the\n<code>&lt;body&gt;</code>\nelement has contents or has a start tag, and is not immediately followed by a comment.\n",
@@ -1569,7 +1569,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;button&gt;</code> element</strong> represents a clickable button, used to submit <a href=\"$MDN_URL$/Learn/Forms\">forms</a> or anywhere in a document for accessible, standard button functionality.</span> By default, HTML buttons are presented in a style resembling the platform the <a href=\"$MDN_URL$/Glossary/user_agent\">user agent</a> runs on, but you can change buttons’ appearance with <a href=\"$MDN_URL$/Web/CSS\">CSS</a>.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\">phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#interactive_content\">Interactive content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_listed\">listed</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_labelable\">labelable</a>\n, and\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_submittable\">submittable</a>\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form-associated_content\">form-associated</a>\nelement, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\">Phrasing content</a>\nbut there must be no\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#interactive_content\">Interactive content</a>\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -1726,7 +1726,7 @@
         "SafariIOS": ""
       },
       "doc": "<p>Use the <strong>HTML <code>&lt;canvas&gt;</code> element</strong> with either the <a href=\"$MDN_URL$/Web/API/Canvas_API\">canvas scripting API</a> or the <a href=\"$MDN_URL$/Web/API/WebGL_API\">WebGL API</a> to draw graphics and animations.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#embedded_content\" data-flaw=\"link3\">embedded content</a>\n, palpable content.\n",
         "Permitted content": "Transparent but with no\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#interactive_content\" data-flaw=\"link4\">interactive content</a>\ndescendants except for\n<a href=\"$MDN_URL$/Web/HTML/Element/a\"><code>&lt;a&gt;</code></a>\nelements,\n<a href=\"$MDN_URL$/Web/HTML/Element/button\"><code>&lt;button&gt;</code></a>\nelements,\n<a href=\"$MDN_URL$/Web/HTML/Element/input\"><code>&lt;input&gt;</code></a>\nelements whose\n<a href=\"$MDN_URL$/Web/HTML/Element/input#attr-type\"><code>type</code></a>\nattribute is\n<code>checkbox</code>\n,\n<code>radio</code>\n, or\n<code>button</code>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -1782,7 +1782,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;caption&gt;</code> element</strong> specifies the caption (or title) of a table.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n.\n",
         "Tag omission": "The end tag can be omitted if the element is not immediately followed by ASCII whitespace or a comment.\n",
@@ -1816,7 +1816,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Citation element</strong> (<strong><code>&lt;cite&gt;</code></strong>) is used to describe a reference to a cited creative work, and must include the title of that work.</span> The reference may be in an abbreviated form according to context-appropriate conventions related to citation metadata.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -1832,7 +1832,7 @@
         "StandardTrack"
       ],
       "doc": "<p id=\"Summary\"><span class=\"seoSummary\">The <strong>HTML <code>&lt;code&gt;</code> element</strong> displays its contents styled in a fashion intended to indicate that the text is a short fragment of computer code.</span> By default, the content text is displayed using the <a href=\"$MDN_URL$/Glossary/user_agent\">user agent's</a> default monospace font.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -1848,7 +1848,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;col&gt;</code> element</strong> defines a column within a table and is used for defining common semantics on all common cells. It is generally found within a <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> element.</p>\n<p><code>&lt;col&gt;</code> allows styling columns using CSS, but only a few properties will have an effect on the column (<a href=\"https://www.w3.org/TR/CSS21/tables.html#columns\" class=\"external\" rel=\" noopener\">see the CSS 2.1 specification</a> for a list).</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "It must have start tag, but must not have an end tag.\n",
@@ -1940,7 +1940,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;colgroup&gt;</code> element</strong> defines a group of columns within a table.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "If the\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup#attr-span\"><code>span</code></a>\nattribute is present: none, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n<br>\nIf the attribute is not present: zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a>\nelement\n",
         "Tag omission": "The start tag may be omitted, if it has a\n<a href=\"$MDN_URL$/Web/HTML/Element/col\"><code>&lt;col&gt;</code></a>\nelement as its first child and if it is not preceded by a\n<a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a>\nwhose end tag has been omitted.\n<br>\nThe end tag may be omitted, if it is not followed by a space or a comment.\n",
@@ -2037,7 +2037,7 @@
         "Opera": "26"
       },
       "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;content&gt;</code> element</strong>—an obsolete part of the <a href=\"$MDN_URL$/Web/Web_Components\">Web Components</a> suite of technologies—was used inside of <a href=\"$MDN_URL$/Web/Web_Components/Using_shadow_DOM\">Shadow DOM</a> as an <a href=\"$MDN_URL$/Glossary/insertion_point\">insertion point</a>, and wasn't meant to be used in ordinary HTML.</span> It has now been replaced by the <a href=\"$MDN_URL$/Web/HTML/Element/slot\"><code>&lt;slot&gt;</code></a> element, which creates a point in the DOM at which a shadow DOM can be inserted.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> Though present in early draft of the specifications and implemented in several browsers, this element has been removed in later versions of the spec, and should not be used. It is documented here to assist in adapting code written during the time it was included in the spec to work with newer versions of the specification.</p>\n</div>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link1\">Transparent content</a>\n.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">Flow content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2066,7 +2066,7 @@
         "SafariIOS": "10"
       },
       "doc": "<p>The <strong>HTML <code>&lt;data&gt;</code> element</strong> links a given piece of content with a machine-readable translation. If the content is time- or date-related, the <a href=\"$MDN_URL$/Web/HTML/Element/time\"><code>&lt;time&gt;</code></a> element must be used.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2098,7 +2098,7 @@
         "SafariIOS": "12.2"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;datalist&gt;</code> element</strong> contains a set of <a href=\"$MDN_URL$/Web/HTML/Element/option\"><code>&lt;option&gt;</code></a> elements that represent the permissible or recommended options available to choose from within other controls.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n.\n",
         "Permitted content": "Either\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">phrasing content</a>\nor zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/option\"><code>&lt;option&gt;</code></a>\nelements.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2114,7 +2114,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;dd&gt;</code> element</strong> provides the description, definition, or value for the preceding term (<a href=\"$MDN_URL$/Web/HTML/Element/dt\"><code>&lt;dt&gt;</code></a>) in a description list (<a href=\"$MDN_URL$/Web/HTML/Element/dl\"><code>&lt;dl&gt;</code></a>).</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n.\n",
         "Tag omission": "The start tag is required. The end tag may be omitted if this element is immediately followed by another\n<code>&lt;dd&gt;</code>\nelement or a\n<a href=\"$MDN_URL$/Web/HTML/Element/dt\"><code>&lt;dt&gt;</code></a>\nelement, or if there is no more content in the parent element.\n",
@@ -2139,7 +2139,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;del&gt;</code> element</strong> represents a range of text that has been deleted from a document.</span> This can be used when rendering \"track changes\" or source code diff information, for example. The <a href=\"$MDN_URL$/Web/HTML/Element/ins\"><code>&lt;ins&gt;</code></a> element can be used for the opposite purpose: to indicate text that has been added to the document.</p>\n<p>This element is often (but need not be) rendered by applying a strike-through style to the text.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link1\">Phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">flow content</a>\n.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link3\">Transparent</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2180,7 +2180,7 @@
         "SafariIOS": "6.1"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Details Element (<code>&lt;details&gt;</code>)</strong> creates a disclosure widget in which information is visible only when the widget is toggled into an \"open\" state.</span> A summary or label can be provided using the <a href=\"$MDN_URL$/Web/HTML/Element/summary\"><code>&lt;summary&gt;</code></a> element.</p>\n<p>A disclosure widget is typically presented onscreen using a small triangle which rotates (or twists) to indicate open/closed status, with a label next to the triangle. If the first child of the <code>&lt;details&gt;</code> element is a <code>&lt;summary&gt;</code>, the contents of the <code>&lt;summary&gt;</code> element are used as the label for the disclosure widget.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> The common use of a triangle which rotates or twists around to represent opening or closing the widget is why these are sometimes called \"twisties.\"</p>\n</div>\n<p>A <code>&lt;details&gt;</code> widget can be in one of two states. The default <em>closed</em> state displays only the triangle and the label inside <code>&lt;summary&gt;</code> (or a <a href=\"$MDN_URL$/Glossary/user_agent\">user agent</a>-defined default string if no <code>&lt;summary&gt;</code>). This might look like the following:</p>\n<figure style=\"margin: 1em 0; padding: 1em; border: 1px solid black; box-shadow: 0 0 4px 1px black; width: 640px;\"></figure>\n<p>Here we see a standard disclosure widget with the label \"System Requirements\", in its default closed state. When the user clicks on the widget or focuses it then presses the space bar, it \"twists\" open, revealing its contents:</p>\n<figure style=\"margin: 1em 0; padding: 1em; border: 1px solid black; box-shadow: 0 0 4px 1px black; width: 640px;\"></figure>\n<p>From there, you can use CSS to style the disclosure widget, and you can programmatically open and close the widget by setting/removing its <a href=\"$MDN_URL$/Web/HTML/Element/details#attr-open\"><code>open</code></a> attribute.</p>\n<p>By default when closed, the widget is only tall enough to display the disclosure triangle and summary. When open, it expands to display the details contained within.</p>\n<div class=\"note notecard\">\n<p><strong>Note:</strong> Unfortunately, at this time there's no built-in way to animate the transition between open and closed.</p>\n</div>\n<p>Fully standards-compliant implementations automatically apply the CSS <code><a href=\"$MDN_URL$/Web/CSS/display\"><code>display</code></a>: list-item</code> to the <a href=\"$MDN_URL$/Web/HTML/Element/summary\"><code>&lt;summary&gt;</code></a> element. You can use this to customize its appearance further. See <a href=\"#customizing_the_disclosure_widget\">Customizing the disclosure widget</a> for further details.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, sectioning root, interactive content, palpable content.\n",
         "Permitted content": "One\n<a href=\"$MDN_URL$/Web/HTML/Element/summary\"><code>&lt;summary&gt;</code></a>\nelement followed by\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">flow content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2214,7 +2214,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Definition element</strong> (<code><strong><dfn>&lt;dfn&gt;</dfn></strong></code>) is used to indicate the term being defined within the context of a definition phrase or sentence.</span> The <a href=\"$MDN_URL$/Web/HTML/Element/p\"><code>&lt;p&gt;</code></a> element, the <a href=\"$MDN_URL$/Web/HTML/Element/dt\"><code>&lt;dt&gt;</code></a>/<a href=\"$MDN_URL$/Web/HTML/Element/dd\"><code>&lt;dd&gt;</code></a> pairing, or the <a href=\"$MDN_URL$/Web/HTML/Element/section\"><code>&lt;section&gt;</code></a> element which is the nearest ancestor of the <code>&lt;dfn&gt;</code> is considered to be the definition of the term.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n, but no\n<a href=\"$MDN_URL$/Web/HTML/Element/dfn\"><code>&lt;dfn&gt;</code></a>\nelement must be a descendant.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2236,7 +2236,7 @@
         "Opera": "24"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;dialog&gt;</code> element</strong> represents a dialog box or other interactive component, such as a dismissible alert, inspector, or subwindow.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Using_HTML_sections_and_outlines#sectioning_roots\" data-flaw=\"link2\">sectioning root</a>\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link3\">Flow content</a>\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2305,7 +2305,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Content Division element</strong> (<strong><code>&lt;div&gt;</code></strong>) is the generic container for flow content. It has no effect on the content or layout until styled in some way using <a href=\"$MDN_URL$/Glossary/CSS\">CSS</a> (e.g. styling is directly applied to it, or some kind of layout model like <a href=\"$MDN_URL$/Web/CSS/CSS_Flexible_Box_Layout\">Flexbox</a> is applied to its parent element).</span></p>\n<p>As a \"pure\" container, the <code>&lt;div&gt;</code> element does not inherently represent anything. Instead, it's used to group content so it can be easily styled using the <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-class\"><code>class</code></a> or <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-id\"><code>id</code></a> attributes, marking a section of a document as being written in a different language (using the <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-lang\"><code>lang</code></a> attribute), and so on.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">Flow content</a>\n.\n<br>\nOr (in\n<a href=\"$MDN_URL$/Glossary/WHATWG\">WHATWG</a>\nHTML): If the parent is a\n<a href=\"$MDN_URL$/Web/HTML/Element/dl\"><code>&lt;dl&gt;</code></a>\nelement: one or more\n<a href=\"$MDN_URL$/Web/HTML/Element/dt\"><code>&lt;dt&gt;</code></a>\nelements followed by one or more\n<a href=\"$MDN_URL$/Web/HTML/Element/dd\"><code>&lt;dd&gt;</code></a>\nelements, optionally intermixed with\n<a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/template\"><code>&lt;template&gt;</code></a>\nelements.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2329,7 +2329,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;dl&gt;</code></strong> element represents a description list. The element encloses a list of groups of terms (specified using the <a href=\"$MDN_URL$/Web/HTML/Element/dt\"><code>&lt;dt&gt;</code></a> element) and descriptions (provided by <a href=\"$MDN_URL$/Web/HTML/Element/dd\"><code>&lt;dd&gt;</code></a> elements). Common uses for this element are to implement a glossary or to display metadata (a list of key-value pairs).</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, and if the\n<code>&lt;dl&gt;</code>\nelement's children include one name-value group, palpable content.\n",
         "Permitted content": "<p>Either: Zero or more groups each consisting of one or more <a href=\"$MDN_URL$/Web/HTML/Element/dt\"><code>&lt;dt&gt;</code></a> elements followed by one or more <a href=\"$MDN_URL$/Web/HTML/Element/dd\"><code>&lt;dd&gt;</code></a> elements, optionally intermixed with <a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/template\"><code>&lt;template&gt;</code></a> elements.<br>\nOr: (in <a href=\"$MDN_URL$/Glossary/WHATWG\">WHATWG</a> HTML, <a href=\"$MDN_URL$/Glossary/W3C\">W3C</a> HTML 5.2 and later) One or more <a href=\"$MDN_URL$/Web/HTML/Element/div\"><code>&lt;div&gt;</code></a> elements, optionally intermixed with <a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/template\"><code>&lt;template&gt;</code></a> elements.</p>\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2345,7 +2345,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;dt&gt;</code> element</strong> specifies a term in a description or definition list, and as such must be used inside a <a href=\"$MDN_URL$/Web/HTML/Element/dl\"><code>&lt;dl&gt;</code></a> element.</span> It is usually followed by a <a href=\"$MDN_URL$/Web/HTML/Element/dd\"><code>&lt;dd&gt;</code></a> element; however, multiple <code>&lt;dt&gt;</code> elements in a row indicate several terms that are all defined by the immediate next <a href=\"$MDN_URL$/Web/HTML/Element/dd\"><code>&lt;dd&gt;</code></a> element.</p>\n<p>The subsequent <a href=\"$MDN_URL$/Web/HTML/Element/dd\"><code>&lt;dd&gt;</code></a> (<strong>Description Details</strong>) element provides the definition or other related text associated with the term specified using <code>&lt;dt&gt;</code>.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, but with no\n<a href=\"$MDN_URL$/Web/HTML/Element/header\"><code>&lt;header&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/footer\"><code>&lt;footer&gt;</code></a>\n, sectioning content or heading content descendants.\n",
         "Tag omission": "The start tag is required. The end tag may be omitted if this element is immediately followed by another\n<code>&lt;dt&gt;</code>\nelement or a\n<a href=\"$MDN_URL$/Web/HTML/Element/dd\"><code>&lt;dd&gt;</code></a>\nelement, or if there is no more content in the parent element.\n",
@@ -2361,7 +2361,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;em&gt;</code> element</strong> marks text that has stress emphasis. The <code>&lt;em&gt;</code> element can be nested, with each level of nesting indicating a greater degree of emphasis.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2377,7 +2377,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;embed&gt;</code> element</strong> embeds external content at the specified point in the document. This content is provided by an external application or other source of interactive content such as a browser plug-in.</p>\n<div class=\"notecard note\">\n<p><strong>Note:</strong> This topic documents only the element that is defined as part of HTML5. It does not address earlier, non-standardized implementation of the element.</p>\n</div>\n<p>Keep in mind that most modern browsers have deprecated and removed support for browser plug-ins, so relying upon <code>&lt;embed&gt;</code> is generally not wise if you want your site to be operable on the average user's browser.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, embedded content, interactive content,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#palpable_content\" data-flaw=\"link3\">palpable content</a>\n.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "Must have a start tag, and must not have an end tag.\n",
@@ -2544,7 +2544,7 @@
         "SafariIOS": "5.1"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;figcaption&gt;</code> or Figure Caption element</strong> represents a caption or legend describing the rest of the contents of its parent <a href=\"$MDN_URL$/Web/HTML/Element/figure\"><code>&lt;figure&gt;</code></a> element.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2570,7 +2570,7 @@
         "SafariIOS": "5.1"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;figure&gt;</code> (Figure With Optional Caption) element</strong> represents self-contained content, potentially with an optional caption, which is specified using the (<a href=\"$MDN_URL$/Web/HTML/Element/figcaption\"><code>&lt;figcaption&gt;</code></a>) element.</span> The figure, its caption, and its contents are referenced as a single unit.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Using_HTML_sections_and_outlines#sectioning_roots\" data-flaw=\"link2\">sectioning root</a>\n, palpable content.\n",
         "Permitted content": "A\n<a href=\"$MDN_URL$/Web/HTML/Element/figcaption\"><code>&lt;figcaption&gt;</code></a>\nelement, followed by\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link3\">flow content</a>\n; or flow content followed by a\n<a href=\"$MDN_URL$/Web/HTML/Element/figcaption\"><code>&lt;figcaption&gt;</code></a>\nelement; or flow content.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2586,7 +2586,7 @@
         "StandardTrack",
         "Deprecated"
       ],
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>",
+      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div><p>The <em>HTML Font Element</em> (<code>&lt;font&gt;</code>) defines the font size, color and face for its content.</p>\n<div class=\"note notecard\">\n<p><em>Usage note: </em></p>\n<p><strong>Do not use this element!</strong> Though once normalized in HTML 3.2, it was deprecated in HTML 4.01, at the same time as all elements related to styling only, then made obsolete in HTML5.</p>\n<p>Starting with HTML 4, HTML does not convey styling information anymore (outside the <a href=\"$MDN_URL$/Web/HTML/Element/style\"><code>&lt;style&gt;</code></a> element or the <strong>style</strong> attribute of each element). For any new web development, styling should be written using <a href=\"$MDN_URL$/Web/CSS\">CSS</a> only.</p>\n<p>The former behavior of the <a href=\"$MDN_URL$/Web/HTML/Element/font\"><code>&lt;font&gt;</code></a> element can be achieved, and even better controlled using the <a href=\"$MDN_URL$/Web/CSS/CSS_Fonts\">CSS Fonts</a> CSS properties.</p>\n</div>",
       "attrs": {
         "color": {
           "url": "$MDN_URL$/web/html/element/font#attr-color",
@@ -2630,7 +2630,7 @@
         "SafariIOS": "4.2"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;footer&gt;</code> element</strong> represents a footer for its nearest <a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#sectioning_content\" data-flaw=\"link1\">sectioning content</a> or <a href=\"$MDN_URL$/Web/Guide/HTML/Using_HTML_sections_and_outlines#sectioning_root\" data-flaw=\"link2\">sectioning root</a> element. A footer typically contains information about the author of the section, copyright data or links to related documents.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link3\">Flow content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link4\">Flow content</a>\n, but with no\n<code>&lt;footer&gt;</code>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/header\"><code>&lt;header&gt;</code></a>\ndescendants.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2646,7 +2646,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;form&gt;</code> element</strong> represents a document section containing interactive controls for submitting information.</span></p>\n<p>It is possible to use the <a href=\"$MDN_URL$/Web/CSS/:valid\"><code>:valid</code></a> and <a href=\"$MDN_URL$/Web/CSS/:invalid\"><code>:invalid</code></a> CSS <a href=\"$MDN_URL$/Web/CSS/Pseudo-classes\">pseudo-classes</a> to style a <code>&lt;form&gt;</code> element based on whether or not the <a href=\"$MDN_URL$/Web/API/HTMLFormElement/elements\" ><code>elements</code></a> inside the form are valid.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#palpable_content\" data-flaw=\"link2\">palpable content</a>\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link3\">Flow content</a>\n, but not containing\n<code>&lt;form&gt;</code>\nelements\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2839,7 +2839,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;head&gt;</code> element</strong> contains machine-readable information (<a href=\"$MDN_URL$/Glossary/metadata\">metadata</a>) about the document, like its <a href=\"$MDN_URL$/Web/HTML/Element/title\">title</a>, <a href=\"$MDN_URL$/Web/HTML/Element/script\">scripts</a>, and <a href=\"$MDN_URL$/Web/HTML/Element/style\">style sheets</a>.</span></p>\n<div class=\"notecard note\">\n<p><strong>Note:</strong> <code>&lt;head&gt;</code> primarily holds information for machine processing, not human-readability. For human-visible information, like top-level headings and listed authors, see the <a href=\"$MDN_URL$/Web/HTML/Element/header\"><code>&lt;header&gt;</code></a> element.</p>\n</div>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<p>If the document is an <a href=\"$MDN_URL$/Web/HTML/Element/iframe\"><code>&lt;iframe&gt;</code></a> <a href=\"$MDN_URL$/Web/HTML/Element/iframe#attr-srcdoc\"><code>srcdoc</code></a> document, or if title information is available from a higher level protocol (like the subject line in HTML email), zero or more elements of metadata content.</p>\n<p>Otherwise, one or more elements of metadata content where exactly one is a <a href=\"$MDN_URL$/Web/HTML/Element/title\"><code>&lt;title&gt;</code></a> element.</p>\n",
         "Tag omission": "The start tag may be omitted if the first thing inside the\n<code>&lt;head&gt;</code>\nelement is an element.\n<br>\nThe end tag may be omitted if the first thing following the\n<code>&lt;head&gt;</code>\nelement is not a space character or a comment.\n",
@@ -2874,7 +2874,7 @@
         "SafariIOS": "4.2"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;header&gt;</code> element</strong> represents introductory content, typically a group of introductory or navigational aids. It may contain some heading elements but also a logo, a search form, an author name, and other elements.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#palpable_content\" data-flaw=\"link2\">palpable content</a>\n.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link3\">Flow content</a>\n, but with no\n<code>&lt;header&gt;</code>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/footer\"><code>&lt;footer&gt;</code></a>\ndescendant.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2890,7 +2890,7 @@
         "StandardTrack"
       ],
       "doc": "<p id=\"Summary\"><span class=\"seoSummary\">The <strong>HTML <code>&lt;h1&gt;</code>–<code>&lt;h6&gt;</code> elements</strong> represent six levels of section headings. <code>&lt;h1&gt;</code> is the highest section level and <code>&lt;h6&gt;</code> is the lowest.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, heading content, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2916,7 +2916,7 @@
         "SafariIOS": "4.2"
       },
       "doc": "<p>The <strong>HTML <code>&lt;hgroup&gt;</code> element</strong> represents a multi-level heading for a section of a document. It groups a set of <code><a href=\"$MDN_URL$/Web/HTML/Element/Heading_Elements\">&lt;h1&gt;–&lt;h6&gt;</a></code> elements.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, heading content, palpable content.\n",
         "Permitted content": "One or more\n<a href=\"$MDN_URL$/Web/HTML/Element/h1\"><code>&lt;h1&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h2\"><code>&lt;h2&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h3\"><code>&lt;h3&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h4\"><code>&lt;h4&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h5\"><code>&lt;h5&gt;</code></a>\n, and/or\n<a href=\"$MDN_URL$/Web/HTML/Element/h6\"><code>&lt;h6&gt;</code></a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -2942,7 +2942,7 @@
         "SafariIOS": ""
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;hr&gt;</code> element</strong> represents a thematic break between paragraph-level elements: for example, a change of scene in a story, or a shift of topic within a section.</span></p>\n<p>Historically, this has been presented as a horizontal rule or line. While it may still be displayed as a horizontal rule in visual browsers, this element is now defined in semantic terms, rather than presentational terms, so if you wish to draw a horizontal line, you should do so using appropriate CSS.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "It must have start tag, but must not have an end tag.\n",
@@ -3045,7 +3045,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;html&gt;</code> element</strong> represents the root (top-level element) of an HTML document, so it is also referred to as the <em>root element</em>. All other elements must be descendants of this element.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "One\n<a href=\"$MDN_URL$/Web/HTML/Element/head\"><code>&lt;head&gt;</code></a>\nelement, followed by one\n<a href=\"$MDN_URL$/Web/HTML/Element/body\"><code>&lt;body&gt;</code></a>\nelement.\n",
         "Tag omission": "The start tag may be omitted if the first thing inside the\n<code>&lt;html&gt;</code>\nelement is not a comment.\n<br>\nThe end tag may be omitted if the\n<code>&lt;html&gt;</code>\nelement is not immediately followed by a comment.\n",
@@ -3094,7 +3094,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Idiomatic Text element (<code>&lt;i&gt;</code>)</strong> represents a range of text that is set off from the normal text for some reason, such as idiomatic text, technical terms, taxonomical designations, among others.</span> Historically, these have been presented using italicized type, which is the original source of the <code>&lt;i&gt;</code> naming of this element.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -3110,7 +3110,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Inline Frame element (<code>&lt;iframe&gt;</code>)</strong> represents a nested <a href=\"$MDN_URL$/Glossary/browsing_context\">browsing context</a>, embedding another HTML page into the current one.</span></p>\n<p>Each embedded browsing context has its own <a href=\"$MDN_URL$/Web/API/History\">session history</a> and <a href=\"$MDN_URL$/Web/API/Document\">document</a>. The browsing context that embeds the others is called the <em><dfn>parent</dfn> browsing context</em>. The <em>topmost</em> browsing context — the one with no parent — is usually the browser window, represented by the <a href=\"$MDN_URL$/Web/API/Window\"><code>Window</code></a> object.</p>\n<div class=\"notecard warning\">\n<p>Because each browsing context is a complete document environment, every <code>&lt;iframe&gt;</code> in a page requires increased memory and other computing resources. While theoretically you can use as many <code>&lt;iframe&gt;</code>s as you like, check for performance problems.</p>\n</div>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\">phrasing content</a>\n, embedded content, interactive content, palpable content.\n",
         "Permitted content": "None.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -3591,7 +3591,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;ins&gt;</code> element</strong> represents a range of text that has been added to a document.</span> You can use the <a href=\"$MDN_URL$/Web/HTML/Element/del\"><code>&lt;del&gt;</code></a> element to similarly represent a range of text that has been deleted from the document.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link1\">Phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">flow content</a>\n.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link3\">Transparent</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -3652,7 +3652,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Keyboard Input element</strong> (<strong><code>&lt;kbd&gt;</code></strong>) represents a span of inline text denoting textual user input from a keyboard, voice input, or any other text entry device.</span> By convention, the <a href=\"$MDN_URL$/Glossary/user_agent\">user agent</a> defaults to rendering the contents of a <code>&lt;kbd&gt;</code> element using its default monospace font, although this is not mandated by the HTML standard.</p>\n<p><code>&lt;kbd&gt;</code> may be nested in various combinations with the <a href=\"$MDN_URL$/Web/HTML/Element/samp\"><code>&lt;samp&gt;</code></a> (Sample Output) element to represent various forms of input or output based on visual cues.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -3673,7 +3673,7 @@
         "Safari": "1.2"
       },
       "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<p>The HTML <code>&lt;keygen&gt;</code> element exists to facilitate generation of key material, and submission of the public key as part of an <a href=\"$MDN_URL$/Learn/Forms\">HTML form</a>. This mechanism is designed for use with Web-based certificate management systems. It is expected that the <code>&lt;keygen&gt;</code> element will be used in an HTML form along with other information needed to construct a certificate request, and that the result of the process will be a signed certificate.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, interactive content,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_listed\" data-flaw=\"link3\">listed</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_labelable\" data-flaw=\"link4\">labelable</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_submittable\" data-flaw=\"link5\">submittable</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_resettable\" data-flaw=\"link6\">resettable</a>\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form-associated_content\" data-flaw=\"link7\">form-associated element</a>\n, palpable content.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "Must have a start tag and must not have an end tag.\n",
@@ -3740,7 +3740,7 @@
         "SafariIOS": ""
       },
       "doc": "<p>The <strong>HTML <code>&lt;legend&gt;</code> element</strong> represents a caption for the content of its parent <a href=\"$MDN_URL$/Web/HTML/Element/fieldset\"><code>&lt;fieldset&gt;</code></a>.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link1\">Phrasing content</a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/Heading_Elements\">headings</a>\n(h1–h6 elements).\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -3785,7 +3785,7 @@
         "SafariIOS": ""
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;li&gt;</code> element</strong> is used to represent an item in a list.</span> It must be contained in a parent element: an ordered list (<a href=\"$MDN_URL$/Web/HTML/Element/ol\"><code>&lt;ol&gt;</code></a>), an unordered list (<a href=\"$MDN_URL$/Web/HTML/Element/ul\"><code>&lt;ul&gt;</code></a>), or a menu (<a href=\"$MDN_URL$/Web/HTML/Element/menu\"><code>&lt;menu&gt;</code></a>). In menus and unordered lists, list items are usually displayed using bullet points. In ordered lists, they are usually displayed with an ascending counter on the left, such as a number or letter.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n.\n",
         "Tag omission": "The end tag can be omitted if the list item is immediately followed by another\n<a href=\"$MDN_URL$/Web/HTML/Element/li\"><code>&lt;li&gt;</code></a>\nelement, or if there is no more content in its parent element.\n",
@@ -4111,7 +4111,7 @@
         "Deprecated"
       ],
       "compatibility": {},
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>"
+      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div><p>The <em>HTML Listing Element</em> (<code>&lt;listing&gt;</code>) renders text between the start and end tags without interpreting the HTML in between and using a monospaced font. The HTML 2 standard recommended that lines shouldn't be broken when not greater than 132 characters.</p>\n<div class=\"note notecard\"><strong>Note:</strong> Do not use this element.\n<ul>\n<li>It is deprecated since HTML 3.2 and was neither implemented by all browsers, nor in a consistent way. Even more it is obsoleted in HTML5 and may be rendered by conforming user-agents as the <a href=\"$MDN_URL$/Web/HTML/Element/pre\"><code>&lt;pre&gt;</code></a> element, which will interpret the internal HTML!</li>\n<li>Instead use the <a href=\"$MDN_URL$/Web/HTML/Element/pre\"><code>&lt;pre&gt;</code></a> element or if semantically adequate the <a href=\"$MDN_URL$/Web/HTML/Element/code\"><code>&lt;code&gt;</code></a> element, eventually escaping the HTML '<code>&lt;</code>' and '<code>&gt;</code>' so that they don't get interpreted.</li>\n<li>A monospaced font can also be obtained on a simple <a href=\"$MDN_URL$/Web/HTML/Element/div\"><code>&lt;div&gt;</code></a> element, by applying an adequate <a href=\"$MDN_URL$/Web/CSS\">CSS</a> style using <code>monospace</code> as the generic-font value in a <a href=\"$MDN_URL$/Web/CSS/font-family\"><code>font-family</code></a> property.</li>\n</ul>\n</div>"
     },
     "main": {
       "url": "$MDN_URL$/web/html/element/main",
@@ -4128,7 +4128,7 @@
         "SafariIOS": "7"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;main&gt;</code> element</strong> represents the dominant content of the <a href=\"$MDN_URL$/Web/HTML/Element/body\"><code>&lt;body&gt;</code></a> of a document. The main content area consists of content that is directly related to or expands upon the central topic of a document, or the central functionality of an application.</span></p>\n<p>A document mustn't have more than one <code>&lt;main&gt;</code> element that doesn't have the <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-hidden\"><code>hidden</code></a> attribute specified.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n.\n",
         "Tag omission": "None; both the starting and ending tags are mandatory.\n",
@@ -4144,7 +4144,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;map&gt;</code> element</strong> is used with <a href=\"$MDN_URL$/Web/HTML/Element/area\"><code>&lt;area&gt;</code></a> elements to define an image map (a clickable link area).</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "Any\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link3\">transparent</a>\nelement.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -4179,7 +4179,7 @@
         "SafariIOS": ""
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Mark Text element</strong> (<strong><code>&lt;mark&gt;</code></strong>) represents text which is <strong>marked</strong> or <strong>highlighted</strong> for reference or notation purposes, due to the marked passage's relevance or importance in the enclosing context.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -4206,7 +4206,7 @@
         "SafariIOS": ""
       },
       "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p>The HTML <code>&lt;marquee&gt;</code> element is used to insert a scrolling area of text. You can control what happens when the text reaches the edges of its content area using its attributes.</p>",
-      "sections": {
+      "details": {
         "DOM interface": "<a href=\"$MDN_URL$/Web/API/HTMLMarqueeElement\"><code>HTMLMarqueeElement</code></a>\n"
       },
       "attrs": {
@@ -4409,7 +4409,7 @@
         "Firefox": "8"
       },
       "doc": "<div class=\"notecard experimental\">\n<h4 id=\"Experimental\">Experimental</h4>\n<p><strong>This is an <a href=\"$MDN_URL$/MDN/Contribute/Guidelines/Conventions_definitions#Experimental\">experimental technology</a></strong><br>Check the <a href=\"#browser_compatibility\">Browser compatibility table</a> carefully before using this in production.</p>\n</div>\n<p>The <strong>HTML <code>&lt;menu&gt;</code> element</strong> represents a group of commands that a user can perform or activate. This includes both list menus, which might appear across the top of a screen, as well as <a href=\"$MDN_URL$/Web/HTML/Element/menu#context_menu\" data-flaw=\"link1\">context menus</a>, such as those that might appear underneath a button after it has been clicked.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<p><a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">Flow content</a>. If the element's children include at least one <a href=\"$MDN_URL$/Web/HTML/Element/li\"><code>&lt;li&gt;</code></a> element: <a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#palpable_content\" data-flaw=\"link3\">Palpable content</a>.</p>\n",
         "Permitted content": "<p>If the element is in the <em>list menu</em> state: <a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link4\">flow content</a>, or alternatively, zero or more occurrences of <a href=\"$MDN_URL$/Web/HTML/Element/li\"><code>&lt;li&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a>, and <a href=\"$MDN_URL$/Web/HTML/Element/template\"><code>&lt;template&gt;</code></a>. (<em>list menu</em> is the default state, unless the parent element is a <a href=\"$MDN_URL$/Web/HTML/Element/menu\"><code>&lt;menu&gt;</code></a> in the <em>context menu</em> state.)</p>\n<p>If the element is in the <em>context menu</em> state: zero or more occurrences, in any order, of <a href=\"$MDN_URL$/Web/HTML/Element/menu\"><code>&lt;menu&gt;</code></a> (<em>context menu</em> state only), <a href=\"$MDN_URL$/Web/HTML/Element/menuitem\"><code>&lt;menuitem&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/hr\"><code>&lt;hr&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a>, and <a href=\"$MDN_URL$/Web/HTML/Element/template\"><code>&lt;template&gt;</code></a>.</p>\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -4444,7 +4444,7 @@
       ],
       "compatibility": {},
       "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"Deprecated_since_HTML5.2\">Deprecated since <a href=\"$MDN_URL$/HTML5.2\">HTML5.2</a></h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<p>The <strong>HTML <code>&lt;menuitem&gt;</code> element</strong> represents a command that a user is able to invoke through a popup menu. This includes context menus, as well as menus that might be attached to a menu button.</p>\n<p>A command can either be defined explicitly, with a textual label and optional icon to describe its appearance, or alternatively as an <em>indirect command</em> whose behavior is defined by a separate element. Commands can also optionally include a checkbox or be grouped to share radio buttons. (Menu items for indirect commands gain checkboxes or radio buttons when defined against elements <code>&lt;input type=\"checkbox\"&gt;</code> and <code>&lt;input type=\"radio\"&gt;</code>.)</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "Must have a start tag and must not have an end tag.\n",
@@ -4535,7 +4535,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;meta&gt;</code> element</strong> represents <a href=\"$MDN_URL$/Glossary/Metadata\">metadata</a> that cannot be represented by other HTML meta-related elements, like <a href=\"$MDN_URL$/Web/HTML/Element/base\"><code>&lt;base&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/link\"><code>&lt;link&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/style\"><code>&lt;style&gt;</code></a> or <a href=\"$MDN_URL$/Web/HTML/Element/title\"><code>&lt;title&gt;</code></a>.</p>\n<p>The type of metadata provided by the <code>&lt;meta&gt;</code> element can be one of the following:</p>\n<ul>\n<li>If the <a href=\"$MDN_URL$/Web/HTML/Element/meta#attr-name\"><code>name</code></a> attribute is set, the <code>&lt;meta&gt;</code> element provides <em>document-level metadata</em>, applying to the whole page.</li>\n<li>If the <a href=\"$MDN_URL$/Web/HTML/Element/meta#attr-http-equiv\"><code>http-equiv</code></a> attribute is set, the <code>&lt;meta&gt;</code> element is a <em>pragma directive</em>, providing information equivalent to what can be given by a similarly-named HTTP header.</li>\n<li>If the <a href=\"$MDN_URL$/Web/HTML/Element/meta#attr-charset\"><code>charset</code></a> attribute is set, the <code>&lt;meta&gt;</code> element is a <em>charset declaration</em>, giving the character encoding in which the document is encoded.</li>\n<li>If the <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-itemprop\"><code>itemprop</code></a> attribute is set, the <code>&lt;meta&gt;</code> element provides <em>user-defined metadata</em>.</li>\n</ul>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#metadata_content\">Metadata content</a>\n. If the\n<a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-itemprop\"><code>itemprop</code></a>\nattribute is present:\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "As it is a void element, the start tag must be present and the end tag must not be present.\n",
@@ -4607,7 +4607,7 @@
         "SafariIOS": "10.3"
       },
       "doc": "<p>The <strong>HTML <code>&lt;meter&gt;</code> element</strong> represents either a scalar value within a known range or a fractional value.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, labelable content, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n, but there must be no\n<code>&lt;meter&gt;</code>\nelement among its descendants.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -4755,7 +4755,7 @@
         "SafariIOS": "4.2"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;nav&gt;</code> element</strong> represents a section of a page whose purpose is to provide navigation links, either within the current document or to other documents. Common examples of navigation sections are menus, tables of contents, and indexes.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#sectioning_content\" data-flaw=\"link2\">sectioning content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link3\">Flow content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -4809,7 +4809,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;noscript&gt;</code> element</strong> defines a section of HTML to be inserted if a script type on the page is unsupported or if scripting is currently turned off in the browser.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#metadata_content\" data-flaw=\"link1\">Metadata content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">phrasing content</a>\n.\n",
         "Permitted content": "When scripting is disabled and when it is a descendant of the\n<a href=\"$MDN_URL$/Web/HTML/Element/head\"><code>&lt;head&gt;</code></a>\nelement: in any order, zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/link\"><code>&lt;link&gt;</code></a>\nelements, zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/style\"><code>&lt;style&gt;</code></a>\nelements, and zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/meta\"><code>&lt;meta&gt;</code></a>\nelements.\n<br>\nWhen scripting is disabled and when it isn't a descendant of the\n<a href=\"$MDN_URL$/Web/HTML/Element/head\"><code>&lt;head&gt;</code></a>\nelement: any\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link4\">transparent content</a>\n, but no\n<code>&lt;noscript&gt;</code>\nelement must be among its descendants.\n<br>\nOtherwise: flow content or phrasing content.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -4825,7 +4825,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;object&gt;</code> element</strong> represents an external resource, which can be treated as an image, a nested browsing context, or a resource to be handled by a plugin.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n;\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n;\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#embedded_content\" data-flaw=\"link3\">embedded content</a>\n, palpable content; if the element has a\n<a href=\"$MDN_URL$/Web/HTML/Element/object#attr-usemap\"><code>usemap</code></a>\nattribute,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#interactive_content\" data-flaw=\"link4\">interactive content</a>\n;\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_listed\" data-flaw=\"link5\">listed</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_submittable\" data-flaw=\"link6\">submittable</a>\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form-associated_content\" data-flaw=\"link7\">form-associated</a>\nelement.\n",
         "Permitted content": "zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/param\"><code>&lt;param&gt;</code></a>\nelements, then\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link8\">transparent</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -4967,7 +4967,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;ol&gt;</code> element</strong> represents an ordered list of items — typically rendered as a numbered list.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, and if the\n<code>&lt;ol&gt;</code>\nelement's children include at least one\n<a href=\"$MDN_URL$/Web/HTML/Element/li\"><code>&lt;li&gt;</code></a>\nelement,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#palpable_content\" data-flaw=\"link2\">palpable content</a>\n.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/li\"><code>&lt;li&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/template\"><code>&lt;template&gt;</code></a>\nelements.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5031,7 +5031,7 @@
         "SafariIOS": ""
       },
       "doc": "<p>The <strong>HTML <code>&lt;optgroup&gt;</code> element</strong> creates a grouping of options within a <a href=\"$MDN_URL$/Web/HTML/Element/select\"><code>&lt;select&gt;</code></a> element.</p>\n<div class=\"notecard note\"><h4 id=\"Note\">Note:</h4>Optgroup elements may not be nested.</div>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/option\"><code>&lt;option&gt;</code></a>\nelements.\n",
         "Tag omission": "The start tag is mandatory. The end tag is optional if this element is immediately followed by another\n<code>&lt;optgroup&gt;</code>\nelement, or if the parent element has no more content.\n",
@@ -5083,7 +5083,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;option&gt;</code> element</strong> is used to define an item contained in a <a href=\"$MDN_URL$/Web/HTML/Element/select\"><code>&lt;select&gt;</code></a>, an <a href=\"$MDN_URL$/Web/HTML/Element/optgroup\"><code>&lt;optgroup&gt;</code></a>, or a <a href=\"$MDN_URL$/Web/HTML/Element/datalist\"><code>&lt;datalist&gt;</code></a> element. As such, <code>&lt;option&gt;</code> can represent menu items in popups and other lists of items in an HTML document.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "Text, possibly with escaped characters (like\n<code>&amp;eacute;</code>\n).\n",
         "Tag omission": "The start tag is mandatory. The end tag is optional if this element is immediately followed by another\n<code>&lt;option&gt;</code>\nelement or an\n<a href=\"$MDN_URL$/Web/HTML/Element/optgroup\"><code>&lt;optgroup&gt;</code></a>\n, or if the parent element has no more content.\n",
@@ -5138,7 +5138,7 @@
         "SafariIOS": ""
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Output element</strong> (<strong><code>&lt;output&gt;</code></strong>) is a container element into which a site or app can inject the results of a calculation or the outcome of a user action.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_listed\" data-flaw=\"link3\">listed</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_labelable\" data-flaw=\"link4\">labelable</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form_resettable\" data-flaw=\"link5\">resettable</a>\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#form-associated_content\" data-flaw=\"link6\">form-associated element</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link7\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5180,7 +5180,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;p&gt;</code> element</strong> represents a paragraph.</span> Paragraphs are usually represented in visual media as blocks of text separated from adjacent blocks by blank lines and/or first-line indentation, but HTML paragraphs can be any structural grouping of related content, such as images or form fields.</p>\n<p>Paragraphs are <a href=\"$MDN_URL$/Web/HTML/Block-level_elements\">block-level elements</a>, and notably will automatically close if another block-level element is parsed before the closing <code>&lt;/p&gt;</code> tag. See “Tag omission” below.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">Phrasing content</a>\n.\n",
         "Tag omission": "The start tag is required. The end tag may be omitted if the\n<a href=\"$MDN_URL$/Web/HTML/Element/p\"><code>&lt;p&gt;</code></a>\nelement is immediately followed by an\n<a href=\"$MDN_URL$/Web/HTML/Element/address\"><code>&lt;address&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/article\"><code>&lt;article&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/aside\"><code>&lt;aside&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/blockquote\"><code>&lt;blockquote&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/div\"><code>&lt;div&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/dl\"><code>&lt;dl&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/fieldset\"><code>&lt;fieldset&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/footer\"><code>&lt;footer&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/form\"><code>&lt;form&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h1\"><code>&lt;h1&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h2\"><code>&lt;h2&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h3\"><code>&lt;h3&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h4\"><code>&lt;h4&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h5\"><code>&lt;h5&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/h6\"><code>&lt;h6&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/header\"><code>&lt;header&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/hr\"><code>&lt;hr&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/menu\"><code>&lt;menu&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/nav\"><code>&lt;nav&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/ol\"><code>&lt;ol&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/pre\"><code>&lt;pre&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/section\"><code>&lt;section&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/ul\"><code>&lt;ul&gt;</code></a>\nor another\n<a href=\"$MDN_URL$/Web/HTML/Element/p\"><code>&lt;p&gt;</code></a>\nelement, or if there is no more content in the parent element and the parent element is not an\n<a href=\"$MDN_URL$/Web/HTML/Element/a\"><code>&lt;a&gt;</code></a>\nelement.\n",
@@ -5196,7 +5196,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;param&gt;</code> element</strong> defines parameters for an <a href=\"$MDN_URL$/Web/HTML/Element/object\"><code>&lt;object&gt;</code></a> element.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "As it is a void element, the start tag must be present and the end tag must not be present.\n",
@@ -5253,7 +5253,7 @@
         "SafariIOS": "9.3"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;picture&gt;</code> element</strong> contains zero or more <a href=\"$MDN_URL$/Web/HTML/Element/source\"><code>&lt;source&gt;</code></a> elements and one <a href=\"$MDN_URL$/Web/HTML/Element/img\"><code>&lt;img&gt;</code></a> element to offer alternative versions of an image for different display/device scenarios.</span></p>\n<p>The browser will consider each child <code>&lt;source&gt;</code> element and choose the best match among them. If no matches are found—or the browser doesn't support the <code>&lt;picture&gt;</code> element—the URL of the <code>&lt;img&gt;</code> element's <a href=\"$MDN_URL$/Web/HTML/Element/img#attr-src\"><code>src</code></a> attribute is selected. The selected image is then presented in the space occupied by the <code>&lt;img&gt;</code> element.</p>\n<p>To decide which URL to load, the <a href=\"$MDN_URL$/Glossary/user_agent\">user agent</a> examines each <code>&lt;source&gt;</code>'s <a href=\"$MDN_URL$/Web/HTML/Element/source#attr-srcset\"><code>srcset</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/source#attr-media\"><code>media</code></a>, and <a href=\"$MDN_URL$/Web/HTML/Element/source#attr-type\"><code>type</code></a> attributes to select a compatible image that best matches the current layout and capabilities of the display device.</p>\n<p>The <code>&lt;img&gt;</code> element serves two purposes:</p>\n<ol>\n<li>It describes the size and other attributes of the image and its presentation.</li>\n<li>It provides a fallback in case none of the offered <code>&lt;source&gt;</code> elements are able to provide a usable image.</li>\n</ol>\n<p>Common use cases for <code>&lt;picture&gt;</code>:</p>\n<ul>\n<li><strong>Art direction.</strong> Cropping or modifying images for different <code>media</code> conditions (for example, loading a simpler version of an image which has too many details, on smaller displays).</li>\n<li><strong>Offering alternative image formats</strong>, for cases where certain formats are not supported.\n<div class=\"note notecard\">\n<p><strong>Note:</strong> For example, newer formats like <a href=\"$MDN_URL$/Web/Media/Formats/Image_types#avif\" data-flaw=\"link1\">AVIF</a> or <a href=\"$MDN_URL$/Web/Media/Formats/Image_types#webp\" data-flaw=\"link2\">WEBP</a> have many advantages, but  might not be supported by the browser. A list of supported image formats can be found in: <a href=\"$MDN_URL$/Web/Media/Formats/Image_types\">Image file type and format guide</a>.</p>\n</div>\n</li>\n<li><strong>Saving bandwidth and speeding page load times</strong> by loading the most appropriate image for the viewer's display.</li>\n</ul>\n<p>If providing higher-density versions of an image for high-DPI (Retina) display, use <a href=\"$MDN_URL$/Web/HTML/Element/img#attr-srcset\"><code>srcset</code></a> on the <code>&lt;img&gt;</code> element instead. This lets browsers opt for lower-density versions in data-saving modes, and you don't have to write explicit <code>media</code> conditions.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link3\">Flow content</a>\n, phrasing content, embedded content\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/source\"><code>&lt;source&gt;</code></a>\nelements, followed by one\n<a href=\"$MDN_URL$/Web/HTML/Element/img\"><code>&lt;img&gt;</code></a>\nelement, optionally intermixed with script-supporting elements.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5284,7 +5284,7 @@
     "portal": {
       "url": "$MDN_URL$/web/html/element/portal",
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Portal element (<code>&lt;portal&gt;</code>)</strong> enables the embedding of another HTML page into the current one for the purposes of allowing smoother navigation into new pages.</span></p>\n<p>A <code>&lt;portal&gt;</code> is similar to an <code>&lt;iframe&gt;</code>. An <code>&lt;iframe&gt;</code> allows a separate <a href=\"$MDN_URL$/Glossary/browsing_context\">browsing context</a> to be embedded. However, the embedded content of a <code>&lt;portal&gt;</code> is more limited than that of an <code>&lt;iframe&gt;</code>. It cannot be interacted with, and therefore is not suitable for embedding widgets into a document. Instead, the <code>&lt;portal&gt;</code> acts as a preview of the content of another page. It can be navigated into therefore allowing for seamless transition to the embedded content.</p>",
-      "sections": {
+      "details": {
         "Implicit ARIA role": "<a href=\"$MDN_URL$/Web/Accessibility/ARIA/Roles/button_role\">button</a>\n",
         "DOM interface": "<a class=\"page-not-created\"  ><code>HTMLPortalElement</code></a>\n"
       },
@@ -5305,7 +5305,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;pre&gt;</code> element</strong> represents preformatted text which is to be presented exactly as written in the HTML file.</span> The text is typically rendered using a non-proportional (\"<a href=\"$MDN_URL$/XUL/Style/monospace\" data-flaw=\"link1\">monospace</a>\") font. Whitespace inside this element is displayed as written.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">Flow content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5358,7 +5358,7 @@
         "SafariIOS": "7"
       },
       "doc": "<p>The <strong>HTML <code>&lt;progress&gt;</code> element</strong> displays an indicator showing the completion progress of a task, typically displayed as a progress bar.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, labelable content, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n, but there must be no\n<code>&lt;progress&gt;</code>\nelement among its descendants.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5410,7 +5410,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;q&gt;</code> element</strong> indicates that the enclosed text is a short inline quotation. Most modern browsers implement this by surrounding the text in quotation marks. </span>This element is intended for short quotations that don't require paragraph breaks; for long quotations use the <a href=\"$MDN_URL$/Web/HTML/Element/blockquote\"><code>&lt;blockquote&gt;</code></a> element.</p>\n<div class=\"note notecard\">\n<p><strong>Usage note:</strong> Most modern browsers will automatically add quotation marks around text inside a <code>&lt;q&gt;</code> element. A style rule may be needed to add quotation marks in older browsers.</p>\n</div>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5436,7 +5436,7 @@
         "IE": "5"
       },
       "doc": "<div><div class=\"notecard warning\">\n<h4 id=\"Non-standard\">Non-standard</h4>\n<p>This feature is non-standard and is not on a standards track. Do not use it on production sites facing the Web: it will not work for every user. There may also be large incompatibilities between implementations and the behavior may change in the future.</p>\n</div></div>\n<p><span class=\"seoSummary\">The <strong>HTML Ruby Base (<code>&lt;rb&gt;</code>) element</strong> is used to delimit the base text component of a  <a href=\"$MDN_URL$/Web/HTML/Element/ruby\"><code>&lt;ruby&gt;</code></a> annotation, i.e. the text that is being annotated.</span> One <code>&lt;rb&gt;</code> element should wrap each separate atomic segment of the base text.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "As a child of a\n<a href=\"$MDN_URL$/Web/HTML/Element/ruby\"><code>&lt;ruby&gt;</code></a>\nelement.\n",
         "Tag omission": "The end tag can be omitted if the element is immediately followed by an\n<a href=\"$MDN_URL$/Web/HTML/Element/rt\"><code>&lt;rt&gt;</code></a>\n, \n<a href=\"$MDN_URL$/Web/HTML/Element/rtc\"><code>&lt;rtc&gt;</code></a>\n, or\n<a href=\"$MDN_URL$/Web/HTML/Element/rp\"><code>&lt;rp&gt;</code></a>\nelement or another\n<code>&lt;rb&gt;</code>\nelement, or if there is no more content in the parent element.\n",
@@ -5461,7 +5461,7 @@
         "SafariIOS": ""
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Ruby Fallback Parenthesis (<code>&lt;rp&gt;</code>) element</strong> is used to provide fall-back parentheses for browsers that do not support display of ruby annotations using the <a href=\"$MDN_URL$/Web/HTML/Element/ruby\"><code>&lt;ruby&gt;</code></a> element.</span> One <code>&lt;rp&gt;</code> element should enclose each of the opening and closing parentheses that wrap the <a href=\"$MDN_URL$/Web/HTML/Element/rt\"><code>&lt;rt&gt;</code></a> element that contains the annotation's text.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "Text\n",
         "Tag omission": "The end tag can be omitted if the element is immediately followed by an\n<a href=\"$MDN_URL$/Web/HTML/Element/rt\"><code>&lt;rt&gt;</code></a>\nor another\n<code>&lt;rp&gt;</code>\nelement, or if there is no more content in the parent element.\n",
@@ -5487,7 +5487,7 @@
         "SafariIOS": ""
       },
       "doc": "<p>The <strong>HTML Ruby Text (<code>&lt;rt&gt;</code>) element</strong> specifies the ruby text component of a ruby annotation, which is used to provide pronunciation, translation, or transliteration information for East Asian typography. The <code>&lt;rt&gt;</code> element must always be contained within a <a href=\"$MDN_URL$/Web/HTML/Element/ruby\"><code>&lt;ruby&gt;</code></a> element.</p>\n<p>See the article about the <a href=\"$MDN_URL$/Web/HTML/Element/ruby\"><code>&lt;ruby&gt;</code></a> element for more examples.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link1\">Phrasing content</a>\n.\n",
         "Tag omission": "The end tag may be omitted if the\n<code>&lt;rt&gt;</code>\nelement is immediately followed by an\n<code>&lt;rt&gt;</code>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/rp\"><code>&lt;rp&gt;</code></a>\nelement, or if there is no more content in the parent element\n",
@@ -5507,7 +5507,7 @@
         "Firefox": "33"
       },
       "doc": "<p>The <strong>HTML Ruby Text Container (<code>&lt;rtc&gt;</code>) element</strong> embraces semantic annotations of characters presented in a ruby of <a href=\"$MDN_URL$/Web/HTML/Element/rb\"><code>&lt;rb&gt;</code></a> elements used inside of <a href=\"$MDN_URL$/Web/HTML/Element/ruby\"><code>&lt;ruby&gt;</code></a> element. <a href=\"$MDN_URL$/Web/HTML/Element/rb\"><code>&lt;rb&gt;</code></a> elements can have both pronunciation (<a href=\"$MDN_URL$/Web/HTML/Element/rt\"><code>&lt;rt&gt;</code></a>) and semantic (<a href=\"$MDN_URL$/Web/HTML/Element/rtc\"><code>&lt;rtc&gt;</code></a>) annotations.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link1\">Phrasing content</a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/rt\"><code>&lt;rt&gt;</code></a>\nelements.\n",
         "Tag omission": "The closing tag can be omitted if it is immediately followed by a\n<a href=\"$MDN_URL$/Web/HTML/Element/rb\"><code>&lt;rb&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/rtc\"><code>&lt;rtc&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/rt\"><code>&lt;rt&gt;</code></a>\nelement opening tag or by its parent closing tag.\n",
@@ -5532,7 +5532,7 @@
         "SafariIOS": ""
       },
       "doc": "<p>The <strong>HTML <code>&lt;ruby&gt;</code> element</strong> represents small annotations that are rendered above, below, or next to base text, usually used for showing the pronunciation of East Asian characters. It can also be used for annotating other kinds of text, but this usage is less common.</p>\n<p>The term <em>ruby</em> originated as <a href=\"https://en.wikipedia.org/wiki/Agate_(typography)\" class=\"external\" rel=\" noopener\">a unit of measurement used by typesetters</a>, representing the smallest size that text can be printed on newsprint while remaining legible.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5548,7 +5548,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;s&gt;</code> element</strong> renders text with a strikethrough, or a line through it. Use the <code>&lt;s&gt;</code> element to represent things that are no longer relevant or no longer accurate. However, <code>&lt;s&gt;</code> is not appropriate when indicating document edits; for that, use the <a href=\"$MDN_URL$/Web/HTML/Element/del\"><code>&lt;del&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/ins\"><code>&lt;ins&gt;</code></a> elements, as appropriate.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link1\">Phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">flow content</a>\n.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5564,7 +5564,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Sample Element</strong> (<strong><code>&lt;samp&gt;</code></strong>) is used to enclose inline text which represents sample (or quoted) output from a computer program.</span> Its contents are typically rendered using the browser's default monospaced font (such as <a  href=\"https://en.wikipedia.org/wiki/Courier_(typeface)\" class=\"external\" rel=\" noopener\">Courier</a> or Lucida Console).</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5580,7 +5580,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;script&gt;</code> element</strong> is used to embed executable code or data; this is typically used to embed or refer to JavaScript code.</span> The <code>&lt;script&gt;</code> element can also be used with other languages, such as <a href=\"$MDN_URL$/Web/API/WebGL_API\">WebGL</a>'s GLSL shader programming language and <a href=\"$MDN_URL$/Glossary/JSON\">JSON</a>.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#metadata_content\" data-flaw=\"link1\">Metadata content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Permitted content": "Dynamic script such as\n<code>text/javascript</code>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5729,7 +5729,7 @@
         "SafariIOS": "4.2"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;section&gt;</code> element</strong> represents a generic standalone section of a document, which doesn't have a more specific semantic element to represent it.</span> Sections should always have a heading, with very few exceptions.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#sectioning_content\">Sectioning content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\">Flow content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5823,7 +5823,7 @@
         "Opera": "26"
       },
       "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;shadow&gt;</code> element</strong>—an obsolete part of the <a href=\"$MDN_URL$/Web/Web_Components\">Web Components</a> technology suite—was intended to be used as a shadow DOM <a href=\"$MDN_URL$/Glossary/insertion_point\">insertion point</a>.</span> You might have used it if you have created multiple shadow roots under a shadow host. It is not useful in ordinary HTML.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link1\">Transparent content</a>\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">Flow content</a>\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -5847,7 +5847,7 @@
         "SafariIOS": "10"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;slot&gt;</code> element</strong>—part of the <a href=\"$MDN_URL$/Web/Web_Components\">Web Components</a> technology suite—is a placeholder inside a web component that you can fill with your own markup, which lets you create separate DOM trees and present them together.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#transparent_content_model\" data-flaw=\"link3\">Transparent</a>\n",
         "Events": "<code><a href=\"$MDN_URL$/Web/Events/slotchange\" >slotchange</a></code>\n",
@@ -5882,7 +5882,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;small&gt;</code></strong> <strong>element</strong> represents side-comments and small print, like copyright and legal text, independent of its styled presentation. By default, it renders text within it one font-size smaller, such as from <code>small</code> to <code>x-small</code>.</p>",
-      "sections": {
+      "details": {
         "Content categories": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n",
         "Tag omission": "None, must have both a start tag and an end tag.\n",
@@ -5908,7 +5908,7 @@
         "SafariIOS": ""
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;source&gt;</code> element</strong> specifies multiple media resources for the <a href=\"$MDN_URL$/Web/HTML/Element/picture\"><code>&lt;picture&gt;</code></a>, the <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> element, or the <a href=\"$MDN_URL$/Web/HTML/Element/video\"><code>&lt;video&gt;</code></a> element.</span> It is an empty element, meaning that it has no content and does not have a closing tag. It is commonly used to offer the same media content in multiple file formats in order to provide compatibility with a broad range of browsers given their differing support for <a href=\"$MDN_URL$/Web/Media/Formats/Image_types\">image file formats</a> and <a href=\"$MDN_URL$/Web/Media/Formats\">media file formats</a>.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "It must have a start tag, but must not have an end tag.\n",
@@ -6039,7 +6039,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;span&gt;</code> element</strong> is a generic inline container for phrasing content, which does not inherently represent anything. It can be used to group elements for styling purposes (using the <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-class\"><code>class</code></a> or <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-id\"><code>id</code></a> attributes), or because they share attribute values, such as <a href=\"$MDN_URL$/Web/HTML/Global_attributes#attr-lang\"><code>lang</code></a>.</span> It should be used only when no other semantic element is appropriate. <code>&lt;span&gt;</code> is very much like a <a href=\"$MDN_URL$/Web/HTML/Element/div\"><code>&lt;div&gt;</code></a> element, but <a href=\"$MDN_URL$/Web/HTML/Element/div\"><code>&lt;div&gt;</code></a> is a <a href=\"$MDN_URL$/Web/HTML/Block-level_elements\">block-level element</a> whereas a <code>&lt;span&gt;</code> is an <a href=\"$MDN_URL$/Web/HTML/Inline_elements\">inline element</a>.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -6056,7 +6056,7 @@
         "Deprecated"
       ],
       "doc": "<div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div>\n<p>The <strong>HTML <code>&lt;strike&gt;</code> element</strong> (or <em>HTML Strikethrough Element</em>) places a strikethrough (horizontal line) over text.</p>\n<div class=\"notecard note\">\n<p><strong>Usage note:</strong> This element is deprecated in HTML 4 and XHTML 1, and obsoleted in HTML5. If semantically appropriate, i.e., if it represents <em>deleted</em> content, use <a href=\"$MDN_URL$/Web/HTML/Element/del\"><code>&lt;del&gt;</code></a> instead. In all other cases use <a href=\"$MDN_URL$/Web/HTML/Element/s\"><code>&lt;s&gt;</code></a>.</p>\n</div>",
-      "sections": {
+      "details": {
         "DOM interface": "<a href=\"$MDN_URL$/Web/API/HTMLElement\"><code>HTMLElement</code></a>\n"
       }
     },
@@ -6066,7 +6066,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The HTML <strong>Strong Importance Element</strong> (<strong><code>&lt;strong&gt;</code></strong>) indicates that its contents have strong importance, seriousness, or urgency. Browsers typically render the contents in bold type.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, must have both a start tag and an end tag.\n",
@@ -6165,7 +6165,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The HTML <strong>Subscript element</strong> (<strong><code>&lt;sub&gt;</code></strong>) specifies inline text which should be displayed as subscript for solely typographical reasons.</span> Subscripts are typically rendered with a lowered baseline using smaller text.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -6190,7 +6190,7 @@
         "SafariIOS": ""
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Disclosure Summary element</strong> (<strong><code>&lt;summary&gt;</code></strong>) element specifies a summary, caption, or legend for a <a href=\"$MDN_URL$/Web/HTML/Element/details\"><code>&lt;details&gt;</code></a> element's disclosure box.</span> Clicking the <code>&lt;summary&gt;</code> element toggles the state of the parent <code>&lt;details&gt;</code> element open and closed.</p>",
-      "sections": {
+      "details": {
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link1\">Phrasing content</a>\nor one element of\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#heading_content\" data-flaw=\"link2\">Heading content</a>\n",
         "Tag omission": "None, both the start tag and the end tag are mandatory.\n",
         "Permitted parents": "The\n<a href=\"$MDN_URL$/Web/HTML/Element/details\"><code>&lt;details&gt;</code></a>\nelement.\n",
@@ -6205,7 +6205,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Superscript element</strong> (<strong><code>&lt;sup&gt;</code></strong>) specifies inline text which is to be displayed as superscript for solely typographical reasons.</span> Superscripts are usually rendered with a raised baseline using smaller text.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -6221,7 +6221,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;table&gt;</code> element</strong> represents tabular data — that is, information presented in a two-dimensional table comprised of rows and columns of cells containing data.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n",
         "Permitted content": "<div class=\"content-models\">\n<div id=\"table-mdls\">In this order:\n<ol>\n<li>an optional <a href=\"$MDN_URL$/Web/HTML/Element/caption\"><code>&lt;caption&gt;</code></a> element,</li>\n<li>zero or more <a href=\"$MDN_URL$/Web/HTML/Element/colgroup\"><code>&lt;colgroup&gt;</code></a> elements,</li>\n<li>an optional <a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a> element,</li>\n<li>either one of the following:\n<ul>\n<li>zero or more <a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a> elements</li>\n<li>one or more <a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> elements</li>\n</ul>\n</li>\n<li>an optional <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a> element</li>\n</ol>\n</div>\n</div>\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -6311,7 +6311,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Table Body element</strong> (<strong><code>&lt;tbody&gt;</code></strong>) encapsulates a set of table rows (<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a> elements), indicating that they comprise the body of the table (<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>).</span></p>\n<p>The <code>&lt;tbody&gt;</code> element, along with its cousins <a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>, provide useful semantic information that can be used when rendering for either screen or printer as well as for <a href=\"$MDN_URL$/Glossary/accessibility\">accessibility</a> purposes.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements.\n",
         "Tag omission": "The\n<code>&lt;tbody&gt;</code>\nelement is not a required child element for a parent\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement to graphically render. However, it must not be present, if its parent\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement has a\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelement as a child.\n",
@@ -6388,7 +6388,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;td&gt;</code> element</strong> defines a cell of a table that contains data. It participates in the <em>table model</em>.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "Sectioning root.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n.\n",
         "Tag omission": "The start tag is mandatory.\n<br>\nThe end tag may be omitted, if it is immediately followed by a\n<a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a>\nelement or if there are no more data in its parent element.\n",
@@ -6531,7 +6531,7 @@
         "SafariIOS": "8"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Content Template (<code>&lt;template&gt;</code>) element</strong> is a mechanism for holding <a href=\"$MDN_URL$/Glossary/HTML\">HTML</a> that is not to be rendered immediately when a page is loaded but may be instantiated subsequently during runtime using JavaScript.</span></p>\n<p>Think of a template as a content fragment that is being stored for subsequent use in the document. While the parser does process the contents of the <strong><code>&lt;template&gt;</code></strong> element while loading the page, it does so only to ensure that those contents are valid; the element's contents are not rendered, however.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#metadata_content\" data-flaw=\"link1\">Metadata content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link2\">flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">phrasing content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#script-supporting_elements\" data-flaw=\"link4\">script-supporting element</a>\n",
         "Permitted content": "No restrictions\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -6802,7 +6802,7 @@
         "StandardTrack"
       ],
       "doc": "<p id=\"Summary\">The <strong>HTML <code>&lt;tfoot&gt;</code> element</strong> defines a set of rows summarizing the columns of the table.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements.\n",
         "Tag omission": "The start tag is mandatory. The end tag may be omitted if there is no more content in the parent\n<a href=\"$MDN_URL$/Web/HTML/Element/table\"><code>&lt;table&gt;</code></a>\nelement.\n",
@@ -6879,7 +6879,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;th&gt;</code> element</strong> defines a cell as header of a group of table cells. The exact nature of this group is defined by the <a href=\"$MDN_URL$/Web/HTML/Element/th#attr-scope\"><code>scope</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/th#attr-headers\"><code>headers</code></a> attributes.</span></p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, but with no header, footer, sectioning content, or heading content descendants.\n",
         "Tag omission": "The start tag is mandatory.\n<br>\nThe end tag may be omitted, if it is immediately followed by a\n<a href=\"$MDN_URL$/Web/HTML/Element/th\"><code>&lt;th&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/td\"><code>&lt;td&gt;</code></a>\nelement or if there are no more data in its parent element.\n",
@@ -7011,7 +7011,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;thead&gt;</code> element</strong> defines a set of rows defining the head of the columns of the table.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/tr\"><code>&lt;tr&gt;</code></a>\nelements.\n",
         "Tag omission": "The start tag is mandatory. The end tag may be omitted if the\n<a href=\"$MDN_URL$/Web/HTML/Element/thead\"><code>&lt;thead&gt;</code></a>\nelement is immediately followed by a\n<a href=\"$MDN_URL$/Web/HTML/Element/tbody\"><code>&lt;tbody&gt;</code></a>\nor\n<a href=\"$MDN_URL$/Web/HTML/Element/tfoot\"><code>&lt;tfoot&gt;</code></a>\nelement.\n",
@@ -7097,7 +7097,7 @@
         "SafariIOS": "4"
       },
       "doc": "<p><span class=\"seoSummary\">The HTML <strong><code>&lt;time&gt;</code> element</strong> represents a specific period in time.</span> It may include the <code>datetime</code> attribute to translate dates into machine-readable format, allowing for better search engine results or custom features such as reminders.</p>\n<p>It may represent one of the following:</p>\n<ul>\n<li>A time on a 24-hour clock.</li>\n<li>A precise date in the <a  href=\"https://en.wikipedia.org/wiki/Gregorian_calendar\" class=\"external\" rel=\" noopener\">Gregorian calendar</a> (with optional time and timezone information).</li>\n<li><a href=\"https://www.w3.org/TR/2014/REC-html5-20141028/infrastructure.html#valid-duration-string\" class=\"external\" rel=\" noopener\">A valid time duration</a>.</li>\n</ul>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -7131,7 +7131,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML Title element</strong> (<strong><code>&lt;title&gt;</code></strong>) defines the document's title that is shown in a <a href=\"$MDN_URL$/Glossary/Browser\">browser</a>'s title bar or a page's tab.</span> It only contains text; tags within the element are ignored.</p>\n<pre class=\"brush: html notranslate\"><code>&lt;title&gt;Grandma's Heavy Metal Festival Journal&lt;/title&gt;</code></pre>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#metadata_content\" data-flaw=\"link1\">Metadata content</a>\n.\n",
         "Permitted content": "Text that is not inter-element\n<a href=\"$MDN_URL$/Glossary/whitespace\">whitespace</a>\n.\n",
         "Tag omission": "Both opening and closing tags are required. Note that leaving off\n<code>&lt;/title&gt;</code>\nshould cause the browser to ignore the rest of the page.\n",
@@ -7225,7 +7225,7 @@
         "SafariIOS": "6"
       },
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML <code>&lt;track&gt;</code> element</strong> is used as a child of the media elements, <a href=\"$MDN_URL$/Web/HTML/Element/audio\"><code>&lt;audio&gt;</code></a> and <a href=\"$MDN_URL$/Web/HTML/Element/video\"><code>&lt;video&gt;</code></a>. It lets you specify timed text tracks (or time-based data), for example to automatically handle subtitles.</span> The tracks are formatted in <a href=\"$MDN_URL$/Web/API/WebVTT_API\">WebVTT format</a> (<code>.vtt</code> files) — Web Video Text Tracks.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "None\n",
         "Permitted content": "None, it is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n.\n",
         "Tag omission": "As it is a void element, the start tag must be present and the end tag must not be present.\n",
@@ -7324,7 +7324,7 @@
         "Deprecated"
       ],
       "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>\n<p><span class=\"seoSummary\">The obsolete <strong>HTML Teletype Text element</strong> (<strong><code>&lt;tt&gt;</code></strong>) creates inline text which is presented using the <a href=\"$MDN_URL$/Glossary/user_agent\">user agent's</a> default monospace font face.</span> This element was created for the purpose of rendering text as it would be displayed on a fixed-width display such as a teletype, text-only screen, or line printer.</p>\n<p>The terms <strong>non-proportional</strong>, <strong>monotype</strong>, and <strong>monospace</strong> are used interchangeably and have the same general meaning: they describe a typeface whose characters are all the same number of pixels wide.</p>\n<p>This element is obsolete, however. You should use the more semantically helpful <a href=\"$MDN_URL$/Web/HTML/Element/code\"><code>&lt;code&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/kbd\"><code>&lt;kbd&gt;</code></a>, <a href=\"$MDN_URL$/Web/HTML/Element/samp\"><code>&lt;samp&gt;</code></a>, or <a href=\"$MDN_URL$/Web/HTML/Element/var\"><code>&lt;var&gt;</code></a> elements for inline text that needs to be presented in monospace type, or the <a href=\"$MDN_URL$/Web/HTML/Element/pre\"><code>&lt;pre&gt;</code></a> tag for content that should be presented as a separate block.</p>\n<div class=\"note notecard\">If none of the semantic elements are appropriate for your use case (for example, if you need to show some content in a non-proportional font), you should consider using the <a href=\"$MDN_URL$/Web/HTML/Element/span\"><code>&lt;span&gt;</code></a> element, styling it as desired using CSS. The <a href=\"$MDN_URL$/Web/CSS/font-family\"><code>font-family</code></a> property is a good place to start.</div>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -7339,7 +7339,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The <strong>HTML</strong> <strong>Unarticulated Annotation element</strong> (<strong><code>&lt;u&gt;</code></strong>) represents a span of inline text which should be rendered in a way that indicates that it has a non-textual annotation.</span> This is rendered by default as a simple solid underline, but may be altered using CSS.</p>\n<div class=\"warning notecard\">\n<p>This element used to be called the \"Underline\" element in older versions of HTML, and is still sometimes misused in this way. To underline text, you should instead apply a style that includes the CSS <a href=\"$MDN_URL$/Web/CSS/text-decoration\"><code>text-decoration</code></a> property set to <code>underline</code>.</p>\n</div>\n<p>See the <a href=\"#usage_notes\">Usage notes</a> section for further details on when it's appropriate to use <code>&lt;u&gt;</code> and when it isn't.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -7355,7 +7355,7 @@
         "StandardTrack"
       ],
       "doc": "<p>The <strong>HTML <code>&lt;ul&gt;</code> element</strong> represents an unordered list of items, typically rendered as a bulleted list.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n, and if the\n<code>&lt;ul&gt;</code>\nelement's children include at least one\n<a href=\"$MDN_URL$/Web/HTML/Element/li\"><code>&lt;li&gt;</code></a>\nelement,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#palpable_content\" data-flaw=\"link2\">palpable content</a>\n.\n",
         "Permitted content": "Zero or more\n<a href=\"$MDN_URL$/Web/HTML/Element/li\"><code>&lt;li&gt;</code></a>\n,\n<a href=\"$MDN_URL$/Web/HTML/Element/script\"><code>&lt;script&gt;</code></a>\nand\n<a href=\"$MDN_URL$/Web/HTML/Element/template\"><code>&lt;template&gt;</code></a>\nelements.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -7387,7 +7387,7 @@
         "StandardTrack"
       ],
       "doc": "<p><span class=\"seoSummary\">The HTML <strong>Variable element</strong> (<strong><code>&lt;var&gt;</code></strong>) represents the name of a variable in a mathematical expression or a programming context.</span> It's typically presented using an italicized version of the current typeface, although that behavior is browser-dependent.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n, palpable content.\n",
         "Permitted content": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link3\">Phrasing content</a>\n.\n",
         "Tag omission": "None, both the starting and ending tag are mandatory.\n",
@@ -7647,7 +7647,7 @@
         "Safari": "4"
       },
       "doc": "<p>The <strong>HTML <code>&lt;wbr&gt;</code> element</strong> represents a word break opportunity—a position within text where the browser may optionally break a line, though its line-breaking rules would not otherwise create a break at that location.</p>",
-      "sections": {
+      "details": {
         "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories\">Content categories</a>": "<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#flow_content\" data-flaw=\"link1\">Flow content</a>\n,\n<a href=\"$MDN_URL$/Web/Guide/HTML/Content_categories#phrasing_content\" data-flaw=\"link2\">phrasing content</a>\n.\n",
         "Permitted content": "Empty\n",
         "Tag omission": "It is an\n<a href=\"$MDN_URL$/Glossary/empty_element\">empty element</a>\n; it must have a start tag, but must not have an end tag.\n",
@@ -7663,7 +7663,7 @@
         "StandardTrack",
         "Deprecated"
       ],
-      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div>"
+      "doc": "<div><div class=\"notecard deprecated\">\n<h4 id=\"Deprecated\">Deprecated</h4>\n<p>This feature is no longer recommended. Though some browsers might still support it, it may have already been removed from the relevant web standards, may be in the process of being dropped, or may only be kept for compatibility purposes. Avoid using it, and update existing code if possible; see the <a href=\"#browser_compatibility\">compatibility table</a> at the bottom of this page to guide your decision. Be aware that this feature may cease to work at any time.</p>\n</div></div><p>The <em>HTML Example Element</em> (<code>&lt;xmp&gt;</code>) renders text between the start and end tags without interpreting the HTML in between and using a monospaced font. The HTML2 specification recommended that it should be rendered wide enough to allow 80 characters per line.</p>\n<div class=\"note notecard\"><strong>Note:</strong> Do not use this element.\n<ul>\n<li>It has been deprecated since HTML3.2 and was not implemented in a consistent way. It was completely removed from the language in HTML5.</li>\n<li>Use the <a href=\"$MDN_URL$/Web/HTML/Element/pre\"><code>&lt;pre&gt;</code></a> element or, if semantically adequate, the <a href=\"$MDN_URL$/Web/HTML/Element/code\"><code>&lt;code&gt;</code></a> element instead. Note that you will need to escape the '<code>&lt;</code>' character as '<code>&amp;lt;</code>' to make sure it is not interpreted as markup.</li>\n<li>A monospaced font can also be obtained on any element, by applying an adequate <a href=\"$MDN_URL$/Web/CSS\">CSS</a> style using <code>monospace</code> as the generic-font value for the <a href=\"$MDN_URL$/Web/CSS/font-family\"><code>font-family</code></a> property.</li>\n</ul>\n</div>"
     }
   },
   "tagAliases": {

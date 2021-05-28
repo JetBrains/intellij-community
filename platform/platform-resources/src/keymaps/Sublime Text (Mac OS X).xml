@@ -136,8 +136,10 @@
   <action id="WebOpenInAction"/>
   <!--END EDIT-->
   <!--SELECTION-->
-  <action id="EditorSelectWord">
+  <action id="EditorSelectLine">
     <keyboard-shortcut first-keystroke="meta l"/>
+  </action>
+  <action id="EditorSelectWord">
     <keyboard-shortcut first-keystroke="meta shift a"/>
     <keyboard-shortcut first-keystroke="meta shift j"/>
     <keyboard-shortcut first-keystroke="meta shift space"/>

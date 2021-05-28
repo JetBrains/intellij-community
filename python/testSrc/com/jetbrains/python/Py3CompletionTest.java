@@ -28,7 +28,7 @@ import java.util.List;
 public class Py3CompletionTest extends PyTestCase {
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   public void testPropertyDecorator() {
@@ -423,12 +423,12 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-42700
   public void testFStringLikeCompletionInOrdinaryStringLiterals() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionPreservesParenthesesForCallables() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
@@ -438,58 +438,56 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-42700
   public void testFStringLikeCompletionNotAvailableInByteLiterals() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionNotAvailableInUnicodeLiterals() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionNotAvailableInStrFormatCalls() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionNotAvailableAfterEscapedOpeningBrace() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionAvailableAfterOpeningBraceFollowingEscapedOne() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionDoesNotDuplicateClosingBrace() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionOnMultipleCaretsDoesNotDuplicatePrefix() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doTest);
+    doTest();
   }
 
   // PY-42700
   public void testFStringLikeCompletionDoesNotWorkInStringWithInjections() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // EA-232631
   public void testFStringLikeCompletionNotAvailableInStringElementsInSyntacticallyIllegalPosition() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), this::doNegativeTest);
+    doNegativeTest();
   }
 
   // PY-45459
   public void testFStringLikeCompletionAvailableRightAfterOpeningBrace() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      myFixture.configureByFile(getTestName(true) + ".py");
-      LookupElement[] variants = myFixture.completeBasic();
-      assertNotNull(variants);
-      assertTrue(variants.length > 0);
-      assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("my_expr")));
-    });
+    myFixture.configureByFile(getTestName(true) + ".py");
+    LookupElement[] variants = myFixture.completeBasic();
+    assertNotNull(variants);
+    assertTrue(variants.length > 0);
+    assertTrue(ContainerUtil.exists(variants, v -> v.getLookupString().equals("my_expr")));
   }
 
   // PY-46056
@@ -526,12 +524,10 @@ public class Py3CompletionTest extends PyTestCase {
 
   // PY-46054
   public void testFromImportFromSameDirectoryModule() {
-    runWithLanguageLevel(LanguageLevel.getLatest(), () -> {
-      myFixture.copyDirectoryToProject(getTestName(true), "");
-      myFixture.configureByFile("foo_bar/sample.py");
-      myFixture.completeBasic();
-      myFixture.checkResultByFile(getTestName(true) + "/foo_bar/sample.after.py");
-    });
+    myFixture.copyDirectoryToProject(getTestName(true), "");
+    myFixture.configureByFile("foo_bar/sample.py");
+    myFixture.completeBasic();
+    myFixture.checkResultByFile(getTestName(true) + "/foo_bar/sample.after.py");
   }
 
   @Override

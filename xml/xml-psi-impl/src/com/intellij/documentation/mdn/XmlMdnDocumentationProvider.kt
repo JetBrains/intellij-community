@@ -17,18 +17,12 @@ class XmlMdnDocumentationProvider : DocumentationProvider {
   override fun getUrlFor(element: PsiElement, originalElement: PsiElement?): List<String>? =
     getMdnDocumentation(element, originalElement)?.let { listOf(it.url) }
 
-  override fun generateHoverDoc(element: PsiElement, originalElement: PsiElement?): String? =
-    generateDoc(element, originalElement, true)
-
-  override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? =
-    generateDoc(element, originalElement, false)
+  override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String?  =
+    getMdnDocumentation(element, originalElement)?.getDocumentation(true)
 
   companion object {
 
     private val supportedNamespaces = setOf(HtmlUtil.SVG_NAMESPACE, HtmlUtil.MATH_ML_NAMESPACE, XmlUtil.HTML_URI, XmlUtil.XHTML_URI)
-
-    private fun generateDoc(element: PsiElement, originalElement: PsiElement?, docOnHover: Boolean): String? =
-      getMdnDocumentation(element, originalElement)?.getDocumentation(true, docOnHover)
 
     private fun getMdnDocumentation(element: PsiElement, originalElement: PsiElement?): MdnSymbolDocumentation? =
       originalElement.takeIf { it is XmlElement || it is XmlToken }

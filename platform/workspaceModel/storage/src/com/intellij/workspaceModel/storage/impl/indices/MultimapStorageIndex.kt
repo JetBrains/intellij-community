@@ -70,6 +70,7 @@ open class MultimapStorageIndex private constructor(
 
     companion object {
       fun from(other: MultimapStorageIndex): MutableMultimapStorageIndex {
+        if (other is MutableMultimapStorageIndex) other.freezed = true
         return MutableMultimapStorageIndex(other.index)
       }
     }

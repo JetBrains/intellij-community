@@ -82,6 +82,7 @@ public final class DefaultTreeUI extends BasicTreeUI {
 
   @Nullable
   private static Color getBackground(@NotNull JTree tree, @NotNull TreePath path, int row, boolean selected) {
+    // to be consistent with com.intellij.ui.components.WideSelectionListUI#getBackground
     if (selected) {
       return RenderingUtil.getSelectionBackground(tree);
     }

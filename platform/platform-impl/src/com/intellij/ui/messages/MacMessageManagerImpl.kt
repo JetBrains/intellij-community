@@ -267,12 +267,17 @@ private class NativeMacMessageManager : MacMessages() {
   private val SHOW_ALERT = object : Callback {
     @Suppress("UNUSED_PARAMETER", "unused")
     fun callback(self: ID, selector: String, params: ID) {
-      val alert = Foundation.invoke(Foundation.invoke("NSAlert", "alloc"), "init")
-
-      val alertWindow = Foundation.invoke(alert, "window")
-      myDialog!!.setHandler(alertWindow.toLong())
-
       val info = myInfo!!
+      val ownerWindow = getActualWindow(info.nativeWindow)
+      val runModal = ownerWindow == null || !ourParentIsTopLevelWindowWithoutChildren()  /* prevent z-order issues with other children of our parent */
+
+      val alert = Foundation.invoke(Foundation.invoke("NSAlert", "alloc"), "init")
+      val alertWindow = Foundation.invoke(alert, "window")
+
+      if (!runModal) {
+        myDialog!!.setHandler(alertWindow.toLong())
+      }
+
       Foundation.invoke(alert, "setMessageText:", Foundation.nsString(info.title))
       Foundation.invoke(alert, "setInformativeText:", Foundation.nsString(info.message))
 
@@ -311,10 +316,7 @@ private class NativeMacMessageManager : MacMessages() {
         Foundation.invoke(alertWindow, "setDefaultButtonCell:", Foundation.invoke(button, "cell"))
       }
 
-      val ownerWindow = getActualWindow(info.nativeWindow)
-
-      if (ownerWindow == null ||
-          !ourParentIsTopLevelWindowWithoutChildren() /* prevent z-order issues with other children of our parent */) {
+      if (runModal) {
         setResult(alert, Foundation.invoke(alert, "runModal"))
       }
       else {

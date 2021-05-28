@@ -3,11 +3,32 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
 import com.intellij.ui.*
+import java.awt.Component
 import javax.swing.JList
 
-class RuntimeChooserPresenter(
-  private val model: RuntimeChooserModel
-) : ColoredListCellRenderer<RuntimeChooserItem>() {
+class RuntimeChooserPresenter: ColoredListCellRenderer<RuntimeChooserItem>() {
+
+  override fun getListCellRendererComponent(list: JList<out RuntimeChooserItem>?,
+                                            value: RuntimeChooserItem?,
+                                            index: Int,
+                                            selected: Boolean,
+                                            hasFocus: Boolean): Component {
+
+    val message = when (value) {
+      is RuntimeChooserAdvancedSectionSeparator -> LangBundle.message("dialog.separator.choose.ide.runtime.advanced")
+      is RuntimeChooserAdvancedJbrSelectedSectionSeparator -> LangBundle.message("dialog.separator.choose.ide.runtime.advancedJbrs")
+      is RuntimeChooserCustomSelectedSectionSeparator -> LangBundle.message("dialog.separator.choose.ide.runtime.customSelected")
+      else -> null
+    }
+
+    if (message == null) {
+      return super.getListCellRendererComponent(list, value, index, selected, hasFocus)
+    }
+
+    val sep = SeparatorWithText()
+    sep.caption = message
+    return sep
+  }
 
   override fun customizeCellRenderer(list: JList<out RuntimeChooserItem>,
                                      value: RuntimeChooserItem?,
@@ -30,6 +51,11 @@ class RuntimeChooserPresenter(
 
     if (value is RuntimeChooserCustomItem) {
       append(LangBundle.message("dialog.item.choose.ide.runtime.custom", value.version), SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES, true)
+      return
+    }
+
+    if (value is RuntimeChooserShowAdvancedItem) {
+      append(LangBundle.message("dialog.item.choose.ide.runtime.advanced"), SimpleTextAttributes.REGULAR_ATTRIBUTES, true)
       return
     }
   }

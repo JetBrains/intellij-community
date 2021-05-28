@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.render;
 
 import com.intellij.openapi.util.Key;
@@ -12,6 +12,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.Color;
 import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.IconLoader.getDarkIcon;
+import static com.intellij.util.ui.StartupUiUtil.isUnderDarcula;
 
 public final class RenderingUtil {
   /**
@@ -40,6 +43,16 @@ public final class RenderingUtil {
    */
   @ApiStatus.Internal
   public static final Key<Supplier<Color>> CUSTOM_SELECTION_BACKGROUND = Key.create("CUSTOM_SELECTION_BACKGROUND");
+
+
+  /**
+   * @param icon     an icon to render
+   * @param selected specifies whether is a selection background expected
+   * @return a lighter icon if applicable, the given icon otherwise
+   */
+  public static @Nullable Icon getIcon(@Nullable Icon icon, boolean selected) {
+    return !selected || icon == null || isUnderDarcula() ? icon : getDarkIcon(icon, true);
+  }
 
 
   @NotNull

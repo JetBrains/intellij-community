@@ -53,6 +53,12 @@ public interface CreateFromTemplateHandler {
 
   void prepareProperties(@NotNull Map<String, Object> props);
 
+  /**
+   * @deprecated use {@link CreateFromTemplateHandler#prepareProperties(Map, String, FileTemplate, Project)} instead
+   */
+  @Deprecated
+  default void prepareProperties(@NotNull Map<String, Object> props, String fileName, @NotNull FileTemplate template) {}
+
   default void prepareProperties(@NotNull Map<String, Object> props,
                                  String fileName,
                                  @NotNull FileTemplate template,

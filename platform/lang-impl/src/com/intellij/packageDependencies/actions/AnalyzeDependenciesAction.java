@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies.actions;
 
 import com.intellij.analysis.AnalysisScope;
@@ -29,7 +14,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 public class AnalyzeDependenciesAction extends BaseAnalysisAction {
-  private AnalyzeDependenciesSettingPanel myPanel;
+  private AnalyzeDependenciesSettingPanelUi myPanel;
 
   public AnalyzeDependenciesAction() {
     super(CodeInsightBundle.messagePointer("action.forward.dependency.analysis"), CodeInsightBundle.messagePointer("action.analysis.noun"));
@@ -37,36 +22,30 @@ public class AnalyzeDependenciesAction extends BaseAnalysisAction {
 
   @Override
   protected void analyze(@NotNull final Project project, @NotNull AnalysisScope scope) {
-    new AnalyzeDependenciesHandler(project, scope, myPanel.myTransitiveCB.isSelected() ? ((SpinnerNumberModel)myPanel.myBorderChooser.getModel()).getNumber().intValue() : 0).analyze();
+    new AnalyzeDependenciesHandler(project, scope, myPanel.getTransitiveCB().isSelected() ? ((SpinnerNumberModel)myPanel.getBorderChooser().getModel()).getNumber().intValue() : 0).analyze();
     myPanel = null;
   }
 
   @Override
   @Nullable
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
-    myPanel = new AnalyzeDependenciesSettingPanel();
-    myPanel.myTransitiveCB.setText(CodeInsightBundle.message("analyze.dependencies.transitive.dependencies.checkbox"));
-    myPanel.myTransitiveCB.addActionListener(new ActionListener() {
+    myPanel = new AnalyzeDependenciesSettingPanelUi();
+    myPanel.getTransitiveCB().setText(CodeInsightBundle.message("analyze.dependencies.transitive.dependencies.checkbox"));
+    myPanel.getTransitiveCB().addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        myPanel.myBorderChooser.setEnabled(myPanel.myTransitiveCB.isSelected());
+        myPanel.getBorderChooser().setEnabled(myPanel.getTransitiveCB().isSelected());
       }
     });
-    myPanel.myBorderChooser.setModel(new SpinnerNumberModel(5, 0, Integer.MAX_VALUE, 1));
-    myPanel.myBorderChooser.setEnabled(myPanel.myTransitiveCB.isSelected());
-    return myPanel.myWholePanel;
+    myPanel.getBorderChooser().setModel(new SpinnerNumberModel(5, 0, Integer.MAX_VALUE, 1));
+    myPanel.getBorderChooser().setEnabled(myPanel.getTransitiveCB().isSelected());
+    return myPanel.getPanel();
   }
 
   @Override
   protected void canceled() {
     super.canceled();
     myPanel = null;
-  }
-
-  private static class AnalyzeDependenciesSettingPanel {
-    private JCheckBox myTransitiveCB;
-    private JPanel myWholePanel;
-    private JSpinner myBorderChooser;
   }
 
 }

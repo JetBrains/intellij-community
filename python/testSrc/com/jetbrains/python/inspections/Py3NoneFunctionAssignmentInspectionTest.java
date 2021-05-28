@@ -25,7 +25,7 @@ public class Py3NoneFunctionAssignmentInspectionTest extends PyInspectionTestCas
   @Nullable
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   // PY-28729

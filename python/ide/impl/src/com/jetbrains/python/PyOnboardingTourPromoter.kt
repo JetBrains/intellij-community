@@ -2,5 +2,12 @@
 package com.jetbrains.python
 
 import training.ui.welcomeScreen.OnboardingLessonPromoter
+import training.util.switchOnExperimentalLessons
+import javax.swing.JPanel
 
-class PyOnboardingTourPromoter : OnboardingLessonPromoter("python.onboarding")
+class PyOnboardingTourPromoter : OnboardingLessonPromoter("python.onboarding") {
+  override fun getPromotionForInitialState(): JPanel? {
+    if (!switchOnExperimentalLessons) return null
+    return super.getPromotionForInitialState()
+  }
+}

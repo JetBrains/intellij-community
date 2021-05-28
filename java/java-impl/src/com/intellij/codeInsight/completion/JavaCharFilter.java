@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.VariableLookupItem;
 import com.intellij.lang.java.JavaLanguage;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
@@ -37,7 +38,11 @@ public class JavaCharFilter extends CharFilter {
 
   @Override
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
-    if (!lookup.getPsiFile().getLanguage().isKindOf(JavaLanguage.INSTANCE)) {
+    PsiFile file = lookup.getPsiFile();
+    if (file == null) return null;
+    boolean isJava = file.getLanguage().isKindOf(JavaLanguage.INSTANCE);
+    boolean isJsp = file.getFileType() == StdFileTypes.JSP;
+    if (!isJava && !isJsp) {
       return null;
     }
 
@@ -61,7 +66,6 @@ public class JavaCharFilter extends CharFilter {
     if (c == '.' && isWithinLiteral(lookup)) return Result.ADD_TO_PREFIX;
 
     if (c == ':') {
-      PsiFile file = lookup.getPsiFile();
       PsiDocumentManager.getInstance(file.getProject()).commitDocument(lookup.getEditor().getDocument());
       PsiElement leaf = file.findElementAt(lookup.getEditor().getCaretModel().getOffset() - 1);
       if (PsiUtil.getLanguageLevel(file).isAtLeast(LanguageLevel.JDK_1_8)) {

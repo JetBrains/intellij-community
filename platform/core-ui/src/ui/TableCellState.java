@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.ui.render.RenderingUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -18,22 +19,8 @@ public class TableCellState {
     clear();
     mySelected = isSelected;
     myFont = table.getFont();
-    if (isSelected) {
-      myForeground = table.getSelectionForeground();
-      myBackground = table.getSelectionBackground();
-    }
-    else {
-      myForeground = table.getForeground();
-      myBackground = table.getBackground();
-    }
-
-    //if (hasFocus) {
-    //  if (table.isCellEditable(row, column)) {
-    //    myForeground = UIUtil.getTableFocusCellForeground();
-    //    myBackground = UIUtil.getTableFocusCellBackground();
-    //  }
-    //}
-
+    myForeground = RenderingUtil.getForeground(table, isSelected);
+    myBackground = RenderingUtil.getBackground(table, isSelected);
     myCellBorder = getBorder(isSelected, hasFocus);
   }
 

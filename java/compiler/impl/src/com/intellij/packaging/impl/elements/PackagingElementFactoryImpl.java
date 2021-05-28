@@ -120,33 +120,41 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
   @Override
   @NotNull
   public CompositePackagingElement<?> getOrCreateDirectory(@NotNull CompositePackagingElement<?> parent, @NotNull String relativePath) {
-    return getOrCreateDirectoryOrArchive(parent, relativePath, true);
+    return getOrCreateDirectoryOrArchive(parent, relativePath, true, false);
   }
 
   @NotNull
   @Override
   public CompositePackagingElement<?> getOrCreateArchive(@NotNull CompositePackagingElement<?> parent, @NotNull String relativePath) {
-    return getOrCreateDirectoryOrArchive(parent, relativePath, false);
+    return getOrCreateDirectoryOrArchive(parent, relativePath, false, false);
   }
 
   @Override
   public void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull String outputDirectoryPath, @NotNull String sourceFilePath) {
-    addFileCopy(root, outputDirectoryPath, sourceFilePath, null);
+    addFileCopy(root, outputDirectoryPath, sourceFilePath, null, false);
   }
 
   @Override
   public void addFileCopy(@NotNull CompositePackagingElement<?> root, @NotNull String outputDirectoryPath, @NotNull String sourceFilePath,
-                          @Nullable String outputFileName) {
+                          @Nullable String outputFileName, boolean addAsFirstChild) {
     final String fileName = PathUtil.getFileName(sourceFilePath);
     if (outputFileName != null && outputFileName.equals(fileName)) {
       outputFileName = null;
     }
-    getOrCreateDirectory(root, outputDirectoryPath).addOrFindChild(createFileCopy(sourceFilePath, outputFileName));
+    CompositePackagingElement<?> parent = getOrCreateDirectoryOrArchive(root, outputDirectoryPath, true, true);
+    PackagingElement<?> child = createFileCopy(sourceFilePath, outputFileName);
+    if (addAsFirstChild) {
+      parent.addFirstChild(child);
+    }
+    else {
+      parent.addOrFindChild(child);
+    }
   }
 
   @NotNull
   private CompositePackagingElement<?> getOrCreateDirectoryOrArchive(@NotNull CompositePackagingElement<?> root,
-                                                                     @NotNull @NonNls String path, final boolean directory) {
+                                                                     @NotNull @NonNls String path,
+                                                                     final boolean directory, boolean addAsFirstChild) {
     path = StringUtil.trimStart(StringUtil.trimEnd(path, "/"), "/");
     if (path.length() == 0) {
       return root;
@@ -155,9 +163,15 @@ public class PackagingElementFactoryImpl extends PackagingElementFactory {
     String lastName = path.substring(index + 1);
     String parentPath = index != -1 ? path.substring(0, index) : "";
 
-    final CompositePackagingElement<?> parent = getOrCreateDirectoryOrArchive(root, parentPath, true);
+    final CompositePackagingElement<?> parent = getOrCreateDirectoryOrArchive(root, parentPath, true, addAsFirstChild);
     final CompositePackagingElement<?> last = directory ? createDirectory(lastName) : createArchive(lastName);
-    return parent.addOrFindChild(last);
+    if (addAsFirstChild) {
+      parent.addFirstChild(last);
+      return last;
+    }
+    else {
+      return parent.addOrFindChild(last);
+    }
   }
 
   @Override

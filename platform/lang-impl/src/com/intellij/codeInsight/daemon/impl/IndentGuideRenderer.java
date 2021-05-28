@@ -18,7 +18,7 @@ import java.util.List;
 
 public class IndentGuideRenderer implements CustomHighlighterRenderer {
     @Override
-    public final void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
+    public void paint(@NotNull Editor editor, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
         int startOffset = highlighter.getStartOffset();
         final Document doc = highlighter.getDocument();
         if (startOffset >= doc.getTextLength()) return;
@@ -38,26 +38,45 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         while (startLine > 1 && off < doc.getTextLength() && chars.charAt(off) == '\n');
 
         final VisualPosition startPosition = editor.offsetToVisualPosition(off);
-        int indentColumn = startPosition.column;
+        final VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
+        paint(editor, startPosition, endPosition, off, endOffset, doc, g);
+    }
+
+    /**
+     *  Existence of this method allows to abstract the line being drawn form the range of highlighter it is drawn for.
+     *  That can be useful for making it possible to avoid drawing the line on top of text
+     *  (examples of issues it can be useful for are RIDER-58398 and IDEA-263469).
+     *  lineStartPosition and lineEndPosition define the visual line that will be drawn,
+     *  while startOffset and endOffset define the entire indent guide, possibly intersecting with non-whitespace text.
+     */
+    protected void paint(
+            @NotNull Editor editor,
+            @NotNull VisualPosition lineStartPosition,
+            @NotNull VisualPosition lineEndPosition,
+            int startOffset,
+            int endOffset,
+            @NotNull Document doc,
+            @NotNull Graphics g
+    ) {
+        int indentColumn = lineStartPosition.column;
         if (indentColumn <= 0) return;
 
         final FoldingModel foldingModel = editor.getFoldingModel();
-        if (foldingModel.isOffsetCollapsed(off)) return;
+        if (foldingModel.isOffsetCollapsed(startOffset)) return;
 
-        final FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(off)));
+        final FoldRegion headerRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineEndOffset(doc.getLineNumber(startOffset)));
         final FoldRegion tailRegion = foldingModel.getCollapsedRegionAtOffset(doc.getLineStartOffset(doc.getLineNumber(endOffset)));
 
         if (tailRegion != null && tailRegion == headerRegion) return;
 
-        final boolean selected = isSelected(editor, endOffset, off, indentColumn);
+        final boolean selected = isSelected(editor, endOffset, startOffset, lineStartPosition.column);
 
         int lineHeight = editor.getLineHeight();
-        Point start = editor.visualPositionToXY(startPosition);
+        Point start = editor.visualPositionToXY(lineStartPosition);
         start.y += lineHeight;
-        final VisualPosition endPosition = editor.offsetToVisualPosition(endOffset);
-        Point end = editor.visualPositionToXY(endPosition);
+        Point end = editor.visualPositionToXY(lineEndPosition);
         int maxY = end.y;
-        if (endPosition.line == editor.offsetToVisualPosition(doc.getTextLength()).line) {
+        if (lineEndPosition.line == editor.offsetToVisualPosition(doc.getTextLength()).line) {
             maxY += lineHeight;
         }
 
@@ -94,7 +113,7 @@ public class IndentGuideRenderer implements CustomHighlighterRenderer {
         }
         else {
             int startY = start.y;
-            int startVisualLine = startPosition.line + 1;
+            int startVisualLine = lineStartPosition.line + 1;
             if (clip != null && startY < clip.y) {
                 startY = clip.y;
                 startVisualLine = editor.yToVisualLine(clip.y);

@@ -16,8 +16,8 @@ if __name__ == "__main__":
         subprocess.run(
             [sys.executable, "-m", "pip", "install", "-U", "-r", dirpath / "mypy/test-requirements.txt"], check=True
         )
+        shutil.rmtree(dirpath / "mypy/mypy/typeshed/stdlib")
         shutil.copytree("stdlib", dirpath / "mypy/mypy/typeshed/stdlib")
-        shutil.copytree("third_party", dirpath / "mypy/mypy/typeshed/third_party")
         try:
             subprocess.run([sys.executable, "runtests.py", "typeshed-ci"], cwd=dirpath / "mypy", check=True)
         except subprocess.CalledProcessError as e:

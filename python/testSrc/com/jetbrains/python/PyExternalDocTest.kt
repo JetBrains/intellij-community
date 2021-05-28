@@ -82,7 +82,7 @@ abstract class PyExternalDocTest : PyTestCase() {
                             moduleName)}.$elementName")
   }
 
-  override fun getProjectDescriptor() = ourPy3Descriptor
+  override fun getProjectDescriptor() = ourPyLatestDescriptor
 }
 
 class PyExternalDocTestPy3 : PyExternalDocTest() {

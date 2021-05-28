@@ -11,7 +11,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecutionAware;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider;
 import com.intellij.openapi.externalSystem.util.OutputWrapper;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Couple;
@@ -181,6 +183,21 @@ public class GradleExecutionHelper {
         long ttlInMs = settings.getRemoteProcessIdleTtlInMs();
         try {
           settings.setRemoteProcessIdleTtlInMs(100);
+          TargetEnvironmentConfigurationProvider configurationProvider =
+            ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
+          if (configurationProvider != null) {
+            // todo add the support for org.jetbrains.plugins.gradle.settings.DistributionType.WRAPPED
+            BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+            launcher.withCancellationToken(cancellationToken);
+            launcher.forTasks("wrapper");
+            launcher.run();
+
+            File wrapperPropertiesFile = GradleUtil.findDefaultWrapperPropertiesFile(projectPath);
+            if (wrapperPropertiesFile != null) {
+              settings.setWrapperPropertyFile(wrapperPropertiesFile.getPath());
+            }
+            return null;
+          }
           try {
             final File wrapperFilesLocation = FileUtil.createTempDirectory("wrap", "loc");
             final String fileName = "gradle-wrapper";

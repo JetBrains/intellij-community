@@ -1,24 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.process.CapturingProcessHandler
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.invokeLater
-import com.intellij.openapi.components.service
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.SdkType
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.projectRoots.SimpleJavaSdkType
+import com.intellij.openapi.projectRoots.impl.jdkDownloader.RuntimeChooserJreValidator.isSupportedSdkItem
 import com.intellij.openapi.roots.ui.configuration.SdkPopup
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory
-import com.intellij.openapi.util.SystemInfo
-import org.jetbrains.jps.model.java.JdkVersionDetector
-import java.nio.file.Files
+import com.intellij.openapi.ui.Messages
 import java.nio.file.Path
+import javax.swing.JComponent
 
 data class RuntimeChooserCustomItem(
   val version: String,
@@ -28,8 +25,6 @@ data class RuntimeChooserCustomItem(
 object RuntimeChooserAddCustomItem : RuntimeChooserItem()
 
 object RuntimeChooserCustom {
-  private val LOG = logger<RuntimeChooserCustom>()
-
   val sdkType
     get() = SdkType
       .getAllTypes()
@@ -38,58 +33,54 @@ object RuntimeChooserCustom {
   val isActionAvailable
     get() = sdkType != null
 
-  fun createSdkChooserPopup(model: RuntimeChooserModel) : SdkPopup? {
+  val jdkDownloaderExtensionProvider = DataProvider { dataId ->
+    when {
+      JDK_DOWNLOADER_EXT.`is`(dataId) -> jdkDownloaderExtension
+      else -> null
+    }
+  }
+
+  private val jdkDownloaderExtension = object : JdkDownloaderDialogHostExtension {
+    override fun allowWsl(): Boolean = false
+
+    override fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem): Boolean {
+      return sdkType == this@RuntimeChooserCustom.sdkType && isSupportedSdkItem(item)
+    }
+  }
+
+  fun createSdkChooserPopup(parent: JComponent, model: RuntimeChooserModel): SdkPopup? {
     return SdkPopupFactory
       .newBuilder()
-      .withSdkType(sdkType?: return null)
-      .onSdkSelected { sdk -> importNewItem(sdk, model) }
+      .withSdkType(sdkType ?: return null)
+      .withSdkFilter { it != null && isSupportedSdkItem(it) }
+      .withSuggestedSdkFilter { it != null && isSupportedSdkItem(it) }
+      .withNoDownlaodActions()
+      .onSdkSelected { sdk -> importNewItem(parent, sdk, model) }
       .buildPopup()
   }
 
-  private fun importNewItem(sdk: Sdk?, model: RuntimeChooserModel) {
+  private fun importNewItem(parent: JComponent, sdk: Sdk?, model: RuntimeChooserModel) {
     if (sdk == null) return
 
-    object: Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk", false, ALWAYS_BACKGROUND)) {
+    object : Task.Modal(null, LangBundle.message("progress.title.choose.ide.runtime.scanning.jdk"), false) {
       override fun run(indicator: ProgressIndicator) {
-        try {
-          val homeDir = sdk.homePath ?: return
-          val version = sdk.homePath ?: return
-          val info = JdkVersionDetector.getInstance().detectJdkVersionInfo(homeDir) ?: return
-          val fullVersion = listOfNotNull(info.displayName, info.version?.toString() ?: version).joinToString(" ")
+        RuntimeChooserJreValidator.testNewJdkUnderProgress(
+          computeHomePath = { sdk.homePath },
+          callback = object : RuntimeChooserJreValidatorCallback<Unit> {
+            override fun onSdkResolved(versionString: String, sdkHome: Path) {
+              val newItem = RuntimeChooserCustomItem(versionString, sdkHome.toString())
+              invokeLater {
+                model.addExistingSdkItem(newItem)
+              }
+            }
 
-          if (!isJdkAlive(homeDir)) {
-            return service<RuntimeChooserNotifications>().notifyJdkDoesNotStart(homeDir)
-          }
-
-          val newItem = RuntimeChooserCustomItem(fullVersion, homeDir)
-
-          invokeLater(ModalityState.any()) {
-            model.addExistingSdkItem(newItem)
-          }
-        } catch (t: Throwable) {
-          LOG.warn("Failed to scan JDK for boot runtime: $sdk, ${sdk.homeDirectory}. ${t.message}", t)
-        }
+            override fun onError(message: String) {
+              invokeLater {
+                Messages.showErrorDialog(parent, message, LangBundle.message("dialog.title.choose.ide.runtime"))
+              }
+            }
+          })
       }
     }.queue()
-  }
-
-  private fun isJdkAlive(javaHome: String): Boolean {
-    val java = when {
-      SystemInfo.isWindows -> "bin/java.exe"
-      SystemInfo.isMac -> "Contents/Home/bin/java"
-      else -> "bin/java"
-    }
-
-    val bin = Path.of(javaHome, java)
-    if (!Files.isRegularFile(bin) || !(SystemInfo.isWindows || Files.isExecutable(bin))) return false
-
-    try {
-      val cmd = GeneralCommandLine(bin.toString(), "-version")
-      return CapturingProcessHandler(cmd).runProcess(30_000).exitCode == 0
-    }
-    catch (t: Throwable) {
-      LOG.warn("Failed to run JDK for boot runtime: $javaHome}. ${t.message}", t)
-      return false
-    }
   }
 }

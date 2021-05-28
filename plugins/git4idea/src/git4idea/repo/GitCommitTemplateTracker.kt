@@ -13,6 +13,8 @@ import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.newvfs.events.*
+import com.intellij.util.ObjectUtils
+import com.intellij.util.SystemProperties
 import com.intellij.util.messages.Topic
 import com.intellij.vfs.AsyncVfsEventsListener
 import com.intellij.vfs.AsyncVfsEventsPostProcessor
@@ -76,26 +78,48 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
   }
 
   private fun processEvents(events: List<VFileEvent>) {
-    val allTemplates = TEMPLATES_LOCK.read { commitTemplates.entries }
+    val allTemplates = TEMPLATES_LOCK.read { commitTemplates.toMap() }
     if (allTemplates.isEmpty()) return
 
     for (event in events) {
       ProgressManager.checkCanceled()
-      val eventPath = event.path
 
       for ((repository, template) in allTemplates) {
         ProgressManager.checkCanceled()
-        if (eventPath != template.watchedRoot.rootPath) continue
+        val watchedTemplatePath = template.watchedRoot.rootPath
 
-        if (event is VFileDeleteEvent) {
-          stopTrackCommitTemplate(repository)
+        var templateChanged = false
+          if (isEventToStopTracking(event, watchedTemplatePath)) {
+            synchronized(this) {
+              stopTrackCommitTemplate(repository)
+            }
+            templateChanged = true
+          }
+          else if (isEventToReloadTemplateContent(event, watchedTemplatePath)) {
+            synchronized(this) {
+              reloadCommitTemplateContent(repository)
+            }
+            templateChanged = true
+          }
+
+        if (templateChanged) {
+          BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).notifyCommitTemplateChanged(repository)
         }
-        else if (event is VFileContentChangeEvent || event is VFileMoveEvent || event is VFileCopyEvent) {
-          reloadCommitTemplateContent(repository)
-        }
-        BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).notifyCommitTemplateChanged(repository)
       }
     }
+  }
+
+  private fun isEventToStopTracking(event: VFileEvent, watchedTemplatePath: String): Boolean {
+    return when {
+      event is VFileDeleteEvent -> event.path == watchedTemplatePath
+      event is VFileMoveEvent -> event.oldPath == watchedTemplatePath
+      event is VFilePropertyChangeEvent && event.isRename -> event.oldPath == watchedTemplatePath
+      else -> false
+    }
+  }
+
+  private fun isEventToReloadTemplateContent(event: VFileEvent, watchedTemplatePath: String): Boolean {
+    return event is VFileContentChangeEvent && event.path == watchedTemplatePath
   }
 
   private fun stopTrackCommitTemplate(repository: GitRepository) {
@@ -123,30 +147,85 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
 
   private fun resolveCommitTemplatePath(repository: GitRepository): String? {
     val gitCommitTemplatePath = Git.getInstance().config(repository, COMMIT_TEMPLATE).outputAsJoinedString
-    return if (gitCommitTemplatePath.isNotBlank() && FileUtil.exists(gitCommitTemplatePath)) gitCommitTemplatePath else null
+    if (gitCommitTemplatePath.isBlank()) return null
+
+    return if (FileUtil.exists(gitCommitTemplatePath)) {
+      gitCommitTemplatePath
+    }
+    else
+      ObjectUtils.chooseNotNull(getPathRelativeToUserHome(gitCommitTemplatePath),
+                                repository.findPathRelativeToRootDirs(gitCommitTemplatePath))
+  }
+
+  private fun getPathRelativeToUserHome(fileNameOrPath: String): String? {
+    if (fileNameOrPath.startsWith('~')) {
+      val fileAtUserHome = File(SystemProperties.getUserHome(), fileNameOrPath.substring(1))
+      if (fileAtUserHome.exists()) {
+        return fileAtUserHome.path
+      }
+    }
+
+    return null
+  }
+
+  private fun GitRepository.findPathRelativeToRootDirs(relativeFilePath: String): String? {
+    if (relativeFilePath.startsWith('/') || relativeFilePath.endsWith('/')) return null
+
+    for (rootDir in repositoryFiles.rootDirs) {
+      val rootDirParent = rootDir.parent?.path ?: continue
+      val templateFile = File(rootDirParent, relativeFilePath)
+      if (templateFile.exists()) return templateFile.path
+    }
+
+    return null
   }
 
   private fun trackCommitTemplate(repository: GitRepository) {
-    val currentTemplatePath = resolveCommitTemplatePath(repository)
-    if (currentTemplatePath == null) {
+    val newTemplatePath = resolveCommitTemplatePath(repository)
+    val templateChanged = synchronized(this) {
+      updateTemplatePath(repository, newTemplatePath)
+    }
+
+    if (templateChanged) {
+      BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).notifyCommitTemplateChanged(repository)
+    }
+  }
+
+  private fun updateTemplatePath(repository: GitRepository, newTemplatePath: String?): Boolean {
+    val oldWatchRoot = TEMPLATES_LOCK.read { commitTemplates[repository]?.watchedRoot }
+    val oldTemplatePath = oldWatchRoot?.rootPath
+    if (oldTemplatePath == newTemplatePath) return false
+    if (newTemplatePath == null) {
       stopTrackCommitTemplate(repository)
-      return
+      return true
     }
-    val watchedTemplatePath = TEMPLATES_LOCK.read { commitTemplates[repository]?.watchedRoot }
+
     val lfs = LocalFileSystem.getInstance()
-    when {
-      watchedTemplatePath == null -> lfs.addRootToWatch(currentTemplatePath, false)
-      watchedTemplatePath.rootPath != currentTemplatePath -> lfs.replaceWatchedRoot(watchedTemplatePath, currentTemplatePath, false)
-      else -> null
-    }?.also {
-      //explicit refresh needed for global templates to subscribe them in VFS and receive VFS events
-      lfs.refreshAndFindFileByPath(it.rootPath)
-      val templateContent = loadTemplateContent(repository, it.rootPath)
-      if (templateContent != null) {
-        TEMPLATES_LOCK.write { commitTemplates[repository] = GitCommitTemplate(it, templateContent) }
-        BackgroundTaskUtil.syncPublisher(project, GitCommitTemplateListener.TOPIC).notifyCommitTemplateChanged(repository)
-      }
+    //explicit refresh needed for global templates to subscribe them in VFS and receive VFS events
+    lfs.refreshAndFindFileByPath(newTemplatePath)
+
+    val templateContent = loadTemplateContent(repository, newTemplatePath)
+    if (templateContent == null) {
+      stopTrackCommitTemplate(repository)
+      return true
     }
+
+    val newWatchRoot = when {
+      oldWatchRoot != null -> lfs.replaceWatchedRoot(oldWatchRoot, newTemplatePath, false)
+      else -> lfs.addRootToWatch(newTemplatePath, false)
+    }
+
+    if (newWatchRoot == null) {
+      LOG.error("Cannot add root to watch $newTemplatePath")
+      if (oldWatchRoot != null) {
+        stopTrackCommitTemplate(repository)
+        return true
+      }
+      return false
+    }
+
+    TEMPLATES_LOCK.write { commitTemplates[repository] = GitCommitTemplate(newWatchRoot, templateContent) }
+    return true
   }
 
   override fun dispose() {

@@ -5,6 +5,7 @@ import com.intellij.execution.wsl.WslDistributionManager
 import com.intellij.execution.wsl.WslPath
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
@@ -25,9 +26,25 @@ import com.intellij.openapi.util.registry.Registry
 import java.util.function.Consumer
 import javax.swing.JComponent
 
-internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
-  private val LOG = logger<JdkDownloader>()
+private val LOG = logger<JdkDownloader>()
 
+
+internal val JDK_DOWNLOADER_EXT = DataKey.create<JdkDownloaderDialogHostExtension>("jdk-downloader-extension")
+
+internal interface JdkDownloaderDialogHostExtension {
+  fun allowWsl() : Boolean = true
+
+  @JvmDefault
+  fun createMainPredicate() : JdkPredicate? = null
+
+  @JvmDefault
+  fun createWslPredicate() : JdkPredicate? = null
+
+  @JvmDefault
+  fun shouldIncludeItem(sdkType: SdkTypeId, item: JdkItem) : Boolean = true
+}
+
+internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
   override fun supportsDownload(sdkTypeId: SdkTypeId): Boolean {
     if (!Registry.`is`("jdk.downloader")) return false
     if (ApplicationManager.getApplication().isUnitTestMode) return false
@@ -39,24 +56,29 @@ internal class JdkDownloader : SdkDownload, JdkDownloaderBase {
                               parentComponent: JComponent,
                               selectedSdk: Sdk?,
                               sdkCreatedCallback: Consumer<SdkDownloadTask>) {
-    val project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(parentComponent))
+    val dataContext = DataManager.getInstance().getDataContext(parentComponent)
+    val project = CommonDataKeys.PROJECT.getData(dataContext)
     if (project?.isDisposed == true) return
 
+    val extension = dataContext.getData(JDK_DOWNLOADER_EXT) ?: object : JdkDownloaderDialogHostExtension {}
+
     val items = try {
-        computeInBackground(project, ProjectBundle.message("progress.title.downloading.jdk.list")) {
+      computeInBackground(project, ProjectBundle.message("progress.title.downloading.jdk.list")) {
 
           val buildModel = { predicate: JdkPredicate ->
             JdkListDownloader.getInstance()
               .downloadForUI(predicate = predicate, progress = it)
+              .filter { extension.shouldIncludeItem(sdkTypeId, it) }
               .takeIf { it.isNotEmpty() }
               ?.let { buildJdkDownloaderModel(it) }
           }
 
-          val wslDistributions = WslDistributionManager.getInstance().installedDistributions
-          val projectWslDistribution = project?.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
+          val allowWsl = extension.allowWsl()
+          val wslDistributions = if (allowWsl) WslDistributionManager.getInstance().installedDistributions else listOf()
+          val projectWslDistribution = if (allowWsl) project?.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) } else null
 
-          val mainModel = buildModel(JdkPredicate.default()) ?: return@computeInBackground null
-          val wslModel = if (wslDistributions.isNotEmpty()) buildModel(JdkPredicate.forWSL()) else null
+          val mainModel = buildModel(extension.createMainPredicate() ?: JdkPredicate.default()) ?: return@computeInBackground null
+          val wslModel = if (allowWsl && wslDistributions.isNotEmpty()) buildModel(extension.createWslPredicate() ?: JdkPredicate.forWSL()) else null
           JdkDownloaderMergedModel(mainModel, wslModel, wslDistributions, projectWslDistribution)
         }
       }

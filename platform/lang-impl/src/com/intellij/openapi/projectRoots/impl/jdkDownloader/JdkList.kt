@@ -216,6 +216,8 @@ data class JdkPredicate(
 ) {
 
   companion object {
+    fun none() = JdkPredicate(ApplicationInfoImpl.getShadowInstance().build, emptySet())
+
     fun default() = createInstance(forWsl = false)
     fun forWSL() = createInstance(forWsl = true)
 
@@ -223,7 +225,7 @@ data class JdkPredicate(
       val x86_64 = "x86_64"
       val defaultPlatform = JdkPlatform(currentOS, x86_64)
       val platforms = when {
-        SystemInfo.isMac && CpuArch.isArm64() || Registry.`is`("jdk.downloader.assume.m1") -> {
+        (SystemInfo.isMac && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.m1") -> {
           listOf(defaultPlatform, defaultPlatform.copy(arch = "aarch64"))
         }
 
@@ -246,6 +248,11 @@ data class JdkPredicate(
       SystemInfo.isMac -> "macOS"
       SystemInfo.isLinux -> "linux"
       else -> error("Unsupported OS")
+    }
+
+    val currentArch = when {
+      (SystemInfo.isMac && CpuArch.isArm64()) || Registry.`is`("jdk.downloader.assume.m1") -> "aarch64"
+      else -> "x86_64"
     }
   }
 
@@ -476,6 +483,10 @@ abstract class JdkListDownloaderBase {
   private fun downloadJdksListWithCache(predicate: JdkPredicate, feedUrl: String?, progress: ProgressIndicator?): List<JdkItem> {
     @Suppress("NAME_SHADOWING")
     val feedUrl = feedUrl ?: this.feedUrl
+
+    if (predicate == JdkPredicate.none()) {
+      return listOf()
+    }
 
     return jdksListCache.getOrCompute(feedUrl, EmptyRawJdkList) {
       downloadJdksListNoCache(feedUrl, progress)

@@ -651,8 +651,10 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           editConfigurationUntilSuccess(environment, assignNewId)
         }
         else {
+          inProgress.add(InProgressEntry(environment.executor.id, environment.runner.runnerId))
           ReadAction.nonBlocking(Callable { RunManagerImpl.canRunConfiguration(environment) })
             .finishOnUiThread(ModalityState.NON_MODAL) { canRun ->
+              inProgress.remove(InProgressEntry(environment.executor.id, environment.runner.runnerId))
               if (canRun) {
                 executeConfiguration(environment, environment.runner, assignNewId, this.project, environment.runnerAndConfigurationSettings)
                 return@finishOnUiThread

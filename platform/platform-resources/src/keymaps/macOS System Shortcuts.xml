@@ -445,4 +445,8 @@
 
   <action id="EditorLookupUp"/>
   <action id="EditorLookupDown"/>
+
+  <action id="ShowContent">
+    <keyboard-shortcut first-keystroke="shift meta alt DOWN"/>
+  </action>
 </keymap>

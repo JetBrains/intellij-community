@@ -101,9 +101,10 @@ interface JpsProjectSerializers {
                           reader: JpsFileContentReader,
                           externalStorageMapping: JpsExternalStorageMapping,
                           enableExternalStorage: Boolean,
-                          virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
+                          virtualFileManager: VirtualFileUrlManager,
+                          fileInDirectorySourceNames: FileInDirectorySourceNames): JpsProjectSerializers {
       return JpsProjectSerializersImpl(directorySerializersFactories, moduleListSerializers, reader, entityTypeSerializers, configLocation,
-                                       externalStorageMapping, enableExternalStorage, virtualFileManager)
+                                       externalStorageMapping, enableExternalStorage, virtualFileManager, fileInDirectorySourceNames)
     }
   }
 

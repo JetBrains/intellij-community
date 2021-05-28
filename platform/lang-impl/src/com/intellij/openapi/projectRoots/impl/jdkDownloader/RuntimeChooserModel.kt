@@ -12,6 +12,12 @@ import javax.swing.DefaultComboBoxModel
 
 abstract class RuntimeChooserItem
 
+object RuntimeChooserShowAdvancedItem : RuntimeChooserItem()
+
+object RuntimeChooserAdvancedSectionSeparator : RuntimeChooserItem()
+object RuntimeChooserCustomSelectedSectionSeparator : RuntimeChooserItem()
+object RuntimeChooserAdvancedJbrSelectedSectionSeparator : RuntimeChooserItem()
+
 class RuntimeChooserModel {
   private var showAdvancedOptions: Boolean = false
 
@@ -52,13 +58,32 @@ class RuntimeChooserModel {
       newList += it
     }
 
-    newList += downloadableJbs
-      .filter { showAdvancedOptions || it.isDefaultItem }
+    val defaultDownloadableSdks = downloadableJbs
+      .filter { it.isDefaultItem }
       .map { RuntimeChooserDownloadableItem(it) }
 
-    if (showAdvancedOptions && RuntimeChooserCustom.isActionAvailable) {
+    val advancedDownloadItems = downloadableJbs
+      .filterNot { it.isDefaultItem }
+      .map { RuntimeChooserDownloadableItem(it) }
+
+    newList += defaultDownloadableSdks
+    newList += RuntimeChooserAdvancedSectionSeparator
+
+    if (advancedDownloadItems.isNotEmpty() && !showAdvancedOptions)  {
+      newList += RuntimeChooserShowAdvancedItem
+    }
+
+    if (RuntimeChooserCustom.isActionAvailable) {
+      if (customJdks.isNotEmpty()) {
+        newList += RuntimeChooserCustomSelectedSectionSeparator
+        newList += customJdks
+      }
       newList += RuntimeChooserAddCustomItem
-      newList += customJdks
+    }
+
+    if (advancedDownloadItems.isNotEmpty() && showAdvancedOptions) {
+      newList += RuntimeChooserAdvancedJbrSelectedSectionSeparator
+      newList += advancedDownloadItems
     }
 
     myMainComboModel.addAll(newList)

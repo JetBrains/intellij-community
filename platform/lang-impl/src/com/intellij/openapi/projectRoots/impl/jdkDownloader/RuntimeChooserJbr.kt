@@ -9,10 +9,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
-import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
-import java.nio.file.Path
-import java.nio.file.Paths
+import com.intellij.openapi.util.registry.Registry
 
 data class RuntimeChooserDownloadableItem(val item: JdkItem) : RuntimeChooserItem() {
   override fun toString() = item.fullPresentationText
@@ -21,7 +18,10 @@ data class RuntimeChooserDownloadableItem(val item: JdkItem) : RuntimeChooserIte
 fun RuntimeChooserModel.fetchAvailableJbrs() {
   object : Task.Backgroundable(null, LangBundle.message("progress.title.choose.ide.runtime.downloading.jetbrains.runtime.list")) {
     override fun run(indicator: ProgressIndicator) {
-      val builds = service<RuntimeChooserJbrListDownloader>().downloadForUI(indicator)
+      val builds = service<RuntimeChooserJbrListDownloader>()
+        .downloadForUI(indicator)
+        .filter { RuntimeChooserJreValidator.isSupportedSdkItem(it) }
+
       invokeLater(modalityState = ModalityState.any()) {
         updateDownloadJbrList(builds)
       }
@@ -31,9 +31,15 @@ fun RuntimeChooserModel.fetchAvailableJbrs() {
 
 @Service(Service.Level.APP)
 private class RuntimeChooserJbrListDownloader : JdkListDownloaderBase() {
-  override val feedUrl: String by lazy {
-    val majorVersion = ApplicationInfo.getInstance().build.components.firstOrNull()
-    "https://download.jetbrains.com/jdk/feed/v1/jbr-choose-runtime-${majorVersion}.json.xz"
-  }
+  override val feedUrl: String
+    get() {
+      val registry = runCatching { Registry.get("runtime.chooser.url").asString() }.getOrNull()
+      if (!registry.isNullOrBlank()) return registry
+
+      val majorVersion = runCatching { Registry.get("runtime.chooser.pretend.major").asInteger() }.getOrNull()
+                         ?: ApplicationInfo.getInstance().build.components.firstOrNull()
+
+      return "https://download.jetbrains.com/jdk/feed/v1/jbr-choose-runtime-${majorVersion}.json.xz"
+    }
 }
 

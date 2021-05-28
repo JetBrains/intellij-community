@@ -47,7 +47,7 @@ internal class FacetEntityChangeListener(private val project: Project) {
       is EntityChange.Added -> {
         val manager = getFacetManager(change.entity.module) ?: return
         val facet = manager.model.getOrCreateFacet(change.entity)
-        manager.model.updateEntity(change.entity, change.entity)
+        manager.model.facetsChanged()
         FacetManagerBase.setFacetName(facet, change.entity.name)
         facet.initFacet()
 

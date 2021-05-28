@@ -15,7 +15,7 @@ class NGramFileListener(private val project: Project) : FileEditorManagerListene
   override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: return
     val language = psiFile.language
-    if (!NGram.isSupported(language)) return
+    if (psiFile.fileType.isBinary || !NGram.isSupported(language)) return
     val filePointer = SmartPointerManager.createPointer(psiFile)
     ReadAction.nonBlocking(Runnable {
       NGramModelRunnerManager.getInstance(project).processFile(filePointer, language)

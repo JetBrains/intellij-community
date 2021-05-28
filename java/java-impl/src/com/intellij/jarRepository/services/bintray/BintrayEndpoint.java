@@ -34,7 +34,9 @@ import static java.util.Collections.emptyList;
 
 /**
  * @author ibessonov
+ * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
+@Deprecated
 public class BintrayEndpoint {
 
   public static final String BINTRAY_API_URL = "https://bintray.com/api/v1/";

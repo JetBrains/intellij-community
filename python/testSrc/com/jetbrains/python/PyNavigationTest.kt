@@ -209,5 +209,5 @@ class PyNavigationTest : PyTestCase() {
     return super.getTestDataPath() + "/navigation"
   }
 
-  override fun getProjectDescriptor(): LightProjectDescriptor? = ourPy3Descriptor
+  override fun getProjectDescriptor(): LightProjectDescriptor? = ourPyLatestDescriptor
 }

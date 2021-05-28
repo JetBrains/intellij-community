@@ -97,6 +97,14 @@ class PyMultipleArgumentsCompletionTest: PyTestCase() {
     assertEquals(1, doTestByTestName().count { it == "x" })
   }
 
+  fun testNoExceptionIfMoreArgumentsThanParameters() {
+    doTestByTestName()
+  }
+
+  fun testNoExceptionIfMoreArgumentsWithImplicitThanParameters() {
+    doTestByTestName()
+  }
+
   private fun doTestByTestName(): List<String?> {
     val testName = "multipleArgumentsCompletion/${getTestName(true)}"
     myFixture.configureByFile("$testName.py")

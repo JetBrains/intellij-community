@@ -52,12 +52,28 @@ final class SystemHealthMonitor extends PreloadingActivity {
 
   @Override
   public void preload(@NotNull ProgressIndicator indicator) {
+    checkInstallationIntegrity();
     checkIdeDirectories();
     checkRuntime();
     checkReservedCodeCacheSize();
     checkEnvironment();
     checkSignalBlocking();
     startDiskSpaceMonitoring();
+  }
+
+  private static void checkInstallationIntegrity() {
+    if (SystemInfo.isUnix && !SystemInfo.isMac) {
+      try (Stream<Path> stream = Files.list(Path.of(PathManager.getLibPath()))) {
+        // see `LinuxDistributionBuilder#generateVersionMarker`
+        long markers = stream.filter(p -> p.getFileName().toString().startsWith("build-marker-")).count();
+        if (markers > 1) {
+          showNotification("mixed.bag.installation", false, null, ApplicationNamesInfo.getInstance().getFullProductName());
+        }
+      }
+      catch (IOException e) {
+        LOG.warn(e.getClass().getName() + ": " + e.getMessage());
+      }
+    }
   }
 
   private static void checkIdeDirectories() {
@@ -88,10 +104,11 @@ final class SystemHealthMonitor extends PreloadingActivity {
       // the JRE is non-bundled and is either non-JB or older than bundled
       NotificationAction switchAction = null;
 
-      if ((SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
-        String appName = ApplicationNamesInfo.getInstance().getScriptName();
-        String configName = appName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
-        Path configFile = Paths.get(PathManager.getConfigPath(), configName);
+      String directory = PathManager.getCustomOptionsDirectory();
+      if (directory != null && (SystemInfo.isWindows || SystemInfo.isMac || SystemInfo.isLinux) && isJbrOperational()) {
+        String scriptName = ApplicationNamesInfo.getInstance().getScriptName();
+        String configName = scriptName + (!SystemInfo.isWindows ? "" : CpuArch.isIntel64() ? "64.exe" : ".exe") + ".jdk";
+        Path configFile = Path.of(directory, configName);
         if (Files.isRegularFile(configFile)) {
           switchAction = new NotificationAction(IdeBundle.message("action.SwitchToJBR.text")) {
             @Override
@@ -181,21 +198,32 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
                                        @Nullable NotificationAction action,
                                        Object... params) {
-    boolean ignored = PropertiesComponent.getInstance().isValueSet("ignore." + key);
-    LOG.warn("issue detected: " + key + (ignored ? " (ignored)" : ""));
-    if (ignored) return;
+    showNotification(key, true, action, params);
+  }
+
+  private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
+                                       boolean suppressable,
+                                       @Nullable NotificationAction action,
+                                       Object... params) {
+    if (suppressable) {
+      boolean ignored = PropertiesComponent.getInstance().isValueSet("ignore." + key);
+      LOG.warn("issue detected: " + key + (ignored ? " (ignored)" : ""));
+      if (ignored) return;
+    }
 
     Notification notification = new MyNotification(IdeBundle.message(key, params));
     if (action != null) {
       notification.addAction(action);
     }
-    notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        notification.expire();
-        PropertiesComponent.getInstance().setValue("ignore." + key, "true");
-      }
-    });
+    if (suppressable) {
+      notification.addAction(new NotificationAction(IdeBundle.message("sys.health.acknowledge.action")) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          notification.expire();
+          PropertiesComponent.getInstance().setValue("ignore." + key, "true");
+        }
+      });
+    }
     notification.setImportant(true);
 
     Notifications.Bus.notify(notification);

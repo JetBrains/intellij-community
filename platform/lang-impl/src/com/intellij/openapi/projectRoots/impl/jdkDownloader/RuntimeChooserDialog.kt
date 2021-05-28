@@ -2,26 +2,22 @@
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
 import com.intellij.lang.LangBundle
+import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectBundle
-import com.intellij.openapi.roots.ui.configuration.SdkListPresenter
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.ui.components.ActionLink
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.components.JBTextField
-import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.layout.*
 import com.intellij.util.castSafelyTo
 import com.intellij.util.io.isDirectory
-import com.intellij.util.ui.JBUI
-import java.awt.BorderLayout
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.Action
 import javax.swing.JComponent
-import javax.swing.JPanel
 
 sealed class RuntimeChooserDialogResult {
   object Cancel : RuntimeChooserDialogResult()
@@ -33,7 +29,7 @@ sealed class RuntimeChooserDialogResult {
 class RuntimeChooserDialog(
   private val project: Project?,
   private val model: RuntimeChooserModel,
-) : DialogWrapper(project) {
+) : DialogWrapper(project), DataProvider {
   private val USE_DEFAULT_RUNTIME_CODE = NEXT_USER_EXIT_CODE + 42
 
   private lateinit var jdkInstallDirSelector: TextFieldWithBrowseButton
@@ -43,6 +39,10 @@ class RuntimeChooserDialog(
     title = LangBundle.message("dialog.title.choose.ide.runtime")
     setResizable(false)
     init()
+  }
+
+  override fun getData(dataId: String): Any? {
+    return RuntimeChooserCustom.jdkDownloaderExtensionProvider.getData(dataId)
   }
 
   override fun createActions(): Array<Action> {
@@ -77,26 +77,12 @@ class RuntimeChooserDialog(
     return RuntimeChooserDialogResult.Cancel
   }
 
-  override fun createSouthAdditionalPanel(): JPanel {
-    val panel: JPanel = NonOpaquePanel(BorderLayout())
-    panel.border = JBUI.Borders.emptyLeft(10)
-
-    val link = ActionLink(LangBundle.message("dialog.label.choose.ide.runtime.more"))
-    link.addActionListener {
-      model.showAdvancedOptions()
-      link.isEnabled = false
-    }
-
-    panel.add(link)
-    return panel
-  }
-
   override fun createCenterPanel(): JComponent {
     jdkCombobox = object : ComboBox<RuntimeChooserItem>(model.mainComboBoxModel) {
       init {
         isSwingPopup = false
         setMinimumAndPreferredWidth(400)
-        setRenderer(RuntimeChooserPresenter(this@RuntimeChooserDialog.model))
+        setRenderer(RuntimeChooserPresenter())
       }
 
       override fun setSelectedItem(anObject: Any?) {
@@ -104,12 +90,19 @@ class RuntimeChooserDialog(
 
         if (anObject is RuntimeChooserAddCustomItem) {
           RuntimeChooserCustom
-            .createSdkChooserPopup(this@RuntimeChooserDialog.model)
+            .createSdkChooserPopup(jdkCombobox, this@RuntimeChooserDialog.model)
             ?.showUnderneathOf(jdkCombobox)
           return
         }
 
-        super.setSelectedItem(anObject)
+        if (anObject is RuntimeChooserShowAdvancedItem) {
+          this@RuntimeChooserDialog.model.showAdvancedOptions()
+          return
+        }
+
+        if (anObject is RuntimeChooserDownloadableItem || anObject is RuntimeChooserCustomItem || anObject is RuntimeChooserCurrentItem) {
+          super.setSelectedItem(anObject)
+        }
       }
     }
 
@@ -119,14 +112,14 @@ class RuntimeChooserDialog(
       }
 
       //download row
-      row(ProjectBundle.message("dialog.row.jdk.location")) {
+      row(LangBundle.message("dialog.label.choose.ide.runtime.location")) {
         val locationLabel = JBTextField()
         locationLabel.isEditable = false
         locationLabel.invoke(growX)
 
         val updateLocation = {
           (jdkCombobox.selectedItem as? RuntimeChooserItemWithFixedLocation)?.let { item ->
-            locationLabel.text = SdkListPresenter.presentDetectedSdkPath(item.homeDir)
+            locationLabel.text = FileUtil.getLocationRelativeToUserHome(item.homeDir, false)
           }
         }
         updateLocation()
@@ -134,7 +127,7 @@ class RuntimeChooserDialog(
       }.onlyVisibleWhenSelected { it is RuntimeChooserItemWithFixedLocation }
 
       //download row
-      row(ProjectBundle.message("dialog.row.jdk.location")) {
+      row(LangBundle.message("dialog.label.choose.ide.runtime.location")) {
         jdkInstallDirSelector = textFieldWithBrowseButton(
           project = project,
           browseDialogTitle = LangBundle.message("dialog.title.choose.ide.runtime.select.path.to.install.jdk"),
@@ -153,6 +146,12 @@ class RuntimeChooserDialog(
       row {
         comment(LangBundle.message("dialog.message.choose.ide.runtime.select.path.to.install.jdk"))
       }.onlyVisibleWhenSelected { it is RuntimeChooserDownloadableItem }
+
+      row {
+        comment(LangBundle.message("dialog.label.choose.ide.runtime.warn"), 90).component.also {
+          it.icon = Messages.getWarningIcon()
+        }
+      }
     }
   }
 

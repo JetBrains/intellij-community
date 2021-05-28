@@ -67,13 +67,13 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
       doMultiFileAutoImportTest("Import", fix -> {
         final List<ImportCandidateHolder> candidates = fix.getCandidates();
         final List<String> names = ContainerUtil.map(candidates, c -> c.getPresentableText());
-        assertSameElements(names, "os.path.join()");
+        assertSameElements(names, "os.path.commonpath()");
         return true;
       });
     };
     runWithAdditionalFileInLibDir(
       "ntpath.py",
-      "def join(*args):\n" +
+      "def commonpath(paths):\n" +
       "    pass",
       f -> runWithAdditionalFileInLibDir(
         "os.py",
@@ -83,7 +83,7 @@ public class PyAddImportQuickFixTest extends PyQuickFixTestCase {
         "    import posixpath as path",
         f1 -> runWithAdditionalFileInLibDir(
           "posixpath.py",
-          "def join(*args):\n" +
+          "def commonpath(paths):\n" +
           "    pass",
           fileConsumer
         )

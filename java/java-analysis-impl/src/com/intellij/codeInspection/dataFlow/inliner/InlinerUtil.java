@@ -21,8 +21,12 @@ final class InlinerUtil {
     if (list == null) return false;
     PsiMethodCallExpression call = tryCast(list.getParent(), PsiMethodCallExpression.class);
     if (call == null) return false;
-    PsiMethodCallExpression qualifierCall = MethodCallUtils.getQualifierMethodCall(call);
-    if (qualifierCall == null) return false;
+    PsiMethodCallExpression qualifierCall = call;
+    do {
+      qualifierCall = MethodCallUtils.getQualifierMethodCall(qualifierCall);
+      if (qualifierCall == null) return false;
+    }
+    while (qualifierCall.getArgumentList().isEmpty());
     PsiType type = qualifierCall.getType();
     return type != null && chainTypePredicate.test(type);
   }

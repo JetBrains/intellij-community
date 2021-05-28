@@ -132,9 +132,11 @@
   </action>
   <!--END EDIT-->
   <!--SELECTION-->
+  <action id="EditorSelectLine">
+    <keyboard-shortcut first-keystroke="control l"/>
+  </action>
   <action id="EditorSelectWord">
     <keyboard-shortcut first-keystroke="control shift SPACE"/>
-    <keyboard-shortcut first-keystroke="control l"/>
     <keyboard-shortcut first-keystroke="control shift a"/>
     <keyboard-shortcut first-keystroke="control shift j"/>
     <keyboard-shortcut first-keystroke="control shift m"/>

@@ -1,19 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server.wsl
 
-import com.intellij.build.events.MessageEvent
-import com.intellij.build.issue.BuildIssue
-import com.intellij.build.issue.BuildIssueQuickFix
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.pom.Navigatable
-import org.jetbrains.idea.maven.buildtool.quickfix.OpenMavenSettingsQuickFix
-import org.jetbrains.idea.maven.execution.SyncBundle
-import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.*
 import org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector
+import org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector.Companion.trigger
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenWslUtil
 
@@ -26,6 +21,7 @@ class WslMavenRemoteProcessSupportFactory : MavenRemoteProcessSupportFactory {
     val wslDistribution = project.basePath?.let { WslPath.getDistributionByWindowsUncPath(it) }
                           ?: throw IllegalArgumentException("Project $project is not WSL based!")
     MavenLog.LOG.info("Use WSL maven distribution at ${mavenDistribution}")
+    trigger(project, MavenActionsUsagesCollector.ActionID.StartWslMavenServer)
     val wslMavenDistribution = toWslMavenDistribution(mavenDistribution, wslDistribution)
     return WslMavenServerRemoteProcessSupport(wslDistribution, jdk, vmOptions, wslMavenDistribution, project, debugPort)
   }

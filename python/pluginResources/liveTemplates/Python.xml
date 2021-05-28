@@ -9,7 +9,7 @@
   </template>
   <template name="main" value="if __name__ == '__main__':&#10;    $END$" description="if __name__ == '__main__'" toReformat="false" toShortenFQNames="true">
     <context>
-      <option name="Python" value="true" />
+      <option name="Python_Top_Level" value="true" />
     </context>
   </template>
   <template name="iter" value="for $VAR$ in $ITERABLE$:&#10;    $END$" description="Iterate (for ... in ...)" toReformat="false" toShortenFQNames="true">

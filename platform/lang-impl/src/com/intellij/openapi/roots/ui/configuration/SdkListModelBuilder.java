@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration;
 
 import com.google.common.collect.ImmutableList;
@@ -40,6 +40,8 @@ public final class SdkListModelBuilder {
   @NotNull private final Condition<? super Sdk> mySdkFilter;
   @NotNull private final Condition<? super SdkTypeId> mySdkTypeFilter;
   @NotNull private final Condition<? super SdkTypeId> mySdkTypeCreationFilter;
+  @NotNull private final Condition<? super SuggestedItem> mySuggestedItemsFilter;
+  @NotNull private final Condition<? super ActionRole> myActionRoleFilter;
 
   @NotNull private final EventDispatcher<ModelListener> myModelListener = EventDispatcher.create(ModelListener.class);
 
@@ -60,6 +62,16 @@ public final class SdkListModelBuilder {
                              @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
                              @Nullable Condition<? super SdkTypeId> sdkTypeCreationFilter,
                              @Nullable Condition<? super Sdk> sdkFilter) {
+    this(project, sdkModel, sdkTypeFilter, sdkTypeCreationFilter, sdkFilter, null, null);
+  }
+
+  public SdkListModelBuilder(@Nullable Project project,
+                             @NotNull ProjectSdksModel sdkModel,
+                             @Nullable Condition<? super SdkTypeId> sdkTypeFilter,
+                             @Nullable Condition<? super SdkTypeId> sdkTypeCreationFilter,
+                             @Nullable Condition<? super Sdk> sdkFilter,
+                             @Nullable Condition<? super SuggestedItem> suggestedSdkFilter,
+                             @Nullable Condition<? super ActionRole> actionRoleFilter) {
     myProject = project;
     mySdkModel = sdkModel;
 
@@ -76,6 +88,12 @@ public final class SdkListModelBuilder {
     mySdkFilter = sdk -> sdk != null
                          && mySdkTypeFilter.value(sdk.getSdkType())
                          && (sdkFilter == null || sdkFilter.value(sdk));
+
+    mySuggestedItemsFilter = item -> item != null
+                                     && mySdkTypeCreationFilter.value(item.sdkType)
+                                     && (suggestedSdkFilter == null || suggestedSdkFilter.value(item));
+
+    myActionRoleFilter = role -> actionRoleFilter == null || actionRoleFilter.value(role);
   }
 
   /**
@@ -342,6 +360,7 @@ public final class SdkListModelBuilder {
       public void onSdkDetected(@NotNull SdkType type, @NotNull String version, @NotNull String home) {
         SuggestedItem item = new SuggestedItem(type, version, home);
 
+        if (!mySuggestedItemsFilter.value(item)) return;
         mySuggestions = ImmutableList.<SuggestedItem>builder()
           .addAll(mySuggestions)
           .add(item)
@@ -359,8 +378,9 @@ public final class SdkListModelBuilder {
   }
 
   @NotNull
-  private static ImmutableList<ActionItem> createActions(@NotNull ActionRole role,
-                                                         @NotNull Map<SdkType, NewSdkAction> actions) {
+  private ImmutableList<ActionItem> createActions(@NotNull ActionRole role,
+                                                  @NotNull Map<SdkType, NewSdkAction> actions) {
+    if (!myActionRoleFilter.value(role)) return ImmutableList.of();
     ImmutableList.Builder<ActionItem> builder = ImmutableList.builder();
     for (NewSdkAction action : actions.values()) {
       builder.add(new ActionItem(role, action, null));

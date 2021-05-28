@@ -21,12 +21,10 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.fixtures.PyMultiFileResolveTestCase;
-import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.namespacePackages.PyNamespacePackagesService;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.impl.PythonLanguageLevelPusher;
 import com.jetbrains.python.psi.resolve.PyQualifiedNameResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveImportUtil;
 import org.jetbrains.annotations.NotNull;
@@ -52,7 +50,7 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return PyTestCase.ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   @Override
@@ -69,14 +67,12 @@ public class PyRelativeImportResolveTest extends PyMultiFileResolveTestCase {
   protected void setUp() throws Exception {
     super.setUp();
     myNamespacePackageDirectory = null;
-    PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.getLatest());
     RegistryManager.getInstance().get("python.explicit.namespace.packages").resetToDefault();
   }
 
   @Override
   protected void tearDown() throws Exception {
     try {
-      PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), null);
       myNamespacePackageDirectory = null;
     }
     catch (Throwable e) {

@@ -7,7 +7,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.impl.FontFamilyService;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AbstractFontCombo;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.JBColor;
@@ -23,7 +22,10 @@ import java.awt.*;
 import java.util.List;
 import java.util.*;
 
-public class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
+class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
+
+  public static final int ITEM_WIDTH = 230;
+
   private final Dimension myItemSize;
   private final boolean myIsPrimary;
 
@@ -33,7 +35,7 @@ public class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontIte
     myIsPrimary = isPrimary;
     setRenderer(new MyListCellRenderer());
     FontMetrics fontMetrics = getFontMetrics(getFont());
-    myItemSize = new Dimension(fontMetrics.stringWidth(StringUtil.repeat("M", 20)), fontMetrics.getHeight());
+    myItemSize = new Dimension(JBUI.scale(ITEM_WIDTH), fontMetrics.getHeight());
   }
 
   @Override

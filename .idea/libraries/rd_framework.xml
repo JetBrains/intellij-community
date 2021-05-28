@@ -1,14 +1,14 @@
 <component name="libraryTable">
   <library name="rd-framework" type="repository">
-    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:0.211.214" />
+    <properties include-transitive-deps="false" maven-id="com.jetbrains.rd:rd-framework:0.211.234" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/0.211.214/rd-framework-0.211.214.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/0.211.234/rd-framework-0.211.234.jar!/" />
     </CLASSES>
     <JAVADOC>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/0.211.214/rd-framework-0.211.214-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/0.211.234/rd-framework-0.211.234-javadoc.jar!/" />
     </JAVADOC>
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/0.211.214/rd-framework-0.211.214-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/jetbrains/rd/rd-framework/0.211.234/rd-framework-0.211.234-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.projectView.ProjectViewSettings;
@@ -200,6 +200,7 @@ public class ProjectViewDirectoryHelper {
                                                                  boolean withSubDirectories,
                                                                  @Nullable PsiFileSystemItemFilter filter) {
     List<AbstractTreeNode<?>> children = new ArrayList<>();
+    if (!psiDirectory.isValid()) return children;
     Project project = psiDirectory.getProject();
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     Module module = fileIndex.getModuleForFile(psiDirectory.getVirtualFile());
@@ -286,7 +287,7 @@ public class ProjectViewDirectoryHelper {
 
 
   private static boolean isFileUnderContentRoot(@NotNull DirectoryIndex index, @Nullable VirtualFile file) {
-    return file != null && index.getInfoForFile(file).getContentRoot() != null;
+    return file != null && file.isValid() && index.getInfoForFile(file).getContentRoot() != null;
   }
 
   private PsiElement @NotNull [] directoryChildrenInProject(PsiDirectory psiDirectory, final ViewSettings settings) {

@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.ListPopupStepEx;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.popup.NumericMnemonicItem;
 import com.intellij.ui.scale.JBUIScale;
@@ -172,6 +173,8 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   @Nullable
   @Override
   protected Icon getItemIcon(E value, boolean isSelected) {
+    if (!Registry.is("ide.list.popup.separate.next.step.button")) return super.getItemIcon(value, isSelected);
+
     ListPopupStep<Object> step = myPopup.getListStep();
     return step.hasSubstep(value) && step.isFinal(value) && isNextStepButtonSelected(myPopup.getList())
            ? myDescriptor.getIconFor(value)
@@ -198,7 +201,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
     if (step.hasSubstep(value)) {
       myNextStepLabel.setVisible(isSelectable);
 
-      if (step.isFinal(value)) {
+      if (Registry.is("ide.list.popup.separate.next.step.button") && step.isFinal(value)) {
         myLeftPart.setOpaque(true);
         myRightPart.setOpaque(true);
         setSelected(myComponent, false, isSelected);
@@ -289,6 +292,7 @@ public class PopupListElementRenderer<E> extends GroupedItemsListRenderer<E> {
   }
 
   protected boolean isNextStepButtonSelected(JList<?> list) {
+    if (!Registry.is("ide.list.popup.separate.next.step.button")) return false;
     return list instanceof ListPopupImpl.NestedList && ((ListPopupImpl.NestedList)list).isNextStepButtonSelected();
   }
 }

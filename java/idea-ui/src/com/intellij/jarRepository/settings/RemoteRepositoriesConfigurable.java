@@ -78,11 +78,11 @@ public class RemoteRepositoriesConfigurable implements SearchableConfigurable, C
   private void configControls() {
     myMavenPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaUiBundle.message("settings.remote.repo.maven.jar.repositories"), false, JBUI.insetsTop(8)).setShowLine(false));
     myServiceListPanel.setBorder(IdeBorderFactory.createTitledBorder(JavaUiBundle.message(
-      "settings.remote.repo.artifactory.nexus.or.bintray.service.urls"), false, JBUI.insetsTop(8)).setShowLine(false));
+      "settings.remote.repo.artifactory.or.nexus.service.urls"), false, JBUI.insetsTop(8)).setShowLine(false));
 
     setupListControls(
       myServiceList, myServicesModel, myAddServiceButton, myEditServiceButton, myRemoveServiceButton,
-      JavaUiBundle.message("settings.remote.repo.artifactory.nexus.or.bintray"), JavaUiBundle.message("settings.remote.repo.service.url"),
+      JavaUiBundle.message("settings.remote.repo.artifactory.or.nexus"), JavaUiBundle.message("settings.remote.repo.service.url"),
       JavaUiBundle.message("settings.remote.repo.no.services"), DataAdapter.STRING_ADAPTER
     );
     setupListControls(

@@ -36,7 +36,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
 
   public static final List<String> DEFAULT_SERVICES = ContainerUtil
     .immutableList("https://oss.sonatype.org/service/local/", "https://repo.jfrog.org/artifactory/api/",
-                   "https://repository.jboss.org/nexus/service/local/", "https://jcenter.bintray.com");
+                   "https://repository.jboss.org/nexus/service/local/");
 
   public MavenRepositoryServicesManager() {
     myUrls.addAll(DEFAULT_SERVICES);

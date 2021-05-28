@@ -20,9 +20,11 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings
 import com.intellij.psi.impl.source.html.HtmlFileImpl
 import com.intellij.psi.stubs.StubIndex
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.xml.*
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.util.castSafelyTo
+import com.intellij.util.text.CharSequenceSubSequence
 import com.intellij.util.text.NameUtilCore
 import java.io.File
 import java.io.FileReader
@@ -231,14 +233,14 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
 
     val status = extractStatus(compatData)
     val compatibility = extractCompatibilityInfo(compatData)
-    val doc = processElementDocumentation(elementDoc)
+    val doc = processElementDocumentation(elementDoc, getProseContentById(indexDataProseValues, "summary"))
 
     val documentation = doc.first
     val properties = doc.second.takeIf { it.isNotEmpty() }
                      ?: filterProseById(indexDataProseValues, "properties")
                        .firstOrNull()
                        ?.getProseContent()
-                       ?.let { processElementDocumentation(it) }
+                       ?.let { processElementDocumentation(it, null) }
                        ?.second
                        ?.takeIf { it.isNotEmpty() }
 
@@ -250,7 +252,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
     return MdnHtmlAttributeDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
                                          extractCompatibilityInfo(compatData),
-                                         extractDescription(indexDataProseValues), null)
+                                         extractDescription(indexDataProseValues))
   }
 
   private fun extractDomEvents(): Map<String, MdnDomEventDocumentation> {
@@ -267,8 +269,7 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val (compatData, indexDataProseValues) = getCompatDataAndProseValues(dir)
     return MdnDomEventDocumentation(getMdnDocsUrl(dir), extractStatus(compatData),
                                     extractCompatibilityInfo(compatData),
-                                 extractEventDescription(indexDataProseValues) ?: return null,
-                                    null)
+                                    extractEventDescription(indexDataProseValues) ?: return null)
   }
 
   private fun extractJavascriptDocumentation(dir: File, name: String): List<Pair<String, MdnJsSymbolDocumentation>> {
@@ -338,10 +339,10 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     val dirName = dir.name
     return when {
       dirName.startsWith('_') || dirName.endsWith("()") ->
-        MdnCssBasicSymbolDocumentation(url, status, compatibility, description, null)
+        MdnCssBasicSymbolDocumentation(url, status, compatibility, description)
       dirName.startsWith('@') ->
         MdnCssAtRuleSymbolDocumentation(
-          url, status, compatibility, description, null,
+          url, status, compatibility, description,
           extractInformationFull(dir,
                                  { !it.contains('_') },
                                  { docDir ->
@@ -356,13 +357,50 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         )
       else ->
         MdnCssPropertySymbolDocumentation(
-          url, status, compatibility, description, extractPropertyValues(indexDataProseValues))
+          url, status, compatibility, description, extractFormalSyntax(indexDataProseValues), extractPropertyValues(indexDataProseValues))
     }
   }
 
   private fun extractDescription(indexDataProseValues: List<JsonObject>): String =
     indexDataProseValues.first().getProseContent()
       .let { createHtmlFile(it).patchedText() }
+
+  private fun extractFormalSyntax(indexDataProseValues: List<JsonObject>): String? =
+    getProseContentById(indexDataProseValues, "formal_syntax")
+      ?.let { createHtmlFile(it) }
+      ?.let { PsiTreeUtil.findChildOfType(it, XmlTag::class.java) }
+      ?.let { extractText(it) }
+      ?.patchProse()
+      ?.replace(" ", " ")
+      ?.let { formatFormalCssSyntax(it) }
+
+  private fun formatFormalCssSyntax(str: String): String {
+    val result = StringBuilder()
+    result.append(str[0])
+    var i = 1
+    var indentation = 0
+    while (i < str.length) {
+      val seq = CharSequenceSubSequence(str, i, str.length)
+      if (str[i - 1].let { it != ' ' }) {
+        if (seq.startsWith("where ")) {
+          if (indentation == 2) break
+          i += "where ".length
+          result.append("\n")
+          repeat(++indentation) { result.append("  ") }
+          continue
+        }
+        else if (seq.startsWith("&lt;")) {
+          result.append("\n")
+          repeat(indentation) { result.append("  ") }
+          result.append("&lt;")
+          i += "&lt;".length
+          continue
+        }
+      }
+      result.append(str[i++])
+    }
+    return result.toString()
+  }
 
   private fun extractEventDescription(indexDataProseValues: List<JsonObject>): String? =
     indexDataProseValues.first().getProseContent()
@@ -434,13 +472,13 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
     return docAttrs.keys.asSequence()
       .plus(compatAttrs.keys).distinct()
       .map { StringUtil.toLowerCase(it) }
-      .map { Pair(it, MdnHtmlAttributeDocumentation(urlPrefix + it, compatAttrs[it]?.first, compatAttrs[it]?.second, docAttrs[it], null)) }
+      .map { Pair(it, MdnHtmlAttributeDocumentation(urlPrefix + it, compatAttrs[it]?.first, compatAttrs[it]?.second, docAttrs[it])) }
       .sortedBy { it.first }
       .toMap()
       .takeIf { it.isNotEmpty() }
   }
 
-  private fun processElementDocumentation(elementDoc: RawProse): Pair<String, Map<String, String>> {
+  private fun processElementDocumentation(elementDoc: RawProse, summaryDoc: RawProse?): Pair<String, Map<String, String>> {
     val sections = mutableMapOf<String, String>()
 
     fun processPropertiesTable(table: XmlTag) {
@@ -472,6 +510,9 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
         else super.visitXmlTag(tag)
       }
     })
+    if (summaryDoc != null && htmlFile.firstChild.children.none { (it as? XmlTag)?.name == "p" }) {
+      return Pair(fixSpaces(htmlFile.patchedText() + createHtmlFile(summaryDoc).patchedText()), sections)
+    }
     return Pair(fixSpaces(htmlFile.patchedText()), sections)
   }
 
@@ -566,14 +607,19 @@ class GenerateMdnDocumentation : BasePlatformTestCase() {
   }
 
   private fun simplifyTag(tag: XmlTag) {
+    tag.replace(
+      XmlElementFactory.getInstance(tag.project).createTagFromText("""<${tag.name}>${extractText(tag)}</${tag.name}>""",
+                                                                   HTMLLanguage.INSTANCE))
+  }
+
+  private fun extractText(tag: XmlTag): String {
     val result = StringBuilder()
     tag.acceptChildren(object : XmlRecursiveElementVisitor() {
       override fun visitXmlText(text: XmlText) {
         result.append(text.text.replace(' ', ' '))
       }
     })
-    tag.replace(
-      XmlElementFactory.getInstance(tag.project).createTagFromText("""<${tag.name}>$result</${tag.name}>""", HTMLLanguage.INSTANCE))
+    return result.toString()
   }
 
   private fun isEmptyTag(tag: XmlTag): Boolean =

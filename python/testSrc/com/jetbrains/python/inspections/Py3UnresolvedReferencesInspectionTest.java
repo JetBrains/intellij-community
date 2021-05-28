@@ -42,7 +42,7 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return ourPy3Descriptor;
+    return ourPyLatestDescriptor;
   }
 
   @NotNull

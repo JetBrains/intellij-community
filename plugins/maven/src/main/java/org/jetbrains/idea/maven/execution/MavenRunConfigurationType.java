@@ -12,6 +12,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.execution.impl.DefaultJavaProgramRunner;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
@@ -161,6 +162,14 @@ public final class MavenRunConfigurationType implements ConfigurationType {
                                       @Nullable MavenRunnerSettings runnerSettings,
                                       @Nullable ProgramRunner.Callback callback,
                                       boolean isDelegateBuild) {
+
+    if (!ExternalSystemUtil.confirmLoadingUntrustedProject(project, Collections.singletonList(MavenUtil.SYSTEM_ID))) {
+      MavenUtil.showError(project,
+                          RunnerBundle.message("notification.title.failed.to.execute.maven.goal"),
+                          RunnerBundle.message("notification.project.is.untrusted"));
+      return;
+    }
+
 
     RunnerAndConfigurationSettings configSettings = createRunnerAndConfigurationSettings(settings,
                                                                                          runnerSettings,
