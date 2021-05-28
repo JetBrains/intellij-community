@@ -39,6 +39,7 @@ import java.io.ByteArrayInputStream
 import java.io.IOException
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
+  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git index file system refresher", 1)
   private val cache = Caffeine.newBuilder()
     .weakValues()
     .build<Key, GitIndexVirtualFile>(CacheLoader { key ->
@@ -89,13 +90,13 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   private fun refresh(filesToRefresh: List<GitIndexVirtualFile>) {
     LOG.debug("Starting async refresh for ${filesToRefresh.joinToString { it.path }}")
 
-    AppExecutorUtil.getAppExecutorService().submit {
+    executor.submit {
       val fileDataList = mutableListOf<IndexFileData>()
       for (file in filesToRefresh) {
         readFromGit(file)?.let { fileDataList.add(it) }
       }
       if (fileDataList.isEmpty()) return@submit
-      writeInEdt {
+      writeInEdtAndWait {
         val events = fileDataList.map { it.event }
         ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
         fileDataList.forEach { it.apply() }
@@ -212,8 +213,8 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
     private fun GitIndexUtil.StagedFile.hash(): Hash = HashImpl.build(blobHash)
 
-    private fun writeInEdt(action: () -> Unit) {
-      ApplicationManager.getApplication().invokeLater {
+    private fun writeInEdtAndWait(action: () -> Unit) {
+      ApplicationManager.getApplication().invokeAndWait {
         ApplicationManager.getApplication().runWriteAction {
           action()
         }
