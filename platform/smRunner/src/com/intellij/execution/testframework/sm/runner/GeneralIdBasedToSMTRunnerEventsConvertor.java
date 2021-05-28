@@ -226,7 +226,6 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
       // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
       if (testProxy.isSuite()) {
-        // no event for suite ignored => need to fix it here:
         fireOnSuiteFinished(testProxy, node.getId());
       }
       else {

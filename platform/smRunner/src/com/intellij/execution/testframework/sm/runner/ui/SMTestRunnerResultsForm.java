@@ -734,7 +734,6 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   private void updateOnTestIgnored(@NotNull final SMTestProxy test) {
     if (!test.isSuite()) {
-      // no event for suite ignored => need to fix it here
       myIgnoredTestCount++;
     }
     updateProgressOnTestDone();
