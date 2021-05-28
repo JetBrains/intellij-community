@@ -75,7 +75,7 @@ sealed class KotlinUsageContextDataFlowPanelBase(
     public override fun updateLayoutLater(infos: List<UsageInfo>?) {
         if (infos == null) {
             removeAll()
-            val title = UsageViewBundle.message("select.the.usage.to.preview", myPresentation.usagesWord)
+            val title = UsageViewBundle.message("select.the.usage.to.preview")
             add(JLabel(title, SwingConstants.CENTER), BorderLayout.CENTER)
         } else {
             val element = infos.firstOrNull()?.element ?: return
