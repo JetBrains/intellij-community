@@ -28,6 +28,7 @@ import java.awt.*;
 import java.util.List;
 
 public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
+  private boolean myAllowEmptySelection = true;
 
   public ChooseModulesDialog(Component parent, final List<? extends Module> items, final @NlsContexts.DialogTitle String title) {
     super(parent, items, title, null, true);
@@ -43,6 +44,12 @@ public class ChooseModulesDialog extends ChooseElementsDialog<Module> {
 
   public void setSingleSelectionMode() {
     myChooser.setSingleSelectionMode();
+    myAllowEmptySelection = false;
+  }
+
+  @Override
+  public boolean isOKActionEnabled() {
+    return myAllowEmptySelection || !getChosenElements().isEmpty();
   }
 
   @Override
