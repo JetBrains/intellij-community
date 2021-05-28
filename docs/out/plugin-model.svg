@@ -1,3 +1,4 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" contentScriptType="application/ecmascript" contentStyleType="text/css" height="579px" preserveAspectRatio="none" style="width:1917px;height:579px;background:#FFFFFF;" version="1.1" viewBox="0 0 1917 579" width="1917px" zoomAndPan="magnify">
   <style>
   @import url('https://fonts.googleapis.com/css?family=Roboto|Roboto+Mono&amp;display=swap');
@@ -16,7 +17,7 @@
   }
 </style>
   <defs>
-    <filter height="300%" id="f1shekoa8o9m49" width="300%" x="-1" y="-1">
+    <filter height="300%" id="f9ebwibwmmiuq" width="300%" x="-1" y="-1">
       <feGaussianBlur result="blurOut" stdDeviation="2.0"/>
       <feColorMatrix in="blurOut" result="blurOut2" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .4 0"/>
       <feOffset dx="4.0" dy="4.0" in="blurOut2" result="blurOut3"/>
@@ -26,59 +27,59 @@
   <g>
     <!--MD5=[1085852dcf5b25a180ffe435ef773747]
 cluster PluginContent-->
-    <polygon fill="#FFFFFF" filter="url(#f1shekoa8o9m49)" points="185,139,240,139,247,161.4063,1615,161.4063,1615,572,185,572,185,139" style="stroke:#000000;stroke-width:1.5;"/>
+    <polygon fill="#FFFFFF" filter="url(#f9ebwibwmmiuq)" points="185,139,240,139,247,161.4063,1615,161.4063,1615,572,185,572,185,139" style="stroke:#000000;stroke-width:1.5;"/>
     <line style="stroke:#000000;stroke-width:1.5;" x1="185" x2="247" y1="161.4063" y2="161.4063"/>
     <text font-family="Roboto" font-size="14" font-weight="bold" textLength="49" x="189" y="153.9883">content</text>
     <!--MD5=[8643c3a2e8ffb0c77ba1cfb35bcb9aeb]
 cluster ModuleDependencies-->
-    <polygon fill="#FFFFFF" filter="url(#f1shekoa8o9m49)" points="383,308,479,308,486,330.4063,1127,330.4063,1127,532,383,532,383,308" style="stroke:#000000;stroke-width:1.5;"/>
+    <polygon fill="#FFFFFF" filter="url(#f9ebwibwmmiuq)" points="383,308,479,308,486,330.4063,1127,330.4063,1127,532,383,532,383,308" style="stroke:#000000;stroke-width:1.5;"/>
     <line style="stroke:#000000;stroke-width:1.5;" x1="383" x2="486" y1="330.4063" y2="330.4063"/>
     <text font-family="Roboto" font-size="14" font-weight="bold" textLength="90" x="387" y="322.9883">dependencies</text>
     <!--MD5=[7544cd838908b9c69ef913353da45cfc]
 cluster PluginDependencies-->
-    <polygon fill="#FFFFFF" filter="url(#f1shekoa8o9m49)" points="1655,137,1751,137,1758,159.4063,1900,159.4063,1900,414,1655,414,1655,137" style="stroke:#000000;stroke-width:1.5;"/>
+    <polygon fill="#FFFFFF" filter="url(#f9ebwibwmmiuq)" points="1655,137,1751,137,1758,159.4063,1900,159.4063,1900,414,1655,414,1655,137" style="stroke:#000000;stroke-width:1.5;"/>
     <line style="stroke:#000000;stroke-width:1.5;" x1="1655" x2="1758" y1="159.4063" y2="159.4063"/>
     <text font-family="Roboto" font-size="14" font-weight="bold" textLength="90" x="1659" y="151.9883">dependencies</text>
     <!--MD5=[c72e14692f063a08d1023b5b76acc947]
 entity M-->
-    <rect fill="#F8F8F8" filter="url(#f1shekoa8o9m49)" height="36.4063" style="stroke:#000000;stroke-width:1.5;" width="159" x="771.5" y="182"/>
+    <rect fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" height="36.4063" style="stroke:#000000;stroke-width:1.5;" width="159" x="771.5" y="182"/>
     <text class="text" textLength="139" x="781.5" y="204.9883">module name="…" 0…N</text>
     <!--MD5=[2e7f0958813e0c469f8dc1b0f09fcd25]
 entity M_N-->
-    <rect fill="#F8F8F8" filter="url(#f1shekoa8o9m49)" height="36.4063" style="stroke:#000000;stroke-width:1.5;" width="142" x="217" y="354.5"/>
+    <rect fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" height="36.4063" style="stroke:#000000;stroke-width:1.5;" width="142" x="217" y="354.5"/>
     <text class="text" textLength="122" x="227" y="377.4883">module name="…" N</text>
-    <path class="note" d="M966,187 L966,196 L930.74,200 L966,204 L966,213.4883 A0,0 0 0 0 966,213.4883 L1332,213.4883 A0,0 0 0 0 1332,213.4883 L1332,197 L1322,187 L966,187 A0,0 0 0 0 966,187 " filter="url(#f1shekoa8o9m49)"/>
+    <path class="note" d="M966,187 L966,196 L930.74,200 L966,204 L966,213.4883 A0,0 0 0 0 966,213.4883 L1332,213.4883 A0,0 0 0 0 1332,213.4883 L1332,197 L1322,187 L966,187 A0,0 0 0 0 966,187 " filter="url(#f9ebwibwmmiuq)"/>
     <path class="note" d="M1322,187 L1322,197 L1332,197 L1322,187 "/>
     <text class="code" textLength="52" x="972" y="205.5352">content</text>
     <text class="text" textLength="290" x="1027" y="205.0703">is not allowed and is not supported for module.</text>
-    <path class="note" d="M1151.5,469 L1151.5,511.8125 L1590.5,511.8125 L1590.5,479 L1580.5,469 L1151.5,469 " filter="url(#f1shekoa8o9m49)"/>
+    <path class="note" d="M1151.5,469 L1151.5,511.8125 L1590.5,511.8125 L1590.5,479 L1580.5,469 L1151.5,469 " filter="url(#f9ebwibwmmiuq)"/>
     <path class="note" d="M1580.5,469 L1580.5,479 L1590.5,479 L1580.5,469 "/>
     <text class="text" textLength="242" x="1157.5" y="486.9883">Module dependency is always optional.</text>
     <text class="text" textLength="418" x="1157.5" y="503.3945">If the module depends on an unavailable plugin, it will not be loaded.</text>
-    <ellipse cx="495.9225" cy="372.6845" fill="#F8F8F8" filter="url(#f1shekoa8o9m49)" rx="88.9225" ry="20.1845" style="stroke:#383838;stroke-width:1.5;"/>
+    <ellipse cx="495.9225" cy="372.6845" fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" rx="88.9225" ry="20.1845" style="stroke:#383838;stroke-width:1.5;"/>
     <text class="text" textLength="139" x="426.24" y="375.5368">module name="…" 0…N</text>
-    <ellipse cx="496.2383" cy="490.5477" fill="#F8F8F8" filter="url(#f1shekoa8o9m49)" rx="75.7383" ry="17.5477" style="stroke:#383838;stroke-width:1.5;"/>
+    <ellipse cx="496.2383" cy="490.5477" fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" rx="75.7383" ry="17.5477" style="stroke:#383838;stroke-width:1.5;"/>
     <text class="text" textLength="107" x="439.7383" y="494.2918">plugin id="…" 0…N</text>
-    <path class="note" d="M620,351 L620,368.5 L585,372.5 L620,376.5 L620,393.8125 A0,0 0 0 0 620,393.8125 L1084,393.8125 A0,0 0 0 0 1084,393.8125 L1084,361 L1074,351 L620,351 A0,0 0 0 0 620,351 " filter="url(#f1shekoa8o9m49)"/>
+    <path class="note" d="M620,351 L620,368.5 L585,372.5 L620,376.5 L620,393.8125 A0,0 0 0 0 620,393.8125 L1084,393.8125 A0,0 0 0 0 1084,393.8125 L1084,361 L1074,351 L620,351 A0,0 0 0 0 620,351 " filter="url(#f9ebwibwmmiuq)"/>
     <path class="note" d="M1074,351 L1074,361 L1084,361 L1074,351 "/>
     <text class="text" textLength="443" x="626" y="368.9883">The dependency is specified in a module descriptor itself in a new model,</text>
     <text class="text" textLength="220" x="626" y="385.3945">not where the module is referenced.</text>
-    <ellipse cx="1786.9225" cy="200.1845" fill="#F8F8F8" filter="url(#f1shekoa8o9m49)" rx="88.9225" ry="20.1845" style="stroke:#383838;stroke-width:1.5;"/>
+    <ellipse cx="1786.9225" cy="200.1845" fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" rx="88.9225" ry="20.1845" style="stroke:#383838;stroke-width:1.5;"/>
     <text class="text" textLength="139" x="1717.24" y="203.0368">module name="…" 0…N</text>
-    <ellipse cx="1787.2383" cy="372.5477" fill="#F8F8F8" filter="url(#f1shekoa8o9m49)" rx="75.7383" ry="17.5477" style="stroke:#383838;stroke-width:1.5;"/>
+    <ellipse cx="1787.2383" cy="372.5477" fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" rx="75.7383" ry="17.5477" style="stroke:#383838;stroke-width:1.5;"/>
     <text class="text" textLength="107" x="1730.7383" y="376.2918">plugin id="…" 0…N</text>
     <!--MD5=[626ad08abde0879284d52f51a0eb42aa]
 entity P-->
-    <rect fill="#F8F8F8" filter="url(#f1shekoa8o9m49)" height="36.4063" style="stroke:#000000;stroke-width:1.5;" width="58" x="822" y="17.5"/>
-    <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md" target="_top" title="https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md" xlink:actuate="onRequest" xlink:href="https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md" xlink:show="new" xlink:title="https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md" xlink:type="simple">
+    <rect fill="#F8F8F8" filter="url(#f9ebwibwmmiuq)" height="36.4063" style="stroke:#000000;stroke-width:1.5;" width="58" x="822" y="17.5"/>
+    <a href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md" target="_top" title="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md" xlink:actuate="onRequest" xlink:href="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md" xlink:show="new" xlink:title="https://github.com/JetBrains/intellij-community/blob/master/docs/plugin.md" xlink:type="simple">
       <text fill="#1D1D1D" font-family="Roboto" font-size="14" lengthAdjust="spacing" text-decoration="underline" textLength="38" x="832" y="40.4883">plugin</text>
     </a>
-    <path class="note" d="M6,6 L6,65.2188 L380,65.2188 L380,16 L370,6 L6,6 " filter="url(#f1shekoa8o9m49)"/>
+    <path class="note" d="M6,6 L6,65.2188 L380,65.2188 L380,16 L370,6 L6,6 " filter="url(#f9ebwibwmmiuq)"/>
     <path class="note" d="M370,6 L370,16 L380,16 L370,6 "/>
     <text class="text" textLength="353" x="12" y="23.9883">Every plugin is a module, but not every module is a plugin.</text>
     <text class="text" textLength="313" x="12" y="40.3945">A plugin is a group of related modules and for now,</text>
     <text class="text" textLength="240" x="12" y="56.8008">it is the only way to distribute modules.</text>
-    <path class="note" d="M1588,22.5 L1588,48.9883 L1738,48.9883 L1738,32.5 L1728,22.5 L1588,22.5 " filter="url(#f1shekoa8o9m49)"/>
+    <path class="note" d="M1588,22.5 L1588,48.9883 L1738,48.9883 L1738,32.5 L1728,22.5 L1588,22.5 " filter="url(#f9ebwibwmmiuq)"/>
     <path class="note" d="M1728,22.5 L1728,32.5 L1738,32.5 L1728,22.5 "/>
     <text class="text" textLength="74" x="1594" y="40.5703">Same as for</text>
     <text class="code" textLength="52" x="1671" y="41.0352">module</text>
