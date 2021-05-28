@@ -128,7 +128,7 @@ public class PythonDebugConsoleCommunication extends AbstractConsoleCommunicatio
 
   @Override
   public void interrupt() {
-    throw new UnsupportedOperationException();
+    // TODO: properly support interruption in Debug console
   }
 
   public boolean isSuspended() {
