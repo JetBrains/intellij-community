@@ -179,8 +179,11 @@ public class ActionsCollectorImpl extends ActionsCollector {
     long durationMillis = stats != null ? TimeoutUtil.getDurationMillis(stats.start) : -1;
 
     List<EventPair<?>> data = new ArrayList<>();
-    if (stats != null && stats.isDumb != null) {
-      data.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb));
+    if (stats != null) {
+      data.add(ActionsEventLogGroup.START_TIME.with(stats.startMs));
+      if (stats.isDumb != null) {
+        data.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb));
+      }
     }
 
     ObjectEventData reportedResult = toReportedResult(result);
@@ -278,7 +281,17 @@ public class ActionsCollectorImpl extends ActionsCollector {
   }
 
   private static final class Stats {
+    /**
+     * Action start time in milliseconds, used to report "start_time" field
+     */
+    final long startMs = System.currentTimeMillis();
+
+    /**
+     * Action start time in nanoseconds, used to report "duration_ms" field
+     * We can't use ms to measure duration because it depends on local system time and, therefore, can go backwards
+     */
     final long start = System.nanoTime();
+
     WeakReference<Project> projectRef;
     final Boolean isDumb;
 

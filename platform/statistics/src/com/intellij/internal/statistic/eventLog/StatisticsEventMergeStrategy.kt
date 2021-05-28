@@ -5,7 +5,7 @@ interface StatisticsEventMergeStrategy {
   fun shouldMerge(lastEvent: LogEvent, newEvent: LogEvent): Boolean
 }
 
-class IdenticalEventMergeStrategy : StatisticsEventMergeStrategy {
+class FilteredEventMergeStrategy(private val ignoredFields: Set<String>) : StatisticsEventMergeStrategy {
   override fun shouldMerge(lastEvent: LogEvent, newEvent: LogEvent): Boolean {
     if (lastEvent.session != newEvent.session) return false
     if (lastEvent.bucket != newEvent.bucket) return false
@@ -25,8 +25,10 @@ class IdenticalEventMergeStrategy : StatisticsEventMergeStrategy {
 
     for (datum in lastEvent.data) {
       val key = datum.key
-      if (!newEvent.data.containsKey(key)) return false
-      if (newEvent.data[key] != datum.value) return false
+      if (!ignoredFields.contains(key)) {
+        if (!newEvent.data.containsKey(key)) return false
+        if (newEvent.data[key] != datum.value) return false
+      }
     }
     return true
   }

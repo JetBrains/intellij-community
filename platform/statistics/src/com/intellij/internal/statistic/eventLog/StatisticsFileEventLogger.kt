@@ -26,7 +26,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
   private var eventMergeTimeoutMs: Long
-  private val mergeStrategy: StatisticsEventMergeStrategy = IdenticalEventMergeStrategy()
+  private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time"))
   private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
 
   init {
