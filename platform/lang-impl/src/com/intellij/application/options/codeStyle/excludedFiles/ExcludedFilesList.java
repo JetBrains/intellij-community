@@ -81,7 +81,9 @@ public class ExcludedFilesList extends JBList<FileSetDescriptor> {
   public void reset(@NotNull CodeStyleSettings settings) {
     myModel.clear();
     for (FileSetDescriptor descriptor : settings.getExcludedFiles().getDescriptors(NamedScopeDescriptor.NAMED_SCOPE_TYPE)) {
-      myModel.addElement(descriptor);
+      if (NamedScopeToGlobConverter.convert((NamedScopeDescriptor)descriptor) == null) {
+        myModel.addElement(descriptor);
+      }
     }
   }
 

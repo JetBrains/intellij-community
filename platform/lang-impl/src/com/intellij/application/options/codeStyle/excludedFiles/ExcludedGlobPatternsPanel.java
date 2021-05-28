@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -23,6 +24,7 @@ public class ExcludedGlobPatternsPanel extends JPanel {
   private final static String PATTERN_SEPARATOR = ";";
 
   private final ExpandableTextField myPatternsField;
+  private final JLabel              myConversionMessageLabel;
 
   public ExcludedGlobPatternsPanel() {
     setLayout(new GridBagLayout());
@@ -45,6 +47,12 @@ public class ExcludedGlobPatternsPanel extends JPanel {
     hintLabel.setFont(JBUI.Fonts.smallFont());
     hintLabel.setForeground(UIUtil.getContextHelpForeground());
     add(hintLabel, c);
+    c.gridy ++;
+    c.gridx = 0;
+    c.gridwidth = 2;
+    myConversionMessageLabel = new JLabel(CodeStyleBundle.message("excluded.files.migration.message"));
+    add(myConversionMessageLabel, c);
+    myConversionMessageLabel.setVisible(false);
   }
 
 
@@ -57,13 +65,27 @@ public class ExcludedGlobPatternsPanel extends JPanel {
   }
 
   public boolean isModified(@NotNull CodeStyleSettings settings) {
-    return !settings.getExcludedFiles().getDescriptors(GlobPatternDescriptor.TYPE).equals(getDescriptors());
+    boolean modified = !settings.getExcludedFiles().getDescriptors(GlobPatternDescriptor.TYPE).equals(getDescriptors());
+    if (!modified) myConversionMessageLabel.setVisible(false);
+    return modified;
   }
 
-  private static String getPatternsText(@NotNull CodeStyleSettings settings) {
+  private String getPatternsText(@NotNull CodeStyleSettings settings) {
     List<String> patterns =
-      ContainerUtil.map(settings.getExcludedFiles().getDescriptors(GlobPatternDescriptor.TYPE), d -> d.getPattern());
+      new ArrayList<>(ContainerUtil.map(settings.getExcludedFiles().getDescriptors(GlobPatternDescriptor.TYPE), d -> d.getPattern()));
+    List<String> convertedPatterns = getConvertedPatterns(settings);
+    myConversionMessageLabel.setVisible(convertedPatterns.size() > 0);
+    patterns.addAll(convertedPatterns);
     return StringUtil.join(patterns, PATTERN_SEPARATOR);
+  }
+
+  @NotNull
+  private static List<String> getConvertedPatterns(@NotNull CodeStyleSettings settings) {
+    return settings.getExcludedFiles().getDescriptors(NamedScopeDescriptor.NAMED_SCOPE_TYPE).stream()
+                   .map(descriptor -> NamedScopeToGlobConverter.convert((NamedScopeDescriptor)descriptor))
+                   .filter(descriptor -> descriptor != null)
+                   .map(descriptor -> descriptor.getPattern())
+                   .collect(Collectors.toList());
   }
 
   private List<FileSetDescriptor> getDescriptors() {
