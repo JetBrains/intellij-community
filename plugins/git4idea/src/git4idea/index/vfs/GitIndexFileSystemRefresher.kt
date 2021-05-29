@@ -126,9 +126,12 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
       writeInEdtAndWait {
         if (isShutDown) return@writeInEdtAndWait
 
-        val events = fileDataList.map { it.event }
+        val dataToApply = fileDataList.filter { !it.isOutdated() }
+        if (dataToApply.isEmpty()) return@writeInEdtAndWait
+
+        val events = dataToApply.map { it.event }
         ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
-        fileDataList.forEach { it.apply() }
+        dataToApply.forEach { it.apply() }
         ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
       }
     }
@@ -262,11 +265,11 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
                                                                  0, 0,
                                                                  oldLength, newLength, true)
 
-    fun apply(): Boolean {
+    fun isOutdated() = file.hash != oldHash
+
+    fun apply() {
       LOG.debug("Refreshing $file")
-      if (file.hash != oldHash) return false
       file.setDataFromRefresh(newHash, newLength, newExecutable)
-      return true
     }
 
     override fun toString(): @NonNls String {
