@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.editor.lists
 
 import com.intellij.openapi.actionSystem.DataContext
@@ -19,6 +19,9 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
  * It collects selected items (or the ones the carets are inside) and calls [doIndentUnindent] and [updateNumbering] on them one by one.
  */
 internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandler: EditorActionHandler?) : EditorWriteActionHandler.ForEachCaret() {
+
+  override fun isEnabledForCaret(editor: Editor, caret: Caret, dataContext: DataContext?): Boolean =
+    baseHandler?.isEnabled(editor, caret, dataContext) == true
 
   override fun executeWriteAction(editor: Editor, caret: Caret?, dataContext: DataContext?) {
     if (caret == null || !doExecuteAction(editor, caret)) {
