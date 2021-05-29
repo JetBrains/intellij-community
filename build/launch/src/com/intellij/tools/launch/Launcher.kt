@@ -90,13 +90,11 @@ object Launcher {
       cmd.add(arg.trim('"'))
     }
 
-    /*
     println("Starting cmd:")
     for (arg in cmd) {
       println("  $arg")
     }
     println("-- END")
-*/
 
     return if (options.runInDocker) {
       val docker = DockerLauncher(paths, options as DockerLauncherOptions)
