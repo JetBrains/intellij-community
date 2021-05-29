@@ -22,7 +22,7 @@ import java.util.*
 import java.util.concurrent.Future
 import java.util.concurrent.TimeUnit
 
-@Bombed(year = 2021, month = Calendar.MAY, day = 30, user = "Julia Beliaeva")
+@Bombed(year = 2021, month = Calendar.JUNE, day = 16, user = "Julia Beliaeva")
 class GitStageTrackerTest : GitSingleRepoTest() {
   private var _tracker: GitStageTracker? = null
 
