@@ -1,16 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX
 
-import com.intellij.ide.starters.local.DependencyConfig
-import com.intellij.ide.starters.local.Starter
-import com.intellij.ide.starters.local.StarterContext
-import com.intellij.ide.starters.local.StarterUtils
+import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.setupTestModule
 import com.intellij.ide.starters.shared.*
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ModuleRootManager
-import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase.JAVA_11
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase4
 import org.jetbrains.plugins.javaFX.wizard.JavaFxModuleBuilder
@@ -19,13 +11,12 @@ import org.junit.Test
 class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
   @Test
   fun emptyMavenProject() {
-    val builder = TestModuleBuilder(fixture.module).withStarterContext {
+    JavaFxModuleBuilder().setupTestModule(fixture.module) {
       language = JAVA_STARTER_LANGUAGE
       projectType = MAVEN_PROJECT
       testFramework = JUNIT_TEST_RUNNER
       isCreatingNewProject = true
     }
-    builder.setupModule()
 
     expectFile("src/main/java/com/example/demo/HelloApplication.java", """
       package com.example.demo;
@@ -130,13 +121,12 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
   @Test
   fun emptyGradleProject() {
-    val builder = TestModuleBuilder(fixture.module).withStarterContext {
+    JavaFxModuleBuilder().setupTestModule(fixture.module) {
       language = JAVA_STARTER_LANGUAGE
       projectType = GRADLE_PROJECT
       testFramework = TESTNG_TEST_RUNNER
       isCreatingNewProject = true
     }
-    builder.setupModule()
 
     expectFile("src/main/java/com/example/demo/HelloController.java", """
       package com.example.demo;
@@ -204,32 +194,5 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
   private fun expectFile(path: String, content: String) {
     fixture.configureFromTempProjectFile(path)
     fixture.checkResult(content)
-  }
-
-  private class TestModuleBuilder(private val module: Module) : JavaFxModuleBuilder() {
-    init {
-      starterContext.starterPack = getStarterPack()
-      moduleJdk = ModuleRootManager.getInstance(module).sdk
-      starterContext.starter = starterContext.starterPack.starters.first()
-      starterContext.starterDependencyConfig = loadDependencyConfig(starterContext.starter!!)
-    }
-
-    private fun loadDependencyConfig(starter: Starter): DependencyConfig {
-      val starterDependencyDom = starter.versionConfigUrl.openStream().use { JDOMUtil.load(it) }
-      return StarterUtils.parseDependencyConfig(starterDependencyDom, starter.versionConfigUrl.path, false)
-    }
-
-    fun setupModule() {
-      ApplicationManager.getApplication().invokeAndWait {
-        runWriteAction {
-          super.setupModule(module)
-        }
-      }
-    }
-
-    fun withStarterContext(consumer: StarterContext.() -> Unit): TestModuleBuilder {
-      consumer.invoke(starterContext)
-      return this
-    }
   }
 }
