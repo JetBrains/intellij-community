@@ -44,8 +44,8 @@ ext.kotlin_version = kotlinCompilerBuild.substring(
   4, // number of chars in "203-" string (or "202-" string or any other platform identifier with dash string)
   kotlinVersionLen
 )
-ext.android_sdk_version = "${osFamily}.4.0.0.0"
-ext.android_layoutlib_version = "27.1.1.1"
+ext.android_sdk_version = "${osFamily}.4.2.0.0"
+ext.android_layoutlib_version = "27.2.0.1"
 
 dependencies {
   androidLayoutlib "org.jetbrains.intellij.deps.android.tools.base:layoutlib-resources:${android_layoutlib_version}"
