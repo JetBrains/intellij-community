@@ -24,10 +24,10 @@ import com.intellij.util.SmartList
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.jps.serialization.levelToLibraryTableId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
@@ -240,7 +240,7 @@ class ModifiableRootModelBridgeImpl(
         error("Library name is null or empty: $library")
       }
 
-      LibraryId(libraryName, levelToLibraryTableId(library.table.tableLevel))
+      LibraryId(libraryName, LibraryNameGenerator.getLibraryTableId(library.table.tableLevel))
     }
 
     val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(
@@ -257,7 +257,7 @@ class ModifiableRootModelBridgeImpl(
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
     val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(
-      library = LibraryId(name, levelToLibraryTableId(level)),
+      library = LibraryId(name, LibraryNameGenerator.getLibraryTableId(level)),
       exported = false,
       scope = ModuleDependencyItem.DependencyScope.COMPILE
     )

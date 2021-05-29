@@ -14,4 +14,7 @@ fun String.trimMiddle(maxLength: Int, useEllipsisSymbol: Boolean = true): String
 
 fun CharArray.nullize(): CharArray? = if (isEmpty()) null else this
 
+/**
+ * Escapes line-breaks making the string fit one line anyway
+ */
 fun String.escLBr(): String = StringUtil.escapeLineBreak(this)

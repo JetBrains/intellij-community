@@ -6,7 +6,6 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.module.EmptyModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
-import com.intellij.openapi.module.impl.ModuleManagerComponent
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ModuleRootModificationUtil
@@ -18,7 +17,6 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TemporaryDirectory
-import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
@@ -91,7 +89,6 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
     when (moduleManager) {
       is ModuleManagerComponentBridge -> "Legacy bridge model enabled: $moduleManager"
-      is ModuleManagerComponent -> "Old model enabled: $moduleManager"
       else -> "Unknown model enabled: $moduleManager"
     }.also { println(it) }
 
@@ -190,8 +187,6 @@ class WorkspaceModelPerformanceTest(private val modulesCount: Int) {
 
   @Test
   fun `test base operations in store`()  = WriteCommandAction.runWriteCommandAction(project) {
-    if (!ProjectModelRule.isWorkspaceModelEnabled) return@runWriteCommandAction
-
     val workspaceModel = WorkspaceModel.getInstance(project)
     var diff = WorkspaceEntityStorageBuilder.from(workspaceModel.entityStorage.current)
 

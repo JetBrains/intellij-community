@@ -6,10 +6,12 @@ import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.lang.LangBundle;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.concurrency.NonUrgentExecutor;
 import com.intellij.util.containers.HashSetInterner;
 import com.intellij.util.containers.HashingStrategy;
 import com.intellij.util.containers.Interner;
@@ -37,9 +39,11 @@ public abstract class SuppressableInspectionTreeNode extends InspectionTreeNode 
 
   void nodeAdded() {
     dropProblemCountCaches();
-    ReadAction.run(() -> myValid = calculateIsValid());
-    //force calculation
-    getProblemLevels();
+    ReadAction
+      .nonBlocking(() -> myValid = calculateIsValid())
+      .expireWith(myPresentation.getProject())
+      .finishOnUiThread(ModalityState.any(), result -> getProblemLevels())
+      .submit(NonUrgentExecutor.getInstance());
   }
 
   @Override

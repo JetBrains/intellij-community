@@ -12,6 +12,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.*
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -43,6 +44,7 @@ import java.nio.file.Paths
 object ProjectUtils {
   private const val LEARNING_PROJECT_MODIFICATION = "LEARNING_PROJECT_MODIFICATION"
   private const val FEATURE_TRAINER_VERSION = "feature-trainer-version.txt"
+  private val LOG = logger<ProjectUtils>()
 
   /**
    * For example:
@@ -122,6 +124,17 @@ object ProjectUtils {
       return false
     }
     return true
+  }
+
+  fun getProjectRoot(project: Project): VirtualFile {
+    val roots = ProjectRootManager.getInstance(project).contentRoots
+    if (roots.isNotEmpty()) {
+      if (roots.size > 1) LOG.warn("Multiple content roots in project ${project.name}: ${roots.toList()}")
+      return roots[0]
+    }
+    LOG.error("Not found content roots in project ${project.name}. " +
+              "Base path: ${project.basePath}, project file path: ${project.projectFilePath}")
+    throw error("Not found content roots for project")
   }
 
   fun simpleInstallAndOpenLearningProject(projectPath: Path,
@@ -232,7 +245,7 @@ object ProjectUtils {
     val stamp = PropertiesComponent.getInstance(project).getValue(LEARNING_PROJECT_MODIFICATION)?.toLong() ?: 0
     val needReplace = mutableListOf<Path>()
     val validContent = mutableListOf<Path>()
-    val root = ProjectRootManager.getInstance(project).contentRoots[0]
+    val root = getProjectRoot(project)
     invokeAndWaitIfNeeded {
       FileDocumentManager.getInstance().saveAllDocuments()
     }
@@ -241,6 +254,9 @@ object ProjectUtils {
       VfsUtilCore.visitChildrenRecursively(root, object : VirtualFileVisitor<Void>() {
         override fun visitFile(file: VirtualFile): Boolean {
           if(file.name == ".idea" ||
+             file.name == "git" ||
+             file.name == ".git" ||
+             file.name == ".gitignore" ||
              file.name == "venv" ||
              file.name == FEATURE_TRAINER_VERSION ||
              file.name.endsWith(".iml")) return false

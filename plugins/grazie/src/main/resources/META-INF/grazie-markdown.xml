@@ -1,6 +1,0 @@
-<idea-plugin>
-    <extensions defaultExtensionNs="com.intellij.grazie">
-      <grammar.strategy language="Markdown"
-                        implementationClass="com.intellij.grazie.ide.language.markdown.MarkdownGrammarCheckingStrategy"/>
-    </extensions>
-</idea-plugin>

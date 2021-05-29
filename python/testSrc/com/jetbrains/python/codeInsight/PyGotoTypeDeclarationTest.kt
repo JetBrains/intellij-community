@@ -62,7 +62,7 @@ class PyGotoTypeDeclarationTest : PyTestCase() {
   // PY-41452
   fun testModule() {
     val type = findSymbolType("import typing\ntyp<caret>ing")
-    assertEquals("_importlib_modulespec.ModuleType", (type as PyClass).qualifiedName)
+    assertEquals("types.ModuleType", (type as PyClass).qualifiedName)
   }
 
   // PY-41452

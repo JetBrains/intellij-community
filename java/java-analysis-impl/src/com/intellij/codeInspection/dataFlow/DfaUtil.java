@@ -4,6 +4,7 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
@@ -27,7 +28,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -120,19 +120,6 @@ public final class DfaUtil {
     return JavaPsiFacade.getElementFactory(block.getProject()).createExpressionFromText(
       StreamEx.ofReversed(operands).map(op -> ParenthesesUtils.getText(op, PsiPrecedenceUtil.ADDITIVE_PRECEDENCE)).joining("+"),
       assignment);
-  }
-
-  /**
-   * @deprecated use {@link NullabilityUtil#getExpressionNullability(PsiExpression, boolean)}
-   * Note that variable parameter is not used at all now.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static @NotNull Nullability checkNullability(final @Nullable PsiVariable variable, final @Nullable PsiElement context) {
-    if (context instanceof PsiExpression) {
-      return NullabilityUtil.getExpressionNullability((PsiExpression)context, true);
-    }
-    return Nullability.UNKNOWN;
   }
 
   public static @NotNull Collection<PsiExpression> getPossibleInitializationElements(@NotNull PsiElement qualifierExpression) {

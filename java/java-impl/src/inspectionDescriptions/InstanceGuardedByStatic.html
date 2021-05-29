@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports <code>@GuardedBy</code> annotations on instance fields or methods,
-where the guard is a <code>static</code> field. Guarding a non-static by a static may result in excessive lock contention,
+Reports <code>@GuardedBy</code> annotations on instance fields or methods
+in which the guard is a <code>static</code> field. Guarding a non-static by a static may result in excessive lock contention,
 as access to each locked field in any object instance will prevent simultaneous access to that field in every object instance.
 <p>Example:</p>
-<pre>
+<pre><code>
     private static ReadWriteLock lock = new ReentrantReadWriteLock(); //static guarding field
     private Object state;
 
@@ -12,9 +12,9 @@ as access to each locked field in any object instance will prevent simultaneous 
     public void bar() {
         state = new Object();
     }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-Supported <code>@GuardedBy</code> annotations are:
+<p>Supported <code>@GuardedBy</code> annotations are:</p>
 <ul>
   <li><code>net.jcip.annotations.GuardedBy</code></li>
   <li><code>javax.annotation.concurrent.GuardedBy</code></li>

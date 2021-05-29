@@ -1,5 +1,13 @@
 <html>
 <body>
-This inspection reports <b>arrayOf</b> calls that can be replaced with array literals <b>[...]</b>.
+Reports <code>arrayOf</code> calls that can be replaced with array literals <code>[...]</code>.
+<p>The inspection is paired with "Replace with [...]" quick-fix to amend the code.</p>
+<p>Examples:</p>
+<pre><code>
+   annotation class MyAnnotation(val strings: Array&lt;String&gt;)
+
+   @MyAnnotation(arrayOf("alpha", "beta", "omega")) // can be replaced with '@MyAnnotation(["alpha", "beta", "omega"])'
+   class MyClass
+</code></pre>
 </body>
 </html>

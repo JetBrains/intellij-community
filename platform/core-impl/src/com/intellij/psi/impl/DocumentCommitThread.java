@@ -71,7 +71,7 @@ public final class DocumentCommitThread implements Disposable, DocumentCommitPro
 
     assert cachedViewProvider.isEventSystemEnabled() : "Asynchronous commit is only supported for physical PSI" +
                                                        ", document=" + document +
-                                                       ", viewProvider=" + cachedViewProvider;
+                                                       ", cachedViewProvider=" + cachedViewProvider +" ("+cachedViewProvider.getClass()+")";
     TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
     CommitTask task = new CommitTask(project, document, reason, modality, documentManager.getLastCommittedText(document), cachedViewProvider);

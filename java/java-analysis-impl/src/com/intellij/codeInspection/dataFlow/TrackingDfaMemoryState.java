@@ -4,11 +4,13 @@ package com.intellij.codeInspection.dataFlow;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.DistinctPairSet;
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -49,7 +51,7 @@ public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
   }
 
   @Override
-  protected void afterMerge(DfaMemoryStateImpl other) {
+  public void afterMerge(@NotNull DfaMemoryState other) {
     super.afterMerge(other);
     assert other instanceof TrackingDfaMemoryState;
     MemoryStateChange otherHistory = ((TrackingDfaMemoryState)other).myHistory;

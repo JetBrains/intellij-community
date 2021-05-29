@@ -102,7 +102,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
           ent.setRenamedOutputFileName(renamedOutputFileName);
           return Unit.INSTANCE;
         });
-      }, true
+      }
     );
   }
 
@@ -126,7 +126,7 @@ public class FileCopyPackagingElement extends FileOrDirectoryCopyPackagingElemen
           ent.setRenamedOutputFileName(updatedName);
           return Unit.INSTANCE;
         });
-      }, true
+      }
     );
   }
 

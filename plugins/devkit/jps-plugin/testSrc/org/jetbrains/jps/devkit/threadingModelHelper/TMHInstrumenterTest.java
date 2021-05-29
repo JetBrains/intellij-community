@@ -22,18 +22,20 @@ import java.lang.reflect.Method;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 public class TMHInstrumenterTest extends UsefulTestCase {
-  private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/assertEdtInstrumenter/";
+  private static final String TEST_DATA_PATH = "plugins/devkit/jps-plugin/testData/threadingModelHelper/instrumenter/";
 
   private static final String REQUIRES_EDT_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresEdt";
   private static final String REQUIRES_BACKGROUND_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresBackgroundThread";
   private static final String REQUIRES_READ_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresReadLock";
   private static final String REQUIRES_WRITE_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresWriteLock";
+  private static final String REQUIRES_NO_READ_LOCK_CLASS_NAME = "com/intellij/util/concurrency/annotations/fake/RequiresNoReadLock";
   private static final String APPLICATION_MANAGER_CLASS_NAME = "com/intellij/openapi/application/fake/ApplicationManager";
   private static final String APPLICATION_CLASS_NAME = "com/intellij/openapi/application/fake/Application";
 
@@ -88,6 +90,35 @@ public class TMHInstrumenterTest extends UsefulTestCase {
   public void testRequiresWriteLockAssertion() throws Exception {
     TestClass testClass = getInstrumentedTestClass();
     assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertWriteAccessAllowed"));
+  }
+
+  public void testRequiresNoReadLockAssertion() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertReadAccessNotAllowed"));
+  }
+
+  public void testLineNumber() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 8, 8), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
+  public void testLineNumberWhenBodyHasTwoStatements() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 8, 8, 9), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
+  public void testLineNumberWhenEmptyBody() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 7, 7), TMHTestUtil.getLineNumbers(testClass.classBytes));
+  }
+
+  public void testLineNumberWhenOtherMethodBefore() throws Exception {
+    TestClass testClass = getInstrumentedTestClass();
+    assertTrue(TMHTestUtil.containsMethodCall(testClass.classBytes, "assertIsDispatchThread"));
+    assertEquals(Arrays.asList(5, 7, 12, 12), TMHTestUtil.getLineNumbers(testClass.classBytes));
   }
 
   private void doEdtTest() throws Exception {
@@ -163,8 +194,9 @@ public class TMHInstrumenterTest extends UsefulTestCase {
       new TMHAssertionGenerator.AssertEdt(REQUIRES_EDT_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
       new TMHAssertionGenerator.AssertBackgroundThread(REQUIRES_BACKGROUND_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
       new TMHAssertionGenerator.AssertReadAccess(REQUIRES_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
-      new TMHAssertionGenerator.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
-    ));
+      new TMHAssertionGenerator.AssertWriteAccess(REQUIRES_WRITE_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME),
+      new TMHAssertionGenerator.AssertNoReadAccess(REQUIRES_NO_READ_LOCK_CLASS_NAME, APPLICATION_MANAGER_CLASS_NAME, APPLICATION_CLASS_NAME)
+    ), true);
     return instrumented ? writer.toByteArray() : null;
   }
 

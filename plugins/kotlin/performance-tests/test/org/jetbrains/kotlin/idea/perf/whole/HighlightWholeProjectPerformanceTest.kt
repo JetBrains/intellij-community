@@ -1,18 +1,23 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.whole
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ProjectLoadingErrorsHeadlessNotifier
+import com.intellij.openapi.roots.ProjectFileIndex
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.search.FileTypeIndex
+import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.perf.util.*
-import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
+import org.jetbrains.kotlin.idea.testFramework.relativePath
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 import java.io.File
+import java.nio.file.Files
 
 @RunWith(JUnit3RunnerWithInners::class)
 class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
@@ -37,76 +42,116 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
     }
 
     fun testHighlightAllKtFilesInProject() {
-        val emptyProfile = System.getProperty("emptyProfile", "false").toBoolean()
+        val emptyProfile = System.getProperty("emptyProfile", "false")!!.toBoolean()
+        val percentOfFiles = System.getProperty("files.percentOfFiles", "10")!!.toInt()
+        val maxFilesPerPart = System.getProperty("files.maxFilesPerPart", "300")!!.toInt()
+        val minFileSize = System.getProperty("files.minFileSize", "300")!!.toInt()
+        val warmUpIterations = System.getProperty("iterations.warmup", "1")!!.toInt()
+        val numberOfIterations = System.getProperty("iterations.number", "10")!!.toInt()
+        val clearPsiCaches = System.getProperty("caches.clearPsi", "true")!!.toBoolean()
+
         val projectSpecs = projectSpecs()
-        suite(suiteName = "allKtFilesInProject") {
-            app {
-                warmUpProject()
+        logMessage { "projectSpecs: $projectSpecs" }
+        try {
+            for (projectSpec in projectSpecs) {
+                val projectName = projectSpec.name
+                val projectPath = projectSpec.path
 
-                with(config) {
-                    warmup = 1
-                    iterations = 3
-                }
-                for (projectSpec in projectSpecs) {
-                    val projectName = projectSpec.name
-                    val projectPath = projectSpec.path
+                val suiteName =
+                    listOfNotNull("allKtFilesIn", "emptyProfile".takeIf { emptyProfile }, projectName)
+                        .joinToString(separator = "-")
+                suite(suiteName = suiteName) {
+                    app {
+                        warmUpProject()
 
-                    try {
-                        project(ExternalProject(projectPath, ProjectOpenAction.GRADLE_PROJECT), refresh = true) {
-                            profile(if (emptyProfile) EmptyProfile else DefaultProfile)
+                        with(config) {
+                            warmup = warmUpIterations
+                            iterations = numberOfIterations
+                            fastIterations = true
+                        }
 
-                            val projectDir = File(projectPath)
+                        try {
+                            project(ExternalProject.autoOpenProject(projectPath), refresh = true) {
+                                profile(if (emptyProfile) EmptyProfile else DefaultProfile)
 
-                            val ktFiles = projectDir.allFilesWithExtension("kt").toList()
-                            logStatValue("number of kt files", ktFiles.size)
-                            val topMidLastFiles =
-                                limitedFiles(ktFiles, 10)
-                                    .map {
-                                        val path = it.path
-                                        it to path.substring(path.indexOf(projectPath) + projectPath.length + 1)
+                                val ktFiles = mutableSetOf<VirtualFile>()
+                                project.runReadActionInSmartMode {
+                                    val projectFileIndex = ProjectFileIndex.getInstance(project)
+                                    val modules = mutableSetOf<Module>()
+                                    val ktFileProcessor = { ktFile: VirtualFile ->
+                                        if (projectFileIndex.isInSourceContent(ktFile)) {
+                                            ktFiles.add(ktFile)
+                                        }
+                                        true
                                     }
-                            logStatValue("limited number of kt files", topMidLastFiles.size)
+                                    FileTypeIndex.processFiles(
+                                        KotlinFileType.INSTANCE,
+                                        ktFileProcessor,
+                                        GlobalSearchScope.projectScope(project)
+                                    )
+                                    modules
+                                }
 
-                            topMidLastFiles.forEach {
-                                logMessage { "${it.second} fileSize: ${it.first.length()}" }
-                            }
+                                logStatValue("number of kt files", ktFiles.size)
+                                val filesToProcess =
+                                    limitedFiles(
+                                        ktFiles,
+                                        percentOfFiles = percentOfFiles,
+                                        maxFilesPerPart = maxFilesPerPart,
+                                        minFileSize = minFileSize
+                                    )
+                                logStatValue("limited number of kt files", filesToProcess.size)
 
-                            topMidLastFiles.forEachIndexed { idx, pair ->
-                                val file = pair.first
-                                val fileName = pair.second
-                                logMessage { "$idx / ${topMidLastFiles.size} : $fileName fileSize: ${file.length()}" }
+                                filesToProcess.forEach {
+                                    logMessage { "${project.relativePath(it)} fileSize: ${Files.size(it.toNioPath())}" }
+                                }
 
-                                try {
-                                    fixture(fileName).use {
-                                        measure<List<HighlightInfo>>(fileName) {
-                                            test = {
-                                                highlight(it)
+                                filesToProcess.forEachIndexed { idx, file ->
+                                    logMessage { "${idx + 1} / ${filesToProcess.size} : ${project.relativePath(file)} fileSize: ${Files.size(file.toNioPath())}" }
+
+                                    try {
+                                        fixture(file).use {
+                                            measure<List<HighlightInfo>>(it.fileName, clearCaches = clearPsiCaches) {
+                                                test = {
+                                                    highlight(it)
+                                                }
                                             }
                                         }
+                                    } catch (e: Exception) {
+                                        // nothing as it is already caught by perfTest
                                     }
-                                } catch (e: Exception) {
-                                    // nothing as it is already caught by perfTest
                                 }
                             }
+                        } catch (e: Exception) {
+                            e.printStackTrace()
+                            // nothing as it is already caught by perfTest
                         }
-                    } catch (e: Exception) {
-                        // nothing as it is already caught by perfTest
                     }
                 }
+            }
+        } finally {
+            pathToResource("").takeIf { it.exists() }?.let {
+                logMessage { "uploadAggregateResults: ${it.absolutePath}" }
+                uploadAggregateResults(it)
             }
         }
     }
 
-    private fun limitedFiles(ktFiles: List<File>, partPercent: Int): Collection<File> {
+    private fun limitedFiles(
+        ktFiles: Collection<VirtualFile>,
+        percentOfFiles: Int,
+        maxFilesPerPart: Int,
+        minFileSize: Int
+    ): Collection<VirtualFile> {
         val sortedBySize = ktFiles
-            .filter { it.length() > 0 }
-            .map { it to it.length() }.sortedByDescending { it.second }
-        val percentOfFiles = (sortedBySize.size * partPercent) / 100
+            .filter { Files.size(it.toNioPath()) > minFileSize }
+            .map { it to Files.size(it.toNioPath()) }.sortedByDescending { it.second }
+        val numberOfFiles = minOf((sortedBySize.size * percentOfFiles) / 100, maxFilesPerPart)
 
-        val topFiles = sortedBySize.take(percentOfFiles).map { it.first }
+        val topFiles = sortedBySize.take(numberOfFiles).map { it.first }
         val midFiles =
-            sortedBySize.take(sortedBySize.size / 2 + percentOfFiles / 2).takeLast(percentOfFiles).map { it.first }
-        val lastFiles = sortedBySize.takeLast(percentOfFiles).map { it.first }
+            sortedBySize.take(sortedBySize.size / 2 + numberOfFiles / 2).takeLast(numberOfFiles).map { it.first }
+        val lastFiles = sortedBySize.takeLast(numberOfFiles).map { it.first }
 
         return LinkedHashSet(topFiles + midFiles + lastFiles)
     }

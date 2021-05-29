@@ -3,25 +3,25 @@
 Reports parameterized tests which have malformed sources:
 <ul>
   <li>
-    <code>MethodSource</code> has unknown target or method is not static, no-arg;
+    <code>MethodSource</code> has an unknown target or the method is not static, no-arg.
   </li>
   <li>
-    <code>ValueSource</code> / <code>EnumSource</code> types are not convertible to method parameters;
+    <code>ValueSource</code> / <code>EnumSource</code> types are not convertible to method parameters.
   </li>
   <li>
     No sources are defined.
   </li>
 </ul>
 <p>Example:</p>
-<pre>
+<pre><code>
   class Test {
     @MethodSource("parameters")
     @ParameterizedTest
     void foo(String param) {}
   }
-</pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   class Test {
     private static Stream&lt;Arguments&gt; parameters() {
         return Stream.empty();
@@ -31,7 +31,7 @@ Reports parameterized tests which have malformed sources:
     @ParameterizedTest
     void foo(String param) {}
   }
-</pre>
+  </code></pre>
 <!-- tooltip end -->
 <p>
   <small>New in 2017.2</small>

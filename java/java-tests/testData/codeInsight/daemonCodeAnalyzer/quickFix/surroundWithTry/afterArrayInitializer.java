@@ -8,8 +8,8 @@ public class ExTest {
         String[] a = new String[0];
         try {
             a = new String[]{maybeThrow("")};
-        } catch (Ex ex) {
-            ex.printStackTrace();
+        } catch (Ex e) {
+            e.printStackTrace();
         }
         System.out.println(a);
     }

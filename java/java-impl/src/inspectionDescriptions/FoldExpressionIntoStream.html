@@ -7,7 +7,7 @@ Reports expressions with a repeating pattern which could be replaced with <i>Str
     return a.startsWith(prefix) && b.startsWith(prefix) && c.startsWith(prefix) && d.startsWith(prefix);
   }
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   boolean foo(String a, String b, String c, String d, String prefix) {
     return Stream.of(a, b, c, d).allMatch(s -> s.startsWith(prefix));
@@ -19,14 +19,14 @@ Reports expressions with a repeating pattern which could be replaced with <i>Str
     return a + "," + b + "," + c + "," + d;
   }
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   String joinAll(String a, String b, String c, String d) {
     return String.join(",", a, b, c, d);
   }
 </pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
+<p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 <p><small>New in 2018.2</small></p>
 </body>
 </html>

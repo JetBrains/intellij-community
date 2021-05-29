@@ -1,5 +1,18 @@
 <html>
 <body>
-This inspection reports usages of curly braces in a string template around a simple identifier.
+Reports usages of curly braces in a string template around a simple identifier.
+<p>'Remove curly braces' quick-fix can be used to amend the code automatically.</p>
+<p>Examples:</p>
+<pre><code>
+fun correctUsage() {
+   val x = "x"
+   val y = "${x.length}" // <== Ok
+}
+
+fun redundant() {
+   val x = 4
+   val y = "${x}" // <== redundant, quick-fix simplifies the string to "$x"
+}
+</code></pre>
 </body>
 </html>

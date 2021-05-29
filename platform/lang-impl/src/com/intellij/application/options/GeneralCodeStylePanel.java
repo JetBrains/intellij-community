@@ -2,7 +2,8 @@
 package com.intellij.application.options;
 
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
-import com.intellij.application.options.codeStyle.excludedFiles.ExcludedFilesList;
+import com.intellij.application.options.codeStyle.excludedFiles.ExcludedGlobPatternsPanel;
+import com.intellij.application.options.codeStyle.excludedFiles.ExcludedScopesPanel;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
@@ -75,11 +76,11 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   private JBLabel myVisualGuidesHint;
   private JBLabel myLineSeparatorHint;
   private JBLabel myVisualGuidesLabel;
-  private ExcludedFilesList myExcludedFilesList;
   private JPanel myExcludedFilesPanel;
-  private JPanel myToolbarPanel;
   private JBTabbedPane myTabbedPane;
-  private final JScrollPane myScrollPane;
+  private ExcludedGlobPatternsPanel myExcludedPatternsPanel;
+  private ExcludedScopesPanel       myExcludedScopesPanel;
+  private final JScrollPane         myScrollPane;
   private static int ourSelectedTabIndex = -1;
 
   public GeneralCodeStylePanel(CodeStyleSettings settings) {
@@ -117,8 +118,6 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myLineSeparatorHint.setForeground(JBColor.GRAY);
     myLineSeparatorHint.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
-    myExcludedFilesList.initModel();
-    myToolbarPanel.add(myExcludedFilesList.getDecorator().createPanel());
     myExcludedFilesPanel
       .setBorder(IdeBorderFactory.createTitledBorder(ApplicationBundle.message("settings.code.style.general.excluded.files")));
     if (ourSelectedTabIndex >= 0) {
@@ -179,7 +178,8 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myVisualGuides.validateContent();
     myRightMarginField.validateContent();
     settings.setDefaultSoftMargins(myVisualGuides.getValue());
-    myExcludedFilesList.apply(settings);
+    myExcludedScopesPanel.apply(settings);
+    myExcludedPatternsPanel.apply(settings);
 
     settings.LINE_SEPARATOR = getSelectedLineSeparator();
 
@@ -207,7 +207,8 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
     myVisualGuides = new CommaSeparatedIntegersField(ApplicationBundle.message("settings.code.style.visual.guides"),
                                                      0, CodeStyleConstraints.MAX_RIGHT_MARGIN,
                                                      ApplicationBundle.message("settings.code.style.visual.guides.optional"));
-    myExcludedFilesList = new ExcludedFilesList();
+    myExcludedPatternsPanel = new ExcludedGlobPatternsPanel();
+    myExcludedScopesPanel = new ExcludedScopesPanel();
   }
 
   @Nullable
@@ -249,7 +250,8 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   public boolean isModified(CodeStyleSettings settings) {
     if (!myVisualGuides.getValue().equals(settings.getDefaultSoftMargins())) return true;
 
-    if (myExcludedFilesList.isModified(settings)) return true;
+    if (myExcludedScopesPanel.isModified(settings)) return true;
+    if (myExcludedPatternsPanel.isModified(settings)) return true;
 
     if (!Objects.equals(getSelectedLineSeparator(), settings.LINE_SEPARATOR)) {
       return true;
@@ -288,7 +290,8 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   protected void resetImpl(final CodeStyleSettings settings) {
     myVisualGuides.setValue(settings.getDefaultSoftMargins());
 
-    myExcludedFilesList.reset(settings);
+    myExcludedScopesPanel.reset(settings);
+    myExcludedPatternsPanel.reset(settings);
 
     String lineSeparator = settings.LINE_SEPARATOR;
     if ("\n".equals(lineSeparator)) {
@@ -357,7 +360,7 @@ final class GeneralCodeStylePanel extends CodeStyleAbstractPanel {
   @Override
   public void setModel(@NotNull CodeStyleSchemesModel model) {
     super.setModel(model);
-    myExcludedFilesList.setSchemesModel(model);
+    myExcludedScopesPanel.setSchemesModel(model);
   }
 
   @Override

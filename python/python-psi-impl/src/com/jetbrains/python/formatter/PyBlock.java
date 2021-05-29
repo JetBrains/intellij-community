@@ -54,10 +54,6 @@ public class PyBlock implements ASTBlock {
                                                                             PyElementTypes.SET_LITERAL_EXPRESSION,
                                                                             PyElementTypes.SET_COMP_EXPRESSION);
 
-  private static final TokenSet ourBrackets = TokenSet.create(PyTokenTypes.LPAR, PyTokenTypes.RPAR,
-                                                              PyTokenTypes.LBRACE, PyTokenTypes.RBRACE,
-                                                              PyTokenTypes.LBRACKET, PyTokenTypes.RBRACKET);
-
   private static final TokenSet ourHangingIndentOwners = TokenSet.create(PyElementTypes.LIST_LITERAL_EXPRESSION,
                                                                          PyElementTypes.LIST_COMP_EXPRESSION,
                                                                          PyElementTypes.DICT_LITERAL_EXPRESSION,
@@ -221,6 +217,9 @@ public class PyBlock implements ASTBlock {
         childIndent = Indent.getNormalIndent();
       }
     }
+    else if (childType == PyElementTypes.CASE_CLAUSE) {
+      childIndent = Indent.getNormalIndent();
+    }
     else if (childType == PyElementTypes.IMPORT_ELEMENT) {
       if (parentType == PyElementTypes.FROM_IMPORT_STATEMENT) {
         childWrap = myFromImportWrapping;
@@ -230,7 +229,8 @@ public class PyBlock implements ASTBlock {
       }
       childIndent = Indent.getNormalIndent();
     }
-    if (childType == PyTokenTypes.END_OF_LINE_COMMENT && parentType == PyElementTypes.FROM_IMPORT_STATEMENT) {
+    if (childType == PyTokenTypes.END_OF_LINE_COMMENT && (parentType == PyElementTypes.FROM_IMPORT_STATEMENT ||
+                                                          parentType == PyElementTypes.MATCH_STATEMENT)) {
       childIndent = Indent.getNormalIndent();
     }
 
@@ -238,7 +238,7 @@ public class PyBlock implements ASTBlock {
     if (ourListElementTypes.contains(parentType)) {
       // wrapping in non-parenthesized tuple expression is not allowed (PY-1792)
       if ((parentType != PyElementTypes.TUPLE_EXPRESSION || grandparentType == PyElementTypes.PARENTHESIZED_EXPRESSION) &&
-          !ourBrackets.contains(childType) &&
+          !PyTokenTypes.ALL_BRACES.contains(childType) &&
           childType != PyTokenTypes.COMMA &&
           !isSliceOperand(child) /*&& !isSubscriptionOperand(child)*/) {
         childWrap = Wrap.createWrap(WrapType.NORMAL, true);
@@ -331,7 +331,7 @@ public class PyBlock implements ASTBlock {
              !hasLineBreaksBeforeInSameParent(myNode.getFirstChildNode(), 1) &&
              !ourListElementTypes.contains(childType)) {
 
-      if (!ourBrackets.contains(childType)) {
+      if (!PyTokenTypes.ALL_BRACES.contains(childType)) {
         childAlignment = getAlignmentForChildren();
         if (parentType != PyElementTypes.CALL_EXPRESSION) {
           childIndent = Indent.getNormalIndent();
@@ -1062,6 +1062,7 @@ public class PyBlock implements ASTBlock {
 
   @NotNull
   private Indent getChildIndent(int newChildIndex) {
+    final IElementType parentType = myNode.getElementType();
     final ASTNode afterNode = getAfterNode(newChildIndex);
     final ASTNode lastChild = getLastNonSpaceChild(myNode, false);
     if (lastChild != null && lastChild.getElementType() == PyElementTypes.STATEMENT_LIST && mySubBlocks.size() >= newChildIndex) {
@@ -1082,6 +1083,9 @@ public class PyBlock implements ASTBlock {
         return Indent.getNormalIndent();
       }
     }
+    if (parentType == PyElementTypes.MATCH_STATEMENT && afterNode != null && afterNode.getElementType() == PyTokenTypes.COLON) {
+      return Indent.getNormalIndent();
+    }
 
     if (afterNode != null && afterNode.getElementType() == PyElementTypes.KEY_VALUE_EXPRESSION) {
       final PyKeyValueExpression keyValue = (PyKeyValueExpression)afterNode.getPsi();
@@ -1090,7 +1094,6 @@ public class PyBlock implements ASTBlock {
       }
     }
 
-    final IElementType parentType = myNode.getElementType();
     // constructs that imply indent for their children
     final PyCodeStyleSettings settings = myContext.getPySettings();
     if ((parentType == PyElementTypes.PARAMETER_LIST && settings.USE_CONTINUATION_INDENT_FOR_PARAMETERS) ||

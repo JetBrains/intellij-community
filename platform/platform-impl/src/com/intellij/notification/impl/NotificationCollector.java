@@ -14,46 +14,23 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.extensions.ExtensionPointListener;
-import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfoById;
-import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getUnknownPlugin;
 import static com.intellij.notification.impl.NotificationsEventLogGroup.*;
 
-@SuppressWarnings("deprecation")
 public final class NotificationCollector {
-  private static final Logger LOG = Logger.getInstance(NotificationCollector.class);
-  private static final Map<String, PluginInfo> ourNotificationGroupsWhitelist = new ConcurrentHashMap<>();
-  private static final Set<String> ourNotificationsWhitelist = new HashSet<>();
   public static final String UNKNOWN = "unknown";
 
   private NotificationCollector() {
-    NotificationWhitelistEP.EP_NAME.getExtensionList().forEach(NotificationCollector::addNotificationsToWhitelist);
-    NotificationAllowlistEP.EP_NAME.getExtensionList().forEach(NotificationCollector::addNotificationsToWhitelist);
-
-    ExtensionPointListener<NotificationAllowlistEP> extensionPointListener = new ExtensionPointListener<>() {
-      @Override
-      public void extensionAdded(@NotNull NotificationAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        addNotificationsToWhitelist(extension);
-      }
-
-      @Override
-      public void extensionRemoved(@NotNull NotificationAllowlistEP extension, @NotNull PluginDescriptor pluginDescriptor) {
-        removeNotificationsFromWhitelist(extension);
-      }
-    };
-    NotificationWhitelistEP.EP_NAME.addExtensionPointListener(extensionPointListener, null);
-    NotificationAllowlistEP.EP_NAME.addExtensionPointListener(extensionPointListener, null);
   }
 
   public void logBalloonShown(@Nullable Project project,
@@ -170,47 +147,11 @@ public final class NotificationCollector {
     return ApplicationManager.getApplication().getService(NotificationCollector.class);
   }
 
-  private static void removeNotificationsFromWhitelist(@NotNull NotificationAllowlistEP extension) {
-    PluginDescriptor pluginDescriptor = extension.getPluginDescriptor();
-    if (pluginDescriptor == null) return;
-    PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
-    if (!info.isDevelopedByJetBrains()) return;
-
-    List<String> notificationGroups = parseIds(extension.groupIds);
-    for (String notificationGroup : notificationGroups) {
-      ourNotificationGroupsWhitelist.remove(notificationGroup, info);
-    }
-  }
-
   private static @Nullable PluginInfo getPluginInfo(@Nullable String groupId) {
     if (groupId == null) return null;
-    PluginInfo pluginInfo = ourNotificationGroupsWhitelist.get(groupId);
-    if (pluginInfo != null) {
-      return pluginInfo;
-    }
     NotificationGroup group = NotificationGroup.findRegisteredGroup(groupId);
     if (group == null) return null;
     return getPluginInfoById(group.getPluginId());
-  }
-
-  private static void addNotificationsToWhitelist(@NotNull NotificationAllowlistEP extension) {
-    PluginDescriptor pluginDescriptor = extension.getPluginDescriptor();
-    if (pluginDescriptor == null) return;
-    PluginInfo info = PluginInfoDetectorKt.getPluginInfoByDescriptor(pluginDescriptor);
-    if (!info.isDevelopedByJetBrains()) return;
-
-    List<String> notificationGroups = parseIds(extension.groupIds);
-    for (String notificationGroup : notificationGroups) {
-      ourNotificationGroupsWhitelist.merge(notificationGroup, info, (oldValue, newValue) -> {
-        if (!oldValue.equals(newValue)) {
-          LOG.warn("Notification group '" + notificationGroup + "' is already registered in whitelist");
-          return getUnknownPlugin();
-        }
-        return oldValue;
-      });
-    }
-
-    ourNotificationsWhitelist.addAll(parseIds(extension.notificationIds));
   }
 
   public static @NotNull List<String> parseIds(@Nullable String entry) {
@@ -242,7 +183,7 @@ public final class NotificationCollector {
       if (group != null && getPluginInfoById(group.getPluginId()).isDevelopedByJetBrains()) {
         return ValidationResultType.ACCEPTED;
       }
-      return ourNotificationGroupsWhitelist.containsKey(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+      return ValidationResultType.REJECTED;
     }
   }
 
@@ -260,7 +201,7 @@ public final class NotificationCollector {
       if (NotificationGroupManager.getInstance().isRegisteredNotificationId(data)) {
         return ValidationResultType.ACCEPTED;
       }
-      return ourNotificationsWhitelist.contains(data) ? ValidationResultType.ACCEPTED : ValidationResultType.REJECTED;
+      return ValidationResultType.REJECTED;
     }
   }
 

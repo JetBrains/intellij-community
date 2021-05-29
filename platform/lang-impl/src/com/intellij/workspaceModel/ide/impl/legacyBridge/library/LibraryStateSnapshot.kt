@@ -15,7 +15,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.ArrayUtil
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.FileContainerDescription
 import com.intellij.workspaceModel.ide.impl.legacyBridge.watcher.JarDirectoryDescription
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl.Companion.toLibraryRootType
@@ -72,7 +71,7 @@ internal class LibraryStateSnapshot(
   }
 
   val name: String?
-    get() = getLegacyLibraryName(libraryEntity.persistentId())
+    get() = LibraryNameGenerator.getLegacyLibraryName(libraryEntity.persistentId())
 
   val module: Module?
     get() = (libraryTable as? ModuleLibraryTableBridge)?.module

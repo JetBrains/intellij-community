@@ -44,15 +44,6 @@ public class MergeChangeCollector {
   }
 
   /**
-   * @deprecated use constructor with GitRepository
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public MergeChangeCollector(@NotNull Project project, @NotNull VirtualFile root, @NotNull GitRevisionNumber start) {
-    this(project, Objects.requireNonNull(GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)), start);
-  }
-
-  /**
    * Collects changed files during or after merge operation to the supplied container.
    */
   public void collect(@NotNull UpdatedFiles updatedFiles) throws VcsException {

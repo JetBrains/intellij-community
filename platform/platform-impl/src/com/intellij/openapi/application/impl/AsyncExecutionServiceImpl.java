@@ -2,6 +2,7 @@
 package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.*;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
@@ -48,7 +49,8 @@ public class AsyncExecutionServiceImpl extends AsyncExecutionService {
     return new NonBlockingReadActionImpl<>(computation);
   }
 
-  static long getWriteActionCounter() {
+  @ApiStatus.Internal
+  public static long getWriteActionCounter() {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return ourWriteActionCounter;
   }

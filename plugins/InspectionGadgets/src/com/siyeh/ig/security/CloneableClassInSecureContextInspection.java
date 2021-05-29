@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,20 +23,21 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
-import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.fixes.RemoveCloneableFix;
 import com.siyeh.ig.psiutils.CloneUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.MethodUtils;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
+import java.util.List;
 
 public class CloneableClassInSecureContextInspection extends BaseInspection {
 
@@ -57,52 +58,21 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
   protected InspectionGadgetsFix buildFix(Object... infos) {
     final PsiClass aClass = (PsiClass)infos[0];
     if (CloneUtils.isDirectlyCloneable(aClass)) {
-      return new RemoveCloneableFix();
+      final RemoveCloneableFix fix = RemoveCloneableFix.create(aClass);
+      if (fix != null) {
+        return fix;
+      }
     }
-    final boolean hasOwnCloneMethod = Arrays.stream(aClass.findMethodsByName("clone", false)).anyMatch(CloneUtils::isClone);
+    final boolean hasOwnCloneMethod = ContainerUtil.exists(aClass.findMethodsByName("clone", false), CloneUtils::isClone);
     if (hasOwnCloneMethod) {
       return null;
     }
-    final boolean hasParentFinalCloneMethod = Arrays.stream(aClass.findMethodsByName("clone", true))
-      .anyMatch(m -> CloneUtils.isClone(m) && m.hasModifierProperty(PsiModifier.FINAL));
+    final boolean hasParentFinalCloneMethod = ContainerUtil.exists(aClass.findMethodsByName("clone", true),
+                                                                   m -> CloneUtils.isClone(m) && m.hasModifierProperty(PsiModifier.FINAL));
     if (hasParentFinalCloneMethod) {
       return null;
     }
     return new CreateExceptionCloneMethodFix();
-  }
-
-  private static class RemoveCloneableFix extends InspectionGadgetsFix {
-    @Nls
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return InspectionGadgetsBundle.message("remove.cloneable.quickfix");
-    }
-
-    @Override
-    protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiElement element = descriptor.getPsiElement().getParent();
-      if (!(element instanceof PsiClass)) {
-        return;
-      }
-      final PsiClass aClass = (PsiClass)element;
-      final PsiReferenceList implementsList = aClass.getImplementsList();
-      if (implementsList == null) {
-        return;
-      }
-      final PsiClass cloneableClass = ClassUtils.findClass(CommonClassNames.JAVA_LANG_CLONEABLE, element);
-      if (cloneableClass == null) {
-        return;
-      }
-      final PsiJavaCodeReferenceElement[] referenceElements = implementsList.getReferenceElements();
-      for (PsiJavaCodeReferenceElement referenceElement : referenceElements) {
-        final PsiElement target = referenceElement.resolve();
-        if (cloneableClass.equals(target)) {
-          referenceElement.delete();
-          return;
-        }
-      }
-    }
   }
 
   private static class CreateExceptionCloneMethodFix extends InspectionGadgetsFix {
@@ -172,12 +142,49 @@ public class CloneableClassInSecureContextInspection extends BaseInspection {
       final PsiCodeBlock body = method.getBody();
       assert body != null;
       body.add(statement);
+      final PsiExpression superCloneCall = factory.createExpressionFromText("super.clone()", aClass);
+      for (PsiMethodCallExpression cloneCall : collectCallsToClone(aClass)) {
+        cloneCall.replace(superCloneCall);
+      }
       if (isOnTheFly() && method.isPhysical()) {
         final Editor editor = FileEditorManager.getInstance(project).getSelectedTextEditor();
         if (editor != null) {
           GenerateMembersUtil.positionCaret(editor, method, true);
         }
       }
+    }
+  }
+
+  private static List<PsiMethodCallExpression> collectCallsToClone(PsiClass aClass) {
+    final CloneCallFinder finder = new CloneCallFinder();
+    aClass.acceptChildren(finder);
+    return finder.getCloneCalls();
+  }
+
+  private static class CloneCallFinder extends JavaRecursiveElementWalkingVisitor {
+
+    private final List<PsiMethodCallExpression> cloneCalls = new SmartList<>();
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      if (CloneUtils.isCallToClone(expression)) {
+        final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+        final PsiExpression qualifier = methodExpression.getQualifierExpression();
+        if (qualifier != null && !(qualifier instanceof PsiThisExpression)) {
+          return;
+        }
+        cloneCalls.add(expression);
+      }
+      else {
+        super.visitMethodCallExpression(expression);
+      }
+    }
+
+    @Override
+    public void visitClass(PsiClass aClass) {}
+
+    private List<PsiMethodCallExpression> getCloneCalls() {
+      return cloneCalls;
     }
   }
 

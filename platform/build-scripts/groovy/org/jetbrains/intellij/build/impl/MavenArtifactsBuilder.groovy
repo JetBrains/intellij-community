@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -230,7 +230,7 @@ class MavenArtifactsBuilder {
           buildContext.messages.warning(" module '$module.name': skip recursive dependency on '$depModule.name'")
         }
         else {
-          def depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
+          MavenArtifactData depArtifact = generateMavenArtifactData(depModule, results, nonMavenizableModules, computationInProgress)
           if (depArtifact == null) {
             buildContext.messages.warning(" module '$module.name' depends on non-mavenizable module '$depModule.name' so it cannot be published")
             mavenizable = false
@@ -256,7 +256,7 @@ class MavenArtifactsBuilder {
       nonMavenizableModules << module
       return null
     }
-    def artifactData = new MavenArtifactData(generateMavenCoordinatesForModule(module), dependencies)
+    MavenArtifactData artifactData = new MavenArtifactData(generateMavenCoordinatesForModule(module), dependencies)
     results[module] = artifactData
     return artifactData
   }

@@ -70,7 +70,6 @@ sealed class Dependency : UserDataHolderBase() {
   }
 
   data class PotentialSideEffectDependency(
-    val currentReference: USimpleNameReferenceExpression,
     val candidates: CandidatesTree,
     override val referenceInfo: DependencyOfReference.ReferenceInfo? = null
   ) : Dependency(), DependencyOfReference {
@@ -83,7 +82,13 @@ sealed class Dependency : UserDataHolderBase() {
     data class DependencyEvidence(
       val evidenceElement: UReferenceExpression? = null,
       val requires: Collection<DependencyEvidence> = emptyList()
-    )
+    ) {
+      companion object : () -> DependencyEvidence {
+        private val DEFAULT = DependencyEvidence()
+
+        override fun invoke(): DependencyEvidence = DEFAULT
+      }
+    }
 
     /**
      * Represents tree of possible update candidates. All branches represents superposition of possible updates, which exist simultaneously,

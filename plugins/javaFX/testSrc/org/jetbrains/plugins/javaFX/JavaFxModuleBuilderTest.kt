@@ -117,7 +117,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
                               <!-- Default configuration for running with: mvn clean javafx:run -->
                               <id>default-cli</id>
                               <configuration>
-                                  <mainClass>com.example.demo.HelloApplication</mainClass>
+                                  <mainClass>com.example.demo/com.example.demo.HelloApplication</mainClass>
                               </configuration>
                           </execution>
                       </executions>
@@ -169,14 +169,18 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
           mavenCentral()
       }
 
-      sourceCompatibility = 11
-      targetCompatibility = 11
+      sourceCompatibility = '11'
+      targetCompatibility = '11'
 
       tasks.withType(JavaCompile) {
           options.encoding = 'UTF-8'
       }
-      mainClassName = 'com.example.demo.HelloApplication'
-      
+
+      application {
+          mainModule = 'com.example.demo'
+          mainClass = 'com.example.demo.HelloApplication'
+      }
+
       javafx {
           version = '11.0.2'
           modules = ['javafx.controls', 'javafx.fxml']
@@ -184,7 +188,7 @@ class JavaFxModuleBuilderTest : LightJavaCodeInsightFixtureTestCase4(JAVA_11) {
 
       dependencies {
 
-          testImplementation('org.testng:testng:7.1.0')
+          testImplementation('org.testng:testng:7.4.0')
       }
 
       test {

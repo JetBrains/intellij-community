@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packaging.impl.artifacts;
 
 import com.intellij.compiler.server.BuildManager;
@@ -265,7 +265,7 @@ public final class ArtifactManagerImpl extends ArtifactManager implements Persis
                                                     @Nls(capitalization = Nls.Capitalization.Sentence) String errorMessage) {
     final InvalidArtifactImpl artifact = new InvalidArtifactImpl(state, errorMessage, externalSource);
     ProjectLoadingErrorsNotifier.getInstance(myProject).registerError(new ArtifactLoadingErrorDescription(myProject, artifact));
-    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature(FEATURE_TYPE, state.getArtifactType(), "Artifact");
+    UnknownFeaturesCollector.getInstance(myProject).registerUnknownFeature(FEATURE_TYPE, state.getArtifactType(), JavaCompilerBundle.message("plugins.advertiser.feature.artifact"));
     return artifact;
   }
 

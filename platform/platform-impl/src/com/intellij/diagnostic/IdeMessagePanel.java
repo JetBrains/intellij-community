@@ -25,7 +25,6 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -91,14 +90,6 @@ public final class IdeMessagePanel extends NonOpaquePanel implements MessagePool
   @Override
   public JComponent getComponent() {
     return this;
-  }
-
-  /** @deprecated use {@link #openErrorsDialog(LogMessage)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @SuppressWarnings("SpellCheckingInspection")
-  public void openFatals(@Nullable LogMessage message) {
-    openErrorsDialog(message);
   }
 
   public void openErrorsDialog(@Nullable LogMessage message) {

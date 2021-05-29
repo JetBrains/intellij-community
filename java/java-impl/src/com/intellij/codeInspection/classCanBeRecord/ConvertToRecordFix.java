@@ -10,6 +10,7 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiAnnotation.TargetType;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
@@ -21,6 +22,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -28,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
 import static com.intellij.psi.PsiModifier.*;
 
 public class ConvertToRecordFix extends InspectionGadgetsFix {
@@ -105,6 +108,10 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
    * It helps to validate whether a class will be a well-formed record and supports performing a refactoring.
    */
   static class RecordCandidate {
+    private static final CallMatcher OBJECT_METHOD_CALLS = CallMatcher.anyOf(
+      CallMatcher.exactInstanceCall(JAVA_LANG_OBJECT, "equals").parameterCount(1),
+      CallMatcher.exactInstanceCall(JAVA_LANG_OBJECT, "hashCode", "toString").parameterCount(0)
+    );
     private final PsiClass myClass;
     private final boolean mySuggestAccessorsRenaming;
     private final MultiMap<PsiField, FieldAccessorCandidate> myFieldAccessors = new MultiMap<>();
@@ -153,6 +160,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         RecordConstructorCandidate ctorCandidate = myConstructors.get(0);
         boolean isCanonical = ctorCandidate.myCanonical && throwsOnlyUncheckedExceptions(ctorCandidate.myConstructor);
         if (!isCanonical) return false;
+        if (containsObjectMethodCalls(ctorCandidate.myConstructor)) return false;
       }
       if (myFieldAccessors.size() == 0) return false;
       for (var entry : myFieldAccessors.entrySet()) {
@@ -160,6 +168,9 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         if (!field.hasModifierProperty(FINAL) || field.hasInitializer()) return false;
         if (HighlightUtil.RESTRICTED_RECORD_COMPONENT_NAMES.contains(field.getName())) return false;
         if (entry.getValue().size() > 1) return false;
+        FieldAccessorCandidate firstAccessor = ContainerUtil.getFirstItem(entry.getValue());
+        if (firstAccessor == null) continue;
+        if (containsObjectMethodCalls(firstAccessor.getAccessor())) return false;
       }
       for (PsiMethod ordinaryMethod : myOrdinaryMethods) {
         if (ordinaryMethod.hasModifierProperty(NATIVE)) return false;
@@ -167,6 +178,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
                                                  ContainerUtil.exists(myFieldAccessors.keySet(),
                                                                       field -> field.getName().equals(ordinaryMethod.getName()));
         if (conflictsWithPotentialAccessor) return false;
+        if (containsObjectMethodCalls(ordinaryMethod)) return false;
       }
       return true;
     }
@@ -202,6 +214,26 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         }
       }
       return true;
+    }
+
+    private static boolean containsObjectMethodCalls(@NotNull PsiMethod psiMethod) {
+      Ref<Boolean> existsObjectMethodCalls = new Ref<>(false);
+      psiMethod.accept(new JavaRecursiveElementWalkingVisitor() {
+        @Override
+        public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+          if (!existsObjectMethodCalls.get() && OBJECT_METHOD_CALLS.test(expression)) {
+            existsObjectMethodCalls.set(true);
+          }
+        }
+
+        @Override
+        public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+          if (!existsObjectMethodCalls.get() && OBJECT_METHOD_CALLS.methodReferenceMatches(expression)) {
+            existsObjectMethodCalls.set(true);
+          }
+        }
+      });
+      return existsObjectMethodCalls.get();
     }
 
     @Nullable

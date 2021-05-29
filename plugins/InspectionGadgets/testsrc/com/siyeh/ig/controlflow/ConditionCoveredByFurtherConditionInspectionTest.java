@@ -17,6 +17,9 @@ public class ConditionCoveredByFurtherConditionInspectionTest extends LightJavaI
   public void testExpressionSwitch() {
     doTest();
   }
+  public void testStringLength() {
+    doTest();
+  }
 
   @Nullable
   @Override

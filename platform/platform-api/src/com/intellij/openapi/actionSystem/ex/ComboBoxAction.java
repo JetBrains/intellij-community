@@ -388,15 +388,6 @@ public abstract class ComboBoxAction extends AnAction implements CustomComponent
       setMargin(JBUI.insets(0, 8, 0, 5));
     }
 
-    /**
-     * @deprecated This method is noop. Set icon, text and tooltip in the constructor
-     * or property change listener for proper computation of preferred size.
-     * Other updates happen in Swing.
-     */
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-    protected void updateButtonSize() {}
-
     @ApiStatus.Experimental
     protected void doShiftClick() {
       doClick();

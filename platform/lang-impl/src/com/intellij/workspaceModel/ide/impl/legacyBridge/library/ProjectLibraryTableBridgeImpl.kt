@@ -16,7 +16,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.executeOrQueueOnDispatchThread
-import com.intellij.workspaceModel.ide.impl.jps.serialization.getLegacyLibraryName
 import com.intellij.workspaceModel.ide.legacyBridge.ProjectLibraryTableBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
@@ -108,7 +107,7 @@ internal class ProjectLibraryTableBridgeImpl(
                   val library = event.storageBefore.libraryMap.getDataByEntity(change.oldEntity) as? LibraryBridgeImpl
                   if (library != null) {
                     library.entityId = idAfter
-                    dispatcher.multicaster.afterLibraryRenamed(library, getLegacyLibraryName(idBefore))
+                    dispatcher.multicaster.afterLibraryRenamed(library, LibraryNameGenerator.getLegacyLibraryName(idBefore))
                   }
                 }
               }

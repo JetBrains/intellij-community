@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JdkVersionDetector;
@@ -12,15 +11,6 @@ import org.jetbrains.jps.model.java.JdkVersionDetector;
  */
 public final class SdkVersionUtil {
   private SdkVersionUtil() { }
-
-  /** @deprecated use {@link #getJdkVersionInfo(String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Nullable
-  public static String detectJdkVersion(@NotNull String homePath) {
-    JdkVersionDetector.JdkVersionInfo info = getJdkVersionInfo(homePath);
-    return info != null ? JdkVersionDetector.formatVersionString(info.version) : null;
-  }
 
   @Nullable
   public static JdkVersionDetector.JdkVersionInfo getJdkVersionInfo(@NotNull String homePath) {

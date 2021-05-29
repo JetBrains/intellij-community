@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -86,6 +86,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.webp",
     "intellij.grazie",
     "intellij.featuresTrainer",
+    "intellij.vcs.git.featuresTrainer",
     "intellij.lombok"
   ]
 
@@ -110,10 +111,10 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/gradle/lib/gradle-tooling-extension-api.jar"       : "1.6",
     "plugins/gradle/lib/gradle-tooling-extension-impl.jar"      : "1.6",
     "plugins/maven/lib/maven-server-api.jar"                    : "1.6",
-    "plugins/maven/lib/maven2-server-impl.jar"                  : "1.6",
+    "plugins/maven/lib/maven2-server.jar"                  : "1.6",
     "plugins/maven/lib/maven3-server-common.jar"                : "1.6",
-    "plugins/maven/lib/maven30-server-impl.jar"                 : "1.6",
-    "plugins/maven/lib/maven3-server-impl.jar"                  : "1.6",
+    "plugins/maven/lib/maven30-server.jar"                 : "1.6",
+    "plugins/maven/lib/maven3-server.jar"                  : "1.6",
     "plugins/maven/lib/artifact-resolver-m2.jar"                : "1.6",
     "plugins/maven/lib/artifact-resolver-m3.jar"                : "1.6",
     "plugins/maven/lib/artifact-resolver-m31.jar"               : "1.6",
@@ -138,7 +139,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
         }
 
         //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
-        withModule("intellij.java.rt", "idea_rt.jar", null)
+        withModule("intellij.java.rt", "idea_rt.jar")
 
         //for compatibility with users' projects which take these libraries from IDEA installation
         withProjectLibrary("jetbrains-annotations")

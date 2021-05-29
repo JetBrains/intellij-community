@@ -9,6 +9,7 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactExtractor
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateChange;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
@@ -80,9 +81,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @Override
-  protected @NotNull JvmDataFlowInterpreter createInterpreter(@NotNull DfaListener listener,
-                                                              @NotNull ControlFlow flow) {
-    return new JvmDataFlowInterpreter(flow, listener, true) {
+  protected @NotNull StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener,
+                                                                   @NotNull ControlFlow flow) {
+    return new StandardDataFlowInterpreter(flow, listener, true) {
       @Override
       protected void beforeInstruction(Instruction instruction) {
         afterStates.clear();
@@ -647,6 +648,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
                 ((JavaExpressionAnchor)pushValueInstruction.getDfaAnchor()).getExpression() == expression) {
               push = push.getPrevious();
             }
+          }
+          if (push != null) {
+            push = push.getNonMerge();
           }
           if (push != null && push.myInstruction instanceof ConditionalGotoInstruction) {
             push = push.getPrevious();

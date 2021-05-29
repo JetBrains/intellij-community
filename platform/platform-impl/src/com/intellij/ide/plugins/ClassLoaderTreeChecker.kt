@@ -10,7 +10,7 @@ private val LOG = logger<ClassLoaderTreeChecker>()
 internal class ClassLoaderTreeChecker(private val unloadedMainDescriptor: IdeaPluginDescriptorImpl,
                                       private val classLoaders: WeakList<PluginClassLoader>) {
   fun checkThatClassLoaderNotReferencedByPluginClassLoader() {
-    if (!ClassLoaderConfigurationData.SEPARATE_CLASSLOADER_FOR_SUB || unloadedMainDescriptor.classLoader !is PluginClassLoader) {
+    if (unloadedMainDescriptor.classLoader !is PluginClassLoader) {
       return
     }
 
@@ -37,6 +37,7 @@ internal class ClassLoaderTreeChecker(private val unloadedMainDescriptor: IdeaPl
       }
     }
 
+    @Suppress("TestOnlyProblems")
     val parents = classLoader._getParents()
 
     for (unloadedClassLoader in classLoaders) {

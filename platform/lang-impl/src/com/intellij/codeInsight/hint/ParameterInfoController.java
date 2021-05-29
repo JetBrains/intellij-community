@@ -10,6 +10,7 @@ import com.intellij.codeInsight.lookup.LookupListener;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.LookupManagerListener;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
+import com.intellij.codeWithMe.ClientId;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.parameterInfo.ParameterInfoHandler;
@@ -111,7 +112,7 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
 
 
     LookupManagerListener lookupManagerListener = (oldLookup, newLookup) -> {
-      if(newLookup != null){
+      if (newLookup != null && ClientId.isCurrentlyUnderLocalId()) {
         newLookup.addLookupListener(lookupListener);
       }
     };

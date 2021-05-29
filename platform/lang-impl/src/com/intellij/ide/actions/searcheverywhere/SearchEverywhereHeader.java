@@ -74,7 +74,7 @@ public class SearchEverywhereHeader {
                                          : ApplicationManager.getApplication().getMessageBus().connect(ui);
     busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+      public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
         if (action == mySelectedTab.everywhereAction && event.getInputEvent() != null) {
           myEverywhereAutoSet = false;
         }

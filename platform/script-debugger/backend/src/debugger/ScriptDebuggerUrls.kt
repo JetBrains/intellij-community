@@ -1,7 +1,10 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Url
 import com.intellij.util.Urls
@@ -42,6 +45,12 @@ object ScriptDebuggerUrls {
   @JvmStatic
   fun parse(url: String, asLocalIfNoScheme: Boolean): Url? = when {
     asLocalIfNoScheme && !URLUtil.containsScheme(url) -> toUri(url)
+    url.startsWith(StandardFileSystems.FILE_PROTOCOL_PREFIX) -> toLocalFileUrl(url)
     else -> Urls.parse(url, false)
+  }
+
+  fun toLocalFileUrl(url: String): Url {
+    val canonicalPath = FileUtil.toCanonicalPath(VfsUtilCore.toIdeaUrl(url, true).substring(StandardFileSystems.FILE_PROTOCOL_PREFIX.length), '/')
+    return newLocalFileUrl(canonicalPath)
   }
 }

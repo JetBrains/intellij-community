@@ -9,10 +9,10 @@ import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.PersistentLibraryKind
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.jps.serialization.generateLibraryEntityName
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.findLibraryEntity
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.mutableLibraryMap
@@ -59,7 +59,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
     val tableId = getTableId()
 
-    val libraryEntityName = generateLibraryEntityName(name) { existsName ->
+    val libraryEntityName = LibraryNameGenerator.generateLibraryEntityName(name) { existsName ->
       modifiableModel.diff.resolve(LibraryId(existsName, tableId)) != null
     }
 
@@ -104,7 +104,7 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
 
   internal fun addLibraryCopy(original: LibraryBridgeImpl, exported: Boolean, scope: ModuleDependencyItem.DependencyScope): LibraryBridgeImpl {
     val tableId = getTableId()
-    val libraryEntityName = generateLibraryEntityName(original.name) { existsName ->
+    val libraryEntityName = LibraryNameGenerator.generateLibraryEntityName(original.name) { existsName ->
       modifiableModel.diff.resolve(LibraryId(existsName, tableId)) != null
     }
     val originalEntity = original.librarySnapshot.libraryEntity

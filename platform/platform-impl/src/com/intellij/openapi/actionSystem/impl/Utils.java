@@ -54,19 +54,12 @@ import java.util.function.Function;
 public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
 
-  /** @deprecated use {@code EMPTY_MENU_FILLER.getTemplateText()} instead
-   * @noinspection SSBasedInspection*/
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated
-  public static final String NOTHING_HERE = CommonBundle.message("empty.menu.filler");
-
   public static final AnAction EMPTY_MENU_FILLER = new EmptyAction();
   static {
     EMPTY_MENU_FILLER.getTemplatePresentation().setText(CommonBundle.messagePointer("empty.menu.filler"));
   }
 
-  public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
-    if (!Registry.is("actionSystem.update.actions.async")) return dataContext;
+  public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
     Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     if (dataContext instanceof DataManagerImpl.MyDataContext) {
       return new PreCachedDataContext(component);
@@ -80,6 +73,11 @@ public final class Utils {
     return dataContext;
   }
 
+  public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
+    if (!Registry.is("actionSystem.update.actions.async")) return dataContext;
+    return wrapToAsyncDataContext(dataContext);
+  }
+
   @ApiStatus.Internal
   public static @NotNull DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
     return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) : dataContext;
@@ -87,6 +85,12 @@ public final class Utils {
 
   public static boolean isAsyncDataContext(@NotNull DataContext dataContext) {
     return dataContext instanceof PreCachedDataContext;
+  }
+
+  @ApiStatus.Internal
+  public static @Nullable Object getRawDataIfCached(@NotNull DataContext dataContext, @NotNull String dataId) {
+    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
+           dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached(dataId) : null;
   }
 
   @ApiStatus.Internal

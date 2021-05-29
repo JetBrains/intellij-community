@@ -44,7 +44,7 @@ public class TestStateStorage implements Disposable {
     public final long configurationHash;
     public final Date date;
     public int failedLine;
-    public final String failedMethod;
+    public String failedMethod;
     public final @NlsSafe String errorMessage;
     public final String topStacktraceLine;
 

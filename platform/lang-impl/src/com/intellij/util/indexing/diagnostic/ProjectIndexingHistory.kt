@@ -15,7 +15,7 @@ typealias TimeMillis = Long
 typealias TimeNano = Long
 typealias BytesNumber = Long
 
-data class ProjectIndexingHistory(val project: Project) {
+data class ProjectIndexingHistory(val project: Project, val indexingReason: String?) {
 
   private companion object {
     val indexingSessionIdSequencer = AtomicLong()
@@ -25,7 +25,7 @@ data class ProjectIndexingHistory(val project: Project) {
 
   private val biggestContributorsPerFileTypeLimit = 10
 
-  val times = IndexingTimes(updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
+  val times = IndexingTimes(indexingReason = indexingReason, updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
@@ -125,6 +125,7 @@ data class ProjectIndexingHistory(val project: Project) {
   }
 
   data class IndexingTimes(
+    val indexingReason: String?,
     val updatingStart: ZonedDateTime,
     var totalUpdatingTime: TimeNano,
     var updatingEnd: ZonedDateTime = updatingStart,

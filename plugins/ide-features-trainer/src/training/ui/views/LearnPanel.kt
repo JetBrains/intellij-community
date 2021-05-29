@@ -52,6 +52,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   init {
     isFocusable = false
+    background = UISettings.instance.backgroundColor
   }
 
   fun reinitMe(lesson: Lesson) {
@@ -292,13 +293,6 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     if (lessonPanel.minimumSize == null) return Dimension(10, 10)
     return Dimension(lessonPanel.minimumSize.getWidth().toInt() + UISettings.instance.westInset + UISettings.instance.eastInset,
                      lessonPanel.minimumSize.getHeight().toInt() + footer.minimumSize.getHeight().toInt() + UISettings.instance.northInset + UISettings.instance.southInset)
-  }
-
-  override fun getBackground(): Color {
-    return if (!UIUtil.isUnderDarcula())
-      UISettings.instance.backgroundColor
-    else
-      UIUtil.getPanelBackground()
   }
 
   fun makeNextButtonSelected() {

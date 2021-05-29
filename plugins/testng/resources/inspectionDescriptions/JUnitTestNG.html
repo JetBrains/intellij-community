@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports any JUnit based test class that can be converted into TestNG based unit test.
+Reports any JUnit-based test class that can be converted into TestNG based unit test.
 <p>Example:</p>
-<pre>
+<pre><code>
 import org.junit.Test;
 import static org.junit.Assert.*;
 
@@ -12,9 +12,9 @@ public class ExampleTest {
     assertEquals(2 + 2, 4);
   }
 }
-</pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
 import org.testng.Assert;
 import org.testng.annotations.Test;
 
@@ -24,6 +24,6 @@ public class ExampleTest {
     Assert.assertEquals(4, 2 + 2);
   }
 }
-</pre>
+</code></pre>
 </body>
 </html>

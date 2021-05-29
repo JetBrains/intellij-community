@@ -52,17 +52,6 @@ public final class RepositoryHelper {
   }
 
   /**
-   * Loads list of plugins, compatible with a current build, from a main plugin repository.
-   *
-   * @deprecated Use `loadPlugins` only for custom repositories. Use {@link MarketplaceRequests} for getting descriptors.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @NotNull List<IdeaPluginDescriptor> loadPlugins(@Nullable ProgressIndicator indicator) throws IOException {
-    return loadPlugins(null, indicator);
-  }
-
-  /**
    * Use method only for getting plugins from custom repositories
    *
    * @deprecated Please use {@link #loadPlugins(String, BuildNumber, ProgressIndicator)} to get a list of {@link PluginNode}s.

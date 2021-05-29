@@ -28,11 +28,16 @@ import java.util.List;
 /**
  * @author peter
  */
-abstract class WeighingActionGroup extends ActionGroup {
+abstract class WeighingActionGroup extends ActionGroup implements UpdateInBackground {
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     getDelegate().update(e);
+  }
+
+  @Override
+  public boolean isUpdateInBackground() {
+    return UpdateInBackground.isUpdateInBackground(getDelegate());
   }
 
   protected abstract ActionGroup getDelegate();

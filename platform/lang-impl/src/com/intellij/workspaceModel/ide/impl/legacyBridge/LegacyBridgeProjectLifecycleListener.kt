@@ -35,32 +35,13 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   }
 
   override fun serviceRegistered(project: Project) {
-    val enabled = WorkspaceModel.isEnabled || WorkspaceModelInitialTestContent.peek() != null
-    if (!enabled) {
-      LOG.info("Using legacy project model to open project")
-      return
-    }
-
     LOG.info("Using workspace model to open project")
 
     val pluginDescriptor = PluginManagerCore.getPlugin(PluginManagerCore.CORE_ID)
                            ?: error("Could not find plugin by id: ${PluginManagerCore.CORE_ID}")
 
     val container = project as ComponentManagerImpl
-
-    container.registerComponent(JpsProjectModelSynchronizer::class.java, JpsProjectModelSynchronizer::class.java, pluginDescriptor, false)
-    container.registerComponent(RootsChangeWatcher::class.java, RootsChangeWatcher::class.java, pluginDescriptor, false)
-    container.registerComponent(VirtualFileUrlWatcher::class.java, VirtualFileUrlWatcher::class.java, pluginDescriptor, false)
-    container.registerComponent(ModuleManager::class.java, ModuleManagerComponentBridge::class.java, pluginDescriptor, true)
-    container.registerService(ProjectRootManager::class.java, ProjectRootManagerBridge::class.java, pluginDescriptor, override = true,
-      preloadMode = ServiceDescriptor.PreloadMode.AWAIT)
     container.unregisterComponent(ExternalModuleListStorage::class.java)
-
-    container.registerService(ProjectLibraryTable::class.java, ProjectLibraryTableBridgeImpl::class.java, pluginDescriptor, true)
-
-    container.registerService(ModifiableModelCommitterService::class.java, ModifiableModelCommitterServiceBridge::class.java, pluginDescriptor, true)
-    container.registerService(WorkspaceModelTopics::class.java, WorkspaceModelTopics::class.java, pluginDescriptor, false)
-    container.registerService(FacetEntityChangeListener::class.java, FacetEntityChangeListener::class.java, pluginDescriptor, false)
 
     if (WorkspaceModel.enabledForArtifacts) {
       registerArtifactManager(container, pluginDescriptor)

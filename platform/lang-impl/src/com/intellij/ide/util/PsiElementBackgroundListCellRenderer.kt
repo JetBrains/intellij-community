@@ -11,9 +11,9 @@ import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.speedSearch.SpeedSearchUtil
 import com.intellij.util.ui.UIUtil
+import kotlinx.coroutines.Deferred
 import java.awt.BorderLayout
 import java.awt.Component
-import java.util.concurrent.Future
 import javax.swing.*
 
 internal class PsiElementBackgroundListCellRenderer(
@@ -35,13 +35,14 @@ internal class PsiElementBackgroundListCellRenderer(
                                             index: Int,
                                             isSelected: Boolean,
                                             cellHasFocus: Boolean): Component {
-    val future: Future<TargetPresentation> = getComputer(list, renderer).computePresentationAsync(value)
-    if (!future.isDone) {
+    val future: Deferred<TargetPresentation> = getComputer(list).computePresentationAsync(renderer, value)
+    if (!future.isCompleted) {
       return myLoadingComponentRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
     }
 
     myComponent.removeAll()
-    val presentation = future.get()
+    @Suppress("EXPERIMENTAL_API_USAGE")
+    val presentation = future.getCompleted()
 
     val bg = if (isSelected) {
       UIUtil.getListSelectionBackground(cellHasFocus)

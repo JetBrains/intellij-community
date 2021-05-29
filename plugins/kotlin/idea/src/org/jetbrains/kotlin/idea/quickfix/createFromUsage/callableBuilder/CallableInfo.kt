@@ -1,12 +1,10 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
 import com.intellij.psi.PsiElement
 import com.intellij.util.ArrayUtil
+import org.jetbrains.kotlin.cfg.pseudocode.containingDeclarationForPseudocode
 import org.jetbrains.kotlin.descriptors.ClassDescriptorWithResolutionScopes
 import org.jetbrains.kotlin.descriptors.DescriptorVisibility
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
@@ -16,6 +14,7 @@ import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.getResolvableApproximations
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
@@ -23,6 +22,7 @@ import org.jetbrains.kotlin.types.ErrorUtils
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import java.util.*
 
 /**
@@ -41,7 +41,22 @@ abstract class TypeInfo(val variance: Variance) {
         override fun getPossibleTypes(builder: CallableBuilder): List<KotlinType> = expression.guessTypes(
             context = builder.currentFileContext,
             module = builder.currentFileModule,
-            pseudocode = builder.pseudocode
+            pseudocode = try {
+                builder.pseudocode
+            } catch (stackException: EmptyStackException) {
+                val originalElement = builder.config.originalElement
+                val containingDeclarationForPseudocode = originalElement.containingDeclarationForPseudocode
+
+                // copy-pasted from org.jetbrains.kotlin.cfg.pseudocode.PseudocodeUtilsKt.getContainingPseudocode
+                val enclosingPseudocodeDeclaration = (containingDeclarationForPseudocode as? KtFunctionLiteral)?.let { functionLiteral ->
+                    functionLiteral.parents.firstOrNull { it is KtDeclaration && it !is KtFunctionLiteral } as? KtDeclaration
+                } ?: containingDeclarationForPseudocode
+
+                throw KotlinExceptionWithAttachments(stackException.message, stackException)
+                    .withAttachment("original_expression.txt", originalElement.text)
+                    .withAttachment("containing_declaration.txt", containingDeclarationForPseudocode?.text)
+                    .withAttachment("enclosing_declaration.txt", enclosingPseudocodeDeclaration?.text)
+            }
         ).flatMap { it.getPossibleSupertypes(variance, builder) }
     }
 

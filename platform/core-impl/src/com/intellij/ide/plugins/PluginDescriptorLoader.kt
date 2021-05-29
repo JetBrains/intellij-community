@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 @file:JvmName("PluginDescriptorLoader")
 @file:ApiStatus.Internal
@@ -10,7 +10,7 @@ import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.openapi.util.text.Strings
 import com.intellij.platform.util.plugins.DataLoader
 import com.intellij.platform.util.plugins.LocalFsDataLoader
@@ -119,7 +119,7 @@ private fun loadDescriptorFromJar(file: Path,
   try {
     val dataLoader: DataLoader
     val pool = ZipFilePool.POOL
-    if (pool == null) {
+    if (pool == null || parentContext.transient) {
       val zipFile = ZipFile(file.toFile(), StandardCharsets.UTF_8)
       closeable = zipFile
       dataLoader = JavaZipFileDataLoader(zipFile)
@@ -394,7 +394,7 @@ private fun loadBundledDescriptorsAndDescriptorsFromDir(context: DescriptorListL
 
   val platformPrefix = PlatformUtils.getPlatformPrefix()
   // should be the only plugin in lib (only for Ultimate and WebStorm for now)
-  val pathResolver = ClassPathXmlPathResolver(classLoader)
+  val pathResolver = ClassPathXmlPathResolver(classLoader, isRunningFromSources = isRunningFromSources)
   if ((platformPrefix == PlatformUtils.IDEA_PREFIX || platformPrefix == PlatformUtils.WEB_PREFIX) &&
       (java.lang.Boolean.getBoolean("idea.use.dev.build.server") || (!isUnitTestMode && !isRunningFromSources))) {
     val dataLoader = object : DataLoader {
@@ -479,45 +479,42 @@ fun loadUncachedDescriptors(isUnitTestMode: Boolean, isRunningFromSources: Boole
 fun loadDescriptorFromArtifact(file: Path, buildNumber: BuildNumber?): IdeaPluginDescriptorImpl? {
   val context = DescriptorListLoadingContext(isMissingSubDescriptorIgnored = true,
                                              disabledPlugins = DisabledPluginsState.disabledPlugins(),
-                                             result = createPluginLoadingResult(buildNumber))
-  var outputDir: Path? = null
-  try {
-    var descriptor = loadDescriptorFromFileOrDir(file = file,
-                                                 pathName = PluginManagerCore.PLUGIN_XML,
-                                                 context = context,
-                                                 pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                                 isBundled = false,
-                                                 isEssential = false,
-                                                 isDirectory = false)
-    if (descriptor != null || !file.toString().endsWith(".zip")) {
-      return descriptor
-    }
+                                             result = createPluginLoadingResult(buildNumber),
+                                             transient = true)
 
-    outputDir = Files.createTempDirectory("plugin")
-    Decompressor.Zip(file).extract(outputDir!!)
-    try {
-      Files.newDirectoryStream(outputDir).use { stream ->
-        val iterator = stream.iterator()
-        if (iterator.hasNext()) {
-          descriptor = loadDescriptorFromFileOrDir(file = iterator.next(),
-                                                   pathName = PluginManagerCore.PLUGIN_XML,
-                                                   context = context,
-                                                   pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                                   isBundled = false,
-                                                   isEssential = false,
-                                                   isDirectory = true)
-        }
-      }
-    }
-    catch (ignore: NoSuchFileException) {
-    }
+  val descriptor = loadDescriptorFromFileOrDir(file = file,
+                                               pathName = PluginManagerCore.PLUGIN_XML,
+                                               context = context,
+                                               pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                               isBundled = false,
+                                               isEssential = false,
+                                               isDirectory = false)
+  if (descriptor != null || !file.toString().endsWith(".zip")) {
     return descriptor
   }
-  finally {
-    outputDir?.let {
-      FileUtil.delete(it)
+
+  val outputDir = Files.createTempDirectory("plugin")!!
+  try {
+    Decompressor.Zip(file).extract(outputDir)
+    try {
+      val rootDir = NioFiles.list(outputDir).firstOrNull()
+      if (rootDir != null) {
+        return loadDescriptorFromFileOrDir(file = rootDir,
+                                           pathName = PluginManagerCore.PLUGIN_XML,
+                                           context = context,
+                                           pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                           isBundled = false,
+                                           isEssential = false,
+                                           isDirectory = true)
+      }
     }
+    catch (ignore: NoSuchFileException) { }
   }
+  finally {
+    NioFiles.deleteRecursively(outputDir)
+  }
+
+  return null
 }
 
 fun loadDescriptor(file: Path,
@@ -580,7 +577,7 @@ fun getDescriptorsToMigrate(dir: Path,
 fun createPathResolverForPlugin(descriptor: IdeaPluginDescriptorImpl, checkPluginJarFiles: Boolean): PathResolver {
   if (PluginManagerCore.isRunningFromSources() && descriptor.pluginPath.fileSystem == FileSystems.getDefault() &&
       descriptor.pluginPath.toString().contains("out/classes")) {
-    return ClassPathXmlPathResolver(descriptor.pluginClassLoader)
+    return ClassPathXmlPathResolver(descriptor.pluginClassLoader, isRunningFromSources = false)
   }
   else if (checkPluginJarFiles) {
     val pluginJarFiles = ArrayList<Path>()
@@ -601,7 +598,7 @@ fun testLoadDescriptorsFromClassPath(loader: ClassLoader): List<IdeaPluginDescri
                                              result = PluginLoadingResult(brokenPluginVersions = emptyMap(),
                                                                           productBuildNumber = Supplier { buildNumber },
                                                                           checkModuleDependencies = false))
-  LoadDescriptorsFromClassPathAction(urlsFromClassPath, context, null, ClassPathXmlPathResolver(loader)).compute()
+  LoadDescriptorsFromClassPathAction(urlsFromClassPath, context, null, ClassPathXmlPathResolver(loader, isRunningFromSources = false)).compute()
   context.result.finishLoading()
   return context.result.getEnabledPlugins()
 }
@@ -680,13 +677,10 @@ private class LoadDescriptorsFromClassPathAction(private val urls: Map<URL, Stri
 
     val result = context.result
     ForkJoinTask.invokeAll(tasks)
-    val usePluginClassLoader = PluginManagerCore.usePluginClassLoader
     for (task in tasks) {
       task.rawResult?.let {
-        if (!usePluginClassLoader) {
-          it.setUseCoreClassLoader()
-        }
-        result.add(it, /* overrideUseIfCompatible = */false)
+        it.setUseCoreClassLoader()
+        result.add(it, overrideUseIfCompatible = false)
       }
     }
   }
@@ -724,9 +718,7 @@ private class LoadDescriptorsFromClassPathAction(private val urls: Map<URL, Stri
                                                  isBundled = true,
                                                  isEssential = isEssential,
                                                  pluginPath = file.parent.parent)
-          if (descriptor != null) {
-            descriptor.jarFiles = null
-          }
+          descriptor?.jarFiles = null
           return descriptor
         }
       }

@@ -3,4 +3,4 @@ class T {
 
 }
 
-// REF: (in java.lang.Integer).MAX_VALUE
+// REF: of java.lang.Integer.MAX_VALUE

@@ -28,7 +28,7 @@ internal class ModuleBridgeLoaderService(private val project: Project) {
   private var activity: Activity? = null
 
   init {
-    if (WorkspaceModel.isEnabled && !project.isDefault) {
+    if (!project.isDefault) {
       val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
       val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
       if (projectModelSynchronizer != null) {
@@ -63,7 +63,7 @@ internal class ModuleBridgeLoaderService(private val project: Project) {
   class ModuleBridgeProjectServiceInitializedListener : ProjectServiceContainerInitializedListener {
     override fun serviceCreated(project: Project) {
       LOG.debug { "Project component initialized" }
-      if (project.isDefault || !WorkspaceModel.isEnabled) return
+      if (project.isDefault) return
       val workspaceModel = WorkspaceModel.getInstance(project) as WorkspaceModelImpl
       if (!workspaceModel.loadedFromCache) {
         val moduleLoaderService = project.getService(ModuleBridgeLoaderService::class.java)

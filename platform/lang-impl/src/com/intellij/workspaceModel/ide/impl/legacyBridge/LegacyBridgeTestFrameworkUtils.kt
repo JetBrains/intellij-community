@@ -17,7 +17,6 @@ object LegacyBridgeTestFrameworkUtils {
     if (!LegacyBridgeProjectLifecycleListener.enabled(project)) {
       return
     }
-
     WriteAction.runAndWait<RuntimeException> {
       for (module in ModuleManager.getInstance(project).modules) {
         (ModuleRootManager.getInstance(module) as ModuleRootComponentBridge).dropCaches()

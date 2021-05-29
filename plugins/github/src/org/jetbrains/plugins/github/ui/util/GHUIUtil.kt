@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.ui.util
 
 import com.intellij.UtilBundle
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.editor.impl.view.FontLayoutService
 import com.intellij.openapi.ui.popup.JBPopupFactory
@@ -32,7 +33,6 @@ import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestState
 import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.ui.avatars.GHAvatarIconsProvider
 import org.jetbrains.plugins.github.util.CollectionDelta
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Color
 import java.awt.Component
 import java.awt.Cursor

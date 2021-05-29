@@ -25,11 +25,7 @@ import javax.swing.*;
 import java.util.function.Supplier;
 
 abstract class ChangeViewTypeActionBase extends ChangeHierarchyViewActionBase {
-  ChangeViewTypeActionBase(final String shortDescription, final String longDescription, final Icon icon) {
-    this(() -> shortDescription, () -> longDescription, icon);
-  }
-
-  ChangeViewTypeActionBase(@NotNull Supplier<String> shortDescription, @NotNull Supplier<String> longDescription, final Icon icon) {
+  ChangeViewTypeActionBase(@NotNull Supplier<String> shortDescription, @NotNull Supplier<String> longDescription, Icon icon) {
     super(shortDescription, longDescription, icon);
   }
 

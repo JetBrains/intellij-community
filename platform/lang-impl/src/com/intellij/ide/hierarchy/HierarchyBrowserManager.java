@@ -16,15 +16,20 @@ import org.jetbrains.annotations.NotNull;
 
 @State(name = "HierarchyBrowserManager", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public final class HierarchyBrowserManager implements PersistentStateComponent<HierarchyBrowserManager.State> {
+  public static HierarchyBrowserManager getInstance(@NotNull Project project) {
+    return project.getService(HierarchyBrowserManager.class);
+  }
+
   public static final class State {
     public boolean IS_AUTOSCROLL_TO_SOURCE;
     public boolean SORT_ALPHABETICALLY;
     public boolean HIDE_CLASSES_WHERE_METHOD_NOT_IMPLEMENTED;
     public String SCOPE;
     public String EXPORT_FILE_PATH;
-  }
 
+  }
   private State myState = new State();
+
   private ContentManager myContentManager;
 
   public HierarchyBrowserManager(@NotNull Project project) {
@@ -48,15 +53,11 @@ public final class HierarchyBrowserManager implements PersistentStateComponent<H
   }
 
   @Override
-  public void loadState(@NotNull final State state) {
+  public void loadState(@NotNull State state) {
     myState = state;
   }
 
-  public static HierarchyBrowserManager getInstance(@NotNull Project project) {
-    return project.getService(HierarchyBrowserManager.class);
-  }
-
-  public static State getSettings(@NotNull Project project) {
+  public static @NotNull State getSettings(@NotNull Project project) {
     State state = getInstance(project).getState();
     return state != null ? state : new State();
   }

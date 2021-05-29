@@ -19,6 +19,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.FindSuperElementsHelper;
+import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
@@ -687,7 +688,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       return findConstructorUsages(psiMethod, references, usages, allElementsToDelete);
     }
     final PsiMethod[] overridingMethods =
-            removeDeletedMethods(OverridingMethodsSearch.search(psiMethod).toArray(PsiMethod.EMPTY_ARRAY),
+            removeDeletedMethods(OverridingMethodsSearch.search(psiMethod).filtering(m -> !(m instanceof LightRecordMethod)).toArray(PsiMethod.EMPTY_ARRAY),
                                  allElementsToDelete);
 
     findFunctionalExpressions(usages, ArrayUtil.prepend(psiMethod, overridingMethods));

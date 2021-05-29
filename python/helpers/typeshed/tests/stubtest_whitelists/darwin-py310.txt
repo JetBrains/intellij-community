@@ -1,0 +1,3 @@
+_?curses.A_ITALIC
+_curses.color_pair
+curses.color_pair

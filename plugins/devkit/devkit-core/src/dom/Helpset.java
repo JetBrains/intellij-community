@@ -18,12 +18,13 @@ package org.jetbrains.idea.devkit.dom;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.util.xml.Required;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated not used anymore
+ * This interface is used only to highlight usages of the deprecated tag.
  */
-@Deprecated
+@ApiStatus.Internal
 public interface Helpset extends DomElement {
 
   @NotNull

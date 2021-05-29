@@ -19,7 +19,6 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.SlowOperations;
@@ -88,13 +87,13 @@ public class CopyHandler extends EditorActionHandler implements CopyAction.Trans
   }
 
   private static @NotNull Transferable getSelection(@NotNull Editor editor, @NotNull Project project, @NotNull PsiFile file) {
-    CopyPasteExtension copyPasteExtension = CopyPasteExtension.findForContext(project, editor);
+    TypingActionsExtension typingActionsExtension = TypingActionsExtension.findForContext(project, editor);
     try {
-      copyPasteExtension.startCopy(project, editor);
+      typingActionsExtension.startCopy(project, editor);
       return getSelectionAction(editor, project, file);
     }
     finally {
-      copyPasteExtension.endCopy(project, editor);
+      typingActionsExtension.endCopy(project, editor);
     }
   }
 

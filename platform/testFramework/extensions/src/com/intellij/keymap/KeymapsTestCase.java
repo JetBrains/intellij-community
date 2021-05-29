@@ -67,7 +67,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt UP",           "PreviousOccurence", "Console.TableResult.PreviousPage"},
     { "control alt N",            "Inline", "Console.TableResult.SetNull"},
     { "control alt X",            "SECOND_STROKE_SHORTCUT", "org.jetbrains.r.rendering.chunk.DebugChunkAction"},
-    { "control alt shift F",      "DatabaseView.FullTextSearch", "Console.TableResult.EditFilterCriteria"},
+    { "control alt shift F",      "DatabaseView.FullTextSearch", "Console.TableResult.EditFilterCriteria", "GoFmtFileAction"},
     { "ctrl alt C",               "IntroduceConstant", "org.jetbrains.r.rendering.chunk.RunChunkAction"},
     { "ctrl alt U",               "ShowUmlDiagramPopup", "ChangesView.UnshelveSilently"},
     { "ctrl alt F",               "IntroduceField", "ShowFilterPopup"},
@@ -102,8 +102,8 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
     { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
     { "shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
+    { "shift control alt P",      "IntroduceFunctionalParameter", "ReformatWithPrettierAction" },
     { "shift control alt ENTER",  "Console.Jpa.GenerateDDL", "Console.TableResult.SubmitAndCommit", "Console.Transaction.Commit", "NotebookRunAllAction", "org.jetbrains.r.actions.RDebugAction"},
-    { "shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction"},
     { "control alt Z",            "Vcs.RollbackChangedLines", "ChangesView.Revert"},
     { "shift control TAB",        "Switcher", "Diff.FocusOppositePaneAndScroll"},
     { "ctrl alt ENTER",           "EditorStartNewLineBefore", "QuickActionPopup", "org.jetbrains.r.actions.DebugSelection"},
@@ -240,7 +240,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl L",                   "$Cut", "Terminal.ClearBuffer"},
     { "alt O",                    "SwitchHeaderSource", "ExportToTextFile"},
     { "ctrl H",                   "Replace", "Vcs.ShowMessageHistory"},
-    { "shift ctrl ENTER",         "Console.Jpa.GenerateSql", "EditorCompleteStatement", "Terminal.SmartCommandExecution.Debug", "org.jetbrains.r.actions.RRunAction"},
     { "control alt button1",      "EditorAddOrRemoveCaret", "UiInspector"},
     { "shift alt button1",        "EditorCreateRectangularSelection", "EditorCreateRectangularSelectionOnMouseDrag"},
     });
@@ -451,6 +450,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     "ActivateDatabaseToolWindow", "ActivateBuildToolWindow", "ActivateNuGetToolWindow", "RiderBackendAction-EncapsulateField",
     "SwitchHeaderSource", "BuildProject", "RebuildProject", "BuildSolutionAction", "RebuildSolutionAction",
     "ActivateInspectionResultsToolWindow",
+    "GoFmtProjectAction", "GoGenerateFileAction", "GoShareInPlaygroundAction",
     ""
   );
 

@@ -228,27 +228,45 @@ public final class ActionUtil {
   public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
                                                    @NotNull AnActionEvent event,
                                                    @NotNull Runnable performRunnable) {
+    performDumbAwareWithCallbacks(action, event, performRunnable, true);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
+                                                   @NotNull AnActionEvent event,
+                                                   @NotNull Runnable performRunnable,
+                                                   Boolean checkVisibility) {
     Project project = event.getProject();
     IndexNotReadyException indexError = null;
     ActionManagerEx manager = ActionManagerEx.getInstanceEx();
     manager.fireBeforeActionPerformed(action, event);
     Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    if (component != null && !component.isShowing() &&
+    if (checkVisibility && component != null && !component.isShowing() &&
         !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
         !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
       LOG.warn("Action is not performed because target component is not showing: " +
                "action=" + id + ", component=" + component.getClass().getName());
+      manager.fireAfterActionPerformed(action, event, AnActionResult.IGNORED);
       return;
     }
+    AnActionResult result = null;
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
       performRunnable.run();
+      result = AnActionResult.PERFORMED;
     }
     catch (IndexNotReadyException ex) {
       indexError = ex;
+      result = AnActionResult.failed(ex);
+    }
+    catch (RuntimeException | Error ex) {
+      result = AnActionResult.failed(ex);
+      throw ex;
     }
     finally {
-      manager.fireAfterActionPerformed(action, event);
+      if (result == null) result = AnActionResult.failed(new Throwable());
+      manager.fireAfterActionPerformed(action, event, result);
     }
     if (indexError != null) {
       LOG.info(indexError);

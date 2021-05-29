@@ -10,9 +10,16 @@ import java.util.Map;
 import java.util.Set;
 
 public final class TMHInstrumenter {
-  static boolean instrument(ClassReader classReader, ClassVisitor classWriter, Set<TMHAssertionGenerator> generators) {
+  static boolean instrument(ClassReader classReader,
+                            ClassVisitor classWriter,
+                            Set<TMHAssertionGenerator> generators,
+                            boolean generateLineNumbers) {
     AnnotatedMethodsCollector collector = new AnnotatedMethodsCollector(generators);
-    classReader.accept(collector, ClassReader.SKIP_CODE | ClassReader.SKIP_FRAMES | ClassReader.SKIP_DEBUG);
+    int options = ClassReader.SKIP_FRAMES;
+    if (!generateLineNumbers) {
+      options |= ClassReader.SKIP_CODE | ClassReader.SKIP_DEBUG;
+    }
+    classReader.accept(collector, options);
     if (collector.annotatedMethods.isEmpty()) {
       return false;
     }
@@ -21,18 +28,19 @@ public final class TMHInstrumenter {
     return true;
   }
 
-  public static boolean instrument(ClassReader classReader, ClassVisitor classWriter) {
+  public static boolean instrument(ClassReader classReader, ClassVisitor classWriter, boolean generateLineNumbers) {
     return instrument(classReader, classWriter, ContainerUtil.immutableSet(
       new TMHAssertionGenerator.AssertEdt(),
       new TMHAssertionGenerator.AssertBackgroundThread(),
       new TMHAssertionGenerator.AssertReadAccess(),
-      new TMHAssertionGenerator.AssertWriteAccess()
-    ));
+      new TMHAssertionGenerator.AssertWriteAccess(),
+      new TMHAssertionGenerator.AssertNoReadAccess()
+    ), generateLineNumbers);
   }
 
   private static class AnnotatedMethodsCollector extends ClassVisitor {
     final Set<TMHAssertionGenerator> assertionGenerators;
-    final Map<MethodKey, TMHAssertionGenerator> annotatedMethods = new HashMap<>();
+    final Map<MethodKey, InstrumentationInfo> annotatedMethods = new HashMap<>();
 
     AnnotatedMethodsCollector(Set<TMHAssertionGenerator> assertionGenerators) {
       super(Opcodes.API_VERSION);
@@ -42,39 +50,53 @@ public final class TMHInstrumenter {
     @Override
     public MethodVisitor visitMethod(int access, final String name, final String methodDescriptor, String signature, String[] exceptions) {
       return new MethodVisitor(Opcodes.API_VERSION) {
+        private final MethodKey methodKey = new MethodKey(name, methodDescriptor);
+        private boolean annotated = false;
+        private boolean firstLineNumberVisited = false;
+
         @Override
         public AnnotationVisitor visitAnnotation(String annotationDescriptor, boolean visible) {
           for (TMHAssertionGenerator assertionGenerator : assertionGenerators) {
             if (assertionGenerator.isMyAnnotation(annotationDescriptor)) {
-              return assertionGenerator.getAnnotationChecker(Opcodes.API_VERSION, () ->
-                annotatedMethods.put(new MethodKey(name, methodDescriptor), assertionGenerator)
-              );
+              return assertionGenerator.getAnnotationChecker(Opcodes.API_VERSION, () -> {
+                annotatedMethods.put(methodKey, new InstrumentationInfo(assertionGenerator));
+                annotated = true;
+              });
             }
           }
           return super.visitAnnotation(annotationDescriptor, visible);
+        }
+
+        @Override
+        public void visitLineNumber(int line, Label start) {
+          super.visitLineNumber(line, start);
+          if (annotated && !firstLineNumberVisited) {
+            annotatedMethods.get(methodKey).methodStartLineNumber = line;
+            firstLineNumberVisited = true;
+          }
         }
       };
     }
   }
 
   private static class Instrumenter extends ClassVisitor {
-    private final Map<MethodKey, TMHAssertionGenerator> myAnnotatedMethods;
+    private final Map<MethodKey, InstrumentationInfo> myAnnotatedMethods;
 
-    Instrumenter(ClassVisitor writer, Map<MethodKey, TMHAssertionGenerator> annotatedMethods) {
+    Instrumenter(ClassVisitor writer, Map<MethodKey, InstrumentationInfo> annotatedMethods) {
       super(Opcodes.API_VERSION, writer);
       myAnnotatedMethods = annotatedMethods;
     }
 
     @Override
     public MethodVisitor visitMethod(int access, String name, String descriptor, String signature, String[] exceptions) {
-      TMHAssertionGenerator generator = myAnnotatedMethods.get(new MethodKey(name, descriptor));
-      if (generator == null) {
+      InstrumentationInfo instrumentationInfo = myAnnotatedMethods.get(new MethodKey(name, descriptor));
+      if (instrumentationInfo == null) {
         return super.visitMethod(access, name, descriptor, signature, exceptions);
       }
       return new FailSafeMethodVisitor(Opcodes.API_VERSION, super.visitMethod(access, name, descriptor, signature, exceptions)) {
         @Override
         public void visitCode() {
-          generator.generateAssertion(mv);
+          instrumentationInfo.assertionGenerator.generateAssertion(mv, instrumentationInfo.methodStartLineNumber);
           super.visitCode();
         }
       };
@@ -103,5 +125,12 @@ public final class TMHInstrumenter {
       return obj == this ||
              obj instanceof MethodKey && ((MethodKey)obj).name.equals(name) && ((MethodKey)obj).descriptor.equals(descriptor);
     }
+  }
+
+  private static class InstrumentationInfo {
+    final TMHAssertionGenerator assertionGenerator;
+    int methodStartLineNumber = -1;
+
+    private InstrumentationInfo(TMHAssertionGenerator generator) {assertionGenerator = generator;}
   }
 }

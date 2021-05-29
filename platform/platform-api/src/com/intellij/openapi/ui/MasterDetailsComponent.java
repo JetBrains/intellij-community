@@ -454,8 +454,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
           group.add(action);
         }
       }
-      PopupHandler
-        .installPopupHandler(myTree, group, ActionPlaces.UNKNOWN, ActionManager.getInstance()); //popup should follow the selection
+      PopupHandler.installPopupMenu(myTree, group, "MasterDetailsTreePopup");
     }
   }
 

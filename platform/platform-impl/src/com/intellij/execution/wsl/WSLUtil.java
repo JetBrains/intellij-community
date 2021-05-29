@@ -174,14 +174,15 @@ public final class WSLUtil {
 
   private static int getVersionFromWslCli(@NotNull WSLDistribution distribution) {
     try {
-      List<WslDistributionAndVersion> versions = WslDistributionManager.getInstance().loadInstalledDistributionsWithVersions();
-      WslDistributionAndVersion distributionAndVersion = ContainerUtil.find(versions, version1 -> version1.getDistributionName().equals(distribution.getMsId()));
+      final List<WslDistributionAndVersion> versions = WslDistributionManager.getInstance().loadInstalledDistributionsWithVersions();
+      final WslDistributionAndVersion distributionAndVersion =
+        ContainerUtil.find(versions, version -> version.getDistributionName().equals(distribution.getMsId()));
       if (distributionAndVersion != null) {
         return distributionAndVersion.getVersion();
       }
       LOG.warn("WSL distribution '" + distribution.getMsId() + "' not found");
     }
-    catch (IOException e) {
+    catch (IOException | IllegalStateException e) {
       LOG.warn("Failed to calculate version for " + distribution.getMsId() + ": " + e.getMessage());
     }
     return -1;

@@ -1,4 +1,4 @@
 class TestX(val x : Int) {
 }
 
-val x = TestX(1)
+val testX = TestX(1)

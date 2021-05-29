@@ -168,10 +168,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   public void testOpenFileInTablessSplitter() {
     VirtualFile file1 = getFile("/src/1.txt");
     assertNotNull(file1);
-    file1.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
     myManager.openFile(file1, false);
     VirtualFile file2 = getFile("/src/2.txt");
-    file2.putUserData(EditorWindow.INITIAL_INDEX_KEY, null);
     assertNotNull(file2);
     myManager.openFile(file2, true);
     EditorWindow primaryWindow = myManager.getCurrentWindow();//1.txt and selected 2.txt

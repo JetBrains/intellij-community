@@ -1,5 +1,19 @@
 <html>
 <body>
-This inspection reports and offers to remove an empty class body.
+Reports an empty class body.
+<p>'Remove redundant empty class body' quick-fix can be used to clean up the code.</p>
+<p>Examples:</p>
+<pre><code>
+class EmptyA() {} // <== empty body
+
+class EmptyB {
+    companion object {} // <== empty body
+}
+
+fun emptyC() {
+   object {} <== anonymous object, it's ok (not reported)
+}
+
+</code></pre>
 </body>
 </html>

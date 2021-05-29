@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.ui.configuration.projectRoot;
 
 import com.intellij.execution.wsl.WslDistributionManager;
@@ -402,7 +402,7 @@ public class ProjectSdksModel implements SdkModel {
         subText = ProjectBundle.message("sdk.configure.add.sdkType.subAction", sdkPresentableName);
       }
 
-      NewSdkAction addAction = new NewSdkAction(type, title, text, subText, type.getIconForAddAction()) {
+      NewSdkAction addAction = new NewSdkAction(type, title, text, subText, type.getIcon()) {
         @Override
         public void actionPerformed(@Nullable Sdk selectedSdk,
                                     @NotNull JComponent parent,

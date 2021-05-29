@@ -4,14 +4,13 @@ import com.intellij.ide.CopyProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.project.Project
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
+import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
@@ -28,7 +27,9 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.autosizeColumnsAt
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.debounce
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
@@ -38,11 +39,12 @@ import com.jetbrains.rd.util.reactive.Property
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
@@ -50,6 +52,7 @@ import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.util.concurrent.CancellationException
 import javax.swing.ListSelectionModel
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellEditor
@@ -62,14 +65,13 @@ internal class PackagesTable(
     private val project: Project,
     private val operationExecutor: OperationExecutor,
     operationFactory: PackageSearchOperationFactory
-) : JBTable(), DataProvider, CopyProvider, Disposable {
+) : JBTable(), DataProvider, CopyProvider, Disposable, CoroutineScope {
 
-    private val mainScope = CoroutineScope(SupervisorJob() + AppUIExecutor.onUiThread().coroutineDispatchingContext()) +
-        CoroutineName("PackagesTable")
-
-    private var dataChangeJob: Job? = null
+    override val coroutineContext = SupervisorJob() + CoroutineName("PackagesTable")
 
     private val operationFactory = PackageSearchOperationFactory()
+
+    private val dataChangedChannel = Channel<DisplayDataModel>()
 
     private val tableModel: PackagesTableModel
         get() = model as PackagesTableModel
@@ -112,7 +114,7 @@ internal class PackagesTable(
         require(columnWeights.sum() == 1.0f) { "The column weights must sum to 1.0" }
 
         model = PackagesTableModel(
-            onlyStable = false,
+            onlyStable = PackageSearchGeneralConfiguration.getInstance(project).onlyStable,
             columns = arrayOf(nameColumn, scopeColumn, versionColumn, actionsColumn)
         )
 
@@ -228,6 +230,12 @@ internal class PackagesTable(
                 }
             }
         )
+
+        dataChangedChannel.consumeAsFlow()
+            .debounce(100)
+            .onEach { displayData(it.packages, it.onlyStable, it.targetModules, it.traceInfo) }
+            .launchIn(this)
+
     }
 
     override fun getCellRenderer(row: Int, column: Int): TableCellRenderer =
@@ -235,6 +243,13 @@ internal class PackagesTable(
 
     override fun getCellEditor(row: Int, column: Int): TableCellEditor? =
         tableModel.columns[column].getEditor(tableModel.items[row])
+
+    private data class DisplayDataModel(
+        val packages: List<PackageModel>,
+        val onlyStable: Boolean,
+        val targetModules: TargetModules,
+        val traceInfo: TraceInfo
+    )
 
     fun display(
         packages: List<PackageModel>,
@@ -249,10 +264,8 @@ internal class PackagesTable(
         this.knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
         this.allKnownRepositories = allKnownRepositories
 
-        dataChangeJob?.cancel()
-        dataChangeJob = mainScope.launch(Dispatchers.Default) {
-            displayData(packages, onlyStable, targetModules, traceInfo)
-        }
+        dataChangedChannel.offer(DisplayDataModel(packages, onlyStable, targetModules, traceInfo))
+
     }
 
     private suspend fun displayData(
@@ -265,7 +278,7 @@ internal class PackagesTable(
 
         logDebug(traceInfo, "PackagesTable#displayData()") { "Displaying ${displayItems.size} item(s)" }
 
-        mainScope.launch {
+        withContext(Dispatchers.AppUI) {
             // We need to update those immediately before setting the items, on EDT, to avoid timing issues
             // where the target modules or only stable flags get updated after the items data change, thus
             // causing issues when Swing tries to render things (e.g., targetModules doesn't match packages' usages)
@@ -277,14 +290,14 @@ internal class PackagesTable(
             tableModel.items = displayItems
             if (displayItems.isEmpty()) {
                 clearSelection()
-                return@launch
+                return@withContext
             }
 
             autosizeColumnsAt(autosizingColumnsIndices)
 
-            if (currentSelectedPackage == null) return@launch
+            if (currentSelectedPackage == null) return@withContext
 
-            withContext(Dispatchers.Default) {
+            val indexToSelect = withContext(Dispatchers.Default) {
                 var indexToSelect: Int? = null
                 for ((index, item) in displayItems.withIndex()) {
                     if (item.packageModel.identifier == currentSelectedPackage.packageModel.identifier) {
@@ -292,18 +305,17 @@ internal class PackagesTable(
                         indexToSelect = index
                     }
                 }
-
-                mainScope.launch {
-                    if (indexToSelect != null) {
-                        selectedIndex = indexToSelect
-                    } else {
-                        logDebug(traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
-                        clearSelection()
-                    }
-
-                    updateAndRepaint()
-                }
+                indexToSelect
             }
+
+            if (indexToSelect != null) {
+                selectedIndex = indexToSelect
+            } else {
+                logDebug(traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
+                clearSelection()
+            }
+
+            updateAndRepaint()
         }
     }
 
@@ -526,7 +538,7 @@ internal class PackagesTable(
 
     override fun dispose() {
         logDebug("PackagesTable#dispose()") { "Disposing PackagesTable..." }
-        dataChangeJob?.cancel("Disposing")
-        mainScope.cancel("Disposing")
+        coroutineContext.cancel(CancellationException("Disposing"))
     }
+
 }

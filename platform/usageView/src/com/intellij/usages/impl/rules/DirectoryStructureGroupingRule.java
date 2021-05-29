@@ -62,6 +62,11 @@ class DirectoryStructureGroupingRule implements DumbAware, UsageGroupingRuleEx {
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.DIRECTORY_STRUCTURE.getAbsoluteRank();
+  }
+
+  @Override
   public @Nullable String getGroupingActionId() {
     return "UsageGrouping.DirectoryStructure";
   }

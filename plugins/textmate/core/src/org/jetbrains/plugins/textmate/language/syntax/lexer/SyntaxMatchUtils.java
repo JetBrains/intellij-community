@@ -1,7 +1,8 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.intellij.openapi.util.text.Strings;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import org.jetbrains.annotations.NotNull;
@@ -22,12 +23,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
-import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
 
 import static org.jetbrains.plugins.textmate.regex.RegexFacade.regex;
 
 public final class SyntaxMatchUtils {
-  private static final ConcurrentMap<MatchKey, TextMateLexerState> CACHE = ContainerUtil.createConcurrentSoftKeySoftValueMap();
+  private static final Cache<MatchKey, TextMateLexerState> CACHE = Caffeine.newBuilder().maximumSize(100_000).expireAfterAccess(1, TimeUnit.MINUTES).build();
   private static final TextMateSelectorWeigher mySelectorWeigher = new TextMateSelectorCachingWeigher(new TextMateSelectorWeigherImpl());
 
   private static Runnable ourCheckCancelledCallback = null;
@@ -48,8 +49,8 @@ public final class SyntaxMatchUtils {
                                               boolean matchBeginOfString,
                                               @NotNull TextMateWeigh.Priority priority,
                                               @NotNull TextMateScope currentScope) {
-    return CACHE.computeIfAbsent(new MatchKey(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope),
-                                 SyntaxMatchUtils::matchFirstUncached);
+    return CACHE.get(new MatchKey(syntaxNodeDescriptor, string, byteOffset, gosOffset, matchBeginOfString, priority, currentScope),
+                     SyntaxMatchUtils::matchFirstUncached);
   }
 
   private static TextMateLexerState matchFirstUncached(MatchKey key) {
@@ -165,12 +166,24 @@ public final class SyntaxMatchUtils {
                                            int anchorOffset,
                                            boolean matchBeginOfString,
                                            @NotNull TextMateLexerState lexerState) {
-    CharSequence stringRegex = lexerState.syntaxRule.getStringAttribute(keyName);
-    if (stringRegex != null) {
-      return regex(replaceGroupsWithMatchData(stringRegex, lexerState.string, lexerState.matchData, '\\'))
-        .match(string, byteOffset, anchorOffset, matchBeginOfString, ourCheckCancelledCallback);
+    String regex = getStringAttribute(keyName, lexerState.syntaxRule, lexerState.string, lexerState.matchData);
+    return regex != null
+           ? regex(regex).match(string, byteOffset, anchorOffset, matchBeginOfString, ourCheckCancelledCallback)
+           : MatchData.NOT_MATCHED;
+  }
+
+  @Nullable
+  public static String getStringAttribute(Constants.@NotNull StringKey keyName,
+                                          @NotNull SyntaxNodeDescriptor syntaxRule,
+                                          @Nullable StringWithId string,
+                                          @NotNull MatchData matchData) {
+    CharSequence stringAttribute = syntaxRule.getStringAttribute(keyName);
+    if (stringAttribute == null) {
+      return null;
     }
-    return MatchData.NOT_MATCHED;
+    return syntaxRule.hasBackReference(keyName)
+           ? replaceGroupsWithMatchData(stringAttribute, string, matchData, keyName.backReferencePrefix)
+           : stringAttribute.toString();
   }
 
   /**
@@ -187,7 +200,7 @@ public final class SyntaxMatchUtils {
   public static String replaceGroupsWithMatchData(@Nullable CharSequence string,
                                                   @Nullable StringWithId matchingString,
                                                   @NotNull MatchData matchData,
-                                                  char prefix) {
+                                                  char groupPrefix) {
     if (string == null) {
       return null;
     }
@@ -200,7 +213,7 @@ public final class SyntaxMatchUtils {
     int length = string.length();
     while (charIndex < length) {
       char c = string.charAt(charIndex);
-      if (c == prefix) {
+      if (c == groupPrefix) {
         boolean hasGroupIndex = false;
         int groupIndex = 0;
         int digitIndex = charIndex + 1;
@@ -215,7 +228,7 @@ public final class SyntaxMatchUtils {
         }
         if (hasGroupIndex && matchData.count() > groupIndex) {
           TextMateRange range = matchData.byteOffset(groupIndex);
-          StringUtil.escapeToRegexp(new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8), result);
+          Strings.escapeToRegexp(new String(matchingString.bytes, range.start, range.getLength(), StandardCharsets.UTF_8), result);
           charIndex = digitIndex;
           continue;
         }

@@ -45,6 +45,12 @@
       <groupId>net.synedra</groupId>
       <artifactId>validatorfx</artifactId>
       <version>${context.getVersion("net.synedra", "validatorfx")}</version>
+      <exclusions>
+        <exclusion>
+          <groupId>org.openjfx</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
     </dependency>#end
     #if ($context.hasLibrary("ikonli"))<dependency>
       <groupId>org.kordamp.ikonli</groupId>
@@ -116,7 +122,7 @@
             <!-- Default configuration for running with: mvn clean javafx:run -->
             <id>default-cli</id>
             <configuration>
-              <mainClass>${context.rootPackage}.HelloApplication</mainClass>
+              <mainClass>${context.rootPackage}/${context.rootPackage}.HelloApplication</mainClass>
             </configuration>
           </execution>
         </executions>

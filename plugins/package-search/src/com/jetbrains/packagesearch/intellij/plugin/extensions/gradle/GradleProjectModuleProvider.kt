@@ -18,27 +18,31 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.BuildSystemType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.model.ExternalProject
 import org.jetbrains.plugins.gradle.service.project.data.ExternalProjectDataCache
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 private val logger by lazy { Logger.getInstance(GradleProjectModuleProvider::class.java) }
 
+private fun PsiFile.firstElementContaining(text: String): @NotNull PsiElement? {
+    val index = this.text.indexOf(text)
+    return if (index >= 0) getElementAtOffsetOrNull(index) else null
+}
+
+private fun PsiFile.getElementAtOffsetOrNull(index: Int) =
+    PsiUtil.getElementAtOffset(this, index).takeIf { it != this }
+
 internal open class GradleProjectModuleProvider : ProjectModuleProvider {
 
     companion object {
 
         fun findDependencyElement(file: PsiFile, groupId: String, artifactId: String): PsiElement? {
-            var index = file.text.indexOf(groupId)
-            while (index >= 0) {
-                PsiUtil.getElementAtOffset(file, index).apply {
-                    if (text.contains(groupId) && text.contains(artifactId)) {
-                        return this
-                    }
-                }
-                index = file.text.indexOf(groupId, index + 1)
-            }
-            return null
+            val isKotlinDependency = file.language::class.qualifiedName == "org.jetbrains.kotlin.idea.KotlinLanguage"
+                && groupId == "org.jetbrains.kotlin" && artifactId.startsWith("kotlin-")
+            val kotlinDependencyImport = "kotlin(\"${artifactId.removePrefix("kotlin-")}\")"
+            val searchableText = if (isKotlinDependency) kotlinDependencyImport else "$groupId:$artifactId"
+            return file.firstElementContaining(searchableText)
         }
     }
 
@@ -53,13 +57,13 @@ internal open class GradleProjectModuleProvider : ProjectModuleProvider {
         for (ourModule in modules) {
             yieldAll(getAllSubmodules(ourModule, project))
         }
-    }.distinct()
+    }.distinctBy { it.buildFile }
 
     private fun obtainProjectModulesFor(project: Project, module: Module): ProjectModule? {
         val externalRootProject = findExternalProject(project, module) ?: return null
         val buildFile = externalRootProject.buildFile ?: return null
         val buildVirtualFile = LocalFileSystem.getInstance().findFileByPath(buildFile.absolutePath) ?: return null
-        val nativeModule = ModuleUtilCore.findModuleForFile(buildVirtualFile, project) ?: return null
+        val nativeModule = runReadAction { ModuleUtilCore.findModuleForFile(buildVirtualFile, project) } ?: return null
 
         return ProjectModule(
             name = externalRootProject.name,

@@ -281,7 +281,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void installPopupHandler(ActionGroup group) {
-    PopupHandler.installPopupHandler(this, group, ActionPlaces.UNKNOWN);
+    PopupHandler.installPopupMenu(this, group, "ChangesTreePopup");
   }
 
   public JComponent getPreferredFocusedComponent() {

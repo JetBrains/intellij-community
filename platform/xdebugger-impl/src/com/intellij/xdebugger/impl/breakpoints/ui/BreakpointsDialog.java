@@ -254,7 +254,7 @@ public class BreakpointsDialog extends DialogWrapper {
     };
 
     tree.setHorizontalAutoScrollingEnabled(false);
-    PopupHandler.installPopupHandler(tree, new ActionGroup() {
+    PopupHandler.installPopupMenu(tree, new ActionGroup() {
       @Override
       public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
         ActionGroup group = new ActionGroup(XDebuggerBundle.message("move.to.group"), true) {
@@ -284,7 +284,7 @@ public class BreakpointsDialog extends DialogWrapper {
         }
         return res.toArray(AnAction.EMPTY_ARRAY);
       }
-    }, ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    }, "BreakpointTreePopup");
 
     new AnAction(XDebuggerBundle.messagePointer("action.Anonymous.text.breakpointdialog.gotosource")) {
       @Override

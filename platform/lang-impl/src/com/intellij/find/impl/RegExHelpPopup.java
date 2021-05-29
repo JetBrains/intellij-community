@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.codeInsight.hint.HintUtil;
-import com.intellij.find.FindUtil;
+import com.intellij.find.FindUsagesCollector;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
@@ -89,7 +89,7 @@ public final class RegExHelpPopup extends JPanel {
     return new LinkLabel<>(title, null, new LinkListener<>() {
       @Override
       public void linkSelected(LinkLabel<Object> aSource, Object aLinkData) {
-        FindUtil.triggerRegexHelpClicked(place);
+        FindUsagesCollector.triggerRegexHelpClicked(place);
         action.run();
       }
     });

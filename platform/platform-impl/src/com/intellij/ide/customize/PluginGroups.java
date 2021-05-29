@@ -13,7 +13,6 @@ import javax.swing.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -265,37 +264,39 @@ public class PluginGroups {
 
     Set<PluginId> accumulator = new HashSet<>();
     if (enabled) {
-      collectInvolvedIds(pluginId,
-                         accumulator,
-                         (dependencyId, __) -> !PluginManagerCore.CORE_ID.equals(dependencyId),
-                         id -> {
-                           IdeaPluginDescriptorImpl descriptor = myEnabledPlugins.get(id);
-                           return descriptor != null ? List.of(descriptor) : List.of();
-                         });
-
+      collectIdsToEnable(pluginId, accumulator);
       myDisabledPluginIds.removeAll(getAllPluginIds(accumulator));
     }
     else {
-      collectInvolvedIds(pluginId,
-                         accumulator,
-                         Objects::equals,
-                         __ -> myEnabledPlugins.values());
-
+      collectIdsToDisable(pluginId, accumulator);
       myDisabledPluginIds.addAll(getAllPluginIds(accumulator));
     }
   }
 
-  private static void collectInvolvedIds(@NotNull PluginId pluginId,
-                                         @NotNull Set<PluginId> accumulator,
-                                         @NotNull BiPredicate<@NotNull PluginId, @NotNull PluginId> predicate,
-                                         @NotNull Function<@NotNull PluginId, @NotNull Collection<IdeaPluginDescriptorImpl>> pluginsById) {
+  private void collectIdsToEnable(@NotNull PluginId pluginId,
+                                  @NotNull Set<PluginId> accumulator) {
     accumulator.add(pluginId);
 
-    for (IdeaPluginDescriptorImpl plugin : pluginsById.apply(pluginId)) {
-      for (PluginDependency dependency : plugin.pluginDependencies) {
-        PluginId dependencyId = dependency.getPluginId();
-        if (!dependency.isOptional() && predicate.test(dependencyId, pluginId)) {
-          collectInvolvedIds(dependencyId, accumulator, predicate, pluginsById);
+    IdeaPluginDescriptorImpl descriptor = myEnabledPlugins.get(pluginId);
+    if (descriptor == null) {
+      return;
+    }
+
+    for (PluginDependency dependency : descriptor.pluginDependencies) {
+      if (!dependency.isOptional() && !dependency.getPluginId().equals(PluginManagerCore.CORE_ID)) {
+        collectIdsToEnable(dependency.getPluginId(), accumulator);
+      }
+    }
+  }
+
+  private void collectIdsToDisable(@NotNull PluginId pluginId,
+                                   @NotNull Set<PluginId> accumulator) {
+    accumulator.add(pluginId);
+
+    for (IdeaPluginDescriptorImpl descriptor : myEnabledPlugins.values()) {
+      for (PluginDependency dependency : descriptor.pluginDependencies) {
+        if (!dependency.isOptional() && dependency.getPluginId().equals(pluginId)) {
+          collectIdsToDisable(descriptor.getPluginId(), accumulator);
         }
       }
     }

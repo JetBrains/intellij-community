@@ -1,5 +1,5 @@
 import java.util.ArrayList
 
 fun f() {
-    ArrayList(ArrayList<Int>(listOf()))
+    ArrayList(ArrayList<Int?>(listOf()))
 }

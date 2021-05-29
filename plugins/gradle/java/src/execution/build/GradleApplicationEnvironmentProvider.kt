@@ -192,26 +192,34 @@ internal class GradleApplicationEnvironmentProvider : GradleExecutionEnvironment
     ${if (useArgsFile) "gradle.addListener(new ArgFileTaskActionListener(runAppTaskName))\n" else ""}
     ${if (useClasspathFile && intelliJRtPath != null) "gradle.addListener(new ClasspathFileTaskActionListener(runAppTaskName, mainClass, mapPath('$intelliJRtPath')))\n " else ""}
 
+
+    import org.gradle.util.GradleVersion
+
     allprojects {
       afterEvaluate { project ->
         if(project.path == gradlePath && project?.convention?.findPlugin(JavaPluginConvention)) {
           def overwrite = project.tasks.findByName(runAppTaskName) != null
           project.tasks.create(name: runAppTaskName, overwrite: overwrite, type: JavaExec) {
             if (javaExePath) executable = javaExePath
-            classpath = project.sourceSets[sourceSetName].runtimeClasspath
             main = mainClass
             $argsString
-            if(_workingDir) workingDir = _workingDir
+            if (_workingDir) workingDir = _workingDir
             standardInput = System.in
-            if(javaModuleName) {
-              inputs.property('moduleName', javaModuleName)
-              doFirst {
-                jvmArgs += [
-                  '--module-path', classpath.asPath,
-                  '--module', javaModuleName + '/' + mainClass
-                ]
-                classpath = files()
+            if (javaModuleName) {
+              classpath = tasks[sourceSets[sourceSetName].jarTaskName].outputs.files + project.sourceSets[sourceSetName].runtimeClasspath;
+              if (GradleVersion.current().baseVersion < GradleVersion.version("6.4")) {
+                doFirst {
+                  jvmArgs += [
+                    '--module-path', classpath.asPath,
+                    '--module', javaModuleName + '/' + mainClass
+                  ]
+                  classpath = files()
+                }
+              } else {
+                mainModule = javaModuleName
               }
+            } else {
+              classpath = project.sourceSets[sourceSetName].runtimeClasspath
             }
           }
         }

@@ -518,5 +518,8 @@
     "text": "#bbbbbb",
     "textText": "#bbbbbb",
     "window": "#3c3f41"
-  }
+  },
+
+  "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
+  "WelcomeScreen.Projects.actions.background": "#3C5C86"
 }

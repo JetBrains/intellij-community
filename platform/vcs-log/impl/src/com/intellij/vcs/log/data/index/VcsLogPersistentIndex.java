@@ -33,7 +33,7 @@ import com.intellij.vcs.log.impl.VcsIndexableLogProvider;
 import com.intellij.vcs.log.impl.VcsLogIndexer;
 import com.intellij.vcs.log.statistics.VcsLogIndexCollector;
 import com.intellij.vcs.log.util.*;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +78,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
   @NotNull private final List<IndexingFinishedListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
-  @NotNull private Map<VirtualFile, TIntHashSet> myCommitsToIndex = new HashMap<>();
+  @NotNull private Map<VirtualFile, IntSet> myCommitsToIndex = new HashMap<>();
 
   public VcsLogPersistentIndex(@NotNull Project project,
                                @NotNull VcsLogStorage storage,
@@ -151,13 +151,13 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     // for fresh index, wait for complete log to load and index everything in one command
     if (myIndexStorage.isFresh() && !full) return;
 
-    Map<VirtualFile, TIntHashSet> commitsToIndex = myCommitsToIndex;
+    Map<VirtualFile, IntSet> commitsToIndex = myCommitsToIndex;
     myCommitsToIndex = new HashMap<>();
 
     boolean isFull = full && myIndexStorage.isFresh();
     if (isFull) LOG.debug("Index storage for project " + myProject.getName() + " is fresh, scheduling full reindex");
     for (VirtualFile root : commitsToIndex.keySet()) {
-      TIntHashSet commits = commitsToIndex.get(root);
+      IntSet commits = commitsToIndex.get(root);
       if (commits.isEmpty()) continue;
 
       if (myBigRepositoriesList.isBig(root)) {
@@ -247,7 +247,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
   @Override
   public synchronized void markForIndexing(int index, @NotNull VirtualFile root) {
     if (isIndexed(index) || !myRoots.contains(root)) return;
-    TroveUtil.add(myCommitsToIndex, root, index);
+    IntCollectionUtil.add(myCommitsToIndex, root, index);
   }
 
   @Nullable
@@ -363,13 +363,16 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         boolean trigramsEmpty = trigrams.isEmpty();
         boolean usersEmpty = users.isEmpty();
         boolean pathsEmpty = paths.isEmpty();
-        if (trigramsEmpty || usersEmpty || pathsEmpty) {
+        if (trigramsEmpty || usersEmpty) {
           IOException exception = new IOException("Broken index maps:\n" +
                                                   "trigrams empty " + trigramsEmpty + "\n" +
                                                   "users empty " + usersEmpty + "\n" +
                                                   "paths empty " + pathsEmpty);
           LOG.error(exception);
           throw exception;
+        }
+        if (pathsEmpty) {
+          LOG.warn("Paths map is empty");
         }
       }
     }
@@ -473,7 +476,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private static final int LOGGED_ERRORS_COUNT = 10;
     private static final int STOPPING_ERROR_COUNT = 100;
     @NotNull private final VirtualFile myRoot;
-    @NotNull private final TIntHashSet myCommits;
+    @NotNull private final IntSet myCommits;
     @NotNull private final VcsLogIndexer.PathsEncoder myPathsEncoder;
     private final boolean myFull;
 
@@ -483,7 +486,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
 
     IndexingRequest(@NotNull VirtualFile root,
                     @NotNull VcsLogIndexer.PathsEncoder encoder,
-                    @NotNull TIntHashSet commits,
+                    @NotNull IntSet commits,
                     boolean full) {
       myRoot = root;
       myPathsEncoder = encoder;
@@ -514,7 +517,7 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
             indexAll(indicator);
           }
           else {
-            IntStream commits = TroveUtil.stream(myCommits).filter(c -> {
+            IntStream commits = myCommits.intStream().filter(c -> {
               if (isIndexed(c)) {
                 myOldCommits.incrementAndGet();
                 return false;
@@ -599,7 +602,6 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
     private void markCommits() {
       myCommits.forEach(value -> {
         markForIndexing(value, myRoot);
-        return true;
       });
     }
 
@@ -607,10 +609,10 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
       // We pass hashes to VcsLogProvider#readFullDetails in batches
       // in order to avoid allocating too much memory for these hashes
       // a batch of 20k will occupy ~2.4Mb
-      TroveUtil.processBatches(commits, BATCH_SIZE, batch -> {
+      IntCollectionUtil.processBatches(commits, BATCH_SIZE, batch -> {
         indicator.checkCanceled();
 
-        List<String> hashes = TroveUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
+        List<String> hashes = IntCollectionUtil.map2List(batch, value -> myStorage.getCommitId(value).getHash().asString());
         myIndexers.get(myRoot).readFullDetails(myRoot, hashes, myPathsEncoder, detail -> {
           storeDetail(detail);
           myNewIndexedCommits.incrementAndGet();

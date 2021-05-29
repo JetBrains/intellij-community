@@ -19,6 +19,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview;
+import org.intellij.plugins.markdown.ui.preview.MarkdownPreviewFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +35,23 @@ public final class MarkdownActionUtil {
     if (editor instanceof MarkdownEditorWithPreview) {
       return (MarkdownEditorWithPreview)editor;
     }
-    else {
-      return null;//SplitFileEditor.PARENT_SPLIT_KEY.get(editor);
+    else if (editor != null) {
+      return editor.getUserData(MarkdownEditorWithPreview.PARENT_SPLIT_EDITOR_KEY);
     }
+    return null;
+  }
+
+  @Nullable
+  public static MarkdownPreviewFileEditor findMarkdownPreviewEditor(AnActionEvent event) {
+    final MarkdownEditorWithPreview splitEditor = findSplitEditor(event);
+    if (splitEditor == null) {
+      return null;
+    }
+    FileEditor editor = splitEditor.getPreviewEditor();
+    if (!(editor instanceof MarkdownPreviewFileEditor) || !editor.getComponent().isVisible()) {
+      return null;
+    }
+    return (MarkdownPreviewFileEditor)editor;
   }
 
   @Nullable

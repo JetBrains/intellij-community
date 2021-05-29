@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -52,6 +52,11 @@ abstract class StringEventField(override val name: String) : PrimitiveEventField
   data class ValidatedByRegexp(@NonNls override val name: String, @NonNls val regexpRef: String) : StringEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{regexp#$regexpRef}")
+  }
+
+  data class ValidatedByInlineRegexp(@NonNls override val name: String, @NonNls val regexp: String) : StringEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{regexp:$regexp}")
   }
 }
 
@@ -155,6 +160,11 @@ abstract class StringListEventField(override val name: String) : ListEventField<
   data class ValidatedByRegexp(@NonNls override val name: String, @NonNls val regexpRef: String) : StringListEventField(name) {
     override val validationRule: List<String>
       get() = listOf("{regexp#$regexpRef}")
+  }
+
+  data class ValidatedByInlineRegexp(@NonNls override val name: String, @NonNls val regexp: String) : StringListEventField(name) {
+    override val validationRule: List<String>
+      get() = listOf("{regexp:$regexp}")
   }
 }
 

@@ -1,14 +1,10 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
-import com.intellij.icons.AllIcons
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -31,14 +27,10 @@ import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     companion object {
-        fun getTestStateIcon(
-            urls: List<String>,
-            declaration: KtNamedDeclaration,
-            defaultIcon: Icon = AllIcons.RunConfigurations.TestState.Run,
-        ): Icon? {
+        fun getTestStateIcon(urls: List<String>, declaration: KtNamedDeclaration): Icon {
             val testStateStorage = TestStateStorage.getInstance(declaration.project)
             val isClass = declaration is KtClass
-            var state: TestStateStorage.Record? = run {
+            val state: TestStateStorage.Record? = run {
                 for (url in urls) {
                     testStateStorage.getState(url)?.let { return@run it }
                 }

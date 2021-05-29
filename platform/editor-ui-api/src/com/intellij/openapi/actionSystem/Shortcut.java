@@ -24,8 +24,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class Shortcut {
   public static final Shortcut[] EMPTY_ARRAY = new Shortcut[0];
-  Shortcut(){
-  }
 
   public abstract boolean isKeyboard();
 

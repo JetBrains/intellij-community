@@ -2,6 +2,7 @@ package com.intellij.ml.local.models.frequency.methods
 
 import com.intellij.ml.local.models.api.LocalModelStorage
 import com.intellij.ml.local.util.StorageUtil
+import com.intellij.ml.local.util.StorageUtil.getOrLogError
 import com.intellij.ml.local.util.StorageUtil.isEmpty
 import com.intellij.util.Processor
 import com.intellij.util.io.DataExternalizer
@@ -67,7 +68,7 @@ class MethodsFrequencyStorage internal constructor(private val storageDirectory:
     }
   }
 
-  fun get(className: String): MethodsFrequencies? = storage.get(className)
+  fun get(className: String): MethodsFrequencies? = storage.getOrLogError(className)
 
   private fun getTotalCounts() {
     totalMethods = 0

@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -200,7 +201,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   private static boolean isSquareStripeUI() {
-    return Registry.is("ide.new.stripes.ui");
+    return ExperimentalUI.isNewToolWindowsStripes();
   }
 
   @Override
@@ -583,7 +584,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       stripe.reset();
     }
 
-    if (Registry.is("ide.new.stripes.ui")) {
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
       if (myLeftToolbar != null) myLeftToolbar.reset();
       if (myRightToolbar != null) myRightToolbar.reset();
     }

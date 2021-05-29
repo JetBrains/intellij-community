@@ -29,13 +29,13 @@ public final class UnknownFeaturesCollector implements PersistentStateComponent<
   public void registerUnknownFeature(@NonNls @NotNull String featureType,
                                      @NonNls @NotNull String implementationName,
                                      @Nls @NotNull String featureDisplayName) {
-    registerUnknownFeature(featureType, featureDisplayName, implementationName, implementationName);
+    registerUnknownFeature(featureType, featureDisplayName, implementationName, null);
   }
 
   public void registerUnknownFeature(@NonNls @NotNull String featureType,
                                      @Nls @NotNull String featureDisplayName,
                                      @NonNls @NotNull String implementationName,
-                                     @Nls @NotNull String implementationDisplayName) {
+                                     @Nls @Nullable String implementationDisplayName) {
     UnknownFeature feature = new UnknownFeature(featureType,
                                                 featureDisplayName,
                                                 implementationName,

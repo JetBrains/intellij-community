@@ -43,6 +43,7 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
    */
   @Deprecated
   @Nullable
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public String getServiceDirectoryPath() {
     return myServiceDirectoryPath;
   }
@@ -51,6 +52,7 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
    * @deprecated use GradleSettings#setServiceDirectoryPath(java.lang.String)
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public void setServiceDirectoryPath(@Nullable String newPath) {
     myServiceDirectoryPath = newPath;
   }

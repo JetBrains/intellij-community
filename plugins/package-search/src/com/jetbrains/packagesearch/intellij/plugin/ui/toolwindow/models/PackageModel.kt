@@ -40,9 +40,7 @@ internal sealed class PackageModel(
 
     protected abstract fun additionalAvailableVersions(): List<PackageVersion>
 
-    private val sortingKey: String = remoteInfo?.name ?: identifier
-
-    override fun compareTo(other: PackageModel): Int = sortingKey.compareTo(other.sortingKey)
+    override fun compareTo(other: PackageModel): Int = sortKey.compareTo(other.sortKey)
 
     abstract val searchableInfo: String
 

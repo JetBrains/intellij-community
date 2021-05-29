@@ -49,7 +49,6 @@ import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
 
-@Suppress("ComponentNotRegistered")
 class ModuleManagerComponentBridge(private val project: Project) : ModuleManagerEx(), Disposable {
   private val unloadedModules: MutableMap<String, UnloadedModuleDescription> = LinkedHashMap()
 
@@ -318,7 +317,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     return entityStore.cachedValue(if (includeTests) dependencyGraphWithTestsValue else dependencyGraphWithoutTestsValue)
   }
 
-  internal val entityStore by lazy { WorkspaceModel.getInstance(project).entityStorage }
+  internal val entityStore = WorkspaceModel.getInstance(project).entityStorage
 
   internal fun loadModules(entities: Sequence<ModuleEntity>) {
     val unloadedModuleNames = UnloadedModulesListStorage.getInstance(project).unloadedModuleNames
@@ -326,7 +325,7 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
     LOG.debug { "Loading modules for ${loadedEntities.size} entities" }
 
     val plugins = PluginManagerCore.getLoadedPlugins(null)
-    val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID }
+    val corePlugin = plugins.firstOrNull { it.pluginId == PluginManagerCore.CORE_ID }
 
     val precomputedExtensionModel = precomputeExtensionModel(plugins)
 

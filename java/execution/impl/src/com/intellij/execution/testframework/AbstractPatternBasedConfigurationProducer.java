@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
+import org.jetbrains.annotations.ApiStatus;
 
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -21,6 +22,7 @@ public abstract class AbstractPatternBasedConfigurationProducer<T extends JavaTe
    * @deprecated Override {@link #getConfigurationFactory()}.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public AbstractPatternBasedConfigurationProducer(ConfigurationType configurationType) {
     super(configurationType);
   }

@@ -136,7 +136,7 @@ public abstract class JavaStubPsiElement<T extends StubElement> extends StubBase
   @Override
   public PsiElement @NotNull [] getChildren() {
     PsiElement psiChild = getFirstChild();
-    if (psiChild == null) return EMPTY_ARRAY;
+    if (psiChild == null) return PsiElement.EMPTY_ARRAY;
 
     int count = 0;
     while (psiChild != null) {

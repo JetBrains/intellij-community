@@ -14,7 +14,7 @@ class PyTestFixtureAndParametrizedTest : PyTestCase() {
   override fun setUp() {
     super.setUp()
     TestRunnerService.getInstance(myFixture.module).projectConfiguration =
-      PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
+      PyTestFactory().id
   }
 
   fun testInspection() {

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.ExperimentalUI
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
@@ -194,10 +195,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
   fun setFocusedComponent(component: Component) {
     toolWindowFocusWatcher?.setFocusedComponentImpl(component)
   }
-
-  @Deprecated(message = "Do not use.", level = DeprecationLevel.ERROR)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  fun getContentUI() = contentUi
 
   override fun getDisposable() = parentDisposable
 
@@ -610,7 +607,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       addAction(toggleToolbarGroup).setAsSecondary(true)
       addSeparator()
       add(ActionManager.getInstance().getAction("TW.ViewModeGroup"))
-      if (Registry.`is`("ide.new.stripes.ui")) {
+      if (ExperimentalUI.isNewToolWindowsStripes()) {
         add(SquareStripeButton.createMoveGroup(project, null, toolWindow))
       } else {
         add(ToolWindowMoveAction.Group())

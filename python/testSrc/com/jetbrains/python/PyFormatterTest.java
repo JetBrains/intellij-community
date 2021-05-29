@@ -1073,4 +1073,14 @@ public class PyFormatterTest extends PyTestCase {
   public void testModuleLevelDunderWithImports() {
     doTest();
   }
+
+  // PY-48009
+  public void testIndentOfCaseClausesInsideMatchStatement() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testIndentOfCommentsInsideMatchStatement() {
+    doTest();
+  }
 }

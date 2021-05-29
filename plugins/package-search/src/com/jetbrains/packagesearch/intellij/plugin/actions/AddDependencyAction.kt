@@ -33,7 +33,7 @@ class AddDependencyAction : AnAction(
             val editor = CommonDataKeys.EDITOR.getData(dataContext) ?: return@run false
 
             val psiFile: PsiFile? = PsiUtilBase.getPsiFileInEditor(editor, project)
-            if (psiFile == null || ProjectModuleOperationProvider.forProjectPsiFile(project, psiFile) == null) {
+            if (psiFile == null || ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, psiFile) == null) {
                 return@run false
             }
 

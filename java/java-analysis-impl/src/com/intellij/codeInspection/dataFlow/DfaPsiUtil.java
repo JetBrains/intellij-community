@@ -8,6 +8,7 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
@@ -83,7 +84,7 @@ public final class DfaPsiUtil {
       return Nullability.UNKNOWN;
     }
 
-    if (owner instanceof PsiEnumConstant || PsiUtil.isAnnotationMethod(owner)) {
+    if (owner instanceof PsiEnumConstant) {
       return Nullability.NOT_NULL;
     }
     if (owner instanceof PsiMethod && isEnumPredefinedMethod((PsiMethod)owner)) {
@@ -333,7 +334,7 @@ public final class DfaPsiUtil {
         if (flow == null) {
           return Result.create(Set.of(), body, PsiModificationTracker.MODIFICATION_COUNT);
         }
-        var interpreter = new JvmDataFlowInterpreter(flow, DfaListener.EMPTY) {
+        var interpreter = new StandardDataFlowInterpreter(flow, DfaListener.EMPTY) {
           final Map<PsiField, Boolean> map = new HashMap<>();
           private boolean isCallExposingNonInitializedFields(Instruction instruction) {
             if (!(instruction instanceof MethodCallInstruction)) {

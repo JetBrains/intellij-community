@@ -390,12 +390,12 @@ public abstract class LanguageCodeStyleSettingsProvider extends CodeStyleSetting
 
   @ApiStatus.Internal
   public static void registerSettingsPageProvider(@NotNull LanguageCodeStyleSettingsProvider provider) {
-    registerSettingsPageProvider(ourSettingsPagesProviders.get(), provider);
+    registerSettingsPageProvider(getSettingsPagesProviders(), provider);
   }
 
   @ApiStatus.Internal
   public static void unregisterSettingsPageProvider(@NotNull LanguageCodeStyleSettingsProvider provider) {
-    ourSettingsPagesProviders.get().remove(provider);
+    getSettingsPagesProviders().remove(provider);
   }
 
   private static void registerSettingsPageProvider(@NotNull Set<? super LanguageCodeStyleSettingsProvider> settingsPagesProviders,

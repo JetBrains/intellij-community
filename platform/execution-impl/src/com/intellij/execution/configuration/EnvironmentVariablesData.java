@@ -35,7 +35,7 @@ public final class EnvironmentVariablesData {
 
   private EnvironmentVariablesData(@NotNull Map<String, String> envs, boolean passParentEnvs, @Nullable String environmentFile) {
     // insertion order must be preserved - Map.copyOf cannot be used here
-    myEnvs = envs.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(envs);
+    myEnvs = envs.isEmpty() ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(envs));
     myPassParentEnvs = passParentEnvs;
     myEnvironmentFile = environmentFile;
   }

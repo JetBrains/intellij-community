@@ -15,6 +15,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
@@ -42,7 +43,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.function.Supplier;
 
-public abstract class AbstractRerunFailedTestsAction extends AnAction {
+public abstract class AbstractRerunFailedTestsAction extends AnAction implements UpdateInBackground {
   private static final Logger LOG = Logger.getInstance(AbstractRerunFailedTestsAction.class);
 
   private TestFrameworkRunningModel myModel;
@@ -226,11 +227,6 @@ public abstract class AbstractRerunFailedTestsAction extends AnAction {
   protected static abstract class MyRunProfile extends RunConfigurationBase<Element> implements ModuleRunProfile,
                                                                                                 WrappingRunConfiguration<RunConfigurationBase<?>>,
                                                                                                 ConsolePropertiesProvider {
-    @Deprecated
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-    public RunConfigurationBase<?> getConfiguration() {
-      return getPeer();
-    }
 
     @Override
     public @NotNull RunConfigurationBase<?> getPeer() {

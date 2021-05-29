@@ -190,7 +190,7 @@ class ProblemsViewPanel extends OnePixelSplitter implements Disposable, DataProv
     new TreeSpeedSearch(myTree);
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
-    PopupHandler.installPopupHandler(myTree, "ProblemsView.ToolWindow.TreePopup", ActionPlaces.POPUP);
+    PopupHandler.installPopupMenu(myTree, "ProblemsView.ToolWindow.TreePopup", "ProblemsView.ToolWindow.TreePopup");
     myTreeExpander = new DefaultTreeExpander(myTree);
 
     ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction("ProblemsView.ToolWindow.Toolbar");

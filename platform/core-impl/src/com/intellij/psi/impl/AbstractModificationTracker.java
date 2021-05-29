@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Roman.Chernyatchik
- * @deprecated see {@link com.intellij.psi.util.PsiModificationTracker#getOutOfCodeBlockModificationTracker()}
+ * @deprecated see {@link com.intellij.psi.util.PsiModificationTracker#OUT_OF_CODE_BLOCK_MODIFICATION_COUNT}
  */
 @Deprecated
 @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")

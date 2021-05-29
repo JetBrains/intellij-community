@@ -46,21 +46,6 @@ object DigestUtil {
   @JvmStatic
   fun sha1Hex(input: ByteArray): String = bytesToHex(sha1().digest(input))
 
-  @Deprecated(message = "Current implementation is very specific: it mixes length of the array to the hash." +
-                        "In general, it is enough to hash only bytes of the array. " +
-                        "Implement the hashing yourself. " +
-                        "Also make sure that you create new or reset the MessageDigest")
-  @JvmStatic
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  fun calculateContentHash(digest: MessageDigest, bytes: ByteArray): ByteArray {
-    // Preserve contract compatibility: make sure the digest is reset.
-    val resetDigest = digest.cloneDigest()
-    resetDigest.update(bytes.size.toString().toByteArray())
-    resetDigest.update("\u0000".toByteArray())
-    resetDigest.update(bytes)
-    return resetDigest.digest()
-  }
-
   /**
    * Digest cloning is faster than requesting a new one from [MessageDigest.getInstance].
    * This approach is used in Guava as well.

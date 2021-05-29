@@ -66,15 +66,13 @@ public final class VfsData {
 
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
-  private final ConcurrentIntObjectMap<Segment> mySegments =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<Segment> mySegments = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = ConcurrentBitSet.create();
 
   /** guarded by {@link #myDeadMarker} */
   private IntSet myDyingIds = new IntOpenHashSet();
 
-  private final IntObjectMap<VirtualDirectoryImpl> myChangedParents =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   public VfsData() {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {

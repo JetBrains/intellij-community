@@ -12,7 +12,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 public final class FileBasedIndexSwitcher {
   private static final Logger LOG = Logger.getInstance(FileBasedIndexSwitcher.class);
@@ -24,7 +23,6 @@ public final class FileBasedIndexSwitcher {
 
   private int myNestedLevelCount = 0;
 
-  @TestOnly
   public FileBasedIndexSwitcher() {
     this(((FileBasedIndexImpl)FileBasedIndex.getInstance()));
   }
@@ -101,7 +99,7 @@ public final class FileBasedIndexSwitcher {
 
       IndexingFlag.cleanupProcessedFlag();
       for (Project project : ProjectUtil.getOpenProjects()) {
-        DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project));
+        DumbService.getInstance(project).queueTask(new UnindexedFilesUpdater(project, "On indexes switcher turned on"));
       }
     }
   }

@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -54,8 +55,6 @@ import java.util.zip.ZipOutputStream
 @CompileStatic
 final class DistributionJARsBuilder {
   private static final boolean COMPRESS_JARS = false
-  private static final String RESOURCES_INCLUDED = "resources.included"
-  private static final String RESOURCES_EXCLUDED = "resources.excluded"
   /**
    * Path to file with third party libraries HTML content,
    * see the same constant at com.intellij.ide.actions.AboutPopup#THIRD_PARTY_LIBRARIES_FILE_PATH
@@ -82,33 +81,6 @@ final class DistributionJARsBuilder {
                       ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
     def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
     this.pluginXmlPatcher = new PluginXmlPatcher(buildContext.messages, releaseDate, releaseVersion, buildContext.applicationInfo.productName, buildContext.applicationInfo.isEAP)
-
-    buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
-      include(name: "**/*Bundle*.properties")
-      include(name: "**/*Messages.properties")
-      include(name: "messages/**/*.properties")
-      include(name: "fileTemplates/**")
-      include(name: "inspectionDescriptions/**")
-      include(name: "intentionDescriptions/**")
-      include(name: "tips/**")
-      include(name: "search/**")
-    }
-
-    buildContext.ant.patternset(id: RESOURCES_EXCLUDED) {
-      exclude(name: "**/*Bundle*.properties")
-      exclude(name: "**/*Messages.properties")
-      exclude(name: "messages/**/*.properties")
-      exclude(name: "fileTemplates/**")
-      exclude(name: "fileTemplates")
-      exclude(name: "inspectionDescriptions/**")
-      exclude(name: "inspectionDescriptions")
-      exclude(name: "intentionDescriptions/**")
-      exclude(name: "intentionDescriptions")
-      exclude(name: "tips/**")
-      exclude(name: "tips")
-      exclude(name: "search/**")
-      exclude(name: "**/icon-robots.txt")
-    }
 
     ProductModulesLayout productLayout = buildContext.productProperties.productLayout
     Set<String> enabledPluginModules = getEnabledPluginModules()
@@ -342,7 +314,7 @@ final class DistributionJARsBuilder {
       def modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
         productProperties.includeIntoSourcesArchiveFilter.test(buildContext.findRequiredModule(moduleName), buildContext)
       }
-      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, "$buildContext.paths.artifacts/$archiveName")
+      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, Path.of(buildContext.paths.artifacts, archiveName), true)
     }
   }
 
@@ -889,8 +861,6 @@ final class DistributionJARsBuilder {
                      MultiMap<String, String> moduleJars,
                      List<Pair<File, String>> additionalResources) {
     AntBuilder ant = buildContext.ant
-    String resourceExcluded = RESOURCES_EXCLUDED
-    String resourcesIncluded = RESOURCES_INCLUDED
     BuildContext buildContext = buildContext
     if (layoutSpec.copyFiles) {
       checkModuleExcludes(layout.moduleExcludes)
@@ -910,18 +880,10 @@ final class DistributionJARsBuilder {
           String jarPath = entry.key
           jar(jarPath, true) {
             for (String moduleName in modules) {
-              modulePatches(List.of(moduleName)) {
-                if (layout.localizableResourcesJarName(moduleName) != null) {
-                  ant.patternset(refid: resourceExcluded)
-                }
-              }
+              modulePatches(List.of(moduleName))
               module(moduleName) {
-                if (layout.localizableResourcesJarName(moduleName) != null) {
-                  ant.patternset(refid: resourceExcluded)
-                }
-                else {
-                  ant.exclude(name: "**/icon-robots.txt")
-                }
+                ant.exclude(name: "**/icon-robots.txt")
+                ant.exclude(name: ".unmodified")
 
                 for (String exclude in layout.moduleExcludes.get(moduleName)) {
                   //noinspection GrUnresolvedAccess
@@ -934,31 +896,6 @@ final class DistributionJARsBuilder {
                 if (layoutSpec.copyFiles) {
                   ant.zipfileset(src: it.absolutePath)
                 }
-              }
-            }
-          }
-        }
-
-        MultiMap<String, String> outputResourceJars = MultiMap.createLinked()
-        for (String moduleName in actualModuleJars.values()) {
-          String resourcesJarName = layout.localizableResourcesJarName(moduleName)
-          if (resourcesJarName != null) {
-            outputResourceJars.putValue(resourcesJarName, moduleName)
-          }
-        }
-
-        for (String resourceJarName : outputResourceJars.keySet()) {
-          jar(resourceJarName, true) {
-            for (String moduleName in outputResourceJars.get(resourceJarName)) {
-              modulePatches(List.of(moduleName)) {
-                ant.patternset(refid: resourcesIncluded)
-              }
-              module(moduleName) {
-                for (String moduleExclude in layout.moduleExcludes.get(moduleName)) {
-                  //noinspection GrUnresolvedAccess
-                  ant.exclude(name: "$moduleExclude/**")
-                }
-                ant.patternset(refid: resourcesIncluded)
               }
             }
           }
@@ -1000,11 +937,11 @@ final class DistributionJARsBuilder {
       }
       if (layoutSpec.copyFiles) {
         for (ModuleResourceData resourceData in layout.resourcePaths) {
-          String path = FileUtil.toSystemIndependentName(new File(basePath(buildContext, resourceData.moduleName),
-                                                                  resourceData.resourcePath).absolutePath)
+          String path = FileUtilRt.toSystemIndependentName(new File(basePath(buildContext, resourceData.moduleName),
+                                                                    resourceData.resourcePath).absolutePath)
           if (resourceData.packToZip) {
             zip(resourceData.relativeOutputPath) {
-              if (Files.isRegularFile(Paths.get(path))) {
+              if (Files.isRegularFile(Path.of(path))) {
                 ant.fileset(file: path)
               }
               else {
@@ -1014,7 +951,7 @@ final class DistributionJARsBuilder {
           }
           else {
             dir(resourceData.relativeOutputPath) {
-              if (Files.isRegularFile(Paths.get(path))) {
+              if (Files.isRegularFile(Path.of(path))) {
                 ant.fileset(file: path)
               }
               else {

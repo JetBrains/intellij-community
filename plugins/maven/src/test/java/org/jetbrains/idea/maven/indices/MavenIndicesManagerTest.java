@@ -71,24 +71,6 @@ public class MavenIndicesManagerTest extends MavenIndicesTestCase {
   }
 
   @Test 
-  public void testIndexedArchetypesWithSeveralIndicesAfterReopening() throws Exception {
-    myIndicesFixture.getRepositoryHelper().addTestData("archetypes");
-    /*myIndicesFixture.getIndicesManager().ensureIndicesExist(myProject,
-                                                            Collections.singleton(Pair.create("id", "foo://bar.baz")));*/
-
-    myIndicesFixture.getIndicesManager()
-      .createIndexForLocalRepo(myProject, myIndicesFixture.getRepositoryHelper().getTestData("archetypes"));
-
-
-    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
-
-    myIndicesFixture.tearDown();
-    myIndicesFixture.setUp();
-
-    assertArchetypeExists("org.apache.maven.archetypes:maven-archetype-foobar:1.0");
-  }
-
-  @Test 
   public void testAddingArchetypes() throws Exception {
     myIndicesFixture.getIndicesManager().addArchetype(new MavenArchetype("myGroup",
                                                                          "myArtifact",

@@ -4,6 +4,7 @@ package com.intellij.openapi.application.ex;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,18 +26,21 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
    * @deprecated use {@link #getApplicationSvgIconUrl()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract String getIconUrl();
 
   /**
    * @deprecated use {@link #getSmallApplicationSvgIconUrl()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract @NotNull String getSmallIconUrl();
 
   /**
    * @deprecated use {@link #getApplicationSvgIconUrl()} instead
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public abstract @Nullable String getBigIconUrl();
 
   /**

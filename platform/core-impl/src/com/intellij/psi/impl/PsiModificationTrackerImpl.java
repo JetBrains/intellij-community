@@ -147,21 +147,6 @@ public final class PsiModificationTrackerImpl implements PsiModificationTracker,
   }
 
   @Override
-  public long getOutOfCodeBlockModificationCount() {
-    return myModificationCount.getModificationCount();
-  }
-
-  @Override
-  public long getJavaStructureModificationCount() {
-    return myModificationCount.getModificationCount();
-  }
-
-  @Override
-  public @NotNull ModificationTracker getOutOfCodeBlockModificationTracker() {
-    return myModificationCount;
-  }
-
-  @Override
   public @NotNull ModificationTracker getJavaStructureModificationTracker() {
     return myModificationCount;
   }

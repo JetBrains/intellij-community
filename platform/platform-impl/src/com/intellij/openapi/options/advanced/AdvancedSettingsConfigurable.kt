@@ -1,17 +1,22 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.advanced
 
+ import com.intellij.icons.AllIcons
  import com.intellij.ide.ui.search.SearchUtil
  import com.intellij.ide.ui.search.SearchableOptionsRegistrar
+ import com.intellij.openapi.actionSystem.AnActionEvent
  import com.intellij.openapi.application.ApplicationBundle
  import com.intellij.openapi.options.SearchableConfigurable
  import com.intellij.openapi.options.UiDslConfigurable
+ import com.intellij.openapi.project.DumbAwareAction
  import com.intellij.openapi.util.NlsSafe
  import com.intellij.ui.CollectionComboBoxModel
+ import com.intellij.ui.ColorUtil
  import com.intellij.ui.DocumentAdapter
  import com.intellij.ui.SearchTextField
  import com.intellij.ui.layout.*
  import com.intellij.util.Alarm
+ import com.intellij.util.ui.JBUI
  import com.intellij.util.ui.UIUtil
  import javax.swing.*
  import javax.swing.event.DocumentEvent
@@ -53,10 +58,31 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
         titledRow(group) {
           for (extension in extensions) {
             row {
-              val (label, component) = control(extension)
+              val labelCellBuilder = if (extension.type() == AdvancedSettingType.Bool)
+                null
+              else
+                label(extension.title() + ":")
+
+              lateinit var component: CellBuilder<JComponent>
+              cell(isFullWidth = true) {
+                val (c, isDefaultPredicate, reset) = control(extension)
+                component = c
+                extension.trailingLabel()?.takeIf { it.isNotEmpty() }?.let { label(it) }
+
+                val resetAction = object : DumbAwareAction(ApplicationBundle.message("button.advanced.settings.reset"), null, AllIcons.Diff.Revert) {
+                  override fun actionPerformed(e: AnActionEvent) {
+                    reset()
+                  }
+                }
+                actionButton(resetAction)
+                  .visibleIf(isDefaultPredicate.not())
+
+                label("").constraints(pushX)
+              }
+
               extension.description()?.let { description -> component.comment(description) }
-              val textComponent = label?.component ?: component.component
-              val row = SettingsRow(this, textComponent, extension.id, label?.component?.text ?: extension.title())
+              val textComponent = labelCellBuilder?.component ?: component.component
+              val row = SettingsRow(this, textComponent, extension.id, labelCellBuilder?.component?.text ?: extension.title())
               settingsRows.add(row)
               settingsRowsInGroup.add(row)
             }
@@ -81,41 +107,61 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     }
   }
 
-  private fun Row.control(extension: AdvancedSettingBean): Pair<CellBuilder<JLabel>?, CellBuilder<JComponent>> {
+  data class AdvancedSettingControl(val cellBuilder: CellBuilder<JComponent>, val isDefault: ComponentPredicate, val reset: () -> Unit)
+
+  private fun InnerCell.control(extension: AdvancedSettingBean): AdvancedSettingControl {
     return when (extension.type()) {
-      AdvancedSettingType.Bool ->
-        null to checkBox(
+      AdvancedSettingType.Bool -> {
+        val cb = checkBox(
           extension.title(),
           { AdvancedSettings.getBoolean(extension.id) },
           { AdvancedSettings.setBoolean(extension.id, it) }
         )
+        AdvancedSettingControl(
+          cb,
+          if (extension.defaultValueObject == true) cb.component.selected else cb.component.selected.not(),
+          { cb.component.isSelected = extension.defaultValueObject as Boolean }
+        )
+      }
 
       AdvancedSettingType.Int -> {
-        label(extension.title() + ":") to intTextField(
+        val textField = intTextField(
           { AdvancedSettings.getInt(extension.id) },
           { AdvancedSettings.setInt(extension.id, it) },
           columns = 10
-        ).also {
-          label(extension.trailingLabel() ?: "").constraints(pushX)
-        }
+        )
+        AdvancedSettingControl(
+          textField,
+          textField.component.enteredTextSatisfies { it == extension.defaultValueObject.toString() },
+          { textField.component.text = extension.defaultValueObject.toString() }
+        )
       }
 
       AdvancedSettingType.String -> {
-        label(extension.title() + ":") to textField(
+        val textField = textField(
           { AdvancedSettings.getString(extension.id) },
           { AdvancedSettings.setString(extension.id, it) },
-          columns = 20
-        ).also {
-          label(extension.trailingLabel() ?: "").constraints(pushX)
-        }
+          columns = 30
+        )
+        AdvancedSettingControl(
+          textField,
+          textField.component.enteredTextSatisfies { it == extension.defaultValueObject },
+          { textField.component.text = extension.defaultValueObject as String }
+        )
       }
 
       AdvancedSettingType.Enum -> {
         val comboBoxModel = CollectionComboBoxModel(extension.enumKlass!!.enumConstants.toList())
-        label(extension.title() + ":") to comboBox(
+        val cb = comboBox(
           comboBoxModel,
           { AdvancedSettings.getEnum(extension.id, extension.enumKlass!!) },
-          { AdvancedSettings.setEnum(extension.id, it as Enum<*>) })
+          { AdvancedSettings.setEnum(extension.id, it as Enum<*>) }
+        )
+        AdvancedSettingControl(
+          cb,
+          cb.component.selectedValueIs(extension.defaultValueObject as Enum<*>),
+          { cb.component.selectedItem = extension.defaultValueObject }
+        )
       }
     }
   }
@@ -140,16 +186,25 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
     val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val filterWords = searchableOptionsRegistrar.getProcessedWords(searchText)
+    val filterWordsUnstemmed = searchText.split(' ')
     val visibleGroupPanels = mutableSetOf<JPanel>()
     for (settingsRow in settingsRows) {
       val textWords = searchableOptionsRegistrar.getProcessedWords(settingsRow.text)
-      val matches = textWords.containsAll(filterWords) || searchText in settingsRow.id
+      val idWords = settingsRow.id.split('.')
+      val textMatches = textWords.containsAll(filterWords)
+      val idMatches = idWords.containsAll(filterWordsUnstemmed)
+      val matches = textMatches || idMatches
       settingsRow.row.visible = matches
       settingsRow.row.subRowsVisible = matches
       if (matches) {
         settingsRow.groupPanel.isVisible = true
         visibleGroupPanels.add(settingsRow.groupPanel)
-        updateMatchText(settingsRow.component, settingsRow.text, searchText)
+        val idColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.ContextHelp.FOREGROUND)
+        val baseText = if (idMatches && !textMatches)
+          """${settingsRow.text}<br><pre><font color="$idColor">${settingsRow.id}"""
+        else
+          settingsRow.text
+        updateMatchText(settingsRow.component, baseText, searchText)
       }
     }
     for (groupPanel in groupPanels) {

@@ -131,7 +131,6 @@
     <extensionPoint name="editorTabTitleProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider" dynamic="true"/>
     <extensionPoint name="editorTabColorProvider" interface="com.intellij.openapi.fileEditor.impl.EditorTabColorProvider" dynamic="true"/>
     <extensionPoint name="editorFileSwapper" interface="com.intellij.openapi.fileEditor.impl.EditorFileSwapper" dynamic="true"/>
-    <extensionPoint name="editorFileAssociateFinder" interface="com.intellij.openapi.fileEditor.impl.FileEditorAssociateFinder" dynamic="true"/>
 
     <extensionPoint name="http.localFileFinder" interface="com.intellij.openapi.fileEditor.impl.http.LocalFileFinder" dynamic="true"/>
     <extensionPoint name="http.fileEditorActionProvider" interface="com.intellij.openapi.fileEditor.impl.http.RemoteFileEditorActionProvider"/>
@@ -213,6 +212,8 @@
     <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
 
     <extensionPoint name="toolWindowExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor" dynamic="true"/>
+
+    <extensionPoint name="toolWindowContentExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor" dynamic="true"/>
 
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate" dynamic="true"/>
 
@@ -317,8 +318,6 @@
 
     <extensionPoint name="notification.parentGroup" beanClass="com.intellij.notification.impl.NotificationParentGroupBean"/>
     <extensionPoint name="notification.group" beanClass="com.intellij.notification.impl.NotificationGroupBean"/>
-    <extensionPoint name="notificationWhitelist" beanClass="com.intellij.notification.impl.NotificationWhitelistEP" dynamic="true"/>
-    <extensionPoint name="notificationAllowlist" beanClass="com.intellij.notification.impl.NotificationAllowlistEP" dynamic="true"/>
     <extensionPoint name="notificationGroup" beanClass="com.intellij.notification.impl.NotificationGroupEP" dynamic="true"/>
 
     <extensionPoint name="troubleInfoCollector" interface="com.intellij.troubleshooting.TroubleInfoCollector" dynamic="true"/>
@@ -420,5 +419,11 @@
 
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="advancedSetting" beanClass="com.intellij.openapi.options.advanced.AdvancedSettingBean" dynamic="true"/>
+
+    <extensionPoint name="dependencyCollector" beanClass="com.intellij.ide.plugins.DependencyCollectorBean" dynamic="true">
+      <with attribute="implementation" implements="com.intellij.ide.plugins.DependencyCollector"/>
+    </extensionPoint>
+    <extensionPoint name="dependencySupport" beanClass="com.intellij.ide.plugins.DependencySupportBean" dynamic="true"/>
+    <extensionPoint name="actionOnSaveInfoProvider" interface="com.intellij.ide.actionsOnSave.api.ActionOnSaveInfoProvider" dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

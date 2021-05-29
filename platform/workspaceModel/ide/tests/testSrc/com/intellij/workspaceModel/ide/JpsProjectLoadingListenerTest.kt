@@ -76,7 +76,7 @@ class JpsProjectLoadingListenerTest {
 
     val project = loadProject(projectData.projectDir)
     waitAndAssert(1_000, "Project is not loaded") {
-      (JpsProjectLoadingManager.getInstance(project) as JpsProjectLoadingManagerImpl).projectLoaded.get()
+      (JpsProjectLoadingManager.getInstance(project) as JpsProjectLoadingManagerImpl).isProjectLoaded()
     }
 
     var listenerCalled = false
@@ -87,7 +87,6 @@ class JpsProjectLoadingListenerTest {
   }
 
   private fun prepareProject(): LoadedProjectData {
-    Assume.assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage

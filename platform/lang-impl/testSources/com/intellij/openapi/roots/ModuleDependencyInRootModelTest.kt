@@ -253,25 +253,6 @@ class ModuleDependencyInRootModelTest {
   }
 
   @Test
-  fun `rename module before committing root model`() {
-    //this test doesn't work under the new project model because we didn't update references to module in created modifiable root models;
-    // however it seems that such scenarios don't happen in production: module may be renamed after creating ModifiableRootModel only
-    // in Project Structure dialog, but it commits all ModifiableRootModel together.
-    ProjectModelRule.ignoreTestUnderWorkspaceModel()
-    val a = projectModel.createModule("a")
-    val model = createModifiableModel(mainModule)
-    model.addModuleOrderEntry(a)
-    projectModel.renameModule(a, "b")
-    val moduleEntry = dropModuleSourceEntry(model, 1).single() as ModuleOrderEntry
-    assertThat(moduleEntry.module).isEqualTo(a)
-    assertThat(moduleEntry.moduleName).isEqualTo("b")
-    val committed = commitModifiableRootModel(model)
-    val committedEntry = dropModuleSourceEntry(committed, 1).single() as ModuleOrderEntry
-    assertThat(committedEntry.module).isEqualTo(a)
-    assertThat(committedEntry.moduleName).isEqualTo("b")
-  }
-
-  @Test
   fun `add invalid module and rename module to that name`() {
     val module = projectModel.createModule("foo")
     val model = createModifiableModel(mainModule)

@@ -76,6 +76,11 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.MODULE.getAbsoluteRank();
+  }
+
+  @Override
   public @Nullable String getGroupingActionId() {
     return "UsageGrouping.Module";
   }

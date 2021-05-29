@@ -35,6 +35,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
                               var messagesNumberBeforeStart: Int = 0,
                               var rehighlightComponent: (() -> Component)? = null,
                               var userVisibleInfo: PreviousTaskInfo? = null,
+                              var transparentRestore: Boolean? = null,
                               val removeAfterDoneMessages: MutableList<Int> = mutableListOf())
 
   var predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
@@ -56,6 +57,7 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     get() = selectedEditor ?: throw NoTextEditor()
 
   data class TaskData(var shouldRestoreToTask: (() -> TaskContext.TaskId?)? = null,
+                      var transparentRestore: Boolean? = null,
                       var delayMillis: Int = 0)
 
   private val taskActions: MutableList<TaskInfo> = ArrayList()
@@ -242,6 +244,12 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
     processNextTask(restoreIndex)
   }
 
+  fun calculateRestoreIndex(): Int {
+    var i = currentTaskIndex - 1
+    while (i > 0 && taskActions[i].transparentRestore == true) i--
+    return i
+  }
+
   /** @return a callback to clear resources used to track restore */
   private fun checkForRestore(taskContext: TaskContextImpl,
                               taskData: TaskData): () -> Unit {
@@ -300,6 +308,9 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
   private fun chainNextTask(taskContext: TaskContextImpl,
                             recorder: ActionsRecorder,
                             taskData: TaskData) {
+    val taskInfo = taskActions[currentTaskIndex]
+    taskInfo.transparentRestore = taskData.transparentRestore
+
     val clearRestore = checkForRestore(taskContext, taskData)
 
     recorder.tryToCheckCallback()
@@ -311,7 +322,6 @@ internal class LessonExecutor(val lesson: KLesson, val project: Project, initial
         if (taskHasBeenDone) {
           clearRestore()
           LessonManager.instance.passExercise()
-          val taskInfo = taskActions[currentTaskIndex]
           if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
           if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
           for (index in taskInfo.removeAfterDoneMessages) {

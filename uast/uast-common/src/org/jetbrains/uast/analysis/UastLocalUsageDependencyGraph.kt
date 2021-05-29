@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.CachedValue
@@ -24,8 +25,13 @@ import kotlin.collections.HashSet
 @ApiStatus.Experimental
 class UastLocalUsageDependencyGraph private constructor(
   val dependents: Map<UElement, Set<Dependent>>,
-  val dependencies: Map<UElement, Set<Dependency>>
+  val dependencies: Map<UElement, Set<Dependency>>,
+  val scopesObjectsStates: Map<UElement, UScopeObjectsState>,
+  private val psiAnchor: PsiElement?
 ) {
+  val uAnchor: UElement?
+    get() = psiAnchor.toUElement()
+
   companion object {
     private val DEPENDENCY_GRAPH_KEY = Key.create<CachedValue<UastLocalUsageDependencyGraph>>("uast.local.dependency.graph")
 
@@ -62,7 +68,7 @@ class UastLocalUsageDependencyGraph private constructor(
           }
         }
       }
-      return UastLocalUsageDependencyGraph(visitor.dependents, visitor.dependencies)
+      return UastLocalUsageDependencyGraph(visitor.dependents, visitor.dependencies, visitor.scopesStates, element.sourcePsi)
     }
 
     /**
@@ -84,7 +90,9 @@ class UastLocalUsageDependencyGraph private constructor(
       // TODO: handle user data holders
       return UastLocalUsageDependencyGraph(
         dependents = methodAndCallerMaps.dependentsMap,
-        dependencies = methodAndCallerMaps.dependenciesMap
+        dependencies = methodAndCallerMaps.dependenciesMap,
+        scopesObjectsStates = methodGraph.scopesObjectsStates,
+        callerGraph.psiAnchor
       )
     }
   }
@@ -164,6 +172,11 @@ class UastLocalUsageDependencyGraph private constructor(
   }
 }
 
+data class UScopeObjectsState(
+  val lastVariablesUpdates: Map<String, Dependency.PotentialSideEffectDependency.CandidatesTree>,
+  val variableToValueMarks: Map<String, Collection<UValueMark>>
+)
+
 //region Dump to PlantUML section
 @ApiStatus.Internal
 fun UastLocalUsageDependencyGraph.dumpVisualisation(): String {
@@ -178,8 +191,8 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
   fun elementName(uElement: UElement) = "UElement_${elementToID[uElement]}"
   append("@startuml").append("\n")
   for ((element, id) in elementToID) {
-    append("object UElement_").append(id).append(" {\n")
-    indent().append("render=\"").append(element.asRenderString().escape()).append("\"\n")
+    append("object UElement_").append(id).appendLine(" {")
+    indent().append("render=\"").append(element.asRenderString().escape()).appendLine("\"")
     element.sourcePsi?.let { psiElement ->
       PsiDocumentManager.getInstance(psiElement.project).getDocument(psiElement.containingFile)?.let { document ->
         val line = document.getLineNumber(psiElement.textOffset)
@@ -188,10 +201,10 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
         indent().append("line=").append("\"").append(line + 1)
         append(": ")
         append(document.charsSequence.subSequence(begin, end).toString().escape().trim())
-        append("\"\n")
+        appendLine("\"")
       }
     }
-    append("}\n")
+    appendLine("}")
   }
 
   val dependencyToID = dependencies.values.flatten().mapIndexed { index, dependency -> dependency to index }.toMap()
@@ -200,11 +213,11 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
     append("object ")
     append(dependency.javaClass.simpleName).append("_").append(depIndex)
     if (dependency is DependencyOfReference) {
-      append(" {\n")
-      indent().append("values = ").append(dependency.referenceInfo?.possibleReferencedValues).append("\n")
+      appendLine(" {")
+      indent().append("values = ").append(dependency.referenceInfo?.possibleReferencedValues).appendLine()
       append("}")
     }
-    append("\n")
+    appendLine()
   }
 
   val candidatesTreeToID = dependencies.values.flatten()
@@ -220,7 +233,7 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
 
   var nodeIndexShift = 0
   for ((tree, id) in candidatesTreeToID) {
-    append("package CandidatesTree_").append(id).append(" {\n")
+    append("package CandidatesTree_").append(id).appendLine(" {")
 
     val nodeToID = tree.allNodes().withIndex().map { (index, node) -> node to index + nodeIndexShift }.toMap()
     nodeIndexShift += nodeToID.size
@@ -229,12 +242,12 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
       "CandidateNode_${nodeToID[node]}"
 
     for ((node, nodeId) in nodeToID) {
-      indent().append("object CandidateNode_").append(nodeId).append(" {\n")
-      indent().indent().append("type = ").append(node.javaClass.simpleName).append("\n")
+      indent().append("object CandidateNode_").append(nodeId).appendLine(" {")
+      indent().indent().append("type = ").append(node.javaClass.simpleName).appendLine()
       if (node is Dependency.PotentialSideEffectDependency.CandidatesTree.Node.CandidateNode) {
         val candidate = node.candidate
-        indent().indent().append("witness = ").append(candidate.dependencyWitnessValues).append("\n")
-        indent().indent().append("evidence = ").append(candidate.dependencyEvidence.evidenceElement?.asRenderString()?.escape()).append("\n")
+        indent().indent().append("witness = ").append(candidate.dependencyWitnessValues).appendLine()
+        indent().indent().append("evidence = ").append(candidate.dependencyEvidence.evidenceElement?.asRenderString()?.escape()).appendLine()
 
         generateSequence(candidate.dependencyEvidence.requires) { reqs -> reqs.flatMap { req -> req.requires }.takeUnless { it.isEmpty() } }
           .flatten()
@@ -288,11 +301,11 @@ private fun dumpDependencies(dependencies: Map<UElement, Set<Dependency>>): Stri
     }
   }
 
-  append("@enduml").append("\n")
+  appendLine("@enduml")
 }
 
 private fun StringBuilder.edge(begin: String, type: String, end: String) {
-  append(begin).append(" ").append(type).append(" ").append(end).append("\n")
+  append(begin).append(" ").append(type).append(" ").append(end).appendLine()
 }
 
 private const val INDENT = "  "

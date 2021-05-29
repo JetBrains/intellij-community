@@ -3,10 +3,12 @@ package org.jetbrains.uast.test.java.analysis
 
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.psi.util.StringEntry
-import org.jetbrains.uast.UElement
+import org.intellij.lang.annotations.Language
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.analysis.UNeDfaConfiguration
 import org.jetbrains.uast.analysis.UStringEvaluator
+import org.jetbrains.uast.getUastParentOfType
 import org.jetbrains.uast.test.java.AbstractJavaUastLightTest
-import org.jetbrains.uast.toUElement
 
 abstract class AbstractStringEvaluatorTest : AbstractJavaUastLightTest() {
   protected val PartiallyKnownString.debugConcatenation: String
@@ -26,16 +28,15 @@ abstract class AbstractStringEvaluatorTest : AbstractJavaUastLightTest() {
     }
 
   protected fun doTest(
-    source: String,
+    @Language("Java", prefix = """@SuppressWarnings("ALL")""") source: String,
     expected: String,
     additionalSetup: () -> Unit = {},
-    configuration: () -> UStringEvaluator.Configuration = { UStringEvaluator.Configuration() },
-    retrieveElement: UElement?.() -> UElement? = { this },
+    configuration: () -> UNeDfaConfiguration<PartiallyKnownString> = { UNeDfaConfiguration() },
     additionalAssertions: (PartiallyKnownString) -> Unit = {}
   ) {
     additionalSetup()
     val file = myFixture.configureByText("myFile.java", source)
-    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement()?.retrieveElement()
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.getUastParentOfType<UReturnExpression>()?.returnExpression
                          ?: fail("Cannot find UElement at caret")
     val pks = UStringEvaluator().calculateValue(elementAtCaret, configuration()) ?: fail("Cannot evaluate string")
     assertEquals(expected, pks.debugConcatenation)

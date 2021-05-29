@@ -172,7 +172,7 @@ public class ProjectJdkImpl extends UserDataHolderBase implements Sdk, SdkModifi
     }
 
     String versionValue = element.getAttributeValue(ELEMENT_VERSION, "");
-    if (versionValue.isEmpty() || !"2".equals(versionValue)) {
+    if (!"2".equals(versionValue)) {
       throw new InvalidDataException("Too old version is not supported: " + versionValue);
     }
     Element homePath = assertNotMissing(element, ELEMENT_HOMEPATH);

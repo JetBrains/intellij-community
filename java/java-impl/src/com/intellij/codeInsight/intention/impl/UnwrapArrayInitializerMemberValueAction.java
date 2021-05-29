@@ -58,6 +58,6 @@ public class UnwrapArrayInitializerMemberValueAction extends LocalQuickFixAndInt
 
   @Override
   public @IntentionFamilyName @NotNull String getFamilyName() {
-    return QuickFixBundle.message("unwrap.array.initializer.member.value.fix");
+    return QuickFixBundle.message("unwrap.array.initializer.fix");
   }
 }

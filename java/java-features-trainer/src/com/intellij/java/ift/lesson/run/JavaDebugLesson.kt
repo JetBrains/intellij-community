@@ -29,7 +29,7 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
   override val expressionToBeEvaluated = "result/input.length"
   override val debuggingMethodName = "findAverage"
   override val methodForStepInto: String = "extractNumber"
-  override val stepIntoDirection = "→"
+  override val stepIntoDirectionToRight = true
 
   override fun LessonContext.applyProgramChangeTasks() {
 

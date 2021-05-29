@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.live
 
@@ -663,8 +660,8 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             }
             tearDown {
                 it.setUpValue?.let { ef ->
-                    cleanupCaches(project)
-                    close(project, ef.psiFile.virtualFile)
+                    project.cleanupCaches()
+                    project.close(ef.psiFile)
                 }
                 it.value?.let { v -> assertNotNull(v) }
             }

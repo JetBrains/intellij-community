@@ -1,9 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
-import com.intellij.openapi.actionSystem.ActionGroup
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -38,7 +37,6 @@ import org.jetbrains.plugins.github.ui.component.GHHandledErrorPanelModel
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.handleOnEdt
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.event.ChangeEvent
@@ -176,8 +174,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val actionManager = ActionManager.getInstance()
     actionManager.getAction("Github.PullRequest.Timeline.Update").registerCustomShortcutSet(scrollPane, uiDisposable)
-    val actionGroup = actionManager.getAction("Github.PullRequest.Timeline.Popup") as ActionGroup
-    PopupHandler.installPopupHandler(scrollPane, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+    val groupId = "Github.PullRequest.Timeline.Popup"
+    PopupHandler.installPopupMenu(scrollPane, groupId, groupId)
 
     return mainPanel
   }

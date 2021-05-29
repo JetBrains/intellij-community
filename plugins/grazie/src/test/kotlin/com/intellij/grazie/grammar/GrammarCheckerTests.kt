@@ -58,10 +58,11 @@ class GrammarCheckerTests : GrazieTestBase() {
     val text = listOf("Hello. World,, tot he.\n", "This are my friend.")
     val tokens = plain(text)
     val fixes = check(tokens).toList()
-    Assert.assertEquals(3, fixes.size)
+    Assert.assertEquals(4, fixes.size)
     fixes[0].assertTypoIs(IntRange(12, 13), listOf(","), text[0])
     fixes[1].assertTypoIs(IntRange(15, 20), listOf("to the"), text[0])
     fixes[2].assertTypoIs(IntRange(0, 3), listOf("These"), text[1])
+    fixes[3].assertTypoIs(IntRange(5, 7), listOf("is"), text[1])
   }
 
   @Test
@@ -70,9 +71,10 @@ class GrammarCheckerTests : GrazieTestBase() {
                       "    This are my friend.    ")
     val tokens = plain(text)
     val fixes = check(tokens).toList()
-    Assert.assertEquals(3, fixes.size)
+    Assert.assertEquals(4, fixes.size)
     fixes[0].assertTypoIs(IntRange(27, 28), listOf(","), text[0])
     fixes[1].assertTypoIs(IntRange(30, 35), listOf("to the"), text[0])
     fixes[2].assertTypoIs(IntRange(4, 7), listOf("These"), text[2])
+    fixes[3].assertTypoIs(IntRange(9, 11), listOf("is"), text[2])
   }
 }

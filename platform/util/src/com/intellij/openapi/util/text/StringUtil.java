@@ -804,12 +804,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars) {
-    if (chars instanceof String || chars instanceof CharSequenceWithStringHash) {
-      // we know for sure these classes have conformant (and maybe faster) hashCode()
-      return chars.hashCode();
-    }
-
-    return stringHashCode(chars, 0, chars.length());
+    return Strings.stringHashCode(chars);
   }
 
   @Contract(pure = true)
@@ -988,10 +983,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String trimStart(@NotNull String s, @NotNull String prefix) {
-    if (s.startsWith(prefix)) {
-      return s.substring(prefix.length());
-    }
-    return s;
+    return Strings.trimStart(s, prefix);
   }
 
   @Contract(pure = true)
@@ -1313,102 +1305,52 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull <T> String join(T @NotNull [] items, @NotNull Function<? super T, String> f, @NotNull String separator) {
-    return join(Arrays.asList(items), f, separator);
+    return Strings.join(items, f, separator);
   }
 
   @Contract(pure = true)
   public static @NotNull <T> String join(@NotNull Collection<? extends T> items,
                                          @NotNull Function<? super T, String> f,
                                          @NotNull String separator) {
-    if (items.isEmpty()) return "";
-    if (items.size() == 1) return notNullize(f.fun(items.iterator().next()));
-    return join((Iterable<? extends T>)items, f, separator);
+    return Strings.join(items, f, separator);
   }
 
   @Contract(pure = true)
   public static @NotNull String join(@NotNull Iterable<?> items, @NotNull String separator) {
-    StringBuilder result = new StringBuilder();
-    for (Object item : items) {
-      result.append(item).append(separator);
-    }
-    if (result.length() > 0) {
-      result.setLength(result.length() - separator.length());
-    }
-    return result.toString();
+    return Strings.join(items, separator);
   }
 
   @Contract(pure = true)
   public static @NotNull <T> String join(@NotNull Iterable<? extends T> items,
                                          @NotNull Function<? super T, ? extends CharSequence> f,
                                          @NotNull String separator) {
-    StringBuilder result = new StringBuilder();
-    join(items, f, separator, result);
-    return result.toString();
+    return Strings.join(items, f, separator);
   }
 
   public static <T> void join(@NotNull Iterable<? extends T> items,
                               @NotNull Function<? super T, ? extends CharSequence> f,
                               @NotNull String separator,
                               @NotNull StringBuilder result) {
-    boolean isFirst = true;
-    for (T item : items) {
-      CharSequence string = f.fun(item);
-      if (!isEmpty(string)) {
-        if (isFirst) {
-          isFirst = false;
-        }
-        else {
-          result.append(separator);
-        }
-        result.append(string);
-      }
-    }
+    Strings.join(items, f, separator, result);
   }
 
   @Contract(pure = true)
   public static @NotNull String join(@NotNull Collection<String> strings, @NotNull String separator) {
-    if (strings.size() <= 1) {
-      return notNullize(strings.isEmpty() ? null : strings.iterator().next());
-    }
-    StringBuilder result = new StringBuilder();
-    join(strings, separator, result);
-    return result.toString();
+    return Strings.join(strings, separator);
   }
 
   public static void join(@NotNull Collection<String> strings, @NotNull String separator, @NotNull StringBuilder result) {
-    boolean isFirst = true;
-    for (String string : strings) {
-      if (string != null) {
-        if (isFirst) {
-          isFirst = false;
-        }
-        else {
-          result.append(separator);
-        }
-        result.append(string);
-      }
-    }
+    Strings.join(strings, separator, result);
   }
 
   @Contract(pure = true)
   public static @NotNull String join(final int @NotNull [] strings, final @NotNull String separator) {
-    final StringBuilder result = new StringBuilder();
-    for (int i = 0; i < strings.length; i++) {
-      if (i > 0) result.append(separator);
-      result.append(strings[i]);
-    }
-    return result.toString();
+    return Strings.join(strings, separator);
   }
 
   @Contract(pure = true)
   public static @NotNull String join(final String @NotNull ... strings) {
-    if (strings.length == 0) return "";
-
-    final StringBuilder builder = new StringBuilder();
-    for (final String string : strings) {
-      builder.append(string);
-    }
-    return builder.toString();
+    return Strings.join(strings);
   }
 
   @Contract(pure = true)
@@ -1981,9 +1923,6 @@ public class StringUtil extends StringUtilRt {
     return '\"' + str + "\"";
   }
 
-  private static final List<String> REPLACES_REFS = Arrays.asList("&lt;", "&gt;", "&amp;", "&#39;", "&quot;");
-  private static final List<String> REPLACES_DISP = Arrays.asList("<", ">", "&", "'", "\"");
-
   /**
    * @deprecated Use {@link #unescapeXmlEntities(String)} instead
    */
@@ -2007,7 +1946,7 @@ public class StringUtil extends StringUtilRt {
    */
   @Contract(pure = true)
   public static @NotNull String unescapeXmlEntities(@NotNull String text) {
-    return replace(text, REPLACES_REFS, REPLACES_DISP);
+    return Strings.unescapeXmlEntities(text);
   }
 
   /**
@@ -2015,7 +1954,7 @@ public class StringUtil extends StringUtilRt {
    */
   @Contract(pure = true)
   public static @NotNull String escapeXmlEntities(@NotNull String text) {
-    return replace(text, REPLACES_DISP, REPLACES_REFS);
+    return Strings.escapeXmlEntities(text);
   }
 
   @Contract(pure = true)
@@ -2072,28 +2011,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static @NotNull StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
-    for (int i = 0; i < text.length(); i++) {
-      final char c = text.charAt(i);
-      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
-        builder.append(c);
-      }
-      else if (c == '\n') {
-        builder.append("\\n");
-      }
-      else if (c == '\r') {
-        builder.append("\\r");
-      }
-      else {
-        final Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
-        if (block == Character.UnicodeBlock.HIGH_SURROGATES || block == Character.UnicodeBlock.LOW_SURROGATES) {
-          builder.append(c);
-        } else {
-          builder.append('\\').append(c);
-        }
-      }
-    }
-
-    return builder;
+    return Strings.escapeToRegexp(text, builder);
   }
 
   @Contract(pure = true)
@@ -2132,33 +2050,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String replace(@NotNull String text, @NotNull List<String> from, @NotNull List<String> to) {
-    assert from.size() == to.size();
-    StringBuilder result = null;
-    replace:
-    for (int i = 0; i < text.length(); i++) {
-      for (int j = 0; j < from.size(); j += 1) {
-        String toReplace = from.get(j);
-        String replaceWith = to.get(j);
-
-        final int len = toReplace.length();
-        if (len == 0) continue;
-        if (text.regionMatches(i, toReplace, 0, len)) {
-          if (result == null) {
-            result = new StringBuilder(text.length());
-            result.append(text, 0, i);
-          }
-          result.append(replaceWith);
-          //noinspection AssignmentToForLoopParameter
-          i += len - 1;
-          continue replace;
-        }
-      }
-
-      if (result != null) {
-        result.append(text.charAt(i));
-      }
-    }
-    return result == null ? text : result.toString();
+    return Strings.replace(text, from, to);
   }
 
   @Contract(pure = true)
@@ -2186,29 +2078,17 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c) {
-    return countChars(text, c, 0, false);
+    return Strings.countChars(text, c);
   }
 
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c, int offset, boolean stopAtOtherChar) {
-    return countChars(text, c, offset, text.length(), stopAtOtherChar);
+    return Strings.countChars(text, c, offset, stopAtOtherChar);
   }
 
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
-    boolean forward = start <= end;
-    start = forward ? Math.max(0, start) : Math.min(text.length(), start);
-    end = forward ? Math.min(text.length(), end) : Math.max(0, end);
-    int count = 0;
-    for (int i = forward ? start : start - 1; forward == i < end; i += forward ? 1 : -1) {
-      if (text.charAt(i) == c) {
-        count++;
-      }
-      else if (stopAtOtherChar) {
-        break;
-      }
-    }
-    return count;
+    return Strings.countChars(text, c, start, end, stopAtOtherChar);
   }
 
   /**
@@ -2748,7 +2628,6 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull String formatLinks(@NotNull String message) {
-    @SuppressWarnings("HttpUrlsUsage")
     Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9./\\-+]+");
     StringBuffer result = new StringBuffer();
     Matcher m = linkPattern.matcher(message);

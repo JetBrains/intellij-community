@@ -2,16 +2,13 @@
 package com.intellij.ide.impl;
 
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
-import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.actionSystem.impl.EdtDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyedExtensionCollector;
@@ -22,13 +19,10 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FloatingDecorator;
-import com.intellij.reference.SoftReference;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.SwingHelper;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
@@ -36,13 +30,9 @@ import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import java.awt.*;
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
-import java.util.stream.Stream;
 
 import static com.intellij.ide.impl.DataValidators.validOrNull;
 
@@ -54,19 +44,6 @@ public class DataManagerImpl extends DataManager {
   private final KeyedExtensionCollector<GetDataRule, String> myDataRuleCollector = new KeyedExtensionCollector<>(GetDataRule.EP_NAME);
 
   public DataManagerImpl() {
-  }
-
-  private @Nullable Object getData(@NotNull String dataId, final Component focusedComponent) {
-    GetDataRule rule = getDataRule(dataId);
-    try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
-      for (Component c = focusedComponent; c != null; c = c.getParent()) {
-        DataProvider dataProvider = getDataProviderEx(c);
-        if (dataProvider == null) continue;
-        Object data = getDataFromProvider(dataProvider, dataId, null, rule);
-        if (data != null) return data;
-      }
-    }
-    return null;
   }
 
   @ApiStatus.Internal
@@ -279,18 +256,6 @@ public class DataManagerImpl extends DataManager {
     return editor;
   }
 
-  private static final class NullResult {
-    public static final NullResult INSTANCE = new NullResult();
-  }
-
-  private static final Set<String> ourSafeKeys = ContainerUtil.set(
-    CommonDataKeys.PROJECT.getName(),
-    CommonDataKeys.EDITOR.getName(),
-    PlatformDataKeys.IS_MODAL_CONTEXT.getName(),
-    PlatformDataKeys.CONTEXT_COMPONENT.getName(),
-    PlatformDataKeys.MODALITY_STATE.getName()
-  );
-
   /**
    * todo make private in 2020
    * @see DataManager#loadFromDataContext(DataContext, Key)
@@ -299,100 +264,9 @@ public class DataManagerImpl extends DataManager {
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static class MyDataContext implements DataContext, UserDataHolder {
-    private int myEventCount;
-    // To prevent memory leak we have to wrap passed component into
-    // the weak reference. For example, Swing often remembers menu items
-    // that have DataContext as a field.
-    private final Reference<Component> myRef;
-    private Map<Key<?>, Object> myUserData;
-    private final Map<String, Object> myCachedData = ContainerUtil.createWeakValueMap();
-
+  public static class MyDataContext extends EdtDataContext {
     public MyDataContext(@Nullable Component component) {
-      myEventCount = -1;
-      myRef = component == null ? null : new WeakReference<>(component);
-    }
-
-    public void setEventCount(int eventCount) {
-      assert ReflectionUtil.getCallerClass(3) == IdeKeyEventDispatcher.class :
-        "This method might be accessible from " + IdeKeyEventDispatcher.class.getName() + " only";
-      myCachedData.clear();
-      myEventCount = eventCount;
-    }
-
-    @Override
-    public Object getData(@NotNull String dataId) {
-      ProgressManager.checkCanceled();
-      boolean cacheable = Registry.is("actionSystem.cache.data") || ourSafeKeys.contains(dataId);
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        int currentEventCount = IdeEventQueue.getInstance().getEventCount();
-        if (myEventCount != -1 && myEventCount != currentEventCount) {
-          LOG.error("cannot share data context between Swing events; initial event count = " + myEventCount + "; current event count = " +
-                    currentEventCount);
-          cacheable = false;
-        }
-      }
-
-      Object answer = cacheable ? myCachedData.get(dataId) : null;
-      if (answer != null) {
-        return answer != NullResult.INSTANCE ? answer : null;
-      }
-
-      answer = doGetData(dataId);
-      if (cacheable && !(answer instanceof Stream)) {
-        myCachedData.put(dataId, answer == null ? NullResult.INSTANCE : answer);
-      }
-      return answer;
-    }
-
-    private @Nullable Object doGetData(@NotNull String dataId) {
-      Component component = SoftReference.dereference(myRef);
-      if (PlatformDataKeys.IS_MODAL_CONTEXT.is(dataId)) {
-        if (component == null) {
-          return null;
-        }
-        return IdeKeyEventDispatcher.isModalContext(component);
-      }
-      if (PlatformDataKeys.CONTEXT_COMPONENT.is(dataId)) {
-        return component;
-      }
-      if (PlatformDataKeys.MODALITY_STATE.is(dataId)) {
-        return component != null ? ModalityState.stateForComponent(component) : ModalityState.NON_MODAL;
-      }
-      Object data = calcData(dataId, component);
-      if (CommonDataKeys.EDITOR.is(dataId) || CommonDataKeys.HOST_EDITOR.is(dataId)) {
-        return validateEditor((Editor)data, component);
-      }
-      return data;
-    }
-
-    protected Object calcData(@NotNull String dataId, Component component) {
-      return ((DataManagerImpl)DataManager.getInstance()).getData(dataId, component);
-    }
-
-    @Override
-    @NonNls
-    public String toString() {
-      return "component=" + SoftReference.dereference(myRef);
-    }
-
-    @Override
-    public <T> T getUserData(@NotNull Key<T> key) {
-      //noinspection unchecked
-      return (T)getOrCreateMap().get(key);
-    }
-
-    @Override
-    public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-      getOrCreateMap().put(key, value);
-    }
-
-    private @NotNull Map<Key<?>, Object> getOrCreateMap() {
-      Map<Key<?>, Object> userData = myUserData;
-      if (userData == null) {
-        myUserData = userData = ContainerUtil.createWeakValueMap();
-      }
-      return userData;
+      super(component);
     }
   }
 }

@@ -65,9 +65,10 @@ class GrammarEngineTest : GrazieTestBase() {
             |Hello. world,, tot he.
             |This are my friend.""".trimMargin()
     val fixes = GrammarEngine.getTypos(text).toList()
-    assertEquals(3, fixes.size)
+    assertEquals(4, fixes.size)
     fixes[0].assertTypoIs(IntRange(12, 13), listOf(","), text)
     fixes[1].assertTypoIs(IntRange(15, 20), listOf("to the"), text)
     fixes[2].assertTypoIs(IntRange(23, 26), listOf("These"), text)
+    fixes[3].assertTypoIs(IntRange(28, 30), listOf("is"), text)
   }
 }

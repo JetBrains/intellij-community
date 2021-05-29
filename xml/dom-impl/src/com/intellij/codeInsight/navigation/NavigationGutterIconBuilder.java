@@ -53,7 +53,7 @@ public class NavigationGutterIconBuilder<T> {
   private final NotNullFunction<? super T, ? extends Collection<? extends PsiElement>> myConverter;
 
   protected NotNullLazyValue<Collection<? extends T>> myTargets;
-  private boolean myLazy;
+  protected boolean myLazy;
   protected @Tooltip String myTooltipText;
   protected @PopupTitle String myPopupTitle;
   protected @PopupContent String myEmptyText;
@@ -288,9 +288,16 @@ public class NavigationGutterIconBuilder<T> {
 
   @NotNull
   protected NavigationGutterIconRenderer createGutterIconRenderer(@NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
-                                                                @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
-                                                                boolean empty) {
+                                                                  @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
+                                                                  boolean empty) {
     return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty);
+  }
+
+  @NotNull
+  protected NavigationGutterIconRenderer createLazyGutterIconRenderer(@NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
+                                                                      @NotNull Computable<PsiElementListCellRenderer<?>> renderer,
+                                                                      boolean empty) {
+    return new MyNavigationGutterIconRenderer(this, myAlignment, myIcon, myTooltipText, pointers, renderer, empty, true);
   }
 
   @NotNull
@@ -357,6 +364,21 @@ public class NavigationGutterIconBuilder<T> {
                                    @NotNull Computable<PsiElementListCellRenderer<?>> cellRenderer,
                                    boolean empty) {
       super(builder.myPopupTitle, builder.myEmptyText, cellRenderer, pointers);
+      myAlignment = alignment;
+      myIcon = icon;
+      myTooltipText = tooltipText;
+      myEmpty = empty;
+    }
+
+    MyNavigationGutterIconRenderer(@NotNull NavigationGutterIconBuilder<?> builder,
+                                   @NotNull Alignment alignment,
+                                   Icon icon,
+                                   @Nullable @Tooltip String tooltipText,
+                                   @NotNull NotNullLazyValue<List<SmartPsiElementPointer<?>>> pointers,
+                                   @NotNull Computable<PsiElementListCellRenderer<?>> cellRenderer,
+                                   boolean empty,
+                                   boolean computeTargetsInBackground) {
+      super(builder.myPopupTitle, builder.myEmptyText, cellRenderer, pointers, computeTargetsInBackground);
       myAlignment = alignment;
       myIcon = icon;
       myTooltipText = tooltipText;

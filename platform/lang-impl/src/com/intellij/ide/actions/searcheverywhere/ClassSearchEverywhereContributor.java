@@ -296,7 +296,7 @@ public class ClassSearchEverywhereContributor extends AbstractGotoSEContributor 
     @NotNull
     @Override
     public SearchEverywhereContributor<Object> createContributor(@NotNull AnActionEvent initEvent) {
-      return new ClassSearchEverywhereContributor(initEvent);
+      return PSIPresentationBgRendererWrapper.wrapIfNecessary(new ClassSearchEverywhereContributor(initEvent));
     }
   }
 

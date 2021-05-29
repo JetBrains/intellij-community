@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -461,7 +462,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
         areAllToolWindowsHidden = event.getPresentation().getClientProperty(MaximizeEditorInSplitAction.Companion.getCURRENT_STATE_IS_MAXIMIZED_KEY());
       }
     }
-    Runnable runnable = AdvancedSettings.getBoolean("editor.position.mouse.cursor.on.doubleclicked.tab")
+    Runnable runnable = Registry.is("editor.position.mouse.cursor.on.doubleclicked.tab")
                         ? createKeepMousePositionRunnable(e)
                         : null;
     if (areAllToolWindowsHidden != null && (isEditorMaximized == null || isEditorMaximized == areAllToolWindowsHidden)) {
@@ -726,7 +727,7 @@ public final class EditorTabbedContainer implements CloseAction.CloseTarget {
           insets.top += layoutInsets.top;
           insets.bottom += layoutInsets.bottom;
 
-          if (Registry.is("ide.new.editor.tabs.ui")) {
+          if (ExperimentalUI.isNewEditorTabs()) {
             insets.top -= 7;
           }
           return super.getPreferredHeight() - insets.top - insets.bottom;

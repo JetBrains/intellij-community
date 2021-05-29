@@ -1,12 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplacePluginDownloadService;
 import com.intellij.ide.plugins.marketplace.PluginSignatureChecker;
-import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
-import com.intellij.ide.plugins.marketplace.statistics.enums.InstallationSourceEnum;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.internal.statistic.DeviceIdManager;
 import com.intellij.openapi.application.Application;
@@ -127,6 +125,8 @@ public final class PluginDownloader {
     return myReleaseVersion;
   }
 
+  public boolean isFromMarketplace() { return myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST); }
+
   public boolean isLicenseOptional() {
     return myLicenseOptional;
   }
@@ -185,35 +185,17 @@ public final class PluginDownloader {
       myOldFile = descriptor.isBundled() ? null : descriptor.getPluginPath();
     }
 
-    boolean isFromMarketplace = myPluginUrl.startsWith(ApplicationInfoImpl.DEFAULT_PLUGINS_HOST);
-    String previousVersion = (descriptor == null) ? null : descriptor.getVersion();
-
-    PluginManagerUsageCollector.pluginInstallationStarted(
-      myDescriptor,
-      isFromMarketplace ? InstallationSourceEnum.MARKETPLACE : InstallationSourceEnum.CUSTOM_REPOSITORY,
-      previousVersion
-    );
-
-    // download plugin
     myFile = tryDownloadPlugin(indicator, showMessageOnError);
-    if (myFile != null) {
-      if (Registry.is("marketplace.certificate.signature.check")) {
+    if (myFile == null) return null;
 
-        if (isFromMarketplace) {
-          if (!PluginSignatureChecker.verifyPluginByJetBrains(myDescriptor, myFile)) {
-            myShownErrors = true;
-            return null;
-          }
-        } else {
-          if (!PluginSignatureChecker.verifyPluginByCustomCertificates(myDescriptor, myFile)) {
-            myShownErrors = true;
-            return null;
-          }
-        }
+    if (Registry.is("marketplace.certificate.signature.check")) {
+      boolean certified = isFromMarketplace()
+                          ? PluginSignatureChecker.verifyPluginByJetBrains(myDescriptor, myFile, showMessageOnError)
+                          : PluginSignatureChecker.verifyPluginByCustomCertificates(myDescriptor, myFile, showMessageOnError);
+      if (!certified) {
+        myShownErrors = true;
+        return null;
       }
-    }
-    else {
-      return null;
     }
 
     IdeaPluginDescriptorImpl actualDescriptor = PluginDescriptorLoader.loadDescriptorFromArtifact(myFile.toPath(), myBuildNumber);
@@ -272,8 +254,9 @@ public final class PluginDownloader {
 
   public static String getMarketplaceDownloadsUUID() {
     try {
-      return DeviceIdManager.getOrGenerateId(new DeviceIdManager.DeviceIdToken() {}, "MarketplaceDownloads");
-    } catch (DeviceIdManager.InvalidDeviceIdTokenException e){
+      return DeviceIdManager.getOrGenerateId(new DeviceIdManager.DeviceIdToken() { }, "MarketplaceDownloads");
+    }
+    catch (DeviceIdManager.InvalidDeviceIdTokenException e) {
       return "";
     }
   }
@@ -333,19 +316,15 @@ public final class PluginDownloader {
     return PluginInstaller.installAndLoadDynamicPlugin(myFile.toPath(), ownerComponent, descriptorImpl);
   }
 
-  private @Nullable File tryDownloadPlugin(@NotNull ProgressIndicator indicator,
-                                           boolean showMessageOnError) {
+  private @Nullable File tryDownloadPlugin(@NotNull ProgressIndicator indicator, boolean showMessageOnError) {
     indicator.checkCanceled();
     indicator.setText2(IdeBundle.message("progress.downloading.plugin", getPluginName()));
 
-    MarketplacePluginDownloadService downloadService = myDownloadService != null ?
-                                                       myDownloadService :
-                                                       MarketplacePluginDownloadService.getInstance();
-
+    MarketplacePluginDownloadService downloader = myDownloadService != null ? myDownloadService : MarketplacePluginDownloadService.getInstance();
     try {
       return myOldFile != null ?
-             downloadService.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
-             downloadService.downloadPlugin(myPluginUrl, indicator);
+             downloader.downloadPluginViaBlockMap(myPluginUrl, myOldFile, indicator) :
+             downloader.downloadPlugin(myPluginUrl, indicator);
     }
     catch (IOException ex) {
       LOG.warn(ex);
@@ -394,27 +373,21 @@ public final class PluginDownloader {
     return node;
   }
 
-  private static @NotNull String getDownloadUrl(@NotNull PluginNode pluginNode,
-                                                @NotNull String host) throws IOException {
-    String downloadUrl = pluginNode.getDownloadUrl();
+  private static String getDownloadUrl(PluginNode pluginNode, String host) throws IOException {
+    String url = pluginNode.getDownloadUrl();
     try {
-      return new URI(downloadUrl).isAbsolute() ?
-             downloadUrl :
-             new URL(new URL(host), downloadUrl).toExternalForm();
+      return new URI(url).isAbsolute() ? url : new URL(new URL(host), url).toExternalForm();
     }
     catch (URISyntaxException e) {
       throw new IOException(e);
     }
   }
 
-  private static @NotNull String getUrl(@NotNull PluginId pluginId,
-                                        @Nullable BuildNumber buildNumber) {
-    Map<String, String> parameters = Map.of("id", pluginId.getIdString(),
-                                            "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
-                                            "uuid", getMarketplaceDownloadsUUID());
-
+  private static String getUrl(PluginId pluginId, @Nullable BuildNumber buildNumber) {
     return Urls.newFromEncoded(ApplicationInfoImpl.getShadowInstance().getPluginsDownloadUrl())
-      .addParameters(parameters)
+      .addParameters(Map.of("id", pluginId.getIdString(),
+                            "build", ApplicationInfoImpl.orFromPluginsCompatibleBuild(buildNumber),
+                            "uuid", getMarketplaceDownloadsUUID()))
       .toExternalForm();
   }
 }

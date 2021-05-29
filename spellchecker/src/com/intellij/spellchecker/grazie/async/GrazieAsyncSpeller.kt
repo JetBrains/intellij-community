@@ -16,8 +16,10 @@ internal class GrazieAsyncSpeller(project: Project, private val create: () -> Sp
 
   init {
     AsyncUtils.run(project) {
-      speller = create()
-      project.messageBus.syncPublisher(SpellCheckerEngineListener.TOPIC).onSpellerInitialized()
+      if (!project.isDisposed) {
+        speller = create()
+        project.messageBus.syncPublisher(SpellCheckerEngineListener.TOPIC).onSpellerInitialized()
+      }
     }
   }
 

@@ -30,7 +30,6 @@ class EclipseEml2ModulesTest {
   }
 
   private fun doTest(secondRootName: String) {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val testName = testName.methodName.removePrefix("test").decapitalize()
     val testRoot = eclipseTestDataRoot.resolve("eml").resolve(testName)
     val commonRoot = eclipseTestDataRoot.resolve("common").resolve("twoModulesWithClasspathStorage")

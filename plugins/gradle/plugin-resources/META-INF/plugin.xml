@@ -122,6 +122,8 @@
 
     <statistics.projectUsagesCollector implementation="org.jetbrains.plugins.gradle.statistics.GradleSettingsCollector"/>
     <statistics.counterUsagesCollector groupId="build.gradle.actions" version="1"/>
+
+    <externalSystem.runConfigurationEx implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationExtension"/>
     <externalSystem.runConfigurationImporter
         implementation="org.jetbrains.plugins.gradle.service.execution.GradleRunConfigurationImporter"/>
 
@@ -139,6 +141,8 @@
                  description="Allow to use Test Launcher API to run tests when applicable"/>
     <registryKey key="gradle.tooling.adjust.user.dir" defaultValue="true"
                  description="Change IDE user.dir system property during the Gradle tooling API call to have expected Gradle daemon CWD."/>
+    <registryKey key="gradle.improved.hotswap.detection" defaultValue="false"
+                 description="Enable improved hotswap detection when build is delegated to Gradle"/>
 
     <commandLineInspectionProjectConfigurator implementation="org.jetbrains.plugins.gradle.GradleCommandLineProjectConfigurator"/>
     <notificationGroup id="Gradle Notification Group" displayType="STICKY_BALLOON"/>

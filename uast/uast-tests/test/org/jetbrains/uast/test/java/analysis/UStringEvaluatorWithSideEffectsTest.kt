@@ -4,12 +4,14 @@ package org.jetbrains.uast.test.java.analysis
 import com.intellij.patterns.ElementPattern
 import com.intellij.patterns.PsiJavaPatterns
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
+import com.intellij.testFramework.PlatformTestUtil
+import junit.framework.TestCase
 import org.jetbrains.uast.UCallExpression
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.analysis.UStringBuilderEvaluator
-import org.jetbrains.uast.analysis.UStringEvaluator
-import org.jetbrains.uast.getUCallExpression
+import org.jetbrains.uast.UReturnExpression
+import org.jetbrains.uast.analysis.*
+import org.jetbrains.uast.getUastParentOfType
 
 class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
   fun `test StringBuilder toString evaluate`() {
@@ -33,17 +35,16 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb1.append("b");
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
       """.trimIndent(),
       """'I am StringBuilder''. Hi!''a'{'x'|'z''y'}'c''d''b'""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
-      },
-      retrieveElement = UElement?::getUCallExpression
+      }
     )
   }
 
@@ -64,14 +65,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb1.append("b");
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'a'{'x'|'y'}'c''b'",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(UStringBuilderEvaluator)
       )
     }
@@ -87,14 +87,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           sb.append("c");
           sb = sb.append("d");
           sb.append("e");
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a''b''c''d''e'""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -125,17 +124,16 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb1.append("f"); // ignore (no connection)
           
-          return sb.toStrin<caret>g(); // go to potential update from sb
+          return /*<caret>*/ sb.toString(); // go to potential update from sb
         }
       }
     """.trimIndent(),
-      """'a'{''|'c'}'\m/'{''|'e'}""",
+      """'a'{|'c'}'\m/'{|'e'}""",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
-      },
-      retrieveElement = UElement?::getUCallExpression
+      }
     )
   }
 
@@ -149,14 +147,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           StringBuilder sb2 = sb1.append("c");
           sb2.append("d");
           sb2.append("e");
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a''b''c''d''e'""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -176,14 +173,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             sb.append("c");
           }
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a'{'b'|'c'}""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -192,25 +188,24 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
 
   fun `test StringBuilder reassignment and side effect change in if`() {
     doTest(
-      """"
-      class MyFile {
-      String a(boolean param) {
-        StringBuilder sb = new StringBuilder("a");
-
-        if (param) {
-          sb.append("b");
-        } else {
-          sb = new StringBuilder("c");
-        }
-
-        return sb.toStrin<caret>g();
+      """
+        class MyFile {
+          String a(boolean param) {
+            StringBuilder sb = new StringBuilder("a");
+    
+            if (param) {
+              sb.append("b");
+            } else {
+              sb = new StringBuilder("c");
+            }
+    
+            return /*<caret>*/ sb.toString();
+          }
       }
-    }
     """.trimIndent(),
       """{'a''b'|'c'}""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -231,14 +226,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb1.append("e");
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a''b''c'""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -256,7 +250,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           if (param) {
             sb.append("c");
             if (!param) {
-              sb1.append("d")
+              sb1.append("d");
             } else {
               sb1.append("e");
             }
@@ -264,14 +258,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             sb1.append("f");
           }
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
       """'a''b'{'c''d'|'c''e'|'f'}""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -291,14 +284,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
               sb2.append("d");
             }
             
-            return sb.toStrin<caret>g();
+            return /*<caret>*/ sb.toString();
           }
         }
       """.trimIndent(),
       """'a''b'{|'c''d'}""",
-      retrieveElement = UElement?::getUCallExpression,
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           builderEvaluators = listOf(UStringBuilderEvaluator)
         )
       }
@@ -315,14 +307,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           
           sb2.append("dd");
           
-          return sb.toStrin<caret>g();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'a'",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
@@ -344,14 +335,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             sb.append("e");
           }
   
-          return sb.toSt<caret>ring();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'aaa'{'d'|'e'}",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
@@ -379,14 +369,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             sb.append("d");
           }
   
-          return sb.toSt<caret>ring();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'a'{'1'|'c'|'d'}",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
@@ -402,14 +391,13 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
           sb = new StringBuilder("b");
           sb.append("c");
    
-          return sb.toSt<caret>ring();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'b''c'",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
@@ -429,25 +417,99 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
             
             sb.append("d");
    
-          return sb.toSt<caret>ring();
+          return /*<caret>*/ sb.toString();
         }
       }
     """.trimIndent(),
     "'0''aaa''bbb''d'",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         builderEvaluators = listOf(CloneAwareStringBuilderEvaluator())
       )
     }
   )
 
-  private class CloneAwareStringBuilderEvaluator : UStringEvaluator.BuilderLikeExpressionEvaluator<PartiallyKnownString?> by UStringBuilderEvaluator {
-    override val methodDescriptions: Map<ElementPattern<PsiMethod>, (UCallExpression, PartiallyKnownString?, UStringEvaluator, UStringEvaluator.Configuration, Boolean) -> PartiallyKnownString?>
-      get() = UStringBuilderEvaluator.methodDescriptions + mapOf(
-        PsiJavaPatterns.psiMethod().withName("clone") to { _, partiallyKnownString, _, _, _ ->
-          partiallyKnownString
+  fun `test StringBuilder result from method usages`() {
+    doTest(
+      """
+        class MyFile {
+          String build(StringBuilder sb) {
+            sb.append("-s1");
+            sb.append("---").append("s2");
+            return /*<caret>*/ sb.toString();
+          }
+        
+          String usage1() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("p1");
+            build(sb);
+          }
+          
+          String usage2() {
+            build(new StringBuilder().append("p2"));
+          }
+          
+          String usage3_1(StringBuilder sb) {
+            sb.append("---");
+            build(sb.append("p3_1"));
+          } 
+          
+          String usage3_2(StringBuilder sb) {
+            sb.append("p3_2");
+            usage3_1(sb);
+          }
         }
+      """.trimIndent(),
+      """{'p1'|'p2'|NULL'p3_2''---''p3_1'}'-s1''---''s2'""",
+      configuration = {
+        UNeDfaConfiguration(
+          builderEvaluators = listOf(UStringBuilderEvaluator),
+          parameterUsagesDepth = 3,
+          usagesSearchScope = LocalSearchScope(myFixture.file)
+        )
+      }
+    )
+  }
+
+  fun `test many appends`() {
+    val size = 400
+    val file = myFixture.configureByText("MyFile.java", """
+      class MyFile {
+        String b() {
+          return "b";
+        }
+      
+        String a() {
+          StringBuilder sb = new StringBuilder();
+          ${(1..size).map { """sb.append("a").append(b())""" }.joinToString("\n          ") { it }}
+          return /*<caret>*/ sb.toString() ;
+        }
+      }
+    """.trimIndent())
+
+    myFixture.doHighlighting()
+
+    val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.getUastParentOfType<UReturnExpression>()?.returnExpression
+                         ?: fail("Cannot find UElement at caret")
+
+    val expected = "'a''b'".repeat(size)
+    PlatformTestUtil.startPerformanceTest("calculate value of many assignments", 1000) {
+      val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
+        methodCallDepth = 2,
+        methodsToAnalyzePattern = PsiJavaPatterns.psiMethod().withName("b"),
+        builderEvaluators = listOf(UStringBuilderEvaluator),
+      )) ?: fail("Cannot evaluate string")
+      TestCase.assertEquals(expected, pks.debugConcatenation)
+    }.attempts(2).assertTiming()
+  }
+
+  private class CloneAwareStringBuilderEvaluator : BuilderLikeExpressionEvaluator<PartiallyKnownString> by UStringBuilderEvaluator {
+    override val methodDescriptions: Map<ElementPattern<PsiMethod>, BuilderMethodEvaluator<PartiallyKnownString>>
+      get() = UStringBuilderEvaluator.methodDescriptions + mapOf(
+        PsiJavaPatterns.psiMethod().withName("clone") to
+          BuilderMethodEvaluator { _, partiallyKnownString, _, _, _ ->
+            partiallyKnownString
+          }
       )
   }
 }

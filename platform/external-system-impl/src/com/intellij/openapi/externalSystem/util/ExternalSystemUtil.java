@@ -356,6 +356,7 @@ public final class ExternalSystemUtil {
     boolean isPreviewMode = importSpec.isPreviewMode();
     ProgressExecutionMode progressExecutionMode = importSpec.getProgressExecutionMode();
     boolean reportRefreshError = importSpec.isReportRefreshError();
+    ThreeState isNavigateToError = importSpec.isNavigateToError();
 
     File projectFile = new File(externalProjectPath);
     final String projectName;
@@ -499,6 +500,7 @@ public final class ExternalSystemUtil {
                                                ExternalSystemBundle.message("build.event.title.sync"));
                   contentDescriptor.setActivateToolWindowWhenAdded(activateToolWindow);
                   contentDescriptor.setActivateToolWindowWhenFailed(reportRefreshError);
+                  contentDescriptor.setNavigateToError(isNavigateToError);
                   contentDescriptor.setAutoFocusContent(reportRefreshError);
                   return contentDescriptor;
                 })
@@ -1197,6 +1199,16 @@ public final class ExternalSystemUtil {
     }
   }
 
+  /**
+   * Get external project info containing custom data cache
+   * for an external build system project of type projectSystemId at externalProjectPath
+   * @param project IDEA project
+   * @param projectSystemId external build system type id
+   * @param externalProjectPath path to the external project
+   * @return project info, or null if there is no such project, or project info cache is not yet ready
+   * To wait for project info to become available, use
+   * {@link com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManager#runWhenInitialized(Runnable) ExternalProjectsManager#runWhenInitialized}
+   */
   @Nullable
   public static ExternalProjectInfo getExternalProjectInfo(@NotNull final Project project,
                                                            @NotNull final ProjectSystemId projectSystemId,

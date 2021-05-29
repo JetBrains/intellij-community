@@ -20,11 +20,11 @@ class DependencyModifierService(private val myProject: Project) {
   }
 
   fun declaredDependencies(module: Module): List<DeclaredDependency> = read(module) {
-    it.declaredDependencies(module);
+    it.declaredDependencies(module)
   }
 
   fun declaredRepositories(module: Module): List<UnifiedDependencyRepository> = read(module) {
-    it.declaredRepositories(module);
+    it.declaredRepositories(module)
   }
 
   fun supports(module: Module): Boolean =

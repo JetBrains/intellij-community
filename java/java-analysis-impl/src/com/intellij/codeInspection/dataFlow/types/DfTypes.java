@@ -71,12 +71,12 @@ public final class DfTypes {
   /**
    * A true boolean constant
    */
-  public static final DfBooleanConstantType TRUE = new DfBooleanConstantType(true);
+  public static final @NotNull DfBooleanConstantType TRUE = new DfBooleanConstantType(true);
 
   /**
    * A false boolean constant
    */
-  public static final DfBooleanConstantType FALSE = new DfBooleanConstantType(false);
+  public static final @NotNull DfBooleanConstantType FALSE = new DfBooleanConstantType(false);
 
   /**
    * @param value boolean value

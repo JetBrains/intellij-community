@@ -38,13 +38,6 @@ public interface DfReferenceType extends DfType {
   }
 
   /**
-   * @return true if this type contains references only to local objects (not leaked from the current context to unknown methods)
-   */
-  default boolean isLocal() {
-    return false;
-  }
-
-  /**
    * @return special field if additional information is known about the special field of all referenced objects
    */
   @Nullable
@@ -95,15 +88,6 @@ public interface DfReferenceType extends DfType {
    */
   default DfReferenceType dropSpecialField() {
     return this;
-  }
-
-  /**
-   * @param type type to check
-   * @return true if the supplied type is a reference type that contains references only
-   * to local objects (not leaked from the current context to unknown methods)
-   */
-  static boolean isLocal(DfType type) {
-    return type instanceof DfReferenceType && ((DfReferenceType)type).isLocal();
   }
 
   /**
@@ -183,6 +167,27 @@ public interface DfReferenceType extends DfType {
       return getSpecialFieldType();
     }
     return DfType.TOP;
+  }
+
+  @Override
+  default boolean mayAlias(DfType otherType) {
+    if (isLocal() || otherType.isLocal()) return false;
+    if (otherType.meet(this) != BOTTOM) {
+      // possible aliasing
+      return true;
+    }
+    if (SpecialField.fromQualifierType(otherType) == SpecialField.COLLECTION_SIZE &&
+        SpecialField.fromQualifierType(this) == SpecialField.COLLECTION_SIZE) {
+      // Collection size is sometimes derived from another (incompatible) collection
+      // e.g. keySet Set size is affected by Map size.
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  default boolean isImmutableQualifier() {
+    return getMutability() == Mutability.UNMODIFIABLE;
   }
 
   @Override

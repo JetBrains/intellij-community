@@ -18,10 +18,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public final class WslDistributionManagerImpl extends WslDistributionManager {
 
@@ -50,7 +50,7 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
   }
 
   @Override
-  public @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions() throws IOException {
+  public @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions() throws IOException, IllegalStateException {
     checkEdtAndReadAction();
     Path wslExe = WSLDistribution.findWslExe();
     if (wslExe == null) {
@@ -66,30 +66,52 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
     catch (ExecutionException e) {
       throw new IOException("Failed to run " + commandLine.getCommandLineString(), e);
     }
+    // Windows Subsystem for Linux has no installed distributions
+    if (output.getExitCode() != 0 && output.getStdout().endsWith("https://aka.ms/wslstore")) {
+      return Collections.emptyList();
+    }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
-      String details = StringUtil.join(ContainerUtil.newArrayList(
-        "timeout: " + output.isTimeout(),
-        "exitCode: " + output.getExitCode(),
-        "stdout: " + output.getStdout(),
-        "stderr: " + output.getStderr()
-      ), ", ");
-      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + details);
+      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output);
     }
     return parseWslVerboseListOutput(output.getStdoutLines());
   }
 
-  static @NotNull List<WslDistributionAndVersion> parseWslVerboseListOutput(@NotNull List<String> stdoutLines) {
-    return stdoutLines.stream().skip(1).map(l -> {
+  /**
+   * @throws IllegalStateException in case of parsing error
+   */
+  static @NotNull List<WslDistributionAndVersion> parseWslVerboseListOutput(@NotNull List<String> stdoutLines)
+    throws IllegalStateException {
+    if (stdoutLines.isEmpty()) {
+      throw new IllegalStateException("[wsl -l -v] parsing error: stdout is empty");
+    }
+
+    // skip the first line: "NAME  STATE  VERSION"
+    stdoutLines = ContainerUtil.subList(stdoutLines, 1);
+    final List<WslDistributionAndVersion> result = new ArrayList<>(stdoutLines.size());
+
+    for (String l: stdoutLines) {
       List<String> words = StringUtil.split(l, " ");
-      int size = words.size();
-      if (size >= 3) {
-        String distributionName = words.get(size - 3);
-        if (!INTERNAL_DISTRIBUTIONS.contains(distributionName)) {
-          return new WslDistributionAndVersion(distributionName, StringUtil.parseInt(words.get(size - 1), -1));
-        }
+      if ("*".equals(ContainerUtil.getFirstItem(words))) {
+        words = ContainerUtil.subList(words, 1);
       }
-      return null;
-    }).filter(v -> v != null).collect(Collectors.toList());
+
+      final String distributionName = ContainerUtil.getFirstItem(words);
+      if (StringUtil.isEmpty(distributionName)) {
+        throw new IllegalStateException("[wsl -l -v] parsing error: malformed distribution name" +
+                                        "\nline: " + l +
+                                        "\nstdout: " + StringUtil.join(stdoutLines, "\n"));
+      }
+      final int version = StringUtil.parseInt(ContainerUtil.getLastItem(words), -1);
+      if (version == -1) {
+        throw new IllegalStateException("[wsl -l -v] parsing error: malformed version" +
+                                        "\nline: " + l +
+                                        "\nstdout: " + StringUtil.join(stdoutLines, "\n"));
+      }
+      if (!INTERNAL_DISTRIBUTIONS.contains(distributionName)) {
+        result.add(new WslDistributionAndVersion(distributionName, version));
+      }
+    }
+    return result;
   }
 
   private static @Nullable Pair<GeneralCommandLine, List<String>> doFetchDistributionsFromWslCli() throws IOException {
@@ -109,13 +131,7 @@ public final class WslDistributionManagerImpl extends WslDistributionManager {
       throw new IOException("Failed to run " + commandLine.getCommandLineString(), e);
     }
     if (output.isTimeout() || output.getExitCode() != 0 || !output.getStderr().isEmpty()) {
-      String details = StringUtil.join(ContainerUtil.newArrayList(
-        "timeout: " + output.isTimeout(),
-        "exitCode: " + output.getExitCode(),
-        "stdout: " + output.getStdout(),
-        "stderr: " + output.getStderr()
-      ), ", ");
-      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + details);
+      throw new IOException("Failed to run " + commandLine.getCommandLineString() + ": " + output);
     }
     List<@NlsSafe String> msIds = ContainerUtil.filter(output.getStdoutLines(true), distribution -> {
       return !INTERNAL_DISTRIBUTIONS.contains(distribution);

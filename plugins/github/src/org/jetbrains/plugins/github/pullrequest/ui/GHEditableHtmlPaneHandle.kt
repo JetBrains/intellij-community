@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.CommonBundle
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
@@ -11,7 +12,6 @@ import org.jetbrains.plugins.github.pullrequest.comment.ui.GHPreLoadingSubmittab
 import org.jetbrains.plugins.github.pullrequest.comment.ui.GHSubmittableTextFieldFactory
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.text.BadLocationException

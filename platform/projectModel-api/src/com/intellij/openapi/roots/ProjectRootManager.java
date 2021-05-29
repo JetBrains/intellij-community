@@ -119,13 +119,6 @@ public abstract class ProjectRootManager extends SimpleModificationTracker {
   public abstract void setProjectSdk(@Nullable Sdk sdk);
 
   /**
-   * @deprecated use {@link #setProjectSdk(Sdk)} or {@link #setProjectSdkName(String, String)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public abstract void setProjectSdkName(@NotNull String name);
-
-  /**
    * Sets the name of the JDK to be used for the project
    * @param sdkTypeName the {@link SdkTypeId#getName()} of the SDK type
    */

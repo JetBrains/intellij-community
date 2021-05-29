@@ -6,10 +6,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonShortcuts
+import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.editor.actions.IncrementalFindAction
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypes
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.ComponentValidator
@@ -150,6 +152,13 @@ class SubmittableTextField(
           scrollPane.isOpaque = false
         }
       }
+
+      override fun getData(dataId: String): Any? {
+        if (PlatformDataKeys.FILE_EDITOR.`is`(dataId)) {
+          return editor?.let { TextEditorProvider.getInstance().getTextEditor(it) } ?: super.getData(dataId)
+        }
+        return super.getData(dataId)
+      }
     }.apply {
       putClientProperty(UIUtil.HIDE_EDITOR_FROM_DATA_CONTEXT_PROPERTY, true)
       setOneLineMode(false)
@@ -163,6 +172,7 @@ class SubmittableTextField(
     }
   }
 
+  @Suppress("DialogTitleCapitalization")
   private fun createSubmitButton(@NlsActions.ActionText actionName: String) =
     InlineIconButton(
       CollaborationToolsIcons.Send, CollaborationToolsIcons.SendHovered,

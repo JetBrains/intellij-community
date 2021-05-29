@@ -2,6 +2,7 @@ package com.intellij.ml.local.models.frequency.classes
 
 import com.intellij.ml.local.models.api.LocalModelStorage
 import com.intellij.ml.local.util.StorageUtil
+import com.intellij.ml.local.util.StorageUtil.getOrLogError
 import com.intellij.ml.local.util.StorageUtil.isEmpty
 import com.intellij.util.Processor
 import com.intellij.util.io.EnumeratorStringDescriptor
@@ -67,7 +68,7 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
     }
   }
 
-  fun get(className: String): Int? = persistentStorage.get(className)
+  fun get(className: String): Int? = persistentStorage.getOrLogError(className)
 
   private fun toMemoryStorage() {
     memoryStorage.clear()

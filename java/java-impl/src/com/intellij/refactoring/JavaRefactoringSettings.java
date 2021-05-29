@@ -6,7 +6,6 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "RefactoringSettings", storages = @Storage("baseRefactoring.xml"))
@@ -48,12 +47,6 @@ public class JavaRefactoringSettings implements PersistentStateComponent<JavaRef
 
   public String INTRODUCE_FIELD_VISIBILITY;
   public int PULL_UP_MEMBERS_JAVADOC;
-  /**
-   * @deprecated no read usages of preview option
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public boolean PUSH_DOWN_PREVIEW_USAGES;
 
   public boolean INLINE_METHOD_THIS;
   public boolean INLINE_METHOD_KEEP;

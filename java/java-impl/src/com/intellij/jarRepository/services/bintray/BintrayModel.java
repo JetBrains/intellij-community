@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.jarRepository.services.bintray;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,6 +12,7 @@ import java.util.List;
  * @deprecated since Bintray service is scheduled for sunsetting in May 2021
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 public class BintrayModel {
 
   public static class Repository {

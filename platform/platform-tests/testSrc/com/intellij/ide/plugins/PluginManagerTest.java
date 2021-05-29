@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.platform.util.plugins.DataLoader;
 import com.intellij.platform.util.plugins.LocalFsDataLoader;
@@ -30,7 +31,6 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.intellij.ide.plugins.DynamicPluginsTestUtil.loadDescriptorInTest;
 import static com.intellij.openapi.util.io.IoTestUtil.assumeSymLinkCreationIsSupported;
@@ -187,17 +187,22 @@ public class PluginManagerTest {
     assertThat(configPath.resolve(DisabledPluginsState.DISABLED_PLUGINS_FILENAME)).hasContent("a" + System.lineSeparator());
   }
 
-  private static void assertPluginPreInstalled(@NotNull PluginLoadingResult loadingResult, PluginId pluginId) {
+  private static void assertPluginPreInstalled(PluginLoadingResult loadingResult, PluginId pluginId) {
     assertTrue("Plugin should be pre installed", loadingResult.shadowedBundledIds.contains(pluginId));
   }
 
-  private static void doPluginSortTest(@NotNull String testDataName, boolean isBundled)
-    throws IOException, XMLStreamException {
+  private static void doPluginSortTest(String testDataName, boolean isBundled) throws IOException, XMLStreamException {
     PluginManagerCore.getAndClearPluginLoadingErrors();
     PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
-    String actual = StringUtil.join(loadPluginResult.sortedPlugins, o -> (o.isEnabled() ? "+ " : "  ") + o.getPluginId().getIdString(), "\n") +
-                    "\n\n" + PluginManagerCore.getAndClearPluginLoadingErrors().stream().map(html -> html.toString().replace("<br/>", "\n")).collect(Collectors.joining("\n"));
-    UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), actual);
+    StringBuilder text = new StringBuilder();
+    for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.pluginSet.loadedPlugins) {
+      text.append(descriptor.isEnabled() ? "+ " : "  ").append(descriptor.getPluginId().getIdString()).append('\n');
+    }
+    text.append("\n\n");
+    for (HtmlChunk html : PluginManagerCore.getAndClearPluginLoadingErrors()) {
+      text.append(html.toString().replace("<br/>", "\n")).append('\n');
+    }
+    UsefulTestCase.assertSameLinesWithFile(new File(getTestDataPath(), testDataName + ".txt").getPath(), text.toString());
   }
 
   private static void assertConvertsTo(String untilBuild, String result) {
@@ -226,7 +231,8 @@ public class PluginManagerTest {
   private static @NotNull PluginManagerState loadAndInitializeDescriptors(@NotNull String testDataName, boolean isBundled)
     throws IOException, XMLStreamException {
     Path file = Path.of(getTestDataPath(), testDataName);
-    DescriptorListLoadingContext parentContext = new DescriptorListLoadingContext(Collections.emptySet(), createPluginLoadingResult(true), false, false, false);
+    DescriptorListLoadingContext parentContext =
+      new DescriptorListLoadingContext(Collections.emptySet(), createPluginLoadingResult(true), false, false, false, false);
 
     XmlElement root = XmlDomReader.readXmlAsModel(Files.newInputStream(file));
     PathResolver pathResolver = new PathResolver() {
@@ -264,6 +270,15 @@ public class PluginManagerTest {
         }
         throw new AssertionError("Unexpected: " + relativePath);
       }
+
+      @NotNull
+      @Override
+      public RawPluginDescriptor resolveModuleFile(@NotNull ReadModuleContext readContext,
+                                                   @NotNull DataLoader dataLoader,
+                                                   @NotNull String path,
+                                                   @Nullable RawPluginDescriptor readInto) {
+        return resolvePath(readContext, dataLoader, path, readInto);
+      }
     };
 
     for (XmlElement element : root.children) {
@@ -272,12 +287,8 @@ public class PluginManagerTest {
       }
 
       Path pluginPath = Path.of(Objects.requireNonNull(element.getAttributeValue("url")));
-      IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt.createFromDescriptor(pluginPath,
-                                                                                        isBundled,
-                                                                                        elementAsBytes(element),
-                                                                                        parentContext,
-                                                                                        pathResolver,
-                                                                                        new LocalFsDataLoader(pluginPath));
+      IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt.createFromDescriptor(
+        pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver, new LocalFsDataLoader(pluginPath));
       parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
     }
     parentContext.close();
@@ -327,11 +338,16 @@ public class PluginManagerTest {
         else {
           IdeaPluginDescriptorImpl optionalConfigPerId = dependency.subDescriptor;
           if (optionalConfigPerId == null) {
-            sb.append("\n    <depends optional=\"true\" config-file=\"???\">").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
+            sb.append("\n    <depends optional=\"true\" config-file=\"???\">")
+              .append(escape.apply(dependency.getPluginId().getIdString()))
+              .append("</depends>");
           }
           else {
               sb.append("\n    <depends optional=\"true\" config-file=\"")
-                .append(optionalConfigPerId.getPluginPath().getFileName().toString()).append("\">").append(escape.apply(dependency.getPluginId().getIdString())).append("</depends>");
+                .append(optionalConfigPerId.getPluginPath().getFileName().toString())
+                .append("\">")
+                .append(escape.apply(dependency.getPluginId().getIdString()))
+                .append("</depends>");
           }
         }
       }

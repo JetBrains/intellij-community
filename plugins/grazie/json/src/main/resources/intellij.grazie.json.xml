@@ -1,0 +1,9 @@
+<idea-plugin package="com.intellij.grazie.ide.language.json">
+  <dependencies>
+    <plugin id="com.intellij.modules.json"/>
+  </dependencies>
+
+  <extensions defaultExtensionNs="com.intellij.grazie">
+    <grammar.strategy language="JSON" implementationClass="com.intellij.grazie.ide.language.json.JsonGrammarCheckingStrategy"/>
+  </extensions>
+</idea-plugin>

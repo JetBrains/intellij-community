@@ -2,11 +2,9 @@
 
 package com.intellij.codeInspection.dataFlow.java.inst;
 
-import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
-import com.intellij.codeInspection.dataFlow.lang.ir.BranchingInstruction;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -15,36 +13,30 @@ import com.intellij.codeInspection.dataFlow.value.DfaCondition;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaWrappedValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
-import static com.intellij.psi.JavaTokenType.*;
 
-public class BooleanBinaryInstruction extends ExpressionPushingInstruction implements BranchingInstruction {
-  // AND and OR for boolean arguments only
-  private static final TokenSet ourSignificantOperations = TokenSet.create(EQ, EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, AND, OR);
-
-  /**
-   * A special operation to express string comparison by content (like equals() method does).
-   * Used to desugar switch statements
-   */
-  public static final IElementType STRING_EQUALITY_BY_CONTENT = EQ;
-
-  private final @Nullable IElementType myOpSign;
+/**
+ * Evaluate comparison like a < b
+ */
+public class BooleanBinaryInstruction extends ExpressionPushingInstruction {
+  private final @NotNull RelationType myRelation;
+  private final boolean myForceEqualityByContent;
 
   /**
-   * @param opSign sign of the operation
-   * @param anchor to bind instruction to
+   * @param relation               operation relation
+   * @param forceEqualityByContent if true, equality by content will be used instead of reference equality where supported
+   *                               (e.g., for strings)
+   * @param anchor                 to bind instruction to
    */
-  public BooleanBinaryInstruction(IElementType opSign, @Nullable DfaAnchor anchor) {
+  public BooleanBinaryInstruction(@NotNull RelationType relation, boolean forceEqualityByContent, @Nullable DfaAnchor anchor) {
     super(anchor);
-    myOpSign = opSign == XOR ? NE : ourSignificantOperations.contains(opSign) ? opSign : null;
+    myRelation = relation;
+    myForceEqualityByContent = forceEqualityByContent;
   }
 
   @Override
@@ -52,10 +44,49 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction imple
     DfaValue dfaRight = stateBefore.pop();
     DfaValue dfaLeft = stateBefore.pop();
 
-    if (myOpSign == AND || myOpSign == OR) {
-      return handleAndOrBinop(interpreter, stateBefore, dfaRight, dfaLeft);
+    if ((myRelation == RelationType.EQ || myRelation == RelationType.NE) &&
+        !myForceEqualityByContent && shouldCompareByEquals(stateBefore, dfaLeft, dfaRight)) {
+      ArrayList<DfaInstructionState> states = new ArrayList<>(2);
+      DfaMemoryState equality = stateBefore.createCopy();
+      DfaCondition condition = dfaLeft.eq(dfaRight);
+      if (equality.applyCondition(condition)) {
+        pushResult(interpreter, equality, BOOLEAN);
+        states.add(nextState(interpreter, equality));
+      }
+      if (stateBefore.applyCondition(condition.negate())) {
+        pushResult(interpreter, stateBefore, booleanValue(myRelation == RelationType.NE));
+        states.add(nextState(interpreter, stateBefore));
+      }
+      return states.toArray(DfaInstructionState.EMPTY_ARRAY);
     }
-    return handleRelationBinop(interpreter, stateBefore, dfaRight, dfaLeft);
+    RelationType[] relations = splitRelation(myRelation);
+
+    ArrayList<DfaInstructionState> states = new ArrayList<>(relations.length);
+
+    for (int i = 0; i < relations.length; i++) {
+      RelationType relation = relations[i];
+      DfaCondition condition = dfaLeft.cond(relation, dfaRight);
+      if (condition == DfaCondition.getFalse()) continue;
+      boolean result = myRelation.isSubRelation(relation);
+      if (condition == DfaCondition.getTrue()) {
+        pushResult(interpreter, stateBefore, booleanValue(result));
+        return nextStates(interpreter, stateBefore);
+      }
+      final DfaMemoryState copy = i == relations.length - 1 && !states.isEmpty() ? stateBefore : stateBefore.createCopy();
+      if (copy.applyCondition(condition) &&
+          copy.meetDfType(dfaLeft, copy.getDfType(dfaLeft).correctForRelationResult(myRelation, result)) &&
+          copy.meetDfType(dfaRight, copy.getDfType(dfaRight).correctForRelationResult(myRelation, result))) {
+        pushResult(interpreter, copy, booleanValue(result));
+        states.add(nextState(interpreter, copy));
+      }
+    }
+    if (states.isEmpty()) {
+      // Neither of relations could be applied: likely comparison with NaN; do not split the state in this case, just push false
+      pushResult(interpreter, stateBefore, FALSE);
+      return nextStates(interpreter, stateBefore);
+    }
+
+    return states.toArray(DfaInstructionState.EMPTY_ARRAY);
   }
 
   private static RelationType @NotNull [] splitRelation(RelationType relationType) {
@@ -85,81 +116,8 @@ public class BooleanBinaryInstruction extends ExpressionPushingInstruction imple
            TypeConstraint.fromDfType(memState.getDfType(dfaRight)).isComparedByEquals();
 
   }
-  
-  private DfaInstructionState @NotNull [] handleRelationBinop(@NotNull DataFlowInterpreter runner,
-                                                              @NotNull DfaMemoryState memState,
-                                                              @NotNull DfaValue dfaRight,
-                                                              @NotNull DfaValue dfaLeft) {
-    if((myOpSign == EQEQ || myOpSign == NE) && shouldCompareByEquals(memState, dfaLeft, dfaRight)) {
-      ArrayList<DfaInstructionState> states = new ArrayList<>(2);
-      DfaMemoryState equality = memState.createCopy();
-      DfaCondition condition = dfaLeft.eq(dfaRight);
-      if (equality.applyCondition(condition)) {
-        pushResult(runner, equality, BOOLEAN);
-        states.add(nextState(runner, equality));
-      }
-      if (memState.applyCondition(condition.negate())) {
-        pushResult(runner, memState, booleanValue(myOpSign == NE));
-        states.add(nextState(runner, memState));
-      }
-      return states.toArray(DfaInstructionState.EMPTY_ARRAY);
-    }
-    RelationType relationType = myOpSign == STRING_EQUALITY_BY_CONTENT ? RelationType.EQ :
-                                DfaPsiUtil.getRelationByToken(myOpSign);
-    if (relationType == null) {
-      pushResult(runner, memState, BOOLEAN);
-      return nextStates(runner, memState);
-    }
-    RelationType[] relations = splitRelation(relationType);
-
-    ArrayList<DfaInstructionState> states = new ArrayList<>(relations.length);
-
-    for (int i = 0; i < relations.length; i++) {
-      RelationType relation = relations[i];
-      DfaCondition condition = dfaLeft.cond(relation, dfaRight);
-      if (condition == DfaCondition.getFalse()) continue;
-      boolean result = relationType.isSubRelation(relation);
-      if (condition == DfaCondition.getTrue()) {
-        pushResult(runner, memState, booleanValue(result));
-        return nextStates(runner, memState);
-      }
-      final DfaMemoryState copy = i == relations.length - 1 && !states.isEmpty() ? memState : memState.createCopy();
-      if (copy.applyCondition(condition) &&
-          copy.meetDfType(dfaLeft, copy.getDfType(dfaLeft).correctForRelationResult(relationType, result)) &&
-          copy.meetDfType(dfaRight, copy.getDfType(dfaRight).correctForRelationResult(relationType, result))) {
-        pushResult(runner, copy, booleanValue(result));
-        states.add(nextState(runner, copy));
-      }
-    }
-    if (states.isEmpty()) {
-      // Neither of relations could be applied: likely comparison with NaN; do not split the state in this case, just push false
-      pushResult(runner, memState, FALSE);
-      return nextStates(runner, memState);
-    }
-
-    return states.toArray(DfaInstructionState.EMPTY_ARRAY);
-  }
-
-  private DfaInstructionState @NotNull [] handleAndOrBinop(@NotNull DataFlowInterpreter runner,
-                                                           @NotNull DfaMemoryState memState,
-                                                           @NotNull DfaValue dfaRight, 
-                                                           @NotNull DfaValue dfaLeft) {
-    List<DfaInstructionState> result = new ArrayList<>(2);
-    boolean or = myOpSign == OR;
-    DfaMemoryState copy = memState.createCopy();
-    DfaCondition cond = dfaRight.eq(booleanValue(or));
-    if (copy.applyCondition(cond)) {
-      pushResult(runner, copy, booleanValue(or));
-      result.add(nextState(runner, copy));
-    }
-    if (memState.applyCondition(cond.negate())) {
-      pushResult(runner, memState, dfaLeft);
-      result.add(nextState(runner, memState));
-    }
-    return result.toArray(DfaInstructionState.EMPTY_ARRAY);
-  }
 
   public String toString() {
-    return "BOOLEAN_OP " + myOpSign;
+    return "BOOLEAN_OP " + myRelation;
   }
 }

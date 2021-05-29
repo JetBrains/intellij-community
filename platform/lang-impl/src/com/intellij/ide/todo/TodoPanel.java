@@ -176,7 +176,7 @@ public abstract class TodoPanel extends SimpleToolWindowPanel implements Occuren
     group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this));
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(IdeActions.GROUP_VERSION_CONTROLS));
-    PopupHandler.installPopupHandler(myTree, group, ActionPlaces.TODO_VIEW_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myTree, group, ActionPlaces.TODO_VIEW_POPUP);
 
     myUsagePreviewPanel = new UsagePreviewPanel(myProject, FindInProjectUtil.setupViewPresentation(false, new FindModel()));
     Disposer.register(this, myUsagePreviewPanel);

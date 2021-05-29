@@ -154,7 +154,8 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
                                 new ProjectEmptyCompletionNotifier();
 
     myLookupManagerListener = evt -> {
-      if (evt.getNewValue() != null) {
+      @Nullable Lookup newLookup = (Lookup)evt.getNewValue();
+      if (newLookup != null && newLookup.getEditor() == myEditor) {
         LOG.error("An attempt to change the lookup during completion, phase = " + CompletionServiceImpl.getCompletionPhase());
       }
     };

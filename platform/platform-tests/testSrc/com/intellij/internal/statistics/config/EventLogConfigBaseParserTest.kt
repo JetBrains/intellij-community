@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.config
 
 import com.intellij.internal.statistic.config.EventLogConfigParserException
@@ -59,12 +59,13 @@ abstract class EventLogConfigBaseParserTest {
       Assert.assertNull(settings.getEndpoint(endpoint))
     }
 
+    val options = settings.options
     for (option in existingOptions) {
-      Assert.assertEquals(option.value, settings.getOption(option.key))
+      Assert.assertEquals(option.value, options[option.key])
     }
 
     for (option in notExistingOptions) {
-      Assert.assertNull(settings.getOption(option))
+      Assert.assertNull(options[option])
     }
   }
 

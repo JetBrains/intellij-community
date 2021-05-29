@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -16,6 +13,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.getDeepestSuperDeclarations
+import org.jetbrains.kotlin.idea.core.getLastLambdaExpression
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.core.setType
 import org.jetbrains.kotlin.idea.inspections.collections.isCalling
@@ -39,6 +37,7 @@ import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.OperatorChecks
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtContainerNode.description(): String? {
     when (node.elementType) {
@@ -401,3 +400,21 @@ fun ResolvedCall<out CallableDescriptor>.canBeReplacedWithInvokeCall(): Boolean 
 }
 
 fun CallableDescriptor.receiverType(): KotlinType? = (dispatchReceiverParameter ?: extensionReceiverParameter)?.type
+
+fun BuilderByPattern<KtExpression>.appendCallOrQualifiedExpression(
+    call: KtCallExpression,
+    newFunctionName: String
+) {
+    val callOrQualified = call.getQualifiedExpressionForSelector() ?: call
+    if (callOrQualified is KtQualifiedExpression) {
+        appendExpression(callOrQualified.receiverExpression)
+        appendFixedText(".")
+    }
+    appendFixedText(newFunctionName)
+    call.valueArgumentList?.let { appendFixedText(it.text) }
+    call.lambdaArguments.firstOrNull()?.let { appendFixedText(it.text) }
+}
+
+fun KtCallExpression.singleLambdaArgumentExpression(): KtLambdaExpression? {
+    return lambdaArguments.singleOrNull()?.getArgumentExpression().safeAs() ?: getLastLambdaExpression()
+}

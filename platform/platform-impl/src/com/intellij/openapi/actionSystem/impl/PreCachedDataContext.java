@@ -94,7 +94,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
 
   @Override
   public final @NotNull DataContext getInjectedDataContext() {
-    return this instanceof InjectedDataContext ? this : new InjectedDataContext(myCachedData, myUserData, null);
+    return this instanceof InjectedDataContext ? this : new InjectedDataContext(myCachedData, myUserData, myMissedKeysIfFrozen);
   }
 
   @Override
@@ -126,6 +126,11 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
 
     myCachedData.put(dataId, answer == null || answer == NullResult.Initial ? NullResult.Final : answer);
     return answer;
+  }
+
+  @Nullable Object getRawDataIfCached(@NotNull String dataId) {
+    Object data = myCachedData.get(dataId);
+    return data == NullResult.Initial || data == NullResult.Final ? null : data;
   }
 
   static {
@@ -219,6 +224,12 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
     }
   }
 
+  /**
+   * {@link #myCachedData} contains
+   * - {@code null} for data keys for which the corresponding {@link #getData(String)} was never called (E.g. for {@link DataKey}s created dynamically during other {@link #getData(String)} execution);
+   * - {@link NullResult#Initial} for data keys which returned {@code null} from the corresponding {@link #getData(String)} during {@link #PreCachedDataContext(Component)} execution;
+   * - {@link NullResult#Final} for data keys which returned {@code null} from both {@link #getData(String)} invocations: in constructor and after all data rules execution
+   */
   private enum NullResult {
     Initial, Final
   }

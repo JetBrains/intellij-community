@@ -703,7 +703,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
   @NotNull
   private static ActionToolbar createActionToolbar(@NotNull JTable table, @NotNull DefaultActionGroup group) {
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, group, true);
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, group, true);
     actionToolbar.setTargetComponent(table);
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     return actionToolbar;
@@ -1123,18 +1123,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   @NotNull
   private static ShowUsagesActionState getState(@NotNull Project project) {
     return project.getService(ShowUsagesActionState.class);
-  }
-
-  /**
-   * @deprecated please use {@link #startFindUsages(PsiElement, RelativePoint, Editor)} overload
-   */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.3")
-  public void startFindUsages(@NotNull PsiElement element,
-                              @NotNull RelativePoint popupPosition,
-                              @Nullable Editor editor,
-                              int maxUsages) {
-    startFindUsages(element, popupPosition, editor);
   }
 
   @TestOnly

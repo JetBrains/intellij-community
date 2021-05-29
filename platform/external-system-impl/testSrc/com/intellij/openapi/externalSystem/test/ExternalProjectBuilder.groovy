@@ -67,10 +67,8 @@ class ExternalProjectBuilder extends BuilderSupport {
         return projectNode
       case 'javaProject':
         ProjectSystemId projectSystemId = attributes.projectSystemId ?: TEST_EXTERNAL_SYSTEM_ID
-        String jdk = attributes.jdk ?: ""
         String languageLevel = attributes.languageLevel ?: ""
         JavaProjectData javaProjectData = new JavaProjectData(projectSystemId, "")
-        javaProjectData.setJdkVersion(jdk)
         javaProjectData.setLanguageLevel(languageLevel)
         return (current as DataNode).createChild(JavaProjectData.KEY, javaProjectData)
       case 'module':

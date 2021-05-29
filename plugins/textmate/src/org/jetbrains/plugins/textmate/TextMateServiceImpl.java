@@ -4,10 +4,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
@@ -20,7 +17,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Interner;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -45,6 +41,8 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class TextMateServiceImpl extends TextMateService {
+  public static final String BUNDLED_BUNDLES_PATH = PluginPathManager.getPluginHome("textmate") + "/lib/bundles";
+
   private boolean ourBuiltinBundlesDisabled;
 
   private final AtomicBoolean myInitialized = new AtomicBoolean(false);
@@ -58,10 +56,6 @@ public final class TextMateServiceImpl extends TextMateService {
   private final SnippetsRegistry mySnippetsRegistry = new SnippetsRegistry();
   private final PreferencesRegistry myPreferencesRegistry = new PreferencesRegistry();
   private final ShellVariablesRegistry myShellVariablesRegistry = new ShellVariablesRegistry();
-  @NonNls public static final String PREINSTALLED_BUNDLES_PATH =
-    FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getCommunityHomePath(), "plugins", "textmate", "lib", "bundles"));
-  @NonNls public static final String INSTALLED_BUNDLES_PATH =
-    FileUtil.toSystemIndependentName(FileUtil.join(PathManager.getPluginsPath(), "textmate", "lib", "bundles"));
   private final Interner<CharSequence> myInterner = Interner.createWeakInterner();
 
   public TextMateServiceImpl() {
@@ -128,14 +122,10 @@ public final class TextMateServiceImpl extends TextMateService {
   }
 
   private static void loadBuiltinBundles(TextMateSettings settings) {
-    File bundles = new File(INSTALLED_BUNDLES_PATH);
-    if (!bundles.exists() || !bundles.isDirectory()) {
-      bundles = new File(PREINSTALLED_BUNDLES_PATH);
-    }
-
+    File bundles = new File(BUNDLED_BUNDLES_PATH);
     File[] files = bundles.listFiles();
     if (files == null) {
-      LOG.warn("Missing builtin bundles, checked: \n" + INSTALLED_BUNDLES_PATH + "\n" + PREINSTALLED_BUNDLES_PATH);
+      LOG.warn("Builtin bundles not found at " + bundles);
       return;
     }
 

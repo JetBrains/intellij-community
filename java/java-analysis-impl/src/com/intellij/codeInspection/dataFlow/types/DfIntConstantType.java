@@ -9,7 +9,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-class DfIntConstantType extends DfConstantType<Integer> implements DfIntType {
+public class DfIntConstantType extends DfConstantType<Integer> implements DfIntType {
   private final @Nullable LongRangeSet myWideRange;
 
   DfIntConstantType(int value, @Nullable LongRangeSet wideRange) {

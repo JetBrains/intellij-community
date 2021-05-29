@@ -43,7 +43,6 @@ import javax.swing.event.TreeExpansionListener;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.*;
 import java.util.List;
@@ -197,15 +196,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     else {
       new TreeSpeedSearch(this, SPEED_SEARCH_CONVERTER);
     }
-
-    final ActionManager actionManager = ActionManager.getInstance();
-    addMouseListener(new PopupHandler() {
-      @Override
-      public void invokePopup(final Component comp, final int x, final int y) {
-        ActionGroup group = (ActionGroup)actionManager.getAction(popupActionGroupId);
-        actionManager.createActionPopupMenu(ActionPlaces.UNKNOWN, group).getComponent().show(comp, x, y);
-      }
-    });
+    PopupHandler.installPopupMenu(this, popupActionGroupId, "XDebuggerTreePopup");
     registerShortcuts();
 
     new AnAction() {

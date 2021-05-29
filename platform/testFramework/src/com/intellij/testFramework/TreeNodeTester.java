@@ -2,11 +2,9 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
-import javax.swing.*;
 import javax.swing.tree.TreeNode;
 import java.util.function.Function;
 
@@ -17,15 +15,6 @@ import java.util.function.Function;
 public final class TreeNodeTester {
   private final TreeNode myNode;
   private Function<? super TreeNode, String> myPresenter = Object::toString;
-
-  /**
-   * @deprecated use {@link com.intellij.ui.tree.TreeTestUtil#TreeTestUtil(JTree)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static TreeNodeTester forTree(JTree tree) {
-    return forNode((TreeNode)tree.getModel().getRoot());
-  }
 
   public static TreeNodeTester forNode(TreeNode node) {
     return new TreeNodeTester(node);

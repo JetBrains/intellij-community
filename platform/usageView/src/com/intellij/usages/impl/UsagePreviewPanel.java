@@ -354,7 +354,10 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   public void updateLayoutLater(@Nullable final List<? extends UsageInfo> infos) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     String cannotPreviewMessage = cannotPreviewMessage(infos);
-    if (cannotPreviewMessage != null) {
+    if (cannotPreviewMessage == null) {
+      resetEditor(infos);
+    }
+    else {
       releaseEditor();
       removeAll();
       int newLineIndex = cannotPreviewMessage.indexOf('\n');
@@ -367,9 +370,6 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
           .appendSecondaryText(cannotPreviewMessage.substring(newLineIndex + 1), StatusText.DEFAULT_ATTRIBUTES, null);
       }
       revalidate();
-    }
-    else {
-      resetEditor(infos);
     }
   }
 

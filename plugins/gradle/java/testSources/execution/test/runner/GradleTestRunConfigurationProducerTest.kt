@@ -210,6 +210,25 @@ class GradleTestRunConfigurationProducerTest : GradleTestRunConfigurationProduce
   }
 
   @Test
+  fun `test execution action children`() {
+    val projectData = generateAndImportTemplateProject()
+    assertGutterRunActionsSize(projectData["project"]["TestCase"].element, 0)
+    assertGutterRunActionsSize(projectData["project"]["TestCase"]["test1"].element, 0)
+    assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"].element, 0)
+    assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"]["test2"].element, 0)
+  }
+
+  @Test
+  fun `test execution action children in choose per test mode`() {
+    currentExternalProjectSettings.testRunner = TestRunner.CHOOSE_PER_TEST
+    val projectData = generateAndImportTemplateProject()
+    assertGutterRunActionsSize(projectData["project"]["TestCase"].element, 2)
+    assertGutterRunActionsSize(projectData["project"]["TestCase"]["test1"].element, 2)
+    //assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"].element, 2)
+    assertGutterRunActionsSize(projectData["project"]["org.example.TestCaseWithMain"]["test2"].element, 2)
+  }
+
+  @Test
   fun `test multiple selected abstract tests`() {
     val projectData = generateAndImportTemplateProject()
     runReadActionAndWait {

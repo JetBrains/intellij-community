@@ -3,6 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
@@ -116,7 +117,7 @@ final class ContractChecker {
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
     if (flow == null) return Collections.emptyMap();
     ContractCheckListener interceptor = new ContractCheckListener(method, contract, ownContract);
-    JvmDataFlowInterpreter interpreter = new JvmDataFlowInterpreter(flow, interceptor, true) {
+    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(flow, interceptor, true) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();

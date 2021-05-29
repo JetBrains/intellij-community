@@ -35,6 +35,9 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.markdownExtension"
                     interface="org.intellij.plugins.markdown.extensions.MarkdownExtension"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.markdownExportProvider"
+                    interface="org.intellij.plugins.markdown.fileActions.export.MarkdownExportProvider"
+                    dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -74,6 +77,8 @@ Includes the following features:</p>
     <spellchecker.support language="Markdown"
                           implementationClass="org.intellij.plugins.markdown.spellchecking.MarkdownSpellcheckingStrategy"/>
 
+    <customFileDropHandler implementation="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownDocxFileDropHandler"/>
+
     <breadcrumbsInfoProvider implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
 
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings"/>
@@ -92,6 +97,7 @@ Includes the following features:</p>
     </applicationConfigurable>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
     <psi.referenceContributor implementation="org.intellij.plugins.markdown.lang.references.MarkdownReferenceProvider"/>
@@ -181,6 +187,13 @@ Includes the following features:</p>
 
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
     <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
+
+    <!--suppress PluginXmlValidity -->
+    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownDocxExportProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownPdfExportProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <markdownExportProvider implementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportProvider"/>
   </extensions>
 
   <actions>
@@ -225,6 +238,18 @@ Includes the following features:</p>
       <action class="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
               id="org.intellij.plugins.markdown.ui.actions.scrolling.AutoScrollAction"
               icon="AllIcons.Actions.SynchronizeScrolling">
+      </action>
+    </group>
+
+    <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
+            class="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction">
+      <add-to-group group-id="FileExportGroup" anchor="last"/>
+    </action>
+
+    <group id="FileImportGroup" popup="true">
+      <add-to-group group-id="PrintExportGroup" relative-to-action="FileExportGroup" anchor="before"/>
+      <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"
+              class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction">
       </action>
     </group>
   </actions>

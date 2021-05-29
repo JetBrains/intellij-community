@@ -182,6 +182,41 @@ public interface DfaMemoryState {
   boolean isEphemeral();
 
   /**
+   * @return a mergeability key. If two states return the same key, then states could be merged via {@link #merge(DfaMemoryState)}.
+   */
+  Object getMergeabilityKey();
+
+  /**
+   * Updates this DfaMemoryState so that it becomes a minimal superstate which covers the other state as well.
+   *
+   * @param other other state which has equal {@link #getMergeabilityKey()}
+   */
+  void merge(@NotNull DfaMemoryState other);
+
+  /**
+   * Custom logic to be implemented by inheritors after two states are merged.
+   * 
+   * @param other other memory start this one was merged with
+   */
+  void afterMerge(@NotNull DfaMemoryState other);
+
+  /**
+   * @param that another state; must be the same implementation as this state
+   * @return a state that is exact superstate of this and that states 
+   * (either possible concrete memory content belongs either to this or to that or to both).
+   * Returns null if such a joining is not possible.
+   */
+  @Nullable DfaMemoryState tryJoinExactly(@NotNull DfaMemoryState that);
+
+  /**
+   * Returns true if current state describes all possible concrete program states described by {@code that} state.
+   *
+   * @param that a sub-state candidate; must be the same implementation as this memory state
+   * @return true if current state is a super-state of the supplied state.
+   */
+  boolean isSuperStateOf(@NotNull DfaMemoryState that);
+
+  /**
    * Widen this memory state on back-branches
    */
   void widen();

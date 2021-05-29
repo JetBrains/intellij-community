@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -71,7 +71,7 @@ import java.util.List;
 import java.util.*;
 import java.util.function.BooleanSupplier;
 
-@State(name = "LafManager", storages = @Storage(value = "laf.xml", roamingType = RoamingType.PER_OS))
+@State(name = "LafManager", storages = @Storage("laf.xml"))
 public final class LafManagerImpl extends LafManager implements PersistentStateComponent<Element>, Disposable {
   private static final Logger LOG = Logger.getInstance(LafManager.class);
 
@@ -406,10 +406,18 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
         }
       }
     }
+
+    UIManager.LookAndFeelInfo laf = null;
     if (lafClassName != null) {
-      return findLaf(lafClassName);
+      laf = findLaf(lafClassName);
     }
-    return null;
+
+    if (laf == null && ("com.intellij.laf.win10.WinIntelliJLaf".equals(lafClassName) ||
+                        "com.intellij.laf.macos.MacIntelliJLaf".equals(lafClassName))) {
+      return defaultLightLaf.getValue();
+    }
+
+    return laf;
   }
 
   @Override
@@ -854,7 +862,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     uiDefaults.put(RenderingHints.KEY_TEXT_LCD_CONTRAST, UIUtil.getLcdContrastValue());
 
     uiDefaults.put(RenderingHints.KEY_FRACTIONALMETRICS,
-                   AppUIUtil.adjustFractionalMetrics(UISettings.getPREFERRED_FRACTIONAL_METRICS_VALUE()));
+                   AppUIUtil.adjustFractionalMetrics(UISettings.Companion.getPreferredFractionalMetricsValue()));
 
     for (Frame frame : Frame.getFrames()) {
       updateUI(frame);

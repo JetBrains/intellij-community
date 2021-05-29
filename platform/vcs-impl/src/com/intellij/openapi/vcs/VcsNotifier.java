@@ -222,16 +222,6 @@ public class VcsNotifier {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
   @Deprecated
   @NotNull
-  public Notification notifyInfo(@NotificationContent @NotNull String message) {
-    return notifyInfo(null, "", message);
-  }
-
-  /**
-   * @deprecated use {@link #notifyInfo(String, String, String)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
-  @NotNull
   public Notification notifyInfo(@NotificationTitle @NotNull String title,
                                  @NotificationContent @NotNull String message) {
     return notifyInfo(null, title, message, null);

@@ -2,11 +2,14 @@
 package com.intellij.codeInspection.dataFlow.interpreter;
 
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
+import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * An interpreter that performs abstract interpretation of {@link com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow}
@@ -16,6 +19,22 @@ public interface DataFlowInterpreter {
    * @return factory associated with this runner, can be used to create new values when necessary
    */
   @NotNull DfaValueFactory getFactory();
+
+  /**
+   * Perform an abstract interpretation with a specified starting memory state (at instruction index #0)
+   * 
+   * @param startingState starting memory state (at instruction index #0)
+   * @return result of interpretation
+   */
+  @NotNull RunnerResult interpret(@NotNull DfaMemoryState startingState);
+
+  /**
+   * Perform an abstract interpretation with a list of initial states
+   *
+   * @param startingStates initial states
+   * @return result of interpretation
+   */
+  @NotNull RunnerResult interpret(@NotNull List<DfaInstructionState> startingStates);
 
   /**
    * Call this method from the visitor to cancel analysis (e.g. if wanted fact is already established and subsequent analysis

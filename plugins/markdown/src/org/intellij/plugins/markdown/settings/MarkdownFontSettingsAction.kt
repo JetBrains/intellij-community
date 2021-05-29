@@ -78,11 +78,16 @@ class MarkdownFontSettingsAction() : ComboBoxAction() {
     newFontSize,
     newFontFamily)
 
-  override fun update(e: AnActionEvent) {
+  override fun update(event: AnActionEvent) {
     val isCustomCssEnabled = markdownCssSettings.isTextEnabled && markdownCssSettings.customStylesheetText.isNotEmpty()
-    val markdownEditor = MarkdownActionUtil.findSplitEditor(e)
-    if (markdownEditor != null) {
-      e.presentation.isEnabledAndVisible = markdownEditor.layout == TextEditorWithPreview.Layout.SHOW_PREVIEW && !isCustomCssEnabled
-    }
+    val editor = MarkdownActionUtil.findSplitEditor(event)
+    event.presentation.isEnabledAndVisible = editor?.layout in allowedLayouts && !isCustomCssEnabled
+  }
+
+  companion object {
+    private val allowedLayouts = arrayOf(
+      TextEditorWithPreview.Layout.SHOW_PREVIEW,
+      TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW
+    )
   }
 }

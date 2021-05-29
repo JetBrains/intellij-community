@@ -314,17 +314,6 @@ public final class ContainerUtil {
     return collection;
   }
 
-  /**
-   * @deprecated Use {@link LinkedHashSet#LinkedHashSet(Collection)} instead
-   */
-  @Deprecated
-  @Contract(pure = true)
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Collection<? extends T> elements) {
-    DeprecatedMethodException.report("Use `new LinkedHashSet(Collection)` instead. "+elements.getClass());
-    return new LinkedHashSet<>(elements);
-  }
-
   @SafeVarargs
   @Contract(pure = true)
   public static @NotNull <T> LinkedHashSet<T> newLinkedHashSet(T @NotNull ... elements) {
@@ -2523,35 +2512,35 @@ public final class ContainerUtil {
     return CollectionFactory.createConcurrentWeakValueMap();
   }
 
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Contract(value = "_,_,_,_ -> new", pure = true)
   static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentWeakKeySoftValueMap(int initialCapacity,
                                                                                  float loadFactor,
                                                                                  int concurrencyLevel,
                                                                                  final @NotNull HashingStrategy<? super K> hashingStrategy) {
-    //noinspection deprecation
-    return new ConcurrentWeakKeySoftValueHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+    return CollectionFactory.createConcurrentWeakKeySoftValueMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftKeySoftValueMap() {
-    return new ConcurrentSoftKeySoftValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.canonical());
+    return CollectionFactory.createConcurrentSoftKeySoftValueMap(100, 0.75f, Runtime.getRuntime().availableProcessors());
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakKeySoftValueMap() {
-    //noinspection deprecation
-    return new ConcurrentWeakKeySoftValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.canonical());
+    return CollectionFactory.createConcurrentWeakKeySoftValueMap();
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap() {
-    return new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.canonical());
+    return CollectionFactory.createConcurrentWeakKeyWeakValueMap();
   }
 
   @ApiStatus.Internal
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakKeyWeakValueMap(@NotNull HashingStrategy<? super K> strategy) {
-    return new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), strategy);
+    return CollectionFactory.createConcurrentWeakKeyWeakValueMap(strategy);
   }
 
   @Contract(value = " -> new", pure = true)
@@ -2561,7 +2550,7 @@ public final class ContainerUtil {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentSoftMap() {
-    return new ConcurrentSoftHashMap<>();
+    return CollectionFactory.createConcurrentSoftMap();
   }
 
   @Contract(value = " -> new", pure = true)
@@ -2570,12 +2559,14 @@ public final class ContainerUtil {
   }
 
   @ApiStatus.Internal
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  @Deprecated
   @Contract(value = "_,_,_,_ -> new", pure = true)
   public static @NotNull <K, V> ConcurrentMap<K, V> createConcurrentSoftMap(int initialCapacity,
                                                                             float loadFactor,
                                                                             int concurrencyLevel,
                                                                             @NotNull HashingStrategy<? super K> hashingStrategy) {
-    return new ConcurrentSoftHashMap<>(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
+    return CollectionFactory.createConcurrentSoftMap(initialCapacity, loadFactor, concurrencyLevel, hashingStrategy);
   }
 
   public static @NotNull <K> HashingStrategy<K> createHashingStrategy(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
@@ -2593,7 +2584,7 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link CollectionFactory#createConcurrentWeakMap(int, float, int)}
+   * @deprecated Use {@link CollectionFactory#createConcurrentWeakMap(int, float, int, HashingStrategy)}
    * or {@link CollectionFactory#createConcurrentWeakIdentityMap()} (int, float, int)}.
    */
   @Deprecated
@@ -2602,7 +2593,7 @@ public final class ContainerUtil {
                                                                             float loadFactor,
                                                                             int concurrencyLevel,
                                                                             @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    return new ConcurrentWeakHashMap<>(initialCapacity, loadFactor, concurrencyLevel, createHashingStrategy(hashingStrategy));
+    return CollectionFactory.createConcurrentWeakMap(initialCapacity, loadFactor, concurrencyLevel, createHashingStrategy(hashingStrategy));
   }
 
   /**
@@ -2610,7 +2601,7 @@ public final class ContainerUtil {
    */
   @Deprecated
   public static @NotNull <K,V> ConcurrentMap<K,V> createConcurrentWeakMap(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    return new ConcurrentWeakHashMap<>(createHashingStrategy(hashingStrategy));
+    return CollectionFactory.createConcurrentWeakMap(createHashingStrategy(hashingStrategy));
   }
 
   /**
@@ -2866,17 +2857,17 @@ public final class ContainerUtil {
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> Map<K,V> createWeakKeySoftValueMap() {
-    return new WeakKeySoftValueHashMap<>();
+    return CollectionFactory.createWeakKeySoftValueMap();
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> Map<K,V> createWeakKeyWeakValueMap() {
-    return new WeakKeyWeakValueHashMap<>();
+    return CollectionFactory.createWeakKeyWeakValueMap();
   }
 
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> Map<K,V> createSoftKeySoftValueMap() {
-    return new SoftKeySoftValueHashMap<>();
+    return CollectionFactory.createSoftKeySoftValueMap();
   }
 
   /**
@@ -2907,14 +2898,7 @@ public final class ContainerUtil {
    */
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> Map<K,V> createSoftMap() {
-    //noinspection deprecation
-    return new SoftHashMap<>(4);
-  }
-
-  @Contract(value = "_ -> new", pure = true)
-  static @NotNull <K,V> Map<K,V> createSoftMap(@NotNull HashingStrategy<? super K> strategy) {
-    //noinspection deprecation
-    return new SoftHashMap<>(strategy);
+    return CollectionFactory.createSoftMap();
   }
 
   /**
@@ -2929,14 +2913,12 @@ public final class ContainerUtil {
 
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <K,V> Map<K,V> createWeakMap(int initialCapacity) {
-    //noinspection deprecation
-    return new WeakHashMap<>(initialCapacity, 0.8f, HashingStrategy.canonical());
+    return CollectionFactory.createWeakMap(initialCapacity, 0.8f, HashingStrategy.canonical());
   }
 
   @Contract(value = "_, _, _ -> new", pure = true)
-  public static @NotNull <K,V> Map<K,V>  createWeakMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
-    //noinspection deprecation
-    return new WeakHashMap<>(initialCapacity, loadFactor, strategy);
+  public static @NotNull <K,V> Map<K,V> createWeakMap(int initialCapacity, float loadFactor, @NotNull HashingStrategy<? super K> strategy) {
+    return CollectionFactory.createWeakMap(initialCapacity, loadFactor, strategy);
   }
 
   @Contract(value = " -> new", pure = true)

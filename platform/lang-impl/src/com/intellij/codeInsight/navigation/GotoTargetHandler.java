@@ -36,8 +36,6 @@ import com.intellij.usages.UsageView;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
-import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
@@ -194,38 +192,47 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     return Comparator.comparing(gotoData::getComparingObject);
   }
 
+  private static Map<PsiElement, TargetPresentation> computePresentationInBackground(
+    @NotNull Project project,
+    PsiElement @NotNull [] targets,
+    boolean hasDifferentNames
+  ) {
+    return ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"), () -> {
+      Map<PsiElement, TargetPresentation> presentations = new HashMap<>();
+      for (PsiElement eachTarget : targets) {
+        presentations.put(eachTarget, computePresentation(eachTarget, hasDifferentNames));
+      }
+      return presentations;
+    });
+  }
+
+  public static @NotNull TargetPresentation computePresentation(@NotNull PsiElement element, boolean hasDifferentNames) {
+    TargetPresentation presentation = GotoTargetPresentationProvider.getTargetPresentationFromProviders(element, hasDifferentNames);
+    if (presentation != null) return presentation;
+    TargetPresentation renderer = getTargetPresentationFromRenderers(element, hasDifferentNames);
+    if (renderer != null) return renderer;
+    return ourDefaultTargetElementRenderer.computePresentation(element);
+  }
+
+  @Nullable
+  private static TargetPresentation getTargetPresentationFromRenderers(@NotNull PsiElement element, boolean hasDifferentNames) {
+    GotoData dummyData = new GotoData(element, PsiElement.EMPTY_ARRAY, Collections.emptyList());
+    dummyData.hasDifferentNames = hasDifferentNames;
+    PsiElementListCellRenderer<?> renderer = createRenderer(dummyData, element);
+    return renderer == null ? null : renderer.computePresentation(element);
+  }
+
+  /**
+   * @deprecated use {@link #computePresentation}
+   */
+  @Deprecated
+  @SuppressWarnings("rawtypes")
   public static PsiElementListCellRenderer createRenderer(@NotNull GotoData gotoData, @NotNull PsiElement eachTarget) {
     for (GotoTargetRendererProvider eachProvider : GotoTargetRendererProvider.EP_NAME.getExtensionList()) {
       PsiElementListCellRenderer renderer = eachProvider.getRenderer(eachTarget, gotoData);
       if (renderer != null) return renderer;
     }
     return null;
-  }
-
-  private static Map<PsiElement, TargetPresentation> computePresentationInBackground(
-    @NotNull Project project,
-    @NotNull GotoData gotoData,
-    PsiElement[] targets
-  ) {
-    return ActionUtil.underModalProgress(project, CodeInsightBundle.message("progress.title.preparing.result"), () -> {
-      Map<PsiElement, TargetPresentation> presentations = new HashMap<>();
-      for (PsiElement eachTarget : targets) {
-        presentations.put(eachTarget, computePresentation(gotoData, eachTarget));
-      }
-      return presentations;
-    });
-  }
-
-  @RequiresReadLock
-  @RequiresBackgroundThread
-  public static @NotNull TargetPresentation computePresentation(@NotNull GotoData gotoData, @NotNull PsiElement element) {
-    for (GotoTargetRendererProvider eachProvider : GotoTargetRendererProvider.EP_NAME.getExtensionList()) {
-      PsiElementListCellRenderer<?> renderer = eachProvider.getRenderer(element, gotoData);
-      if (renderer != null) {
-        return renderer.computePresentation(element);
-      }
-    }
-    return ourDefaultTargetElementRenderer.computePresentation(element);
   }
 
   protected boolean navigateToElement(PsiElement target) {
@@ -317,7 +324,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
     public boolean addTarget(final PsiElement element) {
       if (ArrayUtil.find(targets, element) > -1) return false;
       targets = ArrayUtil.append(targets, element);
-      presentations.put(element, ReadAction.compute(() -> computePresentation(this, element)));
+      presentations.put(element, ReadAction.compute(() -> computePresentation(element, hasDifferentNames)));
       if (!hasDifferentNames && element instanceof PsiNamedElement) {
         final String name = ReadAction.compute(() -> ((PsiNamedElement)element).getName());
         myNames.add(name);
@@ -341,7 +348,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
 
     @VisibleForTesting
     public void initPresentations() {
-      presentations.putAll(computePresentationInBackground(source.getProject(), this, targets));
+      presentations.putAll(computePresentationInBackground(source.getProject(), targets, hasDifferentNames));
     }
   }
 

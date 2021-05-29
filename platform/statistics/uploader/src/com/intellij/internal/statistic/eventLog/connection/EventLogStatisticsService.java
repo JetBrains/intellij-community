@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection;
 
+import com.intellij.internal.statistic.config.EventLogOptions;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
@@ -20,6 +21,7 @@ import java.net.HttpURLConnection;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.isEmpty;
 
@@ -100,6 +102,8 @@ public class EventLogStatisticsService implements StatisticsService {
     final String productCode = info.getProductCode();
     EventLogBuildType defaultBuildType = getDefaultBuildType(info);
     LogEventFilter baseFilter = settings.getBaseEventFilter();
+
+    MachineId machineId = getMachineId(device, settings);
     try {
       EventLogConnectionSettings connectionSettings = info.getConnectionSettings();
 
@@ -113,7 +117,8 @@ public class EventLogStatisticsService implements StatisticsService {
         LogEventFilter filter = settings.getEventFilter(baseFilter, type);
         String deviceId = device.getDeviceId();
         LogEventRecordRequest recordRequest =
-          LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger);
+          LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger,
+                                                 machineId);
         ValidationErrorInfo error = validate(recordRequest, file);
         if (error != null) {
           if (logger.isTraceEnabled()) {
@@ -156,6 +161,18 @@ public class EventLogStatisticsService implements StatisticsService {
       logger.info(message != null ? message : "", e);
       throw new StatServiceException("Error during data sending.", e);
     }
+  }
+
+  private static MachineId getMachineId(@NotNull DeviceConfiguration device, @NotNull EventLogSettingsService settings) {
+    if (device.getMachineId() == MachineId.DISABLED) {
+      return MachineId.DISABLED;
+    }
+    Map<String, String> options = settings.getOptions();
+    String machineIdSaltOption = options.get(EventLogOptions.MACHINE_ID_SALT);
+    if (EventLogOptions.MACHINE_ID_DISABLED.equals(machineIdSaltOption)) {
+      return MachineId.DISABLED;
+    }
+    return device.getMachineId();
   }
 
   @NotNull

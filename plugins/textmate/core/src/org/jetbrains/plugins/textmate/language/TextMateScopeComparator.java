@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class TextMateScopeComparator<T> implements Comparator<T> {
   @NotNull
@@ -36,7 +37,12 @@ public class TextMateScopeComparator<T> implements Comparator<T> {
 
   @NotNull
   public List<T> sortAndFilter(@NotNull Collection<? extends T> objects) {
-    return objects.stream().filter(t -> myWeigher.weigh(myScopeSupplier.apply(t), myScope).weigh > 0)
+    return sortAndFilter(objects.stream());
+  }
+
+  @NotNull
+  public List<T> sortAndFilter(Stream<? extends T> stream) {
+    return stream.filter(t -> myWeigher.weigh(myScopeSupplier.apply(t), myScope).weigh > 0)
       .sorted(Collections.reverseOrder(this)).collect(Collectors.toList());
   }
 

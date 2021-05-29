@@ -20,6 +20,7 @@ import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
@@ -33,7 +34,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -59,10 +62,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     presentation.setText("");
     presentation.setDescription(getActionTooltip());
     presentation.setIcon(getActionIcon());
-
-    for (AnAction child : getTemplateActions()) {
-      child.update(AnActionEvent.createFromAnAction(this, e.getInputEvent(), e.getPlace(), e.getDataContext()));
-    }
   }
 
   private static AnAction @NotNull [] getTemplateActions() {
@@ -72,27 +71,32 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
 
   @NotNull
   private static ListPopup createMainPopup(@NotNull DataContext context, @NotNull Runnable disposeCallback) {
-    DefaultActionGroup group = new DefaultActionGroup();
+    List<AnAction> appActions = new ArrayList<>();
+    List<AnAction> pluginActions = new ArrayList<>();
 
     for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
-      Collection<AnAction> actions = provider.getUpdateActions(context);
-      if (!actions.isEmpty()) {
-        for (AnAction action : actions) {
-          Presentation presentation = action.getTemplatePresentation();
-          if (presentation.getClientProperty(ActionProvider.ICON_KEY) == IconState.ApplicationUpdate) {
-            presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
-          }
-          else {
-            presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
-          }
-          group.add(action);
+      for (UpdateAction action : provider.getUpdateActions(context)) {
+        Presentation presentation = action.getTemplatePresentation();
+        if (action.isIdeUpdate()) {
+          presentation.setIcon(AllIcons.Ide.Notification.IdeUpdate);
+          appActions.add(action);
         }
-        group.addSeparator();
+        else {
+          presentation.setIcon(AllIcons.Ide.Notification.PluginUpdate);
+          pluginActions.add(action);
+        }
+        action.markAsRead();
       }
     }
 
+    DefaultActionGroup group = new DefaultActionGroup(appActions);
+    group.addAll(pluginActions);
+
     if (group.getChildrenCount() == 0) {
       resetActionIcon();
+    }
+    else {
+      group.addSeparator();
     }
 
     for (AnAction child : getTemplateActions()) {
@@ -131,23 +135,36 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }, -1);
   }
 
-  private static boolean myShowPlatformUpdateIcon;
-  private static boolean myShowPluginsUpdateIcon;
+  private static boolean ourShowPlatformUpdateIcon;
+  private static boolean ourShowPluginsUpdateIcon;
 
-  public static void updateState(IconState state) {
-    if (state == IconState.ApplicationUpdate) {
-      myShowPlatformUpdateIcon = true;
+  public static void updateState() {
+    resetActionIcon();
+
+    loop:
+    for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
+      for (UpdateAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
+        if (action.isNewAction()) {
+          if (action.isIdeUpdate()) {
+            ourShowPlatformUpdateIcon = true;
+          }
+          else {
+            ourShowPluginsUpdateIcon = true;
+          }
+          if (ourShowPlatformUpdateIcon && ourShowPluginsUpdateIcon) {
+            break loop;
+          }
+        }
+      }
     }
-    else if (state == IconState.ApplicationComponentUpdate) {
-      myShowPluginsUpdateIcon = true;
-    }
+
     if (isAvailableInStatusBar()) {
       updateWidgets();
     }
   }
 
   private static @NotNull @Nls String getActionTooltip() {
-    boolean updates = myShowPlatformUpdateIcon || myShowPluginsUpdateIcon;
+    boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
     if (!updates) {
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
         if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
@@ -160,14 +177,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static void resetActionIcon() {
-    myShowPlatformUpdateIcon = myShowPluginsUpdateIcon = false;
+    ourShowPlatformUpdateIcon = ourShowPluginsUpdateIcon = false;
   }
 
   private static @NotNull Icon getActionIcon() {
-    if (myShowPlatformUpdateIcon) {
+    if (ourShowPlatformUpdateIcon) {
       return AllIcons.Ide.Notification.IdeUpdate;
     }
-    if (myShowPluginsUpdateIcon) {
+    if (ourShowPluginsUpdateIcon) {
       return AllIcons.Ide.Notification.PluginUpdate;
     }
     return AllIcons.General.GearPlain;
@@ -292,15 +309,32 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     public void dispose() { }
   }
 
-  public enum IconState {
-    Current, ApplicationUpdate, ApplicationComponentUpdate
-  }
-
   public interface ActionProvider {
     ExtensionPointName<ActionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.settingsEntryPointActionProvider");
 
-    String ICON_KEY = "Update_Type_Icon_Key";
+    @NotNull Collection<UpdateAction> getUpdateActions(@NotNull DataContext context);
+  }
 
-    @NotNull Collection<AnAction> getUpdateActions(@NotNull DataContext context);
+  public static abstract class UpdateAction extends DumbAwareAction {
+    private boolean myNewAction = true;
+
+    protected UpdateAction() {
+    }
+
+    protected UpdateAction(@Nullable @NlsActions.ActionText String text) {
+      super(text);
+    }
+
+    public boolean isIdeUpdate() {
+      return false;
+    }
+
+    public boolean isNewAction() {
+      return myNewAction;
+    }
+
+    public void markAsRead() {
+      myNewAction = false;
+    }
   }
 }

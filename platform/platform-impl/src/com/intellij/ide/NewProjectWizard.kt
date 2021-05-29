@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
+import javax.swing.JLabel
 
 interface NewProjectWizard<T> {
   val language: String
@@ -11,11 +13,11 @@ interface NewProjectWizard<T> {
 
   fun enabled(): Boolean = true
   fun settingsList(settings: T): List<LabelAndComponent> = emptyList()
-  fun setupProject(project: Project?, settings: T) { }
+  fun setupProject(project: Project?, settings: T, context: WizardContext) { }
 
   companion object {
     var EP_WIZARD = ExtensionPointName<NewProjectWizard<*>>("com.intellij.newProjectWizard")
   }
 }
 
-data class LabelAndComponent(val text: String? = null, val component: JComponent)
+data class LabelAndComponent(val label: JLabel? = null, val component: JComponent)

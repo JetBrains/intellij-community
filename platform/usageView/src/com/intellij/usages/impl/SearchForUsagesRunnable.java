@@ -40,9 +40,9 @@ import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewContentManager;
 import com.intellij.usages.*;
-import com.intellij.util.Alarm;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.xml.util.XmlStringUtil;
@@ -54,6 +54,7 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -353,12 +354,13 @@ final class SearchForUsagesRunnable implements Runnable {
       CoreProgressManager.assertUnderProgress(indicator);
     }
     TooManyUsagesStatus.createFor(indicator);
-    Alarm findUsagesStartedBalloon = new Alarm();
-    findUsagesStartedBalloon.addRequest(() -> {
-      notifyByFindBalloon(null, MessageType.WARNING,
-                          Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
+    EdtScheduledExecutorService.getInstance().schedule(() -> {
+      if (!myProject.isDisposed()) {
+        notifyByFindBalloon(null, MessageType.WARNING,
+                            Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
+      }
       findStartedBalloonShown.set(true);
-    }, 300, ModalityState.NON_MODAL);
+    }, ModalityState.NON_MODAL, 300, TimeUnit.MILLISECONDS);
     UsageSearcher usageSearcher = mySearcherFactory.create();
     long startSearchStamp = System.currentTimeMillis();
     usageSearcher.generate(usage -> {
@@ -396,7 +398,6 @@ final class SearchForUsagesRunnable implements Runnable {
     if (getUsageView(indicator, startSearchStamp) != null) {
       ApplicationManager.getApplication().invokeLater(() -> myUsageViewManager.showToolWindow(true), myProject.getDisposed());
     }
-    Disposer.dispose(findUsagesStartedBalloon);
     ApplicationManager.getApplication().invokeLater(() -> {
       if (findStartedBalloonShown.get()) {
         Balloon balloon = ToolWindowManager.getInstance(myProject).getToolWindowBalloon(ToolWindowId.FIND);

@@ -78,7 +78,7 @@ public class ArchivePackagingElement extends CompositeElementWithManifest<Archiv
           ent.setFileName(archiveFileName);
           return Unit.INSTANCE;
         });
-      }, true
+      }
     );
   }
 

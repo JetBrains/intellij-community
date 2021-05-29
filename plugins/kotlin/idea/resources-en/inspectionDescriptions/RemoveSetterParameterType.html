@@ -1,6 +1,16 @@
 <html>
 <body>
-This inspection reports explicitly given parameter types in property setters.
-A setter parameter type always matches the property type, so it's not required to be explicit.
+Reports explicitly given parameter types in property setters.
+<p>
+    Setter parameter type always matches the property type, so it's not required to be explicit.
+    'Remove explicit type specification' quick-fix allows to amend the code accordingly.
+</p>
+<p>Examples:</p>
+<pre><code>
+   fun process(x: Int) {}
+
+   var x: Int = 0
+      set(value: Int) = process(value) // <== 'Int' specification can be safely omitted
+</code></pre>
 </body>
 </html>

@@ -351,8 +351,6 @@ class ModuleLevelLibrariesInRootModelTest {
   }
 
   private fun doTestMultiCommitForModuleLevelLibrary(newScope: DependencyScope) {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
-
     addLibrary("a")
     val builder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
     val moduleModel = (projectModel.moduleManager as ModuleManagerComponentBridge).getModifiableModel(builder)

@@ -17,6 +17,7 @@ import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.PathUtil
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.workspaceModel.ide.*
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.ide.impl.jps.serialization.ErrorReporter
 import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectEntitiesLoader
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
@@ -26,7 +27,6 @@ import com.intellij.workspaceModel.ide.legacyBridge.ModifiableModuleModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import java.io.IOException
@@ -91,7 +91,7 @@ internal class ModifiableModuleModelBridgeImpl(
     }
     removeUnloadedModule(moduleName)
 
-    val entitySource = JpsProjectEntitiesLoader.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
+    val entitySource = JpsEntitySourceFactory.createEntitySourceForModule(project, virtualFileManager.fromPath(PathUtil.getParentPath(canonicalPath)), null)
 
     val moduleEntity = diff.addModuleEntity(
       name = moduleName,
@@ -158,7 +158,7 @@ internal class ModifiableModuleModelBridgeImpl(
 
     removeUnloadedModule(moduleName)
 
-    val builder = WorkspaceEntityStorageBuilder.create(ConsistencyCheckingMode.defaultIde())
+    val builder = WorkspaceEntityStorageBuilder.create()
     var errorMessage: String? = null
     JpsProjectEntitiesLoader.loadModule(Paths.get(filePath), getJpsProjectConfigLocation(project)!!, builder, object : ErrorReporter {
       override fun reportError(message: String, file: VirtualFileUrl) {

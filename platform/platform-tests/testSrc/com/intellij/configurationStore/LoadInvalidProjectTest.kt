@@ -102,7 +102,6 @@ class LoadInvalidProjectTest {
   }
 
   private fun loadProjectAndCheckResults(testDataDirName: String, checkProject: suspend (Project) -> Unit) {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     return loadProjectAndCheckResults(listOf(testDataRoot.resolve("common"), testDataRoot.resolve(testDataDirName)), tempDirectory, checkProject)
   }
 }

@@ -15,10 +15,8 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.LazyInitializer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
-import org.cef.browser.CefBrowser;
-import org.cef.browser.CefBrowserOsrWithHandler;
-import org.cef.browser.CefFrame;
-import org.cef.browser.CefRendering;
+import org.cef.CefClient;
+import org.cef.browser.*;
 import org.cef.callback.CefAuthCallback;
 import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
@@ -145,24 +143,20 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
 
     myIsOffScreenRendering = builder.myIsOffScreenRendering;
     boolean isDefaultBrowserCreated = false;
-    CefBrowser _cefBrowser = builder.myCefBrowser;
+    CefBrowser cefBrowser = builder.myCefBrowser;
 
-    if (_cefBrowser == null) {
+    if (cefBrowser == null) {
       if (myIsOffScreenRendering) {
         JBCefApp.checkOffScreenRenderingModeEnabled();
-
-        JBCefOSRHandlerFactory factory = ObjectUtils.notNull(builder.myOSRHandlerFactory, JBCefOSRHandlerFactory.DEFAULT);
-        JComponent comp = factory.createComponent();
-        CefRenderHandler handler = factory.createCefRenderHandler(comp);
-        if (comp instanceof JBCefOsrComponent) ((JBCefOsrComponent)comp).setBrowser(this);
-        _cefBrowser = new CefBrowserOsrWithHandler(myCefClient.getCefClient(), validateUrl(builder.myUrl), null, handler, comp);
+        cefBrowser = createOsrBrowser(ObjectUtils.notNull(builder.myOSRHandlerFactory, JBCefOSRHandlerFactory.DEFAULT),
+                                      myCefClient.getCefClient(), builder.myUrl, null, null, null);
       }
       else {
-        _cefBrowser = myCefClient.getCefClient().createBrowser(validateUrl(builder.myUrl), CefRendering.DEFAULT, false, null);
+        cefBrowser = myCefClient.getCefClient().createBrowser(validateUrl(builder.myUrl), CefRendering.DEFAULT, false, null);
       }
       isDefaultBrowserCreated = true;
     }
-    myCefBrowser = _cefBrowser;
+    myCefBrowser = cefBrowser;
 
     if (isDefaultBrowserCreated) {
       myCefClient.addLifeSpanHandler(myLifeSpanHandler = new CefLifeSpanHandlerAdapter() {
@@ -235,6 +229,32 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
     }
 
     if (builder.myCreateImmediately) createImmediately();
+  }
+
+  private @NotNull CefBrowserOsrWithHandler createOsrBrowser(@NotNull JBCefOSRHandlerFactory factory,
+                                                             @NotNull CefClient client,
+                                                             @Nullable String url,
+                                                             @Nullable CefRequestContext context,
+                                                             // not-null parentBrowser creates a DevTools browser for it
+                                                             @Nullable CefBrowser parentBrowser,
+                                                             @Nullable Point inspectAt)
+  {
+    JComponent comp = factory.createComponent();
+    CefRenderHandler handler = factory.createCefRenderHandler(comp);
+    CefBrowserOsrWithHandler browser =
+      new CefBrowserOsrWithHandler(client, validateUrl(url), context, handler, comp, parentBrowser, inspectAt) {
+        @Override
+        protected CefBrowser createDevToolsBrowser(CefClient client,
+                                                   String url,
+                                                   CefRequestContext context,
+                                                   CefBrowser parent,
+                                                   Point inspectAt)
+        {
+          return createOsrBrowser(factory, client, getUrl(), getRequestContext(), this, inspectAt);
+        }
+      };
+    if (comp instanceof JBCefOsrComponent) ((JBCefOsrComponent)comp).setBrowser(browser);
+    return browser;
   }
 
   /**
@@ -362,7 +382,11 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   final boolean isCefBrowserCreated() {
     assert myCefBrowser instanceof CefNativeAdapter;
     // [tav] todo: this can be thread race prone
-    return ((CefNativeAdapter)myCefBrowser).getNativeRef("CefBrowser") != 0;
+    return isCefBrowserCreated(myCefBrowser);
+  }
+  
+  static boolean isCefBrowserCreated(@NotNull CefBrowser cefBrowser) {
+    return ((CefNativeAdapter)cefBrowser).getNativeRef("CefBrowser") != 0;
   }
 
   /**
@@ -613,18 +637,15 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
       return;
     }
 
-    Window activeFrame = null;
-    for (Frame frame : Frame.getFrames()) {
-      if (frame.isActive()) {
-        activeFrame = frame;
-        break;
-      }
-    }
+    Component comp = getComponent();
+    Window ancestor = comp == null ?
+      KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() :
+      SwingUtilities.getWindowAncestor(comp);
 
-    if (activeFrame == null) return;
-    Rectangle bounds = activeFrame.getGraphicsConfiguration().getBounds();
+    if (ancestor == null) return;
+    Rectangle bounds = ancestor.getGraphicsConfiguration().getBounds();
 
-    myDevtoolsFrame = new JDialog(activeFrame);
+    myDevtoolsFrame = new JDialog(ancestor);
     myDevtoolsFrame.setTitle("JCEF DevTools");
     myDevtoolsFrame.setDefaultCloseOperation(WindowConstants.DISPOSE_ON_CLOSE);
     myDevtoolsFrame.setBounds(bounds.width / 4 + 100, bounds.height / 4 + 100, bounds.width / 2, bounds.height / 2);

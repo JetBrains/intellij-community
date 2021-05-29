@@ -123,7 +123,7 @@ class TerminalProjectOptionsProvider(val project: Project) : PersistentStateComp
       }
       return "/bin/sh"
     }
-    return "cmd.exe"
+    return "powershell.exe"
   }
 
   private fun findWslDistributionName(directory: String?): String? {

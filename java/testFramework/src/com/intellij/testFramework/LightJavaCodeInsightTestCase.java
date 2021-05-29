@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 /**
  * A TestCase for single PsiFile being opened in Editor conversion. See configureXXX and checkResultXXX method docs.
  */
+@TestDataPath("$CONTENT_ROOT/testData")
 public abstract class LightJavaCodeInsightTestCase extends LightPlatformCodeInsightTestCase {
   private static final Pattern JDK_SELECT_PATTERN = Pattern.compile("Java([\\d.]+)(Preview)?(\\.java)?$");
 

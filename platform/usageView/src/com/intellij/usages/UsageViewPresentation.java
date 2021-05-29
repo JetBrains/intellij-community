@@ -21,7 +21,7 @@ public class UsageViewPresentation {
   private static final Logger LOG = Logger.getInstance(UsageViewPresentation.class);
 
   private @NlsContexts.TabTitle String myTabText;
-  private String myScopeText = ""; // Default value. to be overwritten in most cases.
+  private @NlsSafe String myScopeText = ""; // Default value. to be overwritten in most cases.
   private @NlsSafe String myUsagesString;
   private @NlsSafe String mySearchString;
   private @NlsContexts.ListItem String myTargetsNodeText = UsageViewBundle.message("node.targets");
@@ -55,11 +55,12 @@ public class UsageViewPresentation {
   }
 
   @NotNull
+  @NlsSafe
   public String getScopeText() {
     return myScopeText;
   }
 
-  public void setScopeText(@NotNull String scopeText) {
+  public void setScopeText(@NotNull @NlsSafe String scopeText) {
     myScopeText = scopeText;
   }
 
@@ -69,15 +70,6 @@ public class UsageViewPresentation {
 
   public void setShowReadOnlyStatusAsRed(boolean showReadOnlyStatusAsRed) {
     myShowReadOnlyStatusAsRed = showReadOnlyStatusAsRed;
-  }
-
-  /**
-   * @deprecated use {@link #getSearchString}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public String getUsagesString() {
-    return myUsagesString;
   }
 
   /**

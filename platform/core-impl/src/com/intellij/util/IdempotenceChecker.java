@@ -2,7 +2,6 @@
 package com.intellij.util;
 
 import com.intellij.model.Symbol;
-import com.intellij.model.SymbolResolveResult;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -236,8 +235,7 @@ public final class IdempotenceChecker {
 
   private static boolean isExpectedToHaveSaneEquals(@NotNull Object existing) {
     return existing instanceof Comparable
-           || existing instanceof Symbol
-           || existing instanceof SymbolResolveResult;
+           || existing instanceof Symbol;
   }
 
   @Contract("null,_->!null;_,null->!null")

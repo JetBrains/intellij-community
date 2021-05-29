@@ -393,7 +393,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
         moduleBuilder.getServerOptions(starterContext.serverUrl)
       }
       catch (e: Exception) {
-        if (e is IOException) {
+        if (e is IOException || e is IllegalStateException) {
           logger<WebStarterInitialStep>().info("Unable to get server options for " + moduleBuilder.builderId, e)
         }
         else {

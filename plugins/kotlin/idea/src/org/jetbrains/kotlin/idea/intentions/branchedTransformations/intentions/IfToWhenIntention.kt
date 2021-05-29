@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations.intentions
 
@@ -11,12 +8,14 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.codeStyle.CodeStyleManager
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.intentions.SelfTargetingRangeIntention
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.getSubjectToIntroduce
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.introduceSubject
 import org.jetbrains.kotlin.idea.intentions.branchedTransformations.unwrapBlockOrParenthesis
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.quickfix.AddLoopLabelFix
 import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -82,14 +81,24 @@ class IfToWhenIntention : SelfTargetingRangeIntention<KtIfExpression>(
         }
 
         var labelRequired = false
+
         fun KtExpressionWithLabel.addLabelIfNecessary(): KtExpressionWithLabel {
-            if (this.getLabelName() != null) return this
-            if (this.getStrictParentOfType<KtLoopExpression>() != nearestLoopIfAny) return this
-            if (labelName != null) {
+            if (this.getLabelName() != null) {
+                // Label is already present, no need to add
+                return this
+            }
+
+            if (this.getStrictParentOfType<KtLoopExpression>() != nearestLoopIfAny) {
+                // 'for' inside 'if'
+                return this
+            }
+
+            if (!languageVersionSettings.supportsFeature(LanguageFeature.AllowBreakAndContinueInsideWhen) && labelName != null) {
                 val jumpWithLabel = KtPsiFactory(project).createExpression("$text@$labelName") as KtExpressionWithLabel
                 labelRequired = true
                 return replaced(jumpWithLabel)
             }
+
             return this
         }
 

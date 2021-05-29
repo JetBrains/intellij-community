@@ -52,8 +52,8 @@ class RawPluginDescriptor {
 
   @JvmField var epNameToExtensions: MutableMap<String, MutableList<ExtensionDescriptor>>? = null
 
-  @JvmField internal var contentDescriptor = PluginContentDescriptor.EMPTY
-  @JvmField internal var dependencyDescriptor = ModuleDependenciesDescriptor.EMPTY
+  @JvmField internal var content = PluginContentDescriptor.EMPTY
+  @JvmField internal var dependencies = ModuleDependenciesDescriptor.EMPTY
 
   class ActionDescriptor(
     @JvmField val name: String,

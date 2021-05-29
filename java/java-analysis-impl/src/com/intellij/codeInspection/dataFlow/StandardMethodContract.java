@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -155,7 +156,7 @@ public final class StandardMethodContract extends MethodContract {
     for (StandardMethodContract contract : contracts) {
       if (contract.getParameterCount() != paramCount) return null;
       StreamEx.of(leftovers).map(c -> c.intersect(contract)).nonNull().into(result);
-      if (result.size() >= StandardDataFlowRunner.DEFAULT_MAX_STATES_PER_BRANCH) return null;
+      if (result.size() >= StandardDataFlowInterpreter.DEFAULT_MAX_STATES_PER_BRANCH) return null;
       leftovers = StreamEx.of(leftovers).flatMap(c -> c.excludeContract(contract)).toList();
       if (leftovers.isEmpty()) break;
     }

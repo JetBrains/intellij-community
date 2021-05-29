@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -10,7 +7,7 @@ import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.TextRange
@@ -18,6 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.formatter.TrailingCommaVisitor
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
@@ -31,6 +29,7 @@ import org.jetbrains.kotlin.idea.util.isLineBreak
 import org.jetbrains.kotlin.idea.util.leafIgnoringWhitespaceAndComments
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.psiUtil.*
+import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import javax.swing.JComponent
 import kotlin.properties.Delegates
 
@@ -120,7 +119,7 @@ class TrailingCommaInspection(
         ) {
             val commaOwner = commaOrElement.parent as KtElement
             // case for KtFunctionLiteral, where PsiWhiteSpace after KtTypeParameterList isn't included in this list
-            val problemOwner = commaOwner.parent
+            val problemOwner = commonParent(commaOwner, commaOrElement)
             val highlightTypeWithAppliedCondition = highlightType.applyCondition(!checkTrailingCommaSettings || useTrailingComma)
             // INFORMATION shouldn't be reported in batch mode
             if (isOnTheFly || highlightTypeWithAppliedCondition != ProblemHighlightType.INFORMATION) {
@@ -139,7 +138,7 @@ class TrailingCommaInspection(
             elementForTextRange: PsiElement,
             highlightType: ProblemHighlightType,
         ) {
-            val problemElement = commaOwner.parent
+            val problemElement = commonParent(commaOwner, elementForTextRange)
             val highlightTypeWithAppliedCondition = highlightType.applyCondition(useTrailingComma)
             // INFORMATION shouldn't be reported in batch mode
             if (isOnTheFly || highlightTypeWithAppliedCondition != ProblemHighlightType.INFORMATION) {
@@ -152,6 +151,16 @@ class TrailingCommaInspection(
                 )
             }
         }
+
+        private fun commonParent(commaOwner: PsiElement, elementForTextRange: PsiElement): PsiElement =
+            PsiTreeUtil.findCommonParent(commaOwner, elementForTextRange)
+                ?: throw KotlinExceptionWithAttachments("Common parent not found")
+                    .withAttachment("commaOwner", commaOwner.text)
+                    .withAttachment("commaOwnerRange", commaOwner.textRange)
+                    .withAttachment("elementForTextRange", elementForTextRange.text)
+                    .withAttachment("elementForTextRangeRange", elementForTextRange.textRange)
+                    .withAttachment("parent", commaOwner.parent.text)
+                    .withAttachment("parentRange", commaOwner.parent.textRange)
 
         private fun ProblemHighlightType.applyCondition(condition: Boolean): ProblemHighlightType = when {
             ApplicationManager.getApplication().isUnitTestMode -> ProblemHighlightType.GENERIC_ERROR_OR_WARNING
@@ -196,9 +205,9 @@ class TrailingCommaInspection(
             }
     }
 
-    override fun createOptionsPanel(): JComponent? {
-        val panel = MultipleCheckboxOptionsPanel(this)
-        panel.addCheckbox(KotlinBundle.message("inspection.trailing.comma.report.also.a.missing.comma"), "addCommaWarning")
-        return panel
-    }
+    override fun createOptionsPanel(): JComponent = SingleCheckboxOptionsPanel(
+        KotlinBundle.message("inspection.trailing.comma.report.also.a.missing.comma"),
+        this,
+        "addCommaWarning",
+    )
 }

@@ -49,6 +49,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
@@ -124,6 +125,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 @DirtyUI
 final class EditorGutterComponentImpl extends EditorGutterComponentEx implements MouseListener, MouseMotionListener, DataProvider, Accessible {
+  public static final String DISTRACTION_FREE_MARGIN = "editor.distraction.free.margin";
   private static final Logger LOG = Logger.getInstance(EditorGutterComponentImpl.class);
 
   private static final JBValueGroup JBVG = new JBValueGroup();
@@ -170,6 +172,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private int myLastNonDumbModeIconAreaWidth;
   boolean myDnDInProgress;
   @Nullable private AccessibleGutterLine myAccessibleGutterLine;
+  boolean myMouseInside = false;
 
   EditorGutterComponentImpl(@NotNull EditorImpl editor) {
     myEditor = editor;
@@ -199,6 +202,23 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       });
     }
     UISettings.setupEditorAntialiasing(this);
+    addMouseListener(new MouseAdapter() {
+      @Override
+      public void mouseEntered(MouseEvent e) {
+        myMouseInside = true;
+        if (ExperimentalUI.isNewEditorTabs()) {
+          repaint();
+        }
+      }
+
+      @Override
+      public void mouseExited(MouseEvent e) {
+        myMouseInside = false;
+        if (ExperimentalUI.isNewEditorTabs()) {
+          repaint();
+        }
+      }
+    });
   }
 
   @NotNull
@@ -589,6 +609,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       return myEditor.getBackgroundColor();
     }
     Color color = myEditor.getColorsScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+    if (ExperimentalUI.isNewEditorTabs()) {
+      color = myEditor.getBackgroundColor();
+    }
     return color != null ? color : EditorColors.GUTTER_BACKGROUND.getDefaultColor();
   }
 
@@ -828,7 +851,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     myTextAnnotationExtraSize = 0;
     if (!myEditor.isInDistractionFreeMode() || isMirrored()) return;
 
-    int marginFromSettings = AdvancedSettings.getInt(EditorSettingsExternalizable.DISTRACTION_FREE_MARGIN);
+    int marginFromSettings = AdvancedSettings.getInt(DISTRACTION_FREE_MARGIN);
     if (marginFromSettings != -1) {
       myTextAnnotationExtraSize = marginFromSettings;
       return;
@@ -1252,11 +1275,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Collection<DisplayedFoldingAnchor> anchorsToDisplay =
       myAnchorsDisplayStrategy.getAnchorsToDisplay(firstVisibleOffset, lastVisibleOffset, myActiveFoldRegions);
     for (DisplayedFoldingAnchor anchor : anchorsToDisplay) {
-      drawFoldingAnchor(width, clip, g, anchor.visualLine, anchor.type, myActiveFoldRegions.contains(anchor.foldRegion));
+      boolean active = myActiveFoldRegions.contains(anchor.foldRegion);
+      if (ExperimentalUI.isNewEditorTabs()) {
+        active = myMouseInside;
+      }
+      drawFoldingAnchor(width, clip, g, anchor.visualLine, anchor.type, active);
     }
   }
 
   private void paintFoldingLines(final Graphics2D g, final Rectangle clip) {
+    if (ExperimentalUI.isNewEditorTabs()) {
+      return;
+    }
     boolean shown = isFoldingOutlineShown();
     double x = getWhitespaceSeparatorOffset2D();
 
@@ -1363,6 +1393,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     double[] dxPoints = {x1, x1, x2, x2, centerX};
     double[] dyPoints = {y + baseHeight, y, y, y + baseHeight, y + height + (height < 0 ? 1 : 0)};
 
+    if (ExperimentalUI.isNewEditorTabs()) {
+      if (height > 0) {
+        if (active) {
+          UIUtil.getTreeExpandedIcon().paintIcon(this, g, (int)dxPoints[0] - getGapBetweenAreas(), (int)rect.getY());
+        }
+      }
+      return;
+    }
     if (!SystemInfo.isMac && Registry.is("ide.editor.alternative.folding.icons.painting")) {
       GraphicsConfig config = GraphicsUtil.setupAAPainting(g);
       g.setStroke(new BasicStroke((float)getStrokeWidth(), BasicStroke.CAP_SQUARE, BasicStroke.JOIN_ROUND));
@@ -1421,6 +1459,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     Rectangle2D rect = RectanglePainter2D.align(g,
                                                 EnumSet.of(LinePainter2D.Align.CENTER_X, LinePainter2D.Align.CENTER_Y),
                                                 centerX, centerY, width, width, StrokeType.CENTERED, sw);
+    if (ExperimentalUI.isNewEditorTabs()) {
+      UIUtil.getTreeCollapsedIcon().paintIcon(this, g, (int)rect.getX() - getGapBetweenAreas(), (int)rect.getY());
+      return;
+    }
     g.setColor(myEditor.getBackgroundColor());
     RectanglePainter2D.FILL.paint(g, rect, null, StrokeType.CENTERED, sw, RenderingHints.VALUE_ANTIALIAS_OFF);
 
@@ -1631,9 +1673,13 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   }
 
   private int getRightFreePaintersAreaWidth() {
-    return myRightFreePaintersAreaShown ? myForcedRightFreePaintersAreaWidth < 0 ? FREE_PAINTERS_RIGHT_AREA_WIDTH.get()
-                                                                                 : myForcedRightFreePaintersAreaWidth
-                                        : 0;
+    int width = myRightFreePaintersAreaShown ? myForcedRightFreePaintersAreaWidth < 0 ? FREE_PAINTERS_RIGHT_AREA_WIDTH.get()
+                                                                                  : myForcedRightFreePaintersAreaWidth
+                                         : 0;
+    if (ExperimentalUI.isNewEditorTabs()) {
+      width += getGapBetweenAreas();
+    }
+    return width;
   }
 
   @Override

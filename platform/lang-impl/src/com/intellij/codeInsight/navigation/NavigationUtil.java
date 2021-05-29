@@ -342,6 +342,11 @@ public final class NavigationUtil {
         if (name == null) return false;
         renderer.append(name, nameAttributes);
         renderer.setIcon(item.getCustomIcon());
+        final String containerName = item.getCustomContainerName();
+        if (containerName != null) {
+          renderer.append(" " + containerName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+
         return true;
       }
 

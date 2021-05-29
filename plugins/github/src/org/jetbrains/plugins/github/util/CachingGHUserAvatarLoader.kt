@@ -2,6 +2,8 @@
 package org.jetbrains.plugins.github.util
 
 import com.google.common.cache.CacheBuilder
+import com.intellij.collaboration.async.CompletableFutureUtil.submitIOTask
+import com.intellij.collaboration.util.ProgressIndicatorsProvider
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger

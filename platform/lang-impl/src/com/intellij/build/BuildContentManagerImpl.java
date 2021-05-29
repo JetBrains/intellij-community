@@ -27,7 +27,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedContent;
 import com.intellij.util.ContentUtilEx;
 import com.intellij.util.containers.MultiMap;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -45,13 +44,6 @@ import static com.intellij.util.ContentUtilEx.getFullName;
  * @author Vladislav.Soroka
  */
 public final class BuildContentManagerImpl implements BuildContentManager, Disposable {
-  /**
-   * @deprecated use Build_Tab_Title_Supplier instead
-   */
-  @SuppressWarnings("SSBasedInspection") @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  @Deprecated
-  public static final @NlsContexts.TabTitle String Build = LangBundle.message("tab.title.build");
-
   public static final Supplier<@NlsContexts.TabTitle String> Build_Tab_Title_Supplier = LangBundle.messagePointer("tab.title.build");
 
   private static final List<Supplier<@NlsContexts.TabTitle String>> ourPresetOrder = Arrays.asList(

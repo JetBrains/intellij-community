@@ -146,7 +146,7 @@ public abstract class ActionManager {
    *   {@link com.intellij.ui.ToolbarDecorator} instead.
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @NotNull
   public abstract JComponent createButtonToolbar(@NotNull String actionPlace, @NotNull ActionGroup messageActionGroup);
 

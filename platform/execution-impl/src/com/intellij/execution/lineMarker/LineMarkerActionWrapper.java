@@ -42,8 +42,7 @@ public class LineMarkerActionWrapper extends ActionGroup implements PriorityActi
 
   @Override
   public boolean isUpdateInBackground() {
-    return myOrigin instanceof UpdateInBackground &&
-           ((UpdateInBackground)myOrigin).isUpdateInBackground();
+    return UpdateInBackground.isUpdateInBackground(myOrigin);
   }
 
   @Override

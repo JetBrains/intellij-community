@@ -17,7 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogOutputParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenOutputParserProvider;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
-import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 
 import java.util.Collections;
 import java.util.function.Function;
@@ -47,8 +46,8 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     myTaskId = taskId;
     myWorkingDir = workingDir;
     myDescriptor = descriptor;
-    myStartBuildEventSupplier = startBuildEventSupplier != null ? startBuildEventSupplier : ctx -> new StartBuildEventImpl(myDescriptor, "")
-      .withExecutionFilters(MavenConsoleImpl.getMavenConsoleFilters(myProject));
+    myStartBuildEventSupplier = startBuildEventSupplier != null
+                                ? startBuildEventSupplier : ctx -> new StartBuildEventImpl(myDescriptor, "");
 
     myParser = MavenOutputParserProvider.createMavenOutputParser(project, myTaskId, targetFileMapper);
 

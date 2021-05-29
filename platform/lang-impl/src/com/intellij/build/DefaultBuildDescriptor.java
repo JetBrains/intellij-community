@@ -24,6 +24,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +46,9 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
   private final String myWorkingDir;
   private final long myStartTime;
 
-  private boolean myActivateToolWindowWhenAdded;
+  private boolean myActivateToolWindowWhenAdded = false;
   private boolean myActivateToolWindowWhenFailed = true;
+  private @NotNull ThreeState myNavigateToError = ThreeState.UNSURE;
   private boolean myAutoFocusContent = false;
 
   private final @NotNull List<AnAction> myActions = new SmartList<>();
@@ -150,6 +152,20 @@ public class DefaultBuildDescriptor implements BuildDescriptor {
 
   public void setActivateToolWindowWhenFailed(boolean activateToolWindowWhenFailed) {
     myActivateToolWindowWhenFailed = activateToolWindowWhenFailed;
+  }
+
+  /**
+   * If result is {@link ThreeState#YES} then IDEA has to navigate to error in file if that exists;
+   * <p>If result is {@link ThreeState#NO} then IDEA must not navigate to errors in any case.
+   * <p>If result is {@link ThreeState#UNSURE} then
+   * it means that this value should be got from {@link BuildWorkspaceConfiguration#isShowFirstErrorInEditor()};
+   */
+  public @NotNull ThreeState isNavigateToError() {
+    return myNavigateToError;
+  }
+
+  public void setNavigateToError(@NotNull ThreeState navigateToError) {
+    myNavigateToError = navigateToError;
   }
 
   public boolean isAutoFocusContent() {

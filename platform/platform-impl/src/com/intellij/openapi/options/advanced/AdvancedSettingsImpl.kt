@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.advanced
 
 import com.intellij.DynamicBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.BaseState
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -127,8 +126,9 @@ class AdvancedSettingBean : PluginAware {
   val defaultValueObject by lazy { valueFromString(defaultValue) }
 
   private fun findBundle(): ResourceBundle? {
-    val bundleName = bundle.nullize() ?: pluginDescriptor?.resourceBundleBaseName
+    val bundleName = bundle.nullize()
                      ?: pluginDescriptor?.takeIf { it.pluginId.idString == "com.intellij" } ?.let { ApplicationBundle.BUNDLE }
+                     ?: pluginDescriptor?.resourceBundleBaseName
                      ?: return null
     val classLoader = pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader
     return DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
@@ -142,7 +142,7 @@ class AdvancedSettingBean : PluginAware {
 
 @State(name = "AdvancedSettings", storages = [Storage(value = "ide.general.xml")])
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
-  class AdvancedSettingsState : BaseState() {
+  class AdvancedSettingsState {
     var settings = mutableMapOf<String, String>()
   }
 

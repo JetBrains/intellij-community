@@ -81,15 +81,27 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testPlaceInsideLoopAndRename() {
-    doTest(introducer -> type("expr"));
+    doTestReplaceChoice("() -> {...}", introducer -> type("expr"));
+  }
+  
+  public void testPlaceOutsideLoopAndRename() {
+    doTestReplaceChoice("{", introducer -> type("expr"));
+  }
+
+  public void testPlaceOutsideLambdaInIfWithoutBraces() {
+    doTestReplaceChoice("if (b) foo(s -> \"extract me\" + s);", introducer -> type("expr"));
+  }
+
+  public void testPlaceOutsideLambdaInClass() {
+    doTestReplaceChoice("class MyTest {", introducer -> type("expr"));
   }
 
   public void testPlaceInsideLambdaBody() {
-    doTest(introducer -> type("expr"));
+    doTestReplaceChoice("() -> {...}", introducer -> type("expr"));
   }
 
   public void testPlaceInsideLambdaBodyMultipleOccurrences1() {
-    doTestReplaceChoice("Replace all 0 occurrences", introducer -> type("expr"));
+    doTestReplaceChoice("Replace all 0 occurrences", "() -> {...}", introducer -> type("expr"), null);
   }
 
   public void testReplaceAllOnDummyCodeWithSameNameAsGenerated() {
@@ -205,12 +217,12 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testAllLValues() {
-    doTestReplaceChoice("Replace all 2 occurrences (will change semantics!)", null,
+    doTestReplaceChoice("Replace all 2 occurrences (will change semantics!)", null, null,
                         List.of("Replace this occurrence only", "Replace all 2 occurrences (will change semantics!)"));
   }
 
   public void testSelectLValueThenFilterIt() {
-    doTestReplaceChoice("Replace read and write occurrences (will change semantics!)", null,
+    doTestReplaceChoice("Replace read and write occurrences (will change semantics!)", null, null,
                         List.of("Replace this occurrence only", "Replace read and write occurrences (will change semantics!)"));
   }
 
@@ -336,10 +348,12 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   private void doTestReplaceChoice(String choiceText, Consumer<AbstractInplaceIntroducer<?, ?>> pass) {
-    doTestReplaceChoice(choiceText, pass, null);
+    doTestReplaceChoice(choiceText, null, pass, null);
   }
 
+  
   private void doTestReplaceChoice(String choiceText,
+                                   String secondChoiceText,
                                    Consumer<AbstractInplaceIntroducer<?, ?>> pass,
                                    @Nullable List<String> expectedOptions) {
     String name = getTestName(true);
@@ -351,6 +365,9 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
 
       MyIntroduceHandler handler = createIntroduceHandler();
       UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(choiceText)));
+      if (secondChoiceText != null) {
+        UiInterceptors.register(new ChooserInterceptor(expectedOptions, Pattern.quote(secondChoiceText)));
+      }
       final AbstractInplaceIntroducer<?, ?> introducer = invokeRefactoring(handler);
       if (pass != null) {
         pass.accept(introducer);

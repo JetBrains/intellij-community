@@ -5,6 +5,9 @@ import java.io.File
 
 fun <T> List<T>?.nullize() = if (isNullOrEmpty()) null else this
 
+/**
+ * Duplicates code in [com.intellij.openapi.util.io.FileUtil#findSequentFile] which can not be used to avoid the proxy app classpath pollution.
+ */
 fun File.findSequentChild(filePrefix: String, extension: String, condition: (File) -> Boolean): File {
   var postfix = 0
   val ext = if (extension.isEmpty()) "" else ".$extension"

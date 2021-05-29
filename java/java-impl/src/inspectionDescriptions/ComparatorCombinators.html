@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports cases where a <code>Comparator</code> is defined as a lambda expression which could be expressed using
+Reports the cases where a <code>Comparator</code> is defined as a lambda expression which could be expressed using
 methods like <code>Comparator.comparing()</code>.
-This inspection also reports chain comparisons which can be replaced by <code>Comparator.thenComparing()</code>.
+<p>This inspection also reports chain comparisons which can be replaced by <code>Comparator.thenComparing()</code>.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   myList.sort((person1, person2) -> person1.getName().compareTo(person2.getName()));
 
   myList2.sort((person1, person2) -> {
@@ -13,15 +13,15 @@ This inspection also reports chain comparisons which can be replaced by <code>Co
       if(res == 0) res = person1.third() - person2.third();
       return res;
   });
-</pre>
-<p>After the quick-fixes are applied, the result looks like this:</p>
-<pre>
+</code></pre>
+<p>After the quick-fixes are applied:</p>
+<pre><code>
   myList.sort(Comparator.comparing(Person::getName));
 
   myList2.sort(Comparator.comparing(Person::first)
                          .thenComparing(Person::second)
                          .thenComparingInt(Person::third));
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p><small>New in 2016.3</small></p>
 </body>

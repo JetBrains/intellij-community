@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
+import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,6 +38,11 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
       return;
     }
 
+    if (LightEdit.owns(project)) {
+      LightEditService.getInstance().navigateToTab(this);
+      return;
+    }
+
     ToolWindowManager windowManager = ToolWindowManager.getInstance(project);
 
     if (windowManager.isEditorComponentActive()) {
@@ -51,6 +58,12 @@ abstract class TabNavigationActionBase extends AnAction implements DumbAware {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
+
+    if (LightEdit.owns(project)) {
+      presentation.setEnabled(LightEditService.getInstance().isTabNavigationAvailable(this));
+      return;
+    }
+
     presentation.setEnabled(false);
     if (project == null || project.isDisposed()) {
       return;

@@ -619,7 +619,7 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void testCompilerPluginConfigurationCompilerArgumentsParametersProperty() {
+  public void testCompilerPluginConfigurationCompilerArgumentsParametersPropertyOverride() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -634,6 +634,53 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                   "      <configuration>" +
                   "        <parameters>false</parameters>" +
                   "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertEmpty(compilerConfiguration.getAdditionalOptions(getModule("project")));
+  }
+
+  @Test
+  public void testCompilerPluginConfigurationCompilerArgumentsParametersPropertyOverride1() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<properties>" +
+                  "  <maven.compiler.parameters>false</maven.compiler.parameters>" +
+                  "</properties>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
+                  "      <configuration>" +
+                  "        <parameters>true</parameters>" +
+                  "      </configuration>" +
+                  "    </plugin>" +
+                  "  </plugins>" +
+                  "</build>");
+
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    assertEquals("Javac", compilerConfiguration.getDefaultCompiler().getId());
+    assertUnorderedElementsAreEqual(compilerConfiguration.getAdditionalOptions(getModule("project")),"-parameters");
+  }
+
+  @Test
+  public void testCompilerPluginConfigurationCompilerArgumentsParametersProperty() {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<properties>" +
+                  "  <maven.compiler.parameters>true</maven.compiler.parameters>" +
+                  "</properties>" +
+                  "<build>" +
+                  "  <plugins>" +
+                  "    <plugin>" +
+                  "      <groupId>org.apache.maven.plugins</groupId>" +
+                  "      <artifactId>maven-compiler-plugin</artifactId>" +
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
@@ -656,9 +703,6 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                   "    <plugin>" +
                   "      <groupId>org.apache.maven.plugins</groupId>" +
                   "      <artifactId>maven-compiler-plugin</artifactId>" +
-                  "      <configuration>" +
-                  "        <parameters>false</parameters>" +
-                  "      </configuration>" +
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");

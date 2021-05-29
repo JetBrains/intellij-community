@@ -107,7 +107,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }.installOn(myTable);
     final TableSpeedSearch speedSearch = new TableSpeedSearch(myTable);
     speedSearch.setClearSearchOnNavigateNoMatch(true);
-    PopupHandler.installUnknownPopupHandler(myTable, createPopupGroup());
+    PopupHandler.installPopupMenu(myTable, createPopupGroup(), "CoverageViewPopup");
     ScrollingUtil.installActions(myTable);
 
     myTable.registerKeyboardAction(new ActionListener() {
@@ -136,9 +136,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       }
     });
 
-    final JComponent component =
-      ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(structure, suitesBundle), false).getComponent();
-    addToLeft(component);
+    ActionToolbar actionToolbar =
+      ActionManager.getInstance().createActionToolbar("CoverageView", createToolbarActions(structure, suitesBundle), false);
+    actionToolbar.setTargetComponent(myTable);
+    addToLeft(actionToolbar.getComponent());
   }
 
   @Override

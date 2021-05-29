@@ -27,6 +27,7 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -839,7 +840,7 @@ public class StreamChainInliner implements CallInliner {
         .chain(firstStep::before)
         .unwrap(sizeField)
         .push(DfTypes.intValue(0))
-        .ifCondition(JavaTokenType.GT);
+        .ifCondition(RelationType.GT);
     } else {
       builder
         .pushExpression(originalQualifier)

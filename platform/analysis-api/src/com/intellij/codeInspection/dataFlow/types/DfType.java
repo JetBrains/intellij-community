@@ -179,6 +179,32 @@ public interface DfType {
   boolean isSuperType(@NotNull DfType other);
 
   /**
+   * @return true if this type contains only local objects (not leaked from the current context to unknown places)
+   * In particular, this means that the values of these types are never {@linkplain #mayAlias(DfType) aliased} 
+   * to any other values.
+   */
+  default boolean isLocal() {
+    return false;
+  }
+
+  /**
+   * @param otherType other type
+   * @return true if values qualified by this value might be affected by values qualified by otherType.
+   * For example, if both this and otherType are pointer types that may refer to the same memory location.
+   */
+  default boolean mayAlias(DfType otherType) {
+    return false;
+  }
+
+  /**
+   * @return true if values immediately qualified by this type, never change, 
+   * as long as qualifier never changes.
+   */
+  default boolean isImmutableQualifier() {
+    return false;
+  }
+
+  /**
    * @param constant
    * @return true given constant value may be contained by this supertype
    */
