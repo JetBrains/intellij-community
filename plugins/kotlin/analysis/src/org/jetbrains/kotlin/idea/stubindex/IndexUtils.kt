@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.NamedStub
+import com.intellij.psi.tree.TokenSet
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -116,9 +117,38 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
     }
 }
 
+private val CONSTANT_EXPRESSIONS_TYPES = TokenSet.create(
+    KtStubElementTypes.NULL,
+    KtStubElementTypes.BOOLEAN_CONSTANT,
+    KtStubElementTypes.FLOAT_CONSTANT,
+    KtStubElementTypes.CHARACTER_CONSTANT,
+    KtStubElementTypes.INTEGER_CONSTANT,
+    KtStubElementTypes.REFERENCE_EXPRESSION,
+    KtStubElementTypes.DOT_QUALIFIED_EXPRESSION,
+    KtStubElementTypes.STRING_TEMPLATE
+)
+
+private fun KtValueArgument.argumentExpression(): KtExpression? {
+    stub?.let {
+        val constantExpressions = it.getChildrenByType(CONSTANT_EXPRESSIONS_TYPES, KtExpression.EMPTY_ARRAY)
+        return if (constantExpressions.isNotEmpty()) {
+            constantExpressions[0]
+        } else null
+    }
+
+    var cur: com.intellij.psi.PsiElement? = firstChild
+    while (cur != null) {
+        cur.safeAs<KtExpression>()?.let { return it }
+        cur = cur.nextSibling
+    }
+    return null
+}
+
 // TODO: it has to be dropped as soon as JvmFileClassUtil.getLiteralStringFromAnnotation becomes public in compiler
 private fun JvmFileClassUtil.getLiteralStringFromAnnotation(annotation: KtAnnotationEntry): String? {
-    val argumentExpression = annotation.valueArguments.firstOrNull()?.getArgumentExpression() ?: return null
+    val argumentExpression = annotation.valueArguments.firstOrNull()?.let {
+        if (it is KtValueArgument) it.argumentExpression() else it.getArgumentExpression()
+    } ?: return null
     val stringTemplate = argumentExpression as? KtStringTemplateExpression ?: return null
     val singleEntry = stringTemplate.entries.singleOrNull() as? KtLiteralStringTemplateEntry ?: return null
     return singleEntry.text
