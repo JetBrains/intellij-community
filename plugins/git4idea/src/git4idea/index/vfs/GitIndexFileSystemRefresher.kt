@@ -5,6 +5,7 @@ import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
@@ -138,13 +139,13 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private fun readFromGit(file: GitIndexVirtualFile): IndexFileData? {
-    val oldHash = file.hash
+    val (oldHash, oldModificationStamp) = runReadAction { Pair(file.hash, file.modificationStamp) }
     val stagedFile = readMetadataFromGit(file.root, file.filePath)
     val newHash = stagedFile?.hash()
     if (oldHash != newHash) {
       val newLength = if (stagedFile != null) readLengthFromGit(file.root, stagedFile.blobHash) else 0
       LOG.debug("Preparing refresh for $file")
-      return IndexFileData(file, oldHash, newHash, file.length, newLength, stagedFile?.isExecutable ?: false, file.modificationStamp)
+      return IndexFileData(file, oldHash, newHash, file.length, newLength, stagedFile?.isExecutable ?: false, oldModificationStamp)
     }
     return null
   }
