@@ -66,7 +66,11 @@ public class AboutDialog extends DialogWrapper {
   @Override
   protected void createDefaultActions() {
     super.createDefaultActions();
-    myCancelAction = new DialogWrapperAction("Copy") {
+    myCancelAction = new DialogWrapperAction(IdeBundle.message("button.copy")) {
+      {
+        putValue(Action.SHORT_DESCRIPTION, IdeBundle.message("description.copy.text.to.clipboard"));
+      }
+
       @Override
       protected void doAction(ActionEvent e) {
         try {
