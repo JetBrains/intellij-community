@@ -45,6 +45,8 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
       }
     }
 
+    advancedModuleSettings()
+
     settings.languageProperty.set(languages.first())
   }.withBorder(JBUI.Borders.empty(10, 10))
 
