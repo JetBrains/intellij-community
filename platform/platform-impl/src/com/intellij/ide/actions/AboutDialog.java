@@ -77,6 +77,7 @@ public class AboutDialog extends DialogWrapper {
           CopyPasteManager.getInstance().setContents(new StringSelection(getExtendedAboutText()));
         }
         catch (Exception ignore) { }
+        close(OK_EXIT_CODE);
       }
     };
   }
