@@ -20,6 +20,11 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
+/**
+ * @see com.intellij.util.containers.CollectionFactory
+ * @see com.intellij.concurrency.ConcurrentCollectionFactory
+ */
+
 @ApiStatus.NonExtendable
 public final class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
