@@ -530,7 +530,21 @@ public final class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl impleme
     PsiImportStatementBase statement = extractImport(aFile, false);
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
+  
+  @Override
+  public @NotNull PsiImportStatement createImportStatement(@NotNull String className) throws IncorrectOperationException {
+    if (className.isEmpty()) {
+      throw new IncorrectOperationException("Cannot create import statement for default package.");
+    }
+    if (!PsiNameHelper.getInstance(myManager.getProject()).isQualifiedName(className)) {
+      throw new IncorrectOperationException("Incorrect package name: \"" + className + "\".");
+    }
 
+    PsiJavaFile aFile = createDummyJavaFile("import " + className + ";");
+    PsiImportStatementBase statement = extractImport(aFile, false);
+    return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
+  }
+  
   @Override
   public @NotNull PsiDeclarationStatement createVariableDeclarationStatement(@NotNull String name,
                                                                              @NotNull PsiType type,
