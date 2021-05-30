@@ -152,6 +152,15 @@ public final class AboutPopup {
     return null;
   }
 
+  static @NotNull @Nls String getCopyrightText() {
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    // Copyright message should not be translated
+    @NlsSafe
+    String copyrightText = String.format(Locale.ROOT,
+                                         "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
+    return copyrightText;
+  }
+
   private static final class InfoSurface extends JPanel {
     private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
 
@@ -411,15 +420,6 @@ public final class AboutPopup {
         AllIcons.General.CopyHovered.paintIcon(this, g, coord.x, coord.y);
         config.restore();
       }
-    }
-
-    private static @NotNull @Nls String getCopyrightText() {
-      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      // Copyright message should not be translated
-      @NlsSafe
-      String copyrightText = String.format(Locale.ROOT,
-        "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
-      return copyrightText;
     }
 
     private @NotNull TextRenderer createTextRenderer(Graphics2D g) {
