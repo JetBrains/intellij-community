@@ -40,7 +40,7 @@ public class AboutDialog extends DialogWrapper {
   public AboutDialog(Project project, boolean showDebugInfo) {
     super(project, false);
     String appName = ApplicationNamesInfo.getInstance().getFullProductName();
-    setSize(600, 400);
+    //setSize(600, 400);
     setResizable(false);
     //noinspection HardCodedStringLiteral
     setTitle("About " + appName);
@@ -50,13 +50,12 @@ public class AboutDialog extends DialogWrapper {
 
   @Override
   protected @Nullable JComponent createCenterPanel() {
-    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     Icon appIcon = AppUIUtil.loadApplicationIcon(ScaleContext.create(), 100);
     Box box = getText();
     JLabel icon = new JLabel(appIcon);
     icon.setVerticalAlignment(SwingConstants.TOP);
     icon.setBorder(JBUI.Borders.empty(0, 10, 0, 40));
-    //box.setBorder(JBUI.Borders.emptyTop(0));
+    box.setBorder(JBUI.Borders.emptyRight(20));
 
     return JBUI.Panels.simplePanel()
       .addToLeft(icon)
@@ -133,7 +132,6 @@ public class AboutDialog extends DialogWrapper {
     html.add(new JBLabel(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
 
     html.add(Box.createVerticalStrut(20));
-    html.add(Box.createVerticalStrut(20));
 
 
     //HyperlinkLabel label = new HyperlinkLabel();
@@ -152,6 +150,9 @@ public class AboutDialog extends DialogWrapper {
     //  .addToLeft(new JBLabel(IdeBundle.message("about.box.powered.by") + " "))
     //  .addToCenter(link));
     html.add(new JBLabel("Powered by open-source software"));
+    html.add(new JBLabel(AboutPopup.getCopyrightText()));
+    html.add(Box.createVerticalStrut(20));
+    html.add(Box.createVerticalStrut(20));
     //SimpleColoredComponent text = new SimpleColoredComponent();
     //text.append(IdeBundle.message("about.box.powered.by"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     //text.append(IdeBundle.message("about.box.open.source.software"), SimpleTextAttributes.LINK_ATTRIBUTES);
