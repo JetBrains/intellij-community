@@ -312,6 +312,14 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
   @NotNull
   PsiImportStatement createImportStatement(@NotNull PsiClass aClass) throws IncorrectOperationException;
 
+   /**
+   * Creates an import statement for importing class from the package with the specified name.
+   *
+   * @throws IncorrectOperationException if {@code className} is not a valid qualified class name.
+   */
+  @NotNull
+  PsiImportStatement createImportStatement(@NotNull String className) throws IncorrectOperationException;
+  
   /**
    * Creates an on-demand import statement for importing classes from the package with the specified name.
    *
