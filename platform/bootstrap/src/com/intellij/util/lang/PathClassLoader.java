@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.ide.BytecodeTransformer;
@@ -7,11 +7,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.security.ProtectionDomain;
+import java.util.function.Function;
 
 @ApiStatus.Internal
 public final class PathClassLoader extends UrlClassLoader {
-  private static final ClassPath.ResourceFileFactory RESOURCE_FILE_FACTORY = file -> new ZipResourceFile(file);
+  private static final Function<Path, ResourceFile> RESOURCE_FILE_FACTORY = file -> new ZipResourceFile(file);
 
   private static final boolean isParallelCapable = registerAsParallelCapable();
   private static final ClassLoader appClassLoader = PathClassLoader.class.getClassLoader();
@@ -25,7 +27,7 @@ public final class PathClassLoader extends UrlClassLoader {
   }
 
   @SuppressWarnings("unused")
-  public static ClassPath.ResourceFileFactory getResourceFileFactory() {
+  public static Function<Path, ResourceFile> getResourceFileFactory() {
     return RESOURCE_FILE_FACTORY;
   }
 
