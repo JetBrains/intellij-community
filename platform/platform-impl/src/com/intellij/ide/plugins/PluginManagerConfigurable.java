@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -200,6 +201,10 @@ public final class PluginManagerConfigurable
       myTabHeaderComponent.update();
     });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
+    });
 
     createMarketplaceTab();
     createInstalledTab();
