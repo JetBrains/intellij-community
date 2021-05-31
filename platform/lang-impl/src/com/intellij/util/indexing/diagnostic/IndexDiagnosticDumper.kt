@@ -3,17 +3,23 @@ package com.intellij.util.indexing.diagnostic
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.getProjectCachePath
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.indexing.diagnostic.dto.JsonIndexDiagnostic
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingFileCount
+import com.intellij.util.indexing.diagnostic.dto.JsonProjectIndexingHistoryTimes
+import com.intellij.util.indexing.diagnostic.presentation.createAggregateHtml
 import com.intellij.util.indexing.diagnostic.presentation.generateHtml
 import com.intellij.util.io.createDirectories
 import com.intellij.util.io.delete
@@ -26,8 +32,10 @@ import java.nio.file.Paths
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.bufferedReader
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
+import kotlin.io.path.writeText
 import kotlin.streams.asSequence
 
 class IndexDiagnosticDumper : Disposable {
@@ -36,7 +44,7 @@ class IndexDiagnosticDumper : Disposable {
     @JvmStatic
     fun getInstance(): IndexDiagnosticDumper = service<IndexDiagnosticDumper>()
 
-    private val diagnosticDateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
+    val diagnosticTimestampFormat: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd-HH-mm-ss.SSS")
 
     private const val fileNamePrefix = "diagnostic-"
 
@@ -78,10 +86,16 @@ class IndexDiagnosticDumper : Disposable {
       val EP_NAME = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
     }
 
+    fun onStartedIndexing(projectIndexingHistory: ProjectIndexingHistory) = Unit
+
     fun onFinishedIndexing(projectIndexingHistory: ProjectIndexingHistory)
   }
 
-  fun dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory: ProjectIndexingHistory) {
+  fun onIndexingStarted(projectIndexingHistory: ProjectIndexingHistory) {
+    runAllListenersSafely { onStartedIndexing(projectIndexingHistory) }
+  }
+
+  fun onIndexingFinished(projectIndexingHistory: ProjectIndexingHistory) {
     try {
       if (ApplicationManager.getApplication().isUnitTestMode && !shouldDumpInUnitTestMode) {
         return
@@ -90,8 +104,26 @@ class IndexDiagnosticDumper : Disposable {
         return
       }
       NonUrgentExecutor.getInstance().execute { dumpProjectIndexingHistoryToLogSubdirectory(projectIndexingHistory) }
-    } finally {
-      ProjectIndexingHistoryListener.EP_NAME.forEachExtensionSafe { it.onFinishedIndexing(projectIndexingHistory) }
+    }
+    finally {
+      runAllListenersSafely { onFinishedIndexing(projectIndexingHistory) }
+    }
+  }
+
+  private fun runAllListenersSafely(block: ProjectIndexingHistoryListener.() -> Unit) {
+    val listeners = ProgressManager.getInstance().computeInNonCancelableSection<List<ProjectIndexingHistoryListener>, Exception> {
+      ProjectIndexingHistoryListener.EP_NAME.extensionList
+    }
+    for (listener in listeners) {
+      try {
+        listener.block()
+      } catch (e: Exception) {
+        if (e is ControlFlowException) {
+          // Make all listeners run first.
+          continue
+        }
+        LOG.error(e)
+      }
     }
   }
 
@@ -109,7 +141,11 @@ class IndexDiagnosticDumper : Disposable {
       jacksonMapper.writerWithDefaultPrettyPrinter().writeValue(diagnosticJson.toFile(), jsonIndexDiagnostic)
       diagnosticHtml.write(jsonIndexDiagnostic.generateHtml())
 
-      cleanupOldDiagnostics(indexDiagnosticDirectory)
+      val existingDiagnostics = parseExistingDiagnostics(indexDiagnosticDirectory)
+      val survivedDiagnostics = deleteOutdatedDiagnostics(existingDiagnostics)
+      indexDiagnosticDirectory.resolve("report.html").writeText(
+        createAggregateHtml(projectIndexingHistory.project.name, survivedDiagnostics)
+      )
     }
     catch (e: Exception) {
       LOG.warn("Failed to dump index diagnostic", e)
@@ -121,7 +157,7 @@ class IndexDiagnosticDumper : Disposable {
     var diagnosticHtml: Path
     var nowTime = LocalDateTime.now()
     while (true) {
-      val timestamp = nowTime.format(diagnosticDateTimeFormatter)
+      val timestamp = nowTime.format(diagnosticTimestampFormat)
       diagnosticJson = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.json")
       diagnosticHtml = indexDiagnosticDirectory.resolve("$fileNamePrefix$timestamp.html")
       if (!diagnosticJson.exists() && !diagnosticHtml.exists()) {
@@ -132,43 +168,70 @@ class IndexDiagnosticDumper : Disposable {
     return diagnosticJson to diagnosticHtml
   }
 
-  private fun cleanupOldDiagnostics(indexDiagnosticDirectory: Path) {
-    data class ExistingDiagnostic(val timestamp: LocalDateTime, val jsonFile: Path, val htmlFile: Path)
+  private fun <T> fastReadJsonField(jsonFile: Path, propertyName: String, type: Class<T>): T? {
+    try {
+      jsonFile.bufferedReader().use { reader ->
+        jacksonMapper.factory.createParser(reader).use { parser ->
+          while (parser.nextToken() != null) {
+            val property = parser.currentName
+            if (property == propertyName) {
+              parser.nextToken()
+              return jacksonMapper.readValue(parser, type)
+            }
+          }
+        }
+      }
+    }
+    catch (e: Exception) {
+      LOG.debug("Failed to parse project indexing time", e)
+    }
+    return null
+  }
 
-    val existingDiagnostics = Files.list(indexDiagnosticDirectory).use { files ->
+  private fun fastReadIndexingHistoryTimes(jsonFile: Path): JsonProjectIndexingHistoryTimes? =
+    fastReadJsonField(jsonFile, "times", JsonProjectIndexingHistoryTimes::class.java)
+
+  private fun fastReadFileCount(jsonFile: Path): JsonProjectIndexingFileCount? =
+    fastReadJsonField(jsonFile, "fileCount", JsonProjectIndexingFileCount::class.java)
+
+  private fun deleteOutdatedDiagnostics(existingDiagnostics: List<ExistingDiagnostic>): List<ExistingDiagnostic> {
+    val sortedDiagnostics = existingDiagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }
+
+    val survivedDiagnostics = sortedDiagnostics.take(indexingDiagnosticsLimitOfFiles)
+    val outdatedDiagnostics = sortedDiagnostics.drop(indexingDiagnosticsLimitOfFiles)
+
+    for (diagnostic in outdatedDiagnostics) {
+      diagnostic.jsonFile.delete()
+      diagnostic.htmlFile.delete()
+    }
+    return survivedDiagnostics
+  }
+
+  private fun parseExistingDiagnostics(indexDiagnosticDirectory: Path): List<ExistingDiagnostic> =
+    Files.list(indexDiagnosticDirectory).use { files ->
       files.asSequence()
         .filter { file -> file.fileName.toString().startsWith(fileNamePrefix) && file.extension == "json" }
         .mapNotNull { jsonFile ->
-          val timeStampString = jsonFile.fileName.toString().substringAfter(fileNamePrefix).substringBefore(".json")
-          val timeStamp = try {
-            LocalDateTime.parse(timeStampString, diagnosticDateTimeFormatter)
-          }
-          catch (e: Exception) {
-            return@mapNotNull null
-          }
+          val times = fastReadIndexingHistoryTimes(jsonFile) ?: return@mapNotNull null
+          val fileCount = fastReadFileCount(jsonFile)
+
           val htmlFile = jsonFile.resolveSibling(jsonFile.nameWithoutExtension + ".html")
           if (!htmlFile.exists()) {
             return@mapNotNull null
           }
-          ExistingDiagnostic(timeStamp, jsonFile, htmlFile)
+          ExistingDiagnostic(jsonFile, htmlFile, times, fileCount)
         }
         .toList()
     }
 
-    val survivedDiagnostics = existingDiagnostics
-      .sortedByDescending { it.timestamp }
-      .take(indexingDiagnosticsLimitOfFiles)
-
-    Files
-      .list(indexDiagnosticDirectory)
-      .use { files ->
-        files
-          .asSequence()
-          .filter { it.extension == "json" || it.extension == "html" }
-          .filter { file -> survivedDiagnostics.none { diagnostic -> file == diagnostic.htmlFile || file == diagnostic.jsonFile } }
-          .forEach { it.delete() }
-      }
-  }
+  data class ExistingDiagnostic(
+    val jsonFile: Path,
+    val htmlFile: Path,
+    val indexingTimes: JsonProjectIndexingHistoryTimes,
+    // May be not available in existing local reports. After some time
+    // (when all local reports are likely to expire) this field can be made non-null.
+    val fileCount: JsonProjectIndexingFileCount?
+  )
 
   @Synchronized
   override fun dispose() {

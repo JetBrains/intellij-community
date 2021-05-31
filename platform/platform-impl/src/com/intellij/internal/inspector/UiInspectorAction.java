@@ -151,7 +151,9 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     InputEvent event = e.getInputEvent();
-    event.consume();
+    if (event != null) {
+      event.consume();
+    }
     Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
 
     Project project = e.getProject();
@@ -615,7 +617,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
             return Pair.create(entry.getValue(), field.getName());
           }
         }
-        catch (IllegalAccessException e) {
+        catch (Exception e) {
           //skip
         }
       }

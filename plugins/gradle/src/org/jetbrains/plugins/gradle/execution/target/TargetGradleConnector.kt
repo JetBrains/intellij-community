@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.execution.target
 
+import com.intellij.execution.target.value.TargetValue
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
@@ -20,12 +21,13 @@ import java.util.concurrent.TimeUnit
 class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentConfigurationProvider,
                             taskId: ExternalSystemTaskId?,
                             taskListener: ExternalSystemTaskNotificationListener?) : GradleConnector(), ProjectConnectionCloseListener {
-  private val connectionFactory: ConnectionFactory = TargetConnectionFactory(environmentConfigurationProvider, taskId, taskListener)
+  private val connectionFactory: TargetConnectionFactory = TargetConnectionFactory(environmentConfigurationProvider, taskId, taskListener)
   private val distributionFactory: DistributionFactory = DistributionFactory(Time.clock())
   private var distribution: Distribution? = null
   private val connections = mutableListOf<TargetProjectConnection>()
   private var stopped = false
   private val connectionParamsBuilder = DefaultConnectionParameters.builder()
+  private var gradleUserHome: TargetValue<String>? = null
 
   fun close() {
   }
@@ -43,7 +45,13 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
   }
 
   override fun useInstallation(gradleHome: File?): GradleConnector {
-    distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleHome), gradleHome?.path)
+    val targetValue = gradleHome?.path?.let { TargetValue.fixed(it) }
+    distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleHome), targetValue)
+    return this
+  }
+
+  fun useInstallation(gradleHome: TargetValue<String>): GradleConnector {
+    distribution = TargetGradleDistribution(distributionFactory.getDistribution(File(gradleHome.maybeGetLocalValue()!!)), gradleHome)
     return this
   }
 
@@ -79,6 +87,12 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
 
   override fun useGradleUserHomeDir(gradleUserHomeDir: File?): GradleConnector {
     connectionParamsBuilder.setGradleUserHomeDir(gradleUserHomeDir)
+    return this
+  }
+
+  fun useGradleUserHomeDir(gradleUserHome: TargetValue<String>): GradleConnector {
+    this.gradleUserHome = gradleUserHome
+    connectionParamsBuilder.setGradleUserHomeDir(File(gradleUserHome.maybeGetLocalValue()!!))
     return this
   }
 
@@ -128,7 +142,7 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
       if (stopped) {
         throw IllegalStateException("Tooling API client has been disconnected. No other connections may be used.")
       }
-      val connection = connectionFactory.create(distribution, connectionParameters, this)
+      val connection = connectionFactory.create(distribution!!, TargetConnectionParameters(connectionParameters, gradleUserHome), this)
       connections.add(connection as TargetProjectConnection)
       return connection
     }

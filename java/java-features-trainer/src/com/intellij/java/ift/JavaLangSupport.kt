@@ -38,10 +38,7 @@ class JavaLangSupport : AbstractLangSupport() {
 
   override val langCourseFeedback get() = getFeedbackLink(this, false)
 
-  override val readMeCreator: ReadMeCreator = object : ReadMeCreator() {
-    private val sharedIndexesRemark: String = JavaLessonsBundle.message("readme.shared.indexes.remark")
-    override val indexingDescription = "${super.indexingDescription}\n\n$sharedIndexesRemark"
-  }
+  override val readMeCreator= ReadMeCreator()
 
   override fun installAndOpenLearningProject(projectPath: Path,
                                              projectToClose: Project?,

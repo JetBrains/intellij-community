@@ -2011,32 +2011,35 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       // docked and sliding windows
       val anchor = info.anchor
       var another: InternalDecoratorImpl? = null
+      val wholeSize = toolWindowPane!!.rootPane.size
       if (source.parent is Splitter) {
-        var sizeInSplit = if (anchor.isSplitVertically) source.height.toFloat() else source.width.toFloat()
+        var sizeInSplit = if (anchor.isSplitVertically) source.height else source.width
         val splitter = source.parent as Splitter
         if (splitter.secondComponent === source) {
-          sizeInSplit += splitter.dividerWidth.toFloat()
+          sizeInSplit += splitter.dividerWidth
           another = splitter.firstComponent as InternalDecoratorImpl
         }
         else {
           another = splitter.secondComponent as InternalDecoratorImpl
         }
-        if (anchor.isSplitVertically) {
-          info.sideWeight = sizeInSplit / splitter.height
-        }
-        else {
-          info.sideWeight = sizeInSplit / splitter.width
-        }
+        info.sideWeight = getAdjustedRatio(sizeInSplit,
+                                           if (anchor.isSplitVertically) splitter.height else splitter.width,
+                                           if (splitter.secondComponent === source) -1 else 1)
       }
 
-      val size = toolWindowPane!!.size
-      var paneWeight = if (anchor.isHorizontal) source.height.toFloat() / size.height else source.width.toFloat() / size.width
+      val paneWeight = getAdjustedRatio(if (anchor.isHorizontal) source.height else source.width,
+                                        if (anchor.isHorizontal) wholeSize.height else wholeSize.width, 1)
       info.weight = paneWeight
-      if (another != null && anchor.isSplitVertically) {
-        paneWeight = if (anchor.isHorizontal) another.height.toFloat() / size.height else another.width.toFloat() / size.width
+      if (another != null) {
         getRegisteredMutableInfoOrLogError(another.toolWindow.id).weight = paneWeight
       }
     }
+  }
+
+  private fun getAdjustedRatio(partSize: Int, totalSize: Int, direction: Int): Float {
+    var ratio = partSize.toFloat() / totalSize
+    ratio += (((partSize.toFloat() + direction) / totalSize) - ratio) / 2
+    return ratio
   }
 
   private fun focusToolWindowByDefault() {

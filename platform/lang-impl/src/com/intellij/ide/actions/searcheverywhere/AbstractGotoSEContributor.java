@@ -17,6 +17,7 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
 import com.intellij.lang.LangBundle;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.navigation.PsiElementNavigationItem;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -424,6 +425,9 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
       }
       if (element instanceof DataProvider) {
         return ((DataProvider)element).getData(dataId);
+      }
+      if (element instanceof PsiElementNavigationItem) {
+        return ((PsiElementNavigationItem)element).getTargetElement();
       }
     }
 

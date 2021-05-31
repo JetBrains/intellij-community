@@ -105,13 +105,13 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   @Nullable
   @NlsSafe
   public String getServiceDirectoryPath() {
-    return GradleSystemSettings.getInstance().getServiceDirectoryPath();
+    return GradleLocalSettings.getInstance(getProject()).getGradleUserHome();
   }
 
   public void setServiceDirectoryPath(@Nullable String newPath) {
-    String myServiceDirectoryPath = GradleSystemSettings.getInstance().getServiceDirectoryPath();
+    String myServiceDirectoryPath = GradleLocalSettings.getInstance(getProject()).getGradleUserHome();
     if (!Objects.equals(myServiceDirectoryPath, newPath)) {
-      GradleSystemSettings.getInstance().setServiceDirectoryPath(newPath);
+      GradleLocalSettings.getInstance(getProject()).setGradleUserHome(newPath);
       getPublisher().onServiceDirectoryPathChange(myServiceDirectoryPath, newPath);
     }
   }

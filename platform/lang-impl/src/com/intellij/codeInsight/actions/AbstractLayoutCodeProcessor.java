@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.actions;
 
@@ -391,7 +391,8 @@ public abstract class AbstractLayoutCodeProcessor {
     private void performFileProcessing(@NotNull PsiFile file) {
       String groupId = AbstractLayoutCodeProcessor.this.toString();
       for (AbstractLayoutCodeProcessor processor : myProcessors) {
-        FutureTask<Boolean> writeTask = ReadAction.compute(() -> processor.prepareTask(file, myProcessChangedTextOnly));
+        final FutureTask<Boolean> writeTask = ReadAction.nonBlocking(() -> processor.prepareTask(file, myProcessChangedTextOnly))
+          .executeSynchronously();
 
         ProgressIndicatorProvider.checkCanceled();
 

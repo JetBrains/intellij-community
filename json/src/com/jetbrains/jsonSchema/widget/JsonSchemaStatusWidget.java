@@ -310,7 +310,6 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       ReadAction
         .nonBlocking(update)
         .expireWith(this)
-        .expireWith(myProject)
         .wrapProgress(globalProgress)
         .coalesceBy(this)
         .submit(AppExecutorUtil.getAppExecutorService());

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.imageio.ImageIO;
 import javax.swing.*;
@@ -55,6 +56,8 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   private final HyperlinkListener myHyperlinkListener;
   private final boolean myDisableLinkedCss;
 
+  private FontResolver myFontResolver;
+
   public JBHtmlEditorKit() {
     this(true);
   }
@@ -97,6 +100,13 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         }
       }
     };
+  }
+
+  /**
+   * This allows to impact resolution of fonts from CSS attributes of text
+   */
+  public void setFontResolver(@Nullable FontResolver fontResolver) {
+    myFontResolver = fontResolver;
   }
 
   @Override
@@ -179,10 +189,16 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
     super.deinstall(c);
   }
 
-  private static class StyleSheetCompressionThreshold extends StyleSheet {
+  private class StyleSheetCompressionThreshold extends StyleSheet {
     @Override
     protected int getCompressionThreshold() {
       return -1;
+    }
+
+    @Override
+    public Font getFont(AttributeSet a) {
+      Font font = super.getFont(a);
+      return myFontResolver == null ? font : myFontResolver.getFont(font, a);
     }
   }
 
@@ -492,5 +508,15 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
         delegate.handleEndOfLineString(eol);
       }
     }
+  }
+
+  /**
+   * @see #setFontResolver(FontResolver)
+   */
+  public interface FontResolver {
+    /**
+     * Resolves a font for a piece of text, given its CSS attributes. {@code defaultFont} is the result of default resolution algorithm.
+     */
+    @NotNull Font getFont(@NotNull Font defaultFont, @NotNull AttributeSet attributeSet);
   }
 }

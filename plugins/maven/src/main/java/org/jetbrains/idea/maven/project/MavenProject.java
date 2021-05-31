@@ -661,7 +661,8 @@ public class MavenProject {
 
   public void setConfigFileError(@Nullable String message) {
     if (message != null) {
-      myState.myReadingProblems.add(new MavenProjectProblem(myFile.getPath() + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, message, SYNTAX));
+      myState.myReadingProblems.add(new MavenProjectProblem(myFile.getPath() + MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, message, SYNTAX,
+                                                            true));
     }
   }
 
@@ -697,7 +698,7 @@ public class MavenProject {
                                                                          locator);
     MavenUtil.notifySyncForUnresolved(project, results);
     final MavenProjectReaderResult result = results.iterator().next();
-    MavenProjectChanges changes = set(result, generalSettings, false, result.readingProblems.isEmpty(), false);
+    MavenProjectChanges changes = set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);
 
     if (result.nativeMavenProject != null) {
       for (MavenImporter eachImporter : getSuitableImporters()) {
@@ -716,7 +717,7 @@ public class MavenProject {
                                                                          getFile(),
                                                                          getActivatedProfilesIds(),
                                                                          console);
-    if (result == null || !result.readingProblems.isEmpty()) return Pair.create(false, MavenProjectChanges.NONE);
+    if (result == null || !MavenProjectReaderResult.shouldResetDependenciesAndFolders(result)) return Pair.create(false, MavenProjectChanges.NONE);
     MavenProjectChanges changes = setFolders(result);
     return Pair.create(true, changes);
   }
@@ -789,7 +790,7 @@ public class MavenProject {
   }
 
   private static MavenProjectProblem createDependencyProblem(VirtualFile file, String description) {
-    return new MavenProjectProblem(file.getPath(), description, MavenProjectProblem.ProblemType.DEPENDENCY);
+    return new MavenProjectProblem(file.getPath(), description, MavenProjectProblem.ProblemType.DEPENDENCY, false);
   }
 
   private static boolean isParentResolved(State state) {

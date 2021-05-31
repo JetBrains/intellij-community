@@ -87,18 +87,16 @@ public abstract class BaseRemoteFileEditor implements TextEditor, PropertyChange
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     TextEditor textEditor = getTextEditor();
-    return textEditor == null ? myUserDataHolder.getUserData(key) : textEditor.getUserData(key);
+    T data = myUserDataHolder.getUserData(key);
+    if (data == null && textEditor != null) {
+      data = textEditor.getUserData(key);
+    }
+    return data;
   }
 
   @Override
   public <T> void putUserData(@NotNull Key<T> key, @Nullable T value) {
-    TextEditor textEditor = getTextEditor();
-    if (textEditor == null) {
       myUserDataHolder.putUserData(key, value);
-    }
-    else {
-      textEditor.putUserData(key, value);
-    }
   }
 
   @Override

@@ -67,7 +67,7 @@ class Y {
     is[0] = 1000;
     <warning descr="Object instantiation inside 'hashCode()'">Integer.valueOf(is[0])</warning>;
     int hashCode = 7;
-    java.util.Arrays.<warning descr="Object instantiation inside 'hashCode()'">asList</warning>();
+    java.util.Optional.<warning descr="Object instantiation inside 'hashCode()'">of</warning>("foo");
     for (Object fooElement : <warning descr="Object instantiation inside 'hashCode()' (iterator)">fooList</warning>) {
       hashCode = 31 * hashCode + (fooElement == null ? 0 : fooElement.hashCode());
     }

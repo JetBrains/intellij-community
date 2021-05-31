@@ -12,7 +12,6 @@ import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiElementUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.apache.commons.lang.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
@@ -210,7 +209,7 @@ public class DelegateHandler {
     }
 
     final String codeBlockText = createCodeBlockText(psiElement, psiMethod, returnType, psiParameters);
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
+    methodBuilder.withBodyText(codeBlockText);
 
     return methodBuilder;
   }

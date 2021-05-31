@@ -1,8 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python
 
 import com.intellij.concurrency.SensitiveProgressWrapper
-import com.intellij.ide.impl.getExplicitTrustedStateOrByHostAndLocation
+import com.intellij.ide.impl.getTrustedState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.Logger
@@ -104,7 +104,7 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     LOGGER.debug("Looking for a virtual environment related to the project")
     guardIndicator(indicator) {
       val detectedAssociatedEnvironments = detectAssociatedEnvironments(module, existingSdks, context)
-      chooseEnvironmentToSuggest(module, detectedAssociatedEnvironments, project.getExplicitTrustedStateOrByHostAndLocation())
+      chooseEnvironmentToSuggest(module, detectedAssociatedEnvironments, project.getTrustedState())
     }?.let {
       val detectedAssociatedEnv = it.first
 

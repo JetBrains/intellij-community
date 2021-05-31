@@ -1,7 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import com.intellij.ReviseWhenPortedToJDK;
+import com.intellij.UtilBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.NlsSafe;
@@ -33,6 +34,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public class StringUtil extends StringUtilRt {
   public static final String ELLIPSIS = "\u2026";
+  public static final String THREE_DOTS = "...";
 
   private static final class Splitters {
     private static final Pattern EOL_SPLIT_KEEP_SEPARATORS = Pattern.compile("(?<=(\r\n|\n))|(?<=\r)(?=[^\n])");
@@ -2035,7 +2037,6 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static @NotNull @Nls String removeEllipsisSuffix(@NotNull @Nls String s) {
-    String THREE_DOTS = "...";
     if (s.endsWith(THREE_DOTS)) {
       return s.substring(0, s.length() - THREE_DOTS.length());
     }
@@ -3156,5 +3157,15 @@ public class StringUtil extends StringUtilRt {
 
   private static boolean isWhitespaceOrTab(char c) {
     return c == ' ' || c == '\t';
+  }
+
+  @Nls
+  @NotNull
+  public static String naturalJoin(List<String> strings) {
+    if (strings.isEmpty()) return "";
+    if (strings.size() == 1) return strings.get(0);
+    String lastWord = strings.get(strings.size() - 1);
+    String leadingWords = join(strings.subList(0, strings.size() - 1), ", ");
+    return UtilBundle.message("natural.join", leadingWords, lastWord);
   }
 }

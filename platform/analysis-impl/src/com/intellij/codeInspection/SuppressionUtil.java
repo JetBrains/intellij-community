@@ -141,6 +141,11 @@ public final class SuppressionUtil extends SuppressionUtilCore {
                                                boolean replaceOtherSuppressionIds, @NotNull Language commentLanguage) {
     final String oldSuppressionCommentText = comment.getText();
     final String lineCommentPrefix = getLineCommentPrefix(comment);
+    if (!replaceOtherSuppressionIds &&
+        oldSuppressionCommentText.contains(id) &&
+        StringUtil.getWordsIn(oldSuppressionCommentText).contains(id)) {
+      return;
+    }
     Couple<String> blockPrefixSuffix = null;
     if (lineCommentPrefix == null) {
       blockPrefixSuffix = getBlockPrefixSuffixPair(comment);

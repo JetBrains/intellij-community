@@ -483,8 +483,7 @@
     <!-- Compiler -->
     <projectConfigurable groupId="build" groupWeight="130" instance="com.intellij.compiler.options.CompilerConfigurable"
                          id="project.propCompiler" order="after project"
-                         key="compiler.configurable.display.name" bundle="messages.JavaCompilerBundle"
-                         childrenEPName="com.intellij.compilerSettingsFactory">
+                         key="compiler.configurable.display.name" bundle="messages.JavaCompilerBundle">
       <configurable instance="com.intellij.openapi.compiler.options.ExcludedEntriesConfigurable"
                     id="reference.projectsettings.compiler.excludes"
                     key="reference.projectsettings.compiler.excludes"

@@ -9,15 +9,23 @@ import com.intellij.util.indexing.snapshot.SnapshotInputMappingsStatistics
 import java.time.Duration
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
+import java.util.concurrent.atomic.AtomicLong
 
 typealias TimeMillis = Long
 typealias TimeNano = Long
 typealias BytesNumber = Long
 
 data class ProjectIndexingHistory(val project: Project) {
+
+  private companion object {
+    val indexingSessionIdSequencer = AtomicLong()
+  }
+
+  val indexingSessionId = indexingSessionIdSequencer.getAndIncrement()
+
   private val biggestContributorsPerFileTypeLimit = 10
 
-  val times = IndexingTimes(ZonedDateTime.now(ZoneOffset.UTC))
+  val times = IndexingTimes(updatingStart = ZonedDateTime.now(ZoneOffset.UTC), totalUpdatingTime = System.nanoTime())
 
   val scanningStatistics = arrayListOf<JsonScanningStatistics>()
 
@@ -38,18 +46,18 @@ data class ProjectIndexingHistory(val project: Project) {
     for ((fileType, fileTypeStats) in statistics.statsPerFileType) {
       val totalStats = totalStatsPerFileType.getOrPut(fileType) {
         StatsPerFileType(0, 0, 0, 0,
-                         LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.indexingTimeInAllThreads }))
+                         LimitedPriorityQueue(biggestContributorsPerFileTypeLimit, compareBy { it.processingTimeInAllThreads }))
       }
       totalStats.totalNumberOfFiles += fileTypeStats.numberOfFiles
       totalStats.totalBytes += fileTypeStats.totalBytes
-      totalStats.totalIndexingTimeInAllThreads += fileTypeStats.indexingTime.sumTime
-      totalStats.totalContentLoadingTimeInAllThreads += fileTypeStats.contentLoadingTime.sumTime
+      totalStats.totalProcessingTimeInAllThreads += fileTypeStats.processingTimeInAllThreads
+      totalStats.totalContentLoadingTimeInAllThreads += fileTypeStats.contentLoadingTimeInAllThreads
       totalStats.biggestFileTypeContributors.addElement(
         BiggestFileTypeContributor(
           statistics.fileSetName,
           fileTypeStats.numberOfFiles,
           fileTypeStats.totalBytes,
-          fileTypeStats.indexingTime.sumTime
+          fileTypeStats.processingTimeInAllThreads
         )
       )
     }
@@ -70,7 +78,7 @@ data class ProjectIndexingHistory(val project: Project) {
       totalStats.totalNumberOfFiles += stats.numberOfFiles
       totalStats.totalNumberOfFilesIndexedByExtensions += stats.numberOfFilesIndexedByExtensions
       totalStats.totalBytes += stats.totalBytes
-      totalStats.totalIndexingTimeInAllThreads += stats.indexingTime.sumTime
+      totalStats.totalIndexingTimeInAllThreads += stats.indexingTime
     }
   }
 
@@ -92,7 +100,7 @@ data class ProjectIndexingHistory(val project: Project) {
   data class StatsPerFileType(
     var totalNumberOfFiles: Int,
     var totalBytes: BytesNumber,
-    var totalIndexingTimeInAllThreads: TimeNano,
+    var totalProcessingTimeInAllThreads: TimeNano,
     var totalContentLoadingTimeInAllThreads: TimeNano,
     val biggestFileTypeContributors: LimitedPriorityQueue<BiggestFileTypeContributor>
   )
@@ -101,7 +109,7 @@ data class ProjectIndexingHistory(val project: Project) {
     val providerName: String,
     val numberOfFiles: Int,
     val totalBytes: BytesNumber,
-    val indexingTimeInAllThreads: TimeNano
+    val processingTimeInAllThreads: TimeNano
   )
 
   data class StatsPerIndexer(
@@ -118,8 +126,10 @@ data class ProjectIndexingHistory(val project: Project) {
 
   data class IndexingTimes(
     val updatingStart: ZonedDateTime,
+    var totalUpdatingTime: TimeNano,
     var updatingEnd: ZonedDateTime = updatingStart,
     var indexingDuration: Duration = Duration.ZERO,
+    var contentLoadingDuration: Duration = Duration.ZERO,
     var pushPropertiesDuration: Duration = Duration.ZERO,
     var indexExtensionsDuration: Duration = Duration.ZERO,
     var scanFilesDuration: Duration = Duration.ZERO,

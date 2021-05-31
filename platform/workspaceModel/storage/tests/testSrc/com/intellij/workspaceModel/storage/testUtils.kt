@@ -11,7 +11,6 @@ import junit.framework.TestCase.*
 import org.junit.Assert
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.util.*
 import java.util.function.BiPredicate
 import kotlin.reflect.full.memberProperties
 
@@ -28,6 +27,7 @@ class TestEntityTypesResolver : EntityTypesResolver {
 object SerializationRoundTripChecker {
   fun verifyPSerializationRoundTrip(storage: WorkspaceEntityStorage, virtualFileManager: VirtualFileUrlManager): ByteArray {
     storage as WorkspaceEntityStorageImpl
+    storage.assertConsistency()
 
     val serializer = EntityStorageSerializerImpl(TestEntityTypesResolver(), virtualFileManager)
 
@@ -36,6 +36,7 @@ object SerializationRoundTripChecker {
 
     val byteArray = stream.toByteArray()
     val deserialized = (serializer.deserializeCache(ByteArrayInputStream(byteArray)) as WorkspaceEntityStorageBuilderImpl).toStorage()
+    deserialized.assertConsistency()
 
     assertStorageEquals(storage, deserialized)
 
@@ -59,7 +60,7 @@ object SerializationRoundTripChecker {
       val expectedEntities = expectedEntityFamily.entities
       val actualEntities = actualEntityFamily.entities
 
-      assertOrderedEquals(expectedEntities, actualEntities)
+      assertOrderedEquals(expectedEntities, actualEntities) { a, b -> a == null && b == null || a != null && b != null && a.equalsIgnoringEntitySource(b) }
     }
 
     // Assert refs
@@ -74,7 +75,6 @@ object SerializationRoundTripChecker {
 
     // Assert indexes
     assertBiMultiMap(expected.indexes.softLinks.index, actual.indexes.softLinks.index)
-    assertBiMap(expected.indexes.entitySourceIndex.index, actual.indexes.entitySourceIndex.index)
     assertBiMap(expected.indexes.persistentIdIndex.index, actual.indexes.persistentIdIndex.index)
     // External index should not be persisted
     assertTrue(actual.indexes.externalMappings.isEmpty())
@@ -83,8 +83,8 @@ object SerializationRoundTripChecker {
   }
 
   // Use UsefulTestCase.assertOrderedEquals in case it'd be used in this module
-  private fun <T> assertOrderedEquals(actual: Iterable<T?>, expected: Iterable<T?>) {
-    if (!equals(actual, expected, BiPredicate { a: T?, b: T? -> a == b })) {
+  private fun <T> assertOrderedEquals(actual: Iterable<T?>, expected: Iterable<T?>, comparator: (T?, T?) -> Boolean) {
+    if (!equals(actual, expected, BiPredicate(comparator))) {
       val expectedString: String = expected.toString()
       val actualString: String = actual.toString()
       Assert.assertEquals("", expectedString, actualString)
@@ -128,7 +128,7 @@ object SerializationRoundTripChecker {
       val expectedValue = local.getValues(key)
       local.removeKey(key)
 
-      assertOrderedEquals(expectedValue, value)
+      assertOrderedEquals(expectedValue, value) { a, b -> a == b }
     }
     if (!local.isEmpty) {
       Assert.fail("No mappings found for the following keys: " + local.keys)

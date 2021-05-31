@@ -22,6 +22,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.OpenUntrustedProjectChoice;
 import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.internal.statistic.IdeActivity;
@@ -101,7 +102,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Semaphore;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
@@ -713,10 +713,10 @@ public final class ExternalSystemUtil {
     return isTrusted(project, systemIds) ||
            askConfirmation && TrustedProjects.confirmLoadingUntrustedProject(
              project,
-             ExternalSystemBundle.message("untrusted.project.notification.title", systemsPresentation, systemIds.size()),
-             ExternalSystemBundle.message("untrusted.project.notification.text", systemsPresentation, systemIds.size()),
-             ExternalSystemBundle.message("untrusted.project.notification.trust.button"),
-             ExternalSystemBundle.message("untrusted.project.notification.distrust.button")
+             IdeBundle.message("untrusted.project.dialog.title", systemsPresentation, systemIds.size()),
+             IdeBundle.message("untrusted.project.dialog.text", systemsPresentation, systemIds.size()),
+             IdeBundle.message("untrusted.project.dialog.trust.button"),
+             IdeBundle.message("untrusted.project.dialog.distrust.button")
            );
   }
 
@@ -731,18 +731,16 @@ public final class ExternalSystemUtil {
     @NotNull VirtualFile virtualFile,
     @NotNull Collection<ProjectSystemId> systemIds
   ) {
-    String systemsPresentation = naturalJoinSystemIds(systemIds);
     if (executesTrustedCodeOnly(systemIds)) {
       return OpenUntrustedProjectChoice.IMPORT;
     }
     return TrustedProjects.confirmOpeningUntrustedProject(
       virtualFile,
-      ExternalSystemBundle.message("untrusted.project.notification.open.title", systemsPresentation, systemIds.size()),
-      ExternalSystemBundle.message("untrusted.project.notification.open.text", systemsPresentation, systemIds.size()),
-      ExternalSystemBundle.message("untrusted.project.notification.open.trust.button"),
-      ExternalSystemBundle.message("untrusted.project.notification.open.distrust.button"),
-      ExternalSystemBundle.message("untrusted.project.notification.open.cancel.button")
-    );
+      new HashSet<>(systemIds)
+        .stream()
+        .map(it -> it.getReadableName())
+        .sorted(NaturalComparator.INSTANCE)
+        .collect(Collectors.toList()));
   }
 
   public static boolean isTrusted(@NotNull Project project, @NotNull ProjectSystemId systemId) {
@@ -754,21 +752,12 @@ public final class ExternalSystemUtil {
   }
 
 
-  public static @NotNull String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
-    return naturalJoin(
-      new HashSet<>(systemIds).stream()
-        .map(it -> it.getReadableName())
-        .sorted(NaturalComparator.INSTANCE)
-        .collect(Collectors.toList())
-    );
-  }
-
-  private static @NotNull String naturalJoin(@NotNull List<String> words) {
-    if (words.size() == 0) return "";
-    if (words.size() == 1) return words.get(0);
-    String lastWord = words.get(words.size() - 1);
-    String leadingWords = StringUtil.join(words.subList(0, words.size() - 1), ", ");
-    return ExternalSystemBundle.message("external.system.reload.notification.action.reload.and.conjunction", leadingWords, lastWord);
+  public static @NotNull @Nls String naturalJoinSystemIds(@NotNull Collection<ProjectSystemId> systemIds) {
+    List<String> projectTypeNames = new HashSet<>(systemIds).stream()
+      .map(it -> it.getReadableName())
+      .sorted(NaturalComparator.INSTANCE)
+      .collect(Collectors.toList());
+    return StringUtil.naturalJoin(projectTypeNames);
   }
 
   public static boolean isNewProject(Project project) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.updates
 
 import com.intellij.openapi.updateSettings.impl.ChannelStatus
@@ -6,8 +6,7 @@ import com.intellij.openapi.updateSettings.impl.UpdateChannel
 import com.intellij.openapi.updateSettings.impl.UpdatesInfo
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase
-import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
+import org.junit.Assert.*
 import org.junit.Assume.assumeTrue
 import org.junit.Test
 import java.io.IOException
@@ -122,4 +121,20 @@ class UpdateInfoParsingTest : BareTestFixtureTestCase() {
   }
 
   private fun load(text: String) = UpdatesInfo(JDOMUtil.load(text))
+
+  @Test
+  fun disableMachineId() {
+    val product = load("""
+      <products>
+        <product name="IntelliJ IDEA" disableMachineId="true">
+          <code>IU</code>
+          <channel id="IDEA_EAP" status="eap">
+            <build number="162.100" fullNumber="162.100.1" version="2016.2">
+               <patch from="162.99" fullFrom="162.99.2" size="1"/>
+            </build>
+          </channel>
+        </product>
+      </products>""".trimIndent())["IU"]!!
+    assertTrue(product.disableMachineId)
+  }
 }

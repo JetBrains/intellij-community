@@ -818,6 +818,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       Project project = myProject;
       DaemonCodeAnalyzerImpl dca;
       if (project == null ||
+          project.isDefault() ||
           !project.isInitialized() ||
           project.isDisposed() ||
           PowerSaveMode.isEnabled() ||
@@ -971,7 +972,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
     Collection<FileEditor> result = new HashSet<>(activeTextEditors.size());
     Collection<VirtualFile> files = new HashSet<>(activeTextEditors.size());
-    if (!app.isUnitTestMode()) {
+    if (!app.isUnitTestMode() && !myProject.isDefault()) {
       // editors in tabs
       for (FileEditor tabEditor : myFileEditorManager.getSelectedEditorWithRemotes()) {
         if (!tabEditor.isValid()) continue;

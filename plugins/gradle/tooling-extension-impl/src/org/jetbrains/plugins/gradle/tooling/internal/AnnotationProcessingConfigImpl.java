@@ -5,29 +5,31 @@ import org.gradle.internal.impldep.com.google.common.base.Objects;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.AnnotationProcessingConfig;
+import org.jetbrains.plugins.gradle.tooling.util.GradleContainerUtil;
 
+import java.io.File;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class AnnotationProcessingConfigImpl implements AnnotationProcessingConfig, Serializable {
-  private final List<String> myPaths;
+  private final List<File> myPaths;
   private final List<String> myArgs;
   private final String myProcessorOutput;
   private final boolean isTestSources;
 
-  public AnnotationProcessingConfigImpl(List<String> files, List<String> args, String output, boolean sources) {
+  public AnnotationProcessingConfigImpl(Collection<File> files, List<String> args, String output, boolean sources) {
     myProcessorOutput = output;
     isTestSources = sources;
-    myPaths = new ArrayList<String>(files);
+    myPaths = new ArrayList<File>(files);
     myArgs = args;
   }
 
   @NotNull
   @Override
   public Collection<String> getAnnotationProcessorPath() {
-    return myPaths;
+    return GradleContainerUtil.unmodifiablePathSet(myPaths);
   }
 
   @NotNull

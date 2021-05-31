@@ -28,14 +28,7 @@ import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.inspections.quickfix.AddCallSuperQuickFix;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyCallExpression;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyExpression;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyRecursiveElementVisitor;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import java.util.Objects;
 import java.util.Optional;
@@ -67,7 +60,7 @@ public class PyMissingConstructorInspection extends PyInspection {
 
       if (superClasses.length == 0 ||
           superClasses.length == 1 && OBJECT.equals(superClasses[0].getText()) ||
-          !superHasConstructor(node, myTypeEvalContext)) {
+          !superHasNonAbstractConstructor(node, myTypeEvalContext)) {
         return;
       }
 
@@ -86,14 +79,16 @@ public class PyMissingConstructorInspection extends PyInspection {
       }
     }
 
-    private static boolean superHasConstructor(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    private static boolean superHasNonAbstractConstructor(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
       final String className = cls.getName();
 
       for (PyClass baseClass : cls.getAncestorClasses(context)) {
         if (!PyUtil.isObjectClass(baseClass) &&
-            !Objects.equals(className, baseClass.getName()) &&
-            baseClass.findMethodByName(INIT, false, context) != null) {
-          return true;
+            !Objects.equals(className, baseClass.getName())) {
+          var initMethod = baseClass.findMethodByName(INIT, false, context);
+          if (initMethod != null && !PyKnownDecoratorUtil.hasAbstractDecorator(initMethod, context)) {
+            return true;
+          }
         }
       }
 

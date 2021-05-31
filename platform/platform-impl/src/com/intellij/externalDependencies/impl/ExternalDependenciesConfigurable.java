@@ -195,12 +195,12 @@ public class ExternalDependenciesConfigurable implements SearchableConfigurable 
     };
     pluginChooser.setSelectedItem(original.getPluginId());
 
-    final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getMinVersion()));
-    final JBTextField maxVersionField = new JBTextField(StringUtil.notNullize(original.getMaxVersion()));
+    final JBTextField minVersionField = new JBTextField(StringUtil.notNullize(original.getRawMinVersion()));
+    final JBTextField maxVersionField = new JBTextField(StringUtil.notNullize(original.getRawMaxVersion()));
     minVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
-    minVersionField.setColumns(10);
+    minVersionField.setColumns(17);
     maxVersionField.getEmptyText().setText(IdeBundle.message("label.version.any"));
-    maxVersionField.setColumns(10);
+    maxVersionField.setColumns(17);
     JPanel panel = FormBuilder.createFormBuilder()
       .addLabeledComponent(IdeBundle.message("label.plugin"), pluginChooser)
       .addLabeledComponent(IdeBundle.message("label.minimum.version"), minVersionField)

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.wsl;
 
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -291,9 +291,14 @@ public class WslFileWatcher extends PluggableFileWatcher {
           watcherOp = WatcherOp.valueOf(line);
         }
         catch (IllegalArgumentException e) {
-          String message = "Illegal watcher command: '" + line + "'";
-          if (line.length() <= 20) message += " " + Arrays.toString(line.chars().toArray());
-          myVm.logger.error(message);
+          // wsl.exe own error messages are coming in UTF16LE, accompanied by a couple of short tails (decoding artifacts)
+          byte[] raw = line.getBytes(StandardCharsets.UTF_8);
+          if (raw.length > 3 && raw[0] != 0 && raw[2] != 0 && raw[1] + raw[3] == 0) {
+            myVm.logger.warn(new String(raw, StandardCharsets.UTF_16LE));
+          }
+          else if (!(raw.length == 1 && raw[0] == 0 || raw.length == 2 && raw[0] + raw[1] == 0)) {
+            myVm.logger.error("Illegal watcher command: '" + line + "'", (Throwable)null);
+          }
           return;
         }
 

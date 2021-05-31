@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl
 
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
@@ -22,6 +22,7 @@ class Product internal constructor(node: Element) {
   @NlsSafe val name: String = node.getMandatoryAttributeValue("name")
   val codes: Set<String> = node.getChildren("code").map { it.value.trim() }.toSet()
   val channels: List<UpdateChannel> = node.getChildren("channel").map(::UpdateChannel)
+  val disableMachineId: Boolean = node.getAttributeValue("disableMachineId", "false") == "true"
 
   override fun toString(): String = codes.firstOrNull() ?: "-"
 }

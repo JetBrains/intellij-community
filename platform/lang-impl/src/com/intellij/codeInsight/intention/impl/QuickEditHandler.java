@@ -46,15 +46,20 @@ import com.intellij.psi.impl.source.tree.injected.changesHandler.IndentAwareInje
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.SmartHashSet;
 import com.intellij.util.ui.UIUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.FocusManager;
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
 import java.util.Objects;
+import java.util.Set;
 
 /**
 * @author Gregory Shrago
@@ -63,6 +68,7 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   private final Project myProject;
   private final QuickEditAction myAction;
 
+  @NotNull
   private final Editor myEditor;
   private final Document myOrigDocument;
 
@@ -78,7 +84,11 @@ public class QuickEditHandler implements Disposable, DocumentListener {
 
   public static final Key<String> REPLACEMENT_KEY = Key.create("REPLACEMENT_KEY");
 
-  QuickEditHandler(Project project, @NotNull PsiFile injectedFile, final PsiFile origFile, Editor editor, QuickEditAction action) {
+  QuickEditHandler(@NotNull Project project,
+                   @NotNull PsiFile injectedFile,
+                   final @NotNull PsiFile origFile,
+                   @NotNull Editor editor,
+                   @NotNull QuickEditAction action) {
     myProject = project;
     myEditor = editor;
     myAction = action;
@@ -155,7 +165,27 @@ public class QuickEditHandler implements Disposable, DocumentListener {
       myEditChangesHandler = new CommonInjectedFileChangesHandler(shreds, editor, myNewDocument, injectedFile);
     }
     Disposer.register(this, myEditChangesHandler);
+
+    StreamEx.of(shreds).map(it -> it.getHost()).nonNull().distinct().forEach(h -> {
+      Set<QuickEditHandler> editHandlers = QUICK_EDIT_HANDLERS.get(h);
+      if (editHandlers == null) {
+        editHandlers = new SmartHashSet<>();
+        QUICK_EDIT_HANDLERS.set(h, editHandlers);
+      }
+      editHandlers.add(this);
+      Set<QuickEditHandler> finalEditHandlers = editHandlers;
+      Disposer.register(this, () -> finalEditHandlers.remove(this));
+    });
+
     initGuardedBlocks(shreds);
+  }
+
+  private static final Key<Set<QuickEditHandler>> QUICK_EDIT_HANDLERS = Key.create("QUICK_EDIT_HANDLERS");
+
+  public static @NotNull Set<QuickEditHandler> getFragmentEditors(@NotNull PsiLanguageInjectionHost host) {
+    Set<QuickEditHandler> handlers = QUICK_EDIT_HANDLERS.get(host);
+    if (handlers == null) return Collections.emptySet();
+    return handlers;
   }
 
   public boolean isValid() {
@@ -268,6 +298,10 @@ public class QuickEditHandler implements Disposable, DocumentListener {
     FileEditorManager.getInstance(myProject).closeFile(myNewVirtualFile);
   }
 
+  @TestOnly
+  public void closeEditorForTest() {
+    closeEditor();
+  }
 
   private void initGuardedBlocks(Place shreds) {
     int origOffset = -1;
@@ -319,6 +353,10 @@ public class QuickEditHandler implements Disposable, DocumentListener {
   @TestOnly
   public PsiFile getNewFile() {
     return myNewFile;
+  }
+
+  public @NotNull Editor getEditor() {
+    return myEditor;
   }
 
   public boolean tryReuse(@NotNull PsiFile injectedFile, @NotNull TextRange hostRange) {

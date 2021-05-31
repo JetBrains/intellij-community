@@ -7,6 +7,8 @@ import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.ide.externalComponents.ExternalComponentManager
 import com.intellij.ide.plugins.*
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.notification.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -58,6 +60,8 @@ object UpdateChecker {
 
   private const val DISABLED_UPDATE = "disabled_update.txt"
   private const val PRODUCT_DATA_TTL_MS = 300_000L
+  private const val MACHINE_ID_DISABLED_PROPERTY = "machine.id.disabled"
+  private const val MACHINE_ID_PARAMETER = "mid"
 
   private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 
@@ -70,6 +74,7 @@ object UpdateChecker {
   private var ourDisabledToUpdatePlugins: MutableSet<PluginId>? = null
   private val ourUpdatedPlugins: MutableMap<PluginId, PluginDownloader> = HashMap()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
+  private var machineIdInitialized = false
 
   /**
    * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
@@ -140,6 +145,14 @@ object UpdateChecker {
                                     updateSettings: UpdateSettings,
                                     indicator: ProgressIndicator?,
                                     callback: ActionCallback?) {
+    if (!PropertiesComponent.getInstance().getBoolean(MACHINE_ID_DISABLED_PROPERTY, false) && !machineIdInitialized) {
+      machineIdInitialized = true
+      val machineId = MachineIdManager.getAnonymizedMachineId("JetBrainsUpdates", "")
+      if (machineId != null) {
+        UpdateRequestParameters.addParameter(MACHINE_ID_PARAMETER, machineId)
+      }
+    }
+
     // check platform update
 
     indicator?.text = IdeBundle.message("updates.checking.platform")
@@ -209,6 +222,10 @@ object UpdateChecker {
       try {
         val product = loadUpdatesData()?.get(ApplicationInfo.getInstance().build.productCode)
         if (product != null) {
+          if (product.disableMachineId) {
+            PropertiesComponent.getInstance().setValue(MACHINE_ID_DISABLED_PROPERTY, true)
+            UpdateRequestParameters.removeParameter(MACHINE_ID_PARAMETER)
+          }
           productDataCache = SoftReference(product)
           AppExecutorUtil.getAppScheduledExecutorService().schedule(this::clearProductDataCache, PRODUCT_DATA_TTL_MS, TimeUnit.MILLISECONDS)
         }

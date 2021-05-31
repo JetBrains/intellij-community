@@ -344,12 +344,14 @@ public final class IntToIntBtree {
       if (flag) anInt |= mask;
       else anInt &= ~ mask;
       myBuffer.putInt(myAddressInBuffer, anInt);
-      if (!myIsDirty) markDirty();
+      markDirty();
     }
 
     void markDirty() {
-      btree.storage.getPagedFileStorage().getByteBuffer(address, true);
-      myIsDirty = true;
+      if (!myIsDirty) {
+        btree.storage.getPagedFileStorage().getByteBuffer(address, true);
+        myIsDirty = true;
+      }
     }
 
     protected final short getChildrenCount() {
@@ -362,7 +364,7 @@ public final class IntToIntBtree {
       myValue &= ~LENGTH_MASK  <<  LENGTH_SHIFT;
       myValue |= value <<  LENGTH_SHIFT;
       myBuffer.putInt(myAddressInBuffer, myValue);
-      if (!myIsDirty) markDirty();
+      markDirty();
     }
 
     protected final void setNextPage(int nextPage) {
@@ -379,6 +381,7 @@ public final class IntToIntBtree {
 
     protected final void putInt(int offset, int value) {
       myBuffer.putInt(myAddressInBuffer + offset, value);
+      markDirty();
     }
 
     protected final ByteBuffer getBytes(int address, int length) {
@@ -394,6 +397,7 @@ public final class IntToIntBtree {
     protected final void putBytes(int address, ByteBuffer buffer) {
       myBuffer.position(address + myAddressInBuffer);
       myBuffer.put(buffer);
+      markDirty();
     }
   }
 

@@ -4,7 +4,9 @@ package com.intellij.util.indexing;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.project.*;
+import com.intellij.openapi.project.DumbModeTask;
+import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -13,7 +15,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.contentQueue.IndexUpdateRunner;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
-import com.intellij.util.indexing.diagnostic.IndexingJobStatistics;
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistory;
 import com.intellij.util.indexing.diagnostic.ScanningStatistics;
 import org.jetbrains.annotations.ApiStatus;
@@ -25,6 +26,7 @@ import java.time.Instant;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.util.Collection;
+import java.util.Collections;
 
 public final class FileBasedIndexProjectHandler {
   private static final Logger LOG = Logger.getInstance(FileBasedIndexProjectHandler.class);
@@ -110,33 +112,43 @@ public final class FileBasedIndexProjectHandler {
                                           @NotNull ProgressIndicator indicator,
                                           @NotNull FileBasedIndexImpl index,
                                           @NotNull Project project) {
-      int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
-      LOG.info("Using " + numberOfIndexingThreads + " " + StringUtil.pluralize("thread", numberOfIndexingThreads) + " for indexing");
-      IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads);
-      IndexingJobStatistics statistics;
-      IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
       ProjectIndexingHistory projectIndexingHistory = new ProjectIndexingHistory(project);
-      Instant indexingStart = Instant.now();
-      String fileSetName = "Refreshed files";
+      IndexDiagnosticDumper.getInstance().onIndexingStarted(projectIndexingHistory);
       try {
-        statistics = indexUpdateRunner.indexFiles(project, fileSetName, files, indicator);
-      } catch (IndexUpdateRunner.IndexingInterruptedException e) {
-        projectIndexingHistory.getTimes().setWasInterrupted(true);
-        statistics = e.myStatistics;
-        interruptedException = e;
-      } finally {
-        Instant now = Instant.now();
-        projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(indexingStart, now));
-        projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
+        int numberOfIndexingThreads = UnindexedFilesUpdater.getNumberOfIndexingThreads();
+        LOG.info("Using " + numberOfIndexingThreads + " " + StringUtil.pluralize("thread", numberOfIndexingThreads) + " for indexing");
+        IndexUpdateRunner indexUpdateRunner = new IndexUpdateRunner(
+          index, UnindexedFilesUpdater.GLOBAL_INDEXING_EXECUTOR, numberOfIndexingThreads
+        );
+        IndexUpdateRunner.IndexingInterruptedException interruptedException = null;
+        Instant indexingStart = Instant.now();
+        String fileSetName = "Refreshed files";
+        IndexUpdateRunner.FileSet fileSet = new IndexUpdateRunner.FileSet(project, fileSetName, files);
+        try {
+          indexUpdateRunner.indexFiles(project, Collections.singletonList(fileSet), indicator);
+        }
+        catch (IndexUpdateRunner.IndexingInterruptedException e) {
+          projectIndexingHistory.getTimes().setWasInterrupted(true);
+          interruptedException = e;
+        }
+        finally {
+          Instant now = Instant.now();
+          projectIndexingHistory.getTimes().setIndexingDuration(Duration.between(indexingStart, now));
+          projectIndexingHistory.getTimes().setUpdatingEnd(ZonedDateTime.now(ZoneOffset.UTC));
+          projectIndexingHistory.getTimes().setTotalUpdatingTime(System.nanoTime() - projectIndexingHistory.getTimes().getTotalUpdatingTime());
+        }
+        ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
+        scanningStatistics.setNumberOfScannedFiles(files.size());
+        scanningStatistics.setNumberOfFilesForIndexing(files.size());
+        projectIndexingHistory.addScanningStatistics(scanningStatistics);
+        projectIndexingHistory.addProviderStatistics(fileSet.statistics);
+
+        if (interruptedException != null) {
+          ExceptionUtil.rethrow(interruptedException.getCause());
+        }
       }
-      ScanningStatistics scanningStatistics = new ScanningStatistics(fileSetName);
-      scanningStatistics.setNumberOfScannedFiles(files.size());
-      scanningStatistics.setNumberOfFilesForIndexing(files.size());
-      projectIndexingHistory.addScanningStatistics(scanningStatistics);
-      projectIndexingHistory.addProviderStatistics(statistics);
-      IndexDiagnosticDumper.getInstance().dumpProjectIndexingHistoryIfNecessary(projectIndexingHistory);
-      if (interruptedException != null) {
-        ExceptionUtil.rethrow(interruptedException.getCause());
+      finally {
+        IndexDiagnosticDumper.getInstance().onIndexingFinished(projectIndexingHistory);
       }
     }
 

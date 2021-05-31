@@ -50,8 +50,9 @@ class LegacyMethodExtractor: InplaceExtractMethodProvider {
     handler.methodCall = methodCall
     handler.methodName = method.name
     handler.parametrizedDuplicates?.apply {
-      setParametrizedMethod(method)
-      setParametrizedCall(methodCall)
+      val nameIdentifier = method.nameIdentifier ?: return
+      parametrizedMethod?.nameIdentifier?.replace(nameIdentifier)
+      parametrizedCall?.methodExpression?.referenceNameElement?.replace(nameIdentifier)
     }
     DuplicatesImpl.processDuplicates(handler, project, editor)
   }

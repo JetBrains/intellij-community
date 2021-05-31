@@ -690,13 +690,16 @@
       <group id="RemoveBom.Group">
         <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
         <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
-        <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
       </group>
       <group id="AddBom.Group">
         <action id="AddBom" class="com.intellij.openapi.editor.actions.AddBomAction"/>
         <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="RemoveBom"/>
-        <add-to-group group-id="EditorPopupMenu" anchor="after" relative-to-action="RemoveBom"/>
       </group>
+    </group>
+
+    <group id="EncodingPanelActions">
+      <reference ref="RemoveBom"/>
+      <reference ref="AddBom"/>
     </group>
 
     <group id="NavbarPopupMenu">
@@ -853,6 +856,7 @@
         <reference ref="GotoImplementation"/>
         <reference ref="GotoTypeDeclaration"/>
         <reference ref="GotoSuperMethod"/>
+        <reference ref="GotoRelated"/>
         <reference ref="GotoTest"/>
       </group>
       <reference ref="Generate"/>

@@ -61,7 +61,8 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
   fun prepareEnvironment(targetBuildParametersBuilder: TargetBuildParameters.Builder,
                          consumerOperationParameters: ConsumerOperationParameters,
-                         progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator): TargetedCommandLine {
+                         progressIndicator: GradleServerRunner.GradleServerProgressIndicator): TargetedCommandLine {
+    progressIndicator.checkCanceled()
     initJavaParameters()
 
     this.environmentConfiguration = environmentConfigurationProvider.environmentConfiguration
@@ -74,9 +75,11 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
       targetBuildParametersBuilder.useInstallation(it)
     }
 
+    progressIndicator.checkCanceled()
     val (request, targetArguments) =
       prepareTargetEnvironmentRequest(factory, consumerOperationParameters, targetPathMapper, environmentConfiguration, progressIndicator)
 
+    progressIndicator.checkCanceled()
     val targetedCommandLineBuilder = javaParameters.toCommandLine(request, environmentConfiguration)
     projectUploadRoot = setupTargetProjectDirectories(consumerOperationParameters, request, targetedCommandLineBuilder)
     val remoteEnvironment = factory.prepareRemoteEnvironment(request, progressIndicator)
@@ -86,6 +89,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
       it.handleCreatedTargetEnvironment(remoteEnvironment, this, progressIndicator)
     }
 
+    progressIndicator.checkCanceled()
     uploader.upload(remoteEnvironment, progressIndicator)
     val pathMappingSettings = PathMappingSettings(uploader.pathMappingSettings.pathMappings)
     for ((uploadRoot, uploadableVolume) in targetEnvironment.uploadVolumes) {
@@ -154,7 +158,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
                                          pathMappingSettings: PathMappingSettings,
                                          targetPathMapper: PathMapper?,
                                          environmentConfiguration: TargetEnvironmentConfiguration,
-                                         progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator): String {
+                                         progressIndicator: GradleServerRunner.GradleServerProgressIndicator): String {
     val request = factory.createRequest()
     val uploader = Uploader()
     val mapperInitScript = StringBuilder("ext.pathMapper = [:]\n")
@@ -204,13 +208,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     else {
       if (environmentConfiguration.runtimes.findByType(JavaLanguageRuntimeConfiguration::class.java) == null) {
         val localJavaHomePath = consumerOperationParameters.javaHome.path
-        val targetJavaHomePath: String
-        if (targetPathMapper?.canReplaceLocal(localJavaHomePath) == true) {
-          targetJavaHomePath = targetPathMapper.convertToRemote(localJavaHomePath)
-        }
-        else {
-          targetJavaHomePath = localJavaHomePath
-        }
+        val targetJavaHomePath = targetPathMapper.maybeConvertToRemote(localJavaHomePath)
         val javaLanguageRuntimeConfiguration = JavaLanguageRuntimeConfiguration().apply { homePath = targetJavaHomePath }
         environmentConfiguration.addLanguageRuntime(javaLanguageRuntimeConfiguration)
       }
@@ -327,13 +325,15 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     private val uploads = mutableListOf<Upload>()
     val pathMappingSettings = PathMappingSettings()
 
-    fun upload(targetEnvironment: TargetEnvironment, progressIndicator: TargetEnvironmentAwareRunProfileState.TargetProgressIndicator) {
+    fun upload(targetEnvironment: TargetEnvironment, progressIndicator: GradleServerRunner.GradleServerProgressIndicator) {
       environmentPromise.setResult(targetEnvironment to progressIndicator)
       for (upload in uploads) {
+        progressIndicator.checkCanceled()
         upload.volume.upload(upload.relativePath, progressIndicator)
       }
       uploads.clear()
       for (promise in dependingOnEnvironmentPromise) {
+        progressIndicator.checkCanceled()
         promise.blockingGet(0)  // Just rethrows errors.
       }
       dependingOnEnvironmentPromise.clear()

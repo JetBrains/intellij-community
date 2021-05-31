@@ -8,6 +8,8 @@ import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -15,6 +17,8 @@ import com.intellij.openapi.options.ConfigurableGroup;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.options.ex.ConfigurableExtensionPointUtil;
 import com.intellij.openapi.options.ex.ConfigurableVisitor;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
@@ -54,6 +58,10 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public final class PyInterpreterInspection extends PyInspection {
+
+  @NotNull
+  private static final Logger LOGGER = Logger.getInstance(PyInterpreterInspection.class);
+
   @NotNull
   private static final Pattern NAME = Pattern.compile("Python (?<version>\\d\\.\\d+)\\s*(\\((?<name>.+?)\\))?");
 
@@ -163,7 +171,20 @@ public final class PyInterpreterInspection extends PyInspection {
 
       final UserDataHolderBase context = new UserDataHolderBase();
 
-      final var detectedAssociatedSdk = ContainerUtil.getFirstItem(PySdkExtKt.detectAssociatedEnvironments(module, existingSdks, context));
+      List<PyDetectedSdk> detectedAssociatedEnvs = Collections.emptyList();
+      try {
+        detectedAssociatedEnvs = ApplicationUtil.runWithCheckCanceled(
+          () -> PySdkExtKt.detectAssociatedEnvironments(module, existingSdks, context),
+          ProgressManager.getInstance().getProgressIndicator()
+        );
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (Exception e) {
+        LOGGER.warn(e);
+      }
+      final var detectedAssociatedSdk = ContainerUtil.getFirstItem(detectedAssociatedEnvs);
       if (detectedAssociatedSdk != null) return new UseDetectedInterpreterFix(detectedAssociatedSdk, existingSdks, true, module);
 
       final Pair<@IntentionName String, PyProjectSdkConfigurationExtension> textAndExtension
@@ -172,7 +193,7 @@ public final class PyInterpreterInspection extends PyInspection {
 
       if (name != null) {
         final Matcher matcher = NAME.matcher(name);
-        if (!matcher.matches()) {
+        if (matcher.matches()) {
           final String venvName = matcher.group("name");
           if (venvName != null) {
             final PyDetectedSdk detectedAssociatedViaRootNameEnv = detectAssociatedViaRootNameEnv(venvName, module, existingSdks, context);

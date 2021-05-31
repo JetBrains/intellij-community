@@ -106,11 +106,11 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     }
     else { // fallback, no highlight
       final StringBuilder signatureBuilder = new StringBuilder();
-      if (hints.length > 1) {
+      if (hints.length >= 1) {
         for (String s : hints) signatureBuilder.append(s);
       }
       else {
-        signatureBuilder.append(XmlStringUtil.escapeString(getNoParamsMsg()));
+        signatureBuilder.append(getNoParamsMsg());
       }
       context.setupUIComponentPresentation(
         signatureBuilder.toString(), -1, 0, false, false, false, context.getDefaultParameterColor()

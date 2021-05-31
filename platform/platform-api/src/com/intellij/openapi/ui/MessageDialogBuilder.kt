@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui
 
 import com.intellij.CommonBundle
@@ -121,7 +121,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
         (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
                                                          message = message, title = title, icon = icon,
                                                          options = arrayOf(yesText, noText),
-                                                         doNotAskOption = doNotAskOption) == 0)
+                                                         doNotAskOption = doNotAskOption, alwaysUseIdeaUI = false) == 0)
       })
     }
   }
@@ -161,7 +161,7 @@ sealed class MessageDialogBuilder<T : MessageDialogBuilder<T>>(protected val tit
         when (MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
                                                               message = message, title = title, icon = icon,
                                                               options = options,
-                                                              doNotAskOption = doNotAskOption)) {
+                                                              doNotAskOption = doNotAskOption, alwaysUseIdeaUI = false)) {
           0 -> YES
           1 -> NO
           else -> CANCEL
@@ -192,14 +192,14 @@ class OkCancelDialogBuilder internal constructor(title: String, message: String)
       MessagesService.getInstance().showMessageDialog(project = project, parentComponent = parentComponent,
                                                       message = message, title = title, icon = icon,
                                                       options = arrayOf(yesText, noText),
-                                                      doNotAskOption = doNotAskOption) == 0
+                                                      doNotAskOption = doNotAskOption, alwaysUseIdeaUI = true) == 0
     })
   }
 }
 
 private inline fun <T> showMessage(project: Project?, parentComponent: Component?, mac: (Window?) -> T, other: () -> T): T {
-  try {
-    if (canShowMacSheetPanel()) {
+  if (canShowMacSheetPanel()) {
+    try {
       val window = if (parentComponent == null) {
         WindowManager.getInstance().suggestParentWindow(project)
       }
@@ -208,9 +208,11 @@ private inline fun <T> showMessage(project: Project?, parentComponent: Component
       }
       return mac(window)
     }
-  }
-  catch (e: Exception) {
-    logger<MessagesService>().error(e)
+    catch (e: Exception) {
+      if (e.message != "Cannot find any window") {
+        logger<MessagesService>().error(e)
+      }
+    }
   }
   return other()
 }

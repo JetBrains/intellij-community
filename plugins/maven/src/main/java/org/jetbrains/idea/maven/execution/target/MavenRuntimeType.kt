@@ -10,7 +10,7 @@ import com.intellij.openapi.options.Configurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import icons.MavenIcons
-import org.jetbrains.idea.maven.execution.RunnerBundle
+import org.jetbrains.idea.maven.execution.RunnerBundle.message
 import java.util.function.Supplier
 
 class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TYPE_ID) {
@@ -19,9 +19,9 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
   @NlsSafe
   override val displayName = "Maven"
 
-  override val configurableDescription = "Maven configuration"
+  override val configurableDescription = message("maven.target.configure.label")
 
-  override val launchDescription = "Run Maven goal"
+  override val launchDescription = message("maven.target.run.label")
 
   override fun isApplicableTo(runConfig: RunnerAndConfigurationSettings) = true
 
@@ -54,16 +54,16 @@ class MavenRuntimeType : LanguageRuntimeType<MavenRuntimeTargetConfiguration>(TY
 
     @JvmStatic
     val PROJECT_FOLDER_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":projectFolder",
-                                                 RunnerBundle.message("maven.target.execution.project.folder.label"),
-                                                 RunnerBundle.message("maven.target.execution.project.folder.description"),
-                                                 RunnerBundle.message("maven.target.execution.project.folder.browsing.title"),
+                                                 message("maven.target.execution.project.folder.label"),
+                                                 message("maven.target.execution.project.folder.description"),
+                                                 message("maven.target.execution.project.folder.browsing.title"),
                                                  "")
 
     @JvmStatic
     val MAVEN_EXT_CLASS_PATH_VOLUME = VolumeDescriptor(MavenRuntimeType::class.qualifiedName + ":maven.ext.class.path",
-                                                       RunnerBundle.message("maven.target.execution.ext.class.path.folder.label"),
-                                                       RunnerBundle.message("maven.target.execution.ext.class.path.folder.description"),
-                                                       RunnerBundle.message("maven.target.execution.ext.class.path.folder.browsing.title"),
+                                                       message("maven.target.execution.ext.class.path.folder.label"),
+                                                       message("maven.target.execution.ext.class.path.folder.description"),
+                                                       message("maven.target.execution.ext.class.path.folder.browsing.title"),
                                                        "")
   }
 }

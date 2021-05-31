@@ -21,6 +21,7 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,10 +29,12 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
-import org.gradle.initialization.BuildLayoutParameters;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.target.GradleTargetUtil;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.execution.BuildLayoutParameters;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -154,7 +157,7 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
             @Override
             public void onSuccess() {
               VirtualFile classesFile = libraryOrderEntry.getFiles(OrderRootType.CLASSES)[0];
-              File sourceJar = getSourceFile(artifactCoordinates, classesFile, project);
+              File sourceJar = getSourceFile(artifactCoordinates, classesFile, project, settings.getExternalProjectPath());
               if (sourceJar == null) {
                 try {
                   sourceJar = new File(FileUtil.loadFile(sourcesLocationFile));
@@ -215,13 +218,16 @@ public class GradleAttachSourcesProvider implements AttachSourcesProvider {
   }
 
   @Nullable
-  private static File getSourceFile(String artifactCoordinates, VirtualFile classesFile, Project project) {
+  private static File getSourceFile(@NotNull String artifactCoordinates,
+                                    VirtualFile classesFile,
+                                    @NotNull Project project,
+                                    @NotNull @NlsSafe String projectPath) {
     LibraryData data = new LibraryData(GradleConstants.SYSTEM_ID, artifactCoordinates);
     data.addPath(LibraryPathType.BINARY, VfsUtil.getLocalFile(classesFile).getPath());
-    String serviceDirectory = GradleSettings.getInstance(project).getServiceDirectoryPath();
-    File gradleUserHome =
-      serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
-    attachSourcesAndJavadocFromGradleCacheIfNeeded(gradleUserHome, data);
+    BuildLayoutParameters buildLayoutParameters = GradleInstallationManager.getInstance().guessBuildLayoutParameters(project, projectPath);
+    String gradleUserHome = GradleTargetUtil.maybeGetLocalValue(buildLayoutParameters.getGradleUserHome());
+    if (gradleUserHome == null) return null;
+    attachSourcesAndJavadocFromGradleCacheIfNeeded(new File(gradleUserHome), data);
     Iterator<String> iterator = data.getPaths(LibraryPathType.SOURCE).iterator();
     return iterator.hasNext() ? new File(iterator.next()) : null;
   }

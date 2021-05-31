@@ -11,12 +11,16 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.impl.content.BaseLabel;
+import com.intellij.ui.ComponentUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Objects;
 
 /**
@@ -55,16 +59,7 @@ public class PinActiveTabAction extends DumbAwareAction {
 
     e.getPresentation().setIcon(e.isFromActionToolbar() ? AllIcons.General.Pin_tab : null);
     Toggleable.setSelected(e.getPresentation(), selected);
-
-    String text;
-    // add the word "active" if the target tab is not current
-    if (ActionPlaces.isMainMenuOrActionSearch(e.getPlace()) || handler != null && !handler.isActiveTab) {
-      text = selected ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab");
-    }
-    else {
-      text = selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab");
-    }
-    e.getPresentation().setText(text);
+    e.getPresentation().setText(selected ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
     e.getPresentation().setEnabledAndVisible(enabled);
   }
 
@@ -135,7 +130,13 @@ public class PinActiveTabAction extends DumbAwareAction {
   private static Content getToolWindowContent(@NotNull AnActionEvent e) {
     // note to future readers: TW tab "pinned" icon is shown when content.getUserData(TW.SHOW_CONTENT_ICON) is true
     ToolWindow window = e.getData(PlatformDataKeys.TOOL_WINDOW);
-    Content result = window != null ? window.getContentManager().getSelectedContent() : null;
+    if (window == null) return null;
+
+    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    Content result = ObjectUtils.doIfNotNull(ComponentUtil.getParentOfType(BaseLabel.class, component), BaseLabel::getContent);
+    if (result == null) {
+      result = ObjectUtils.doIfNotNull(window.getContentManager(), ContentManager::getSelectedContent);
+    }
     return result != null && result.isPinnable() ? result : null;
   }
 

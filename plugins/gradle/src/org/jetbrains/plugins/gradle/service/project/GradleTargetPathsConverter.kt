@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.service.execution.ExternalSystemExecu
 import org.jetbrains.plugins.gradle.model.ProjectImportAction.AllModels
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings
 import org.jetbrains.plugins.gradle.util.ReflectionTraverser
-import org.jetbrains.plugins.gradle.util.ReflectionTraverser.Visitor
 import java.io.Closeable
 import java.io.File
 
@@ -14,22 +13,20 @@ internal class GradleTargetPathsConverter(private val executionSettings: GradleE
 
   fun mayBeApplyTo(allModels: AllModels) {
     val pathMapper = executionSettings.getEnvironmentConfigurationProvider()?.pathMapper ?: return
-    allModels.applyPathsConverter {
-      traverser.walk(it!!, object : Visitor {
-        override fun process(instance: Any) {
-          if (instance !is File) return
-          val remotePath = instance.path
-          if (!pathMapper.canReplaceRemote(remotePath)) return
-          val localPath = pathMapper.convertToLocal(remotePath)
-          try {
-            val field = File::class.java.getDeclaredField("path")
-            field.isAccessible = true
-            field[instance] = localPath
-          }
-          catch (ignore: Throwable) {
-          }
+    allModels.applyPathsConverter { rootObject ->
+      traverser.walk(rootObject!!, listOf(String::class.java), listOf(File::class.java)) {
+        if (it !is File) return@walk
+        val remotePath = it.path
+        if (!pathMapper.canReplaceRemote(remotePath)) return@walk
+        val localPath = pathMapper.convertToLocal(remotePath)
+        try {
+          val field = File::class.java.getDeclaredField("path")
+          field.isAccessible = true
+          field[it] = localPath
         }
-      })
+        catch (ignore: Throwable) {
+        }
+      }
     }
   }
 

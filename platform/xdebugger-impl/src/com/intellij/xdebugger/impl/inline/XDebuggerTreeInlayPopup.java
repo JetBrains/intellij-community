@@ -291,13 +291,13 @@ public class XDebuggerTreeInlayPopup<D> {
                                  @NotNull List<? extends XValueContainerNode<?>> children,
                                  boolean last) {
         if (last) {
-          updateInitialBounds(tree);
+          updateDebugPopupBounds(tree, myToolbar, myPopup);
           ((XDebuggerTree)tree).removeTreeListener(this);
         }
       }
     });
 
-    updateInitialBounds(tree);
+    updateDebugPopupBounds(tree, myToolbar, myPopup);
   }
 
   private void resize(final TreePath path, JTree tree) {
@@ -320,17 +320,21 @@ public class XDebuggerTreeInlayPopup<D> {
     popupWindow.repaint();
   }
 
-  private void updateInitialBounds(final Tree tree) {
-    final Window popupWindow = SwingUtilities.windowForComponent(myPopup.getContent());
+  public static void updateDebugPopupBounds(final Tree tree, JComponent toolbar, JBPopup popup) {
+    final Window popupWindow = SwingUtilities.windowForComponent(popup.getContent());
     final Dimension size = tree.getPreferredSize();
     final Point location = popupWindow.getLocation();
-    int width = Math.max(size.width, myToolbar.getPreferredSize().width) + 150;
-    int maxWidth = 600;
-    int rowHeight = tree.isFixedRowHeight() ? tree.getRowHeight() : tree.getFontMetrics(tree.getFont()).getHeight();
+    int hMargin = JBUI.scale(150);
+    int width = Math.max(size.width, toolbar.getPreferredSize().width) + hMargin;
+    int maxWidth = JBUI.scale(600);
+    int row = Math.min(12, tree.getRowCount() - 1);
+    Rectangle bounds = tree.getRowBounds(row);
+    int vMargin = JBUI.scale(30);
+    int height = toolbar.getHeight() + vMargin + (bounds == null ? 0 : bounds.y + bounds.height);
     final Rectangle targetBounds = new Rectangle(location.x,
                                                  location.y,
                                                  Math.min(width, maxWidth),
-                                                 Math.min(tree.getRowCount(), 12) * rowHeight + 75);
+                                                 height);
 
     ScreenUtil.cropRectangleToFitTheScreen(targetBounds);
     popupWindow.setBounds(targetBounds);

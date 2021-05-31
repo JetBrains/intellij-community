@@ -11,17 +11,17 @@ private const val VCS_GROUP = "vcs"
 private const val REFRESH_ACTION_ID = "changes.view.refresh"
 
 fun logRefreshActionPerformed(project: Project,
-                              changesBefore: MutableCollection<Change>,
-                              changesAfter: MutableCollection<Change>,
+                              changesBefore: Collection<Change>,
+                              changesAfter: Collection<Change>,
                               unversionedBefore: Collection<FilePath>,
                               unversionedAfter: Collection<FilePath>,
                               wasUpdatingBefore: Boolean) {
 
-  val changes = mutableSetOf(changesBefore union changesAfter)
-  changes -= (changesBefore intersect changesAfter)
+  val changes: MutableSet<Change> = (changesBefore union changesAfter).toMutableSet()
+  changes.removeAll(changesBefore intersect changesAfter)
 
-  val unversioned = mutableSetOf(unversionedBefore union unversionedAfter)
-  unversioned -= unversionedBefore intersect unversionedAfter
+  val unversioned: MutableSet<FilePath> = (unversionedBefore union unversionedAfter).toMutableSet()
+  unversioned.removeAll(unversionedBefore intersect unversionedAfter)
 
   val data = FeatureUsageData()
     .addData("wasUpdatingBefore", wasUpdatingBefore)

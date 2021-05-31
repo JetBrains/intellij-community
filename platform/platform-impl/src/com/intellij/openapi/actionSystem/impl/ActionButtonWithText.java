@@ -206,7 +206,7 @@ public class ActionButtonWithText extends ActionButton {
   @Override
   protected void presentationPropertyChanged(@NotNull PropertyChangeEvent e) {
     super.presentationPropertyChanged(e);
-    if (Presentation.PROP_TEXT.equals(e.getPropertyName())) {
+    if (Presentation.PROP_TEXT_WITH_SUFFIX.equals(e.getPropertyName())) {
       revalidate(); // recalc preferred size & repaint instantly
     }
   }
@@ -263,7 +263,7 @@ public class ActionButtonWithText extends ActionButton {
   @NotNull
   @NlsActions.ActionText
   private String getText() {
-    final String text = myPresentation.getText();
+    final String text = myPresentation.getText(true);
     return text != null ? text : "";
   }
 

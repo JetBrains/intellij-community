@@ -42,6 +42,8 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
     Plow { pr -> producingFunction(transformation(pr)) }
 
   fun <R> map(mapping: (T) -> R): Plow<R> = transform { pr -> Processor { v -> pr.process(mapping(v)) } }
+  
+  fun <R> mapNotNull(mapping: (T) -> R?): Plow<R> = transform { pr -> Processor { v -> mapping(v)?.let { pr.process(it) } ?: true } }
 
   fun filter(test: (T) -> Boolean): Plow<T> = transform { pr -> Processor { v -> !test(v) || pr.process(v) } }
 

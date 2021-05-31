@@ -8,6 +8,7 @@ import com.intellij.ide.lightEdit.LightEditCompatible
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.markup.MarkupEditorFilter
@@ -19,7 +20,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import org.jetbrains.annotations.CalledInAny
 import java.awt.Point
-import java.util.*
 
 interface LineStatusTracker<out R : Range> : LineStatusTrackerI<R> {
   override val project: Project
@@ -134,18 +134,8 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
 
   private inner class LocalDocumentTrackerHandler : DocumentTracker.Handler {
     override fun afterBulkRangeChange(isDirty: Boolean) {
-      if (blocks.isEmpty()) {
-        fireFileUnchanged()
-      }
-    }
-
-    @RequiresEdt
-    private fun fireFileUnchanged() {
-      if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
-        // later to avoid saving inside document change event processing and deadlock with CLM.
-        ApplicationManager.getApplication().invokeLater(Runnable {
-          FileDocumentManager.getInstance().saveDocument(document)
-        }, project.disposed)
+      if (blocks.isEmpty() && isOperational()) {
+        saveDocumentWhenUnchanged(project, document)
       }
     }
   }
@@ -179,5 +169,17 @@ abstract class LocalLineStatusTrackerImpl<R : Range>(
   override fun unfreeze() {
     documentTracker.unfreeze(Side.LEFT)
     documentTracker.unfreeze(Side.RIGHT)
+  }
+}
+
+fun saveDocumentWhenUnchanged(project: Project, document: Document) {
+  if (GeneralSettings.getInstance().isSaveOnFrameDeactivation) {
+    // Use 'invokeLater' to avoid saving inside document change event processing and deadlock with CLM.
+    // Override ANY modality (that is abused by LineStatusTrackerManager) to prevent errors in TransactionGuard.
+    var modalityState = ModalityState.defaultModalityState()
+    if (modalityState == ModalityState.any()) modalityState = ModalityState.NON_MODAL
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      FileDocumentManager.getInstance().saveDocument(document)
+    }, modalityState, project.disposed)
   }
 }

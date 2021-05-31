@@ -188,7 +188,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamInlining() { doTest(); }
   public void testStreamCollectInlining() {
     setupTypeUseAnnotations("foo", myFixture);
-    doTest(); 
+    doTest();
   }
   public void testStreamCollectorInlining() { doTest(); }
   public void testStreamToMapInlining() { doTest(); }
@@ -203,7 +203,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testStreamAnyMatchIsNull() { doTest(); }
   public void testStreamCustomSumMethod() { doTest(); }
   public void testStreamReduceLogicalAnd() { doTest(); }
-  
+
   public void testMapGetWithValueNullability() { doTestWithCustomAnnotations(); }
   public void testInferNestedForeachNullability() { doTestWithCustomAnnotations(); }
 
@@ -251,7 +251,7 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
-  public void testConflictsInInferredTypes() { 
+  public void testConflictsInInferredTypes() {
     setupAmbiguousAnnotations("foo", myFixture);
     doTest();
   }
@@ -330,4 +330,10 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
   public void testConstantInClosure() { doTest(); }
+  public void testUnknownNullability() {
+    myFixture.addClass("package org.jetbrains.annotations;\nimport java.lang.annotation.*;\n" +
+                       "@Target(ElementType.TYPE_USE)\n" +
+                       "public @interface UnknownNullability { }");
+    doTestWith(insp -> insp.SUGGEST_NULLABLE_ANNOTATIONS = false);
+  }
 }

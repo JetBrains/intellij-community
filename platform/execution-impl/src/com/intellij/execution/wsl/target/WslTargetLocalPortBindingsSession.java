@@ -45,14 +45,14 @@ public class WslTargetLocalPortBindingsSession {
     myWsl1 = WSLUtil.isWsl1(myDistribution) == ThreeState.YES;
   }
 
-  public @NotNull CompletableFuture<Integer> getTargetPortFuture(@NotNull TargetEnvironment.LocalPortBinding localPortBinding) {
+  public @NotNull CompletableFuture<HostPort> getTargetHostPortFuture(@NotNull TargetEnvironment.LocalPortBinding localPortBinding) {
     if (myWsl1) {
       // Ports bound on localhost in Windows can be accessed by linux apps running in WSL1, but not in WSL2:
       //   https://docs.microsoft.com/en-US/windows/wsl/compare-versions#accessing-network-applications
-      return CompletableFuture.completedFuture(localPortBinding.getLocal());
+      return CompletableFuture.completedFuture(new HostPort("localhost", localPortBinding.getLocal()));
     }
     BindingSession session = Objects.requireNonNull(ContainerUtil.find(mySessions, s -> s.myPortBinding.equals(localPortBinding)));
-    return session.getTargetPortFuture();
+    return session.getTargetHostPortFuture();
   }
 
   public void start() {
@@ -89,7 +89,7 @@ public class WslTargetLocalPortBindingsSession {
     private SimpleProxy myHostProxy;
     private File myWslProxyPyFile;
     private KillableProcessHandler myWslProxyProcess;
-    private final CompletableFuture<Integer> myTargetPortFuture = new CompletableFuture<>();
+    private final CompletableFuture<HostPort> myTargetHostPortFuture = new CompletableFuture<>();
 
     private BindingSession(TargetEnvironment.LocalPortBinding portBinding) {
       myPortBinding = portBinding;
@@ -135,7 +135,7 @@ public class WslTargetLocalPortBindingsSession {
               output.append(event.getText());
               int port = parsePort(output.toString());
               if (port >= 0) {
-                myTargetPortFuture.complete(port);
+                myTargetHostPortFuture.complete(new HostPort(myDistribution.getHostIp(), port));
               }
             }
             LOG.info("wsl2_proxy.py: " + StringUtil.trimEnd(event.getText(), LineSeparator.LF.getSeparatorString()));
@@ -165,8 +165,8 @@ public class WslTargetLocalPortBindingsSession {
       }
     }
 
-    public @NotNull CompletableFuture<Integer> getTargetPortFuture() {
-      return myTargetPortFuture;
+    public @NotNull CompletableFuture<HostPort> getTargetHostPortFuture() {
+      return myTargetHostPortFuture;
     }
   }
 

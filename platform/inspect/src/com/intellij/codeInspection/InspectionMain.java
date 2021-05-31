@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.application.ApplicationStarter;
@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 public class InspectionMain implements ApplicationStarter {
-  private InspectionApplication myApplication;
+  private InspectionApplicationBase myApplication;
 
   @Override
   public String getCommandName() {
@@ -28,8 +28,11 @@ public class InspectionMain implements ApplicationStarter {
 
     InspectionApplication.LOG.info("Command line arguments: " + args);
     //System.setProperty("idea.load.plugins.category", "inspection");
-    myApplication = new InspectionApplication();
-
+    if (args.contains("-qodana")) {
+      myApplication = InspectionApplicationFactory.getApplication("qodana");
+    } else {
+      myApplication = new InspectionApplication();
+    }
     myApplication.myHelpProvider = () -> printHelp();
     myApplication.myProjectPath = args.get(1);
     myApplication.myStubProfile = args.get(2);
@@ -83,8 +86,9 @@ public class InspectionMain implements ApplicationStarter {
         }
         else if ("-changes".equals(arg)) {
           myApplication.myAnalyzeChanges = true;
-        } else if ("-qodana".equals(arg)) {
-          myApplication.myQodanaRun = true;
+        }
+        else //noinspection StatementWithEmptyBody
+          if ("-qodana".equals(arg)) {
         }
         else {
           System.err.println("unexpected argument: " + arg);

@@ -6,6 +6,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.MapIndexStorage;
@@ -73,6 +74,10 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
   @Nullable
   protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> createdForwardIndex(@Nullable StorageLockContext storageLockContext) throws IOException {
     return null;
+  }
+
+  public boolean isEmpty() throws IOException {
+    return ((MyMapIndexStorage<T>)myMapReduceIndex.getStorage()).isEmpty();
   }
 
   @NotNull
@@ -163,6 +168,15 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     MyMapIndexStorage(@NotNull String name, @NotNull StorageId storageId, @NotNull DataExternalizer<T> externalizer)
       throws IOException {
       super(storageId.getStorageFile(name, true), EnumeratorIntegerDescriptor.INSTANCE, externalizer, 5000, false);
+    }
+
+    protected boolean isEmpty() throws IOException {
+      Ref<Boolean> isEmpty = new Ref<>(true);
+      doProcessKeys(key -> {
+        isEmpty.set(false);
+        return false;
+      });
+      return isEmpty.get();
     }
 
     @Override

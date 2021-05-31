@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui;
 
 import com.intellij.analysis.AnalysisBundle;
@@ -10,12 +10,14 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.profile.codeInspection.ui.table.ScopesOrderTable;
 import com.intellij.psi.search.scope.NonProjectFilesScope;
 import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 import com.intellij.ui.*;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -65,8 +67,8 @@ public class ScopesOrderDialog extends DialogWrapper {
       .disableRemoveAction()
       .disableAddAction()
       .createPanel();
-    final JLabel descr = new JLabel(AnalysisBundle.message("inspections.settings.scopes.order.help.label"));
-    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, descr);
+    final JLabel descr = ComponentPanelBuilder.createCommentComponent(AnalysisBundle.message("inspections.settings.scopes.order.help.label"), true, 110);
+    descr.setBorder(JBUI.Borders.emptyTop(5));
     myPanel = new JPanel();
     myPanel.setLayout(new BorderLayout());
     myPanel.add(listPanel, BorderLayout.CENTER);

@@ -32,7 +32,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
@@ -44,7 +43,7 @@ import static com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywh
 
 public final class SearchEverywhereManagerImpl implements SearchEverywhereManager {
   public static final String ALL_CONTRIBUTORS_GROUP_ID = "SearchEverywhereContributor.All";
-  private static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
+  public static final String LOCATION_SETTINGS_KEY = "search.everywhere.popup";
 
   public static final DataKey<Boolean> IS_SELECT_SEARCH_TEXT = DataKey.create("search.everywhere.is.select.search.text");
 

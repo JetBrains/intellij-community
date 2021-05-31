@@ -41,7 +41,7 @@ object JpsProjectEntitiesLoader {
                   externalStoragePath: Path, errorReporter: ErrorReporter, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
     val reader = CachingJpsFileContentReader(configLocation.baseDirectoryUrlString)
     val data = createProjectEntitiesSerializers(configLocation, reader, externalStoragePath, true, virtualFileManager)
-    data.loadAll(reader, builder, errorReporter)
+    data.loadAll(reader, builder, errorReporter, null)
     return data
   }
 
@@ -173,7 +173,7 @@ object JpsProjectEntitiesLoader {
 internal fun loadStorageFile(xmlFile: Path, pathMacroManager: PathMacroManager): Map<String, Element> {
   val rootElement = JDOMUtil.load(xmlFile)
   if (Strings.endsWith(xmlFile.toString(), ".iml")) {
-    val optionElement = Element("component").setAttribute("name", "DeprecatedModuleOptionManager")
+    val optionElement = Element("component").setAttribute("name", DEPRECATED_MODULE_MANAGER_COMPONENT_NAME)
     val iterator = rootElement.attributes.iterator()
     for (attribute in iterator) {
       if (attribute.name != "version") {

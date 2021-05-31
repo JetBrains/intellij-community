@@ -143,7 +143,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
                            @Nullable ResolveScopeManager resolveScopeManager,
                            @Nullable String packagePrefix,
                            @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
-    super(builder, resourceFileFactory, isParallelCapable);
+    super(builder, resourceFileFactory, isParallelCapable, !pluginDescriptor.isBundled() && !"JetBrains".equals(pluginDescriptor.getVendor()));
 
     instanceId = instanceIdProducer.incrementAndGet();
 

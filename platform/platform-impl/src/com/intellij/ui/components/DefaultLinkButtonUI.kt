@@ -51,9 +51,9 @@ class DefaultLinkButtonUI : BasicButtonUI() {
     installProperty(button, "rolloverEnabled", true)
     installProperty(button, "iconTextGap", 4)
     defaultTextShiftOffset = UIManager.getInt("Button.textShiftOffset")
-    if (isUpdateable(button.font)) button.font = UIManager.getFont("Label.font")
-    if (isUpdateable(button.background)) button.background = UIManager.getColor("Label.background")
-    if (isUpdateable(button.foreground)) button.foreground = DynamicColor(button)
+    if (!button.isFontSet || button.font is UIResource) button.font = UIManager.getFont("Label.font")!!
+    if (!button.isBackgroundSet || button.background is UIResource) button.background = UIManager.getColor("Label.background")
+    if (!button.isForegroundSet || button.foreground is UIResource) button.foreground = DynamicColor(button)
     button.horizontalAlignment = LEADING
     button.isRequestFocusEnabled = false
   }
@@ -173,8 +173,6 @@ private fun AbstractButton.focusInsets(): Insets? {
   val margin = scale(1)
   return Insets(0, margin, 0, margin)
 }
-
-private fun isUpdateable(property: Any?) = property == null || property is UIResource
 
 private fun isEnabled(button: AbstractButton) = button.model?.isEnabled ?: false
 private fun isHovered(button: AbstractButton) = button.model?.isRollover ?: false

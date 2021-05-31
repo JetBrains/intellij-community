@@ -5,7 +5,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -239,9 +238,10 @@ public class PyProtectedMemberInspection extends PyInspection {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
-    panel.addCheckbox(PyPsiBundle.message("INSP.protected.member.ignore.test.functions"), "ignoreTestFunctions");
-    panel.addCheckbox(PyPsiBundle.message("INSP.protected.member.ignore.annotations"), "ignoreAnnotations");
+    final PythonUiService uiService = PythonUiService.getInstance();
+    final JPanel panel = uiService.createMultipleCheckboxOptionsPanel(this);
+    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.protected.member.ignore.test.functions"), "ignoreTestFunctions");
+    uiService.addCheckboxToOptionsPanel(panel, PyPsiBundle.message("INSP.protected.member.ignore.annotations"), "ignoreAnnotations");
     return panel;
   }
 }

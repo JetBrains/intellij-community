@@ -25,6 +25,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,6 +53,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
@@ -68,9 +70,9 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final VcsLogTabsManager myTabsManager;
 
   @NotNull private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
-  @NotNull private final Disposable myListenersDisposable = Disposer.newDisposable();
+  @NotNull private final Disposable myDisposable = Disposer.newDisposable();
   @NotNull private final ExecutorService myExecutor;
-  private volatile boolean myDisposeStarted = false;
+  @NotNull private final AtomicBoolean myDisposeStarted = new AtomicBoolean(false);
   private int myRecreatedLogCount = 0;
 
   public VcsProjectLog(@NotNull Project project) {
@@ -82,28 +84,41 @@ public class VcsProjectLog implements Disposable {
     myTabsManager = new VcsLogTabsManager(project, myMessageBus, uiProperties, this);
 
     myExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Vcs Log Initialization/Dispose", 1);
-    myMessageBus.connect(myListenersDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
+    myMessageBus.connect(myDisposable).subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectClosing(@NotNull Project project) {
-        if (myProject != project) return;
-
-        myDisposeStarted = true;
-        Disposer.dispose(myListenersDisposable);
-        disposeLog(false);
-        myExecutor.shutdown();
-        ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
-          try {
-            myExecutor.awaitTermination(5, TimeUnit.SECONDS);
-          }
-          catch (InterruptedException ignored) {
-          }
-        }, VcsLogBundle.message("vcs.log.closing.process"), false, project);
+        if (myProject == project) {
+          shutDown();
+        }
       }
     });
+    ShutDownTracker.getInstance().registerShutdownTask(this::shutDown, myDisposable);
+  }
+
+  private void shutDown() {
+    if (myDisposeStarted.compareAndSet(false, true)) {
+      Disposer.dispose(myDisposable);
+      disposeLog(false);
+      myExecutor.shutdown();
+      Runnable awaitDisposal = () -> {
+        try {
+          myExecutor.awaitTermination(5, TimeUnit.SECONDS);
+        }
+        catch (InterruptedException ignored) {
+        }
+      };
+      if (ApplicationManager.getApplication().isDispatchThread()) {
+        ProgressManager.getInstance().runProcessWithProgressSynchronously(awaitDisposal,
+                                                                          VcsLogBundle.message("vcs.log.closing.process"),
+                                                                          false, myProject);
+      } else {
+        awaitDisposal.run();
+      }
+    }
   }
 
   private void subscribeToMappingsAndPluginsChanges() {
-    MessageBusConnection connection = myMessageBus.connect(myListenersDisposable);
+    MessageBusConnection connection = myMessageBus.connect(myDisposable);
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, () -> disposeLog(true));
     connection.subscribe(DynamicPluginListener.TOPIC, new MyDynamicPluginUnloader());
   }
@@ -171,7 +186,7 @@ public class VcsProjectLog implements Disposable {
 
   @RequiresEdt
   private void recreateOnError(@NotNull Throwable t) {
-    if (myDisposeStarted) return;
+    if (myDisposeStarted.get()) return;
 
     myRecreatedLogCount++;
     String logMessage = "Recreating Vcs Log after storage corruption. Recreated count " + myRecreatedLogCount;
@@ -203,7 +218,7 @@ public class VcsProjectLog implements Disposable {
   @Nullable
   @RequiresBackgroundThread
   private VcsLogManager createLog(boolean forceInit) {
-    if (myDisposeStarted) return null;
+    if (myDisposeStarted.get()) return null;
     Map<VirtualFile, VcsLogProvider> logProviders = getLogProviders(myProject);
     if (!logProviders.isEmpty()) {
       VcsLogManager logManager = myLogManager.getValue(logProviders);

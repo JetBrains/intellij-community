@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 {
   generate = [
     psi = 'no'
@@ -931,7 +931,7 @@ string_injection ::= '$' string_injection_body
 private string_injection_body ::= qualified_reference_expression | unqualified_reference_expression | lazy_closure | clear_variants <<unexpected "identifier.or.block.expected">>
 
 parenthesized_expression ::= p_parenthesized_expression_inner
-private p_parenthesized_expression_inner ::= '(' <<enableNlBeforeAnonymousBody expression>> ')' { pin = 1}
+private p_parenthesized_expression_inner ::= '(' mb_nl <<enableNlBeforeAnonymousBody expression>> mb_nl ')' { pin = 1 }
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 

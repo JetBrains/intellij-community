@@ -13,7 +13,6 @@ import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
-import de.plushnikov.intellij.plugin.util.PsiMethodUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -88,8 +87,8 @@ public final class FieldNameConstantsHandler {
         .withModifier(PsiModifier.STATIC)
         .withContainingClass(containingClass)
         .withNavigationElement(navigationElement)
-        .withMethodReturnType(new PsiArrayType(enumClassType));
-      valuesEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valuesEnumMethod));
+        .withMethodReturnType(new PsiArrayType(enumClassType))
+        .withBodyText("");
 
       //     "public static " + myClass.getName() + " valueOf(java.lang.String name) throws java.lang.IllegalArgumentException { }"
       final LombokLightMethodBuilder valueOfEnumMethod = new LombokLightMethodBuilder(psiManager, "valueOf")
@@ -99,8 +98,8 @@ public final class FieldNameConstantsHandler {
         .withNavigationElement(navigationElement)
         .withParameter("name", PsiType.getJavaLangString(psiManager, containingClass.getResolveScope()))
         .withException(PsiType.getTypeByName("java.lang.IllegalArgumentException", containingClass.getProject(), containingClass.getResolveScope()))
-        .withMethodReturnType(enumClassType);
-      valueOfEnumMethod.withBody(PsiMethodUtil.createCodeBlockFromText("", valueOfEnumMethod));
+        .withMethodReturnType(enumClassType)
+        .withBodyText("");
 
       return Arrays.asList(valuesEnumMethod, valueOfEnumMethod);
     });

@@ -5,6 +5,7 @@ public class NonThreadSafeLazyInitialization {
     private static Object foo3;
     private static Object foo5;
     private static Object foo6;
+    private static Object foo8;
     private Object instance;
 
     public Object getInstance() {
@@ -68,5 +69,10 @@ public class NonThreadSafeLazyInitialization {
 
     public Object getInstance3() {
         return Foo7Holder.foo7;
+    }
+
+    public Object getInstance4() {
+      if (foo8 == null) foo8 =
+      return foo8;
     }
 }

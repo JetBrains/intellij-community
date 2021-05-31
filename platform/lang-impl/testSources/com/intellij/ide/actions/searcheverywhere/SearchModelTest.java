@@ -19,7 +19,73 @@ public class SearchModelTest extends BasePlatformTestCase {
   private final static SearchEverywhereContributor<Object> STUB_CONTRIBUTOR_2 = createStubContributor(200);
   private final static SearchEverywhereContributor<Object> STUB_CONTRIBUTOR_3 = createStubContributor(300);
 
-  public void testElementsAdding() {
+  public void testMixingModel() {
+    SearchListModel model = new MixedSearchListModel();
+
+    // adding to empty -----------------------------------------------------------------------
+    model.addElements(Arrays.asList(
+      new SearchEverywhereFoundElementInfo("item_300", 300, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_340", 340, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_160", 160, STUB_CONTRIBUTOR_1),
+      new SearchEverywhereFoundElementInfo("item_130", 130, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_280_2", 280, STUB_CONTRIBUTOR_2)
+    ));
+
+    List<Object> actualItems = model.getItems();
+    List<Object> expectedItems = Arrays.asList("item_340", "item_300", "item_280_2", "item_160", "item_130");
+    Assert.assertEquals("Adding elements to empty model", expectedItems, actualItems);
+
+    // adding before freeze -----------------------------------------------------------------------
+    model.addElements(Arrays.asList(
+      new SearchEverywhereFoundElementInfo("item_370", 370, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_250", 250, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_280_3", 280, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_280_1", 280, STUB_CONTRIBUTOR_1)
+    ));
+
+    actualItems = model.getItems();
+    expectedItems = Arrays.asList("item_370", "item_340", "item_300", "item_280_1", "item_280_2", "item_280_3",
+                                  "item_250", "item_160", "item_130");
+    Assert.assertEquals("Adding to existing items before freeze", expectedItems, actualItems);
+
+    // "more" elements -----------------------------------------------------------------------
+    model.setHasMore(STUB_CONTRIBUTOR_1, true);
+    model.setHasMore(STUB_CONTRIBUTOR_3, true);
+
+    actualItems = model.getItems();
+    expectedItems = Arrays.asList("item_370", "item_340", "item_300", "item_280_1", "item_280_2", "item_280_3",
+                                  "item_250", "item_160", "item_130", SearchListModel.MORE_ELEMENT);
+    Assert.assertEquals("Adding 'more' item", expectedItems, actualItems);
+
+    // adding after freeze -----------------------------------------------------------------------
+    model.addElements(Arrays.asList(
+      new SearchEverywhereFoundElementInfo("item_360", 300, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_100", 100, STUB_CONTRIBUTOR_1),
+      new SearchEverywhereFoundElementInfo("item_220", 220, STUB_CONTRIBUTOR_2)
+    ));
+
+    actualItems = model.getItems();
+    expectedItems = Arrays.asList("item_370", "item_340", "item_300", "item_280_1", "item_280_2", "item_280_3", "item_250",
+                                  "item_160", "item_130", "item_360", "item_220", "item_100", SearchListModel.MORE_ELEMENT);
+    Assert.assertEquals("Adding to existing items after freeze", expectedItems, actualItems);
+
+    // expiring results -----------------------------------------------------------------------
+    model.expireResults();
+    model.addElements(Arrays.asList(
+      new SearchEverywhereFoundElementInfo("item_310", 310, STUB_CONTRIBUTOR_1),
+      new SearchEverywhereFoundElementInfo("item_130", 250, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_270", 270, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_330", 330, STUB_CONTRIBUTOR_3),
+      new SearchEverywhereFoundElementInfo("item_100", 240, STUB_CONTRIBUTOR_2),
+      new SearchEverywhereFoundElementInfo("item_210", 210, STUB_CONTRIBUTOR_1)
+    ));
+
+    actualItems = model.getItems();
+    expectedItems = Arrays.asList("item_330", "item_310", "item_270", "item_130", "item_100", "item_210");
+    Assert.assertEquals("Adding after expire", expectedItems, actualItems);
+  }
+
+  public void testGroupingModel() {
     SearchListModel model = new GroupedSearchListModel();
 
     // adding to empty -----------------------------------------------------------------------
@@ -37,7 +103,7 @@ public class SearchModelTest extends BasePlatformTestCase {
 
     List<Object> actualItems = model.getItems();
     List<Object> expectedItems = Arrays.asList("item_1_10", "item_1_20", "item_1_30", "item_2_10", "item_2_20", "item_2_30", "item_3_10", "item_3_20", "item_3_30");
-    Assert.assertEquals(expectedItems, actualItems);
+    Assert.assertEquals("adding to empty model", expectedItems, actualItems);
 
     // "more" elements -----------------------------------------------------------------------
     model.setHasMore(STUB_CONTRIBUTOR_1, true);
@@ -47,7 +113,7 @@ public class SearchModelTest extends BasePlatformTestCase {
     expectedItems = Arrays.asList("item_1_10", "item_1_20", "item_1_30", SearchListModel.MORE_ELEMENT,
                                   "item_2_10", "item_2_20", "item_2_30",
                                   "item_3_10", "item_3_20", "item_3_30", SearchListModel.MORE_ELEMENT);
-    Assert.assertEquals(expectedItems, actualItems);
+    Assert.assertEquals("adding \"more\" elements", expectedItems, actualItems);
 
     // adding to existing -----------------------------------------------------------------------
     model.addElements(Arrays.asList(
@@ -67,7 +133,7 @@ public class SearchModelTest extends BasePlatformTestCase {
     expectedItems = Arrays.asList("item_1_10", "item_1_20", "item_1_25", "item_1_30", "item_1_35", SearchListModel.MORE_ELEMENT,
                                   "item_2_05", "item_2_10", "item_2_20", "item_2_23", "item_2_25", "item_2_30", "item_2_40",
                                   "item_3_03", "item_3_05", "item_3_10", "item_3_20", "item_3_30", "item_3_40", "item_3_50", SearchListModel.MORE_ELEMENT);
-    Assert.assertEquals(expectedItems, actualItems);
+    Assert.assertEquals("adding to existing elements", expectedItems, actualItems);
 
     // expiring results -----------------------------------------------------------------------
     model.expireResults();
@@ -90,7 +156,7 @@ public class SearchModelTest extends BasePlatformTestCase {
     expectedItems = Arrays.asList("item_1_20", "item_1_25", "item_1_35", SearchListModel.MORE_ELEMENT,
                                   "item_2_05", "item_2_10", "item_2_23", SearchListModel.MORE_ELEMENT,
                                   "item_3_10", "item_3_20", "item_3_30", "item_3_50");
-    Assert.assertEquals(expectedItems, actualItems);
+    Assert.assertEquals("adding to expired list", expectedItems, actualItems);
 
     // removing items -----------------------------------------------------------------------
     model.removeElement("item_1_25", STUB_CONTRIBUTOR_1);
@@ -102,7 +168,7 @@ public class SearchModelTest extends BasePlatformTestCase {
     expectedItems = Arrays.asList("item_1_20", "item_1_35",
                                   "item_2_05", "item_2_10", "item_2_23", SearchListModel.MORE_ELEMENT,
                                   "item_3_10", "item_3_50");
-    Assert.assertEquals(expectedItems, actualItems);
+    Assert.assertEquals("removing items", expectedItems, actualItems);
   }
 
   @NotNull

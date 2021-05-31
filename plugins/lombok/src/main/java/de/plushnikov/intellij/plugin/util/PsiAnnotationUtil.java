@@ -10,7 +10,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.regex.Pattern;
 
 /**
  * Some util methods for annotation processing
@@ -135,22 +134,4 @@ public final class PsiAnnotationUtil {
     Object constValue = javaPsiFacade.getConstantEvaluationHelper().computeConstantExpression(attributeValue);
     return constValue instanceof Boolean ? (Boolean) constValue : null;
   }
-
-  @NotNull
-  public static Collection<String> collectAnnotationsToCopy(@NotNull PsiField psiField, final Pattern... patterns) {
-    Collection<String> annotationsToCopy = new ArrayList<>();
-    PsiModifierList modifierList = psiField.getModifierList();
-    if (null != modifierList) {
-      for (PsiAnnotation psiAnnotation : modifierList.getAnnotations()) {
-        final String annotationName = PsiAnnotationSearchUtil.getSimpleNameOf(psiAnnotation);
-        for (Pattern pattern : patterns) {
-          if (pattern.matcher(annotationName).matches()) {
-            annotationsToCopy.add(psiAnnotation.getQualifiedName());
-          }
-        }
-      }
-    }
-    return annotationsToCopy;
-  }
-
 }

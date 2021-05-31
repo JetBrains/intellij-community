@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.net;
 
 import com.github.markusbernhardt.proxy.ProxySearch;
@@ -9,20 +9,18 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.proxy.CommonProxy;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.IOException;
-import java.net.InetSocketAddress;
-import java.net.Proxy;
-import java.net.ProxySelector;
-import java.net.SocketAddress;
-import java.net.URI;
+import java.net.*;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
-import org.jetbrains.annotations.NotNull;
 
 public final class IdeaWideProxySelector extends ProxySelector {
   private final static Logger LOG = Logger.getInstance(IdeaWideProxySelector.class);
+  private static final String DOCUMENT_BUILDER_FACTORY_KEY = "javax.xml.parsers.DocumentBuilderFactory";
 
   private final HttpConfigurable myHttpConfigurable;
   private final AtomicReference<Pair<ProxySelector, String>> myPacProxySelector = new AtomicReference<>();
@@ -60,7 +58,23 @@ public final class IdeaWideProxySelector extends ProxySelector {
     }
 
     if (myHttpConfigurable.USE_PROXY_PAC) {
-      return selectUsingPac(uri);
+      // https://youtrack.jetbrains.com/issue/IDEA-262173
+      String oldDocumentBuilderFactory =
+        System.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, "com.sun.org.apache.xerces.internal.jaxp.DocumentBuilderFactoryImpl");
+      try {
+        return selectUsingPac(uri);
+      }
+      catch (Throwable e) {
+        LOG.error("Cannot select using PAC", e);
+      }
+      finally {
+        if (oldDocumentBuilderFactory == null) {
+          System.clearProperty(DOCUMENT_BUILDER_FACTORY_KEY);
+        }
+        else {
+          System.setProperty(DOCUMENT_BUILDER_FACTORY_KEY, oldDocumentBuilderFactory);
+        }
+      }
     }
 
     return CommonProxy.NO_PROXY_LIST;

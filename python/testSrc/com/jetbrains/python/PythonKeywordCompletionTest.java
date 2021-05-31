@@ -251,4 +251,14 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   public void testNoForAndYieldInCommentContext() {
     assertDoesntContain(doTestByTestName(), "for", "yield");
   }
+
+  // PY-45368
+  public void testNoneInParameterAnnotation() {
+    doTest();
+  }
+
+  // PY-45368
+  public void testNoneInReturnAnnotation() {
+    doTest();
+  }
 }

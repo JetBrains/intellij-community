@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiFileWithOneLanguage;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.psi.util.PsiUtilCore;
@@ -160,6 +161,9 @@ public class BackspaceHandler extends EditorWriteActionHandler.ForEachCaret {
   }
 
   static @NotNull Language getLanguageAtCursorPosition(final PsiFile file, final Editor editor) {
+    if (file instanceof PsiFileWithOneLanguage) {
+      return file.getLanguage();
+    }
     PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     Language language = element != null ? PsiUtilCore.findLanguageFromElement(element) : Language.ANY;
     if (language != Language.ANY) {

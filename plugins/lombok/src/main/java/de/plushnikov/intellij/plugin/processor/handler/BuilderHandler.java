@@ -15,7 +15,10 @@ import de.plushnikov.intellij.plugin.processor.handler.singular.AbstractSingular
 import de.plushnikov.intellij.plugin.processor.handler.singular.SingularHandlerFactory;
 import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import de.plushnikov.intellij.plugin.psi.LombokLightMethodBuilder;
-import de.plushnikov.intellij.plugin.util.*;
+import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
+import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
+import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -299,13 +302,13 @@ public class BuilderHandler {
     final PsiClass containingClass = info.getBuilderClass().getContainingClass();
     final String blockText = String.format("return %s;", info.getFieldInitializer().getText());
 
-    final LombokLightMethodBuilder methodBuilder = new LombokLightMethodBuilder(containingClass.getManager(), info.renderFieldDefaultProviderName())
+    return new LombokLightMethodBuilder(containingClass.getManager(), info.renderFieldDefaultProviderName())
       .withMethodReturnType(info.getFieldType())
       .withContainingClass(containingClass)
       .withNavigationElement(info.getVariable())
       .withModifier(PsiModifier.PRIVATE)
-      .withModifier(PsiModifier.STATIC);
-    return methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+      .withModifier(PsiModifier.STATIC)
+      .withBodyText(blockText);
   }
 
   public Optional<PsiMethod> createBuilderMethodIfNecessary(@NotNull PsiClass containingClass, @Nullable PsiMethod psiMethod, @NotNull PsiClass builderPsiClass, @NotNull PsiAnnotation psiAnnotation) {
@@ -318,8 +321,8 @@ public class BuilderHandler {
         .withMethodReturnType(psiTypeWithGenerics)
         .withContainingClass(containingClass)
         .withNavigationElement(psiAnnotation)
-        .withModifier(getBuilderOuterAccessVisibility(psiAnnotation));
-      methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+        .withModifier(getBuilderOuterAccessVisibility(psiAnnotation))
+        .withBodyText(blockText);
 
       addTypeParameters(builderPsiClass, psiMethod, methodBuilder);
 
@@ -357,7 +360,7 @@ public class BuilderHandler {
       .collect(Collectors.joining(".", ".", ""));
 
     final String blockText = String.format("return new %s()%s;", psiTypeWithGenerics.getPresentableText(), toBuilderMethodCalls);
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(blockText, methodBuilder));
+    methodBuilder.withBodyText(blockText);
 
     return Optional.of(methodBuilder);
   }
@@ -537,7 +540,7 @@ public class BuilderHandler {
       .withNavigationElement(parentClass)
       .withModifier(getBuilderInnerAccessVisibility(psiAnnotation));
     final String codeBlockText = createBuildMethodCodeBlockText(psiMethod, builderClass, returnType, buildMethodPrepare, buildMethodParameters);
-    methodBuilder.withBody(PsiMethodUtil.createCodeBlockFromText(codeBlockText, methodBuilder));
+    methodBuilder.withBodyText(codeBlockText);
 
     Optional<PsiMethod> definedConstructor = Optional.ofNullable(psiMethod);
     if (definedConstructor.isEmpty()) {

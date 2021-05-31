@@ -135,7 +135,10 @@ public abstract class JspSpiUtil {
     List<Path> result = new ArrayList<>();
     processClassPathItems(virtualFile, module, file -> {
       if (file != null && file.isValid()) {
-        result.add(file.toNioPath());
+        Path path = file.getFileSystem().getNioPath(file);
+        if (path != null) {
+          result.add(path);
+        }
       }
     }, includeModuleOutput);
     return result;

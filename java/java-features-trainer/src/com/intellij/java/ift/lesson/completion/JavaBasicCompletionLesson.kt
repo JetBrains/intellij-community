@@ -41,10 +41,10 @@ class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.mess
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
-    task("EditorChooseLookupItem") {
+    task {
       text(LessonsBundle.message("basic.completion.start.typing", code("Ran")) +
-           " " + JavaLessonsBundle.message("java.basic.completion.choose.first", action(it)))
-      trigger(it) {
+           " " + JavaLessonsBundle.message("java.basic.completion.choose.first", action("EditorChooseLookupItem")))
+      stateCheck {
         editor.document.charsSequence.contains("Random()")
       }
       proposeRestore {
@@ -57,9 +57,10 @@ class JavaBasicCompletionLesson : KLesson("Basic completion", LessonsBundle.mess
       triggerByListItemAndHighlight(false, false) { item -> item.toString() == "i" }
       restoreIfModifiedOrMoved()
     }
-    task("EditorChooseLookupItem") {
-      text(JavaLessonsBundle.message("java.basic.completion.choose.item", code("i"), action(it)))
-      trigger(it) {
+    task {
+      text(JavaLessonsBundle.message("java.basic.completion.choose.item",
+                                     code("i"), action("EditorChooseLookupItem")))
+      stateCheck {
         editor.document.charsSequence.contains("Random(i)")
       }
       restoreByUi()

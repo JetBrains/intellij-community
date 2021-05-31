@@ -9,10 +9,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CustomShortcutSet
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.DumbAwareToggleAction
+import com.intellij.util.BitUtil.isSet
 import java.awt.event.*
 import java.util.function.Consumer
 import javax.swing.AbstractAction
 import javax.swing.JList
+import javax.swing.KeyStroke
 
 private fun forward(event: AnActionEvent) = true != event.inputEvent?.isShiftDown
 
@@ -174,12 +176,20 @@ internal class SwitcherKeyReleaseListener(event: InputEvent?, val consumer: Cons
     if (wasMetaDown) append("meta ")
   }.toString()
 
-  val forbiddenMnemonic = (event as? KeyEvent)?.keyCode?.let {
-    when (it) {
-      in KeyEvent.VK_0..KeyEvent.VK_9 -> it.toChar().toString()
-      in KeyEvent.VK_A..KeyEvent.VK_Z -> it.toChar().toString()
-      else -> null
-    }
+  val forbiddenMnemonic = (event as? KeyEvent)?.keyCode?.let { getMnemonic(it) }
+
+  fun getForbiddenMnemonic(keyStroke: KeyStroke) = when {
+    isSet(keyStroke.modifiers, InputEvent.ALT_DOWN_MASK) != wasAltDown -> null
+    isSet(keyStroke.modifiers, InputEvent.ALT_GRAPH_DOWN_MASK) != wasAltGraphDown -> null
+    isSet(keyStroke.modifiers, InputEvent.CTRL_DOWN_MASK) != wasControlDown -> null
+    isSet(keyStroke.modifiers, InputEvent.META_DOWN_MASK) != wasMetaDown -> null
+    else -> getMnemonic(keyStroke.keyCode)
+  }
+
+  private fun getMnemonic(keyCode: Int) = when (keyCode) {
+    in KeyEvent.VK_0..KeyEvent.VK_9 -> keyCode.toChar().toString()
+    in KeyEvent.VK_A..KeyEvent.VK_Z -> keyCode.toChar().toString()
+    else -> null
   }
 
   fun getShortcuts(vararg keys: String): CustomShortcutSet {

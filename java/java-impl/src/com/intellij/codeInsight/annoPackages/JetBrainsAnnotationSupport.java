@@ -17,8 +17,10 @@ class JetBrainsAnnotationSupport implements AnnotationPackageSupport {
         return Collections.singletonList(AnnotationUtil.NOT_NULL);
       case NULLABLE:
         return Collections.singletonList(AnnotationUtil.NULLABLE);
+      case UNKNOWN:
+        return Collections.singletonList(AnnotationUtil.UNKNOWN_NULLABILITY);
       default:
-        return Collections.emptyList();
+        throw new IllegalStateException("Unexpected value: " + nullability);
     }
   }
 }

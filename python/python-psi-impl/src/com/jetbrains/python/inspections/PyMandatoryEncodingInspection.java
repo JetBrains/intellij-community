@@ -17,7 +17,6 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ui.InspectionOptionsPanel;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElementVisitor;
@@ -80,11 +79,12 @@ public class PyMandatoryEncodingInspection extends PyInspection {
 
   @Override
   public JComponent createOptionsPanel() {
-    final InspectionOptionsPanel main = new InspectionOptionsPanel();
+    final PythonUiService uiService = PythonUiService.getInstance();
+    final JPanel main = uiService.createMultipleCheckboxOptionsPanel(this);
 
     main.add(onlyPython2Box());
-    main.row(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding")), defaultEncodingBox());
-    main.row(new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format")), encodingFormatBox());
+    uiService.addRowToOptionsPanel(main, new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.select.default.encoding")), defaultEncodingBox());
+    uiService.addRowToOptionsPanel(main, new JLabel(PyPsiBundle.message("INSP.mandatory.encoding.label.encoding.comment.format")), encodingFormatBox());
 
     return main;
   }

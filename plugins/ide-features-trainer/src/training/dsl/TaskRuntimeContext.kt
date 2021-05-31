@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.dsl
 
+import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
@@ -51,6 +52,7 @@ open class TaskRuntimeContext(private val lessonExecutor: LessonExecutor,
 
   fun setSample(sample: LessonSample) {
     invokeLater(ModalityState.NON_MODAL) {
+      TemplateManagerImpl.getTemplateState(editor)?.gotoEnd()
       (editor as? EditorEx)?.isViewer = false
       editor.caretModel.removeSecondaryCarets()
       setDocumentCode(sample.text)

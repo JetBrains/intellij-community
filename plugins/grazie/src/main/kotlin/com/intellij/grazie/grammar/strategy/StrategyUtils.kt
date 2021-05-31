@@ -113,20 +113,44 @@ object StrategyUtils {
    * @param types possible types of siblings
    * @return sequence of siblings with whitespace tokens
    */
-  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) = sequence {
-    fun PsiElement.process(types: Set<IElementType>, next: Boolean) = sequence<PsiElement> {
+  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) =
+    getNotSoDistantSiblingsOfTypes(strategy, element) { type -> type in types }
+
+  /**
+   * Get all siblings of [element] of type accepted by [checkType]
+   * which are no further than one line
+   *
+   * @param element element whose siblings are to be found
+   * @param checkType predicate to check if type is accepted
+   * @return sequence of siblings with whitespace tokens
+   */
+  fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, checkType: (IElementType?) -> Boolean) =
+    getNotSoDistantSimilarSiblings(strategy, element) { sibling -> checkType(sibling.elementType) }
+
+  /**
+   * Get all siblings of [element] that are accepted by [checkSibling]
+   * which are no further than one line
+   *
+   * @param element element whose siblings are to be found
+   * @param checkSibling predicate to check if sibling is accepted
+   * @return sequence of siblings with whitespace tokens
+   */
+  fun getNotSoDistantSimilarSiblings(strategy: GrammarCheckingStrategy, element: PsiElement, checkSibling: (PsiElement?) -> Boolean) =
+    sequence {
+    fun PsiElement.process(checkSibling: (PsiElement?) -> Boolean, next: Boolean) = sequence<PsiElement> {
       val whitespaceTokens = strategy.getWhiteSpaceTokens()
       var newLinesBetweenSiblingsCount = 0
 
       var sibling: PsiElement? = this@process
       while (sibling != null) {
         val candidate = if (next) sibling.nextSibling else sibling.prevSibling
-        sibling = when (candidate.elementType) {
-          in types -> {
+        val type = candidate.elementType
+        sibling = when {
+          checkSibling(candidate) -> {
             newLinesBetweenSiblingsCount = 0
             candidate
           }
-          in whitespaceTokens -> {
+          type in whitespaceTokens -> {
             newLinesBetweenSiblingsCount += candidate.text.count { char -> char == '\n' }
             if (newLinesBetweenSiblingsCount > 1) null else candidate
           }
@@ -137,9 +161,9 @@ object StrategyUtils {
       }
     }
 
-    yieldAll(element.process(types, false).toList().asReversed())
+    yieldAll(element.process(checkSibling, false).toList().asReversed())
     yield(element)
-    yieldAll(element.process(types, true))
+    yieldAll(element.process(checkSibling, true))
   }
 
   private fun quotesOffset(str: CharSequence): Int {
