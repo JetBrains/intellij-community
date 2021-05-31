@@ -72,7 +72,7 @@ abstract public class TestRunnerService
     }
 
     ServiceState() {
-      this(PythonTestConfigurationsModel.getPythonsUnittestName());
+      this(new PyUnitTestFactory().getName());
     }
   }
 

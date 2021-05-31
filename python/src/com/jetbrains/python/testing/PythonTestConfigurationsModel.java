@@ -47,8 +47,4 @@ public class PythonTestConfigurationsModel extends CollectionComboBoxModel {
   public Object getTestRunner() {
     return myTestRunner;
   }
-
-  public static @Nls String getPythonsUnittestName() {
-    return PyBundle.message("runcfg.unittest.display_name");
-  }
 }

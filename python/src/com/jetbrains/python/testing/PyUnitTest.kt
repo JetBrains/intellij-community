@@ -104,7 +104,7 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
 class PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
   override fun createTemplateConfiguration(project: Project): PyUnitTestConfiguration = PyUnitTestConfiguration(project, this)
 
-  override fun getName(): String = PythonTestConfigurationsModel.getPythonsUnittestName()
+  override fun getName(): String = PyBundle.message("runcfg.unittest.display_name")
 
   override fun getId(): String = "Unittests"
 
