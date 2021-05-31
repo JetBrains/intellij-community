@@ -4,8 +4,11 @@ package org.jetbrains.plugins.groovy.config
 import com.intellij.ide.LabelAndComponent
 import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.NewProjectWizard
+import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.ui.layout.*
 import org.jetbrains.plugins.groovy.GroovyBundle
 import javax.swing.DefaultComboBoxModel
@@ -23,7 +26,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
         row {
           twoColumnRow(
             { radioButton(GroovyBundle.message("radio.use.version.from.maven")) },
-            { comboBox(DefaultComboBoxModel(arrayOf("1.0", "2.0")), settings::version) }
+            { comboBox(DefaultComboBoxModel(arrayOf("3.0.6")), settings::version) }
           )
           twoColumnRow(
             { radioButton(GroovyBundle.message("radio.use.jar.file.from.disk")) },
@@ -36,7 +39,19 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
   }
 
   override fun setupProject(project: Project, settings: GroovyModuleSettings, context: WizardContext) {
-    settings
+    if (project == null) {
+      return
+    }
+    val builder = context.projectBuilder as? ModuleBuilder ?: return
+    builder.contentEntryPath = project.basePath
+    builder.name = project.name
+    val groovyModuleBuilder = GroovyAwareModuleBuilder()
+    groovyModuleBuilder.updateFrom(builder)
+    builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
+      override fun update(module: Module, rootModel: ModifiableRootModel) {
+        groovyModuleBuilder.setupRootModel(rootModel)
+      }
+    })
   }
 }
 
