@@ -181,12 +181,13 @@ private fun smartSelectElement(
     }
 
     val highlighter = ScopeHighlighter(editor)
-    var title = "Elements"
-    if (elementKinds.size == 1) {
-        title = when (elementKinds.iterator().next()) {
+    val title: String = if (elementKinds.size == 1) {
+        when (elementKinds.iterator().next()) {
             CodeInsightUtils.ElementKind.EXPRESSION -> "Expressions"
             CodeInsightUtils.ElementKind.TYPE_ELEMENT, CodeInsightUtils.ElementKind.TYPE_CONSTRUCTOR -> "Types"
         }
+    } else {
+        "Elements"
     }
 
     JBPopupFactory.getInstance()
