@@ -22,9 +22,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.util.SystemProperties
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
@@ -74,7 +74,7 @@ private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
 
   init {
     if (!ApplicationManager.getApplication().isInternal
-        || !Registry.`is`("ide.plugins.create.all.services.and.extensions", false)) {
+        || !SystemProperties.`is`("ide.plugins.create.all.services.and.extensions")) {
       throw ExtensionNotApplicableException.INSTANCE
     }
   }
