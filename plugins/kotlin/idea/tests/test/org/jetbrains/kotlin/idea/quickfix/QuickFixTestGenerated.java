@@ -7888,12 +7888,12 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("removeUselessCastForLambdaInNecessaryNestedParens2.kt")
         public void testRemoveUselessCastForLambdaInNecessaryNestedParens2() throws Exception {
-            runTest("idea/testData/quickfix/expressions/removeUselessCastForLambdaInNecessaryNestedParens2.kt");
+            runTest("testData/quickfix/expressions/removeUselessCastForLambdaInNecessaryNestedParens2.kt");
         }
 
         @TestMetadata("removeUselessCastForLambdaInNestedParens.kt")
         public void testRemoveUselessCastForLambdaInNestedParens() throws Exception {
-            runTest("idea/testData/quickfix/expressions/removeUselessCastForLambdaInNestedParens.kt");
+            runTest("testData/quickfix/expressions/removeUselessCastForLambdaInNestedParens.kt");
         }
 
         @TestMetadata("removeUselessCastForLambdaInParens1.kt")
@@ -7928,7 +7928,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("removeUselessCastInNestedParens.kt")
         public void testRemoveUselessCastInNestedParens() throws Exception {
-            runTest("idea/testData/quickfix/expressions/removeUselessCastInNestedParens.kt");
+            runTest("testData/quickfix/expressions/removeUselessCastInNestedParens.kt");
         }
 
         @TestMetadata("removeUselessCastInParens.kt")
@@ -8028,22 +8028,22 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("uselessElvisForLambdaInNecessaryNestedParens.kt")
         public void testUselessElvisForLambdaInNecessaryNestedParens() throws Exception {
-            runTest("idea/testData/quickfix/expressions/uselessElvisForLambdaInNecessaryNestedParens.kt");
+            runTest("testData/quickfix/expressions/uselessElvisForLambdaInNecessaryNestedParens.kt");
         }
 
         @TestMetadata("uselessElvisForLambdaInNestedParens.kt")
         public void testUselessElvisForLambdaInNestedParens() throws Exception {
-            runTest("idea/testData/quickfix/expressions/uselessElvisForLambdaInNestedParens.kt");
+            runTest("testData/quickfix/expressions/uselessElvisForLambdaInNestedParens.kt");
         }
 
         @TestMetadata("uselessElvisInNestedParens.kt")
         public void testUselessElvisInNestedParens() throws Exception {
-            runTest("idea/testData/quickfix/expressions/uselessElvisInNestedParens.kt");
+            runTest("testData/quickfix/expressions/uselessElvisInNestedParens.kt");
         }
 
         @TestMetadata("uselessElvisRightIsNull.kt")
         public void testUselessElvisRightIsNull() throws Exception {
-            runTest("idea/testData/quickfix/expressions/uselessElvisRightIsNull.kt");
+            runTest("testData/quickfix/expressions/uselessElvisRightIsNull.kt");
         }
     }
 
