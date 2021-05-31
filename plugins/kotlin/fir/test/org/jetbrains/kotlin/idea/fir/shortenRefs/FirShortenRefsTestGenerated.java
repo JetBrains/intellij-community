@@ -152,6 +152,11 @@ public abstract class FirShortenRefsTestGenerated extends AbstractFirShortenRefs
             runTest("../idea/tests/testData/shortenRefsFir/quailfiers/AlreadyImportedNestedType.kt");
         }
 
+        @TestMetadata("Enum.kt")
+        public void testEnum() throws Exception {
+            runTest("idea/testData/shortenRefsFir/quailfiers/Enum.kt");
+        }
+
         @TestMetadata("NestedTypeInSameFile.kt")
         public void testNestedTypeInSameFile() throws Exception {
             runTest("../idea/tests/testData/shortenRefsFir/quailfiers/NestedTypeInSameFile.kt");
