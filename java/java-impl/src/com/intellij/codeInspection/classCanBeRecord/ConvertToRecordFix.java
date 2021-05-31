@@ -10,13 +10,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.PsiAnnotation.TargetType;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,7 +87,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     if (psiClass.getContainingClass() != null && !psiClass.hasModifierProperty(STATIC)) return null;
 
     PsiClass superClass = psiClass.getSuperClass();
-    if (superClass == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) return null;
+    if (superClass == null || !JAVA_LANG_OBJECT.equals(superClass.getQualifiedName())) return null;
 
     if (ContainerUtil.exists(psiClass.getInitializers(), initializer -> !initializer.hasModifierProperty(STATIC))) return null;
 
@@ -217,23 +217,35 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
     }
 
     private static boolean containsObjectMethodCalls(@NotNull PsiMethod psiMethod) {
-      Ref<Boolean> existsObjectMethodCalls = new Ref<>(false);
-      psiMethod.accept(new JavaRecursiveElementWalkingVisitor() {
+      var visitor = new JavaRecursiveElementWalkingVisitor() {
+        boolean existsSuperMethodCalls;
+
         @Override
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-          if (!existsObjectMethodCalls.get() && OBJECT_METHOD_CALLS.test(expression)) {
-            existsObjectMethodCalls.set(true);
+          super.visitMethodCallExpression(expression);
+          if (JavaPsiConstructorUtil.isSuperConstructorCall(expression) ||
+              hasSuperQualifier(expression.getMethodExpression()) && OBJECT_METHOD_CALLS.test(expression)) {
+            existsSuperMethodCalls = true;
+            stopWalking();
           }
         }
 
         @Override
         public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
-          if (!existsObjectMethodCalls.get() && OBJECT_METHOD_CALLS.methodReferenceMatches(expression)) {
-            existsObjectMethodCalls.set(true);
+          super.visitMethodReferenceExpression(expression);
+          if (hasSuperQualifier(expression) && OBJECT_METHOD_CALLS.methodReferenceMatches(expression)) {
+            existsSuperMethodCalls = true;
+            stopWalking();
           }
         }
-      });
-      return existsObjectMethodCalls.get();
+
+        private boolean hasSuperQualifier(@NotNull PsiReferenceExpression expression) {
+          PsiElement qualifier = expression.getQualifier();
+          return qualifier != null && PsiKeyword.SUPER.equals(qualifier.getText());
+        }
+      };
+      psiMethod.accept(visitor);
+      return visitor.existsSuperMethodCalls;
     }
 
     @Nullable
