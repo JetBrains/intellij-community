@@ -1079,6 +1079,8 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
 
       private String getTextValue(int row, int col) {
         Object value = myTable.getValueAt(row, col);
+        if (value instanceof String) return (String)value;
+
         TableColumn tableColumn = myTable.getColumnModel().getColumn(col);
         Component component = tableColumn.getCellRenderer().getTableCellRendererComponent(myTable, value, false, false, row, col);
         if (component instanceof JLabel) { // see ValueCellRenderer
