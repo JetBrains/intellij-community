@@ -247,6 +247,8 @@ Includes the following features:</p>
               class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
       <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
               class="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"/>
+      <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
+              class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
   </actions>
 </idea-plugin>
