@@ -5,7 +5,6 @@ import com.intellij.java.JavaBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.util.Pass;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiExpressionTrimRenderer;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -37,10 +36,10 @@ final class IntroduceVariableTargetBlockChooser {
                                          element -> {
                                            PsiElement container = takeNextContainer(containers, element);
                                            if (container instanceof PsiLambdaExpression) {
-                                             return PsiExpressionTrimRenderer.render((PsiExpression)container);
+                                             PsiType type = ((PsiLambdaExpression)container).getFunctionalInterfaceType();
+                                             return (type != null ? type.getPresentableText() + ": " : "") + PsiExpressionTrimRenderer.render((PsiExpression)container);
                                            }
-                                           String text = container.getText();
-                                           return StringUtil.shortenTextWithEllipsis(StringUtil.splitByLines(text)[0], 50, 0);
+                                           return JavaBundle.message("target.code.block.presentable.text");
                                          }, JavaBundle.message("popup.title.select.target.code.block"),
                                          element -> {
                                            PsiElement result = takeNextContainer(containers, element);

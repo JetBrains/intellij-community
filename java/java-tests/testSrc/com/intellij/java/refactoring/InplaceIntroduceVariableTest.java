@@ -3,6 +3,7 @@ package com.intellij.java.refactoring;
 
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
+import com.intellij.java.JavaBundle;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
@@ -81,27 +82,27 @@ public class InplaceIntroduceVariableTest extends AbstractJavaInplaceIntroduceTe
   }
 
   public void testPlaceInsideLoopAndRename() {
-    doTestReplaceChoice("() -> {...}", introducer -> type("expr"));
+    doTestReplaceChoice("Runnable: () -> {...}", introducer -> type("expr"));
   }
   
   public void testPlaceOutsideLoopAndRename() {
-    doTestReplaceChoice("{", introducer -> type("expr"));
+    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), introducer -> type("expr"));
   }
 
   public void testPlaceOutsideLambdaInIfWithoutBraces() {
-    doTestReplaceChoice("if (b) foo(s -> \"extract me\" + s);", introducer -> type("expr"));
+    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), introducer -> type("expr"));
   }
 
   public void testPlaceOutsideLambdaInClass() {
-    doTestReplaceChoice("class MyTest {", introducer -> type("expr"));
+    doTestReplaceChoice(JavaBundle.message("target.code.block.presentable.text"), introducer -> type("expr"));
   }
 
   public void testPlaceInsideLambdaBody() {
-    doTestReplaceChoice("() -> {...}", introducer -> type("expr"));
+    doTestReplaceChoice("Runnable: () -> {...}", introducer -> type("expr"));
   }
 
   public void testPlaceInsideLambdaBodyMultipleOccurrences1() {
-    doTestReplaceChoice("Replace all 0 occurrences", "() -> {...}", introducer -> type("expr"), null);
+    doTestReplaceChoice("Replace all 0 occurrences", "Runnable: () -> {...}", introducer -> type("expr"), null);
   }
 
   public void testReplaceAllOnDummyCodeWithSameNameAsGenerated() {
