@@ -3079,6 +3079,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
                 runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/nonSealedClassInWhen.kt");
             }
 
+            @TestMetadata("nonSealedClassWithTypeArgs.kt")
+            public void testNonSealedClassWithTypeArgs() throws Exception {
+                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/nonSealedClassWithTypeArgs.kt");
+            }
+
             @TestMetadata("nullableEnumInWhen.kt")
             public void testNullableEnumInWhen() throws Exception {
                 runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/nullableEnumInWhen.kt");
@@ -3102,6 +3107,11 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
             @TestMetadata("sealedClassWithAbstractInheritorsInWhen.kt")
             public void testSealedClassWithAbstractInheritorsInWhen() throws Exception {
                 runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/sealedClassWithAbstractInheritorsInWhen.kt");
+            }
+
+            @TestMetadata("sealedClassWithTypeArgs.kt")
+            public void testSealedClassWithTypeArgs() throws Exception {
+                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/sealedClassWithTypeArgs.kt");
             }
 
             @TestMetadata("sealedInterfaceInWhen.kt")
