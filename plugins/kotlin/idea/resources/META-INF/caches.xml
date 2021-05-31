@@ -26,6 +26,8 @@
 
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.lightClasses.ClsJavaStubByVirtualFileCache"/>
 
+    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener"/>
+
     <projectService serviceInterface="org.jetbrains.kotlin.idea.caches.project.KotlinStdlibCache"
                     serviceImplementation="org.jetbrains.kotlin.idea.caches.project.KotlinStdlibCacheImpl"/>
 
