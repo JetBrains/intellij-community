@@ -2,6 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.StatisticsEventLoggerProvider.Companion.EP_NAME
+import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.application.ApplicationInfo
@@ -54,7 +55,7 @@ object StatisticsEventLogProviderUtil {
         return true
       }
       val pluginInfo = getPluginInfo(extension::class.java)
-      return pluginInfo.type.isPlatformOrJetBrainsBundled() || pluginInfo.isAllowedToInjectIntoFUS()
+      return pluginInfo.type == PluginType.PLATFORM || pluginInfo.type == PluginType.FROM_SOURCES || pluginInfo.isAllowedToInjectIntoFUS()
     }
     return false
   }
