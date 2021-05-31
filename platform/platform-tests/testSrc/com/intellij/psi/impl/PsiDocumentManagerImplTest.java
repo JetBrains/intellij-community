@@ -290,6 +290,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testDocumentCommittedInBackgroundEventuallyEvenDespiteTyping() throws IOException {
+    assumeJavaInClassPath();
     VirtualFile virtualFile = createTempVirtualFile("x.java", null, "", StandardCharsets.UTF_8);
     PsiFile file = findFile(virtualFile);
     assertNotNull(file);
@@ -607,6 +608,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testUndoShouldAddToCommitQueue() throws IOException {
+    assumeJavaInClassPath();
     VirtualFile virtualFile = getVirtualFile(createTempFile("X.java", ""));
     PsiFile file = findFile(virtualFile);
     assertEquals("JAVA", file.getFileType().getName());
@@ -698,6 +700,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testBackgroundCommitDoesNotChokeByWildChangesWhichInvalidatePsiFile() throws Exception {
+    assumeJavaInClassPath();
     @Language("JAVA")
     String text = "\n\nclass X {\npublic static final String string =null;\n public void x() {}\n}";
     VirtualFile virtualFile = getVirtualFile(createTempFile("X.java", text));
@@ -772,7 +775,7 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
   }
 
   public void testDefaultProjectDocumentsAreAutoCommitted() throws IOException {
-    Assume.assumeTrue("This test must have JavaFileType in its classpath", FileTypeManager.getInstance().findFileTypeByName("JAVA") != null);
+    assumeJavaInClassPath();
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     VirtualFile vFile = getVirtualFile(createTempFile("a.java", ""));
     PsiFile psiFile = PsiManager.getInstance(defaultProject).findFile(vFile);
@@ -783,6 +786,10 @@ public class PsiDocumentManagerImplTest extends HeavyPlatformTestCase {
     assertTrue(documentManager.isCommitted(document));
     PsiElement firstChild = psiFile.getFirstChild();
     assertTrue(firstChild instanceof PsiComment);
+  }
+
+  private static void assumeJavaInClassPath() {
+    Assume.assumeTrue("This test must have JavaFileType in its classpath", FileTypeManager.getInstance().findFileTypeByName("JAVA") != null);
   }
 
   public void testAutoCommitDoesNotGetStuckForDocumentsWithIgnoredFileName() throws IOException {
