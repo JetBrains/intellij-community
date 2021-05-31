@@ -473,7 +473,7 @@ public abstract class BaseRefactoringProcessor implements Runnable {
     usageView.setRerunAction(new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        doRun();
+        run();
       }
     });
   }
