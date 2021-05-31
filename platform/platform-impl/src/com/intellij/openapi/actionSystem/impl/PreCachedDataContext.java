@@ -96,6 +96,10 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
   public final @NotNull DataContext getInjectedDataContext() {
     return this instanceof InjectedDataContext ? this : new InjectedDataContext(myCachedData, myUserData, myMissedKeysIfFrozen);
   }
+  
+  boolean isFrozenDataContext() {
+    return myMissedKeysIfFrozen != null;
+  }
 
   @Override
   public @Nullable Object getData(@NotNull String dataId) {

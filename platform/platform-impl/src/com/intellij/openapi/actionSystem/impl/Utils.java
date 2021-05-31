@@ -541,4 +541,8 @@ public final class Utils {
     });
     return result[0];
   }
+
+  public static boolean isFrozenDataContext(DataContext context) {
+    return context instanceof PreCachedDataContext && ((PreCachedDataContext)context).isFrozenDataContext();
+  }
 }
