@@ -143,7 +143,7 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.eclipse") {
       withModule("intellij.eclipse.jps", "eclipse-jps.jar")
-      withModule("intellij.eclipse.common")
+      withModule("intellij.eclipse.common", "eclipse-common.jar")
     },
     plugin("intellij.java.coverage") {
       withModule("intellij.java.coverage.rt")
