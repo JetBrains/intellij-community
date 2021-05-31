@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.codeInspection;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInspection.i18n;
 
-import com.intellij.java.JavaBundle;
+import com.intellij.codeInspection.*;
+import com.intellij.java.i18n.JavaI18nBundle;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -36,12 +37,13 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
       @Nullable
-      @SuppressWarnings("DialogTitleCapitalization" /* "Basic Latin" is a proper noun */)
       private ProblemDescriptor getProblem(PsiElement element) {
         if (IOUtil.isAscii(element.getText())) return null;
+        // "Basic Latin" is a proper noun
+        //noinspection DialogTitleCapitalization
         return holder.getManager().createProblemDescriptor(element,
                                                            (TextRange)null,
-                                                           JavaBundle.message("inspection.convert.to.basic.latin"),
+                                                           JavaI18nBundle.message("inspection.convert.to.basic.latin"),
                                                            ProblemHighlightType.INFORMATION,
                                                            isOnTheFly,
                                                            new MyLocalQuickFix());
@@ -198,7 +200,7 @@ public class ConvertToBasicLatinInspection extends AbstractBaseJavaLocalInspecti
     @NotNull
     @Override
     public String getFamilyName() {
-      return JavaBundle.message("inspection.convert.to.basic.latin");
+      return JavaI18nBundle.message("inspection.convert.to.basic.latin");
     }
 
     @Override
