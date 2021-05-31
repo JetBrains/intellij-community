@@ -16,12 +16,14 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
   interface UValueEvaluatorStrategy<T : Any> {
     fun calculateLiteral(element: ULiteralExpression): T?
 
-    fun calculatePolyadicExpression(element: UPolyadicExpression, elementEvaluator: (UElement) -> T?): T?
+    fun calculatePolyadicExpression(element: UPolyadicExpression): CalculateRequest<T>?
 
     fun constructValueFromList(element: UElement, values: List<T>?): T?
 
     fun constructUnknownValue(element: UElement): T?
   }
+
+  class CalculateRequest<T>(val arguments: List<UElement>, val collapse: (List<T?>) -> T?)
 
   fun calculateValue(element: UElement, configuration: UNeDfaConfiguration<T> = UNeDfaConfiguration()): T? {
     val parentElement = element.getContainingUMethod() ?: element.getContainingUVariable() as? UField
@@ -62,9 +64,9 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
     }
 
     if (element is UPolyadicExpression) {
-      return strategy.calculatePolyadicExpression(element) { operand ->
-        calculate(graph, operand, configuration)
-      }
+      val calculateRequest = strategy.calculatePolyadicExpression(element) ?: return null
+      val operands = calculateRequest.arguments.map { calculate(graph, it, configuration) }
+      return calculateRequest.collapse(operands)
     }
 
     if (

@@ -2,7 +2,6 @@
 
 package org.jetbrains.uast.test.java.analysis
 
-import com.intellij.idea.Bombed
 import com.intellij.openapi.util.TextRange
 import com.intellij.patterns.PsiJavaPatterns.psiMethod
 import com.intellij.patterns.uast.callExpression
@@ -458,8 +457,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     }
   )
 
-  @Bombed(year = 2021, month = 5, day = 28, user = "aleksandr.izmaylov", description = "Fails on Windows")
   fun `test many assignments`() {
+    val updateTimes = 500
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {
         String b() {
@@ -468,8 +467,8 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       
         String a() {
           String a0 = "a";
-          ${(1..500).map { """String a$it = a${it - 1} + (true ? "a" : b());""" }.joinToString("\n          ") { it }}
-          return a500 + <caret> (true ? "a" : b());
+          ${(1..updateTimes).map { """String a$it = a${it - 1} + (true ? "a" : b());""" }.joinToString("\n          ") { it }}
+          return a$updateTimes + <caret> (true ? "a" : b());
         }
       }
     """.trimIndent())
@@ -478,7 +477,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
 
     myFixture.doHighlighting()
 
-    val expected = "'a'${"{'a'|'b'}".repeat(501)}"
+    val expected = "'a'${"{'a'|'b'}".repeat(updateTimes + 1)}"
     PlatformTestUtil.startPerformanceTest("calculate value of many assignments", 1000) {
       val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
         methodCallDepth = 2,
