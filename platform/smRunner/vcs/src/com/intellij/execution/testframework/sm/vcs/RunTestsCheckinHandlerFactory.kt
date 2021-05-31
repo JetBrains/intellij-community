@@ -53,6 +53,7 @@ import com.intellij.vcs.commit.NullCommitWorkflowHandler
 import com.intellij.vcs.commit.isBackgroundCommitChecks
 import com.intellij.vcs.commit.isNonModalCommit
 import kotlinx.coroutines.*
+import org.jetbrains.annotations.NotNull
 import javax.swing.JComponent
 import kotlin.coroutines.resume
 
@@ -94,7 +95,7 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
       }
 
       val failedToStartMessages = problems
-        .filter { it.failed == 0 && it.ignored == 0 && it.historyFileName.isEmpty()}
+        .filter { it.failed == 0 && it.ignored == 0 }
         .mapNotNull { it.configuration }
         .joinToString { TestRunnerBundle.message("failed.to.start.message", it.configuration.name) }
       if (failedToStartMessages.isNotEmpty()) {
@@ -165,7 +166,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     val form = console.resultsForm
     if (form != null) {
       reportProblem(form, problems, configurationSettings)
-      if (form.testsRootNode.isDefect) {
+      if (!isSuccessful(form.testsRootNode)) {
         awaitSavingHistory(form.historyFileName)
       }
     }
@@ -329,9 +330,12 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
                             problems: ArrayList<FailureDescription>,
                             configuration: RunnerAndConfigurationSettings) {
     val rootNode = resultsForm.testsRootNode
-    if (rootNode.isDefect) {
+    if (!isSuccessful(rootNode)) {
       val presentation = TestResultPresentation(rootNode).presentation
       problems.add(FailureDescription(resultsForm.historyFileName, presentation.failedCount, presentation.ignoredCount, configuration))
     }
   }
+
+  private fun isSuccessful(rootNode: @NotNull SMTestProxy.SMRootTestProxy) : Boolean =
+    !rootNode.isDefect && rootNode.children.isNotEmpty()
 }
