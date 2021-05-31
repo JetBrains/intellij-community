@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.externalSystem.model.project.ProjectCoordinate
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectsWorkspaceImpl
@@ -12,18 +13,21 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.ModuleRootManagerEx
 import com.intellij.openapi.roots.ProjectModelExternalSource
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.roots.impl.RootConfigurationAccessor
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.util.Disposer
 import com.intellij.workspaceModel.ide.WorkspaceModel.Companion.getInstance
-import com.intellij.workspaceModel.ide.legacyBridge.LibraryModifiableModelBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModifiableFacetModelBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ProjectModifiableLibraryTableBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
+import com.intellij.workspaceModel.ide.legacyBridge.*
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import java.util.*
 
 interface ModifiableModelsProviderProxy {
   val modifiableModuleModel: ModifiableModuleModel
@@ -34,18 +38,17 @@ interface ModifiableModelsProviderProxy {
 
   val modalityStateForQuestionDialogs: ModalityState
   fun registerModulePublication(module: Module, id: ProjectCoordinate)
-  fun getModifiableRootModel(module: Module?): ModifiableRootModel
+  fun getModifiableRootModel(module: Module): ModifiableRootModel
   val allLibraries: Array<Library?>
-  fun removeLibrary(lib: Library?)
+  fun removeLibrary(lib: Library)
   fun createLibrary(name: String?, source: ProjectModelExternalSource?): Library?
-  fun getLibraryByName(name: String?): Library?
-  fun getModifiableLibraryModel(library: Library?): Library.ModifiableModel?
-  fun trySubstitute(module: Module?, entry: LibraryOrderEntry?, id: ProjectId?)
+  fun getLibraryByName(name: String): Library?
+  fun getModifiableLibraryModel(library: Library): Library.ModifiableModel?
+  fun trySubstitute(module: Module, entry: LibraryOrderEntry, id: ProjectId)
 
   // bridge back to original interface
   val modifiableModelsProvider: IdeModifiableModelsProvider?
 }
-
 class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModelsProviderImpl,
                                         private val project: Project) : ModifiableModelsProviderProxy {
 
@@ -65,6 +68,14 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
         moduleModelWrapper
       }
     }
+
+  private val myModifiableRootModels: MutableMap<Module, ModifiableRootModel> = HashMap()
+  private val modifiableLibraryModels: MutableMap<Library, Library.ModifiableModel> = IdentityHashMap()
+  private val librariesModel: LibraryTable.ModifiableModel by lazy {
+    val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+    (libraryTable as ProjectLibraryTableBridge).getModifiableModel(diff!!)
+  }
+
 
   fun usingDiff(newDiff: WorkspaceEntityStorageBuilder) {
     diff = newDiff
@@ -141,6 +152,15 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
   }
 
   override fun dispose() {
+    if (diff != null) {
+      myModifiableRootModels.values
+        .filter { !it.isDisposed }
+        .forEach { it.dispose() }
+      modifiableLibraryModels.values
+        .filter { !Disposer.isDisposed(it) }
+        .forEach { Disposer.dispose(it) }
+      Disposer.dispose(librariesModel)
+    }
     delegate.dispose()
   }
 
@@ -152,29 +172,94 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
     delegate.modifiableWorkspace?.register(id, module)
   }
 
-  override fun getModifiableRootModel(module: Module?): ModifiableRootModel = delegate.getModifiableRootModel(module)
+  override fun getModifiableRootModel(module: Module): ModifiableRootModel {
+    return if (diff == null) {
+      delegate.getModifiableRootModel(module)
+    } else {
+      myModifiableRootModels.getOrPut(module) { doGetModifiableRootModel(module) }
+    }
+  }
+
+  private fun doGetModifiableRootModel(module: Module): ModifiableRootModel {
+    val rootConfigurationAccessor: RootConfigurationAccessor = object : RootConfigurationAccessor() {
+      override fun getLibrary(library: Library, libraryName: String, libraryLevel: String): Library? {
+        return if (LibraryTablesRegistrar.PROJECT_LEVEL == libraryLevel) {
+          librariesModel.getLibraryByName(libraryName)
+        }
+        else library
+      }
+    }
+
+    return ReadAction.compute<ModifiableRootModel, RuntimeException> {
+      val rootManager = ModuleRootManagerEx.getInstanceEx(module)
+      val initialStorage = getInstance(project).entityStorage.current
+      (rootManager as ModuleRootComponentBridge).getModifiableModel(diff!!, initialStorage, rootConfigurationAccessor)
+    }
+  }
+
 
   override val allLibraries: Array<Library?>
-    get() = delegate.allLibraries
+    get() = if (diff == null) {
+      delegate.allLibraries
+    }
+    else {
+      librariesModel.libraries
+    }
 
-  override fun removeLibrary(lib: Library?) {
-    delegate.removeLibrary(lib)
+  override fun removeLibrary(lib: Library) {
+    if (diff == null) {
+      delegate.removeLibrary(lib)
+    }
+    else {
+      librariesModel.removeLibrary(lib)
+    }
   }
 
   override fun createLibrary(name: String?, source: ProjectModelExternalSource?): Library? {
-    return delegate.createLibrary(name, source)
+    return if (diff == null) {
+      delegate.createLibrary(name, source)
+    }
+    else {
+      librariesModel.createLibrary(name, null, source)
+    }
   }
 
-  override fun getLibraryByName(name: String?): Library? {
-    return delegate.getLibraryByName(name)
+  override fun getLibraryByName(name: String): Library? {
+    return if (diff == null) {
+      delegate.getLibraryByName(name)
+    }
+    else {
+      librariesModel.getLibraryByName(name)
+    }
   }
 
-  override fun getModifiableLibraryModel(library: Library?): Library.ModifiableModel? {
-    return delegate.getModifiableLibraryModel(library)
+  override fun getModifiableLibraryModel(library: Library): Library.ModifiableModel? {
+    return if (diff == null) {
+      delegate.getModifiableLibraryModel(library)
+    } else {
+      modifiableLibraryModels.getOrPut(library) { (library as LibraryBridge).getModifiableModel(diff!!) }
+    }
   }
 
-  override fun trySubstitute(module: Module?, entry: LibraryOrderEntry?, id: ProjectId?) {
-    delegate.trySubstitute(module, entry, id)
+  override fun trySubstitute(module: Module, entry: LibraryOrderEntry, id: ProjectId) {
+    if (diff == null) {
+      delegate.trySubstitute(module, entry, id)
+    } else {
+      val workspaceModuleCandidate = delegate.modifiableWorkspace!!.findModule(id) ?: return
+      val workspaceModule = moduleModelProxy.findModuleByName(workspaceModuleCandidate) ?: return
+      val modifiableRootModel = getModifiableRootModel(module)
+
+      val moduleOrderEntry = modifiableRootModel.findModuleOrderEntry(workspaceModule)
+                             ?: modifiableRootModel.addModuleOrderEntry(workspaceModule)
+      moduleOrderEntry.scope = entry.scope
+      moduleOrderEntry.isExported = entry.isExported
+      val workspace = delegate.modifiableWorkspace!!
+      workspace.addSubstitution(module.name,
+                                workspaceModule.name,
+                                entry.libraryName,
+                                entry.scope)
+      modifiableRootModel.removeOrderEntry(entry)
+    }
   }
 
   override val modifiableModelsProvider: IdeModifiableModelsProvider
@@ -182,38 +267,4 @@ class ModifiableModelsProviderProxyImpl(private val delegate: IdeModifiableModel
 
 }
 
-class ModifiableModelsProviderProxyWrapper(val delegate: IdeModifiableModelsProvider) : ModifiableModelsProviderProxy {
-  override val modifiableModuleModel: ModifiableModuleModel = delegate.modifiableModuleModel;
 
-  override fun commit() {
-    delegate.commit()
-  }
-
-  override fun dispose() {
-    delegate.dispose()
-  }
-
-  override val modalityStateForQuestionDialogs: ModalityState = delegate.modalityStateForQuestionDialogs
-
-  override fun registerModulePublication(module: Module, id: ProjectCoordinate) {
-    delegate.registerModulePublication(module, id)
-  }
-
-  override fun getModifiableRootModel(module: Module?): ModifiableRootModel = delegate.getModifiableRootModel(module)
-
-  override val allLibraries: Array<Library?> = delegate.allLibraries
-
-  override fun removeLibrary(each: Library?) = delegate.removeLibrary(each)
-
-  override fun createLibrary(name: String?, source: ProjectModelExternalSource?): Library? = delegate.createLibrary(name, source)
-
-  override fun getLibraryByName(name: String?): Library? = delegate.getLibraryByName(name)
-
-  override fun getModifiableLibraryModel(library: Library?): Library.ModifiableModel? = delegate.getModifiableLibraryModel(library)
-
-  override fun trySubstitute(module: Module?, entry: LibraryOrderEntry?, id: ProjectId?) {
-    delegate.trySubstitute(module, entry, id)
-  }
-
-  override val modifiableModelsProvider: IdeModifiableModelsProvider = delegate
-}
