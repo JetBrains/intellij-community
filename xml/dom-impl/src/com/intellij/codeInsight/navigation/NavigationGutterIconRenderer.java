@@ -42,18 +42,15 @@ import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -72,6 +69,7 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
   private final NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> myPointers;
   private final boolean myComputeTargetsInBackground;
+  protected boolean myNavigating;
 
   protected NavigationGutterIconRenderer(@PopupTitle String popupTitle,
                                          @PopupContent String emptyText,
@@ -149,8 +147,12 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   }
 
   private void navigateTargetsAsync(@NotNull MouseEvent event) {
-    RelativePoint relativePoint = new RelativePoint(event);
-    Runnable removeIcon = addLoadingIcon(relativePoint);
+    boolean[] finished = { false };
+    EdtScheduledExecutorService.getInstance().schedule(() -> {
+      if (finished[0]) return;
+      myNavigating = true;
+      event.getComponent().repaint();
+    }, 500, TimeUnit.MILLISECONDS);
 
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       ProgressManager.getInstance().computePrioritized(() -> {
@@ -159,7 +161,8 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
           boolean success = runInReadActionWithWriteActionPriority(() -> targets.set(getTargetElements()));
 
           ApplicationManager.getApplication().invokeLater(() -> {
-            removeIcon.run();
+            finished[0] = true;
+            myNavigating = false;
             if (success) {
               navigateTargets(event, targets.get());
             }
@@ -224,31 +227,5 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
     if (element == null) return null;
     final PsiElement navigationElement = element.getNavigationElement();
     return navigationElement instanceof Navigatable ? (Navigatable)navigationElement : null;
-  }
-
-  private static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point) {
-    JRootPane rootPane = point == null ? null : UIUtil.getRootPane(point.getComponent());
-    JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
-    if (glassPane == null) return () -> {};
-
-    JLabel icon = new JLabel(AnimatedIcon.Big.INSTANCE);
-    Dimension size = icon.getPreferredSize();
-    icon.setSize(size);
-    Point location = point.getPoint(glassPane);
-    location.x -= size.width / 2;
-    location.y -= size.height / 2;
-    icon.setLocation(location);
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
-      if (!icon.isVisible()) return;
-      glassPane.add(icon);
-    }, 500, TimeUnit.MILLISECONDS);
-    return () -> {
-      if (icon.getParent() != null) {
-        glassPane.remove(icon);
-      }
-      else {
-        icon.setVisible(false);
-      }
-    };
   }
 }
