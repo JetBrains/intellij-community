@@ -147,7 +147,7 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
     SyntaxTreeBuilder.Marker mark = myBuilder.mark();
     myBuilder.remapCurrentToken(PyTokenTypes.MATCH_KEYWORD);
     myBuilder.advanceLexer();
-    myContext.getExpressionParser().parseTupleExpression(true, false, false);
+    myContext.getExpressionParser().parseExpression();
     if (!matchToken(PyTokenTypes.COLON)) {
       mark.rollbackTo();
       myBuilder.remapCurrentToken(PyTokenTypes.IDENTIFIER);
