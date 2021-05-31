@@ -986,6 +986,10 @@ public class PythonParsingTest extends ParsingTestCase {
     doTest(LanguageLevel.PYTHON310);
   }
 
+  public void testPatternMatchingRecoveryNoSubjectAfterMatch() {
+    doTest(LanguageLevel.PYTHON310);
+  }
+
   public void testPatternMatchingRecoveryNoPatternAfterCase() {
     doTest(LanguageLevel.PYTHON310);
   }
