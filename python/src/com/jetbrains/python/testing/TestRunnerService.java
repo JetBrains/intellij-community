@@ -72,7 +72,7 @@ abstract public class TestRunnerService
     }
 
     ServiceState() {
-      this(new PyUnitTestFactory().getName());
+      this(PyTestsSharedKt.getDefaultFactory().getIdForSettings());
     }
   }
 
