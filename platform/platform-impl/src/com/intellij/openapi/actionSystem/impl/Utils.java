@@ -204,7 +204,7 @@ public final class Utils {
                                                              @NotNull ActionGroup group,
                                                              boolean hideDisabled,
                                                              @Nullable Consumer<String> missedKeys) {
-    int maxTime = Registry.intValue("actionSystem.update.actions.async.fast.timeout.ms", 20);
+    int maxTime = Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
@@ -264,7 +264,7 @@ public final class Utils {
     EdtScheduledExecutorService.getInstance().schedule(() -> {
       if (!icon.isVisible()) return;
       glassPane.add(icon);
-    }, 500, TimeUnit.MILLISECONDS);
+    }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
     return () -> {
       if (icon.getParent() != null) glassPane.remove(icon);
       else icon.setVisible(false);

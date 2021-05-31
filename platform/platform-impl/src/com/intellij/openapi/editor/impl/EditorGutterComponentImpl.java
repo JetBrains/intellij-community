@@ -2287,7 +2287,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       clickInfo.myProgressVisualLine = info.visualLine;
       clickInfo.myProgressGutterMark = info.renderer;
       repaint();
-    }, 500, TimeUnit.MILLISECONDS);
+    }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
     myLastActionableClick.myProgressRemover = () -> {
       removed[0] = true;
       if (myLastActionableClick == clickInfo) {
