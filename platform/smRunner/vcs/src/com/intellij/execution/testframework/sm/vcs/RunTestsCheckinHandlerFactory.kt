@@ -6,6 +6,7 @@ import com.intellij.execution.*
 import com.intellij.execution.compound.CompoundRunConfiguration
 import com.intellij.execution.configurations.RunConfiguration
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.impl.RunDialog
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.process.ProcessAdapter
@@ -96,8 +97,8 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
 
       val failedToStartMessages = problems
         .filter { it.failed == 0 && it.ignored == 0 }
-        .mapNotNull { it.configuration }
-        .joinToString { TestRunnerBundle.message("failed.to.start.message", it.configuration.name) }
+        .mapNotNull { it.configName }
+        .joinToString { TestRunnerBundle.message("failed.to.start.message", it) }
       if (failedToStartMessages.isNotEmpty()) {
         str += (if (ignored + failed > 0) ", " else "")
         str += failedToStartMessages
@@ -106,7 +107,7 @@ class FailedTestCommitProblem(val problems: List<FailureDescription>) : CommitPr
     }
 }
 
-data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val configuration: RunnerAndConfigurationSettings?)
+data class FailureDescription(val historyFileName: String, val failed: Int, val ignored: Int, val configuration: RunnerAndConfigurationSettings?, val configName: String?)
 
 private fun createCommitProblem(descriptions: List<FailureDescription>): FailedTestCommitProblem? =
   if (descriptions.isNotEmpty()) FailedTestCommitProblem(descriptions) else null
@@ -118,7 +119,11 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   override fun isEnabled(): Boolean = settings.myState.enabled
 
   override suspend fun doRunCheck(): FailedTestCommitProblem? {
-    val configurationSettings = getConfiguredRunConfiguration() ?: return null
+    val configurationBean = settings.myState.configuration ?: return null
+    val configurationSettings = RunManager.getInstance(project).findConfigurationByTypeAndName(configurationBean.configurationId, configurationBean.name)
+    if (configurationSettings == null) {
+      return createCommitProblem(listOf(FailureDescription("", 0, 0, configurationSettings, configurationBean.name)))
+    }
     progress(name = SmRunnerBundle.message("progress.text.running.tests", configurationSettings.name))
 
     return withContext(Dispatchers.IO) {
@@ -151,7 +156,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
         override fun processNotStarted(executorId: String, env: ExecutionEnvironment) {
           if (environment.executionId == env.executionId) {
             Disposer.dispose(environment)
-            problems.add(FailureDescription("", 0, 0, configurationSettings))
+            problems.add(FailureDescription("", 0, 0, configurationSettings, configurationSettings.name))
             continuation.resume(null)
           }
         }
@@ -216,17 +221,16 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     }
   }
 
-  private fun getConfiguredRunConfiguration(): RunnerAndConfigurationSettings? {
-    val configurationBean = settings.myState.configuration?:return null
-    return RunManager.getInstance(project).findConfigurationByTypeAndName(configurationBean.configurationId, configurationBean.name)
-  }
-
   override fun showDetails(problem: FailedTestCommitProblem) {
     val groupId = ExecutionEnvironment.getNextUnusedExecutionId()
     for (p in problem.problems) {
       if (p.historyFileName.isEmpty() && p.failed == 0 && p.ignored == 0) {
         if (p.configuration != null) {
           RunDialog.editConfiguration(project, p.configuration, ExecutionBundle.message("edit.run.configuration.for.item.dialog.title", p.configuration.name))
+          continue
+        }
+        if (p.configName != null) {
+          EditConfigurationsDialog(project).show()
           continue
         }
       }
@@ -332,7 +336,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
     val rootNode = resultsForm.testsRootNode
     if (!isSuccessful(rootNode)) {
       val presentation = TestResultPresentation(rootNode).presentation
-      problems.add(FailureDescription(resultsForm.historyFileName, presentation.failedCount, presentation.ignoredCount, configuration))
+      problems.add(FailureDescription(resultsForm.historyFileName, presentation.failedCount, presentation.ignoredCount, configuration, configuration.name))
     }
   }
 
