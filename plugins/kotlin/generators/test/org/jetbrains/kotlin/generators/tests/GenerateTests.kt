@@ -16,12 +16,16 @@ import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.*
+import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByReferenceTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractMemoryLeakInSymbolsTest
 import org.jetbrains.kotlin.idea.codeInsight.codevision.AbstractKotlinCodeVisionProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractCodeInsightActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateHashCodeAndEqualsActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSupportMethodActionTest
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
+import org.jetbrains.kotlin.idea.fir.frontend.api.symbols.AbstractSymbolByPsiTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
 import org.jetbrains.kotlin.idea.codeInsight.postfix.AbstractPostfixTemplateProviderTest
@@ -39,6 +43,7 @@ import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractBasicCompletio
 import org.jetbrains.kotlin.idea.completion.test.weighers.AbstractSmartCompletionWeigherTest
 import org.jetbrains.kotlin.idea.fir.completion.wheigher.AbstractHighLevelWeigherTest
 import org.jetbrains.kotlin.idea.configuration.AbstractGradleConfigureProjectByChangingFileTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.AbstractSymbolByFqNameTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractJavaToKotlinCopyPasteConversionTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralKotlinToKotlinCopyPasteTest
 import org.jetbrains.kotlin.idea.conversion.copy.AbstractLiteralTextToKotlinCopyPasteTest
@@ -94,14 +99,14 @@ import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixMultiFile
 import org.jetbrains.kotlin.idea.fir.quickfix.AbstractHighLevelQuickFixTest
 import org.jetbrains.kotlin.idea.fir.resolve.AbstractFirReferenceResolveTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
-import org.jetbrains.kotlin.idea.frontend.api.components.AbstractExpectedExpressionTypeTest
-import org.jetbrains.kotlin.idea.frontend.api.components.AbstractHLExpressionTypeTest
-import org.jetbrains.kotlin.idea.frontend.api.components.AbstractOverriddenDeclarationProviderTest
-import org.jetbrains.kotlin.idea.frontend.api.components.AbstractReturnExpressionTargetTest
-import org.jetbrains.kotlin.idea.frontend.api.components.AbstractRendererTest
-import org.jetbrains.kotlin.idea.frontend.api.fir.AbstractResolveCallTest
-import org.jetbrains.kotlin.idea.frontend.api.scopes.AbstractFileScopeTest
-import org.jetbrains.kotlin.idea.frontend.api.scopes.AbstractMemberScopeByFqNameTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractExpectedExpressionTypeTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractHLExpressionTypeTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractOverriddenDeclarationProviderTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractReturnExpressionTargetTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.components.AbstractRendererTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.fir.AbstractResolveCallTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.scopes.AbstractFileScopeTest
+import org.jetbrains.kotlin.idea.fir.frontend.api.scopes.AbstractMemberScopeByFqNameTest
 import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.components.AbstractOverriddenDeclarationProviderTest
 import org.jetbrains.kotlin.idea.hierarchy.AbstractHierarchyTest
@@ -1176,11 +1181,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("quickfix/replaceWithDotCall", pattern = pattern)
             model("quickfix/replaceWithSafeCall", pattern = pattern)
             model("quickfix/variables/changeMutability", pattern = pattern, isRecursive = false)
-            model("quickfix/variables/removeValVarFromParameter", pattern = pattern, filenameStartsLowerCase = true)
+            model("quickfix/variables/removeValVarFromParameter", pattern = pattern)
             model("quickfix/when", pattern = pattern)
             model("quickfix/wrapWithSafeLetCall", pattern = pattern)
-            model("quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern, filenameStartsLowerCase = true)
-            model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern, filenameStartsLowerCase = true)
+            model("quickfix/typeMismatch/componentFunctionReturnTypeMismatch", pattern = pattern)
+            model("quickfix/typeMismatch/typeMismatchOnReturnedExpression", pattern = pattern)
         }
 
         testClass<AbstractHighLevelQuickFixMultiFileTest> {
