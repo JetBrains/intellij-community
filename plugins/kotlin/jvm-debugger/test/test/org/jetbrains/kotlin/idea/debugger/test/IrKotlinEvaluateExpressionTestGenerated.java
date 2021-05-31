@@ -679,6 +679,11 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/coroutines/anyUpdateVariable.kt");
             }
 
+            @TestMetadata("capturedReceiverName.kt")
+            public void testCapturedReceiverName() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/coroutines/capturedReceiverName.kt");
+            }
+
             @TestMetadata("coroutineContextExists.kt")
             public void testCoroutineContextExists() throws Exception {
                 runTest("testData/evaluation/singleBreakpoint/coroutines/coroutineContextExists.kt");
