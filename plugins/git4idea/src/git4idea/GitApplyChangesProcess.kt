@@ -90,7 +90,7 @@ class GitApplyChangesProcess(private val project: Project,
       try {
         for (commit in repoCommits) {
           val success = executeForCommit(repository, commit, successfulCommits, skippedCommits)
-          if (!success) break@repoLoop
+          if (!success) return
         }
       }
       finally {
