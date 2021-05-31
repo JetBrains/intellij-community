@@ -6,6 +6,8 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightVisitor
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.problems.ProblemImpl
+import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key

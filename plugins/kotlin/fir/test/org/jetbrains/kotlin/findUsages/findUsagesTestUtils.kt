@@ -5,7 +5,7 @@
 package org.jetbrains.kotlin.findUsages
 
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.uitls.IgnoreTests
+import org.jetbrains.kotlin.test.util.IgnoreTests
 import java.nio.file.Path
 import java.nio.file.Paths
 

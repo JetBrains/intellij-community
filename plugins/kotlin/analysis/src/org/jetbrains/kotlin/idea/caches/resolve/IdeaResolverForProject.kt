@@ -51,7 +51,6 @@ class IdeaResolverForProject(
     fallbackModificationTracker,
     delegateResolver,
     projectContext.project.getServiceSafe<IdePackageOracleFactory>(),
-    projectContext.project.getServiceSafe<ResolutionAnchorProvider>()
 ) {
 
     companion object {
