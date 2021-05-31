@@ -98,7 +98,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
 
     val utilModule = modules[1]
     assertEquals("util", utilModule.name)
-    assertEquals("""<component LANGUAGE_LEVEL="JDK_1_7">
+    assertEquals("""<component>
   <annotation-paths>
     <root url="$projectUrl/lib/anno" />
   </annotation-paths>
@@ -109,6 +109,7 @@ class JpsProjectEntitiesLoaderTest : HeavyPlatformTestCase() {
     val utilJavaSettings = utilModule.javaSettings!!
     assertEquals(false, utilJavaSettings.inheritedCompilerOutput)
     assertEquals(true, utilJavaSettings.excludeOutput)
+    assertEquals("JDK_1_7", utilJavaSettings.languageLevelId)
     assertEquals("$projectUrl/out/production-util", utilJavaSettings.compilerOutput?.url)
     assertEquals("$projectUrl/out/test-util", utilJavaSettings.compilerOutputForTests?.url)
     val utilContentRoot = assertOneElement(utilModule.contentRoots.toList())
