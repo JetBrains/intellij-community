@@ -2042,6 +2042,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
+  @Override
+  public @Nullable Runnable setLoadingIconForCurrentGutterMark() {
+    if (myLastActionableClick == null || myLastActionableClick.myProgressRemover == null) {
+      return null;
+    }
+    Runnable remover = myLastActionableClick.myProgressRemover;
+    myLastActionableClick.myProgressRemover = null;
+    return remover;
+  }
+
   @Nullable
   private ActiveGutterRenderer getActiveRendererByMouseEvent(final MouseEvent e) {
     if (findFoldingAnchorAt(e.getX(), e.getY()) != null) {

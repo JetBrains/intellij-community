@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
-import com.intellij.ui.AnimatedIcon;
 import com.intellij.util.ConstantFunction;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.NullableFunction;
@@ -36,9 +35,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.*;
 
 /**
@@ -396,30 +393,7 @@ public class NavigationGutterIconBuilder<T> {
     @Override
     @NotNull
     public Icon getIcon() {
-      return new Icon() {
-        @Override
-        public void paintIcon(Component c, Graphics g, int x, int y) {
-          if (myNavigating) {
-            int dx = (AnimatedIcon.Default.INSTANCE.getIconWidth() - getIconWidth()) / 2;
-            int dy = (AnimatedIcon.Default.INSTANCE.getIconHeight() - getIconHeight()) / 2;
-            AnimatedIcon.Default.INSTANCE.paintIcon(c, g, x - dx, y - dy);
-          }
-          else {
-            myIcon.paintIcon(c, g, x, y);
-          }
-        }
-
-        @Override
-        public int getIconWidth() {
-          return myIcon.getIconWidth();
-        }
-
-        @Override
-        public int getIconHeight() {
-          return myIcon.getIconHeight();
-        }
-      };
-
+      return myIcon;
     }
 
     @Override

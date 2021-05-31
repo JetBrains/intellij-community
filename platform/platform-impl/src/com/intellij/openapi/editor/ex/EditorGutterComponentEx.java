@@ -75,4 +75,6 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
   public abstract void setInitialIconAreaWidth(int width);
 
   public abstract @Nullable GutterMark getGutterRenderer(Point p);
+
+  public abstract @Nullable Runnable setLoadingIconForCurrentGutterMark();
 }

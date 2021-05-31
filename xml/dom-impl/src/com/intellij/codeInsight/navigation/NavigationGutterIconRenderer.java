@@ -21,6 +21,7 @@ import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -44,18 +45,17 @@ import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInReadActionWithWriteActionPriority;
 
@@ -69,7 +69,6 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   protected final Computable<? extends PsiElementListCellRenderer> myCellRenderer;
   private final NotNullLazyValue<? extends List<SmartPsiElementPointer<?>>> myPointers;
   private final boolean myComputeTargetsInBackground;
-  protected boolean myNavigating;
 
   protected NavigationGutterIconRenderer(@PopupTitle String popupTitle,
                                          @PopupContent String emptyText,
@@ -147,13 +146,9 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
   }
 
   private void navigateTargetsAsync(@NotNull MouseEvent event) {
-    boolean[] finished = { false };
-    EdtScheduledExecutorService.getInstance().schedule(() -> {
-      if (finished[0]) return;
-      myNavigating = true;
-      event.getComponent().repaint();
-    }, 500, TimeUnit.MILLISECONDS);
-
+    Component component = event.getComponent();
+    Runnable loadingRemover = component instanceof EditorGutterComponentEx ?
+                              ((EditorGutterComponentEx)component).setLoadingIconForCurrentGutterMark() : null;
     AppExecutorUtil.getAppExecutorService().execute(() -> {
       ProgressManager.getInstance().computePrioritized(() -> {
         ProgressManager.getInstance().executeProcessUnderProgress(() -> {
@@ -161,8 +156,9 @@ public abstract class NavigationGutterIconRenderer extends GutterIconRenderer
           boolean success = runInReadActionWithWriteActionPriority(() -> targets.set(getTargetElements()));
 
           ApplicationManager.getApplication().invokeLater(() -> {
-            finished[0] = true;
-            myNavigating = false;
+            if (loadingRemover != null) {
+              loadingRemover.run();
+            }
             if (success) {
               navigateTargets(event, targets.get());
             }
