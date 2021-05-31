@@ -30,7 +30,6 @@ import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryRe
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogEntryReader.MavenLogEntry
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
-import org.jetbrains.idea.maven.importing.MavenProjectModelModifier
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle.message
@@ -67,7 +66,7 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
 
       messageConsumer.accept(
         BuildIssueEventImpl(parentId,
-                            SourceLevelBuildIssue(parsingContext.ideaProject, logLine.line, logLine.line, mavenProject, moduleJdk),
+                            SourceLevelBuildIssue(logLine.line, logLine.line, mavenProject, moduleJdk),
                             MessageEvent.Kind.ERROR));
       return true
     }
@@ -77,13 +76,12 @@ class SourceOptionQuickFix : MavenLoggedEventParser {
 
 }
 
-class SourceLevelBuildIssue(project: Project,
-                            private val message: String,
+class SourceLevelBuildIssue(private val message: String,
                             override val title: String,
                             private val mavenProject: MavenProject,
                             private val moduleJdk: Sdk) : BuildIssue {
 
-  override val quickFixes: List<UpdateSourceLevelQuickFix> = Collections.singletonList(prepareQuickFixes(project, mavenProject))
+  override val quickFixes: List<UpdateSourceLevelQuickFix> = Collections.singletonList(UpdateSourceLevelQuickFix(mavenProject))
   override val description = createDescription()
 
   private fun createDescription() = "$message\n<br/>" + quickFixes.map {
@@ -95,22 +93,6 @@ class SourceLevelBuildIssue(project: Project,
 
   override fun getNavigatable(project: Project): Navigatable? {
     return mavenProject.file.let { OpenFileDescriptor(project, it) }
-  }
-
-  companion object {
-    private fun prepareQuickFixes(project: Project, mavenProject: MavenProject): UpdateSourceLevelQuickFix {
-      if (mavenProject.parentId == null) {
-        return UpdateSourceLevelQuickFix(mavenProject)
-      }
-      else {
-        var parentProject = mavenProject;
-        while (parentProject.parentId != null) {
-          parentProject = MavenProjectsManager.getInstance(project).findProject(parentProject.parentId!!)
-                          ?: return UpdateSourceLevelQuickFix(mavenProject)
-        }
-        return UpdateSourceLevelQuickFix(parentProject)
-      }
-    }
   }
 }
 
@@ -136,7 +118,7 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
     val mavenProject = MavenProjectsManager.getInstance(project).findProject(failedId) ?: return null
     val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), mavenProject) ?: return null
 
-    if (predicates.any { it(message) }) return SourceLevelBuildIssue(project, title, message, mavenProject, moduleJdk)
+    if (predicates.any { it(message) }) return SourceLevelBuildIssue(title, message, mavenProject, moduleJdk)
     return null
   }
 
@@ -151,14 +133,15 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
 class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuickFix {
   override val id = ID + mavenProject.mavenId.displayString
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
-    val module = MavenProjectsManager.getInstance(project).findModule(mavenProject)
-    if (module == null) {
+    val languageLevelQuickFix = LanguageLevelQuickFixFactory.getInstance(project, mavenProject)
+    if (languageLevelQuickFix == null) {
       Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
                    message("maven.quickfix.cannot.update.source.level.module.not.found", mavenProject.displayName),
                    NotificationType.INFORMATION).notify(project)
       return CompletableFuture.completedFuture(null)
     }
 
+    val mavenProject = languageLevelQuickFix.mavenProject
     val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), mavenProject)
     if (moduleJdk == null) {
       Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
@@ -166,8 +149,7 @@ class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuic
                    NotificationType.INFORMATION).notify(project)
       return CompletableFuture.completedFuture(null)
     }
-
-    MavenProjectModelModifier(project).changeLanguageLevelPropertyLiveTemplate(module, LanguageLevel.parse(moduleJdk.versionString)!!)
+    languageLevelQuickFix.perform(LanguageLevel.parse(moduleJdk.versionString)!!)
     return CompletableFuture.completedFuture(null)
   }
 

@@ -1,14 +1,8 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix;
-import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateBuilderImpl;
-import com.intellij.codeInsight.template.TemplateManager;
-import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -20,12 +14,9 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.xml.XmlText;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +40,6 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import java.util.*;
 
 public final class MavenProjectModelModifier extends JavaProjectModelModifier {
-  private static final String MAVEN_COMPILER_SOURCE = "maven.compiler.source";
-  private static final String MAVEN_COMPILER_TARGET = "maven.compiler.target";
   private final Project myProject;
   private final MavenProjectsManager myProjectsManager;
   private final MavenProjectIndicesManager myIndicesManager;
@@ -214,36 +203,6 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     return myProjectsManager.forceUpdateProjects(Collections.singleton(mavenProject));
   }
 
-  public void changeLanguageLevelPropertyLiveTemplate(@NotNull Module module, @NotNull final LanguageLevel level) {
-    if (!myProjectsManager.isMavenizedModule(module)) return;
-
-    MavenProject mavenProject = myProjectsManager.findProject(module);
-    if (mavenProject == null) return;
-
-    final MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
-    if (model == null) return;
-
-    WriteCommandAction.writeCommandAction(myProject, DomUtil.getFile(model)).run(() -> {
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-      XmlFile file = DomUtil.getFile(model);
-      Document document = documentManager.getDocument(file);
-      if (document == null) return;
-
-      documentManager.commitDocument(document);
-
-      XmlTag tag = model.getProperties().ensureTagExists();
-      String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
-      String prevSourceValue = setChildTagIfAbsent(tag, MAVEN_COMPILER_SOURCE, option);
-      String prevTargetValue = setChildTagIfAbsent(tag, MAVEN_COMPILER_TARGET, option);
-
-      PsiDocumentManager.getInstance(myProject).doPostponedOperationsAndUnblockDocument(document);
-
-      tag = model.getProperties().ensureTagExists();
-      Template template = getTemplate(tag, prevSourceValue, prevTargetValue, option);
-      runTemplate(template, tag);
-    });
-  }
-
   private static void setChildTagValue(@NotNull XmlTag tag, @NotNull String subTagName, @NotNull String value) {
     XmlTag subTag = tag.findFirstSubTag(subTagName);
     if (subTag != null) {
@@ -254,67 +213,26 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
     }
   }
 
-  private static @NotNull String setChildTagIfAbsent(@NotNull XmlTag tag, @NotNull String subTagName, @NotNull String value) {
-    XmlTag subTag = tag.findFirstSubTag(subTagName);
-    String prevValue = "";
-    if (subTag != null && StringUtil.isEmpty(subTag.getValue().getText())) {
-      subTag.getValue().setText(value);
-    }
-    else if (subTag != null) {
-      prevValue = subTag.getValue().getText();
-    }
-    else {
-      XmlTag subT = tag.createChildTag(subTagName, tag.getNamespace(), value, false);
-      tag.addSubTag(subT, false);
-    }
-    return prevValue;
-  }
-
-  private static Template getTemplate(XmlTag tagProperty, String prevSource, String prevTarget, String option) {
-    XmlTag tagSource = tagProperty.findFirstSubTag(MAVEN_COMPILER_SOURCE);
-    XmlTag tagTarget = tagProperty.findFirstSubTag(MAVEN_COMPILER_TARGET);
-    PsiElement psiSource = getXmlTagPsiValue(tagSource);
-    PsiElement psiTarget = getXmlTagPsiValue(tagTarget);
-    if (psiSource == null || psiTarget == null) return null;
-
-    TemplateBuilderImpl builder = new TemplateBuilderImpl(tagProperty);
-    builder.replaceElement(psiSource, "variableSource", getExpression(prevSource, option), true);
-    builder.replaceElement(psiTarget, "variableTarget", getExpression(prevTarget, option), true);
-    return builder.buildInlineTemplate();
-  }
-
   @NotNull
-  private static ConstantNode getExpression(String prevSource, String option) {
-    return new ConstantNode(prevSource.isEmpty() ? option : prevSource)
-      .withLookupStrings(prevSource.isEmpty() ? option : prevSource, option);
-  }
-
-  private void runTemplate(Template template, XmlTag tagProperty) {
-    if (template == null) return;
-    Editor editor = CreateFromUsageBaseFix.positionCursor(myProject, tagProperty.getContainingFile(), tagProperty);
-    if (editor == null) return;
-    template.setToReformat(true);
-    TemplateManager.getInstance(myProject).startTemplate(editor, template, true, Collections.emptyMap(), null);
-  }
-
-  private static PsiElement getXmlTagPsiValue(XmlTag tag) {
-    if (tag == null) return null;
-    return ContainerUtil.find(tag.getChildren(), e -> e instanceof XmlText);
-  }
-
-  @NotNull
-  private static MavenDomPlugin getCompilerPlugin(MavenDomProjectModel model) {
-    MavenDomPlugins plugins = model.getBuild().getPlugins();
-    for (MavenDomPlugin plugin : plugins.getPlugins()) {
-      if ("org.apache.maven.plugins".equals(plugin.getGroupId().getValue()) &&
-          "maven-compiler-plugin".equals(plugin.getArtifactId().getValue())) {
-        return plugin;
-      }
-    }
-    MavenDomPlugin plugin = plugins.addPlugin();
+  public static MavenDomPlugin getCompilerPlugin(MavenDomProjectModel model) {
+    MavenDomPlugin plugin = findCompilerPlugin(model);
+    if (plugin != null) return plugin;
+    plugin = model.getBuild().getPlugins().addPlugin();
     plugin.getGroupId().setValue("org.apache.maven.plugins");
     plugin.getArtifactId().setValue("maven-compiler-plugin");
     return plugin;
+  }
+
+  @Nullable
+  public static MavenDomPlugin findCompilerPlugin(MavenDomProjectModel model) {
+    MavenDomPlugins plugins = model.getBuild().getPlugins();
+    for (MavenDomPlugin plugin : plugins.getPlugins()) {
+      if ("org.apache.maven.plugins".equals(plugin.getGroupId().getStringValue()) &&
+          "maven-compiler-plugin".equals(plugin.getArtifactId().getStringValue())) {
+        return plugin;
+      }
+    }
+    return null;
   }
 
   private static String getMavenScope(@NotNull DependencyScope scope) {
