@@ -163,9 +163,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            boolean horizontal,
                            boolean decorateButtons) {
     super(null);
-    if (ActionPlaces.UNKNOWN.equals(place)) {
-      LOG.warn("Please use specific place, instead of ActionPlaces.UNKNOWN. " +
-               "Any string unique enough to deduct the toolbar purpose out of it will do.", myCreationTrace);
+    if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
+      LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
+               "Any string unique enough to deduce the toolbar location will do.", myCreationTrace);
     }
 
     myPlace = place;
