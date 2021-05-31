@@ -217,7 +217,9 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
   private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
     val text = searchText?.let {
-      "<html>" + SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL), UIUtil.getSearchMatchGradientStartColor())
+      @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL),
+                                              UIUtil.getSearchMatchGradientStartColor())
+      "<html>$highlightedText"
     } ?: baseText
     when (component) {
       is JLabel -> component.text = text
