@@ -341,11 +341,11 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
+  @SuppressWarnings('SpellCheckingInspection')
   @NotNull String getAdditionalJvmArguments() {
-    //noinspection SpellCheckingInspection
     StringBuilder jvmArgs = new StringBuilder("-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+
     if (productProperties.platformPrefix != null) {
-      //noinspection SpellCheckingInspection
       jvmArgs.append(' ').append("-Didea.platform.prefix=").append(productProperties.platformPrefix)
     }
 
@@ -355,9 +355,9 @@ final class BuildContextImpl extends BuildContext {
     }
 
     if (productProperties.toolsJarRequired) {
-      //noinspection SpellCheckingInspection
       jvmArgs.append(' ').append("-Didea.jre.check=true")
     }
+
     return jvmArgs.toString().trim()
   }
 }
