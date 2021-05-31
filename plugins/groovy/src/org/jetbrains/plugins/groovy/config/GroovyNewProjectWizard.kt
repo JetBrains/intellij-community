@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config
 
+import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.ide.LabelAndComponent
 import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.NewProjectWizard
@@ -9,9 +10,14 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.roots.libraries.LibraryType
+import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
+import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.plugins.groovy.GroovyBundle
+import java.util.*
 import javax.swing.DefaultComboBoxModel
+import javax.swing.SwingUtilities
 
 class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
   override val language: String = "Groovy"
@@ -26,7 +32,18 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
         row {
           twoColumnRow(
             { radioButton(GroovyBundle.message("radio.use.version.from.maven")) },
-            { comboBox(DefaultComboBoxModel(arrayOf("3.0.6")), settings::version) }
+            {
+              val downloadableType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType::class.java)!!
+              val groovyLibraryDescription = downloadableType.libraryDescription
+              val box = comboBox(DefaultComboBoxModel(emptyArray()), settings::version, SimpleListCellRenderer.create("") { it?.get()?.versionString ?: "<unknown>"})
+              groovyLibraryDescription.fetchVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
+                override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
+                  for (item in versions) {
+                    box.component.addItem(Optional.of(item))
+                  }
+                }
+              })
+            }
           )
           twoColumnRow(
             { radioButton(GroovyBundle.message("radio.use.jar.file.from.disk")) },
@@ -46,6 +63,7 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     builder.contentEntryPath = project.basePath
     builder.name = project.name
     val groovyModuleBuilder = GroovyAwareModuleBuilder()
+
     groovyModuleBuilder.updateFrom(builder)
     builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
       override fun update(module: Module, rootModel: ModifiableRootModel) {
@@ -56,6 +74,6 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
 }
 
 class GroovyModuleSettings {
-  var version: String = "1.0"
+  var version: Optional<FrameworkLibraryVersion> = Optional.empty()
   var jarPath: String = ""
 }
