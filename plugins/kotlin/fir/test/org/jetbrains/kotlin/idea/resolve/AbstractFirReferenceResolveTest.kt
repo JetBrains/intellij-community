@@ -7,12 +7,10 @@ package org.jetbrains.kotlin.idea.resolve
 
 import org.jetbrains.kotlin.idea.completion.test.configureWithExtraFile
 import org.jetbrains.kotlin.idea.invalidateCaches
-import org.jetbrains.kotlin.idea.shouldBeRethrown
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.test.InTextDirectivesUtils
-import org.jetbrains.kotlin.test.uitls.IgnoreTests
+import org.jetbrains.kotlin.test.util.IgnoreTests
 
 abstract class AbstractFirReferenceResolveTest : AbstractReferenceResolveTest() {
     override fun isFirPlugin(): Boolean = true
