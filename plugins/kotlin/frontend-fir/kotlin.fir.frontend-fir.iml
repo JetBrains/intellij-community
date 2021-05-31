@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.test-framework" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.common" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.idea.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util.ex" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.editor" scope="TEST" />
