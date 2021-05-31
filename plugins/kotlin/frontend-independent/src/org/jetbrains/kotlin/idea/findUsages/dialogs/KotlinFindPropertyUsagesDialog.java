@@ -154,7 +154,7 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
     @Override
     protected void update() {
-        setOKActionEnabled(isSelected(readAccesses) || isSelected(writeAccesses) || isSelected(searchForBase));
+        setOKActionEnabled(isSelected(readAccesses) || isSelected(writeAccesses));
     }
 
     private static final boolean disableComponentAndDestructionSearchDefault = false;
