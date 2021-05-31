@@ -18,7 +18,7 @@ public class PsiGuardedPatternImpl extends CompositePsiElement implements PsiGua
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitPsiGuardedPattern(this);
+      ((JavaElementVisitor)visitor).visitGuardedPattern(this);
     }
     else {
       visitor.visitElement(this);

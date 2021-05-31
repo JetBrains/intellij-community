@@ -436,7 +436,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitPattern(pattern);
   }
 
-  public void visitPsiGuardedPattern(PsiGuardedPattern pattern) {
+  public void visitGuardedPattern(PsiGuardedPattern pattern) {
     visitPattern(pattern);
   }
 

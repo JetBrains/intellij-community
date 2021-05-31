@@ -65,6 +65,8 @@ public final class JavaPsiPatternUtil {
     return null;
   }
 
+  @Contract("null -> null")
+  @Nullable
   public static PsiPattern skipParenthesizedPatternDown(PsiPattern pattern) {
     while (pattern instanceof PsiParenthesizedPattern) {
       pattern = ((PsiParenthesizedPattern)pattern).getPattern();
