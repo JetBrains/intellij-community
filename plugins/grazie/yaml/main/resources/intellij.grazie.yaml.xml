@@ -4,6 +4,6 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <grammar.strategy language="yaml" implementationClass="com.intellij.grazie.ide.language.yaml.YamlGrammarCheckingStrategy"/>
+    <textExtractor language="yaml" implementationClass="com.intellij.grazie.ide.language.yaml.YamlTextExtractor"/>
   </extensions>
 </idea-plugin>
