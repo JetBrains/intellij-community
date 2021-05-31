@@ -1,10 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.intellij.diagnostic.DefaultIdeaErrorLogger;
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.diagnostic.LogMessage;
+import com.intellij.diagnostic.VMOptions;
+import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.PluginUtil;
 import com.intellij.ide.plugins.PluginUtilImpl;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -14,6 +23,8 @@ import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.diagnostic.Log4jBasedLogger;
+import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.DefaultThrowableRenderer;
 import org.apache.log4j.Logger;
@@ -23,13 +34,81 @@ import org.apache.log4j.spi.ThrowableRendererSupport;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.util.Properties;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 public final class IdeaLogger extends Log4jBasedLogger {
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
   // when not null, holds the first of errors that occurred
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;
+
+  /**
+   * We try to report exceptions thrown from frequently called methods (e.g. {@link Component#paint(Graphics)}) judiciously,
+   * so that instead of polluting the log with hundreds of identical {@link com.intellij.openapi.diagnostic.Logger#error(Throwable) LOG.errors}
+   * we print the error message and the stacktrace once in a while.
+   */
+  final int REPORT_EVERY_NTH_FREQUENT_EXCEPTION = Integer.getInteger("ide.muted.error.logger.frequency", 10);
+  private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("ide.muted.error.logger.expiration", 5);
+
+  // must be as a separate class to avoid initialization as part of start-up (file logger configuration)
+  private static final class MyCache {
+    private static final Cache<@NotNull String, @NotNull AtomicInteger> cache = Caffeine.newBuilder()
+      .maximumSize(1000)
+      .expireAfterAccess(Math.max(EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES, 0), TimeUnit.MINUTES)
+      .build();
+
+    @NotNull
+    private static AtomicInteger getOrCreate(int hash, @NotNull Throwable t) {
+      return cache.get(hash+":"+t, __ -> new AtomicInteger());
+    }
+  }
+
+  public static void dropFrequentExceptionsCaches() {
+    MyCache.cache.invalidateAll();
+    MyCache.cache.cleanUp();
+  }
+
+  private boolean isTooFrequentException(@Nullable Throwable t) {
+    if (t == null || !isMutingFrequentExceptionsEnabled() || !LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return false;
+    }
+
+    int hash = ThrowableInterner.computeAccurateTraceHashCode(t);
+    AtomicInteger counter = MyCache.getOrCreate(hash, t);
+    int occurrences = counter.incrementAndGet();
+    if (occurrences == 1) {
+      return false;
+    }
+
+    reportToFus(t);
+
+    if (occurrences % REPORT_EVERY_NTH_FREQUENT_EXCEPTION == 0 && occurrences > 1) {
+      error(false, getExceptionWasAlreadyReportedNTimesMessage(t, occurrences), null);
+    }
+
+    return true;
+  }
+
+  @NotNull
+  static String getExceptionWasAlreadyReportedNTimesMessage(@NotNull Throwable t, int occurrences) {
+    return "Exception '" + t + "' was reported " + occurrences + " times";
+  }
+
+  private static void reportToFus(@NotNull Throwable t) {
+    Application application = ApplicationManager.getApplication();
+    if (application != null && !application.isUnitTestMode() && !application.isDisposed()) {
+      PluginId pluginId = PluginUtil.getInstance().findPluginId(t);
+      VMOptions.MemoryKind kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
+      LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+    }
+  }
+
+  static boolean isMutingFrequentExceptionsEnabled() {
+    return EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES > 0;
+  }
 
   private static final Supplier<String> ourApplicationInfoProvider = () -> {
     ApplicationInfoEx info = ApplicationInfoImpl.getShadowInstance();
@@ -74,20 +153,23 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   @Override
   public void error(String message, @Nullable Throwable t, Attachment @NotNull ... attachments) {
+    if (isTooFrequentException(t)) return;
     myLogger.error(LogMessage.createEvent(t != null ? t : new Throwable(), message, attachments));
   }
 
   @Override
   public void warn(String message, @Nullable Throwable t) {
+    if (isTooFrequentException(t)) return;
     super.warn(message, ensureNotControlFlow(t));
   }
 
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
+    if (isTooFrequentException(t)) return;
     error(true, message, t, details);
   }
 
-  void error(boolean addErrorHeader, String message, @Nullable Throwable t, String @NotNull ... details) {
+  private void error(boolean addErrorHeader, String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
       myLogger.error(message, ensureNotControlFlow(t));
       ExceptionUtil.rethrow(t);
