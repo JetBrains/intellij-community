@@ -14,7 +14,6 @@ import com.intellij.openapi.vcs.Executor
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.vcsUtil.VcsUtil
 import git4idea.index.vfs.GitIndexFileSystemRefresher
-import git4idea.index.vfs.GitIndexVirtualFile
 import git4idea.test.GitSingleRepoTest
 import junit.framework.TestCase
 import org.apache.commons.lang.RandomStringUtils
