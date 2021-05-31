@@ -44,10 +44,9 @@ public final class MutedLogger extends DelegatingLogger<Logger> {
       .expireAfterAccess(Math.max(EXPIRATION, 0), TimeUnit.MINUTES)
       .removalListener((@Nullable String key, @Nullable LoggerWithCounter value, RemovalCause cause) -> {
         if (key != null && value != null) {
-          int errorIndex = key.indexOf(':');
-          String error = key.substring(0, errorIndex);
-          String hash = key.substring(errorIndex + 1, key.indexOf(':', errorIndex + 1));
-          value.logger.logOccurrences(Boolean.parseBoolean(error), hash, value.counter.get());
+          char error = key.charAt(0);
+          String hash = key.substring(1, key.indexOf(':'));
+          value.logger.logOccurrences(error == 'e', hash, value.counter.get());
         }
       })
       .build();
@@ -152,7 +151,7 @@ public final class MutedLogger extends DelegatingLogger<Logger> {
     }
 
     int hash = ThrowableInterner.computeAccurateTraceHashCode(t);
-    String key = error + ":" + hash + ":" + t;
+    String key = (error ? "e" : "w") + hash + ":" + t;
     LoggerWithCounter holder = MyCache.cache.get(key, __ -> new LoggerWithCounter(this));
     if (holder.counter.compareAndSet(0, 1)) {
       log(error, "Hash for the following exception is '" + hash + "': " + t);
