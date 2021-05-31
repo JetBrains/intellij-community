@@ -1221,6 +1221,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       label.setIcon(EmptyIcon.create(icon.getIconWidth(), icon.getIconHeight()));
       boolean suppressLoading = ActionPlaces.MAIN_TOOLBAR.equals(myPlace) ||
                                 ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace) ||
+                                ActionPlaces.TOOLWINDOW_TITLE.equals(myPlace) ||
                                 ActionPlaces.WELCOME_SCREEN.equals(myPlace);
       if (!suppressLoading) {
         EdtScheduledExecutorService.getInstance().schedule(() -> label.setIcon(icon), 500, TimeUnit.MILLISECONDS);
