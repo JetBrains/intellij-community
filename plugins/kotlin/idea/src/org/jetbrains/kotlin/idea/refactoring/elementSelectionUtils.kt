@@ -83,17 +83,18 @@ fun selectElement(
 fun getSmartSelectSuggestions(
     file: PsiFile,
     offset: Int,
-    elementKind: CodeInsightUtils.ElementKind
+    elementKind: CodeInsightUtils.ElementKind,
+    isOriginalOffset: Boolean = true,
 ): List<KtElement> {
     if (offset < 0) return emptyList()
 
     var element: PsiElement? = file.findElementAt(offset) ?: return emptyList()
 
     if (element is PsiWhiteSpace
-        || element?.node?.elementType == KtTokens.RPAR
+        || isOriginalOffset && element?.node?.elementType == KtTokens.RPAR
         || element is PsiComment
         || element?.getStrictParentOfType<KDoc>() != null
-    ) return getSmartSelectSuggestions(file, offset - 1, elementKind)
+    ) return getSmartSelectSuggestions(file, offset - 1, elementKind, isOriginalOffset = false)
 
     val elements = ArrayList<KtElement>()
     while (element != null && !(element is KtBlockExpression && element.parent !is KtFunctionLiteral) &&
