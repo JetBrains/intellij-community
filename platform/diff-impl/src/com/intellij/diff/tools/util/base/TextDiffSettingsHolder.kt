@@ -69,10 +69,14 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     // Diff settings
 
-    var highlightPolicy: HighlightPolicy
-      get()      = PLACE_SETTINGS.HIGHLIGHT_POLICY
-      set(value) { PLACE_SETTINGS.HIGHLIGHT_POLICY = value
-                   PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged() }
+    var highlightPolicy: HighlightPolicy = PLACE_SETTINGS.HIGHLIGHT_POLICY
+      set(value) {
+        field = value
+        if (value != HighlightPolicy.DO_NOT_HIGHLIGHT) { // do not persist confusing value as new default
+          PLACE_SETTINGS.HIGHLIGHT_POLICY = value
+        }
+        PLACE_SETTINGS.eventDispatcher.multicaster.highlightPolicyChanged()
+      }
 
     var ignorePolicy: IgnorePolicy
       get()      = PLACE_SETTINGS.IGNORE_POLICY
