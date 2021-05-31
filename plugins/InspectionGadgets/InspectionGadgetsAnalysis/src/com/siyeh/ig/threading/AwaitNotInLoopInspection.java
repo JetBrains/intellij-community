@@ -19,7 +19,6 @@ import com.intellij.psi.PsiMethodCallExpression;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class AwaitNotInLoopInspection extends BaseInspection {
@@ -40,10 +39,7 @@ public class AwaitNotInLoopInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (!ThreadingUtils.isAwaitCall(expression)) {
-        return;
-      }
-      if (ControlFlowUtils.isInLoop(expression)) {
+      if (!ThreadingUtils.isAwaitCall(expression) || WaitNotInLoopInspection.isCheckedInLoop(expression)) {
         return;
       }
       registerMethodCallError(expression);

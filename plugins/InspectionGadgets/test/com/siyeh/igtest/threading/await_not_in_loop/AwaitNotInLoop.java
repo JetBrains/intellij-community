@@ -23,4 +23,12 @@ public class AwaitNotInLoop
         {
         }
     }
+
+  public static Trippable boo(Condition condition) {
+    return () -> condition.await();
+  }
+
+  interface Trippable {
+      public void trip() throws Exception;
+  }
 }
