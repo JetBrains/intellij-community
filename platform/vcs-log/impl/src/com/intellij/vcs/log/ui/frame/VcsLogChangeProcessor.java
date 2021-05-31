@@ -38,7 +38,9 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     super(project, isInEditor ? DiffPlaces.DEFAULT : DiffPlaces.VCS_LOG_VIEW);
     myIsInEditor = isInEditor;
     myBrowser = browser;
-    myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    if (!isInEditor) {
+      myContentPanel.setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    }
     Disposer.register(disposable, this);
 
     myBrowser.addListener(() -> updatePreviewLater(), this);
