@@ -9,6 +9,7 @@ import com.intellij.execution.configurations.RuntimeConfigurationWarning
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PyNames
@@ -98,5 +99,5 @@ class PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
 
   override fun getId(): String = PyUnitTestFactory.id
 
-  override val onlyClassesSupported: Boolean = true
+  override fun onlyClassesAreSupported(sdk: Sdk): Boolean = true
 }
