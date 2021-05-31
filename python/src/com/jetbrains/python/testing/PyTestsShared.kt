@@ -454,15 +454,17 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
   val testFrameworkName: String = testFactory.name
 
-  /**
-   * @see [RunnersThatRequireTestCaseClass]
-   */
-  fun isTestClassRequired(): ThreeState = if (testFactory.onlyClassesSupported) {
-    ThreeState.YES
+
+  fun isTestClassRequired(): ThreeState {
+    val sdk = sdk ?: return ThreeState.UNSURE
+    return if (testFactory.onlyClassesAreSupported(sdk)) {
+      ThreeState.YES
+    }
+    else {
+      ThreeState.NO
+    }
   }
-  else {
-    ThreeState.NO
-  }
+
 
   /**
    * For real launch use [getWorkingDirectorySafe] instead
@@ -680,7 +682,7 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> :
   /**
    * Only UnitTest inheritors are supported
    */
-  abstract val onlyClassesSupported: Boolean
+  abstract fun onlyClassesAreSupported(sdk: Sdk): Boolean
 
   /**
    * Test framework needs package to be installed

@@ -20,6 +20,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 
@@ -57,7 +58,7 @@ class PyTrialTestFactory : PyAbstractTestFactory<PyTrialTestConfiguration>() {
 
   override fun getId(): String = "Twisted Trial"
 
-  override val onlyClassesSupported: Boolean = true
+  override fun onlyClassesAreSupported(sdk: Sdk): Boolean = true
 
   override val packageRequired: String = "Twisted"
 }

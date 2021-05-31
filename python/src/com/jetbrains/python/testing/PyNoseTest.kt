@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.RunProfileState
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.projectRoots.Sdk
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
@@ -58,7 +59,7 @@ class PyNoseTestFactory : PyAbstractTestFactory<PyNoseTestConfiguration>() {
 
   override fun getName(): String = PyBundle.message("runcfg.nosetests.display_name")
 
-  override val onlyClassesSupported: Boolean = false
+  override fun onlyClassesAreSupported(sdk: Sdk): Boolean = false
 
   override val packageRequired: String = "nose"
 }
