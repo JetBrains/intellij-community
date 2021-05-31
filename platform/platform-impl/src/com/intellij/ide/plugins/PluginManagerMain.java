@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.BrowserUtil;
@@ -208,7 +208,7 @@ public final class PluginManagerMain {
 
       String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
       if (!Strings.isEmptyOrSpaces(size)) {
-        sb.append("<h4>Size</h4>").append(PluginManagerColumnInfo.getFormattedSize(size));
+        sb.append("<h4>Size</h4>").append(getFormattedSize(size));
       }
     }
 
@@ -218,6 +218,13 @@ public final class PluginManagerMain {
 
   private static String composeHref(String vendorUrl) {
     return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFFIX;
+  }
+
+  private static String getFormattedSize(String size) {
+    if (size.equals("-1")) {
+      return IdeBundle.message("plugin.info.unknown");
+    }
+    return StringUtil.formatFileSize(Long.parseLong(size));
   }
 
   public static class MyHyperlinkListener implements HyperlinkListener {
