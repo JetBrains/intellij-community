@@ -3,6 +3,7 @@ package com.intellij.codeInspection
 
 import com.intellij.codeInsight.TestFrameworks
 import com.intellij.execution.TestStateStorage
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
@@ -16,6 +17,7 @@ import com.intellij.psi.util.ClassUtil
 import com.intellij.util.containers.FactoryMap
 import org.jetbrains.uast.*
 
+@Service
 class TestFailedLineManager(project: Project) : FileEditorManagerListener {
   private val testStorage = TestStateStorage.getInstance(project)
 
@@ -23,27 +25,6 @@ class TestFailedLineManager(project: Project) : FileEditorManagerListener {
 
   init {
     project.messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, this)
-  }
-
-  class TestInfo(var record: TestStateStorage.Record) {
-    var pointer: SmartPsiElementPointer<PsiElement>? = null
-  }
-
-  private fun getTestInfo(method: UMethod): TestInfo? {
-    val containingClass = method.getContainingUClass() ?: return null
-    val javaClazz = containingClass.javaPsi
-    val framework = TestFrameworks.detectFramework(javaClazz) ?: return null
-    if (!framework.isTestMethod(method.javaPsi, false)) return null
-    val url = "java:test://" + ClassUtil.getJVMClassName(javaClazz) + "/" + method.name
-    val state = testStorage.getState(url) ?: return null
-    val vFile = method.getContainingUFile()?.sourcePsi?.virtualFile ?: return null
-    val infoInFile = cache[vFile] ?: return null
-    var info = infoInFile[url]
-    if (info == null || state.date != info.record.date) {
-      info = TestInfo(state)
-      infoInFile[url] = info
-    }
-    return info
   }
 
   fun getFailedLineState(call: UCallExpression): TestStateStorage.Record? {
@@ -65,11 +46,28 @@ class TestFailedLineManager(project: Project) : FileEditorManagerListener {
     return info.record
   }
 
-  override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-    cache.remove(file)?.forEach { (s: String, info: TestInfo) -> testStorage.writeState(s, info.record) }
+  private class TestInfo(var record: TestStateStorage.Record) {
+    var pointer: SmartPsiElementPointer<PsiElement>? = null
   }
 
-  companion object {
-    fun getInstance(project: Project): TestFailedLineManager = project.getService(TestFailedLineManager::class.java)
+  private fun getTestInfo(method: UMethod): TestInfo? {
+    val containingClass = method.getContainingUClass() ?: return null
+    val javaClazz = containingClass.javaPsi
+    val framework = TestFrameworks.detectFramework(javaClazz) ?: return null
+    if (!framework.isTestMethod(method.javaPsi, false)) return null
+    val url = "java:test://" + ClassUtil.getJVMClassName(javaClazz) + "/" + method.name
+    val state = testStorage.getState(url) ?: return null
+    val vFile = method.getContainingUFile()?.sourcePsi?.virtualFile ?: return null
+    val infoInFile = cache[vFile] ?: return null
+    var info = infoInFile[url]
+    if (info == null || state.date != info.record.date) {
+      info = TestInfo(state)
+      infoInFile[url] = info
+    }
+    return info
+  }
+
+  override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
+    cache.remove(file)?.forEach { (s: String, info: TestInfo) -> testStorage.writeState(s, info.record) }
   }
 }
