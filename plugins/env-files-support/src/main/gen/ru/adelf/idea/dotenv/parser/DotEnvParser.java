@@ -1,15 +1,15 @@
 // This is a generated file. Not intended for manual editing.
 package ru.adelf.idea.dotenv.parser;
 
+import com.intellij.lang.ASTNode;
+import com.intellij.lang.LightPsiParser;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.PsiBuilder.Marker;
-import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
-import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
-import com.intellij.psi.tree.IElementType;
-import com.intellij.lang.ASTNode;
-import com.intellij.psi.tree.TokenSet;
 import com.intellij.lang.PsiParser;
-import com.intellij.lang.LightPsiParser;
+import com.intellij.psi.tree.IElementType;
+
+import static com.intellij.lang.parser.GeneratedParserUtilBase.*;
+import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
 
 @SuppressWarnings({"SimplifiableIfStatement", "UnusedAssignment"})
 public class DotEnvParser implements PsiParser, LightPsiParser {
@@ -149,19 +149,34 @@ public class DotEnvParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // VALUE_CHARS | QUOTE VALUE_CHARS? QUOTE?
+  // VALUE_CHARS+ | QUOTE VALUE_CHARS* QUOTE?
   public static boolean value(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "value")) return false;
     if (!nextTokenIs(b, "<value>", QUOTE, VALUE_CHARS)) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, VALUE, "<value>");
-    r = consumeToken(b, VALUE_CHARS);
+    r = value_0(b, l + 1);
     if (!r) r = value_1(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
   }
 
-  // QUOTE VALUE_CHARS? QUOTE?
+  // VALUE_CHARS+
+  private static boolean value_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "value_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, VALUE_CHARS);
+    while (r) {
+      int c = current_position_(b);
+      if (!consumeToken(b, VALUE_CHARS)) break;
+      if (!empty_element_parsed_guard_(b, "value_0", c)) break;
+    }
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // QUOTE VALUE_CHARS* QUOTE?
   private static boolean value_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "value_1")) return false;
     boolean r;
@@ -173,10 +188,14 @@ public class DotEnvParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // VALUE_CHARS?
+  // VALUE_CHARS*
   private static boolean value_1_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "value_1_1")) return false;
-    consumeToken(b, VALUE_CHARS);
+    while (true) {
+      int c = current_position_(b);
+      if (!consumeToken(b, VALUE_CHARS)) break;
+      if (!empty_element_parsed_guard_(b, "value_1_1", c)) break;
+    }
     return true;
   }
 

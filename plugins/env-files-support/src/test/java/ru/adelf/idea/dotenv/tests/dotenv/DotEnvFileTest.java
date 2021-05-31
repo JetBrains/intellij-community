@@ -53,6 +53,12 @@ public class DotEnvFileTest extends DotEnvLightCodeInsightFixtureTestCase {
 
     public void testMultiLine() {
         assertContainsKeyAndValue("MULTI_LINE", "MULTI...");
+        assertContainsKeyAndValue("MULTI_LINE_SINGLE", "MULTI...");
+    }
+
+    public void testMultiLineSlashed() {
+        assertContainsKeyAndValue("MULTI_LINE_SLASHED", "MULTI...");
+        assertContainsKeyAndValue("MULTI_LINE_SLASHED_SINGLE", "MULTI...");
     }
 
     public void testEnvExportKeys() {

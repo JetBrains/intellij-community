@@ -1,14 +1,11 @@
 // This is a generated file. Not intended for manual editing.
 package ru.adelf.idea.dotenv.psi.impl;
 
-import java.util.List;
-import org.jetbrains.annotations.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.util.PsiTreeUtil;
-import static ru.adelf.idea.dotenv.psi.DotEnvTypes.*;
-import ru.adelf.idea.dotenv.psi.DotEnvNamedElementImpl;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import ru.adelf.idea.dotenv.psi.*;
 
 public class DotEnvPropertyImpl extends DotEnvNamedElementImpl implements DotEnvProperty {
@@ -21,6 +18,7 @@ public class DotEnvPropertyImpl extends DotEnvNamedElementImpl implements DotEnv
     visitor.visitProperty(this);
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof DotEnvVisitor) accept((DotEnvVisitor)visitor);
     else super.accept(visitor);

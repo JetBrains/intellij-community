@@ -24,10 +24,14 @@ public class KeyValuePsiElement {
 
     public String getShortValue() {
         if (value.indexOf('\n') != -1) {
-            return StringUtil.trimLeading(value.substring(0, value.indexOf('\n')), '"').trim() + "...";
+            return clearString(value.substring(0, value.indexOf('\n'))) + "...";
         }
 
-        return StringUtil.trimEnd(StringUtil.trimLeading(value, '"'), '"').trim();
+        return value.trim();
+    }
+
+    private String clearString(String s) {
+        return StringUtil.trim(s.trim(), ch -> ch != '\\').trim();
     }
 
     public PsiElement getElement() {

@@ -51,9 +51,9 @@ public abstract class DotEnvLightCodeInsightFixtureTestCase extends BasePlatform
             }, GlobalSearchScope.allScope(getProject()));
 
             if (notCondition && virtualFiles.size() > 0) {
-                fail(String.format("Fail that ID '%s' not contains '%s'", id.toString(), key));
+                fail(String.format("Fail that ID '%s' not contains '%s'", id, key));
             } else if (!notCondition && virtualFiles.size() == 0) {
-                fail(String.format("Fail that ID '%s' contains '%s'", id.toString(), key));
+                fail(String.format("Fail that ID '%s' contains '%s'", id, key));
             }
         }
     }
@@ -71,8 +71,11 @@ public abstract class DotEnvLightCodeInsightFixtureTestCase extends BasePlatform
         assertIndexContains(DotEnvKeyValuesIndex.KEY, key);
 
         final AtomicBoolean found = new AtomicBoolean(false);
+        Set<String> variants = new HashSet<>();
 
         FileBasedIndexImpl.getInstance().processValues(DotEnvKeyValuesIndex.KEY, key, null, (virtualFile, s) -> {
+            variants.add(s);
+
             if (s.equals(value)) {
                 found.set(true);
             }
@@ -80,7 +83,7 @@ public abstract class DotEnvLightCodeInsightFixtureTestCase extends BasePlatform
         }, GlobalSearchScope.allScope(myFixture.getProject()));
 
         if (!found.get()) {
-            fail(String.format("Fail that index contains pair '%s' => '%s'", key, value));
+            fail(String.format("Fail that index contains pair '%s' => '%s'. Variants: '%s'", key, value, String.join("', '", variants)));
         }
     }
 }
