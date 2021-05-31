@@ -32,7 +32,7 @@ private data class ClassifierLookupObject(
     override val shortName: Name,
     val classId: ClassId?,
     val insertFqName: Boolean
-) : KotlinLookupObject
+) : KotlinLookupObject {}
 
 /**
  * The simplest implementation of the insertion handler for a classifiers.
