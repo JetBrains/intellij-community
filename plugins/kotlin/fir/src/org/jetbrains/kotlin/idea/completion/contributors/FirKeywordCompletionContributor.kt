@@ -60,7 +60,7 @@ internal class FirKeywordCompletionContributor(basicContext: FirBasicCompletionC
                     createLookups(parameters, expression, lookupElement, project)
                 }
                 ?: listOf(lookupElement)
-            result.addAllElements(lookups)
+            sink.addAllElements(lookups)
         }
     }
 
