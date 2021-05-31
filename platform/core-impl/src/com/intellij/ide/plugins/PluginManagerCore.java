@@ -897,13 +897,22 @@ public final class PluginManagerCore {
 
     Set<PluginId> enabledPluginIds = new LinkedHashSet<>();
     Set<PluginId> enabledModuleIds = new LinkedHashSet<>();
+    Set<String> enabledModuleV2Ids = new LinkedHashSet<>();
     Set<PluginId> disabledRequiredIds = new LinkedHashSet<>();
 
     for (IdeaPluginDescriptorImpl descriptor : sortedRequired) {
       boolean wasEnabled = descriptor.isEnabled();
-      if (wasEnabled && computePluginEnabled(descriptor, enabledPluginIds, enabledModuleIds, idMap, disabledRequiredIds, context.disabledPlugins, pluginErrors)) {
+      if (wasEnabled && computePluginEnabled(descriptor,
+                                             enabledPluginIds, enabledModuleIds, enabledModuleV2Ids,
+                                             idMap, disabledRequiredIds, context.disabledPlugins, pluginErrors)) {
         enabledPluginIds.add(descriptor.getPluginId());
         enabledModuleIds.addAll(descriptor.modules);
+        for (PluginContentDescriptor.ModuleItem module : descriptor.content.modules) {
+          enabledModuleV2Ids.add(module.name);
+        }
+        if (descriptor.packagePrefix != null) {
+          enabledModuleV2Ids.add(descriptor.getId().getIdString());
+        }
       }
       else {
         descriptor.setEnabled(false);
@@ -989,6 +998,7 @@ public final class PluginManagerCore {
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptorImpl descriptor,
                                               @NotNull Set<PluginId> loadedPluginIds,
                                               @NotNull Set<PluginId> loadedModuleIds,
+                                              @NotNull Set<String> loadedModuleV2Ids,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                               @NotNull Set<PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
@@ -1029,6 +1039,34 @@ public final class PluginManagerCore {
 
       addCannotLoadError(descriptor, errors, notifyUser, depId, dep);
     }
+    for (ModuleDependenciesDescriptor.PluginItem item : descriptor.dependencies.plugins) {
+      if (loadedPluginIds.contains(item.id) || loadedModuleIds.contains(item.id)) {
+        continue;
+      }
+
+      result = false;
+      IdeaPluginDescriptorImpl dep = idMap.get(item.id);
+      if (dep != null && disabledPlugins.contains(item.id)) {
+        // broken/incompatible plugins can be updated, add them anyway
+        disabledRequiredIds.add(dep.getPluginId());
+      }
+
+      addCannotLoadError(descriptor, errors, notifyUser, item.id, dep);
+    }
+    for (ModuleDependenciesDescriptor.ModuleReference item : descriptor.dependencies.modules) {
+      if (loadedModuleV2Ids.contains(item.name)) {
+        continue;
+      }
+
+      result = false;
+      errors.put(descriptor.getPluginId(),
+                 new PluginLoadingError(
+                   descriptor,
+                   message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.getName(), item.name),
+                   message("plugin.loading.error.short.depends.on.not.installed.plugin", item.name), notifyUser, null
+                 ));
+
+    }
     return result;
   }
 
@@ -1036,7 +1074,7 @@ public final class PluginManagerCore {
                                          @NotNull Map<PluginId, PluginLoadingError> errors,
                                          boolean notifyUser,
                                          PluginId depId,
-                                         IdeaPluginDescriptor dep) {
+                                         @Nullable IdeaPluginDescriptor dep) {
     String depName = dep == null ? null : dep.getName();
     if (depName == null) {
       @NlsSafe String depPresentableId = depId.getIdString();
