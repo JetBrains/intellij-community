@@ -251,19 +251,26 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
   }
 
 
-  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
+  @NlsContexts.DialogTitle
+  private fun getInitialText(): String {
     val configurationBean = settings.myState.configuration
-    val initialText = if (configurationBean != null) getOptionTitle(configurationBean.name)
+    return if (configurationBean != null) getOptionTitle(configurationBean.name)
     else SmRunnerBundle.message("checkbox.run.tests.before.commit.no.configuration")
+  }
+
+  override fun getBeforeCheckinConfigurationPanel(): RefreshableOnComponent {
     
     return object :
-      BooleanCommitOption(commitPanel, initialText, true, settings.myState::enabled) {
+      BooleanCommitOption(commitPanel, getInitialText(), true, settings.myState::enabled) {
+      
+      
       override fun getComponent(): JComponent {
         val showFiltersPopup = LinkListener<Any> { sourceLink, _ ->
           JBPopupMenu.showBelow(sourceLink, ActionPlaces.UNKNOWN, createConfigurationChooser())
         }
         val configureFilterLink = LinkLabel(SmRunnerBundle.message("link.label.choose.configuration.before.commit"), null, showFiltersPopup)
   
+        checkBox.text = getInitialText()
         return JBUI.Panels.simplePanel(4, 0).addToLeft(checkBox).addToCenter(configureFilterLink)
       }
 
