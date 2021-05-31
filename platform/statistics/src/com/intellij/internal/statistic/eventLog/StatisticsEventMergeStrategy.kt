@@ -26,8 +26,8 @@ class FilteredEventMergeStrategy(private val ignoredFields: Set<String>) : Stati
     for (datum in lastEvent.data) {
       val key = datum.key
       if (!ignoredFields.contains(key)) {
-        if (!newEvent.data.containsKey(key)) return false
-        if (newEvent.data[key] != datum.value) return false
+        val value = newEvent.data[key]
+        if (value == null || value != datum.value) return false
       }
     }
     return true
