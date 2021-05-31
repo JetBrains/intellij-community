@@ -127,7 +127,7 @@ class ImaginaryCaret extends UserDataHolderBase implements Caret {
 
   @Override
   public int getLeadSelectionOffset() {
-    throw notImplemented();
+    return getOffset();
   }
 
   @NotNull
