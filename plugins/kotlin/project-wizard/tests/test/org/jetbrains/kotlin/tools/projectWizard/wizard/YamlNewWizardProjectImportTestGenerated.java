@@ -84,11 +84,6 @@ public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYa
         public void testSinglePlatformJsNode() throws Exception {
             runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
         }
-
-        @TestMetadata("singleplatformJs")
-        public void testSingleplatformJs() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/singleplatformJs/");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -157,11 +152,6 @@ public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYa
         public void testSinglePlatformJsNode() throws Exception {
             runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
         }
-
-        @TestMetadata("singleplatformJs")
-        public void testSingleplatformJs() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/singleplatformJs/");
-        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -229,11 +219,6 @@ public abstract class YamlNewWizardProjectImportTestGenerated extends AbstractYa
         @TestMetadata("singlePlatformJsNode")
         public void testSinglePlatformJsNode() throws Exception {
             runTest("../cli/testData/buildFileGeneration/singlePlatformJsNode/");
-        }
-
-        @TestMetadata("singleplatformJs")
-        public void testSingleplatformJs() throws Exception {
-            runTest("../cli/testData/buildFileGeneration/singleplatformJs/");
         }
     }
 }
