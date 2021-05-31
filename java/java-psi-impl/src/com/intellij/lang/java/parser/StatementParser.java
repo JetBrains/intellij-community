@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
@@ -437,22 +437,20 @@ public class StatementParser {
   Pair<PsiBuilder.@Nullable Marker, Boolean> parseCaseLabel(PsiBuilder builder) {
     CASE_LABEL.set(builder, Boolean.TRUE);
     try {
-      if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X)) {
-        if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
-          PsiBuilder.Marker defaultElement = builder.mark();
-          builder.advanceLexer();
-          done(defaultElement, JavaElementType.DEFAULT_ELEMENT);
-          return Pair.create(defaultElement, false);
-        }
-        if (builder.getTokenType() == JavaTokenType.NULL_KEYWORD) {
-          PsiBuilder.Marker defaultElement = builder.mark();
-          builder.advanceLexer();
-          done(defaultElement, JavaElementType.NULL_ELEMENT);
-          return Pair.create(defaultElement, false);
-        }
-        if (myParser.getPatternParser().isPattern(builder)) {
-          return Pair.create(myParser.getPatternParser().parsePattern(builder), false);
-        }
+      if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
+        PsiBuilder.Marker defaultElement = builder.mark();
+        builder.advanceLexer();
+        done(defaultElement, JavaElementType.DEFAULT_ELEMENT);
+        return Pair.create(defaultElement, false);
+      }
+      if (builder.getTokenType() == JavaTokenType.NULL_KEYWORD) {
+        PsiBuilder.Marker defaultElement = builder.mark();
+        builder.advanceLexer();
+        done(defaultElement, JavaElementType.NULL_ELEMENT);
+        return Pair.create(defaultElement, false);
+      }
+      if (myParser.getPatternParser().isPattern(builder)) {
+        return Pair.create(myParser.getPatternParser().parsePattern(builder), false);
       }
       return Pair.create(myParser.getExpressionParser().parseAssignment(builder), true);
     }

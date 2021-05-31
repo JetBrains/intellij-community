@@ -22,13 +22,15 @@ public class PatternParser {
     myParser = javaParser;
   }
 
+  /**
+   * Checks whether given token sequence can be parsed as a pattern.
+   * The result of the method makes sense only for places where pattern is expected (case label and instanceof expression).
+   */
   @Contract(pure = true)
   public boolean isPattern(final PsiBuilder builder) {
     PsiBuilder.Marker patternStart = builder.mark();
-    if (getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X)) {
-      while (builder.getTokenType() == JavaTokenType.LPARENTH) {
-        builder.advanceLexer();
-      }
+    while (builder.getTokenType() == JavaTokenType.LPARENTH) {
+      builder.advanceLexer();
     }
     myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS);
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
@@ -54,7 +56,7 @@ public class PatternParser {
   }
 
   PsiBuilder.@NotNull Marker parsePrimaryPattern(final PsiBuilder builder) {
-    if (builder.getTokenType() == JavaTokenType.LPARENTH && getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X)) {
+    if (builder.getTokenType() == JavaTokenType.LPARENTH) {
       PsiBuilder.Marker parenPattern = builder.mark();
       builder.advanceLexer();
       parsePattern(builder);

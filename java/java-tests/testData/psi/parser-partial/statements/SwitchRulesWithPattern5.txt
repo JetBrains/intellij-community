@@ -5,10 +5,6 @@ PsiJavaFile:SwitchRulesWithPattern5.java
     PsiCaseLabelElementList
       PsiNullElementImpl
         PsiJavaToken:NULL_KEYWORD('null')
-      PsiJavaToken:COMMA(',')
-      PsiWhiteSpace(' ')
-      PsiDefaultElement
-        PsiKeyword:default('default')
     PsiWhiteSpace(' ')
     PsiJavaToken:ARROW('->')
     PsiWhiteSpace(' ')

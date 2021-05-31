@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestCase;
@@ -141,9 +141,8 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchRulesWithPattern1() { doParserTest("case int[] ia -> { }"); }
   public void testSwitchRulesWithPattern2() { doParserTest("case Integer i && i > 10 -> { }"); }
   public void testSwitchRulesWithPattern3() { doParserTest("case (Integer i && i > 10) && boolExpr() -> { }"); }
-  public void testSwitchRulesWithPattern4() { setLanguageLevel(LanguageLevel.JDK_16); doParserTest("case Integer i -> { }"); }
-  public void testSwitchRulesWithPattern5() { doParserTest("case null, default -> { }"); }
-  public void testSwitchRulesWithPattern6() { doParserTest("case null -> { }"); }
+  public void testSwitchRulesWithPattern4() { doParserTest("case null, default -> { }"); }
+  public void testSwitchRulesWithPattern5() { doParserTest("case null -> { }"); }
 
   public void testSwitchRulesWithPatternIncomplete0() { doParserTest("case Integer i &&  -> { }"); }
   public void testSwitchRulesWithPatternIncomplete1() { doParserTest("case (Integer i  -> { }"); }

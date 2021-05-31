@@ -1,28 +1,19 @@
 PsiJavaFile:SwitchRulesWithPattern4.java
-  PsiSwitchLabelStatement
+  PsiSwitchLabeledRule
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
-    PsiExpressionList
-      PsiReferenceExpression:Integer
-        PsiReferenceParameterList
-          <empty list>
-        PsiIdentifier:Integer('Integer')
-    PsiErrorElement:':' expected
-      <empty list>
-  PsiWhiteSpace(' ')
-  PsiExpressionStatement
-    PsiLambdaExpression
-      PsiParameterList:i
-        PsiParameter:i
-          PsiModifierList:
-            <empty list>
-          PsiIdentifier:i('i')
+    PsiCaseLabelElementList
+      PsiNullElementImpl
+        PsiJavaToken:NULL_KEYWORD('null')
+      PsiJavaToken:COMMA(',')
       PsiWhiteSpace(' ')
-      PsiJavaToken:ARROW('->')
-      PsiWhiteSpace(' ')
+      PsiDefaultElement
+        PsiKeyword:default('default')
+    PsiWhiteSpace(' ')
+    PsiJavaToken:ARROW('->')
+    PsiWhiteSpace(' ')
+    PsiBlockStatement
       PsiCodeBlock
         PsiJavaToken:LBRACE('{')
         PsiWhiteSpace(' ')
         PsiJavaToken:RBRACE('}')
-    PsiErrorElement:';' expected
-      <empty list>
