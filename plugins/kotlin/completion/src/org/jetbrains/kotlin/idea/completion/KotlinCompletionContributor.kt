@@ -18,6 +18,8 @@ import com.intellij.psi.util.elementType
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionSession
+import org.jetbrains.kotlin.idea.completion.stringTemplates.InsertStringTemplateBracesLookupElementDecorator
+import org.jetbrains.kotlin.idea.completion.stringTemplates.StringTemplateCompletion
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
@@ -51,28 +53,17 @@ class KotlinCompletionContributor : CompletionContributor() {
     }
 
     override fun beforeCompletion(context: CompletionInitializationContext) {
+        val offset = context.startOffset
         val psiFile = context.file
-        if (psiFile !is KtFile) return
+        val tokenBefore = psiFile.findElementAt(max(0, offset - 1))
 
         // this code will make replacement offset "modified" and prevents altering it by the code in CompletionProgressIndicator
         context.replacementOffset = context.replacementOffset
 
-        val offset = context.startOffset
-        val tokenBefore = psiFile.findElementAt(max(0, offset - 1))
-
-        if (offset > 0 && tokenBefore!!.node.elementType == KtTokens.REGULAR_STRING_PART && tokenBefore.text.startsWith(".")) {
-            val prev = tokenBefore.parent.prevSibling
-            if (prev != null && prev is KtSimpleNameStringTemplateEntry) {
-                val expression = prev.expression
-                if (expression != null) {
-                    val prefix = tokenBefore.text.substring(0, offset - tokenBefore.startOffset)
-                    context.dummyIdentifier = "{" + expression.text + prefix + CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + "}"
-                    context.offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, expression.startOffset)
-                    return
-                }
-            }
+        val dummyIdentifierCorrected = service<CompletionDummyIdentifierProviderService>().correctPositionForStringTemplateEntry(context)
+        if (dummyIdentifierCorrected) {
+            return
         }
-
         context.dummyIdentifier = when {
             context.completionType == CompletionType.SMART -> DEFAULT_DUMMY_IDENTIFIER
 
@@ -149,23 +140,11 @@ class KotlinCompletionContributor : CompletionContributor() {
         val parametersOriginFile = parameters.originalFile
         if (position.containingFile !is KtFile || parametersOriginFile !is KtFile) return
 
-        if (position.node.elementType == KtTokens.LONG_TEMPLATE_ENTRY_START) {
-            val expression = (position.parent as? KtBlockStringTemplateEntry)?.expression
-            if (expression is KtDotQualifiedExpression) {
-                val correctedPosition = (expression.selectorExpression as? KtNameReferenceExpression)?.firstChild
-                if (correctedPosition != null) {
-                    // Workaround for KT-16848
-                    // ex:
-                    // expression: some.IntellijIdeaRulezzz
-                    // correctedOffset: ^
-                    // expression: some.funcIntellijIdeaRulezzz
-                    // correctedOffset      ^
-                    val correctedOffset = correctedPosition.endOffset - CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED.length
-                    val correctedParameters = parameters.withPosition(correctedPosition, correctedOffset)
-                    doComplete(correctedParameters, result) { wrapLookupElementForStringTemplateAfterDotCompletion(it) }
-                    return
-                }
-            }
+        val toFromOriginalFileMapper = ToFromOriginalFileMapper.create(parameters)
+
+        StringTemplateCompletion.correctParametersForInStringTemplateCompletion(parameters)?.let { correctedParameters ->
+            doComplete(correctedParameters, result) { InsertStringTemplateBracesLookupElementDecorator(it) }
+            return
         }
 
         doComplete(parameters, result)
@@ -237,26 +216,6 @@ class KotlinCompletionContributor : CompletionContributor() {
             session.complete()
         }
     }
-
-    private fun wrapLookupElementForStringTemplateAfterDotCompletion(lookupElement: LookupElement): LookupElement =
-        LookupElementDecorator.withDelegateInsertHandler(lookupElement) { context, element ->
-            val document = context.document
-            val startOffset = context.startOffset
-
-            val psiDocumentManager = PsiDocumentManager.getInstance(context.project)
-            psiDocumentManager.commitDocument(document)
-
-            val token = getToken(context.file, document.charsSequence, startOffset)
-            val nameRef = token.parent as KtNameReferenceExpression
-
-            document.insertString(nameRef.startOffset, "{")
-
-            val tailOffset = context.tailOffset
-            document.insertString(tailOffset, "}")
-            context.tailOffset = tailOffset
-
-            element.handleInsert(context)
-        }
 
     private fun shouldSuppressCompletion(parameters: CompletionParameters, prefixMatcher: PrefixMatcher): Boolean {
         val position = parameters.position
