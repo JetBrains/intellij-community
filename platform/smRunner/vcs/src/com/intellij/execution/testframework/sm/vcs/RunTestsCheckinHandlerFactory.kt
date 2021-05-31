@@ -12,12 +12,11 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionUtil
-import com.intellij.execution.target.TargetEnvironmentAwareRunProfile
 import com.intellij.execution.testframework.TestRunnerBundle
 import com.intellij.execution.testframework.TestsUIUtil.TestResultPresentation
+import com.intellij.execution.testframework.actions.ConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.ConfigurationBean
 import com.intellij.execution.testframework.sm.SmRunnerBundle
-import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.execution.testframework.sm.runner.history.actions.AbstractImportTestsAction
 import com.intellij.execution.testframework.sm.runner.ui.SMTestRunnerResultsForm
@@ -265,7 +264,7 @@ class RunTestsBeforeCheckinHandler(private val commitPanel: CheckinProjectPanel)
 
       private fun createConfigurationChooser(): ActionGroup {
         fun testConfiguration(it: RunConfiguration) =
-          it is SMRunnerConsolePropertiesProvider && !(it is TargetEnvironmentAwareRunProfile && it.needPrepareTarget())
+          it is ConsolePropertiesProvider && it.createTestConsoleProperties(DefaultRunExecutor.getRunExecutorInstance()) != null
         val result = DefaultActionGroup()
         val runManager = RunManagerImpl.getInstanceImpl(project)
         for ((type, folderMap) in runManager.getConfigurationsGroupedByTypeAndFolder(false)) {
