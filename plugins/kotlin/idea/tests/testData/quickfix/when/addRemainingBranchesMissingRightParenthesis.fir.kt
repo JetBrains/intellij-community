@@ -1,13 +1,8 @@
 // "Add remaining branches" "true"
-// WITH_STDLIB
+// WITH_RUNTIME
 
 sealed class A
 class B : A()
 
 fun test(a: A) {
-    val r = <caret>when (a) {
-
-        // comment
-
-    }
-}
+  val i = w<caret>hen (a

@@ -15235,6 +15235,21 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/when/addRemainingBranchesInNonDefaultPackage.kt");
         }
 
+        @TestMetadata("addRemainingBranchesMissingLeftBracket.kt")
+        public void testAddRemainingBranchesMissingLeftBracket() throws Exception {
+            runTest("idea/testData/quickfix/when/addRemainingBranchesMissingLeftBracket.kt");
+        }
+
+        @TestMetadata("addRemainingBranchesMissingRightBracket.kt")
+        public void testAddRemainingBranchesMissingRightBracket() throws Exception {
+            runTest("idea/testData/quickfix/when/addRemainingBranchesMissingRightBracket.kt");
+        }
+
+        @TestMetadata("addRemainingBranchesMissingRightParenthesis.kt")
+        public void testAddRemainingBranchesMissingRightParenthesis() throws Exception {
+            runTest("idea/testData/quickfix/when/addRemainingBranchesMissingRightParenthesis.kt");
+        }
+
         @TestMetadata("addRemainingBranchesSealed.kt")
         public void testAddRemainingBranchesSealed() throws Exception {
             runTest("testData/quickfix/when/addRemainingBranchesSealed.kt");
