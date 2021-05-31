@@ -394,7 +394,7 @@ final class CommunityRepositoryModules {
       mainJarName = "javaFX.jar"
       withModule("intellij.javaFX", mainJarName)
       withModule("intellij.javaFX.jps")
-      withModule("intellij.javaFX.common")
+      withModule("intellij.javaFX.common", "javaFX-common.jar")
       withModule("intellij.javaFX.properties")
       withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
     }
