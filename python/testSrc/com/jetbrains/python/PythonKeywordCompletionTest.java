@@ -258,4 +258,49 @@ public class PythonKeywordCompletionTest extends PyTestCase {
   public void testNoneInReturnAnnotation() {
     doTest();
   }
+
+  // PY-48039
+  public void testMatchInsideFunction() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testMatchOnTopLevel() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoMatchInsideArgumentList() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoMatchInCondition() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoMatchAfterQualifier() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoMatchBefore310() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, this::doTest);
+  }
+
+  // PY-48039
+  public void testCaseInsideMatchStatement() {
+    doTest();
+  }
+
+  // PY-48039
+  public void testNoCaseBefore310() {
+    runWithLanguageLevel(LanguageLevel.PYTHON39, this::doTest);
+  }
+
+  // PY-48039
+  public void testNoCaseOutsideMatchStatement() {
+    doTest();
+  }
 }
