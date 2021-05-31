@@ -3,14 +3,14 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiNullElement;
+import com.intellij.psi.PsiNullCaseLabelElement;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiNullElementImpl extends CompositePsiElement implements PsiNullElement, Constants {
-  public PsiNullElementImpl() {
-    super(NULL_ELEMENT);
+public class PsiNullCaseLabelElementImpl extends CompositePsiElement implements PsiNullCaseLabelElement, Constants {
+  public PsiNullCaseLabelElementImpl() {
+    super(NULL_CASE_LABEL_ELEMENT);
   }
 
   @Override
@@ -25,7 +25,7 @@ public class PsiNullElementImpl extends CompositePsiElement implements PsiNullEl
 
   @Override
   public String toString() {
-    return "PsiNullElementImpl";
+    return "PsiNullCaseLabelElementImpl";
   }
 }
 

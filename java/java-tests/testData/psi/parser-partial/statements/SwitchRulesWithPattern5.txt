@@ -3,7 +3,7 @@ PsiJavaFile:SwitchRulesWithPattern5.java
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
     PsiCaseLabelElementList
-      PsiNullElementImpl
+      PsiNullCaseLabelElementImpl
         PsiJavaToken:NULL_KEYWORD('null')
     PsiWhiteSpace(' ')
     PsiJavaToken:ARROW('->')

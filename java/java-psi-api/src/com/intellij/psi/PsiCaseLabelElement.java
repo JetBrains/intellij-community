@@ -2,10 +2,12 @@
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Element which can be used in {@link PsiCaseLabelElementList}
  */
+@ApiStatus.NonExtendable
 public interface PsiCaseLabelElement extends PsiElement {
   PsiCaseLabelElement[] EMPTY_ARRAY = new PsiCaseLabelElement[0];
 

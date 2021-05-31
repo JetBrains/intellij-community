@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree;
 
 import com.intellij.lang.*;
@@ -141,7 +141,7 @@ public interface JavaElementType {
   IElementType PARENTHESIZED_PATTERN = new JavaCompositeElementType("PARENTHESIZED_PATTERN", () -> new PsiParenthesizedPatternImpl());
   IElementType GUARDED_PATTERN = new JavaCompositeElementType("GUARDED_PATTERN", () -> new PsiGuardedPatternImpl());
   IElementType DEFAULT_ELEMENT = new JavaCompositeElementType("DEFAULT_ELEMENT", () -> new PsiDefaultElementImpl());
-  IElementType NULL_ELEMENT = new JavaCompositeElementType("NULL_ELEMENT", () -> new PsiNullElementImpl());
+  IElementType NULL_CASE_LABEL_ELEMENT = new JavaCompositeElementType("NULL_CASE_LABEL_ELEMENT", () -> new PsiNullCaseLabelElementImpl());
   IElementType CASE_LABEL_ELEMENT_LIST = new JavaCompositeElementType("CASE_LABEL_ELEMENT_LIST", () -> new PsiCaseLabelElementListImpl());
 
   final class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {

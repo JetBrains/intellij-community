@@ -444,7 +444,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitElement(element);
   }
 
-  public void visitNullElement(PsiNullElement element) {
+  public void visitNullElement(PsiNullCaseLabelElement element) {
     visitElement(element);
   }
 
