@@ -19,6 +19,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +45,8 @@ public interface ImportSpec {
   boolean shouldCreateDirectoriesForEmptyContentRoots();
 
   boolean isReportRefreshError();
+
+  @NotNull ThreeState isNavigateToError();
 
   @Nullable
   String getVmOptions();

@@ -1265,7 +1265,7 @@ public final class HighlightMethodUtil {
       }
     }
     else if (isInterface) {
-      if (!isExtension && !isStatic && !isPrivate) {
+      if (!isExtension && !isStatic && !isPrivate && !isConstructor) {
         description = JavaErrorBundle.message("interface.methods.cannot.have.body");
         if (languageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
           if (Stream.of(method.findDeepestSuperMethods())
@@ -1276,9 +1276,6 @@ public final class HighlightMethodUtil {
             IntentionAction makeDefaultFix = QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.DEFAULT, true, false);
             additionalFixes.add(PriorityIntentionActionWrapper.highPriority(makeDefaultFix));
             additionalFixes.add(QUICK_FIX_FACTORY.createModifierListFix(method, PsiModifier.STATIC, true, false));
-            if (isConstructor) {
-              additionalFixes.add(QUICK_FIX_FACTORY.createConvertInterfaceToClassFix(aClass));
-            }
           }
         }
       }

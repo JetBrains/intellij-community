@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -290,6 +287,11 @@ public class LineMarkersTestGenerated extends AbstractLineMarkersTest {
         @TestMetadata("jUnit3TestFile.kt")
         public void testJUnit3TestFile() throws Exception {
             runTest("testData/codeInsight/lineMarker/runMarkers/jUnit3TestFile.kt");
+        }
+
+        @TestMetadata("jUnit3TestFileWithJUnit4.kt")
+        public void testJUnit3TestFileWithJUnit4() throws Exception {
+            runTest("testData/codeInsight/lineMarker/runMarkers/jUnit3TestFileWithJUnit4.kt");
         }
 
         @TestMetadata("jUnit4TestFile.kt")

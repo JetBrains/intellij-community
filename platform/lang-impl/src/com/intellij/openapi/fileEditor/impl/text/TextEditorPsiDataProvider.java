@@ -17,8 +17,8 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.ide.IdeView;
-import com.intellij.ide.util.EditorHelper;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -33,7 +33,6 @@ import com.intellij.openapi.fileEditor.EditorDataProvider;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -75,10 +74,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
 
           @Override
           public void selectElement(final PsiElement element) {
-            Editor editor = EditorHelper.openInEditor(element);
-            if (editor != null) {
-              ToolWindowManager.getInstance(element.getProject()).activateEditorComponent();
-            }
+            NavigationUtil.activateFileWithPsiElement(element);
           }
 
           @Override
@@ -118,7 +114,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
         //noinspection deprecation
         return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(e, caret, getPsiFile(e, file));
       }
-      return e;
+      return null;
     }
     if (InjectedDataKeys.CARET.is(dataId)) {
       return querySlowInjectedCaret(e, caret);
@@ -168,6 +164,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     return null;
   }
 
+  // here there's a convention that query* methods below can call getSlowData() whereas get* methods can't
   private EditorWindow querySlowInjectedEditor(@NotNull Editor e, @NotNull Caret caret) {
     Object editor = getSlowData(InjectedDataKeys.EDITOR.getName(), e, caret);
     return editor instanceof EditorWindow ? (EditorWindow)editor : null;

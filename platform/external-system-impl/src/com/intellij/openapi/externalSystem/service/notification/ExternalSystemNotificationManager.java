@@ -212,9 +212,9 @@ public class ExternalSystemNotificationManager implements Disposable {
           }
           if (group == null) return;
 
-          final Notification notification = group.createNotification(
-            notificationData.getTitle(), notificationData.getMessage(),
-            notificationData.getNotificationCategory().getNotificationType(), notificationData.getListener());
+          final Notification notification = group
+            .createNotification(notificationData.getTitle(), notificationData.getMessage(), notificationData.getNotificationCategory().getNotificationType())
+            .setListener(notificationData.getListener());
 
           if (notificationKey == null) {
             myNotifications.add(notification);

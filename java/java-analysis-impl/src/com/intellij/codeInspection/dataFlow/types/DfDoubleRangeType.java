@@ -7,6 +7,7 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -78,6 +79,15 @@ class DfDoubleRangeType implements DfDoubleType {
 
   @Override
   public @NotNull DfType join(@NotNull DfType other) {
+    return join(other, false);
+  }
+
+  @Override
+  public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+    return join(other, true);
+  }
+
+  DfType join(@NotNull DfType other, boolean exact) {
     if (other.isSuperType(this)) return other;
     if (this.isSuperType(other)) return this;
     if (other instanceof DfDoubleConstantType) {
@@ -85,43 +95,48 @@ class DfDoubleRangeType implements DfDoubleType {
       if (Double.isNaN(value)) {
         return create(myFrom, myTo, myInvert, true);
       }
-      return joinRange(value, value);
+      return joinRange(value, value, exact);
     }
     if (!(other instanceof DfDoubleRangeType)) {
-      return TOP;
+      return exact ? null : TOP;
     }
     DfDoubleRangeType range = (DfDoubleRangeType)other;
     DfDoubleRangeType res = range.myNaN && !myNaN ? new DfDoubleRangeType(myFrom, myTo, myInvert, true) : this;
     if (range.myInvert) {
       if (range.myFrom > Double.NEGATIVE_INFINITY) {
-        res = res.joinRange(Double.NEGATIVE_INFINITY, nextDown(range.myFrom));
+        res = res.joinRange(Double.NEGATIVE_INFINITY, nextDown(range.myFrom), exact);
+        if (res == null) return null;
       }
       if (range.myTo < Double.POSITIVE_INFINITY) {
-        res = res.joinRange(nextUp(range.myTo), Double.POSITIVE_INFINITY);
+        res = res.joinRange(nextUp(range.myTo), Double.POSITIVE_INFINITY, exact);
+        if (res == null) return null;
       }
     } else {
-      res = res.joinRange(range.myFrom, range.myTo);
+      res = res.joinRange(range.myFrom, range.myTo, exact);
     }
     return res;
   }
 
-  private @NotNull DfDoubleRangeType joinRange(double from, double to) {
+  private DfDoubleRangeType joinRange(double from, double to, boolean exact) {
     if (Double.compare(from, to) > 0) return this;
     if (myInvert) {
       if (Double.compare(to, myFrom) < 0 || Double.compare(from, myTo) > 0) return this;
       double fromCmp = Double.compare(myFrom, from);
       double toCmp = Double.compare(to, myTo);
       if (fromCmp >= 0 && toCmp >= 0 || fromCmp < 0 && toCmp < 0) {
-        return (DfDoubleRangeType)create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, myNaN);
+        return exact ? null : (DfDoubleRangeType)create(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, myNaN);
       }
-      if (fromCmp >= 0 && toCmp < 0) {
+      if (fromCmp >= 0) {
         return (DfDoubleRangeType)create(nextUp(to), myTo, true, myNaN);
       }
-      if (fromCmp < 0 && toCmp >= 0) {
-        return (DfDoubleRangeType)create(myFrom, nextDown(from), true, myNaN);
-      }
-      throw new AssertionError("Impossible!");
+      return (DfDoubleRangeType)create(myFrom, nextDown(from), true, myNaN);
     } else {
+      if (Double.compare(myTo, nextDown(from)) < 0 || Double.compare(to, nextDown(myFrom)) < 0) {
+        if (myFrom == Double.NEGATIVE_INFINITY && to == Double.POSITIVE_INFINITY) {
+          return (DfDoubleRangeType)create(nextUp(myTo), nextDown(from), true, myNaN);
+        }
+        if (exact) return null;
+      }
       return (DfDoubleRangeType)create(Math.min(myFrom, from), Math.max(myTo, to), false, myNaN);
     }
   }
@@ -142,10 +157,10 @@ class DfDoubleRangeType implements DfDoubleType {
         double fromCmp = Double.compare(myFrom, range.myFrom);
         double toCmp = Double.compare(range.myTo, myTo);
         if (fromCmp >= 0) {
-          return create(nextUp(range.myTo), myTo, false, nan);
+          return create(Math.max(myFrom, nextUp(range.myTo)), myTo, false, nan);
         }
         if (toCmp >= 0) {
-          return create(myFrom, nextDown(range.myFrom), false, nan);
+          return create(myFrom, Math.min(myTo, nextDown(range.myFrom)), false, nan);
         }
         if (myFrom == Double.NEGATIVE_INFINITY && myTo == Double.POSITIVE_INFINITY) {
           return create(range.myFrom, range.myTo, true, nan);
@@ -225,14 +240,14 @@ class DfDoubleRangeType implements DfDoubleType {
       } else {
         range = LongRangeSet.empty();
         if (myFrom > Double.NEGATIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range(Long.MIN_VALUE, (long)nextDown(myFrom)));
+          range = range.join(LongRangeSet.range(Long.MIN_VALUE, (long)nextDown(myFrom)));
         }
         if (myTo < Double.POSITIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range((long)nextUp(myTo), Long.MAX_VALUE));
+          range = range.join(LongRangeSet.range((long)nextUp(myTo), Long.MAX_VALUE));
         }
       }
       if (myNaN) {
-        range = range.unite(LongRangeSet.point(0));
+        range = range.join(LongRangeSet.point(0));
       }
       return DfTypes.longRange(range);
     }
@@ -243,14 +258,14 @@ class DfDoubleRangeType implements DfDoubleType {
       } else {
         range = LongRangeSet.empty();
         if (myFrom > Double.NEGATIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range(Integer.MIN_VALUE, (int)nextDown(myFrom)));
+          range = range.join(LongRangeSet.range(Integer.MIN_VALUE, (int)nextDown(myFrom)));
         }
         if (myTo < Double.POSITIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range((int)nextUp(myTo), Integer.MAX_VALUE));
+          range = range.join(LongRangeSet.range((int)nextUp(myTo), Integer.MAX_VALUE));
         }
       }
       if (myNaN) {
-        range = range.unite(LongRangeSet.point(0));
+        range = range.join(LongRangeSet.point(0));
       }
       DfType result = DfTypes.intRange(range);
       if (result instanceof DfPrimitiveType && !type.equals(PsiType.INT)) {

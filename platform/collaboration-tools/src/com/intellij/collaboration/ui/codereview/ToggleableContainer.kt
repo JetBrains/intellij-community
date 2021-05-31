@@ -16,7 +16,7 @@ object ToggleableContainer {
       isOpaque = false
       addToCenter(mainComponentSupplier())
     }
-    model.addValueUpdatedListener { newValue ->
+    model.addListener { newValue ->
       if (newValue) {
         updateToggleableContainer(container, toggleableComponentSupplier())
       }

@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.remote
 
 import com.google.gson.JsonElement
@@ -17,11 +18,9 @@ import com.intellij.ide.starters.remote.wizard.WebStarterInitialStep
 import com.intellij.ide.starters.remote.wizard.WebStarterLibrariesStep
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.*
-import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
@@ -36,11 +35,14 @@ import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.projectRoots.*
+import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.JavaSdkType
+import com.intellij.openapi.projectRoots.JavaSdkVersion
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.LanguageLevelModuleExtension
 import com.intellij.openapi.roots.ModifiableRootModel
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.roots.ui.configuration.setupNewModuleJdk
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
@@ -209,16 +211,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
   }
 
   override fun setupRootModel(modifiableRootModel: ModifiableRootModel) {
-    val project = modifiableRootModel.project
-    val sdk = if (moduleJdk != null) moduleJdk else getProjectJdk(project)
-    if (sdk != null) {
-      if (!starterContext.isCreatingNewProject && sdk == getProjectJdk(project)) {
-        modifiableRootModel.inheritSdk()
-      }
-      else {
-        modifiableRootModel.sdk = sdk
-      }
-    }
+    val sdk = setupNewModuleJdk(modifiableRootModel, moduleJdk, starterContext.isCreatingNewProject)
     val moduleExt = modifiableRootModel.getModuleExtension(LanguageLevelModuleExtension::class.java)
     if (moduleExt != null && sdk != null) {
       val languageLevel = starterContext.languageLevel
@@ -231,10 +224,6 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       }
     }
     doAddContentEntry(modifiableRootModel)
-  }
-
-  private fun getProjectJdk(project: Project): Sdk? {
-    return ProjectRootManager.getInstance(project).projectSdk
   }
 
   private fun extractAndImport(module: Module) {
@@ -317,16 +306,12 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
 
     if (toInstallOrEnable.isEmpty()) return
 
-    notificationGroup.createNotification(
-      IdeBundle.message("plugins.advertiser.plugins.suggestions.title"),
-      IdeBundle.message("plugins.advertiser.plugins.suggestions.text"),
-      NotificationType.INFORMATION,
-      null,
-    ).addAction(object : NotificationAction(IdeBundle.message("plugins.advertiser.action.enable.plugins")) {
-      override fun actionPerformed(e: AnActionEvent, notification: Notification) {
+    notificationGroup
+      .createNotification(IdeBundle.message("plugins.advertiser.plugins.suggestions.title"), IdeBundle.message("plugins.advertiser.plugins.suggestions.text"), NotificationType.INFORMATION)
+      .addAction(NotificationAction.create(IdeBundle.message("plugins.advertiser.action.enable.plugins")) { _, notification ->
         installAndEnable(toInstallOrEnable) { notification.expire() }
-      }
-    }).notify(project)
+      })
+      .notify(project)
   }
 
   private fun fixExecutableFlag(containingDir: File, relativePath: String) {

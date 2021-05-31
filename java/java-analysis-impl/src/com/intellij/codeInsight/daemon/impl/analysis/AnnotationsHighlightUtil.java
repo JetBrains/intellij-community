@@ -6,7 +6,6 @@ import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
-import com.intellij.codeInsight.daemon.impl.quickfix.MakeReceiverParameterFirstFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.MoveAnnotationOnStaticMemberQualifyingTypeFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.daemon.impl.quickfix.ReplaceVarWithExplicitTypeFix;
@@ -122,7 +121,8 @@ public final class AnnotationsHighlightUtil {
       }
     }
     final PsiAnnotationMethod annotationMethod = ObjectUtils.tryCast(method, PsiAnnotationMethod.class);
-    boolean fromDefaultValue = annotationMethod != null && PsiTreeUtil.isAncestor(annotationMethod.getDefaultValue(), value, false);
+    if (annotationMethod == null) return null;
+    boolean fromDefaultValue = PsiTreeUtil.isAncestor(annotationMethod.getDefaultValue(), value, false);
     if (value instanceof PsiAnnotation) {
       PsiJavaCodeReferenceElement nameRef = ((PsiAnnotation)value).getNameReferenceElement();
       if (nameRef == null) return null;
@@ -757,12 +757,14 @@ public final class AnnotationsHighlightUtil {
       return info;
     }
 
-    PsiElement leftNeighbour = PsiTreeUtil.skipWhitespacesAndCommentsBackward(parameter);
-    if (leftNeighbour != null && !PsiUtil.isJavaToken(leftNeighbour, JavaTokenType.LPARENTH)) {
+    if (!PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(parameter), JavaTokenType.LPARENTH)) {
       String text = JavaErrorBundle.message("receiver.wrong.position");
       HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter.getIdentifier()).descriptionAndTooltip(text).create();
-      QuickFixAction.registerQuickFixAction(info, new MakeReceiverParameterFirstFix(parameter));
+      PsiReceiverParameter firstReceiverParameter = PsiTreeUtil.getChildOfType(method.getParameterList(), PsiReceiverParameter.class);
+      if (!PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(firstReceiverParameter), JavaTokenType.LPARENTH)) {
+        QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createMakeReceiverParameterFirstFix(parameter));
+      }
       QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createDeleteFix(parameter));
       return info;
     }

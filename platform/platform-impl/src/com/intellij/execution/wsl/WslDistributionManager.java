@@ -5,7 +5,9 @@ import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -13,6 +15,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -103,12 +106,36 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
+    if (Registry.is("wsl.list.prefer.verbose.output", true)) {
+      try {
+        final var result = loadInstalledDistributionsWithVersions();
+        return ContainerUtil.map(result, data -> {
+          final WSLDistribution distribution = getOrCreateDistributionByMsId(data.getDistributionName(), true);
+          distribution.setVersion(data.getVersion());
+          return distribution;
+        });
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+      catch (IllegalStateException e) {
+        LOG.error(e);
+      }
+    }
+    // fallback: using loadInstalledDistributionMsIds in case of execution exception or parsing error
     return ContainerUtil.map(loadInstalledDistributionMsIds(), (msId) -> {
       return getOrCreateDistributionByMsId(msId, true);
     });
   }
 
   protected abstract @NotNull List<String> loadInstalledDistributionMsIds();
+
+  /**
+   * @throws IOException if an execution error occurs
+   * @throws IllegalStateException if a parsing error occurs
+   */
+  public abstract @NotNull List<WslDistributionAndVersion> loadInstalledDistributionsWithVersions()
+    throws IOException, IllegalStateException;
 
   private static class CachedDistributions {
     private final @NotNull List<WSLDistribution> myInstalledDistributions;

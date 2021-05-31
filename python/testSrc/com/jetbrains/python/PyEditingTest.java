@@ -832,6 +832,26 @@ public class PyEditingTest extends PyTestCase {
                  "s = f'{42:<caret>:3d}'");
   }
 
+  // PY-48009
+  public void testEnterAfterColonOfMatchStatementWithoutClauses() {
+    doTypingTest('\n');
+  }
+
+  // PY-48009
+  public void testEnterAfterColonOfMatchStatementWithClauses() {
+    doTypingTest('\n');
+  }
+
+  // PY-48009
+  public void testEnterAfterColonOfCaseClauseWithoutBody() {
+    doTypingTest('\n');
+  }
+
+  // PY-48009
+  public void testEnterAfterColonOfCaseClauseWithBody() {
+    doTypingTest('\n');
+  }
+
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
     return getCodeStyleSettings().getCustomSettings(PyCodeStyleSettings.class);

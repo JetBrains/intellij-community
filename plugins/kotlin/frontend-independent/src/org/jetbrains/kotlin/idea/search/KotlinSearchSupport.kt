@@ -1,17 +1,14 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.search
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.ImportPath
@@ -23,9 +20,7 @@ interface KotlinSearchUsagesSupport {
     }
 
     companion object {
-        fun getInstance(project: Project): KotlinSearchUsagesSupport {
-            return ServiceManager.getService(project, KotlinSearchUsagesSupport::class.java)
-        }
+        fun getInstance(project: Project): KotlinSearchUsagesSupport = project.getServiceSafe()
 
         val KtParameter.dataClassComponentMethodName: String?
             get() = getInstance(project).dataClassComponentMethodName(this)

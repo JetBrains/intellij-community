@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -171,49 +171,40 @@ public class FileUtilRt {
             return Result_Continue;
           }
 
-          private void performDelete(final Object fileObject) throws IOException {
-            Boolean result = doIOOperation(new RepeatableIOOperation<Boolean, RuntimeException>() {
-              @Override
-              public Boolean execute(boolean lastAttempt) {
-                try {
-                  //Files.deleteIfExists(file);
-                  ourFilesDeleteIfExistsMethod.invoke(null, fileObject);
-                  return Boolean.TRUE;
-                }
-                catch (InvocationTargetException e) {
-                  final Throwable cause = e.getCause();
-                  if (!(cause instanceof IOException)) {
-                    return Boolean.FALSE;
-                  }
-                  if (ourAccessDeniedExceptionClass.isInstance(cause)) {
-                    // file is read-only: fallback to standard java.io API
-                    try {
-                      final File file = (File)ourPathToFileMethod.invoke(fileObject);
-                      if (file == null) {
-                        return Boolean.FALSE;
-                      }
-                      if (file.delete() || !file.exists()) {
-                        return Boolean.TRUE;
-                      }
-                    }
-                    catch (Throwable ignored) {
-                      return Boolean.FALSE;
-                    }
-                  }
-                }
-                catch (IllegalAccessException e) {
-                  return Boolean.FALSE;
-                }
-                return lastAttempt ? Boolean.FALSE : null;
+          private void performDelete(Object fileObject) throws IOException {
+            for (int attempt = MAX_FILE_IO_ATTEMPTS; attempt > 0; attempt--) {
+              try {
+                //Files.deleteIfExists(file);
+                ourFilesDeleteIfExistsMethod.invoke(null, fileObject);
+                break;
               }
-            });
-            if (!Boolean.TRUE.equals(result)) {
-              throw new IOException("Failed to delete " + fileObject) {
-                @Override
-                public synchronized Throwable fillInStackTrace() {
-                  return this; // optimization: the stacktrace is not needed: the exception is used to terminate tree walking and to pass the result
+              catch (InvocationTargetException e) {
+                Throwable cause = e.getCause();
+                if (!(cause instanceof IOException)) {
+                  throw new IllegalStateException(e);
                 }
-              };
+
+                if (!SystemInfoRt.isWindows || attempt == 1) {
+                  throw (IOException)cause;
+                }
+
+                if (ourAccessDeniedExceptionClass.isInstance(cause)) {
+                  // a file could be read-only, then fallback to legacy java.io API helps
+                  try {
+                    File file = (File)ourPathToFileMethod.invoke(fileObject);
+                    if (file.delete() || !file.exists()) {
+                      break;
+                    }
+                  }
+                  catch (Throwable ignored) { }
+                }
+              }
+              catch (IllegalAccessException e) {
+                throw new IllegalStateException(e);
+              }
+
+              try { Thread.sleep(10); }
+              catch (InterruptedException ignored) { }
             }
           }
         });
@@ -927,10 +918,11 @@ public class FileUtilRt {
     catch (InvocationTargetException e) {
       Throwable cause = e.getCause();
       if (cause instanceof IOException) throw (IOException)cause;
-      logger().info(e);
+      if (cause instanceof RuntimeException) throw (RuntimeException)cause;
+      throw new IllegalStateException(e);
     }
-    catch (Exception e) {
-      logger().info(e);
+    catch (IllegalAccessException e) {
+      throw new IllegalStateException(e);
     }
   }
 
@@ -1163,14 +1155,5 @@ public class FileUtilRt {
     }
   };
 
-  /** @deprecated please use {@code FileFilters#DIRECTORIES} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static final FileFilter ALL_DIRECTORIES = new FileFilter() {
-    @Override
-    public boolean accept(File file) {
-      return file.isDirectory();
-    }
-  };
   //</editor-fold>
 }

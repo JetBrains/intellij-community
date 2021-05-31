@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.actions.updateFromSources
 
 import com.intellij.CommonBundle
@@ -50,7 +50,6 @@ import org.jetbrains.idea.devkit.util.PsiUtil
 import java.io.File
 import java.nio.file.Paths
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
 private val LOG = logger<UpdateIdeFromSourcesAction>()
 
@@ -231,9 +230,10 @@ internal open class UpdateIdeFromSourcesAction
   }
 
   private fun showRestartNotification(command: Array<String>, deployDirPath: String, project: Project) {
-    notificationGroup.createNotification(title = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"),
-                                         content = DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"),
-                                         listener = NotificationListener { _, _ -> restartWithCommand(command, deployDirPath) }).notify(project)
+    notificationGroup
+      .createNotification(DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.title"), DevKitBundle.message("action.UpdateIdeFromSourcesAction.task.success.content"), NotificationType.INFORMATION)
+      .setListener(NotificationListener { _, _ -> restartWithCommand(command, deployDirPath) })
+      .notify(project)
   }
 
   private fun scheduleRestart(command: Array<String>, deployDirPath: String, project: Project) {

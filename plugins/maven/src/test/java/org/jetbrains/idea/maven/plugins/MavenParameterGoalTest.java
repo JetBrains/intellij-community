@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.plugins;
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.junit.Test;
 
 /**
  * @author Sergey Evdokimov
@@ -35,6 +36,7 @@ public class MavenParameterGoalTest extends LightJavaCodeInsightFixtureTestCase 
     }
   }
 
+  @Test
   public void testCompletion() {
     myFixture.configureByText("pom.xml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                          "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"\n" +

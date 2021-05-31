@@ -95,7 +95,7 @@ private fun TargetData.Declared.typeSymbols(editor: Editor, offset: Int): Sequen
   }
   else {
     for (typeProvider in SymbolTypeProvider.EP_NAME.extensions) {
-      yieldAll(typeProvider.getSymbolTypes(declaration))
+      yieldAll(typeProvider.getSymbolTypes(declaration.symbol))
     }
   }
 }
@@ -111,7 +111,9 @@ private fun TargetData.Referenced.typeSymbols(editor: Editor, offset: Int): Sequ
     }
     else {
       for (typeProvider in SymbolTypeProvider.EP_NAME.extensions) {
-        yieldAll(typeProvider.getSymbolTypes(reference))
+        for (target in reference.resolveReference()) {
+          yieldAll(typeProvider.getSymbolTypes(target))
+        }
       }
     }
   }

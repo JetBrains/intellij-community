@@ -24,7 +24,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.FontUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.JBIterable
-import git4idea.conflicts.getConflictType
+import git4idea.conflicts.GitConflictsUtil.getConflictType
 import git4idea.i18n.GitBundle
 import git4idea.index.GitFileStatus
 import git4idea.index.GitStageTracker
@@ -64,32 +64,25 @@ abstract class GitStageTree(project: Project,
 
   override fun getToggleClickCount(): Int = 2
 
-  abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
+  protected abstract fun performStageOperation(nodes: List<GitFileStatusNode>, operation: StagingAreaOperation)
 
-  abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
+  protected abstract fun getDndOperation(targetKind: NodeKind): StagingAreaOperation?
 
-  abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>);
+  protected abstract fun showMergeDialog(conflictedFiles: List<VirtualFile>)
+
+  protected abstract fun createHoverIcon(node: ChangesBrowserGitFileStatusNode): HoverIcon?
 
   override fun getHoverIcon(node: ChangesBrowserNode<*>): HoverIcon? {
     if (node == root) return null
+    if (node is ChangesBrowserGitFileStatusNode) {
+      val hoverIcon = createHoverIcon(node)
+      if (hoverIcon != null) return hoverIcon
+    }
     val statusNode = VcsTreeModelData.children(node).userObjectsStream(GitFileStatusNode::class.java).findFirst().orElse(null)
                      ?: return null
     val operation = operations.find { it.matches(statusNode) } ?: return null
     if (operation.icon == null) return null
     return GitStageHoverIcon(operation)
-  }
-
-  private inner class GitStageHoverIcon(val operation: StagingAreaOperation)
-    : HoverIcon(operation.icon!!, operation.actionText.get()) {
-    override fun invokeAction(node: ChangesBrowserNode<*>) {
-      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
-      performStageOperation(nodes, operation)
-    }
-
-    override fun equals(other: Any?): Boolean = other is GitStageHoverIcon &&
-                                                operation == other.operation
-
-    override fun hashCode(): Int = operation.hashCode()
   }
 
   override fun rebuildTree() {
@@ -163,6 +156,19 @@ abstract class GitStageTree(project: Project,
     }
   }
 
+  private inner class GitStageHoverIcon(val operation: StagingAreaOperation)
+    : HoverIcon(operation.icon!!, operation.actionText.get()) {
+    override fun invokeAction(node: ChangesBrowserNode<*>) {
+      val nodes = VcsTreeModelData.children(node).userObjects(GitFileStatusNode::class.java)
+      performStageOperation(nodes, operation)
+    }
+
+    override fun equals(other: Any?): Boolean = other is GitStageHoverIcon &&
+                                                operation == other.operation
+
+    override fun hashCode(): Int = operation.hashCode()
+  }
+
   private inner class MyTreeModelBuilder(project: Project, grouping: ChangesGroupingPolicyFactory)
     : TreeModelBuilder(project, grouping) {
     private val parentNodes: MutableMap<NodeKind, MyKindNode> = mutableMapOf()
@@ -229,10 +235,10 @@ abstract class GitStageTree(project: Project,
     }
   }
 
-  private class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
+  protected class ChangesBrowserGitFileStatusNode(node: GitFileStatusNode) :
     AbstractChangesBrowserFilePathNode<GitFileStatusNode>(node, node.fileStatus) {
     private val movedRelativePath by lazy { getMovedRelativePath(getUserObject()) }
-    private val conflict by lazy { getUserObject().createConflict() }
+    internal val conflict by lazy { getUserObject().createConflict() }
 
     override fun filePath(userObject: GitFileStatusNode): FilePath = userObject.filePath
 

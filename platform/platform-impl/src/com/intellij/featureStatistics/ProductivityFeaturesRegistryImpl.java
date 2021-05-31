@@ -1,7 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics;
 
-import com.intellij.internal.statistic.eventLog.EventLogNotificationService;
+import com.intellij.internal.statistic.eventLog.EventLogListenersManager;
 import com.intellij.internal.statistic.eventLog.EventLogSystemLogger;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -250,14 +250,13 @@ public final class ProductivityFeaturesRegistryImpl extends ProductivityFeatures
         var registryImpl = (ProductivityFeaturesRegistryImpl)registry;
         FeatureUsageTracker usageTracker = FeatureUsageTracker.getInstance();
         if (usageTracker != null && !isSubscribed.getAndSet(true)) {
-          EventLogNotificationService.INSTANCE.subscribe(logEvent -> {
+          ApplicationManager.getApplication().getService(EventLogListenersManager.class).subscribe((logEvent, rawEventId, rawData) -> {
             FeatureDescriptor feature = registryImpl.getFeatureDescriptorByLogEvent(logEvent.getGroup().getId(),
                                                                                     logEvent.getEvent().getId(),
                                                                                     logEvent.getEvent().getData());
             if (feature != null) {
               usageTracker.triggerFeatureUsed(feature.getId());
             }
-            return null;
           }, EventLogSystemLogger.DEFAULT_RECORDER);
         }
       } else {

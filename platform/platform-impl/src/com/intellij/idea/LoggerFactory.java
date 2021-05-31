@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.DialogAppender;
@@ -52,8 +52,7 @@ public final class LoggerFactory implements Logger.Factory {
 
   @Override
   public @NotNull Logger getLoggerInstance(@NotNull String name) {
-    IdeaLogger logger = new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
-    return MutedErrorLogger.isEnabled() ? MutedErrorLogger.of(logger) : logger;
+    return new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
   }
 
   private static void configureFromXmlFile(Path xmlFile) throws Exception {
@@ -92,16 +91,20 @@ public final class LoggerFactory implements Logger.Factory {
 
     PatternLayout layout = new PatternLayout("%d [%7r] %6p - %30.30c - %m \n");
 
-    RollingFileAppender ideaLog = new RollingFileAppender(layout, getLogFilePath().toString(), true) {
+    RollingFileAppender ideaLog = new RollingFileAppender() {
       @Override
       public void rollOver() {
         super.rollOver();
-        MutedErrorLogger.dropCaches();
+        IdeaLogger.dropFrequentExceptionsCaches();
       }
     };
+    ideaLog.setFile(getLogFilePath().toString());
+    ideaLog.setLayout(layout);
+    ideaLog.setAppend(true);
     ideaLog.setEncoding(StandardCharsets.UTF_8.name());
     ideaLog.setMaxBackupIndex(12);
     ideaLog.setMaximumFileSize(10_000_000);
+    ideaLog.activateOptions();
     root.addAppender(ideaLog);
 
     ConsoleAppender consoleWarn = new ConsoleAppender(layout, ConsoleAppender.SYSTEM_ERR);

@@ -43,24 +43,6 @@ public class TablePassInfo extends LayoutPassInfo {
     return table.size();
   }
 
-  @Deprecated
-  @Override
-  public int getColumnCount(final int row) {
-    return table.get(row).myColumns.size();
-  }
-
-  @Deprecated
-  @Override
-  public TabInfo getTabAt(final int row, final int column) {
-    if(getRowCount() <= row) return null;
-    TableRow tableRow = table.get(row);
-    if(tableRow == null) return null;
-    List<TabInfo> columns = tableRow.myColumns;
-    if(columns.size() <= column) return null;
-
-    return columns.get(column);
-  }
-
   @Override
   public Rectangle getHeaderRectangle() {
     return (Rectangle)toFitRec.clone();

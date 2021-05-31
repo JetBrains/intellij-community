@@ -25,6 +25,7 @@ import java.util.Collection;
 public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
   private static final Logger LOG = Logger.getInstance(TMHInstrumentingBuilder.class);
   static final String INSTRUMENT_ANNOTATIONS_PROPERTY = "tmh.instrument.annotations";
+  static final String GENERATE_LINE_NUMBERS_PROPERTY = "tmh.generate.line.numbers";
 
   public TMHInstrumentingBuilder() {
   }
@@ -59,7 +60,8 @@ public class TMHInstrumentingBuilder extends BaseInstrumentingBuilder {
                                      ClassWriter writer,
                                      InstrumentationClassFinder finder) {
     try {
-      if (TMHInstrumenter.instrument(reader, writer)) {
+      boolean generateLineNumbers = SystemProperties.getBooleanProperty(GENERATE_LINE_NUMBERS_PROPERTY, false);
+      if (TMHInstrumenter.instrument(reader, writer, generateLineNumbers)) {
         return new BinaryContent(writer.toByteArray());
       }
     } catch (Throwable e) {

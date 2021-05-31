@@ -145,6 +145,9 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   public void testCaptureOnInvalidatedReference() {
     doTest();
   }
+  public void testCaptureOnInvalidatedReference1() {
+    doTest();
+  }
 
   public void testSpecifyFormalParameterTypesWhenMethodReferenceWasExactAndTypeOfParameterIsUnknown() {
     doTest();
@@ -154,6 +157,10 @@ public class MethodRefCanBeReplacedWithLambdaFixTest extends IGQuickFixesTestCas
   public void testExplicitTypeRequired() { doTest(); }
 
   public void testNestedClassReference(){
+    doTest();
+  }
+
+  public void testLocalClassReference(){
     doTest();
   }
 

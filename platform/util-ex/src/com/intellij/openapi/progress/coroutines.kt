@@ -43,6 +43,10 @@ suspend fun checkCanceled() {
  */
 fun <T> runSuspendingAction(action: suspend CoroutineScope.() -> T): T {
   val indicator = ProgressManager.getGlobalProgressIndicator()
+  return runSuspendingAction(indicator, action)
+}
+
+fun <T> runSuspendingAction(indicator: ProgressIndicator?, action: suspend CoroutineScope.() -> T): T {
   if (indicator == null) {
     // we are not under indicator => just run the action, since nobody will cancel it anyway
     return runBlocking(block = action)

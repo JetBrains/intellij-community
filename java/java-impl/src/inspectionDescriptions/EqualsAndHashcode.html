@@ -2,11 +2,11 @@
 <body>
 Reports classes that override the
 <code>equals()</code> method but do not override the
-<code>hashCode()</code> method or vice versa, which could potentially lead to problems
+<code>hashCode()</code> method or vice versa, which can potentially lead to problems
 when the class is added to a <code>Collection</code> or a <code>HashMap</code>.
-<p>There is a fix that generates default implementation for absent method.</p>
+<p>The quick-fix generates the default implementation for an absent method.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
 class StringHolder {
   String s;
 
@@ -14,9 +14,9 @@ class StringHolder {
     return s != null ? s.hashCode() : 0;
   }
 }
-</pre>
-<p>After applying the fix:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
 class StringHolder {
   String s;
 
@@ -36,6 +36,6 @@ class StringHolder {
     return true;
   }
 }
-</pre>
+</code></pre>
 </body>
 </html>

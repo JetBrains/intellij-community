@@ -1,10 +1,10 @@
 public class YoYo {
     Object y;
     static class YoYoYo {
+        private final YoYo anObject;
+        private final Object y;
         Object x;
         Object[] xx;
-        private YoYo anObject;
-        private Object y;
 
         public YoYoYo(YoYo anObject, Object y) {
             this.anObject = anObject;

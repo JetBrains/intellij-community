@@ -1,6 +1,8 @@
 <html>
 <body>
-This inspection reports any <b>Logger</b>s which are initialized with a class literal from a different class than the <b>Logger</b> is contained in.
+Reports any <code>Logger</code>s initialized with a class literal other than the class the  <code>Logger</code>
+resides in. This can easily happen when copy-pasting some contents from another class.
+It may result in logging events under an unexpected category and cause filters to be applied incorrectly.
 <br /><br />
 Use the table below to specify the logger factory classes and logger factory methods recognized by this inspection.
 </body>

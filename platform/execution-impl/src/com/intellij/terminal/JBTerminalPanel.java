@@ -122,6 +122,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     addFocusListener(this);
 
     mySettingsProvider.getUiSettingsManager().addListener(this);
+    setCursorShape(settingsProvider.getCursorShape());
     myEscapeKeyListener = new TerminalEscapeKeyListener(this);
   }
 
@@ -304,6 +305,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
       return;
     }
     super.processMouseWheelEvent(e);
+  }
+
+  @NotNull JBTerminalSystemSettingsProviderBase getSettingsProvider() {
+    return mySettingsProvider;
   }
 
   @Nullable ToolWindow getContextToolWindow() {

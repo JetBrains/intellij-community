@@ -196,12 +196,12 @@ final class ServiceViewDragHelper {
     }
 
     @Override
-    public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+    public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
       return !myServiceView.getSelectedItems().isEmpty();
     }
 
     @Override
-    public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+    public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
       return new DnDDragStartBean(new ServiceViewDragBean(myServiceView, myServiceView.getSelectedItems()));
     }
 

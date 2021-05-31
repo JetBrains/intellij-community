@@ -46,6 +46,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @NonNls private static final String VARIANT = "JTextField.variant";
   @NonNls private static final String INPLACE_HISTORY = "JTextField.Search.InplaceHistory";
   @NonNls private static final String ON_CLEAR = "JTextField.Search.CancelAction";
+  @NonNls private static final String HISTORY_POPUP_ENABLED = "History.Popup.Enabled";
 
   protected final LinkedHashMap<String, IconHolder> icons = new LinkedHashMap<>();
   private final Handler handler = new Handler();
@@ -66,7 +67,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
    * @return a preferred space to paint the search icon
    */
   protected int getSearchIconPreferredSpace() {
-    Icon icon = getSearchIcon(true, true);
+    Icon icon = getSearchIcon(true, isSearchFieldWithHistoryPopup(this.getComponent()));
     return icon == null ? 0 : icon.getIconWidth() + getSearchIconGap();
   }
 
@@ -607,7 +608,7 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
 
     @Override
     public Icon getIcon(boolean hovered) {
-      return getSearchIcon(hovered, true);
+      return getSearchIcon(hovered, isSearchFieldWithHistoryPopup(TextFieldWithPopupHandlerUI.this.getComponent()));
     }
 
     @Override
@@ -708,7 +709,13 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
              || (component instanceof JTextArea && ((JTextArea) component).getLineWrap());
     }
   }
+
   public static boolean isSearchFieldWithHistoryPopup(Component c) {
-    return isSearchField(c);
+    if(c instanceof JComponent) {
+      var historyPopupEnabled = ((JComponent)c).getClientProperty(HISTORY_POPUP_ENABLED);
+      var searchPopupDisabled = historyPopupEnabled != null && historyPopupEnabled.equals(false);
+      return isSearchField(c) && !searchPopupDisabled;
+    }
+    return false;
   }
 }

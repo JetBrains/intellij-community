@@ -29,10 +29,8 @@ import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.evaluate.quick.XValueHint;
 import com.intellij.xdebugger.impl.evaluate.quick.common.ValueHintType;
 import com.intellij.xdebugger.impl.inline.XDebuggerInlayUtil;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreePanel;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeRestorer;
-import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
+import com.intellij.xdebugger.impl.ui.tree.*;
+import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XStackFrameNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import org.jetbrains.annotations.NotNull;
@@ -40,7 +38,9 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public abstract class XVariablesViewBase extends XDebugView {
   private final XDebuggerTreePanel myTreePanel;
@@ -48,12 +48,22 @@ public abstract class XVariablesViewBase extends XDebugView {
 
   private Object myFrameEqualityObject;
   private XDebuggerTreeRestorer myTreeRestorer;
+  private @NotNull CompletableFuture<XDebuggerTreeNode> myLoaded = new CompletableFuture<>();
   private final Map<Object, XDebuggerTreeState> myTreeStates = new FixedHashMap<>(Registry.get("debugger.tree.states.depth").asInteger());
 
   protected XVariablesViewBase(@NotNull Project project, @NotNull XDebuggerEditorsProvider editorsProvider, @Nullable XValueMarkers<?, ?> markers) {
     myTreePanel = new XDebuggerTreePanel(
       project, editorsProvider, this, null, this instanceof XWatchesView ? XDebuggerActions.WATCHES_TREE_POPUP_GROUP : XDebuggerActions.VARIABLES_TREE_POPUP_GROUP, markers);
     getTree().getEmptyText().setText(XDebuggerBundle.message("debugger.variables.not.available"));
+    getTree().addTreeListener(new XDebuggerTreeListener() {
+      @Override
+      public void childrenLoaded(@NotNull XDebuggerTreeNode node,
+                                 @NotNull List<? extends XValueContainerNode<?>> children, boolean last) {
+        if (last && node == getTree().getRoot()) {
+          myLoaded.complete(node);
+        }
+      }
+    }, this);
     DnDManager.getInstance().registerSource(myTreePanel, getTree());
   }
 
@@ -90,6 +100,8 @@ public abstract class XVariablesViewBase extends XDebugView {
 
   protected final XValueContainerNode createNewRootNode(@Nullable XStackFrame stackFrame) {
     saveCurrentTreeState();
+    myLoaded.cancel(false);
+    myLoaded = new CompletableFuture<>();
     XValueContainerNode node = doCreateNewRootNode(stackFrame);
     getTree().setRoot(node, false);
     myFrameEqualityObject = stackFrame != null ? stackFrame.getEqualityObject() : null;
@@ -148,6 +160,11 @@ public abstract class XVariablesViewBase extends XDebugView {
     }
   }
 
+  public @NotNull CompletableFuture<XDebuggerTreeNode> onReady() {
+    CompletableFuture<XDebuggerTreeNode> loaded = myLoaded;  // a copy ref for the lambda in thenCompose()
+    return myTreeRestorer != null ? CompletableFuture.allOf(myTreeRestorer.onFinished(), loaded).thenCompose(v -> loaded) : loaded.copy();
+  }
+
   @NotNull
   public final XDebuggerTree getTree() {
     return myTreePanel.getTree();
@@ -160,6 +177,7 @@ public abstract class XVariablesViewBase extends XDebugView {
   @Override
   public void dispose() {
     disposeTreeRestorer();
+    myLoaded.cancel(false);
     removeSelectionListener();
     DnDManager.getInstance().unregisterSource(myTreePanel, getTree());
   }

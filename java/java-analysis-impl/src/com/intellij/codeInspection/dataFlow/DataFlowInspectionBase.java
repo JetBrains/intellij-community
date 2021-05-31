@@ -250,6 +250,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
     return Collections.emptyList();
   }
 
+  protected @NotNull List<LocalQuickFix> createUnboxingNullableFixes(@NotNull PsiExpression qualifier, PsiExpression expression, boolean onTheFly) {
+    return Collections.emptyList();
+  }
+
   protected List<LocalQuickFix> createMethodReferenceNPEFixes(PsiMethodReferenceExpression methodRef, boolean onTheFly) {
     return Collections.emptyList();
   }
@@ -633,7 +637,10 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
         if (anchor instanceof PsiTypeCastExpression && anchor.getType() instanceof PsiPrimitiveType) {
           anchor = Objects.requireNonNull(((PsiTypeCastExpression)anchor).getOperand());
         }
-        reporter.registerProblem(anchor, problem.getMessage(expressions));
+        if (anchor != null) {
+          LocalQuickFix[] fixes = createUnboxingNullableFixes(anchor, expression, reporter.isOnTheFly()).toArray(LocalQuickFix.EMPTY_ARRAY);
+          reporter.registerProblem(anchor, problem.getMessage(expressions), fixes);
+        }
       });
       NullabilityProblemKind.nullableFunctionReturn.ifMyProblem(
         problem, expr -> reporter.registerProblem(expression == null ? expr : expression, problem.getMessage(expressions)));
@@ -1270,7 +1277,7 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
 
     static @NotNull ConstantResult mergeValue(@Nullable ConstantResult state, @NotNull DfaMemoryState memState, @Nullable DfaValue value) {
       if (state == UNKNOWN || value == null) return UNKNOWN;
-      ConstantResult nextState = fromDfType(memState.getUnboxedDfType(value));
+      ConstantResult nextState = fromDfType(DfaUtil.getUnboxedDfType(memState, value));
       return state == null || state == nextState ? nextState : UNKNOWN;
     }
   }

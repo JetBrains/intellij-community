@@ -1,0 +1,90 @@
+plugins {
+  id 'java'
+  id 'application'
+#if ($context.hasLanguage("groovy"))
+  id 'groovy'
+#end
+#if ($context.hasLanguage("kotlin"))
+  id 'org.jetbrains.kotlin.jvm' version '${context.getVersion("org.jetbrains.kotlin", "kotlin-gradle-plugin")}'
+#end
+  id 'org.openjfx.javafxplugin' version '${context.getVersion("org.openjfx", "javafxplugin")}'
+}
+
+group '${context.group}'
+version '${context.version}'
+
+repositories {
+  mavenCentral()
+}
+#if ($context.testRunnerId == "junit")
+
+ext {
+  junitVersion = '${context.getVersion("org.junit.jupiter", "junit-jupiter-engine")}'
+}
+#end
+
+#if ($context.sdkFeatureVersion > 0)
+sourceCompatibility = '${context.sdkFeatureVersion}'
+targetCompatibility = '${context.sdkFeatureVersion}'
+#end
+
+tasks.withType(JavaCompile) {
+  options.encoding = 'UTF-8'
+}
+
+application {
+  mainModule = '${context.rootPackage}'
+  mainClass = '${context.rootPackage}.HelloApplication'
+}
+#if ($context.hasLanguage("kotlin"))
+
+[compileKotlin, compileTestKotlin].forEach {
+  it.kotlinOptions {
+    jvmTarget = '11'
+  }
+}
+#end
+
+javafx {
+  version = '${context.getProperty("javafx.version")}'
+  modules = ['javafx.controls', 'javafx.fxml'#if ($context.hasLibrary("tilesfx")), 'javafx.web'#end]
+}
+
+dependencies {
+#if ($context.hasLanguage("groovy"))
+  implementation('org.codehaus.groovy:groovy:${context.getVersion("org.codehaus.groovy", "groovy")}')
+#end
+#if ($context.hasLibrary("controlsfx"))
+  implementation('org.controlsfx:controlsfx:${context.getVersion("org.controlsfx", "controlsfx")}')
+#end
+#if ($context.hasLibrary("formsfx"))
+  implementation('com.dlsc.formsfx:formsfx-core:${context.getVersion("com.dlsc.formsfx", "formsfx-core")}')
+#end
+#if ($context.hasLibrary("validatorfx"))
+  implementation('net.synedra:validatorfx:${context.getVersion("net.synedra", "validatorfx")}') {
+    exclude(group: 'org.openjfx')
+  }
+#end
+#if ($context.hasLibrary("ikonli"))
+  implementation('org.kordamp.ikonli:ikonli-javafx:${context.getVersion("org.kordamp.ikonli", "ikonli-javafx")}')
+#end
+#if ($context.hasLibrary("bootstrapfx"))
+  implementation('org.kordamp.bootstrapfx:bootstrapfx-core:${context.getVersion("org.kordamp.bootstrapfx", "bootstrapfx-core")}')
+#end
+#if ($context.hasLibrary("tilesfx"))
+  implementation('eu.hansolo:tilesfx:${context.getVersion("eu.hansolo", "tilesfx")}')
+#end
+
+#if ($context.testRunnerId == "junit")
+  testImplementation("org.junit.jupiter:junit-jupiter-api:${context.asPlaceholder("junitVersion")}")
+  testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:${context.asPlaceholder("junitVersion")}")
+#end
+#if ($context.testRunnerId == "testng")
+  testImplementation('org.testng:testng:${context.getVersion("org.testng", "testng")}')
+#end
+}
+
+test {
+  #if ($context.testRunnerId == "junit")useJUnitPlatform()#end
+  #if ($context.testRunnerId == "testng")useTestNG()#end
+}

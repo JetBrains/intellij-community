@@ -29,7 +29,7 @@ import javax.swing.border.EmptyBorder
 import javax.swing.border.MatteBorder
 import kotlin.math.max
 
-class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
+internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
   private val lessonPanel = JPanel()
 
   private val moduleNameLabel: JLabel = LinkLabelWithBackArrow<Any> { _, _ ->
@@ -52,6 +52,7 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
   init {
     isFocusable = false
+    background = UISettings.instance.backgroundColor
   }
 
   fun reinitMe(lesson: Lesson) {
@@ -178,16 +179,16 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     this.repaint()
   }
 
-  fun addMessage(@Language("HTML") text: String, state: LessonMessagePane.MessageState = LessonMessagePane.MessageState.NORMAL) {
+  fun addMessage(@Language("HTML") text: String, properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
     val messages = MessageFactory.convert(text)
     MessageFactory.setLinksHandlers(learnToolWindow.project, messages)
-    addMessages(messages, state)
+    addMessages(messages, properties)
   }
 
-  fun addMessages(messageParts: List<MessagePart>, state: LessonMessagePane.MessageState = LessonMessagePane.MessageState.NORMAL) {
-    val needToShow = lessonMessagePane.addMessage(messageParts, state)
+  fun addMessages(messageParts: List<MessagePart>, properties: LessonMessagePane.MessageProperties = LessonMessagePane.MessageProperties()) {
+    val needToShow = lessonMessagePane.addMessage(messageParts, properties)
     adjustMessagesArea()
-    if (state != LessonMessagePane.MessageState.INACTIVE) {
+    if (properties.state != LessonMessagePane.MessageState.INACTIVE) {
       scrollToMessage(needToShow())
     }
   }
@@ -292,13 +293,6 @@ class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     if (lessonPanel.minimumSize == null) return Dimension(10, 10)
     return Dimension(lessonPanel.minimumSize.getWidth().toInt() + UISettings.instance.westInset + UISettings.instance.eastInset,
                      lessonPanel.minimumSize.getHeight().toInt() + footer.minimumSize.getHeight().toInt() + UISettings.instance.northInset + UISettings.instance.southInset)
-  }
-
-  override fun getBackground(): Color {
-    return if (!UIUtil.isUnderDarcula())
-      UISettings.instance.backgroundColor
-    else
-      UIUtil.getPanelBackground()
   }
 
   fun makeNextButtonSelected() {

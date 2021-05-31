@@ -947,6 +947,9 @@ public class MavenUtil {
     if (element == null) {
       element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
     }
+    if (element == null) {
+      element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0"));
+    }
     return element;
   }
 
@@ -957,6 +960,9 @@ public class MavenUtil {
     }
     if (elements.isEmpty()) {
       elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
+    }
+    if (elements.isEmpty()) {
+      elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0"));
     }
     return elements;
   }
@@ -1054,9 +1060,8 @@ public class MavenUtil {
   }
 
   public static boolean newModelEnabled(Project project) {
-    return LegacyBridgeProjectLifecycleListener.Companion.enabled(project) &&
-           (Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
-            || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY));
+    return Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
+            || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY);
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {

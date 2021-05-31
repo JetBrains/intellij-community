@@ -130,6 +130,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
     @Override
     public void visitVariable(@NotNull PsiVariable variable) {
       if (isOnTheFly() && DeclarationSearchUtils.isTooExpensiveToSearch(variable, false)) {
+        registerPossibleProblem(variable.getNameIdentifier());
         return;
       }
       if (ignoreLocalVariables && variable instanceof PsiLocalVariable) {
@@ -173,6 +174,7 @@ public class DeclareCollectionAsInterfaceInspection extends BaseInspection {
         return;
       }
       if (isOnTheFly() && DeclarationSearchUtils.isTooExpensiveToSearch(method, false)) {
+        registerPossibleProblem(method.getNameIdentifier());
         return;
       }
       final PsiType type = method.getReturnType();

@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
@@ -563,8 +564,8 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   public void testDifferentStatesAreNotEqualAfterGc() {
     String s1 = new String("foo");
     String s2 = new String("bar");
-    ModalityStateEx state1 = new ModalityStateEx("common", s1);
-    ModalityStateEx state2 = new ModalityStateEx("common", s2);
+    ModalityStateEx state1 = new ModalityStateEx(Arrays.asList("common", s1));
+    ModalityStateEx state2 = new ModalityStateEx(Arrays.asList("common", s2));
     assertNotEquals(state1, state2);
 
     GCWatcher watcher = GCWatcher.tracking(s1, s2);

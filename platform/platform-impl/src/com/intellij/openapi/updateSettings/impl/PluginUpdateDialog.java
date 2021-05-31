@@ -201,7 +201,9 @@ public class PluginUpdateDialog extends DialogWrapper {
         List<PluginDownloader> downloaders = downloadPluginUpdates(toDownloads, indicator);
         if (!downloaders.isEmpty()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, ownerComponent, true);
+            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders,
+                                                                                       downloader -> !downloader.tryInstallWithoutRestart(
+                                                                                         ownerComponent));
             if (result.getPluginsInstalled().size() > 0) {
               if (!result.getRestartRequired()) {
                 String message;
@@ -214,7 +216,8 @@ public class PluginUpdateDialog extends DialogWrapper {
                   message = IdeBundle.message("notification.content.updated.plugins", names);
                 }
                 UpdateChecker.getNotificationGroupForUpdateResults()
-                  .createNotification(message, NotificationType.INFORMATION, "plugins.updated.without.restart")
+                  .createNotification(message, NotificationType.INFORMATION)
+                  .setDisplayId("plugins.updated.without.restart")
                   .notify(myProject);
               }
               else if (WelcomeFrame.getInstance() == null) {

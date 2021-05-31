@@ -2,8 +2,8 @@
 package com.intellij.openapi.components;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.openapi.extensions.RequiredElement;
-import com.intellij.openapi.extensions.impl.ExtensionDescriptor;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;

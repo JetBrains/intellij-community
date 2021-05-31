@@ -129,9 +129,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
   private boolean myUiLastStateWasRestored;
 
   private final Set<Object> myRestoreStateRequestors = new HashSet<>();
-  private String myTopLeftActionsPlace = ActionPlaces.UNKNOWN;
-  private String myTopMiddleActionsPlace = ActionPlaces.UNKNOWN;
-  private String myTopRightActionsPlace = ActionPlaces.UNKNOWN;
+  private String myTopLeftActionsPlace = "RunnerContentUI.topLeftToolbar";
+  private String myTopMiddleActionsPlace = "RunnerContentUI.topMiddleToolbar";
+  private String myTopRightActionsPlace = "RunnerContentUI.topRightToolbar";
   private final IdeFocusManager myFocusManager;
 
   private boolean myMinimizeActionEnabled = true;
@@ -649,7 +649,7 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
         myOriginal.myManager.addContent(content);
         GridCell cell = myOriginal.findCellFor(content);
         if (cell != null) {
-          myOriginal.restoreContent(content.getUserData(ViewImpl.ID));
+          myOriginal.restore(content);
           cell.minimize(content);
         }
       }
@@ -1066,9 +1066,8 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return hasToolbarContent;
   }
 
-  private void setActions(Wrapper placeHolder, String place, DefaultActionGroup group) {
-    String adjustedPlace = place == ActionPlaces.UNKNOWN ? ActionPlaces.TOOLBAR : place;
-    ActionToolbar tb = myActionManager.createActionToolbar(adjustedPlace, group, true);
+  private void setActions(@NotNull Wrapper placeHolder, @NotNull String place, @NotNull DefaultActionGroup group) {
+    ActionToolbar tb = myActionManager.createActionToolbar(place, group, true);
     tb.setReservePlaceAutoPopupIcon(false);
     // see IDEA-262878, evaluate action on the toolbar should get the editor data context
     tb.setTargetComponent(Registry.is("debugger.new.tool.window.layout") ? myComponent : null);
@@ -1449,9 +1448,9 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return map.computeIfAbsent(key, __ -> defaultPolicy);
   }
 
-  public @Nullable Content findContent(final String key) {
+  public @Nullable Content findContent(@NotNull String key) {
     final ContentManager manager = getContentManager();
-    if (manager == null || key == null) return null;
+    if (manager == null) return null;
 
     Content[] contents = manager.getContents();
     for (Content content : contents) {
@@ -1464,16 +1463,28 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     return null;
   }
 
-  public void restoreContent(final String key) {
+  private @Nullable Content findMinimizedContent(@NotNull String key) {
     for (AnAction action : myViewActions.getChildren(null)) {
       if (!(action instanceof RestoreViewAction)) continue;
 
       Content content = ((RestoreViewAction)action).getContent();
       if (key.equals(content.getUserData(ViewImpl.ID))) {
-        restore(content);
-        return;
+        return content;
       }
     }
+
+    return null;
+  }
+
+  public @Nullable Content findOrRestoreContentIfNeeded(@NotNull String key) {
+    Content content = findContent(key);
+    if (content == null) {
+      content = findMinimizedContent(key);
+      if (content != null) {
+        restore(content);
+      }
+    }
+    return content;
   }
 
   void setToDisposeRemovedContent(final boolean toDispose) {
@@ -1685,11 +1696,12 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
                       afterInitialized, false);
   }
 
-  private void processAttraction(final String contentId,
-                                 final Map<String, LayoutAttractionPolicy> policyMap,
-                                 final LayoutAttractionPolicy defaultPolicy,
-                                 final boolean afterInitialized,
-                                 final boolean activate) {
+  private void processAttraction(@Nullable String contentId,
+                                 @NotNull Map<String, LayoutAttractionPolicy> policyMap,
+                                 @NotNull LayoutAttractionPolicy defaultPolicy,
+                                 boolean afterInitialized,
+                                 boolean activate) {
+    if (contentId == null) return;
     IdeFocusManager.getInstance(getProject()).doWhenFocusSettlesDown(() -> myInitialized.processOnDone(() -> {
       Content content = findContent(contentId);
       if (content == null) return;
@@ -1735,7 +1747,6 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     getStateFor(content).setMinimizedInGrid(true);
     myManager.removeContent(content, false);
     saveUiState();
-    updateTabsUI(false);
   }
 
   public void restore(@NotNull Content content) {
@@ -1744,14 +1755,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
       getStateFor(content).assignTab(myLayoutSettings.getOrCreateTab(-1));
     }
     else {
-      //noinspection ConstantConditions
-      ((GridCellImpl)findCellFor(content)).restore(content);
+      grid.getCellFor(content).restore(content);
     }
     getStateFor(content).setMinimizedInGrid(false);
     myManager.addContent(content);
     saveUiState();
-    select(content, true);
-    updateTabsUI(false);
   }
 
   @Override

@@ -16,12 +16,14 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.roots.ProjectRootManager
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.junit.Test
+
 /**
  * @author Sergey Evdokimov
  */
-class MavenDontExcludeTargetTest extends MavenImportingTestCase {
+class MavenDontExcludeTargetTest extends MavenMultiVersionImportingTestCase {
 
   void testDontExcludeTargetTest() {
     MavenProjectsManager.getInstance(myProject).importingSettings.excludeTargetFolder = false
@@ -46,6 +48,7 @@ class MavenDontExcludeTargetTest extends MavenImportingTestCase {
     assert fileIndex.isInContent(aaa)
   }
 
+  @Test
   void testDontExcludeTargetTest2() {
     MavenProjectsManager.getInstance(myProject).importingSettings.excludeTargetFolder = false
 

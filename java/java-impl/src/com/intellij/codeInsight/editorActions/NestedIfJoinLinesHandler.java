@@ -4,6 +4,7 @@ package com.intellij.codeInsight.editorActions;
 import com.intellij.openapi.editor.Document;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
@@ -84,7 +85,15 @@ public class NestedIfJoinLinesHandler implements JoinRawLinesHandlerDelegate {
     String parentConditionText = ParenthesesUtils.getText(outerCondition, ParenthesesUtils.OR_PRECEDENCE);
 
     PsiElementFactory factory = JavaPsiFacade.getElementFactory(psiFile.getProject());
-    String condition = parentConditionText + " && " + childConditionText;
+    PsiElement lastChild = outerCondition.getLastChild();
+    String condition;
+    if (lastChild instanceof PsiErrorElement &&
+        PsiUtil.isJavaToken(PsiTreeUtil.skipWhitespacesAndCommentsBackward(lastChild), JavaTokenType.ANDAND)) {
+      // unterminated condition like if(a &&) -- reuse existing &&
+      condition = parentConditionText + " " + childConditionText;
+    } else {
+      condition = parentConditionText + " && " + childConditionText;
+    }
     String innerIfBody = innerIf.getText().substring(rParenth.getTextRangeInParent().getStartOffset());
     if (!innerPrefix.isEmpty()) {
       String finalInnerPrefix = innerPrefix;

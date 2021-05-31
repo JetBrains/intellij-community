@@ -8,6 +8,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -281,7 +282,7 @@ public final class GuavaInspection extends AbstractBaseJavaLocalInspectionTool {
 
       return TypeMigrationBundle.message("migrate.fix.text",
                                          TypeMigrationProcessor.getPresentation(element),
-                                         myTargetType.getCanonicalText(false));
+                                         StringUtil.escapeXmlEntities(myTargetType.getCanonicalText(false)));
     }
 
     @Nls

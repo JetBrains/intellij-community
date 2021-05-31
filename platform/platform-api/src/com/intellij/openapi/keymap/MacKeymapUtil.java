@@ -10,6 +10,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
+import java.util.StringJoiner;
 
 /**
  * Utility class to display action shortcuts in Mac menus
@@ -47,16 +48,22 @@ public final class MacKeymapUtil {
   public static final String NUM_PAD     = "\u2328";
 
   @NotNull
-  static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
-    StringBuilder buf = new StringBuilder();
-    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.append(get(CONTROL, "Ctrl+"));
-    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.append(get(OPTION, "Alt+"));
-    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.append(get(SHIFT, "Shift+"));
-    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.append(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
-    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) buf.append(Toolkit.getProperty("AWT.button1", "Button1"));
-    if ((modifiers & InputEvent.META_MASK) != 0) buf.append(get(COMMAND, "Cmd+"));
+  static String getModifiersText(@JdkConstants.InputEventMask int modifiers, String delimiter) {
+    StringJoiner buf = new StringJoiner(delimiter != null ? delimiter : "");
+    if ((modifiers & InputEvent.CTRL_MASK) != 0) buf.add(get(CONTROL, "Ctrl+"));
+    if ((modifiers & InputEvent.ALT_MASK) != 0) buf.add(get(OPTION, "Alt+"));
+    if ((modifiers & InputEvent.SHIFT_MASK) != 0) buf.add(get(SHIFT, "Shift+"));
+    if ((modifiers & InputEvent.ALT_GRAPH_MASK) != 0) buf.add(Toolkit.getProperty("AWT.altGraph", "Alt Graph"));
+    if ((modifiers & InputEvent.BUTTON1_MASK) != 0) buf.add(Toolkit.getProperty("AWT.button1", "Button1"));
+    if ((modifiers & InputEvent.META_MASK) != 0) buf.add(get(COMMAND, "Cmd+"));
+
     return buf.toString();
 
+  }
+
+  @NotNull
+  static String getModifiersText(@JdkConstants.InputEventMask int modifiers) {
+    return getModifiersText(modifiers, null);
   }
 
   @NotNull
@@ -103,10 +110,24 @@ public final class MacKeymapUtil {
   }
 
   @NotNull
-  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
-    final String modifiers = getModifiersText(keyStroke.getModifiers());
+  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke, String delimiter, boolean onlyDelimIntoModifiersAndKey) {
+    String modifiers = getModifiersText(keyStroke.getModifiers());
     final String key = KeymapUtil.getKeyText(keyStroke.getKeyCode());
+
+    if (!onlyDelimIntoModifiersAndKey) {
+      modifiers = getModifiersText(keyStroke.getModifiers(), delimiter);
+    }
+
+    if (delimiter != null) {
+      if (modifiers.isEmpty()) return key;
+      return modifiers + delimiter + key;
+    }
     return modifiers + key;
+  }
+
+  @NotNull
+  public static String getKeyStrokeText(@NotNull KeyStroke keyStroke) {
+    return getKeyStrokeText(keyStroke, null, true);
   }
 
   @NotNull

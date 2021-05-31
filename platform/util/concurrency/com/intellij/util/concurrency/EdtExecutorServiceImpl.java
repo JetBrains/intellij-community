@@ -35,11 +35,10 @@ final class EdtExecutorServiceImpl extends EdtExecutorService {
 
   @Override
   public void execute(@NotNull Runnable command, @NotNull ModalityState modalityState, @NotNull Condition<?> expired) {
-    Application application = ApplicationManager.getApplication();
     if (shouldManifestExceptionsImmediately() && !(command instanceof FlippantFuture)) {
       command = new FlippantFuture<>(Executors.callable(command, null));
     }
-
+    Application application = ApplicationManager.getApplication();
     if (application == null) {
       EventQueue.invokeLater(command);
     }

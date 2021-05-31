@@ -19,12 +19,14 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.containers.ContainerUtil
+import org.junit.Test
 
 /**
  * @author Sergey Evdokimov
  */
 class MavenDomAnnotatorTest extends MavenDomTestCase {
 
+  @Test
   void testAnnotatePlugin() {
     def modulePom = createModulePom("m", """
 <parent>

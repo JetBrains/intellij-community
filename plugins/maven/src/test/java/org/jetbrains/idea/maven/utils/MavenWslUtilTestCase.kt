@@ -14,6 +14,7 @@ import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveLocalRepository
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveM2Dir
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveUserSettingsFile
 import org.junit.Assume
+import org.junit.Test
 import java.io.File
 import java.io.IOException
 
@@ -50,18 +51,21 @@ class MavenWslUtilTestCase : MavenTestCase() {
     ).run()
   }
 
+  @Test
   fun testShouldReturnMavenLocalDirOnWsl() {
     TestCase.assertEquals(
       File(File(myUserHome, ".m2"), "repository"),
       myDistribution.resolveLocalRepository(null, null, null));
   }
 
+  @Test
   fun testShouldReturnMavenLocalSettings() {
     TestCase.assertEquals(
       File(File(myUserHome, ".m2"), "settings.xml"),
       myDistribution.resolveUserSettingsFile(null))
   }
 
+  @Test
   fun testShouldReturnMavenRepoForOverloadedSettings() {
 
     val subFile = createProjectSubFile("settings.xml",
@@ -74,24 +78,29 @@ class MavenWslUtilTestCase : MavenTestCase() {
       myDistribution.resolveLocalRepository(null, null, subFile.path));
   }
 
+  @Test
   fun testShouldReturnCorrectM2Dir() {
     TestCase.assertEquals(
       File(myUserHome, ".m2"),
       myDistribution.resolveM2Dir())
   }
 
+  @Test
   fun testWindowFileMapInMnt() {
     TestCase.assertEquals(File("c:\\somefile"), myDistribution.getWindowsFile(File("/mnt/c/somefile")));
   }
 
+  @Test
   fun testWindowFileMapInternalWsl() {
     TestCase.assertEquals(File("\\\\wsl$\\${myDistribution.msId}\\somefile"), myDistribution.getWindowsFile(File("/somefile")))
   }
 
+  @Test
   fun testWslFileMapInMnt() {
     TestCase.assertEquals(File("/mnt/c/somefile"), myDistribution.getWslFile(File("c:\\somefile")));
   }
 
+  @Test
   fun testWslFileMapInternalWsl() {
     TestCase.assertEquals(File("/somefile"), myDistribution.getWslFile(File("\\\\wsl$\\${myDistribution.msId}\\somefile")))
   }

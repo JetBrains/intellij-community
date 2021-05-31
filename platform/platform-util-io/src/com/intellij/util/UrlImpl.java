@@ -2,6 +2,7 @@
 package com.intellij.util;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -197,5 +198,27 @@ public final class UrlImpl implements Url {
   @Override
   public int hashCodeCaseInsensitive() {
     return computeHashCode(false);
+  }
+
+  @Override
+  public @NotNull Url removeParameter(@NotNull String name) {
+    StringBuilder result = new StringBuilder();
+    String parameters = this.parameters;
+    if (parameters == null) return this;
+    
+    if (parameters.startsWith("?")) {
+      parameters = StringUtil.trimStart(parameters, "?");
+      result.append("?");
+    }
+    boolean added = false;
+    for (String s : parameters.split("&")) {
+      String currentName = ContainerUtil.getFirstItem(StringUtil.split(s, "="));
+      if (!StringUtil.equals(currentName, name)) {
+        if (added) result.append("&");
+        result.append(s);
+        added = true;
+      }
+    }
+    return new UrlImpl(scheme, authority, path, result.toString());
   }
 }

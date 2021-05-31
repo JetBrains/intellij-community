@@ -8,7 +8,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.vcs.log.CommitId;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.VcsFullCommitDetails;
@@ -37,7 +36,6 @@ public final class GraphTableModel extends AbstractTableModel {
   public static final int COMMIT_DOES_NOT_MATCH = -2;
 
   private static final Logger LOG = Logger.getInstance(GraphTableModel.class);
-  private static final FrequentErrorLogger ERROR_LOG = FrequentErrorLogger.newInstance(LOG);
 
   @NotNull private final VcsLogData myLogData;
   @NotNull private final Consumer<? super Runnable> myRequestMore;
@@ -92,7 +90,7 @@ public final class GraphTableModel extends AbstractTableModel {
       return column.getStubValue(this);
     }
     catch (Throwable t) {
-      ERROR_LOG.error("Failed to get information for the log table", t);
+      LOG.error("Failed to get information for the log table", t);
       return column.getStubValue(this);
     }
   }

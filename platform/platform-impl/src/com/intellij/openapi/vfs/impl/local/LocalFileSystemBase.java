@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.local;
 
 import com.intellij.core.CoreBundle;
@@ -28,6 +28,7 @@ import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PreemptiveSafeFileOutputStream;
 import com.intellij.util.io.SafeFileOutputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -42,7 +43,8 @@ import java.util.List;
  * @author Dmitry Avdeev
  */
 public abstract class LocalFileSystemBase extends LocalFileSystem {
-  final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
+  @ApiStatus.Internal
+  public static final ExtensionPointName<PluggableLocalFileSystemContentLoader> PLUGGABLE_CONTENT_LOADER_EP_NAME =
     ExtensionPointName.create("com.intellij.vfs.local.pluggableContentLoader");
   protected static final Logger LOG = Logger.getInstance(LocalFileSystemBase.class);
 
@@ -704,7 +706,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private final DiskQueryRelay<String, FileAttributes> myAttrGetter = new DiskQueryRelay<>(FileSystemUtil::getAttributes);
-  private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list(DirectoryAccessChecker.getFileFilter(dir)));
+  private final DiskQueryRelay<File, String[]> myChildrenGetter = new DiskQueryRelay<>(dir -> dir.list());
 
   @Override
   public void refresh(boolean asynchronous) {

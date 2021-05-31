@@ -1,2 +1,2 @@
 typealias S = Runnable
-val r1 = S {}
+val s1 = S {}

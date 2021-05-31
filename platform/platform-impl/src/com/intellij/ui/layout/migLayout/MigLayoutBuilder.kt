@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.DialogWrapper.IS_VISUAL_PADDING_COMPENSATED_ON_COMPONENT_LEVEL_KEY
 import com.intellij.openapi.ui.ValidationInfo
@@ -274,6 +275,9 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
           }
         }
       }
+      else if (prevRowType == RowType.NESTED_PANEL) {
+        prevRow.gapAfter = "0px!"
+      }
     }
   }
 
@@ -288,11 +292,14 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
           it is JBTextArea || it is JComboBox<*>
         }) return RowType.CHECKBOX_TALL
     }
+    if (row.components.singleOrNull() is DialogPanel) {
+      return RowType.NESTED_PANEL
+    }
     return RowType.GENERIC
   }
 
   private enum class RowType {
-    GENERIC, CHECKBOX, CHECKBOX_TALL;
+    GENERIC, CHECKBOX, CHECKBOX_TALL, NESTED_PANEL;
 
     val isCheckboxRow get() = this == CHECKBOX || this == CHECKBOX_TALL
   }

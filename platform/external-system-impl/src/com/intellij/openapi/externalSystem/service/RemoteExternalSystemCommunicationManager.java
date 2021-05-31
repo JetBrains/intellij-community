@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.service;
 
-import com.intellij.CommonBundle;
 import com.intellij.configurationStore.StorageUtilKt;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
@@ -136,7 +135,6 @@ public final class RemoteExternalSystemCommunicationManager implements ExternalS
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(getClass()));
         // external-system-rt.jar
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ExternalSystemException.class));
-        ExternalSystemApiUtil.addBundle(params.getClassPath(), "messages.CommonBundle", CommonBundle.class);
         // com.intellij.openapi.externalSystem.model.FSTSerializer dependencies
         ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(ObjectSerializer.class));
 

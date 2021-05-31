@@ -21,13 +21,12 @@ import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
-import com.intellij.workspaceModel.ide.impl.jps.serialization.levelToLibraryTableId
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.OrderRootsCacheBridge
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 
-@Suppress("ComponentNotRegistered")
 class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(project) {
   companion object {
     private const val LIBRARY_NAME_DELIMITER = ":"
@@ -178,7 +177,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       }
     }
 
-    fun isEmpty(libraryLevel: String) = librariesPerModuleMap.values.none{ it.startsWith("$libraryLevel$LIBRARY_NAME_DELIMITER") }
+    fun isEmpty(libraryLevel: String) = librariesPerModuleMap.values.none { it.startsWith("$libraryLevel$LIBRARY_NAME_DELIMITER") }
 
     fun getLibraryLevels() = librariesPerModuleMap.values.mapTo(HashSet()) { it.substringBefore(LIBRARY_NAME_DELIMITER) }
 
@@ -196,7 +195,7 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
       if (libraryTable != null && oldName != null && newName != null) {
         val affectedModules = librariesPerModuleMap.getKeys(getLibraryIdentifier(libraryTable, oldName))
         if (affectedModules.isNotEmpty()) {
-          val libraryTableId = levelToLibraryTableId(libraryTable.tableLevel)
+          val libraryTableId = LibraryNameGenerator.getLibraryTableId(libraryTable.tableLevel)
           WorkspaceModel.getInstance(myProject).updateProjectModel { builder ->
             //maybe it makes sense to simplify this code by reusing code from PEntityStorageBuilder.updateSoftReferences
             affectedModules.mapNotNull { builder.resolve(it) }.forEach { module ->

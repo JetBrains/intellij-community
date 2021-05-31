@@ -10,7 +10,9 @@ import com.intellij.ide.dnd.DnDDragStartBean;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.dnd.aware.DnDAwareTree;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactEditorImpl;
 import com.intellij.openapi.roots.ui.configuration.artifacts.SimpleDnDAwareTree;
@@ -44,7 +46,7 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
     setModel(new AsyncTreeModel(myStructureTreeModel, this));
     setRootVisible(false);
     setShowsRootHandles(true);
-    PopupHandler.installPopupHandler(this, createPopupGroup(), ActionPlaces.UNKNOWN, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(this, createPopupGroup(), "ArtifactSourceItemTreePopup");
     installDnD();
   }
 
@@ -90,12 +92,12 @@ public class SourceItemsTree extends SimpleDnDAwareTree implements AdvancedDnDSo
   }
 
   @Override
-  public boolean canStartDragging(DnDAction action, Point dragOrigin) {
+  public boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin) {
     return !getSelectedItems().isEmpty();
   }
 
   @Override
-  public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
+  public DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin) {
     List<PackagingSourceItem> items = getSelectedItems();
     return new DnDDragStartBean(new SourceItemsDraggingObject(items.toArray(new PackagingSourceItem[0])));
   }

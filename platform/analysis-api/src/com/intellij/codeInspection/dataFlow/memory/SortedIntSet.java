@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow.memory;
 
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.function.IntConsumer;
 
 class SortedIntSet implements Comparable<SortedIntSet> {
@@ -104,6 +105,27 @@ class SortedIntSet implements Comparable<SortedIntSet> {
     for (int i = 0; i < mySize; i++) {
       consumer.accept(myData[i]);
     }
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    SortedIntSet set = (SortedIntSet)o;
+    if (mySize != set.mySize) return false;
+    return Arrays.equals(myData, 0, mySize, set.myData, 0, mySize);
+  }
+
+  @Override
+  public int hashCode() {
+    int size = mySize;
+    int result = Objects.hash(size);
+    int[] arr = myData;
+    for (int i = 0; i < size; i++) {
+      int element = arr[i];
+      result = 31 * result + element;
+    }
+    return result;
   }
 
   protected int[] toNativeArray() {

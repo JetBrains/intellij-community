@@ -6,6 +6,8 @@ import com.intellij.codeInsight.folding.CodeFoldingSettings;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.DisabledPluginsState;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginDescriptorLoader;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -19,6 +21,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CoreCommandProcessor;
 import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.extensions.*;
+import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeExtension;
@@ -161,7 +164,7 @@ public class CoreApplicationEnvironment {
         if (onDoneCallback != null) {
           onDoneCallback.consume(CompletableFuture.completedFuture(null));
         }
-        return Job.NULL_JOB;
+        return Job.nullJob();
       }
     };
   }
@@ -259,15 +262,13 @@ public class CoreApplicationEnvironment {
   }
 
   @SuppressWarnings("TestOnlyProblems")
-  private static <T> void registerExtensionPoint(@NotNull ExtensionsArea area, @NotNull String name, @NotNull Class<? extends T> aClass, boolean dymanic) {
+  private static <T> void registerExtensionPoint(@NotNull ExtensionsArea area,
+                                                 @NotNull String name,
+                                                 @NotNull Class<? extends T> aClass,
+                                                 boolean isDynamic) {
     if (!area.hasExtensionPoint(name)) {
       ExtensionPoint.Kind kind = aClass.isInterface() || Modifier.isAbstract(aClass.getModifiers()) ? ExtensionPoint.Kind.INTERFACE : ExtensionPoint.Kind.BEAN_CLASS;
-      if (dymanic) {
-        area.registerDynamicExtensionPoint(name, aClass.getName(), kind);
-      }
-      else {
-        area.registerExtensionPoint(name, aClass.getName(), kind);
-      }
+      area.registerExtensionPoint(name, aClass.getName(), kind, isDynamic);
     }
   }
 
@@ -282,7 +283,18 @@ public class CoreApplicationEnvironment {
   }
 
   public static void registerExtensionPointAndExtensions(@NotNull Path pluginRoot, @NotNull String fileName, @NotNull ExtensionsArea area) {
-    PluginManagerCore.registerExtensionPointAndExtensions(pluginRoot, fileName, area);
+    IdeaPluginDescriptorImpl descriptor = PluginDescriptorLoader.loadForCoreEnv(pluginRoot, fileName);
+    if (descriptor == null) {
+      PluginManagerCore.getLogger().error("Cannot load " + fileName + " from " + pluginRoot);
+      return;
+    }
+
+    List<ExtensionPointDescriptor> extensionPoints = descriptor.appContainerDescriptor.extensionPoints;
+    ExtensionsAreaImpl areaImpl = (ExtensionsAreaImpl)area;
+    if (extensionPoints != null) {
+      areaImpl.registerExtensionPoints(extensionPoints, descriptor);
+    }
+    descriptor.registerExtensions(areaImpl.extensionPoints, descriptor.appContainerDescriptor, null);
   }
 
   @NotNull

@@ -23,6 +23,7 @@ internal object PackageScopeTableCellRenderer : TableCellRenderer {
         column: Int
     ) = JPanel(MigLayout("al left center, insets 0 8 0 0")).apply {
         table.colors.applyTo(this, isSelected)
+
         val bgColor = if (!isSelected && value is ScopeViewModel.InstallablePackage) {
             PackageSearchUI.ListRowHighlightBackground
         } else {

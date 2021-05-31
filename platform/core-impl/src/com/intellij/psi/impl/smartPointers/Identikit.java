@@ -33,7 +33,7 @@ public abstract class Identikit {
 
   public abstract boolean isForPsiFile();
 
-  public static ByType fromPsi(@NotNull PsiElement element, @NotNull Language fileLanguage) {
+  public static @NotNull ByType fromPsi(@NotNull PsiElement element, @NotNull Language fileLanguage) {
     return fromTypes(element.getClass(), PsiUtilCore.getElementType(element), fileLanguage);
   }
 
@@ -102,7 +102,7 @@ public abstract class Identikit {
     }
 
     @Nullable
-    private PsiElement findParent(int startOffset, int endOffset, PsiElement anchor) {
+    private PsiElement findParent(int startOffset, int endOffset, @NotNull PsiElement anchor) {
       TextRange range = anchor.getTextRange();
 
       if (range.getStartOffset() != startOffset) return null;

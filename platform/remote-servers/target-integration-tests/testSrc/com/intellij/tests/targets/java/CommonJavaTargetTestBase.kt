@@ -21,13 +21,13 @@ import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.process.ProcessListener
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
+import com.intellij.execution.target.RunTargetsEnabled
 import com.intellij.execution.testframework.SearchForTestsTask
 import com.intellij.execution.testframework.export.TestResultsXmlFormatter
 import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView
 import com.intellij.execution.ui.RunContentDescriptor
 import com.intellij.java.execution.AbstractTestFrameworkIntegrationTest
 import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.Experiments
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runReadAction
@@ -65,7 +65,6 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
 
   override fun initOutputChecker(): OutputChecker = OutputChecker({ testAppPath }, { appOutputPath })
 
-  private var defaultTargetsEnabled: Boolean? = null
   private var defaultForceCompilationInTests: Boolean? = null
 
   enum class ExecutionMode { RUN, DEBUG }
@@ -86,8 +85,7 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
   public override fun setUp() {
     super.setUp()
 
-    defaultTargetsEnabled = Experiments.getInstance().isFeatureEnabled("run.targets")
-    Experiments.getInstance().setFeatureEnabled("run.targets", true)
+    RunTargetsEnabled.forceEnable(testRootDisposable)
 
     (ExecutionManager.getInstance(project) as? ExecutionManagerImpl)?.let {
       defaultForceCompilationInTests = it.forceCompilationInTests
@@ -97,9 +95,6 @@ abstract class CommonJavaTargetTestBase(protected val executionMode: ExecutionMo
 
   public override fun tearDown() {
     try {
-      defaultTargetsEnabled?.let {
-        Experiments.getInstance().setFeatureEnabled("run.targets", it)
-      }
       defaultForceCompilationInTests?.let {
         (ExecutionManager.getInstance(project) as? ExecutionManagerImpl)?.forceCompilationInTests = it
       }

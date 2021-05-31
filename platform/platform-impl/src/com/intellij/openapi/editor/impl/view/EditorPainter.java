@@ -5,7 +5,6 @@ import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.colors.FontPreferences;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -15,6 +14,7 @@ import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.editor.markup.TextAttributesEffectsBuilder.EffectDescriptor;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
@@ -55,10 +55,11 @@ public final class EditorPainter implements TextDrawingCallback {
   private static final Color CARET_DARK = Gray._0;
   private static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
                                                                                    new float[]{0, 2, 0, 2}, 0);
-  private static final int CARET_DIRECTION_MARK_SIZE = 5;
+  private static final int CARET_DIRECTION_MARK_SIZE = 3;
   private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
   private static final String WHITESPACE_CHARS = " \t" + IDEOGRAPHIC_SPACE;
   private static final Object ourCachedDot = ObjectUtils.sentinel("space symbol");
+  public static final String EDITOR_TAB_PAINTING = "editor.tab.painting";
 
   private final EditorView myView;
 
@@ -79,7 +80,7 @@ public final class EditorPainter implements TextDrawingCallback {
     for (EditorImpl.CaretRectangle location : locations) {
       float x = (float)location.myPoint.getX();
       int y = (int)location.myPoint.getY() - topOverhang;
-      float width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
+      float width = location.myWidth + CARET_DIRECTION_MARK_SIZE;
       int xStart = (int)Math.floor(x - width);
       int xEnd = (int)Math.ceil(x + width);
       editor.getContentComponent().repaint(xStart, y, xEnd - xStart, nominalLineHeight);
@@ -769,7 +770,7 @@ public final class EditorPainter implements TextDrawingCallback {
           }
           else if (c == '\t') {
             double strokeWidth = Math.max(scale, PaintUtil.devPixel(myGraphics));
-            switch (EditorSettingsExternalizable.getInstance().getTabCharacterPaintMode()) {
+            switch (AdvancedSettings.getEnum(EDITOR_TAB_PAINTING, TabCharacterPaintMode.class)) {
               case LONG_ARROW: {
                 int tabEndX = endX - (int)(myView.getPlainSpaceWidth() / 4);
                 int height = myView.getCharHeight();
@@ -1295,45 +1296,121 @@ public final class EditorPainter implements TextDrawingCallback {
         CaretVisualAttributes attr = caret == null ? CaretVisualAttributes.DEFAULT : caret.getVisualAttributes();
         g.setColor(attr.getColor() != null ? attr.getColor() : caretColor);
         boolean isRtl = location.myIsRtl;
-        if (myEditor.isInsertMode() != settings.isBlockCursor()) {
-          int lineWidth = JBUIScale.scale(attr.getWidth(settings.getLineCursorWidth()));
-          // fully cover extra character's pixel which can appear due to antialiasing
-          // see IDEA-148843 for more details
-          if (x > minX && lineWidth > 1) x -= 1 / JBUIScale.sysScale(g);
-          g.fill(new Rectangle2D.Float(x, y, lineWidth, nominalLineHeight));
-          if (myDocument.getTextLength() > 0 && caret != null &&
-              !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
-            GeneralPath triangle = new GeneralPath(Path2D.WIND_NON_ZERO, 3);
-            triangle.moveTo(isRtl ? x + lineWidth : x, y);
-            triangle.lineTo(isRtl ? x + lineWidth - CARET_DIRECTION_MARK_SIZE : x + CARET_DIRECTION_MARK_SIZE, y);
-            triangle.lineTo(isRtl ? x + lineWidth : x, y + CARET_DIRECTION_MARK_SIZE);
-            triangle.closePath();
-            g.fill(triangle);
-          }
-        }
-        else {
-          float width = location.myWidth;
-          float startX = Math.max(minX, isRtl ? x - width : x);
-          g.fill(new Rectangle2D.Float(startX, y, width, nominalLineHeight));
-          if (caret != null) {
-            int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
-            for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
-                                                                                                    caret.getVisualLineStart(),
-                                                                                                    false)) {
-              if (fragment.getCurrentInlay() != null) continue;
-              int startVisualColumn = fragment.getStartVisualColumn();
-              int endVisualColumn = fragment.getEndVisualColumn();
-              if (startVisualColumn <= targetVisualColumn && targetVisualColumn < endVisualColumn) {
-                g.setColor(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK);
-                fragment.draw(startX, y + topOverhang + myAscent,
-                              fragment.visualColumnToOffset(targetVisualColumn - startVisualColumn),
-                              fragment.visualColumnToOffset(targetVisualColumn + 1 - startVisualColumn)).accept(g);
-                break;
-              }
+        float width = location.myWidth;
+        float startX = Math.max(minX, isRtl ? x - width : x);
+
+        CaretVisualAttributes.Shape shape = attr.getShape();
+        switch (shape) {
+          case DEFAULT:
+            if (myEditor.isInsertMode() != settings.isBlockCursor()) {
+              int lineWidth = JBUIScale.scale(attr.getWidth(settings.getLineCursorWidth()));
+              // fully cover extra character's pixel which can appear due to antialiasing
+              // see IDEA-148843 for more details
+              if (x > minX && lineWidth > 1) x -= 1 / JBUIScale.sysScale(g);
+              paintCaretBar(g, caret, x, y, lineWidth, nominalLineHeight, isRtl);
             }
-            ComplexTextFragment.flushDrawingCache(g);
+            else {
+              paintCaretBlock(g, startX, y, width, nominalLineHeight);
+              paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
+            }
+            break;
+          case BLOCK:
+            paintCaretBlock(g, startX, y, width, nominalLineHeight);
+            paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
+            break;
+          case BAR:
+            // Don't draw if thickness is zero. This allows a plugin to "hide" carets, e.g. to visually emulate a block selection as a
+            // selection rather than as multiple carets with discrete selections
+            if (attr.getThickness() > 0) {
+              int barWidth = Math.max((int)(width * attr.getThickness()), JBUIScale.scale(settings.getLineCursorWidth()));
+              if (!isRtl && x > minX && barWidth > 1 && barWidth < (width / 2)) x -= 1 / JBUIScale.sysScale(g);
+              paintCaretBar(g, caret, isRtl ? x - barWidth : x, y, barWidth, nominalLineHeight, isRtl);
+              Shape savedClip = g.getClip();
+              g.setClip(new Rectangle2D.Float(isRtl ? x - barWidth : x, y, barWidth, nominalLineHeight));
+              paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
+              g.setClip(savedClip);
+            }
+            break;
+          case UNDERSCORE:
+            if (attr.getThickness() > 0) {
+              int underscoreHeight = Math.max((int)(nominalLineHeight * attr.getThickness()), 1);
+              paintCaretUnderscore(g, startX, y + nominalLineHeight - underscoreHeight, width, underscoreHeight);
+              Shape oldClip = g.getClip();
+              g.setClip(new Rectangle2D.Float(startX, y + nominalLineHeight - underscoreHeight, width, underscoreHeight));
+              paintCaretText(g, caret, caretColor, startX, y, topOverhang, isRtl);
+              g.setClip(oldClip);
+            }
+            break;
+          case BOX:
+            paintCaretBox(g, startX, y, width, nominalLineHeight);
+            break;
+        }
+      }
+    }
+
+    private void paintCaretBar(@NotNull Graphics2D g, @Nullable Caret caret, float x, float y, float w, float h, boolean isRtl) {
+      g.fill(new Rectangle2D.Float(x, y, w, h));
+      paintCaretRtlMarker(g, caret, x, y, w, isRtl);
+    }
+
+    private static void paintCaretBlock(@NotNull Graphics2D g, float x, float y, float w, float h) {
+      g.fill(new Rectangle2D.Float(x, y, w, h));
+    }
+
+    private static void paintCaretUnderscore(@NotNull Graphics2D g, float x, float y, float w, float h) {
+      g.fill(new Rectangle2D.Float(x, y, w, h));
+    }
+
+    private static void paintCaretBox(@NotNull Graphics2D g, float x, float y, float w, float h) {
+      if (w > 2) {
+        final float outlineWidth = (float) PaintUtil.alignToInt(1, g);
+        final Area area = new Area(new Rectangle2D.Float(x, y, w, h));
+        area.subtract(new Area(new Rectangle2D.Float(x + outlineWidth, y + outlineWidth, w - (2 * outlineWidth), h - (2 * outlineWidth))));
+        g.fill(area);
+      }
+      else {
+        paintCaretBlock(g, x, y, w, h);
+      }
+    }
+
+    private void paintCaretText(@NotNull Graphics2D g,
+                                @Nullable Caret caret,
+                                @NotNull Color caretColor,
+                                float x,
+                                float y,
+                                int topOverhang,
+                                boolean isRtl) {
+      if (caret != null) {
+        int targetVisualColumn = caret.getVisualPosition().column - (isRtl ? 1 : 0);
+        for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView,
+                                                                                                caret.getVisualLineStart(),
+                                                                                                false)) {
+          if (fragment.getCurrentInlay() != null) continue;
+          int startVisualColumn = fragment.getStartVisualColumn();
+          int endVisualColumn = fragment.getEndVisualColumn();
+          if (startVisualColumn <= targetVisualColumn && targetVisualColumn < endVisualColumn) {
+            g.setColor(ColorUtil.isDark(caretColor) ? CARET_LIGHT : CARET_DARK);
+            fragment.draw(x, y + topOverhang + myAscent,
+                          fragment.visualColumnToOffset(targetVisualColumn - startVisualColumn),
+                          fragment.visualColumnToOffset(targetVisualColumn + 1 - startVisualColumn)).accept(g);
+            break;
           }
         }
+        ComplexTextFragment.flushDrawingCache(g);
+      }
+    }
+
+    private void paintCaretRtlMarker(@NotNull Graphics2D g, @Nullable Caret caret, float x, float y, float w, boolean isRtl) {
+      // We only draw the RTL marker for bar carets. If our bar is close to being a block, skip it. We keep the entire caret inside the
+      // caret location width.
+      if (myDocument.getTextLength() > 0 && caret != null &&
+          !myView.getTextLayoutCache().getLineLayout(caret.getLogicalPosition().line).isLtr()) {
+        GeneralPath triangle = new GeneralPath(Path2D.WIND_NON_ZERO, 3);
+        triangle.moveTo(isRtl ? x : x + w, y);
+        triangle.lineTo(isRtl ? x - CARET_DIRECTION_MARK_SIZE : x + w + CARET_DIRECTION_MARK_SIZE, y);
+        triangle.lineTo(isRtl ? x : x + w, y + CARET_DIRECTION_MARK_SIZE);
+        triangle.closePath();
+        g.fill(triangle);
       }
     }
 

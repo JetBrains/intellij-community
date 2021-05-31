@@ -63,5 +63,11 @@ public enum ProblemHighlightType {
   /**
    * JEP 277 enhanced deprecation.
    */
-  LIKE_MARKED_FOR_REMOVAL
+  LIKE_MARKED_FOR_REMOVAL,
+
+  /**
+   * Marks places which were not checked during local analysis e.g., because of performance considerations. 
+   * These places won't be anyhow highlighted in the editor though Redundant suppression inspection would skip reporting. 
+   */
+  POSSIBLE_PROBLEM
 }

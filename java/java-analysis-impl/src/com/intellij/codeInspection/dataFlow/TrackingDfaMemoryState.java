@@ -3,16 +3,14 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.problems.JvmDfaProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
-import com.intellij.codeInspection.dataFlow.lang.ir.ConditionalGotoInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.lang.ir.ExpressionPushingInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.EnsureInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.DistinctPairSet;
 import com.intellij.codeInspection.dataFlow.memory.EqClass;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
@@ -33,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
+public class TrackingDfaMemoryState extends JvmDfaMemoryStateImpl {
   private MemoryStateChange myHistory;
 
   protected TrackingDfaMemoryState(DfaValueFactory factory) {
@@ -53,7 +51,7 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
   }
 
   @Override
-  protected void afterMerge(DfaMemoryStateImpl other) {
+  public void afterMerge(@NotNull DfaMemoryState other) {
     super.afterMerge(other);
     assert other instanceof TrackingDfaMemoryState;
     MemoryStateChange otherHistory = ((TrackingDfaMemoryState)other).myHistory;
@@ -358,12 +356,13 @@ public class TrackingDfaMemoryState extends DfaMemoryStateImpl {
         return new FactDefinition<>(null, extractor.extract(((DfaVariableValue)value).getInherentType()));
       }
       if (value instanceof DfaBinOpValue) {
-        FactDefinition<T> left = findFact(((DfaBinOpValue)value).getLeft(), extractor);
-        FactDefinition<T> right = findFact(((DfaBinOpValue)value).getRight(), extractor);
+        DfaBinOpValue binOp = (DfaBinOpValue)value;
+        FactDefinition<T> left = findFact(binOp.getLeft(), extractor);
+        FactDefinition<T> right = findFact(binOp.getRight(), extractor);
         if (left.myFact instanceof LongRangeSet && right.myFact instanceof LongRangeSet) {
-          LongRangeBinOp op = ((DfaBinOpValue)value).getOperation();
+          LongRangeBinOp op = binOp.getOperation();
           @SuppressWarnings("unchecked")
-          T result = (T)op.eval((LongRangeSet)left.myFact, (LongRangeSet)right.myFact, value.getDfType() instanceof DfLongType);
+          T result = (T)op.eval((LongRangeSet)left.myFact, (LongRangeSet)right.myFact, binOp.getDfType().getLongRangeType());
           return new FactDefinition<>(null, Objects.requireNonNull(result));
         }
       }

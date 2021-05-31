@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin
 
 import kotlinx.collections.immutable.persistentListOf
@@ -36,7 +37,7 @@ data class ModulesToIrConversionData(
         }
 }
 
-private data class ModulesToIrsState(
+data class ModulesToIrsState(
     val parentPath: Path,
     val parentModuleHasTransitivelySpecifiedKotlinVersion: Boolean
 )
@@ -78,7 +79,13 @@ class ModulesToIRsConverter(
         val initialState = ModulesToIrsState(projectPath, parentModuleHasTransitivelySpecifiedKotlinVersion = false)
 
         val parentModuleHasKotlinVersion = allModules.any { module ->
-            module.configurator == AndroidSinglePlatformModuleConfigurator
+            module.configurator == AndroidSinglePlatformModuleConfigurator ||
+            module.configurator is MppModuleConfigurator && module.subModules.any { subModule ->
+                        subModule.configurator is AndroidTargetConfiguratorBase &&
+                        subModule.dependencies.filterIsInstance<ModuleReference.ByModule>().any { moduleRef ->
+                            moduleRef.module.configurator == MppModuleConfigurator
+                        }
+            }
         }
 
         allModules.mapSequenceIgnore { module ->
@@ -122,7 +129,8 @@ class ModulesToIRsConverter(
         state: ModulesToIrsState
     ): TaskResult<List<BuildFileIR>> = when (val configurator = module.configurator) {
         is MppModuleConfigurator -> createMultiplatformModule(module, state)
-        is SinglePlatformModuleConfigurator -> createSinglePlatformModule(module, configurator, state)
+        is CustomPlatformModuleConfigurator -> configurator.createPlatformModule(this, this@ModulesToIRsConverter, module, state)
+        is SinglePlatformModuleConfigurator -> createSinglePlatformModule(this, module, configurator, state, StructurePlugin.renderPomIR.settingValue)
         else -> Success(emptyList())
     }
 
@@ -138,20 +146,22 @@ class ModulesToIRsConverter(
         }.sequence()
     }
 
-    private fun Writer.createSinglePlatformModule(
+    fun createSinglePlatformModule(
+        writer: Writer,
         module: Module,
         configurator: SinglePlatformModuleConfigurator,
-        state: ModulesToIrsState
+        state: ModulesToIrsState,
+        renderPomIr: Boolean
     ): TaskResult<List<BuildFileIR>> = computeM {
         val modulePath = calculatePathForModule(module, state.parentPath)
-        val (moduleDependencies) = createModuleDependencies(module)
-        mutateProjectStructureByModuleConfigurator(module, modulePath)
+        val (moduleDependencies) = writer.createModuleDependencies(module)
+        writer.mutateProjectStructureByModuleConfigurator(module, modulePath)
         val buildFileIR = run {
             if (!configurator.needCreateBuildFile) return@run null
             val dependenciesIRs = buildPersistenceList<BuildSystemIR> {
                 +moduleDependencies
-                with(configurator) { +createModuleIRs(this@createSinglePlatformModule, data, module) }
-                addIfNotNull(addSdtLibForNonGradleSignleplatformModule(module))
+                with(configurator) { +createModuleIRs(writer, data, module) }
+                addIfNotNull(writer.addSdtLibForNonGradleSignleplatformModule(module))
             }
 
             val moduleIr = SingleplatformModuleIR(
@@ -161,9 +171,10 @@ class ModulesToIRsConverter(
                 module.template,
                 module,
                 module.sourcesets.map { sourceset ->
+                    val path = if (sourceset.createDirectory) modulePath / Defaults.SRC_DIR / sourceset.sourcesetType.name else null
                     SingleplatformSourcesetIR(
                         sourceset.sourcesetType,
-                        modulePath / Defaults.SRC_DIR / sourceset.sourcesetType.name,
+                        path,
                         persistentListOf(),
                         sourceset
                     )
@@ -179,15 +190,15 @@ class ModulesToIRsConverter(
                 listOf(module),
                 data.pomIr.copy(artifactId = module.name),
                 isRoot = false, /* TODO */
-                renderPomIr = StructurePlugin.renderPomIR.settingValue,
-                createBuildFileIRs(module, state)
+                renderPomIr = renderPomIr,
+                writer.createBuildFileIRs(module, state)
             ).also {
                 moduleToBuildFile[module] = it
             }
         }
 
         module.subModules.mapSequence { subModule ->
-            createBuildFileForModule(
+            writer.createBuildFileForModule(
                 subModule,
                 state.stateForSubModule(modulePath)
             )
@@ -250,6 +261,7 @@ class ModulesToIRsConverter(
                 @Suppress("DEPRECATION")
                 unsafeSettingWriter {
                     runArbitraryTask(
+                        this@createModuleDependencies,
                         module,
                         to,
                         to.path.considerSingleRootModuleMode(data.isSingleRootModuleMode).asPath(),
@@ -266,9 +278,10 @@ class ModulesToIRsConverter(
         mutateProjectStructureByModuleConfigurator(target, modulePath)
         val sourcesetss = target.sourcesets.map { sourceset ->
             val sourcesetName = target.name + sourceset.sourcesetType.name.capitalize()
+            val path = if (sourceset.createDirectory) modulePath / Defaults.SRC_DIR / sourcesetName else null
             MultiplatformSourcesetIR(
                 sourceset.sourcesetType,
-                modulePath / Defaults.SRC_DIR / sourcesetName,
+                path,
                 target.name,
                 persistentListOf(),
                 sourceset

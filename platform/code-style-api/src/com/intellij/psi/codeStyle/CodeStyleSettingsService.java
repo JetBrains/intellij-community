@@ -42,6 +42,7 @@ public interface CodeStyleSettingsService {
    * @deprecated Use {@link #getCustomCodeStyleSettingsFactories()} which returns all factories, including settings pages.
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @NotNull
   Set<? extends CustomCodeStyleSettingsFactory> getSettingsPagesProviders();
 }

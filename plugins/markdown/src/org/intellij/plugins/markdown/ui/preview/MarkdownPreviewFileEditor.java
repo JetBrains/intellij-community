@@ -14,6 +14,7 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
@@ -37,6 +38,7 @@ import java.util.Objects;
 public class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private static final long PARSING_CALL_TIMEOUT_MS = 50L;
   private static final long RENDERING_DELAY_MS = 20L;
+  public static final Key<MarkdownHtmlPanel> PREVIEW_BROWSER = Key.create("PREVIEW_BROWSER");
 
   private static @Nullable Boolean ourIsDefaultMarkdownPreviewSettings = null;
 
@@ -217,6 +219,11 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     }
   }
 
+  @Nullable
+  public MarkdownHtmlPanelProvider.ProviderInfo getLastPanelProviderInfo() {
+    return myLastPanelProviderInfo;
+  }
+
   private @NotNull MarkdownHtmlPanelProvider retrievePanelProvider(@NotNull MarkdownApplicationSettings settings) {
     final MarkdownHtmlPanelProvider.ProviderInfo providerInfo = settings.getMarkdownPreviewSettings().getHtmlPanelProviderInfo();
 
@@ -294,6 +301,7 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       myHtmlPanelWrapper.remove(myPanel.getComponent());
       Disposer.dispose(myPanel);
       myPanel = null;
+      this.putUserData(PREVIEW_BROWSER, null);
     }
   }
 
@@ -301,8 +309,10 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     MarkdownApplicationSettings settings = MarkdownApplicationSettings.getInstance();
     myPanel = retrievePanelProvider(settings).createHtmlPanel();
     myHtmlPanelWrapper.add(myPanel.getComponent(), BorderLayout.CENTER);
+    if (myHtmlPanelWrapper.isShowing()) myHtmlPanelWrapper.validate();
     myHtmlPanelWrapper.repaint();
     myLastRenderedHtml = "";
+    this.putUserData(PREVIEW_BROWSER, myPanel);
     updateHtmlPooled();
   }
 
@@ -322,15 +332,15 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       return true;
     }
 
-    return SplitFileEditor.SplitEditorLayout.valueOf(((SplitFileEditor.MyFileEditorState)state).getSplitLayout()) !=
-           SplitFileEditor.SplitEditorLayout.FIRST;
+    String layout = ((SplitFileEditor.MyFileEditorState)state).getSplitLayout();
+    return layout == null || !layout.equals("FIRST"); //todo[kb] remove after migration to the new state model
   }
 
   private class MyUpdatePanelOnSettingsChangedListener implements MarkdownApplicationSettings.SettingsChangedListener {
     @Override
     public void settingsChanged(@NotNull MarkdownApplicationSettings settings) {
       mySwingAlarm.addRequest(() -> {
-        if (settings.getMarkdownPreviewSettings().getSplitEditorLayout() != SplitFileEditor.SplitEditorLayout.FIRST) {
+        if (settings.getMarkdownPreviewSettings().getSplitEditorLayout() != TextEditorWithPreview.Layout.SHOW_EDITOR) {
           if (myPanel == null) {
             attachHtmlPanel();
           }

@@ -30,6 +30,8 @@ import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
 import com.intellij.util.ui.IoErrorText;
 import com.sun.jna.*;
+import com.sun.jna.platform.mac.SystemB;
+import com.sun.jna.ptr.IntByReference;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.PropertyKey;
@@ -80,10 +82,10 @@ final class SystemHealthMonitor extends PreloadingActivity {
   private static void checkIdeDirectories() {
     if (System.getProperty(PathManager.PROPERTY_PATHS_SELECTOR) != null) {
       if (System.getProperty(PathManager.PROPERTY_CONFIG_PATH) != null && System.getProperty(PathManager.PROPERTY_PLUGINS_PATH) == null) {
-        showNotification("implicit.plugin.directory.path", null, shorten(PathManager.getPluginsPath()));
+        showNotification("implicit.plugin.directory.path", true, null, shorten(PathManager.getPluginsPath()));
       }
       if (System.getProperty(PathManager.PROPERTY_SYSTEM_PATH) != null && System.getProperty(PathManager.PROPERTY_LOG_PATH) == null) {
-        showNotification("implicit.log.directory.path", null, shorten(PathManager.getLogPath()));
+        showNotification("implicit.log.directory.path", true, null, shorten(PathManager.getLogPath()));
       }
     }
   }
@@ -100,6 +102,15 @@ final class SystemHealthMonitor extends PreloadingActivity {
   }
 
   private static void checkRuntime() {
+    if (isUnderRosetta()) {
+      NotificationAction downloadAction =
+        NotificationAction.createSimpleExpiring(
+          IdeBundle.message("bundled.jre.m1.arch.message.download"), () ->
+            BrowserUtil.browse("https://www.jetbrains.com/products/#type=ide")
+          );
+      showNotification("bundled.jre.m1.arch.message", true, downloadAction, ApplicationNamesInfo.getInstance().getFullProductName());
+    }
+
     String jreHome = SystemProperties.getJavaHome();
     if (!(PathManager.isUnderHomeDirectory(jreHome) || isModernJBR())) {
       // the JRE is non-bundled and is either non-JB or older than bundled
@@ -126,7 +137,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       }
 
       jreHome = StringUtil.trimEnd(jreHome, "/Contents/Home");
-      showNotification("bundled.jre.version.message", switchAction, JavaVersion.current(), SystemInfo.JAVA_VENDOR, jreHome);
+      showNotification("bundled.jre.version.message", true, switchAction, JavaVersion.current(), SystemInfo.JAVA_VENDOR, jreHome);
     }
   }
 
@@ -153,6 +164,27 @@ final class SystemHealthMonitor extends PreloadingActivity {
     return false;
   }
 
+  private static boolean isUnderRosetta() {
+    // Use "sysctl.proc_translated" to check if running in Rosetta
+    // See https://developer.apple.com/documentation/apple-silicon/about-the-rosetta-translation-environment#Determine-Whether-Your-App-Is-Running-as-a-Translated-Binary
+    // for more details
+
+    if (!SystemInfo.isMac || !CpuArch.isIntel64()) {
+      return false;
+    }
+
+    IntByReference size = new IntByReference(SystemB.INT_SIZE);
+    Pointer p = new Memory(size.getValue());
+
+    if (SystemB.INSTANCE.sysctlbyname(
+      "sysctl.proc_translated", p, size, null, 0) != -1)
+    {
+      return p.getInt(0) == 1;
+    }
+
+    return false;
+  }
+
   private static void checkReservedCodeCacheSize() {
     int reservedCodeCacheSize = VMOptions.readOption(VMOptions.MemoryKind.CODE_CACHE, true);
     int minReservedCodeCacheSize = 240;  //todo[r.sh] PluginManagerCore.isRunningFromSources() ? 240 : CpuArch.is32Bit() ? 384 : 512;
@@ -160,7 +192,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       EditCustomVmOptionsAction vmEditAction = new EditCustomVmOptionsAction();
       NotificationAction action = vmEditAction.isEnabled() ? NotificationAction.createExpiring(
         IdeBundle.message("vm.options.edit.action.cap"), (e, n) -> vmEditAction.actionPerformed(e)) : null;
-      showNotification("code.cache.warn.message", action, reservedCodeCacheSize, minReservedCodeCacheSize);
+      showNotification("code.cache.warn.message", true, action, reservedCodeCacheSize, minReservedCodeCacheSize);
     }
   }
 
@@ -169,7 +201,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
       .filter(var -> Strings.isNotEmpty(System.getenv(var)))
       .collect(Collectors.toList());
     if (!usedVars.isEmpty()) {
-      showNotification("vm.options.env.vars", null, String.join(", ", usedVars));
+      showNotification("vm.options.env.vars", true, null, String.join(", ", usedVars));
     }
 
     AppExecutorUtil.getAppExecutorService().execute(() -> {
@@ -177,7 +209,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
         if (StartupUtil.getShellEnvLoadingFuture().get() == Boolean.FALSE) {
           NotificationAction action = ShowLogAction.isSupported() ? ShowLogAction.notificationAction() : null;
           String appName = ApplicationNamesInfo.getInstance().getFullProductName(), shell = System.getenv("SHELL");
-          showNotification("shell.env.loading.failed", action, appName, shell);
+          showNotification("shell.env.loading.failed", true, action, appName, shell);
         }
       }
       catch (Exception e) {
@@ -200,12 +232,6 @@ final class SystemHealthMonitor extends PreloadingActivity {
         LOG.warn(t);
       }
     }
-  }
-
-  private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
-                                       @Nullable NotificationAction action,
-                                       Object... params) {
-    showNotification(key, true, action, params);
   }
 
   private static void showNotification(@PropertyKey(resourceBundle = "messages.IdeBundle") String key,
@@ -277,7 +303,7 @@ final class SystemHealthMonitor extends PreloadingActivity {
             ourFreeSpaceCalculation.set(null);
 
             long usableSpace = result;
-            long timeout = MathUtil.clamp((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS, 5, 3600);
+            long delaySeconds = MathUtil.clamp((usableSpace - LOW_DISK_SPACE_THRESHOLD) / MAX_WRITE_SPEED_IN_BPS, 5, 3600);
             if (usableSpace < LOW_DISK_SPACE_THRESHOLD) {
               if (ReadAction.compute(() -> NotificationsConfiguration.getNotificationsConfiguration()) == null) {
                 ourFreeSpaceCalculation.set(future);
@@ -293,21 +319,21 @@ final class SystemHealthMonitor extends PreloadingActivity {
                   LOG.warn(message + " (" + usableSpace + ")");
                   Messages.showErrorDialog(message, IdeBundle.message("dialog.title.fatal.configuration.problem"));
                   reported.compareAndSet(true, false);
-                  restart(timeout);
+                  restart(delaySeconds);
                 }
                 else {
                   NotificationGroupManager.getInstance().getNotificationGroup(DISPLAY_ID)
-                    .createNotification(message, file.getPath(), NotificationType.ERROR, null)
+                    .createNotification(message, file.getPath(), NotificationType.ERROR)
                     .whenExpired(() -> {
                       reported.compareAndSet(true, false);
-                      restart(timeout);
+                      restart(delaySeconds);
                     })
                     .notify(null);
                 }
               });
             }
             else {
-              restart(timeout);
+              restart(delaySeconds);
             }
           }
           catch (Exception ex) {
@@ -316,8 +342,8 @@ final class SystemHealthMonitor extends PreloadingActivity {
         }
       }
 
-      private void restart(long timeout) {
-        AppExecutorUtil.getAppScheduledExecutorService().schedule(this, timeout, TimeUnit.SECONDS);
+      private void restart(long delaySeconds) {
+        AppExecutorUtil.getAppScheduledExecutorService().schedule(this, delaySeconds, TimeUnit.SECONDS);
       }
     }, 1, TimeUnit.SECONDS);
   }

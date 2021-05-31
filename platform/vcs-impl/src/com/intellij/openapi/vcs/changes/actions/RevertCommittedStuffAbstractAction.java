@@ -48,19 +48,18 @@ abstract class RevertCommittedStuffAbstractAction extends AnAction implements Du
     Collections.addAll(changesList, changes);
     FileDocumentManager.getInstance().saveAllDocuments();
 
-    String defaultName = null;
     final ChangeList[] changeLists = e.getData(VcsDataKeys.CHANGE_LISTS);
 
-    if (changeLists != null && changeLists.length > 0) {
-      defaultName = VcsBundle.message("changes.revert.apply.change.list.name", myReverse ? 0 : 1, changeLists[0].getName());
-    }
     String title = VcsBundle.message("changes.progress.title.choice.revert.apply.changes", myReverse ? 0 : 1);
     String errorPrefix = VcsBundle.message("changes.dialog.message.failed.to.revert.apply.changes", myReverse ? 0 : 1);
 
     LocalChangeList targetList;
     if (ChangeListManager.getInstance(project).areChangeListsEnabled()) {
-      ChangeListChooser chooser = new ChangeListChooser(project, null, null,
-                                                        VcsBundle.message("revert.changes.changelist.chooser.title"), defaultName);
+      ChangeListChooser chooser = new ChangeListChooser(project, VcsBundle.message("revert.changes.changelist.chooser.title"));
+      if (changeLists != null && changeLists.length > 0) {
+        String defaultName = VcsBundle.message("changes.revert.apply.change.list.name", myReverse ? 0 : 1, changeLists[0].getName());
+        chooser.setSuggestedName(defaultName);
+      }
       if (!chooser.showAndGet()) return;
 
       targetList = chooser.getSelectedList();

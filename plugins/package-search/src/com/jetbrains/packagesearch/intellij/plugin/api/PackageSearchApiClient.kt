@@ -48,7 +48,8 @@ internal class PackageSearchApiClient(
         encodeDefaults = false
     }
 
-    fun packagesByQuery(
+    @Suppress("BlockingMethodInNonBlockingContext")
+    suspend fun packagesByQuery(
         searchQuery: String,
         onlyStable: Boolean = false,
         onlyMpp: Boolean = false,
@@ -78,7 +79,7 @@ internal class PackageSearchApiClient(
             .mapSuccess { serializer.decodeFromString(it) }
     }
 
-    fun packagesByRange(range: List<String>): ApiResult<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> {
+    suspend fun packagesByRange(range: List<String>): ApiResult<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> {
         if (range.isEmpty()) {
             return ApiResult.Success(emptyStandardV2PackagesWithRepos)
         }
@@ -98,7 +99,7 @@ internal class PackageSearchApiClient(
 
     private fun <T : Any> argumentError(message: String) = ApiResult.Failure<T>(IllegalArgumentException(message))
 
-    fun repositories(): ApiResult<ApiRepositoriesResponse> =
+    suspend fun repositories(): ApiResult<ApiRepositoriesResponse> =
         requestString("$baseUrl/repositories", contentType.standard, timeoutInSeconds, headers)
             .mapSuccess { serializer.decodeFromString(it) }
 }

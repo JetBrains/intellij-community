@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMo
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ThreeState;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,7 @@ public class ImportSpecBuilder {
   @Nullable private ExternalProjectRefreshCallback myCallback;
   private boolean isPreviewMode;
   private boolean isReportRefreshError = true;
+  private @NotNull ThreeState isNavigateToError = ThreeState.UNSURE;
   @Nullable private String myVmOptions;
   @Nullable private String myArguments;
   private boolean myCreateDirectoriesForEmptyContentRoots;
@@ -82,6 +84,16 @@ public class ImportSpecBuilder {
     return this;
   }
 
+  public ImportSpecBuilder dontNavigateToError() {
+    isNavigateToError = ThreeState.NO;
+    return this;
+  }
+
+  public ImportSpecBuilder navigateToError() {
+    isNavigateToError = ThreeState.YES;
+    return this;
+  }
+
   public ImportSpecBuilder withVmOptions(@Nullable String vmOptions) {
     myVmOptions = vmOptions;
     return this;
@@ -104,6 +116,7 @@ public class ImportSpecBuilder {
     mySpec.setCreateDirectoriesForEmptyContentRoots(myCreateDirectoriesForEmptyContentRoots);
     mySpec.setPreviewMode(isPreviewMode);
     mySpec.setReportRefreshError(isReportRefreshError);
+    mySpec.setNavigateToError(isNavigateToError);
     mySpec.setArguments(myArguments);
     mySpec.setVmOptions(myVmOptions);
     mySpec.setProjectResolverPolicy(myProjectResolverPolicy);

@@ -6,6 +6,7 @@ import org.jetbrains.idea.maven.execution.MavenExecutor;
 import org.jetbrains.idea.maven.execution.MavenRunner;
 import org.jetbrains.idea.maven.execution.MavenRunnerParameters;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
@@ -16,6 +17,7 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
 public class ArchetypesTest extends MavenTestCase {
+  @Test
   public void testGenerating() throws Exception {
     if (!hasMavenInstallation()) return;
 
@@ -23,7 +25,8 @@ public class ArchetypesTest extends MavenTestCase {
     dir.mkdirs();
 
     MavenRunnerParameters params = new MavenRunnerParameters(false, dir.getPath(), (String)null,
-                                                             Arrays.asList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
+                                                             Arrays
+                                                               .asList("org.apache.maven.plugins:maven-archetype-plugin:RELEASE:generate"),
                                                              Collections.emptyList());
 
     MavenRunnerSettings settings = new MavenRunnerSettings();

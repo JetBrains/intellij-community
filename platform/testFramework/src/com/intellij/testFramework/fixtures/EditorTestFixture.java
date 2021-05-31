@@ -287,7 +287,7 @@ public class EditorTestFixture {
     if (element == null) {
       fail("element not found in file " + myFile.getName() +
            " at caret position offset " + myEditor.getCaretModel().getOffset() + "," +
-           " psi structure:\n" + DebugUtil.psiToString(getFile(), true, true));
+           " psi structure:\n" + DebugUtil.psiToString(getFile(), false, true));
     }
     return element;
   }

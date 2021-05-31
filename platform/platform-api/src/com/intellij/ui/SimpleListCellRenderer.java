@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -53,8 +54,8 @@ public abstract class SimpleListCellRenderer<T> extends JBLabel implements ListC
       isSelected = true;
     }
     else {
-      bg = isSelected ? list.getSelectionBackground() : list.getBackground();
-      fg = isSelected ? list.getSelectionForeground() : list.getForeground();
+      bg = RenderingUtil.getBackground(list, isSelected);
+      fg = RenderingUtil.getForeground(list, isSelected);
     }
     setBackground(bg);
     setForeground(fg);

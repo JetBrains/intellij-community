@@ -189,9 +189,10 @@ public class IdeEventQueueTest extends LightPlatformTestCase {
     LoggedErrorProcessor old = LoggedErrorProcessor.getInstance();
     LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
       @Override
-      public void processError(String message, Throwable t, String[] details, @NotNull org.apache.log4j.Logger logger) {
+      public boolean processError(@NotNull String category, String message, Throwable t, String @NotNull [] details) {
         assertNull(error.get());
         error.set(t);
+        return false;
       }
     });
 

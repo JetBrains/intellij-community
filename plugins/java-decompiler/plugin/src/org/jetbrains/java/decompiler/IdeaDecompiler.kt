@@ -8,7 +8,6 @@ import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.DynamicPlugins
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.loadFullDescriptor
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -102,9 +101,8 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
 
               val plugin = PluginManagerCore.getPlugin(id)
               if (plugin is IdeaPluginDescriptorImpl) {
-                val descriptor = loadFullDescriptor(plugin)
-                if (DynamicPlugins.allowLoadUnloadWithoutRestart(descriptor)) {
-                  val task = DynamicPlugins.getPluginUnloadingTask(descriptor, DynamicPlugins.UnloadPluginOptions(disable = true, save = false))
+                if (DynamicPlugins.allowLoadUnloadWithoutRestart(plugin)) {
+                  val task = DynamicPlugins.getPluginUnloadingTask(plugin, DynamicPlugins.UnloadPluginOptions(disable = true, save = false))
                   ApplicationManager.getApplication().invokeLater(task)
                 }
               }

@@ -113,7 +113,7 @@ final class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
 
   @Override
   public boolean containsValue(int value) {
-    throw RefValueHashMap.pointlessContainsValue();
+    throw RefValueHashMapUtil.pointlessContainsValue();
   }
 
   private static final Object GCED = ObjectUtils.sentinel("GCED");

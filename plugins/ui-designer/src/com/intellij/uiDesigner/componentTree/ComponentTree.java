@@ -100,10 +100,10 @@ public final class ComponentTree extends Tree implements DataProvider {
     TreeUtil.installActions(this);
 
     // Popup menu
-    PopupHandler.installPopupHandler(
+    PopupHandler.installPopupMenu(
       this,
-      (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP),
-      ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP, ActionManager.getInstance());
+      IdeActions.GROUP_GUI_DESIGNER_COMPONENT_TREE_POPUP,
+      ActionPlaces.GUI_DESIGNER_COMPONENT_TREE_POPUP);
 
     // F2 should start inplace editing
     myStartInplaceEditingAction = new StartInplaceEditingAction(null);

@@ -2,15 +2,20 @@
 package com.intellij.openapi.util.text;
 
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Function;
 import com.intellij.util.text.CharArrayCharSequence;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 public final class Strings {
+  private static final List<String> REPLACES_REFS = Arrays.asList("&lt;", "&gt;", "&amp;", "&#39;", "&quot;");
+  private static final List<String> REPLACES_DISP = Arrays.asList("<", ">", "&", "'", "\"");
+
   public static final CharSequence EMPTY_CHAR_SEQUENCE = new CharArrayCharSequence(ArrayUtilRt.EMPTY_CHAR_ARRAY);
 
   public static boolean isAscii(char ch) {
@@ -411,6 +416,24 @@ public final class Strings {
   }
 
   @Contract(pure = true)
+  public static @NotNull String trimStart(@NotNull String s, @NotNull String prefix) {
+    if (s.startsWith(prefix)) {
+      return s.substring(prefix.length());
+    }
+    return s;
+  }
+
+  @Contract(pure = true)
+  public static int stringHashCode(@NotNull CharSequence chars) {
+    if (chars instanceof String || chars instanceof CharSequenceWithStringHash) {
+      // we know for sure these classes have conformant (and maybe faster) hashCode()
+      return chars.hashCode();
+    }
+
+    return stringHashCode(chars, 0, chars.length());
+  }
+
+  @Contract(pure = true)
   public static int stringHashCode(@NotNull CharSequence chars, int from, int to) {
     return stringHashCode(chars, from, to, 0);
   }
@@ -455,5 +478,204 @@ public final class Strings {
   @Contract(pure = true)
   public static int stringHashCodeInsensitive(@NotNull CharSequence chars) {
     return StringUtilRt.stringHashCodeInsensitive(chars);
+  }
+
+  @Contract(pure = true)
+  public static int countChars(@NotNull CharSequence text, char c) {
+    return countChars(text, c, 0, false);
+  }
+
+  @Contract(pure = true)
+  public static int countChars(@NotNull CharSequence text, char c, int offset, boolean stopAtOtherChar) {
+    return countChars(text, c, offset, text.length(), stopAtOtherChar);
+  }
+
+  @Contract(pure = true)
+  public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
+    boolean forward = start <= end;
+    start = forward ? Math.max(0, start) : Math.min(text.length(), start);
+    end = forward ? Math.min(text.length(), end) : Math.max(0, end);
+    int count = 0;
+    for (int i = forward ? start : start - 1; forward == i < end; i += forward ? 1 : -1) {
+      if (text.charAt(i) == c) {
+        count++;
+      }
+      else if (stopAtOtherChar) {
+        break;
+      }
+    }
+    return count;
+  }
+
+  public static @NotNull StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
+    for (int i = 0; i < text.length(); i++) {
+      final char c = text.charAt(i);
+      if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
+        builder.append(c);
+      }
+      else if (c == '\n') {
+        builder.append("\\n");
+      }
+      else if (c == '\r') {
+        builder.append("\\r");
+      }
+      else {
+        final Character.UnicodeBlock block = Character.UnicodeBlock.of(c);
+        if (block == Character.UnicodeBlock.HIGH_SURROGATES || block == Character.UnicodeBlock.LOW_SURROGATES) {
+          builder.append(c);
+        } else {
+          builder.append('\\').append(c);
+        }
+      }
+    }
+
+    return builder;
+  }
+
+  /**
+   * @return {@code text} with some standard XML entities replaced with corresponding characters, e.g. '{@code &lt;}' replaced with '<'
+   */
+  @Contract(pure = true)
+  public static @NotNull String unescapeXmlEntities(@NotNull String text) {
+    return replace(text, REPLACES_REFS, REPLACES_DISP);
+  }
+
+  /**
+   * @return {@code text} with some characters replaced with standard XML entities, e.g. '<' replaced with '{@code &lt;}'
+   */
+  @Contract(pure = true)
+  public static @NotNull String escapeXmlEntities(@NotNull String text) {
+    return replace(text, REPLACES_DISP, REPLACES_REFS);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String replace(@NotNull String text, @NotNull List<String> from, @NotNull List<String> to) {
+    assert from.size() == to.size();
+    StringBuilder result = null;
+    replace:
+    for (int i = 0; i < text.length(); i++) {
+      for (int j = 0; j < from.size(); j += 1) {
+        String toReplace = from.get(j);
+        String replaceWith = to.get(j);
+
+        final int len = toReplace.length();
+        if (len == 0) continue;
+        if (text.regionMatches(i, toReplace, 0, len)) {
+          if (result == null) {
+            result = new StringBuilder(text.length());
+            result.append(text, 0, i);
+          }
+          result.append(replaceWith);
+          //noinspection AssignmentToForLoopParameter
+          i += len - 1;
+          continue replace;
+        }
+      }
+
+      if (result != null) {
+        result.append(text.charAt(i));
+      }
+    }
+    return result == null ? text : result.toString();
+  }
+
+  @Contract(pure = true)
+  public static @NotNull <T> String join(T @NotNull [] items, @NotNull Function<? super T, String> f, @NotNull String separator) {
+    return join(Arrays.asList(items), f, separator);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull <T> String join(@NotNull Collection<? extends T> items,
+                                         @NotNull Function<? super T, String> f,
+                                         @NotNull String separator) {
+    if (items.isEmpty()) return "";
+    if (items.size() == 1) return notNullize(f.fun(items.iterator().next()));
+    return join((Iterable<? extends T>)items, f, separator);
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String join(@NotNull Iterable<?> items, @NotNull String separator) {
+    StringBuilder result = new StringBuilder();
+    for (Object item : items) {
+      result.append(item).append(separator);
+    }
+    if (result.length() > 0) {
+      result.setLength(result.length() - separator.length());
+    }
+    return result.toString();
+  }
+
+  @Contract(pure = true)
+  public static @NotNull <T> String join(@NotNull Iterable<? extends T> items,
+                                         @NotNull Function<? super T, ? extends CharSequence> f,
+                                         @NotNull String separator) {
+    StringBuilder result = new StringBuilder();
+    join(items, f, separator, result);
+    return result.toString();
+  }
+
+  public static <T> void join(@NotNull Iterable<? extends T> items,
+                              @NotNull Function<? super T, ? extends CharSequence> f,
+                              @NotNull String separator,
+                              @NotNull StringBuilder result) {
+    boolean isFirst = true;
+    for (T item : items) {
+      CharSequence string = f.fun(item);
+      if (!isEmpty(string)) {
+        if (isFirst) {
+          isFirst = false;
+        }
+        else {
+          result.append(separator);
+        }
+        result.append(string);
+      }
+    }
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String join(@NotNull Collection<String> strings, @NotNull String separator) {
+    if (strings.size() <= 1) {
+      return notNullize(strings.isEmpty() ? null : strings.iterator().next());
+    }
+    StringBuilder result = new StringBuilder();
+    join(strings, separator, result);
+    return result.toString();
+  }
+
+  public static void join(@NotNull Collection<String> strings, @NotNull String separator, @NotNull StringBuilder result) {
+    boolean isFirst = true;
+    for (String string : strings) {
+      if (string != null) {
+        if (isFirst) {
+          isFirst = false;
+        }
+        else {
+          result.append(separator);
+        }
+        result.append(string);
+      }
+    }
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String join(final int @NotNull [] strings, final @NotNull String separator) {
+    final StringBuilder result = new StringBuilder();
+    for (int i = 0; i < strings.length; i++) {
+      if (i > 0) result.append(separator);
+      result.append(strings[i]);
+    }
+    return result.toString();
+  }
+
+  @Contract(pure = true)
+  public static @NotNull String join(final String @NotNull ... strings) {
+    if (strings.length == 0) return "";
+
+    final StringBuilder builder = new StringBuilder();
+    for (final String string : strings) {
+      builder.append(string);
+    }
+    return builder.toString();
   }
 }

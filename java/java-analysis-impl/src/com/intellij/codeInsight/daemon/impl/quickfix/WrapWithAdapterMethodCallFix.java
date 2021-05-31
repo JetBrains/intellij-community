@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
@@ -45,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.function.Predicate;
 
 import static com.intellij.pom.java.LanguageLevel.JDK_11;
+import static com.intellij.pom.java.LanguageLevel.JDK_1_9;
 
 public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentionActionOnPsiElement implements HighPriorityAction {
   static class Wrapper extends ArgumentFixerActionFactory {
@@ -152,6 +139,9 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     new Wrapper("new java.io.File({0})",
                 inType -> inType.equalsToText(CommonClassNames.JAVA_LANG_STRING),
                 outType -> outType.equalsToText(CommonClassNames.JAVA_IO_FILE)),
+    new Wrapper("new java.lang.StringBuilder({0})",
+                inType -> inType.equalsToText(CommonClassNames.JAVA_LANG_STRING),
+                outType -> outType.equalsToText(CommonClassNames.JAVA_LANG_STRING_BUILDER)),
     new Wrapper("java.nio.file.Path.of({0})",
                 inType -> inType.equalsToText(CommonClassNames.JAVA_LANG_STRING),
                 outType -> outType.equalsToText("java.nio.file.Path") && isAppropriateLanguageLevel(outType, level -> level.isAtLeast(JDK_11))),
@@ -160,7 +150,12 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                 outType -> outType.equalsToText("java.nio.file.Path") && isAppropriateLanguageLevel(outType, level -> level.isLessThan(JDK_11))),
     new Wrapper("java.util.Arrays.asList({0})",
                 inType -> inType instanceof PsiArrayType && ((PsiArrayType)inType).getComponentType() instanceof PsiClassType,
-                outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE)),
+                outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE) &&
+                           isAppropriateLanguageLevel(outType ,l -> l.isLessThan(JDK_1_9))),
+    new Wrapper("java.util.List.of({0})",
+                inType -> inType instanceof PsiArrayType && ((PsiArrayType)inType).getComponentType() instanceof PsiClassType,
+                outType -> InheritanceUtil.isInheritor(outType, CommonClassNames.JAVA_LANG_ITERABLE) &&
+                           isAppropriateLanguageLevel(outType ,l -> l.isAtLeast(JDK_1_9))),
     new Wrapper("java.lang.Math.toIntExact({0})",
                 inType -> PsiType.LONG.equals(inType) || inType.equalsToText(CommonClassNames.JAVA_LANG_LONG),
                 outType -> PsiType.INT.equals(outType) || outType.equalsToText(CommonClassNames.JAVA_LANG_INTEGER)),
@@ -215,10 +210,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
                              @NotNull PsiFile file,
                              @NotNull PsiElement startElement,
                              @NotNull PsiElement endElement) {
-    return myType != null &&
-           myWrapper != null &&
-           myType.isValid() &&
-           BaseIntentionAction.canModify(startElement);
+    return myType != null && myWrapper != null && myType.isValid() && BaseIntentionAction.canModify(startElement);
   }
 
   @Override
@@ -237,10 +229,7 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
 
   private static class MyMethodArgumentFix extends MethodArgumentFix implements HighPriorityAction {
 
-    protected MyMethodArgumentFix(@NotNull PsiExpressionList list,
-                                  int i,
-                                  @NotNull PsiType toType,
-                                  @NotNull Wrapper fixerActionFactory) {
+    protected MyMethodArgumentFix(@NotNull PsiExpressionList list, int i, @NotNull PsiType toType, @NotNull Wrapper fixerActionFactory) {
       super(list, i, toType, fixerActionFactory);
     }
 

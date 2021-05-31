@@ -16,11 +16,16 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.options.Scheme;
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 public interface CodeStyleScheme extends Scheme {
+
+  @NlsSafe
   String DEFAULT_SCHEME_NAME = "Default";
+
+  @NlsSafe
   String PROJECT_SCHEME_NAME = "Project";
 
   String CODE_STYLE_TAG_NAME = "code_scheme";

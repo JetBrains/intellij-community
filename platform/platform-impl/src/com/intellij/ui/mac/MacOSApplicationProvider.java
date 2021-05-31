@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac;
 
-import com.apple.eawt.AppEvent;
-import com.apple.eawt.Application;
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.ide.CommandLineProcessor;
 import com.intellij.ide.CommandLineProcessorResult;
@@ -35,6 +33,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.desktop.OpenURIEvent;
+import java.awt.desktop.OpenURIHandler;
 import java.awt.event.MouseEvent;
 import java.io.File;
 import java.nio.file.Path;
@@ -65,110 +65,47 @@ public final class MacOSApplicationProvider {
     private static final AtomicBoolean ENABLED = new AtomicBoolean(true);
     @SuppressWarnings({"FieldCanBeLocal", "unused"}) private static Object UPDATE_CALLBACK_REF;
 
-    // TODO remove backward compatibility code
-
-    // TODO remove me [begin]
-    private static final boolean USE_NEW_API;
-
-    static {
-      boolean legacyClassFound;
-      try {
-        Class.forName("com.apple.eawt._AppEventLegacyHandler");
-        legacyClassFound = true;
-      }
-      catch (ClassNotFoundException e) {
-        legacyClassFound = false;
-      }
-      USE_NEW_API = !legacyClassFound;
-    }
-    // TODO remove me [end]
-
     static void initMacApplication() {
-      if (USE_NEW_API) {
-        Desktop desktop = Desktop.getDesktop();
+      Desktop desktop = Desktop.getDesktop();
 
-        desktop.setAboutHandler(event -> {
-          if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            AboutAction.perform(getProject(false));
-          }
-        });
+      desktop.setAboutHandler(event -> {
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          AboutAction.perform(getProject(false));
+        }
+      });
 
-        desktop.setPreferencesHandler(event -> {
-          if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            Project project = Objects.requireNonNull(getProject(true));
-            submit("Preferences", () -> ShowSettingsAction.perform(project));
-          }
-        });
+      desktop.setPreferencesHandler(event -> {
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          Project project = Objects.requireNonNull(getProject(true));
+          submit("Preferences", () -> ShowSettingsAction.perform(project));
+        }
+      });
 
-        desktop.setQuitHandler((event, response) -> {
-          if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            submit("Quit", () -> ApplicationManager.getApplication().exit());
-            response.cancelQuit();
-          }
-          else {
-            response.performQuit();
-          }
-        });
+      desktop.setQuitHandler((event, response) -> {
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          submit("Quit", () -> ApplicationManager.getApplication().exit());
+          response.cancelQuit();
+        }
+        else {
+          response.performQuit();
+        }
+      });
 
-        desktop.setOpenFileHandler(event -> {
-          List<File> files = event.getFiles();
-          if (files.isEmpty()) {
-            return;
-          }
+      desktop.setOpenFileHandler(event -> {
+        List<File> files = event.getFiles();
+        if (files.isEmpty()) {
+          return;
+        }
 
-          List<Path> list = ContainerUtil.map(files, file -> file.toPath());
-          if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            Project project = getProject(false);
-            submit("OpenFile", () -> ProjectUtil.tryOpenFiles(project, list, "MacMenu"));
-          }
-          else {
-            IdeStarter.openFilesOnLoading(list);
-          }
-        });
-      } else {
-        // TODO remove me [begin]
-        Application application = Application.getApplication();
-
-        application.setAboutHandler((com.apple.eawt.AboutHandler) event -> {
-          if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            AboutAction.perform(getProject(false));
-          }
-        });
-
-        application.setPreferencesHandler((com.apple.eawt.PreferencesHandler) event -> {
-          if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            Project project = Objects.requireNonNull(getProject(true));
-            submit("Preferences", () -> ShowSettingsAction.perform(project));
-          }
-        });
-
-        application.setQuitHandler((com.apple.eawt.QuitHandler) (event, response) -> {
-          if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            submit("Quit", () -> ApplicationManager.getApplication().exit());
-            response.cancelQuit();
-          }
-          else {
-            response.performQuit();
-          }
-        });
-
-        application.setOpenFileHandler((com.apple.eawt.OpenFilesHandler) event -> {
-          List<File> files = event.getFiles();
-          if (files.isEmpty()) {
-            return;
-          }
-
-          List<Path> list = ContainerUtil.map(files, file -> file.toPath());
-          if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
-            Project project = getProject(false);
-            submit("OpenFile", () -> ProjectUtil.tryOpenFiles(project, list, "MacMenu"));
-          }
-          else {
-            IdeStarter.openFilesOnLoading(list);
-          }
-        });
-        // TODO remove me [end]
-      }
+        List<Path> list = ContainerUtil.map(files, file -> file.toPath());
+        if (LoadingState.COMPONENTS_LOADED.isOccurred()) {
+          Project project = getProject(false);
+          submit("OpenFile", () -> ProjectUtil.tryOpenFiles(project, list, "MacMenu"));
+        }
+        else {
+          IdeStarter.openFilesOnLoading(list);
+        }
+      });
 
       if (JnaLoader.isLoaded()) {
         installAutoUpdateMenu();
@@ -264,79 +201,40 @@ public final class MacOSApplicationProvider {
         return;
       }
 
-      if (USE_NEW_API) {
-        Desktop.getDesktop().setOpenURIHandler(new java.awt.desktop.OpenURIHandler() {
-          @Override
-          public void openURI(java.awt.desktop.OpenURIEvent event) {
-            Map<String, List<String>> parameters = new QueryStringDecoder(event.getURI()).parameters();
-            String file = ContainerUtil.getFirstItem(parameters.get("file"));
-            if (file == null) {
-              return;
-            }
-
-            if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-              // handle paths like /file/foo\qwe
-              IdeStarter.openFilesOnLoading(Collections.singletonList(Paths.get(FileUtilRt.toSystemDependentName(file)).normalize()));
-              return;
-            }
-
-            String line = ContainerUtil.getFirstItem(parameters.get("line"));
-            String column = ContainerUtil.getFirstItem(parameters.get("column"));
-            List<String> args = new SmartList<>();
-            if (line != null) {
-              args.add("--line");
-              args.add(line);
-            }
-            if (column != null) {
-              args.add("--column");
-              args.add(column);
-            }
-            args.add(file);
-
-            ApplicationManager.getApplication().invokeLater(() -> {
-              CommandLineProcessorResult result = CommandLineProcessor.processExternalCommandLine(args, null);
-              result.showErrorIfFailed();
-            }, ModalityState.NON_MODAL);
+      Desktop.getDesktop().setOpenURIHandler(new OpenURIHandler() {
+        @Override
+        public void openURI(OpenURIEvent event) {
+          Map<String, List<String>> parameters = new QueryStringDecoder(event.getURI()).parameters();
+          String file = ContainerUtil.getFirstItem(parameters.get("file"));
+          if (file == null) {
+            return;
           }
-        });
-      } else {
-        // TODO remove me [end]
-        Application.getApplication().setOpenURIHandler(new com.apple.eawt.OpenURIHandler() {
-          @Override
-          public void openURI(AppEvent.OpenURIEvent event) {
-            Map<String, List<String>> parameters = new QueryStringDecoder(event.getURI()).parameters();
-            String file = ContainerUtil.getFirstItem(parameters.get("file"));
-            if (file == null) {
-              return;
-            }
 
-            if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
-              // handle paths like /file/foo\qwe
-              IdeStarter.openFilesOnLoading(Collections.singletonList(Paths.get(FileUtilRt.toSystemDependentName(file)).normalize()));
-              return;
-            }
-
-            String line = ContainerUtil.getFirstItem(parameters.get("line"));
-            String column = ContainerUtil.getFirstItem(parameters.get("column"));
-            List<String> args = new SmartList<>();
-            if (line != null) {
-              args.add("--line");
-              args.add(line);
-            }
-            if (column != null) {
-              args.add("--column");
-              args.add(column);
-            }
-            args.add(file);
-
-            ApplicationManager.getApplication().invokeLater(() -> {
-              CommandLineProcessorResult result = CommandLineProcessor.processExternalCommandLine(args, null);
-              result.showErrorIfFailed();
-            }, ModalityState.NON_MODAL);
+          if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+            // handle paths like /file/foo\qwe
+            IdeStarter.openFilesOnLoading(Collections.singletonList(Paths.get(FileUtilRt.toSystemDependentName(file)).normalize()));
+            return;
           }
-        });
-        // TODO remove me [end]
-      }
+
+          String line = ContainerUtil.getFirstItem(parameters.get("line"));
+          String column = ContainerUtil.getFirstItem(parameters.get("column"));
+          List<String> args = new SmartList<>();
+          if (line != null) {
+            args.add("--line");
+            args.add(line);
+          }
+          if (column != null) {
+            args.add("--column");
+            args.add(column);
+          }
+          args.add(file);
+
+          ApplicationManager.getApplication().invokeLater(() -> {
+            CommandLineProcessorResult result = CommandLineProcessor.processExternalCommandLine(args, null);
+            result.showErrorIfFailed();
+          }, ModalityState.NON_MODAL);
+        }
+      });
     }
   }
 }

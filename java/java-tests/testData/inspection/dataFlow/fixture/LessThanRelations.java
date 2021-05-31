@@ -1,6 +1,14 @@
 import java.util.*;
 
 class LessThanRelations {
+  void testNE(int a, int b) {
+    if (a != b) {
+      if (<warning descr="Condition 'a == b' is always 'false'">a == b</warning>) {}
+      if (a > b) {}
+      if (a < b) {}
+    }
+  }
+  
   void test(int a, int b, int c, int d) {
     if ((a >= c && b <= d) ||
         (b >= c && a <= d)) {

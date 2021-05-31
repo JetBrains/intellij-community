@@ -27,7 +27,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   private void doTest() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final ControlFlow flow = ControlFlowCache.getControlFlow((PyFile)myFile);
     final String fullPath = getTestDataPath() + testName + ".txt";
@@ -179,7 +179,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   public void testQualifiedSelfReference() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final PyClass pyClass = ((PyFile) myFile).getTopLevelClasses().get(0);
@@ -188,7 +188,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   public void testSelf() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final PyClass pyClass = ((PyFile) myFile).getTopLevelClasses().get(0);
@@ -197,7 +197,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   public void testTryBreak() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final ControlFlow flow = ControlFlowCache.getControlFlow((PyFunction)((PyFile)myFile).getStatements().get(0));
     final String fullPath = getTestDataPath() + testName + ".txt";
@@ -319,7 +319,7 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
   }
 
   private void doTestFirstStatement() {
-    final String testName = getTestName(false).toLowerCase();
+    final String testName = getTestName(false);
     configureByFile(testName + ".py");
     final String fullPath = getTestDataPath() + testName + ".txt";
     final ControlFlow flow = ControlFlowCache.getControlFlow((ScopeOwner)((PyFile)myFile).getStatements().get(0));

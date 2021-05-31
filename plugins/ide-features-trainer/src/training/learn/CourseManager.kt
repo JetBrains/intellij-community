@@ -7,11 +7,14 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.KeyedLazyInstanceEP
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
 import training.lang.LangManager
 import training.lang.LangSupport
 import training.learn.course.IftModule
 import training.learn.course.LearningCourse
+import training.learn.course.LearningCourseBase
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.ui.LearnToolWindowFactory
@@ -24,12 +27,16 @@ class CourseManager internal constructor() : Disposable {
 
   var unfoldModuleOnInit by WeakReferenceDelegator<IftModule>()
 
-  private var allModules: List<IftModule>? = null
+  private val languageCourses: MultiMap<LangSupport, IftModule> = MultiMap.create()
+  private val commonCourses: MultiMap<String, IftModule> = MultiMap.create()
 
   private var currentConfiguration = switchOnExperimentalLessons
 
-  val modules: List<IftModule>
-    get() = LangManager.getInstance().getLangSupport()?.let { filterByLanguage(it) } ?: emptyList()
+  val modules: Collection<IftModule>
+    get() {
+      prepareLangModules()
+      return LangManager.getInstance().getLangSupport()?.let { languageCourses[it] } ?: emptyList()
+    }
 
   val lessonsForModules: List<Lesson>
     get() = modules.map { it.lessons }.flatten()
@@ -47,7 +54,8 @@ class CourseManager internal constructor() : Disposable {
   }
 
   fun clearModules() {
-    allModules = null
+    languageCourses.clear()
+    commonCourses.clear()
   }
 
   //TODO: remove this method or convert XmlModule to a Module
@@ -73,25 +81,44 @@ class CourseManager internal constructor() : Disposable {
     return lessonsForModules.firstOrNull { it.name.equals(lessonName, ignoreCase = true) }
   }
 
-  private fun initAllModules(): List<IftModule> = COURSE_MODULES_EP.extensions
-    .filter { courseCanBeUsed(it.language) }
-    .map { it.instance.modules() }.flatten()
-
-  private fun getAllModules(): List<IftModule> {
-    if (currentConfiguration != switchOnExperimentalLessons) {
-      allModules = null
-      currentConfiguration = switchOnExperimentalLessons
-    }
-    return allModules ?: initAllModules().also { allModules = it }
+  fun findCommonModules(commonCourseId: String): Collection<IftModule> {
+    if (commonCourses.isEmpty) reloadCommonModules()
+    return commonCourses[commonCourseId]
   }
 
-  private fun filterByLanguage(primaryLangSupport: LangSupport): List<IftModule> {
-    return getAllModules().filter { it.primaryLanguage == primaryLangSupport }
+  private fun reloadLangModules() {
+    val extensions = COURSE_MODULES_EP.extensions.filter { courseCanBeUsed(it.language) }
+    for (e in extensions) {
+      val langSupport = LangManager.getInstance().getLangSupportById(e.language)
+      if (langSupport != null) {
+        languageCourses.put(langSupport, e.instance.modules())
+      }
+    }
+  }
+
+  private fun reloadCommonModules() {
+    val commonCoursesExtensions = COMMON_COURSE_MODULES_EP.extensions
+    for (e in commonCoursesExtensions) {
+      if (commonCourses[e.key].isEmpty()) {
+        commonCourses.put(e.key, e.instance.modules())
+      }
+    }
+  }
+
+  private fun prepareLangModules() {
+    if (currentConfiguration != switchOnExperimentalLessons) {
+      languageCourses.clear()
+      currentConfiguration = switchOnExperimentalLessons
+    }
+    if (languageCourses.isEmpty) {
+      reloadLangModules()
+    }
   }
 
   companion object {
     val instance: CourseManager
       get() = ApplicationManager.getApplication().getService(CourseManager::class.java)
-    val COURSE_MODULES_EP = ExtensionPointName<LanguageExtensionPoint<LearningCourse>>("training.ift.learning.course")
+    val COURSE_MODULES_EP = ExtensionPointName<LanguageExtensionPoint<LearningCourseBase>>("training.ift.learning.course")
+    val COMMON_COURSE_MODULES_EP = ExtensionPointName<KeyedLazyInstanceEP<LearningCourse>>("training.ift.learning.commonCourse")
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.recorder.compile
 
 import com.intellij.ide.plugins.PluginManagerCore
@@ -78,7 +78,7 @@ internal class LocalCompiler {
     }
     val pluginClassLoader = PluginClassLoader(UrlClassLoader.build().files(listOf(tempDir.toPath())).useCache(),
                                               classLoadersArray, DefaultPluginDescriptor("SubGuiScriptRecorder"), null as Path?,
-                                              PluginManagerCore::class.java.classLoader, null, null, null)
+                                              PluginManagerCore::class.java.classLoader)
     val currentTest = pluginClassLoader.loadClass(TEST_CLASS_NAME)
                       ?: throw Exception("Unable to load by pluginClassLoader $TEST_CLASS_NAME.class file")
     val testCase = currentTest.getDeclaredConstructor().newInstance()

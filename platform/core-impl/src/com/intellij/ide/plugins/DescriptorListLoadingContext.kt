@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
@@ -20,10 +20,11 @@ private val LOG: Logger
 @ApiStatus.Internal
 class DescriptorListLoadingContext constructor(
   @JvmField val disabledPlugins: Set<PluginId>,
-  @JvmField @Suppress("EXPOSED_PROPERTY_TYPE_IN_CONSTRUCTOR") val result: PluginLoadingResult = PluginManagerCore.createLoadingResult(null),
+  @JvmField val result: PluginLoadingResult = createPluginLoadingResult(buildNumber = null),
   override val isMissingIncludeIgnored: Boolean = false,
   @JvmField val isMissingSubDescriptorIgnored: Boolean = false,
   checkOptionalConfigFileUniqueness: Boolean = false,
+  @JvmField val transient: Boolean = false
 ) : AutoCloseable, ReadModuleContext {
   private val toDispose = ConcurrentLinkedQueue<Array<MyXmlInterner?>>()
   // synchronization will ruin parallel loading, so, string pool is local for thread
@@ -93,7 +94,14 @@ private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
   "qualifiedName"))
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-private val EXTRA_STRINGS = Arrays.asList("id", "order", "os", PluginManagerCore.VENDOR_JETBRAINS)
+private val EXTRA_STRINGS = Arrays.asList(
+  "id", "order", "os", PluginManagerCore.VENDOR_JETBRAINS,
+  "com.intellij.applicationService",
+  "com.intellij.projectService",
+  "com.intellij.moduleService",
+  "com.intellij.postStartupActivity",
+  "com.intellij",
+)
 
 private class MyXmlInterner : XmlInterner {
   @Suppress("SSBasedInspection")

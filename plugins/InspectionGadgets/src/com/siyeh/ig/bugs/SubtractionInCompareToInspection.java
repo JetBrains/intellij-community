@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
@@ -120,6 +121,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
 
     private boolean isSafeSubtraction(PsiBinaryExpression binaryExpression) {
       final PsiType type = binaryExpression.getType();
+      if (type == null) return true;
       if (PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
         // Difference of floats and doubles never overflows.
         // It may lose a precision, but it's not the case when we compare the result with zero
@@ -153,7 +155,7 @@ public class SubtractionInCompareToInspection extends BaseInspection {
       LongRangeSet leftRange = CommonDataflow.getExpressionRange(lhs);
       LongRangeSet rightRange = CommonDataflow.getExpressionRange(rhs);
       if (leftRange != null && !leftRange.isEmpty() && rightRange != null && !rightRange.isEmpty()) {
-        if (!leftRange.subtractionMayOverflow(rightRange, PsiType.LONG.equals(type))) return true;
+        if (!leftRange.subtractionMayOverflow(rightRange, JvmPsiRangeSetUtil.getLongRangeType(type))) return true;
       }
       return false;
     }

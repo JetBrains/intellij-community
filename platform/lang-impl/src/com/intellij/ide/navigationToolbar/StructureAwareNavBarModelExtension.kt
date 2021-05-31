@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.navigationToolbar
 
 import com.intellij.ide.structureView.StructureViewModel
@@ -13,6 +13,7 @@ import com.intellij.lang.LanguageStructureViewBuilder
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
@@ -35,8 +36,12 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
       if (psiFile == null || !psiFile.isValid || editor == null) return null
       val psiElement = psiFile.findElementAt(editor.caretModel.offset)
       if (isAcceptableLanguage(psiElement)) {
-        buildStructureViewModel(psiFile, editor)?.let { model ->
-          return (model.currentEditorElement as? PsiElement)?.originalElement
+        try {
+          buildStructureViewModel(psiFile, editor)?.let { model ->
+            return (model.currentEditorElement as? PsiElement)?.originalElement
+          }
+        }
+        catch (ignored: IndexNotReadyException) {
         }
       }
     }

@@ -1,22 +1,8 @@
-/*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.run;
 
-import com.intellij.application.options.ModulesComboBox;
+import com.intellij.application.options.ModuleDescriptionsComboBox;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.ConfigurationUtil;
@@ -47,8 +33,9 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
     private LabeledComponent<EditorTextFieldWithBrowseButton> mainClass;
 
     private CommonJavaParametersPanel commonProgramParameters;
-    private LabeledComponent<ModulesComboBox> moduleChooser;
+    private LabeledComponent<ModuleDescriptionsComboBox> moduleChooser;
     private JrePathEditor jrePathEditor;
+    private LabeledComponent<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
 
     private final ConfigurationModuleSelector moduleSelector;
     private JComponent anchor;
@@ -90,7 +77,9 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
             }
         });
         createApplicationClassBrowser(project, moduleSelector).setField(mainClass.getComponent());
-        anchor = UIUtil.mergeComponentsWithAnchor(mainClass, commonProgramParameters, jrePathEditor, jrePathEditor, moduleChooser);
+        anchor = UIUtil.mergeComponentsWithAnchor(mainClass, commonProgramParameters, jrePathEditor, jrePathEditor, moduleChooser,
+                                                  shortenClasspathModeCombo);
+        shortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(project, jrePathEditor, moduleChooser.getComponent()));
     }
 
     @Override
@@ -104,6 +93,7 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
         configuration.setRunClass(aClass != null ? JavaExecutionUtil.getRuntimeQualifiedName(aClass) : className);
         configuration.setAlternativeJrePath(jrePathEditor.getJrePathOrName());
         configuration.setAlternativeJrePathEnabled(jrePathEditor.isAlternativeJreSelected());
+        configuration.setShortenCommandLine(shortenClasspathModeCombo.getComponent().getSelectedItem());
     }
 
     @Override
@@ -113,6 +103,7 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
         String runClass = configuration.getRunClass();
         mainClass.getComponent().setText(runClass != null ? runClass.replaceAll("\\$", "\\.") : "");
         jrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
+        shortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     }
 
     @NotNull
@@ -148,5 +139,6 @@ public class KotlinRunConfigurationEditor extends SettingsEditor<KotlinRunConfig
         commonProgramParameters.setAnchor(anchor);
         jrePathEditor.setAnchor(anchor);
         moduleChooser.setAnchor(anchor);
+        shortenClasspathModeCombo.setAnchor(anchor);
     }
 }

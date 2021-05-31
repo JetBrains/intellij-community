@@ -6,6 +6,7 @@ import com.intellij.ide.actions.ActivateToolWindowAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.WindowInfo;
@@ -79,11 +80,10 @@ public class StripeButton extends AnchoredButton implements DataProvider {
     setOpaque(false);
 
     enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-
     addMouseMotionListener(new MouseMotionAdapter() {
       @Override
       public void mouseDragged(MouseEvent e) {
-        processDrag(e);
+        if (!Registry.is("ide.new.tool.window.dnd")) processDrag(e);
       }
     });
 
@@ -197,14 +197,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
         return;
       }
 
-      int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
-      int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
-      BufferedImage image = UIUtil.createImage(e.getComponent(), width, height, BufferedImage.TYPE_INT_RGB);
-      Graphics graphics = image.getGraphics();
-      graphics.setColor(UIUtil.getBgFillColor(getParent()));
-      graphics.fillRect(0, 0, width, height);
-      paint(graphics);
-      graphics.dispose();
+      BufferedImage image = createDragImage(e);
       myDragButtonImage = new JLabel(IconUtil.createImageIcon((Image)image)) {
         @Override
         public String toString() {
@@ -256,6 +249,19 @@ public class StripeButton extends AnchoredButton implements DataProvider {
     }
 
     myLastStripe = stripe;
+  }
+
+  @NotNull
+  BufferedImage createDragImage(MouseEvent e) {
+    int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
+    int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
+    BufferedImage image = UIUtil.createImage(e.getComponent(), width, height, BufferedImage.TYPE_INT_RGB);
+    Graphics graphics = image.getGraphics();
+    graphics.setColor(UIUtil.getBgFillColor(getParent()));
+    graphics.fillRect(0, 0, width, height);
+    paint(graphics);
+    graphics.dispose();
+    return image;
   }
 
   public @NotNull ToolWindowImpl getToolWindow() {

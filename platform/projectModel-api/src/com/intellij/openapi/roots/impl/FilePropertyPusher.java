@@ -118,6 +118,7 @@ public interface FilePropertyPusher<T> {
    * @deprecated Please override {@link FilePropertyPusher#acceptsFile(VirtualFile, Project)}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @SuppressWarnings("DeprecatedIsStillUsed")
   default boolean acceptsFile(@NotNull VirtualFile file) {
     return false;
@@ -128,6 +129,7 @@ public interface FilePropertyPusher<T> {
    */
   @Deprecated
   @SuppressWarnings({"unused", "DeprecatedIsStillUsed"})
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   default void initExtra(@NotNull Project project, @NotNull MessageBus bus) {
   }
 

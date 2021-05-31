@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.testGenerator.generator
 
 import com.intellij.testFramework.TestDataPath
@@ -64,12 +65,14 @@ object TestGenerator {
     private fun write(file: File, content: String) {
         val oldContent = file.takeIf { it.isFile }?.readText() ?: ""
 
-        if (content != oldContent) {
+        if (normalizeContent(content) != normalizeContent(oldContent)) {
             file.writeText(content)
             val path = file.toRelativeStringSystemIndependent(KotlinRoot.DIR)
             println("Updated $path")
         }
     }
+
+    private fun normalizeContent(content: String): String = content.replace(Regex("\\R"), "\n")
 
     private fun getImports(suite: TSuite): List<String> {
         val imports = (commonImports + suite.imports).toMutableList()
@@ -102,10 +105,7 @@ object TestGenerator {
 
     private fun Code.appendCopyrightComment() {
         val year = GregorianCalendar()[Calendar.YEAR]
-        appendMultilineComment("""
-            Copyright 2010-$year JetBrains s.r.o. and Kotlin Programming Language contributors.
-            Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
-        """.trimIndent())
+        appendLine("// Copyright 2000-$year JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.")
     }
 
     private fun Code.appendGeneratedComment() {

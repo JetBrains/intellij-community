@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.JavaTestUtil;
@@ -26,6 +26,8 @@ public class RedundantStringOperationInspectionTest extends LightJavaInspectionT
   public void testStringLengthArgument() {doTest();}
   public void testZeroArgument() {doTest();}
   public void testBAOStoString() {doTest();}
+  public void testNewStringNewChar() {doTest();}
+  public void testStringValueOfNewChar() {doTest();}
 
   @Override
   protected String getBasePath() {

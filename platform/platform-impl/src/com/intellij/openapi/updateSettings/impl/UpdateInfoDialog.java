@@ -246,8 +246,11 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
           String downloadUrl = UpdateInfoPanel.downloadUrl(myLoadedResult.getNewBuild(), myLoadedResult.getUpdatedChannel());
           String message = IdeBundle.message("update.downloading.patch.error", e.getMessage(), downloadUrl);
-          UpdateChecker.getNotificationGroup().createNotification(
-            title, message, NotificationType.ERROR, NotificationListener.URL_OPENING_LISTENER, "ide.patch.download.failed").notify(null);
+          UpdateChecker.getNotificationGroup()
+            .createNotification(title, message, NotificationType.ERROR)
+            .setListener(NotificationListener.URL_OPENING_LISTENER)
+            .setDisplayId("ide.patch.download.failed")
+            .notify(null);
 
           return;
         }
@@ -263,14 +266,16 @@ public final class UpdateInfoDialog extends AbstractUpdateDialog {
           else {
             String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
             String message = IdeBundle.message("update.ready.message");
-            NotificationListener.Adapter listener = new NotificationListener.Adapter() {
-              @Override
-              protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-                restartLaterAndRunCommand(command);
-              }
-            };
-            UpdateChecker.getNotificationGroup().createNotification(
-              title, message, NotificationType.INFORMATION, listener, "ide.update.suggest.restart").notify(null);
+            UpdateChecker.getNotificationGroup()
+              .createNotification(title, message, NotificationType.INFORMATION)
+              .setListener(new NotificationListener.Adapter() {
+                @Override
+                protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+                  restartLaterAndRunCommand(command);
+                }
+              })
+              .setDisplayId("ide.update.suggest.restart")
+              .notify(null);
           }
         }
         else {

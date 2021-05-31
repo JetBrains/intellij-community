@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports accesses of fields declared as <code>@GuardedBy</code> which are are not guarded by an appropriate synchronization structure.
+Reports accesses of fields declared as <code>@GuardedBy</code> that are not guarded by an appropriate synchronization structure.
 <p>Example:</p>
-<pre>
+<pre><code>
     @GuardedBy("this")
     void x() {
         notify();
@@ -10,9 +10,9 @@ Reports accesses of fields declared as <code>@GuardedBy</code> which are are not
     void y() {
         x(); // unguarded method call
     }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-Supported <code>@GuardedBy</code> annotations are:
+<p>Supported <code>@GuardedBy</code> annotations are:</p>
 <ul>
   <li><code>net.jcip.annotations.GuardedBy</code></li>
   <li><code>javax.annotation.concurrent.GuardedBy</code></li>

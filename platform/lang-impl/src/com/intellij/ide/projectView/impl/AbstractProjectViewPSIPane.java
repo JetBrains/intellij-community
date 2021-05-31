@@ -136,14 +136,20 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
     myTree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     myTree.getSelectionModel().addTreeSelectionListener(e -> onSelectionChanged());
     myTree.addFocusListener(new FocusListener() {
+      void updateIfMultipleSelection() {
+        if (myTree != null && myTree.getSelectionCount() > 1) {
+          onSelectionChanged();
+        }
+      }
+
       @Override
       public void focusGained(FocusEvent e) {
-        onSelectionChanged();
+        updateIfMultipleSelection();
       }
 
       @Override
       public void focusLost(FocusEvent e) {
-        onSelectionChanged();
+        updateIfMultipleSelection();
       }
     });
     myTree.setRootVisible(false);

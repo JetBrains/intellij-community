@@ -209,3 +209,5 @@ fun Any.toNullableString(): String? {
 private fun excludeNullCheck(value: String?): String? {
   return value
 }
+
+fun String.replaceSpacesWithNonBreakSpace(): String = this.replace(" ", "\u00A0")

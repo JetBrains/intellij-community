@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.testGenerator
 
@@ -247,6 +244,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("continuation")
         }
 
+        testClass<AbstractKotlinVariablePrintingTest> {
+            model("variables")
+        }
+
         testClass<AbstractXCoroutinesStackTraceTest> {
             model("xcoroutines")
         }
@@ -269,7 +270,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("resolve/resolveModeComparison")
         }
 
-        testClass<AbstractKotlinHighlightingPassTest> {
+        testClass<AbstractKotlinHighlightVisitorTest> {
             model("checker", isRecursive = false)
             model("checker/regression")
             model("checker/recovery")
@@ -696,6 +697,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractLineMarkersTest> {
             model("codeInsight/lineMarker")
+        }
+
+        testClass<AbstractLightTestRunLineMarkersTest> {
+            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doLightTest", testClassName="WithLightTestFramework")
+            model("codeInsight/lineMarker/runMarkers", pattern = "^((jUnit|test).*)\\.kt$".toRegex(), testMethodName = "doPureTest", testClassName="WithoutLightTestFramework")
         }
 
         testClass<AbstractLineMarkersTestInLibrarySources> {

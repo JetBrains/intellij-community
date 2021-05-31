@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.details
 
+import com.intellij.collaboration.async.CompletableFutureUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.VerticalLayout
 import com.intellij.ui.CardLayoutPanel
@@ -21,7 +22,6 @@ import org.jetbrains.plugins.github.pullrequest.data.service.GHPRSecurityService
 import org.jetbrains.plugins.github.pullrequest.ui.details.action.*
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
-import org.jetbrains.plugins.github.util.GithubAsyncUtil
 import java.awt.FlowLayout
 import java.awt.event.ActionEvent
 import javax.swing.*
@@ -284,7 +284,7 @@ internal class GHPRStatePanel(private val securityService: GHPRSecurityService, 
         private fun update() {
           val mergeability = stateModel.mergeabilityState
           if (mergeability == null) {
-            if (stateModel.mergeabilityLoadingError?.takeIf { !GithubAsyncUtil.isCancellation(it) } == null) {
+            if (stateModel.mergeabilityLoadingError?.takeIf { !CompletableFutureUtil.isCancellation(it) } == null) {
               panel.setContent(createNotLoadedComponent(stateModel.isDraft))
             }
             else {

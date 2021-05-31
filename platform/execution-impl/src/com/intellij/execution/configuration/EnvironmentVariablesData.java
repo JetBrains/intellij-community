@@ -34,7 +34,8 @@ public final class EnvironmentVariablesData {
   private final boolean myPassParentEnvs;
 
   private EnvironmentVariablesData(@NotNull Map<String, String> envs, boolean passParentEnvs, @Nullable String environmentFile) {
-    myEnvs = Map.copyOf(envs);
+    // insertion order must be preserved - Map.copyOf cannot be used here
+    myEnvs = envs.isEmpty() ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(envs));
     myPassParentEnvs = passParentEnvs;
     myEnvironmentFile = environmentFile;
   }
@@ -126,13 +127,11 @@ public final class EnvironmentVariablesData {
    *             (iteration order should be reliable user-specified, like {@link LinkedHashMap} or {@link ImmutableMap})
    * @param passParentEnvs true if system environment should be passed
    */
-  @NotNull
-  public static EnvironmentVariablesData create(@NotNull Map<String, String> envs, boolean passParentEnvs) {
+  public static @NotNull EnvironmentVariablesData create(@NotNull Map<String, String> envs, boolean passParentEnvs) {
     return passParentEnvs && envs.isEmpty() ? DEFAULT : new EnvironmentVariablesData(envs, passParentEnvs, null);
   }
 
-  @NotNull
-  public EnvironmentVariablesData with(@NotNull Map<String, String> envs) {
+  public @NotNull EnvironmentVariablesData with(@NotNull Map<String, String> envs) {
     return new EnvironmentVariablesData(envs, myPassParentEnvs, myEnvironmentFile);
   }
 

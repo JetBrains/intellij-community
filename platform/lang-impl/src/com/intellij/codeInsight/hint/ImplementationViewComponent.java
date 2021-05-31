@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -257,6 +257,7 @@ public class ImplementationViewComponent extends JPanel {
       @Override
       protected void customizeCellRenderer(@NotNull JList<? extends FileDescriptor> list,
                                            FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setBackground(UIUtil.getListBackground(selected, true));
         if (value != null) {
           ImplementationViewElement element = value.myElement;
           setIcon(getIconForFile(value.myFile, project));
@@ -273,6 +274,7 @@ public class ImplementationViewComponent extends JPanel {
       @Override
       public void customize(@NotNull JList<? extends FileDescriptor> list,
                             FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setForeground(UIUtil.getListForeground(selected, true));
         if (value != null) {
           setText(value.myElement.getLocationText());
           setIcon(value.myElement.getLocationIcon());
@@ -553,6 +555,7 @@ public class ImplementationViewComponent extends JPanel {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setTargetComponent(myEditor.getContentComponent());
     return toolbar;
   }
 

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate;
 
@@ -146,6 +143,11 @@ public abstract class CodeFragmentHighlightingTestGenerated extends AbstractCode
         @TestMetadata("unusedEquals.kt")
         public void testUnusedEquals() throws Exception {
             runTest("testData/checker/codeFragments/unusedEquals.kt");
+        }
+
+        @TestMetadata("unusedEquals2.kt")
+        public void testUnusedEquals2() throws Exception {
+            runTest("testData/checker/codeFragments/unusedEquals2.kt");
         }
 
         @TestMetadata("withoutBodyFunction.kt")

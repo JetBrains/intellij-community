@@ -10,13 +10,13 @@ class TerminalStateSerializationTest {
   @Test
   fun envs() {
     val state = TerminalProjectOptionsProvider.State()
-    state.envDataOptions.set(EnvironmentVariablesData.create(mapOf("foo" to "bar", "env2" to "true"), false))
+    state.envDataOptions.set(EnvironmentVariablesData.create(linkedMapOf("B" to "bar", "A" to "true"), false))
 
     testSerializer("""
     <State>
       <envs>
-        <env key="env2" value="true" />
-        <env key="foo" value="bar" />
+        <env key="B" value="bar" />
+        <env key="A" value="true" />
       </envs>
       <option name="passParentEnvs" value="false" />
     </State>

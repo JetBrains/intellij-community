@@ -137,7 +137,7 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
 
       if (group.getChildrenCount() == 0) {
         SimpleJavaSdkType javaSdkType = SimpleJavaSdkType.getInstance();
-        final AnAction addAction = new DumbAwareAction(javaSdkType.getPresentableName(), null, javaSdkType.getIconForAddAction()) {
+        final AnAction addAction = new DumbAwareAction(javaSdkType.getPresentableName(), null, javaSdkType.getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
             jdksModel.doAdd(ExternalSystemJdkComboBox.this, selectedJdk, javaSdkType, updateTree);
@@ -172,21 +172,6 @@ public final class ExternalSystemJdkComboBox extends ComboBoxWithWidePopup<Exter
     return jdk;
   }
 
-
-  /**
-   * @deprecated because it do nothing
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public @NotNull ExternalSystemJdkComboBox withoutJre() {
-    return this;
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public boolean isHighlightInternalJdk() {
-    return myHighlightInternalJdk;
-  }
 
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")

@@ -65,6 +65,7 @@ public class ExecutionPointHighlighter {
 
         clearDescriptor();
         myOpenFileDescriptor = XSourcePositionImpl.createOpenFileDescriptor(myProject, position);
+        myOpenFileDescriptor.setUsePreviewTab(true);
         if (!XDebuggerSettingManagerImpl.getInstanceImpl().getGeneralSettings().isScrollToCenter()) {
           myOpenFileDescriptor.setScrollType(notTopFrame ? ScrollType.CENTER : ScrollType.MAKE_VISIBLE);
         }
@@ -133,21 +134,16 @@ public class ExecutionPointHighlighter {
 
     removeHighlighter();
 
-
-    OpenFileDescriptor fileDescriptor = myOpenFileDescriptor;
-    if (!navigate && myOpenFileDescriptor != null) {
-      fileDescriptor = new OpenFileDescriptor(myProject, myOpenFileDescriptor.getFile());
-    }
     myEditor = null;
-    if (fileDescriptor != null) {
+    if (myOpenFileDescriptor != null) {
       if (!navigate) {
-        FileEditor editor = FileEditorManager.getInstance(fileDescriptor.getProject()).getSelectedEditor(fileDescriptor.getFile());
+        FileEditor editor = FileEditorManager.getInstance(myProject).getSelectedEditor(myOpenFileDescriptor.getFile());
         if (editor instanceof TextEditor) {
           myEditor = ((TextEditor)editor).getEditor();
         }
       }
       if (myEditor == null) {
-        myEditor = XDebuggerUtilImpl.createEditor(fileDescriptor);
+        myEditor = XDebuggerUtilImpl.createEditor(myOpenFileDescriptor);
       }
     }
     if (myEditor != null) {

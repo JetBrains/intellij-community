@@ -1,24 +1,12 @@
-/*
- * Copyright 2005-2016 Bas Leijdekkers
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingFeature;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Processor;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
@@ -32,28 +20,25 @@ import javax.swing.*;
 
 public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreMethodsAccessedFromAnonymousClass = false;
 
-  @SuppressWarnings({"PublicField"})
-  public boolean ignoreStaticMethodsFromNonStaticInnerClass = false;
+  @SuppressWarnings({"PublicField", "unused"})
+  public boolean ignoreStaticMethodsFromNonStaticInnerClass = false; // Preserved for serialization compatibility
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean onlyReportStaticMethods = false;
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    final PsiNamedElement element = (PsiNamedElement)infos[0];
-    final String name = element.getName();
-    if (infos.length > 1) {
-      if (Boolean.TRUE.equals(infos[1])) {
-        return InspectionGadgetsBundle.message("method.only.used.from.inner.class.problem.descriptor.anonymous.extending", name);
-      }
-      return InspectionGadgetsBundle.message("method.only.used.from.inner.class.problem.descriptor.anonymous.implementing", name);
-    }
-    return InspectionGadgetsBundle.message(
-      "method.only.used.from.inner.class.problem.descriptor", name);
+    final PsiClass containingClass = (PsiClass)infos[0];
+    final int ordinal = ClassUtils.getTypeOrdinal(containingClass);
+    final String name = containingClass instanceof PsiAnonymousClass
+           ? ((PsiAnonymousClass)containingClass).getBaseClassReference().getText()
+           : containingClass.getName();
+    final int innerClassType = containingClass instanceof PsiAnonymousClass ? 3 : PsiUtil.isLocalClass(containingClass) ? 2 : 1;
+    return InspectionGadgetsBundle.message("method.only.used.from.inner.class.problem.descriptor", innerClassType, ordinal, name);
   }
 
   @Override
@@ -62,8 +47,6 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("method.only.used.from.inner.class.ignore.option"),
                       "ignoreMethodsAccessedFromAnonymousClass");
-    panel.addCheckbox(InspectionGadgetsBundle.message("ignore.static.methods.accessed.from.a.non.static.inner.class"),
-                      "ignoreStaticMethodsFromNonStaticInnerClass");
     panel.addCheckbox(InspectionGadgetsBundle.message("only.report.static.methods"), "onlyReportStaticMethods");
     return panel;
   }
@@ -73,8 +56,7 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     return new MethodOnlyUsedFromInnerClassVisitor();
   }
 
-  private class MethodOnlyUsedFromInnerClassVisitor
-    extends BaseInspectionVisitor {
+  private class MethodOnlyUsedFromInnerClassVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitMethod(PsiMethod method) {
@@ -88,45 +70,33 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
       if (method.getNameIdentifier() == null) {
         return;
       }
-      final MethodReferenceFinder processor = new MethodReferenceFinder(method);
-      if (!processor.isOnlyAccessedFromInnerClass()) {
+      if (DeclarationSearchUtils.isTooExpensiveToSearch(method, false)) {
+        registerPossibleProblem(method.getNameIdentifier());
         return;
       }
-      final PsiClass containingClass = processor.getContainingClass();
-      if (ignoreStaticMethodsFromNonStaticInnerClass && method.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiElement parent = containingClass.getParent();
-        if (parent instanceof PsiClass && !containingClass.hasModifierProperty(PsiModifier.STATIC)) {
+      final MethodReferenceFinder processor = new MethodReferenceFinder(method);
+      final PsiClass innerClass = processor.getOnlyAccessInnerClass();
+      if (innerClass == null) {
+        return;
+      }
+      if (method.hasModifierProperty(PsiModifier.STATIC) && !HighlightingFeature.INNER_STATICS.isAvailable(method)) {
+        final PsiElement parent = innerClass.getParent();
+        if (parent instanceof PsiClass && !innerClass.hasModifierProperty(PsiModifier.STATIC) || PsiUtil.isLocalClass(innerClass)) {
           return;
         }
       }
-      if (containingClass instanceof PsiAnonymousClass) {
-        final PsiClass[] interfaces = containingClass.getInterfaces();
-        final PsiClass superClass;
-        if (interfaces.length == 1) {
-          superClass = interfaces[0];
-          registerMethodError(method, superClass, Boolean.FALSE);
-        }
-        else {
-          superClass = containingClass.getSuperClass();
-          if (superClass == null) {
-            return;
-          }
-          registerMethodError(method, superClass, Boolean.TRUE);
-        }
+      if (ignoreMethodsAccessedFromAnonymousClass && PsiUtil.isLocalOrAnonymousClass(innerClass)) {
+        return;
       }
-      else {
-        registerMethodError(method, containingClass);
-      }
+      registerMethodError(method, innerClass);
     }
   }
 
-  private class MethodReferenceFinder implements Processor<PsiReference> {
+  private static class MethodReferenceFinder implements Processor<PsiReference> {
 
     private final PsiClass methodClass;
     private final PsiMethod method;
-    private boolean onlyAccessedFromInnerClass = false;
-
-    private PsiClass cache = null;
+    private PsiClass myContainingClass = null;
 
     MethodReferenceFinder(@NotNull PsiMethod method) {
       this.method = method;
@@ -137,45 +107,28 @@ public class MethodOnlyUsedFromInnerClassInspection extends BaseInspection {
     public boolean process(PsiReference reference) {
       final PsiElement element = reference.getElement();
       final PsiMethod containingMethod = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
-      if (method.equals(containingMethod)) {
+      if (method.equals(containingMethod)) { // recursive call
         return true;
       }
       final PsiClass containingClass = ClassUtils.getContainingClass(element);
       if (containingClass == null) {
-        onlyAccessedFromInnerClass = false;
         return false;
       }
-      if (containingClass instanceof PsiAnonymousClass) {
-        if (ignoreMethodsAccessedFromAnonymousClass) {
-          onlyAccessedFromInnerClass = false;
-          return false;
-        }
-      }
-      if (cache != null) {
-        if (!cache.equals(containingClass)) {
-          onlyAccessedFromInnerClass = false;
+      if (myContainingClass != null) {
+        if (!myContainingClass.equals(containingClass)) {
           return false;
         }
       }
       else if (!PsiTreeUtil.isAncestor(methodClass, containingClass, true)) {
-        onlyAccessedFromInnerClass = false;
         return false;
       }
-      onlyAccessedFromInnerClass = true;
-      cache = containingClass;
+      myContainingClass = containingClass;
       return true;
     }
 
-    public boolean isOnlyAccessedFromInnerClass() {
-      if (DeclarationSearchUtils.isTooExpensiveToSearch(method, true)) {
-        return false;
-      }
+    public PsiClass getOnlyAccessInnerClass() {
       ReferencesSearch.search(method).forEach(this);
-      return onlyAccessedFromInnerClass;
-    }
-
-    public PsiClass getContainingClass() {
-      return cache;
+      return myContainingClass;
     }
   }
 }

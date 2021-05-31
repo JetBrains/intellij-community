@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
@@ -38,6 +39,12 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
                                              val version: Int,
                                              val sendFrequencyMs: Long = TimeUnit.HOURS.toMillis(1),
                                              private val maxFileSize: String = "200KB") {
+
+  companion object {
+    @JvmStatic
+    val EP_NAME = ExtensionPointName<StatisticsEventLoggerProvider>("com.intellij.statistic.eventLog.eventLoggerProvider")
+  }
+
   open val logger: StatisticsEventLogger by lazy { createLogger() }
 
   abstract fun isRecordEnabled() : Boolean
@@ -64,7 +71,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
 
     val configService = EventLogConfigOptionsService.getInstance()
     val throttledWriter = StatisticsEventLogThrottleWriter(
-      configService, recorderId, version.toString(), EventLogNotificationProxy(writer, recorderId)
+      configService, recorderId, version.toString(), writer
     )
 
     val logger = StatisticsFileEventLogger(

@@ -37,14 +37,14 @@ public class FormattingServiceTest extends FormatterTestCase {
   }
 
   private static class CustomFormattingService extends AbstractDocumentFormattingService {
-    private final static Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
+    private static final Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
                                                             Feature.FORMAT_FRAGMENTS);
 
 
     @Override
     public void formatDocument(@NotNull Document document,
                                @NotNull List<TextRange> formattingRanges,
-                               @NotNull FormattingContext formattingContext, boolean canChangeWhiteSpaceOnly) {
+                               @NotNull FormattingContext formattingContext, boolean canChangeWhiteSpaceOnly, boolean quickFormat) {
       for (TextRange range : formattingRanges) {
         CharSequence chars = document.getCharsSequence().subSequence(range.getStartOffset(), range.getEndOffset());
         StringBuilder replacement = new StringBuilder();
@@ -57,7 +57,7 @@ public class FormattingServiceTest extends FormatterTestCase {
     }
 
     @Override
-    public Set<Feature> getFeatures() {
+    public @NotNull Set<Feature> getFeatures() {
       return FEATURES;
     }
 

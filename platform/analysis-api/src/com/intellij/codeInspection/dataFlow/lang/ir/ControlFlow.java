@@ -8,6 +8,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import one.util.streamex.StreamEx;
@@ -52,7 +53,7 @@ public final class ControlFlow {
     myInstructions = StreamEx.of(flow.myInstructions).map(instruction -> instruction.bindToFactory(factory)).toImmutableList();
   }
 
-  public PsiElement getPsiAnchor() {
+  public @NotNull PsiElement getPsiAnchor() {
     return myPsiAnchor;
   }
 
@@ -93,7 +94,9 @@ public final class ControlFlow {
    * Finalize current control flow. No more instructions are accepted after this call
    */
   public void finish() {
+    addInstruction(new ReturnInstruction(myFactory, FList.emptyList(), null));
     myLoopNumbers = LoopAnalyzer.calcInLoop(this);
+    new LiveVariablesAnalyzer(this).flushDeadVariablesOnStatementFinish();
   }
 
   public ControlFlowOffset getStartOffset(final PsiElement element) {

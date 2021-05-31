@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.analysis.AnalysisScope;
@@ -6,6 +6,7 @@ import com.intellij.analysis.AnalysisUIOptions;
 import com.intellij.analysis.PerformAnalysisInBackgroundOption;
 import com.intellij.analysis.problemsView.toolWindow.ProblemsView;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.actions.AbstractLayoutCodeProcessor;
 import com.intellij.codeInsight.daemon.ProblemHighlightFilter;
 import com.intellij.codeInsight.daemon.impl.DaemonProgressIndicator;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoProcessor;
@@ -36,6 +37,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,6 +52,7 @@ import com.intellij.openapi.roots.FileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,7 +76,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
+import java.io.IOException;
 import java.lang.reflect.Constructor;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Predicate;
@@ -98,6 +104,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
   private volatile boolean myViewClosed = true;
   private long myInspectionStartedTimestamp;
   private final ConcurrentMap<InspectionToolWrapper<?, ?>, InspectionToolPresentation> myPresentationMap = new ConcurrentHashMap<>();
+  private boolean forceInspectAllScope = false;
 
   public GlobalInspectionContextImpl(@NotNull Project project, @NotNull NotNullLazyValue<? extends ContentManager> contentManager) {
     super(project);
@@ -186,6 +193,14 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     return myView;
   }
 
+  public boolean isForceInspectAllScope() {
+    return forceInspectAllScope;
+  }
+
+  public void setForceInspectAllScope(boolean forceInspectAllScope) {
+    this.forceInspectAllScope = forceInspectAllScope;
+  }
+
   private static void resolveElementRecursively(@NotNull InspectionToolResultExporter presentation, @NotNull RefEntity refElement) {
     presentation.suppressProblem(refElement);
     final List<RefEntity> children = refElement.getChildren();
@@ -224,6 +239,16 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
     long elapsed = System.currentTimeMillis() - myInspectionStartedTimestamp;
     LOG.info("Code inspection finished. Took " + elapsed + " ms");
+    if (SystemProperties.getBooleanProperty("idea.is.integration.test", false)) {
+      String logPath = PathManager.getLogPath();
+      Path perfMetrics = Paths.get(logPath).resolve("performance-metrics").resolve("inspectionMetrics.json");
+      try {
+        FileUtil.writeToFile(perfMetrics.toFile(), "{\n\t\"inspection_execution_time\" : " + elapsed + "\n}");
+      }
+      catch (IOException ex) {
+        LOG.info("Could not create json file " + perfMetrics + " with the performance metrics.");
+      }
+    }
     if (getProject().isDisposed()) return;
 
     InspectionResultsView newView = myView == null ? new InspectionResultsView(this, new InspectionRVContentProviderImpl()) : null;
@@ -500,7 +525,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
           final FileIndex fileIndex = ProjectRootManager.getInstance(getProject()).getFileIndex();
           scope.accept(file -> {
             ProgressManager.checkCanceled();
-            if (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file)) return true;
+            if (!forceInspectAllScope && (ProjectUtil.isProjectOrWorkspaceFile(file) || !fileIndex.isInContent(file))) return true;
 
             PsiFile psiFile = ReadAction.compute(() -> {
               if (getProject().isDisposed()) throw new ProcessCanceledException();
@@ -870,7 +895,9 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
         private int myCount;
         @Override
         public void visitFile(@NotNull PsiFile file) {
+          progressIndicator.setText(AbstractLayoutCodeProcessor.getPresentablePath(getProject(), file));
           progressIndicator.setFraction((double)++myCount / fileCount);
+
           if (isBinary(file)) return;
           final List<LocalInspectionToolWrapper> lTools = new ArrayList<>();
           for (final Tools tools : inspectionTools) {
@@ -990,7 +1017,7 @@ public class GlobalInspectionContextImpl extends GlobalInspectionContextEx {
     if (ApplicationManager.getApplication().isHeadlessEnvironment() && !TESTING_VIEW) {
       return;
     }
-    if (myView == null && !ReadAction.compute(() -> InspectionResultsView.hasProblems(tools, this, new InspectionRVContentProviderImpl()))) {
+    if (myView == null && !InspectionResultsView.hasProblems(tools, this, new InspectionRVContentProviderImpl())) {
       return;
     }
     initializeViewIfNeeded().doWhenDone(() -> myView.addTools(tools));

@@ -1,16 +1,21 @@
 <html>
 <body>
-This inspection reports redundant <b>else</b> in <b>if</b> with <b>return</b>:
-
-<pre>
+<p>Reports redundant <code>else</code> in <code>if</code> with <code>return</code></p>
+<p><b>Example:</b></p>
+<pre><code>
 fun foo(arg: Boolean): Int {
     if (arg) return 0
-    // This else is redundant, code in braces could be just shifted left
-    else {
-        ...
+    else { // This else is redundant, code in braces could be just shifted left
+        someCode()
     }
 }
-</pre>
-
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun foo(arg: Boolean): Int {
+    if (arg) return 0
+    someCode()
+}
+</code></pre>
 </body>
 </html>

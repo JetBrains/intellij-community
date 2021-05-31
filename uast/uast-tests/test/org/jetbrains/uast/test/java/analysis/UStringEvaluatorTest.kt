@@ -13,66 +13,62 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.castSafelyTo
 import junit.framework.TestCase
 import org.jetbrains.uast.*
-import org.jetbrains.uast.analysis.UStringEvaluator
+import org.jetbrains.uast.analysis.*
 
 class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
   fun `test simple string`() = doTest(
     """
     class MyFile {
       String a() {
-        return "ab<caret>c";
+        return /*<caret>*/ "abc";
       }
     }
   """.trimIndent(),
-    "'abc'",
-    additionalAssertions = {
-      TestCase.assertEquals(1, it.segments.size)
-    }
-  )
+    "'abc'"
+  ) {
+    TestCase.assertEquals(1, it.segments.size)
+  }
 
   fun `test simple concatenation`() = doTest(
     """
     class MyFile {
       String a() {
-        return "abc" +<caret> "def";
+        return /*<caret>*/ "abc" + "def";
       }
     }
     """.trimIndent(),
-    "'abc''def'",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc''def'"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with variable`() = doTest(
     """
     class MyFile {
       String a() {
         String a = "def";
-        return "abc" +<caret> a;
+        return /*<caret>*/ "abc" + a;
       }
     }
     """.trimIndent(),
-    "'abc''def'",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc''def'"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with ternary op and variable`() = doTest(
     """
     class MyFile {
       String a(boolean condition) {
         String a = condition ? "def" : "xyz";
-        return "abc" +<caret> a;
+        return /*<caret>*/ "abc" + a;
       }
     }
     """.trimIndent(),
-    "'abc'{'def'|'xyz'}",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc'{'def'|'xyz'}"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with if and variable`() = doTest(
     """
@@ -84,29 +80,27 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
         } else {
           a = "xyz";
         }
-        return "abc" +<caret> a;
+        return /*<caret>*/ "abc" + a;
       }
     }
     """.trimIndent(),
-    "'abc'{'def'|'xyz'}",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc'{'def'|'xyz'}"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with unknown`() = doTest(
     """
     class MyFile {
       String a(boolean condition, String a) {
-        return "abc" +<caret> a;
+        return /*<caret>*/ "abc" + a;
       }
     }
     """.trimIndent(),
-    "'abc'NULL",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc'NULL"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with constant`() = doTest(
     """
@@ -114,15 +108,14 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       public static final String myConst = "def";
       
       String a() {
-        return "abc" +<caret> myConst;
+        return /*<caret>*/ "abc" + myConst;
       }
     }
     """.trimIndent(),
-    "'abc''def'",
-    additionalAssertions = {
-      TestCase.assertEquals(2, it.segments.size)
-    }
-  )
+    "'abc''def'"
+  ) {
+    TestCase.assertEquals(2, it.segments.size)
+  }
 
   fun `test concatenation with constant from different file`() = doTest(
     """
@@ -130,7 +123,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       public static final String myConst = "def" + A.myConst;
       
       String a() {
-        return "abc" +<caret> myConst;
+        return /*<caret>*/ "abc" + myConst;
       }
     }
     """.trimIndent(),
@@ -156,13 +149,13 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     
       String a(boolean a, String param) {
-        return "abc" +<caret> param;
+        return /*<caret>*/ "abc" + param;
       }
     }
     """.trimIndent(),
     "'abc'{'def'|'xyz'}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         parameterUsagesDepth = 2,
         usagesSearchScope = LocalSearchScope(file)
       )
@@ -181,13 +174,13 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     
       String a(boolean a, String param) {
-        return "abc" +<caret> param;
+        return /*<caret>*/ "abc" + param;
       }
     }
     """.trimIndent(),
     "'abc'{'def''fed'|'xyz'NULL}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         parameterUsagesDepth = 2,
         usagesSearchScope = LocalSearchScope(file)
       )
@@ -198,19 +191,19 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return "abc" +<caret> b(false);
+        return /*<caret>*/ "abc" + b(false);
       }
       
       String b(boolean a) {
         if (!a) return "";
         
-        return "xyz"
+        return "xyz";
       }
     }
     """.trimIndent(),
     "'abc'{''|'xyz'}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("b")
       )
@@ -222,19 +215,19 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     class MyFile {
       String a() {
         String s = "my" + "var";
-        return "abc" +<caret> b(false, s + "1");
+        return /*<caret>*/ "abc" + b(false, s + "1");
       }
       
       String b(boolean a, String param) {
         if (!a) return "aaa";
         
-        return "xyz" + param
+        return "xyz" + param;
       }
     }
     """.trimIndent(),
     "'abc'{'aaa'|'xyz''my''var''1'}",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -245,7 +238,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return "abc" +<caret> b();
+        return /*<caret>*/ "abc" + b();
       }
       
       String b() {
@@ -253,9 +246,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "'abc'{'xyz'{'abc'NULL}}",
+    "'abc''xyz''abc'NULL",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 3,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -266,13 +259,13 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a(String param) {
-        return "a" +<caret> a(param + "b") + param;
+        return /*<caret>*/ "a" + a(param + "b") + param;
       }
     }
     """.trimIndent(),
-    "'a'{'a'{'a'{'a'NULLNULL'b''b''b'}NULL'b''b'}NULL'b'}NULL",
+    "'a''a''a''a'NULLNULL'b''b''b'NULL'b''b'NULL'b'NULL",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 4,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -283,7 +276,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a(String param) {
-        return "abc" +<caret> b(param + "a") + param;
+        return /*<caret>*/ "abc" + b(param + "a") + param;
       }
       
       String b(String param) {
@@ -291,9 +284,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "'abc'{'xyz'{'abc'{'xyz'NULLNULL'a''b''a'}NULL'a''b'}NULL'a'}NULL",
+    "'abc''xyz''abc''xyz'NULLNULL'a''b''a'NULL'a''b'NULL'a'NULL",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 4,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -304,7 +297,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return "(" + b() <caret> + ")";
+        return /*<caret>*/ "(" + b() + ")";
       }
       
       String b() {
@@ -312,9 +305,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "'('{'['{'('{'['NULL']'}')'}']'}')'",
+    "'(''[''(''['NULL']'')'']'')'",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 4,
         methodsToAnalyzePattern = psiMethod().withName("a", "b")
       )
@@ -325,7 +318,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return b("a")<caret>;
+        return /*<caret>*/ b("a");
       }
       
       String b(String param) {
@@ -345,9 +338,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "{{{{'a''b''c''d''e'}}}}",
+    "'a''b''c''d''e'",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 5,
         methodsToAnalyzePattern = psiMethod().withName("a", "b", "c", "d", "e")
       )
@@ -355,7 +348,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
   )
 
   fun `test custom evaluator`() {
-    val myAnnoValueProvider = UStringEvaluator.DeclarationValueProvider { declaration ->
+    val myAnnoValueProvider = DeclarationValueEvaluator { declaration ->
       val myAnnotation = declaration.uAnnotations.firstOrNull { anno -> anno.qualifiedName == "MyAnno" }
       myAnnotation?.findAttributeValue("value")?.castSafelyTo<ULiteralExpression>()?.takeIf { it.isString }?.let { literal ->
         PartiallyKnownString(StringEntry.Known(literal.value as String, literal.sourcePsi!!, TextRange(0, literal.sourcePsi!!.textLength)))
@@ -380,13 +373,13 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
         String anotherValue;
         
         String a() {
-          return myValue +<caret> anotherValue;
+          return /*<caret>*/ myValue + anotherValue;
         }
       }
       """.trimIndent(),
       "'value'NULL",
       configuration = {
-        UStringEvaluator.Configuration(
+        UNeDfaConfiguration(
           valueProviders = listOf(myAnnoValueProvider)
         )
       }
@@ -397,7 +390,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     """
     class MyFile {
       String a() {
-        return b("a")<caret> + c("b");
+        return /*<caret>*/ b("a") + c("b");
       }
       
       String b(String param) {
@@ -409,9 +402,9 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       }
     }
     """.trimIndent(),
-    "{'b''a'}NULL",
+    "'b''a'NULL",
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("b")
       )
@@ -429,20 +422,19 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
     class MyFile {
       String a(String param) {
         String s = "aaa";
-        return Strings.jo<caret>in("\\m/", "abacaba", param, "my-string" + " is cool", s);
+        return /*<caret>*/ Strings.join("\\m/", "abacaba", param, "my-string" + " is cool", s);
       }
     }
     """.trimIndent(),
     """'abacaba''\m/'NULL'\m/''my-string'' is cool''\m/''aaa'""",
-    retrieveElement = UElement?::getUCallExpression,
     configuration = {
-      UStringEvaluator.Configuration(
+      UNeDfaConfiguration(
         methodEvaluators = mapOf(
           callExpression().withResolvedMethod(
             psiMethod().withName("join").definedInClass("Strings").withModifiers(PsiModifier.STATIC), false
-          ) to UStringEvaluator.MethodCallEvaluator body@{ uStringEvaluator: UStringEvaluator,
-                                                           configuration: UStringEvaluator.Configuration,
-                                                           joinCall: UCallExpression ->
+          ) to MethodCallEvaluator body@{ uStringEvaluator: UNeDfaValueEvaluator<PartiallyKnownString>,
+                                          configuration: UNeDfaConfiguration<PartiallyKnownString>,
+                                          joinCall: UCallExpression ->
             val separator = joinCall.getArgumentForParameter(0)?.let { uStringEvaluator.calculateValue(it, configuration) }
                             ?: return@body null
 
@@ -466,6 +458,7 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
   )
 
   fun `test many assignments`() {
+    val updateTimes = 500
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {
         String b() {
@@ -474,21 +467,23 @@ class UStringEvaluatorTest : AbstractStringEvaluatorTest() {
       
         String a() {
           String a0 = "a";
-          ${(1..1000).map { """String a$it = a${it - 1} + (true ? "a" : b());""" }.joinToString("\n          ") { it }}
-          return a1000 + <caret> (true ? "a" : b());
+          ${(1..updateTimes).map { """String a$it = a${it - 1} + (true ? "a" : b());""" }.joinToString("\n          ") { it }}
+          return a$updateTimes + <caret> (true ? "a" : b());
         }
       }
     """.trimIndent())
 
     val elementAtCaret = file.findElementAt(myFixture.caretOffset)?.parent?.toUElement() ?: fail("Cannot find UElement at caret")
 
-    val expected = "'a'${"{'a'|{'b'}}".repeat(1001)}"
-    PlatformTestUtil.startPerformanceTest("calculate value of many assignments", 2000) {
-      val pks = UStringEvaluator().calculateValue(elementAtCaret, UStringEvaluator.Configuration(
+    myFixture.doHighlighting()
+
+    val expected = "'a'${"{'a'|'b'}".repeat(updateTimes + 1)}"
+    PlatformTestUtil.startPerformanceTest("calculate value of many assignments", 1000) {
+      val pks = UStringEvaluator().calculateValue(elementAtCaret, UNeDfaConfiguration(
         methodCallDepth = 2,
         methodsToAnalyzePattern = psiMethod().withName("b")
       )) ?: fail("Cannot evaluate string")
       TestCase.assertEquals(expected, pks.debugConcatenation)
-    }.attempts(1).assertTiming()
+    }.attempts(2).assertTiming()
   }
 }

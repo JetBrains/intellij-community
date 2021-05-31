@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -135,7 +135,7 @@ class ConflictingFileTypeMappingTracker {
         NotificationGroup.getGroupTitle("File type conflict"),
         notificationText,
         result.explanation,
-        NotificationType.INFORMATION, null);
+        NotificationType.INFORMATION);
       String message =
       result.resolved.pluginDescriptor.isBundled() ? FileTypesBundle.message("notification.content.conflict.confirm.reassign", resolvedDisplayName) :
       FileTypesBundle.message("notification.content.conflict.confirm.reassign.from.plugin", resolvedDisplayName, result.resolved.pluginDescriptor.getName());
@@ -175,12 +175,12 @@ class ConflictingFileTypeMappingTracker {
   }
 
   private static void showReassignedInfoNotification(@Nullable Project project, @NotNull @NlsContexts.NotificationContent String message) {
-    Notification confirmNotification = new Notification(
+    new Notification(
       NotificationGroup.getGroupTitle("Pattern reassigned"),
       FileTypesBundle.message("dialog.title.pattern.reassigned"),
       message,
-      NotificationType.INFORMATION, null);
-    Notifications.Bus.notify(confirmNotification, project);
+      NotificationType.INFORMATION
+    ).notify(project);
   }
 
   private static void editFileType(@Nullable Project project, @NotNull FileType fileType) {

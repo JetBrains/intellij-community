@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.AbstractBundle;
@@ -11,7 +11,10 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.plugins.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
+import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.ide.plugins.RawPluginDescriptor;
 import com.intellij.ide.ui.customization.ActionUrl;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.idea.IdeaLogger;
@@ -47,6 +50,7 @@ import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.serviceContainer.ContainerUtilKt;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
@@ -58,6 +62,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
+import kotlin.Unit;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -134,7 +139,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
     }
 
-    registerActions(PluginManagerCore.getLoadedPlugins(null), true);
+    registerActions(PluginManagerCore.getLoadedPlugins(null));
 
     EP.forEachExtensionSafe(customizer -> customizer.customize(this));
     DYNAMIC_EP_NAME.forEachExtensionSafe(customizer -> customizer.registerActions(this));
@@ -158,26 +163,12 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @ApiStatus.Internal
-  public void registerActions(@NotNull List<IdeaPluginDescriptorImpl> plugins, @SuppressWarnings("unused") boolean initialStartup) {
+  public void registerActions(@NotNull List<IdeaPluginDescriptorImpl> plugins) {
     KeymapManagerEx keymapManager = Objects.requireNonNull(KeymapManagerEx.getInstanceEx());
-
-    for (IdeaPluginDescriptorImpl plugin : plugins) {
-      registerPluginActions(plugin, keymapManager);
-      for (PluginDependency pluginDependency : plugin.getPluginDependencies()) {
-        IdeaPluginDescriptorImpl subPlugin = pluginDependency.isDisabledOrBroken ? null : pluginDependency.subDescriptor;
-        if (subPlugin == null) {
-          continue;
-        }
-
-        registerPluginActions(subPlugin, keymapManager);
-        for (PluginDependency subPluginDependency : subPlugin.getPluginDependencies()) {
-          IdeaPluginDescriptorImpl subSubPlugin = subPluginDependency.isDisabledOrBroken ? null : subPluginDependency.subDescriptor;
-          if (subSubPlugin != null) {
-            registerPluginActions(subSubPlugin, keymapManager);
-          }
-        }
-      }
-    }
+    ContainerUtilKt.executeRegisterTask(plugins, it -> {
+      registerPluginActions(it, keymapManager);
+      return Unit.INSTANCE;
+    });
   }
 
   private static @NotNull AnActionListener publisher() {
@@ -434,7 +425,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   private void registerPluginActions(@NotNull IdeaPluginDescriptorImpl pluginDescriptor, @NotNull KeymapManagerEx keymapManager) {
-    List<RawPluginDescriptor.ActionDescriptor> elements = pluginDescriptor.getActionDescriptionElements();
+    List<RawPluginDescriptor.ActionDescriptor> elements = pluginDescriptor.actions;
     if (elements == null) {
       return;
     }
@@ -498,13 +489,11 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   @Override
-  @Nullable
-  public AnAction getAction(@NotNull String id) {
+  public @Nullable AnAction getAction(@NotNull String id) {
     return getActionImpl(id, false);
   }
 
-  @Nullable
-  private AnAction getActionImpl(@NotNull String id, boolean canReturnStub) {
+  private @Nullable AnAction getActionImpl(@NotNull String id, boolean canReturnStub) {
     AnAction action;
     synchronized (myLock) {
       action = idToAction.get(id);
@@ -1129,7 +1118,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @ApiStatus.Internal
   public static @Nullable String checkUnloadActions(PluginId pluginId, @NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    List<RawPluginDescriptor.ActionDescriptor> descriptors = pluginDescriptor.getActionDescriptionElements();
+    List<RawPluginDescriptor.ActionDescriptor> descriptors = pluginDescriptor.actions;
     if (descriptors == null) {
       return null;
     }
@@ -1159,12 +1148,13 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   }
 
   public void unloadActions(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    List<RawPluginDescriptor.ActionDescriptor> elements = pluginDescriptor.getActionDescriptionElements();
-    if (elements == null) {
+    List<RawPluginDescriptor.ActionDescriptor> descriptors = pluginDescriptor.actions;
+    if (descriptors == null) {
       return;
     }
 
-    for (RawPluginDescriptor.ActionDescriptor descriptor : ContainerUtil.reverse(elements)) {
+    for (int i = descriptors.size() - 1; i >= 0; i--) {
+      RawPluginDescriptor.ActionDescriptor descriptor = descriptors.get(i);
       XmlElement element = descriptor.element;
       switch (descriptor.name) {
         case ACTION_ELEMENT_NAME:
@@ -1265,19 +1255,16 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
   private @Nullable AnAction addToMap(@NotNull String actionId,
                                       @NotNull AnAction action,
                                       @Nullable ProjectType projectType) {
-    AnAction chameleonAction = idToAction.computeIfPresent(actionId,
-                                                           (__, old) -> old instanceof ChameleonAction
-                                                                        ? old
-                                                                        : new ChameleonAction(old, projectType));
-    if (chameleonAction != null) {
-      return ((ChameleonAction)chameleonAction).addAction(action, projectType);
-    }
-    else {
-      AnAction result = projectType != null ?
-                        new ChameleonAction(action, projectType) :
-                        action;
+    AnAction chameleonAction = idToAction.computeIfPresent(actionId, (__, old) -> {
+      return old instanceof ChameleonAction ? old : new ChameleonAction(old, projectType);
+    });
+    if (chameleonAction == null) {
+      AnAction result = projectType == null ? action : new ChameleonAction(action, projectType);
       idToAction.put(actionId, result);
       return result;
+    }
+    else {
+      return ((ChameleonAction)chameleonAction).addAction(action, projectType);
     }
   }
 
@@ -1298,7 +1285,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
 
   @Override
   public void registerAction(@NotNull String actionId, @NotNull AnAction action) {
-    registerAction(actionId, action, null);
+    registerAction(actionId, action, null, null);
   }
 
   @Override
@@ -1501,29 +1488,25 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     try (AccessToken ignore = ProhibitAWTEvents.start("fireBeforeActionPerformed")) {
       for (AnActionListener listener : myActionListeners) {
-        //noinspection deprecation
-        listener.beforeActionPerformed(action, event.getDataContext(), event);
+        listener.beforeActionPerformed(action, event);
       }
-      //noinspection deprecation
-      publisher().beforeActionPerformed(action, event.getDataContext(), event);
+      publisher().beforeActionPerformed(action, event);
       ActionsCollectorImpl.onBeforeActionInvoked(action, event);
     }
   }
 
   @Override
-  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+  public void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
     myPrevPerformedActionId = myLastPreformedActionId;
     myLastPreformedActionId = getId(action);
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     IdeaLogger.ourLastActionId = myLastPreformedActionId;
     try (AccessToken ignore = ProhibitAWTEvents.start("fireAfterActionPerformed")) {
-      ActionsCollectorImpl.onAfterActionInvoked(action, event);
+      ActionsCollectorImpl.onAfterActionInvoked(action, event, result);
       for (AnActionListener listener : myActionListeners) {
-        //noinspection deprecation
-        listener.afterActionPerformed(action, event.getDataContext(), event);
+        listener.afterActionPerformed(action, event, result);
       }
-      //noinspection deprecation
-      publisher().afterActionPerformed(action, event.getDataContext(), event);
+      publisher().afterActionPerformed(action, event, result);
     }
   }
 

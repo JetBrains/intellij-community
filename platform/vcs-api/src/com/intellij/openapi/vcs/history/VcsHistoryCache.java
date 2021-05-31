@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.history;
 
 import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.util.Consumer;
@@ -22,6 +21,7 @@ public class VcsHistoryCache {
   private final Object myLock;
   private final SLRUMap<HistoryCacheBaseKey, CachedHistory> myHistoryCache;
   private final SLRUMap<HistoryCacheWithRevisionKey, Object> myAnnotationCache;
+  private final SLRUMap<HistoryCacheWithRevisionKey, VcsRevisionNumber> myLastRevisionCache;
 
   public VcsHistoryCache() {
     myLock = new Object();
@@ -33,14 +33,17 @@ public class VcsHistoryCache {
     myAnnotationCache = new SLRUMap<>(
       preloadEnabled ? 50 : 10,
       preloadEnabled ? 50 : 5);
+    myLastRevisionCache = new SLRUMap<>(50, 50);
   }
 
-  public <C extends Serializable, T extends VcsAbstractHistorySession> void put(final FilePath filePath,
-                                                                                @Nullable final FilePath correctedPath,
-                                                                                final VcsKey vcsKey,
-                                                                                final T session,
-                                                                                @NotNull final VcsCacheableHistorySessionFactory<C, T> factory,
-                                                                                boolean isFull) {
+  public <C extends Serializable, T extends VcsAbstractHistorySession> void put(
+    @NotNull FilePath filePath,
+    @Nullable FilePath correctedPath,
+    @NotNull VcsKey vcsKey,
+    @NotNull T session,
+    @NotNull VcsCacheableHistorySessionFactory<C, T> factory,
+    boolean isFull
+  ) {
     synchronized (myLock) {
       myHistoryCache.put(new HistoryCacheBaseKey(filePath, vcsKey),
                          new CachedHistory(correctedPath != null ? correctedPath : filePath, session.getRevisionList(),
@@ -48,9 +51,9 @@ public class VcsHistoryCache {
     }
   }
 
-  public void editCached(final FilePath filePath, final VcsKey vcsKey, final Consumer<? super List<VcsFileRevision>> consumer) {
+  public void editCached(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull Consumer<? super List<VcsFileRevision>> consumer) {
     synchronized (myLock) {
-      final CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
+      CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
       if (cachedHistory != null) {
         consumer.consume(cachedHistory.getRevisions());
       }
@@ -58,27 +61,37 @@ public class VcsHistoryCache {
   }
 
   @Nullable
-  public <C extends Serializable, T extends VcsAbstractHistorySession> T getFull(final FilePath filePath, final VcsKey vcsKey,
-                                                                                 @NotNull final VcsCacheableHistorySessionFactory<C, T> factory) {
+  public <C extends Serializable, T extends VcsAbstractHistorySession> T getFull(
+    @NotNull FilePath filePath,
+    @NotNull VcsKey vcsKey,
+    @NotNull VcsCacheableHistorySessionFactory<C, T> factory
+  ) {
     synchronized (myLock) {
-      final CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
-      if (cachedHistory == null || ! cachedHistory.isIsFull()) {
+      CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
+      if (cachedHistory == null || !cachedHistory.isIsFull()) {
         return null;
       }
-      return factory.createFromCachedData((C) cachedHistory.getCustomData(), cachedHistory.getRevisions(), cachedHistory.getPath(),
+      //noinspection unchecked
+      C customData = (C)cachedHistory.getCustomData();
+      return factory.createFromCachedData(customData, cachedHistory.getRevisions(), cachedHistory.getPath(),
                                           cachedHistory.getCurrentRevision());
     }
   }
 
   @Nullable
-  public <C extends Serializable, T extends VcsAbstractHistorySession> T getMaybePartial(final FilePath filePath, final VcsKey vcsKey,
-                                                                                         @NotNull final VcsCacheableHistorySessionFactory<C, T> factory) {
+  public <C extends Serializable, T extends VcsAbstractHistorySession> T getMaybePartial(
+    @NotNull FilePath filePath,
+    @NotNull VcsKey vcsKey,
+    @NotNull VcsCacheableHistorySessionFactory<C, T> factory
+  ) {
     synchronized (myLock) {
-      final CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
+      CachedHistory cachedHistory = myHistoryCache.get(new HistoryCacheBaseKey(filePath, vcsKey));
       if (cachedHistory == null) {
         return null;
       }
-      return factory.createFromCachedData((C) cachedHistory.getCustomData(), cachedHistory.getRevisions(), cachedHistory.getPath(),
+      //noinspection unchecked
+      C customData = (C)cachedHistory.getCustomData();
+      return factory.createFromCachedData(customData, cachedHistory.getRevisions(), cachedHistory.getPath(),
                                           cachedHistory.getCurrentRevision());
     }
   }
@@ -86,28 +99,30 @@ public class VcsHistoryCache {
   public void clearAll() {
     clearHistory();
     clearAnnotations();
+    clearLastRevisions();
   }
 
   public void clearHistory() {
     synchronized (myLock) {
-      final Iterator<Map.Entry<HistoryCacheBaseKey,CachedHistory>> iterator = myHistoryCache.entrySet().iterator();
+      Iterator<Map.Entry<HistoryCacheBaseKey, CachedHistory>> iterator = myHistoryCache.entrySet().iterator();
       while (iterator.hasNext()) {
-        final Map.Entry<HistoryCacheBaseKey, CachedHistory> next = iterator.next();
-        if (! next.getKey().getFilePath().isNonLocal()) {
+        Map.Entry<HistoryCacheBaseKey, CachedHistory> next = iterator.next();
+        if (!next.getKey().getFilePath().isNonLocal()) {
           iterator.remove();
         }
       }
     }
   }
 
-  public void putAnnotation(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number,
-                  @NotNull final Object vcsAnnotation) {
+  public void putAnnotation(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber number,
+                            @NotNull Object vcsAnnotation) {
     synchronized (myLock) {
       myAnnotationCache.put(new HistoryCacheWithRevisionKey(filePath, vcsKey, number), vcsAnnotation);
     }
   }
 
-  public Object getAnnotation(@NotNull final FilePath filePath, @NotNull final VcsKey vcsKey, @NotNull final VcsRevisionNumber number) {
+  @Nullable
+  public Object getAnnotation(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber number) {
     synchronized (myLock) {
       return myAnnotationCache.get(new HistoryCacheWithRevisionKey(filePath, vcsKey, number));
     }
@@ -116,6 +131,26 @@ public class VcsHistoryCache {
   public void clearAnnotations() {
     synchronized (myLock) {
       myAnnotationCache.clear();
+    }
+  }
+
+  public void putLastRevision(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber currentRevision,
+                              @NotNull VcsRevisionNumber lastRevision) {
+    synchronized (myLock) {
+      myLastRevisionCache.put(new HistoryCacheWithRevisionKey(filePath, vcsKey, currentRevision), lastRevision);
+    }
+  }
+
+  @Nullable
+  public VcsRevisionNumber getLastRevision(@NotNull FilePath filePath, @NotNull VcsKey vcsKey, @NotNull VcsRevisionNumber currentRevision) {
+    synchronized (myLock) {
+      return myLastRevisionCache.get(new HistoryCacheWithRevisionKey(filePath, vcsKey, currentRevision));
+    }
+  }
+
+  public void clearLastRevisions() {
+    synchronized (myLock) {
+      myLastRevisionCache.clear();
     }
   }
 

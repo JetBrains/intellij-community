@@ -3,6 +3,8 @@ package com.intellij.openapi.application.impl;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ex.ApplicationUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.util.containers.ConcurrentList;
@@ -50,9 +52,9 @@ final class ReadMostlyRWLock {
   }
 
   // Each reader thread has instance of this struct in its thread local. it's also added to global "readers" list.
-  private static class Reader {
+  static class Reader {
     @NotNull private final Thread thread;   // its thread
-    private volatile boolean readRequested; // this reader is requesting or obtained read access. Written by reader thread only, read by writer.
+    volatile boolean readRequested; // this reader is requesting or obtained read access. Written by reader thread only, read by writer.
     private volatile boolean blocked;       // this reader is blocked waiting for the writer thread to release write lock. Written by reader thread only, read by writer.
     private boolean impatientReads; // true if should throw PCE on contented read lock
     Reader(@NotNull Thread readerThread) {
@@ -88,28 +90,45 @@ final class ReadMostlyRWLock {
     return status.readRequested;
   }
 
-  boolean checkReadLockedByThisThreadAndNoPendingWrites() throws ApplicationUtil.CannotRunReadActionException {
-    checkReadThreadAccess();
+  // null means lock already acquired, Reader means lock acquired successfully
+  Reader startRead() {
+    if (Thread.currentThread() == writeThread) return null;
     Reader status = R.get();
     throwIfImpatient(status);
-    return status.readRequested;
+    if (status.readRequested) return null;
+
+    if (!tryReadLock(status)) {
+      ProgressIndicator progress = ProgressManager.getGlobalProgressIndicator();
+      for (int iter = 0; ; iter++) {
+        if (tryReadLock(status)) {
+          break;
+        }
+        // do not run any checkCanceled hooks to avoid deadlock
+        if (progress != null && progress.isCanceled() && !ProgressManager.getInstance().isInNonCancelableSection()) {
+          throw new ProcessCanceledException();
+        }
+        waitABit(status, iter);
+      }
+    }
+    return status;
   }
 
-  void readLock() {
-    checkReadThreadAccess();
+  // return tristate: null means lock already acquired, Reader with readRequested==true means lock was successfully acquired, Reader with readRequested==false means lock was not acquired
+  Reader startTryRead() {
+    if (Thread.currentThread() == writeThread) return null;
     Reader status = R.get();
     throwIfImpatient(status);
+    if (status.readRequested) return null;
 
-    if (tryReadLock(status)) {
-      return;
-    }
-    for (int iter = 0; ; iter++) {
-      if (tryReadLock(status)) {
-        break;
-      }
+    tryReadLock(status);
+    return status;
+  }
 
-      ProgressManager.checkCanceled();
-      waitABit(status, iter);
+  void endRead(Reader status) {
+    checkReadThreadAccess();
+    status.readRequested = false;
+    if (writeRequested) {
+      LockSupport.unpark(writeThread);  // parked by writeLock()
     }
   }
 
@@ -157,21 +176,6 @@ final class ReadMostlyRWLock {
     finally {
       status.impatientReads = old;
     }
-  }
-
-  void readUnlock() {
-    checkReadThreadAccess();
-    Reader status = R.get();
-    status.readRequested = false;
-    if (writeRequested) {
-      LockSupport.unpark(writeThread);  // parked by writeLock()
-    }
-  }
-
-  boolean tryReadLock() {
-    checkReadThreadAccess();
-    Reader status = R.get();
-    return tryReadLock(status);
   }
 
   private boolean tryReadLock(Reader status) {

@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.platform.testintegration
 
 import com.intellij.psi.JavaPsiFacade
@@ -43,11 +44,16 @@ abstract class AbstractLightTestFramework: LightTestFramework {
                     return NoLightTestFrameworkResult
                 }
 
-                when(isAUnitTestMethod(namedDeclaration)) {
-                    true -> ResolvedLightTestFrameworkResult(testFramework)
+                when (namedDeclaration.getParentOfType<KtClassOrObject>(true)?.run { isAUnitTestClass(this) }) {
+                    true -> when (isAUnitTestMethod(namedDeclaration)) {
+                        true -> ResolvedLightTestFrameworkResult(testFramework)
+                        false -> UnsureLightTestFrameworkResult
+                        null -> NoLightTestFrameworkResult
+                    }
                     false -> UnsureLightTestFrameworkResult
                     null -> NoLightTestFrameworkResult
                 }
+
             }
             else -> UnsureLightTestFrameworkResult
         }

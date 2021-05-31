@@ -1,52 +1,23 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.artifacts
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.PathManager
+import com.intellij.util.io.Decompressor
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
+import java.security.MessageDigest
 import kotlin.io.path.*
+
+const val KOTLINC_DIST_JPS_LIB_XML_NAME = "kotlinc_kotlin_dist.xml"
 
 abstract class KotlinArtifacts(val kotlincDistDir: File) {
     companion object {
         @get:JvmStatic
         val instance: KotlinArtifacts by lazy {
-            if (
-                doRunFromSources() &&
-                doesClassExist("com.intellij.openapi.application.ApplicationManager") && // ApplicationManager may absent in JPS process so we need to check it presence firstly
-                ApplicationManager.getApplication()?.isUnitTestMode == true
-            ) {
-                getTestKotlinArtifacts() ?: error(
-                    "We are in unit test mode! TestKotlinArtifacts must be available in such mode. " +
-                            "Probably class was renamed or broken classpath"
-                )
-            } else {
-                // If TestKotlinArtifacts is presented in classpath then it must be test environment
-                getTestKotlinArtifacts() ?: ProductionKotlinArtifacts
-            }
-        }
-
-        private fun doRunFromSources(): Boolean {
-            val resourcePathForClass = PathUtil.getResourcePathForClass(ProductionKotlinArtifacts::class.java)
-            return resourcePathForClass.extension != "jar"
-        }
-
-        private fun doesClassExist(fqName: String): Boolean {
-            val classPath = fqName.replace('.', '/') + ".class"
-            return KotlinArtifacts::class.java.classLoader.getResource(classPath) != null
-        }
-
-        private fun getTestKotlinArtifacts(): KotlinArtifacts? {
-            val clazz = try {
-                Class.forName("org.jetbrains.kotlin.idea.artifacts.TestKotlinArtifacts")
-            } catch (ex: ClassNotFoundException) {
-                null
-            }
-            return clazz?.getConstructor()?.newInstance() as KotlinArtifacts?
+            if (File(PathManager.getHomePath(), ".idea/libraries/$KOTLINC_DIST_JPS_LIB_XML_NAME").exists()) KotlinArtifactsFromSources
+            else ProductionKotlinArtifacts
         }
     }
 
@@ -93,9 +64,6 @@ private object ProductionKotlinArtifacts : KotlinArtifacts(run {
             // and the kotlinc directory becomes a subdirectory of the cache directory (see KotlinBuildProcessParametersProvider.getAdditionalPluginPaths())
             pluginJar.parent.toFile()
         } else {
-            val kotlincPathWhenRunningFromSources = Path(PathManager.getHomePath(), "out/artifacts/KotlinPlugin")
-            if (kotlincPathWhenRunningFromSources.exists()) return@run kotlincPathWhenRunningFromSources.toFile()
-
             // Don't throw exception because someone may want to just try to initialize
             // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
             File("\"<invalid_kotlinc_path>\"")
@@ -104,3 +72,30 @@ private object ProductionKotlinArtifacts : KotlinArtifacts(run {
         libFile.parent.toFile()
     }
 })
+
+private object KotlinArtifactsFromSources : KotlinArtifacts(run {
+    val outDir = File(PathManager.getHomePath(), "out")
+    val kotlincDistDir = outDir.resolve("kotlinc-dist")
+    val hashFile = outDir.resolve("kotlinc-dist/kotlinc-dist.md5")
+    val kotlincJar = findLibrary(
+        RepoLocation.MAVEN_REPOSITORY,
+        KOTLINC_DIST_JPS_LIB_XML_NAME,
+        "org.jetbrains.kotlin",
+        "kotlin-dist-for-ide"
+    )
+    val hash = kotlincJar.md5()
+    if (hashFile.exists() && hashFile.readText() == hash && kotlincDistDir.exists()) {
+        return@run kotlincDistDir
+    }
+    val dirWhereToExtractKotlinc = kotlincDistDir.resolve("kotlinc").also {
+        it.deleteRecursively()
+        it.mkdirs()
+    }
+    hashFile.writeText(hash)
+    Decompressor.Zip(kotlincJar).extract(dirWhereToExtractKotlinc)
+    return@run kotlincDistDir
+})
+
+private fun File.md5(): String {
+    return MessageDigest.getInstance("MD5").digest(readBytes()).joinToString("") { "%02x".format(it) }
+}

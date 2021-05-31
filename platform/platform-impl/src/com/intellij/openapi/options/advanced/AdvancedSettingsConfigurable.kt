@@ -1,28 +1,33 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.advanced
 
+ import com.intellij.icons.AllIcons
  import com.intellij.ide.ui.search.SearchUtil
  import com.intellij.ide.ui.search.SearchableOptionsRegistrar
+ import com.intellij.openapi.actionSystem.AnActionEvent
  import com.intellij.openapi.application.ApplicationBundle
  import com.intellij.openapi.options.SearchableConfigurable
  import com.intellij.openapi.options.UiDslConfigurable
+ import com.intellij.openapi.project.DumbAwareAction
  import com.intellij.openapi.util.NlsSafe
+ import com.intellij.ui.CollectionComboBoxModel
+ import com.intellij.ui.ColorUtil
  import com.intellij.ui.DocumentAdapter
  import com.intellij.ui.SearchTextField
  import com.intellij.ui.layout.*
  import com.intellij.util.Alarm
+ import com.intellij.util.ui.JBUI
  import com.intellij.util.ui.UIUtil
- import javax.swing.AbstractButton
- import javax.swing.JComponent
- import javax.swing.JLabel
- import javax.swing.SwingConstants
+ import javax.swing.*
  import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfigurable {
-  private class SettingsRow(val row: Row, val component: JComponent, val text: String, val groupRow: Row)
+  private class SettingsRow(val row: Row, val component: JComponent, val id: String, val text: String) {
+    lateinit var groupPanel: JPanel
+  }
 
   private val settingsRows = mutableListOf<SettingsRow>()
-  private val groupRows = mutableListOf<Row>()
+  private val groupPanels = mutableListOf<JPanel>()
   private lateinit var nothingFoundRow: Row
 
   private val searchAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
@@ -48,18 +53,45 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     }.toSortedMap()
 
     for ((group, extensions) in groupedExtensions) {
-      titledRow(group) {
-        val groupRow = this
-        groupRows.add(groupRow)
+      val settingsRowsInGroup = mutableListOf<SettingsRow>()
+      val groupPanel = nestedPanel {
+        titledRow(group) {
+          for (extension in extensions) {
+            row {
+              val labelCellBuilder = if (extension.type() == AdvancedSettingType.Bool)
+                null
+              else
+                label(extension.title() + ":")
 
-        for (extension in extensions) {
-          row {
-            val (label, component) = control(extension)
-            extension.description()?.let { description -> component.comment(description) }
-            val textComponent = label?.component ?: component.component
-            settingsRows.add(SettingsRow(this, textComponent, extension.title(), groupRow))
+              lateinit var component: CellBuilder<JComponent>
+              cell(isFullWidth = true) {
+                val (c, isDefaultPredicate, reset) = control(extension)
+                component = c
+                extension.trailingLabel()?.takeIf { it.isNotEmpty() }?.let { label(it) }
+
+                val resetAction = object : DumbAwareAction(ApplicationBundle.message("button.advanced.settings.reset"), null, AllIcons.Diff.Revert) {
+                  override fun actionPerformed(e: AnActionEvent) {
+                    reset()
+                  }
+                }
+                actionButton(resetAction)
+                  .visibleIf(isDefaultPredicate.not())
+
+                label("").constraints(pushX)
+              }
+
+              extension.description()?.let { description -> component.comment(description) }
+              val textComponent = labelCellBuilder?.component ?: component.component
+              val row = SettingsRow(this, textComponent, extension.id, labelCellBuilder?.component?.text ?: extension.title())
+              settingsRows.add(row)
+              settingsRowsInGroup.add(row)
+            }
           }
         }
+      }.component
+      groupPanels.add(groupPanel)
+      for (settingsRow in settingsRowsInGroup) {
+        settingsRow.groupPanel = groupPanel
       }
     }
 
@@ -75,44 +107,61 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     }
   }
 
-  private fun Row.control(extension: AdvancedSettingBean): Pair<CellBuilder<JLabel>?, CellBuilder<JComponent>> {
+  data class AdvancedSettingControl(val cellBuilder: CellBuilder<JComponent>, val isDefault: ComponentPredicate, val reset: () -> Unit)
+
+  private fun InnerCell.control(extension: AdvancedSettingBean): AdvancedSettingControl {
     return when (extension.type()) {
-      AdvancedSettingType.Bool ->
-        null to checkBox(
+      AdvancedSettingType.Bool -> {
+        val cb = checkBox(
           extension.title(),
           { AdvancedSettings.getBoolean(extension.id) },
           { AdvancedSettings.setBoolean(extension.id, it) }
         )
+        AdvancedSettingControl(
+          cb,
+          if (extension.defaultValueObject == true) cb.component.selected else cb.component.selected.not(),
+          { cb.component.isSelected = extension.defaultValueObject as Boolean }
+        )
+      }
 
       AdvancedSettingType.Int -> {
-        label(extension.title() + ":") to intTextField(
+        val textField = intTextField(
           { AdvancedSettings.getInt(extension.id) },
           { AdvancedSettings.setInt(extension.id, it) },
           columns = 10
         )
+        AdvancedSettingControl(
+          textField,
+          textField.component.enteredTextSatisfies { it == extension.defaultValueObject.toString() },
+          { textField.component.text = extension.defaultValueObject.toString() }
+        )
       }
 
       AdvancedSettingType.String -> {
-        label(extension.title() + ":") to textField(
+        val textField = textField(
           { AdvancedSettings.getString(extension.id) },
           { AdvancedSettings.setString(extension.id, it) },
-          columns = 20
+          columns = 30
+        )
+        AdvancedSettingControl(
+          textField,
+          textField.component.enteredTextSatisfies { it == extension.defaultValueObject },
+          { textField.component.text = extension.defaultValueObject as String }
         )
       }
 
       AdvancedSettingType.Enum -> {
-        val builder = label(extension.title() + ":")
-        cell {
-          buttonGroup(
-            { AdvancedSettings.getEnum(extension.id, extension.enumKlass!!) },
-            { AdvancedSettings.setEnum(extension.id, it) }
-          ) {
-            for (enumConstant in extension.enumKlass!!.enumConstants) {
-              radioButton(enumConstant.toString(), enumConstant)
-            }
-          }
-        }
-        builder to builder
+        val comboBoxModel = CollectionComboBoxModel(extension.enumKlass!!.enumConstants.toList())
+        val cb = comboBox(
+          comboBoxModel,
+          { AdvancedSettings.getEnum(extension.id, extension.enumKlass!!) },
+          { AdvancedSettings.setEnum(extension.id, it as Enum<*>) }
+        )
+        AdvancedSettingControl(
+          cb,
+          cb.component.selectedValueIs(extension.defaultValueObject as Enum<*>),
+          { cb.component.selectedItem = extension.defaultValueObject }
+        )
       }
     }
   }
@@ -123,9 +172,8 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
   private fun applyFilter(searchText: String?) {
     if (searchText.isNullOrBlank()) {
-      for (groupRow in groupRows) {
-        groupRow.visible = true
-        groupRow.subRowsVisible = true
+      for (groupPanel in groupPanels) {
+        groupPanel.isVisible = true
       }
       for (settingsRow in settingsRows) {
         settingsRow.row.visible = true
@@ -138,31 +186,40 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
     val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
     val filterWords = searchableOptionsRegistrar.getProcessedWords(searchText)
-    val visibleGroupRows = mutableSetOf<Row>()
+    val filterWordsUnstemmed = searchText.split(' ')
+    val visibleGroupPanels = mutableSetOf<JPanel>()
     for (settingsRow in settingsRows) {
       val textWords = searchableOptionsRegistrar.getProcessedWords(settingsRow.text)
-      val matches = textWords.containsAll(filterWords)
+      val idWords = settingsRow.id.split('.')
+      val textMatches = textWords.containsAll(filterWords)
+      val idMatches = idWords.containsAll(filterWordsUnstemmed)
+      val matches = textMatches || idMatches
       settingsRow.row.visible = matches
       settingsRow.row.subRowsVisible = matches
       if (matches) {
-        settingsRow.groupRow.visible = true
-        settingsRow.groupRow.subRowsVisible = true
-        visibleGroupRows.add(settingsRow.groupRow)
-        updateMatchText(settingsRow.component, settingsRow.text, searchText)
+        settingsRow.groupPanel.isVisible = true
+        visibleGroupPanels.add(settingsRow.groupPanel)
+        val idColor = ColorUtil.toHtmlColor(JBUI.CurrentTheme.ContextHelp.FOREGROUND)
+        val baseText = if (idMatches && !textMatches)
+          """${settingsRow.text}<br><pre><font color="$idColor">${settingsRow.id}"""
+        else
+          settingsRow.text
+        updateMatchText(settingsRow.component, baseText, searchText)
       }
     }
-    for (groupRow in groupRows) {
-      if (groupRow !in visibleGroupRows) {
-        groupRow.visible = false
-        groupRow.subRowsVisible = false
+    for (groupPanel in groupPanels) {
+      if (groupPanel !in visibleGroupPanels) {
+        groupPanel.isVisible = false
       }
     }
-    nothingFoundRow.visible = visibleGroupRows.isEmpty()
+    nothingFoundRow.visible = visibleGroupPanels.isEmpty()
   }
 
   private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
     val text = searchText?.let {
-      "<html>" + SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL), UIUtil.getSearchMatchGradientStartColor())
+      @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL),
+                                              UIUtil.getSearchMatchGradientStartColor())
+      "<html>$highlightedText"
     } ?: baseText
     when (component) {
       is JLabel -> component.text = text

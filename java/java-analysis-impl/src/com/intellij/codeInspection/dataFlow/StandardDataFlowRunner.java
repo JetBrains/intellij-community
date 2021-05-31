@@ -3,7 +3,10 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.interpreter.StateQueue;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
@@ -15,14 +18,12 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -41,15 +42,11 @@ import java.util.function.BiConsumer;
  */
 public class StandardDataFlowRunner {
   private static final Logger LOG = Logger.getInstance(StandardDataFlowRunner.class);
-  // Default complexity limit (maximum allowed attempts to process instruction).
-  // Fail as too complex to process if certain instruction is executed more than this limit times.
-  // Also used to calculate a threshold when states are forcibly merged.
-  protected static final int DEFAULT_MAX_STATES_PER_BRANCH = 300;
 
   private final @NotNull DfaValueFactory myValueFactory;
   private final @NotNull ThreeState myIgnoreAssertions;
   private boolean myInlining = true;
-  private JvmDataFlowInterpreter myInterpreter;
+  private StandardDataFlowInterpreter myInterpreter;
 
   /**
    * @param project current project
@@ -174,7 +171,7 @@ public class StandardDataFlowRunner {
       throw ex;
     }
     catch (RuntimeException | AssertionError e) {
-      reportDfaProblem(psiBlock, null, null, e);
+      LOG.error("Error building control flow", e, new Attachment("method_body.txt", psiBlock.getText()));
     }
     return null;
   }
@@ -187,8 +184,8 @@ public class StandardDataFlowRunner {
   }
 
   @NotNull
-  protected JvmDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
-    return new JvmDataFlowInterpreter(flow, listener);
+  protected StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener, @NotNull ControlFlow flow) {
+    return new StandardDataFlowInterpreter(flow, listener);
   }
 
   protected @NotNull List<DfaInstructionState> createInitialInstructionStates(@NotNull PsiElement psiBlock,
@@ -206,38 +203,6 @@ public class StandardDataFlowRunner {
 
   public boolean wasForciblyMerged() {
     return myInterpreter.wasForciblyMerged();
-  }
-
-  static void reportDfaProblem(@NotNull PsiElement psiBlock,
-                               ControlFlow flow,
-                               DfaInstructionState lastInstructionState, Throwable e) {
-    Attachment[] attachments = {new Attachment("method_body.txt", psiBlock.getText())};
-    if (flow != null) {
-      String flowText = flow.toString();
-      if (lastInstructionState != null) {
-        int index = lastInstructionState.getInstruction().getIndex();
-        flowText = flowText.replaceAll("(?m)^", "  ");
-        flowText = flowText.replaceFirst("(?m)^ {2}" + index + ": ", "* " + index + ": ");
-      }
-      attachments = ArrayUtil.append(attachments, new Attachment("flow.txt", flowText));
-      if (lastInstructionState != null) {
-        DfaMemoryState memoryState = lastInstructionState.getMemoryState();
-        String memStateText = null;
-        try {
-          memStateText = memoryState.toString();
-        }
-        catch (RuntimeException second) {
-          e.addSuppressed(second);
-        }
-        if (memStateText != null) {
-          attachments = ArrayUtil.append(attachments, new Attachment("memory_state.txt", memStateText));
-        }
-      }
-    }
-    if (e instanceof RuntimeExceptionWithAttachments) {
-      attachments = ArrayUtil.mergeArrays(attachments, ((RuntimeExceptionWithAttachments)e).getAttachments());
-    }
-    LOG.error(new RuntimeExceptionWithAttachments(e, attachments));
   }
 
   public @NotNull RunnerResult analyzeMethodRecursively(@NotNull PsiElement block, @NotNull DfaListener listener) {
@@ -263,7 +228,7 @@ public class StandardDataFlowRunner {
   }
 
   protected @NotNull DfaMemoryState createMemoryState() {
-    return new DfaMemoryStateImpl(myValueFactory);
+    return new JvmDfaMemoryStateImpl(myValueFactory);
   }
 
   public void forNestedClosures(BiConsumer<? super PsiElement, ? super Collection<? extends DfaMemoryState>> consumer) {
@@ -275,12 +240,12 @@ public class StandardDataFlowRunner {
         .filter(var -> var.getPsiVariable() instanceof PsiVariable &&
                        !VariableAccessUtils.variableIsUsed((PsiVariable)var.getPsiVariable(), closure))
         .toList();
-      Collection<? extends DfaMemoryState> states = closures.get(closure);
+      Collection<DfaMemoryState> states = closures.get(closure);
       if (!unusedVars.isEmpty()) {
-        List<DfaMemoryStateImpl> stateList = StreamEx.of(states)
+        List<DfaMemoryState> stateList = StreamEx.of(states)
           .peek(state -> unusedVars.forEach(state::flushVariable))
-          .map(state -> (DfaMemoryStateImpl)state).distinct().toList();
-        states = StateQueue.mergeGroup(stateList);
+          .distinct().toList();
+        states = StateQueue.squash(stateList);
       }
       consumer.accept(closure, states);
     }

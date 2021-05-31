@@ -12,6 +12,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.impl.PopupMenuPreloader;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -28,7 +29,6 @@ import com.intellij.openapi.editor.colors.impl.AbstractColorsScheme;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.colors.impl.FontPreferencesImpl;
 import com.intellij.openapi.editor.event.*;
-import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.ex.*;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
@@ -51,6 +51,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -65,6 +66,7 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
 import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
+import com.intellij.ui.components.GradientViewport;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -311,7 +313,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private CaretImpl myPrimaryCaret;
 
   public final boolean myDisableRtl = Registry.is("editor.disable.rtl");
-  public final Object myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
+  /**
+   * @deprecated use UISettings#getEditorFractionalMetricsHint instead
+   */
+  @Deprecated
+  public Object myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
 
   final EditorView myView;
 
@@ -530,6 +536,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myFocusModeModel = new FocusModeModel(this);
     Disposer.register(myDisposable, myFocusModeModel);
     myPopupHandlers.add(new DefaultPopupHandler());
+    PopupMenuPreloader.install(myEditorComponent, ActionPlaces.EDITOR_POPUP, null,
+                               () -> ContextMenuPopupHandler.getGroupForId(myContextMenuGroupId));
 
     myScrollingPositionKeeper = new EditorScrollingPositionKeeper(this);
     Disposer.register(myDisposable, myScrollingPositionKeeper);
@@ -987,6 +995,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (myFocusModeModel != null) {
       myFocusModeModel.clearFocusMode();
     }
+
+    myFractionalMetricsHintValue = UISettings.getEditorFractionalMetricsHint();
   }
 
   /**
@@ -1060,7 +1070,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myGutterComponent.setOpaque(true);
 
-    myScrollPane.setViewportView(myEditorComponent);
+    if (ExperimentalUI.isNewEditorTabs()) {
+      myScrollPane.setViewport(new GradientViewport(myEditorComponent, JBUI.insets(10), true));
+    } else {
+      myScrollPane.setViewportView(myEditorComponent);
+    }
     //myScrollPane.setBorder(null);
     myScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     myScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
@@ -3816,19 +3830,12 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myDragStarted = false;
       clearDnDContext();
 
-      boolean forceProcessing = false;
       myMousePressedEvent = e;
 
       myExpectedCaretOffset = event.getOffset();
       try {
         for (EditorMouseListener mouseListener : myMouseListeners) {
-          boolean wasConsumed = event.isConsumed();
           mouseListener.mousePressed(event);
-          //noinspection deprecation
-          if (!wasConsumed && event.isConsumed() && mouseListener instanceof com.intellij.util.EditorPopupHandler) {
-            // compatibility with legacy code, this logic should be removed along with EditorPopupHandler
-            forceProcessing = true;
-          }
           if (isReleased) return;
         }
       }
@@ -3848,7 +3855,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myDragOnGutterSelectionStartLine = EditorUtil.yPositionToLogicalLine(EditorImpl.this, e);
       }
 
-      if (event.isConsumed() && !forceProcessing) return;
+      if (event.isConsumed()) return;
 
       if (myCommandProcessor != null) {
         Runnable runnable = () -> {

@@ -751,6 +751,7 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
   }
 
   override fun loadState(parentNode: Element) {
+    config.migrateToRegistry()
     val oldSelectedConfigurationId: String?
     val isFirstLoadState = isFirstLoadState.compareAndSet(true, false)
     if (isFirstLoadState) {
@@ -999,9 +1000,9 @@ open class RunManagerImpl @JvmOverloads constructor(val project: Project, shared
              if (checkUnknown && typeId != null) {
                UnknownFeaturesCollector.getInstance(project).registerUnknownFeature(
                  CONFIGURATION_TYPE_FEATURE_ID,
-                 "Run Configuration",
+                 ExecutionBundle.message("plugins.advertiser.feature.run.configuration"),
                  typeId,
-                 factoryId ?: typeId,
+                 null
                )
              }
            }

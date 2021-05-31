@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.textmate.plist;
 
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
-import org.jdom.Element;
-import org.jdom.JDOMException;
+import com.intellij.openapi.util.text.Strings;
+import com.intellij.util.XmlDomReader;
+import com.intellij.util.XmlElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.text.ParseException;
@@ -19,47 +19,39 @@ import static org.jetbrains.plugins.textmate.plist.PListValue.value;
 public class XmlPlistReader implements PlistReader {
   @Override
   public Plist read(@NotNull InputStream inputStream) throws IOException {
-    try {
-      return internalRead(JDOMUtil.load(inputStream));
-    }
-    catch (JDOMException e) {
-      throw new IOException("Error while parsing plist", e);
-    }
+    return internalRead(XmlDomReader.readXmlAsModel(inputStream));
   }
 
   @Override
   public Plist read(@NotNull File file) throws IOException {
-    try {
-      return internalRead(JDOMUtil.load(file));
-    }
-    catch (JDOMException e) {
-      throw new IOException("Error while parsing plist", e);
+    try (FileInputStream fs = new FileInputStream(file)) {
+      return read(fs);
     }
   }
 
-  private static Plist internalRead(@NotNull Element root) throws IOException {
-    if (JDOMUtil.isEmpty(root)) {
+  private static Plist internalRead(@NotNull XmlElement root) throws IOException {
+    if (root.children.isEmpty()) {
       return Plist.EMPTY_PLIST;
     }
 
-    if (!"plist".equals(root.getName())) {
-      throw new IOException("Unknown xml format. Root element is '" + root.getName() + "'");
+    if (!"plist".equals(root.name)) {
+      throw new IOException("Unknown xml format. Root element is '" + root.name + "'");
     }
 
-    Element dictElement = root.getChild("dict");
+    XmlElement dictElement = root.getChild("dict");
     return dictElement != null ? (Plist)readDict(dictElement).getValue() : Plist.EMPTY_PLIST;
   }
 
-  private static PListValue readDict(@NotNull Element dictElement) throws IOException {
+  private static PListValue readDict(@NotNull XmlElement dictElement) throws IOException {
     Plist dict = new Plist();
-    List<Element> children = dictElement.getChildren();
+    List<XmlElement> children = dictElement.children;
     int i = 0;
     for (; i < children.size(); i++) {
-      Element keyElement = children.get(i);
-      if ("key".equals(keyElement.getName())) {
-        String attributeKey = keyElement.getValue();
+      XmlElement keyElement = children.get(i);
+      if ("key".equals(keyElement.name)) {
+        String attributeKey = keyElement.content;
         i++;
-        PListValue value = readValue(attributeKey, children.get(i));
+        PListValue value = attributeKey != null ? readValue(attributeKey, children.get(i)) : null;
         if (value != null) {
           dict.setEntry(attributeKey, value);
         }
@@ -70,8 +62,8 @@ public class XmlPlistReader implements PlistReader {
   }
 
   @Nullable
-  private static PListValue readValue(@NotNull String key, @NotNull Element valueElement) throws IOException {
-    String type = valueElement.getName();
+  private static PListValue readValue(@NotNull String key, @NotNull XmlElement valueElement) throws IOException {
+    String type = valueElement.name;
     if ("dict".equals(type)) {
       return readDict(valueElement);
     }
@@ -83,9 +75,9 @@ public class XmlPlistReader implements PlistReader {
     }
   }
 
-  private static PListValue readArray(String key, Element element) throws IOException {
+  private static PListValue readArray(String key, XmlElement element) throws IOException {
     List<Object> result = new ArrayList<>();
-    for (Element child : element.getChildren()) {
+    for (XmlElement child : element.children) {
       Object val = readValue(key, child);
       if (val != null) {
         result.add(val);
@@ -95,9 +87,11 @@ public class XmlPlistReader implements PlistReader {
   }
 
   @Nullable
-  private static PListValue readBasicValue(@NotNull String type, @NotNull Element valueElement) throws IOException {
-    if ("string".equals(type)) {
-      return value(StringUtil.unescapeXmlEntities(valueElement.getValue()), PlistValueType.STRING);
+  private static PListValue readBasicValue(@NotNull String type, @NotNull XmlElement valueElement) throws IOException {
+    String content = valueElement.content;
+
+    if ("string".equals(type) && content != null) {
+      return value(Strings.unescapeXmlEntities(content), PlistValueType.STRING);
     }
     else if ("true".equals(type)) {
       return value(Boolean.TRUE, PlistValueType.BOOLEAN);
@@ -105,15 +99,15 @@ public class XmlPlistReader implements PlistReader {
     else if ("false".equals(type)) {
       return value(Boolean.FALSE, PlistValueType.BOOLEAN);
     }
-    else if ("integer".equals(type)) {
-      return value(Long.parseLong(valueElement.getValue()), PlistValueType.INTEGER);
+    else if ("integer".equals(type) && content != null) {
+      return value(Long.parseLong(content), PlistValueType.INTEGER);
     }
-    else if ("real".equals(type)) {
-      return value(Double.parseDouble(valueElement.getValue()), PlistValueType.REAL);
+    else if ("real".equals(type) && content != null) {
+      return value(Double.parseDouble(content), PlistValueType.REAL);
     }
-    else if ("date".equals(type)) {
+    else if ("date".equals(type) && content != null) {
       try {
-        return value(Plist.dateFormatter().parse(valueElement.getValue()), PlistValueType.DATE);
+        return value(Plist.dateFormatter().parse(content), PlistValueType.DATE);
       }
       catch (ParseException e) {
         throw new IOException(e);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.io.FileUtil
@@ -19,7 +19,7 @@ final class CommunityRepositoryModules {
   static List<PluginLayout> COMMUNITY_REPOSITORY_PLUGINS = [
     plugin("intellij.ant") {
       mainJarName = "antIntegration.jar"
-      withModule("intellij.ant.jps")
+      withModule("intellij.ant.jps", "ant-jps.jar")
     },
     plugin("intellij.laf.macos") {
       bundlingRestrictions.supportedOs = [OsFamily.MACOS]
@@ -35,7 +35,7 @@ final class CommunityRepositoryModules {
     plugin("intellij.java.guiForms.designer") {
       directoryName = "uiDesigner"
       mainJarName = "uiDesigner.jar"
-      withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar", null)
+      withModule("intellij.java.guiForms.jps", "jps/java-guiForms-jps.jar")
     },
     plugin("intellij.properties") {
       withModule("intellij.properties.psi", "properties.jar")
@@ -43,7 +43,7 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.properties.resource.bundle.editor"),
     plugin("intellij.vcs.git") {
-      withModule("intellij.vcs.git.rt", "git4idea-rt.jar", null)
+      withModule("intellij.vcs.git.rt", "git4idea-rt.jar")
     },
     plugin("intellij.vcs.svn"){
       withProjectLibrary("sqlite")
@@ -55,7 +55,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.java.langInjection", "IntelliLang.jar")
       withModule("intellij.xml.langInjection", "IntelliLang.jar")
       withModule("intellij.java.langInjection.jps")
-      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.tasks.core") {
       directoryName = "tasks"
@@ -63,7 +62,6 @@ final class CommunityRepositoryModules {
       withModule("intellij.tasks.compatibility")
       withModule("intellij.tasks.jira")
       withModule("intellij.tasks.java")
-      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.xslt.debugger") {
       withModule("intellij.xslt.debugger.rt", "xslt-debugger-rt.jar")
@@ -74,12 +72,12 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.maven") {
       withModule("intellij.maven.jps")
-      withModule("intellij.maven.server")
-      withModule("intellij.maven.server.m2.impl")
-      withModule("intellij.maven.server.m3.common")
-      withModule("intellij.maven.server.m30.impl")
-      withModule("intellij.maven.server.m3.impl")
-      withModule("intellij.maven.server.m36.impl")
+      withModule("intellij.maven.server", "maven-server-api.jar")
+      withModule("intellij.maven.server.m2.impl", "maven2-server.jar")
+      withModule("intellij.maven.server.m3.common", "maven3-server-common.jar")
+      withModule("intellij.maven.server.m30.impl", "maven30-server.jar")
+      withModule("intellij.maven.server.m3.impl", "maven3-server.jar")
+      withModule("intellij.maven.server.m36.impl", "maven36-server.jar")
       withModule("intellij.maven.errorProne.compiler")
       withModule("intellij.maven.artifactResolver.m2", "artifact-resolver-m2.jar")
       withModule("intellij.maven.artifactResolver.common", "artifact-resolver-m2.jar")
@@ -105,8 +103,8 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.gradle") {
       withModule("intellij.gradle.common")
-      withModule("intellij.gradle.toolingExtension")
-      withModule("intellij.gradle.toolingExtension.impl")
+      withModule("intellij.gradle.toolingExtension", "gradle-tooling-extension-api.jar")
+      withModule("intellij.gradle.toolingExtension.impl", "gradle-tooling-extension-impl.jar")
       withModule("intellij.gradle.toolingProxy")
       withProjectLibrary("Gradle")
     },
@@ -144,8 +142,8 @@ final class CommunityRepositoryModules {
       withModule("intellij.devkit.jps")
     },
     plugin("intellij.eclipse") {
-      withModule("intellij.eclipse.jps", "eclipse-jps.jar", null)
-      withModule("intellij.eclipse.common")
+      withModule("intellij.eclipse.jps", "eclipse-jps.jar")
+      withModule("intellij.eclipse.common", "eclipse-common.jar")
     },
     plugin("intellij.java.coverage") {
       withModule("intellij.java.coverage.rt")
@@ -154,7 +152,6 @@ final class CommunityRepositoryModules {
       directoryName = "java-decompiler"
       mainJarName = "java-decompiler.jar"
       withModule("intellij.java.decompiler.engine", mainJarName)
-      doNotCreateSeparateJarForLocalizableResources()
     },
     javaFXPlugin("intellij.javaFX.community"),
     plugin("intellij.terminal") {
@@ -190,7 +187,16 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.android.jpsBuildPlugin") {
       withModule("intellij.android.jpsBuildPlugin.common")
-      withModule("intellij.android.jpsBuildPlugin.jps", "jps/android-jps-plugin.jar", null)
+      withModule("intellij.android.jpsBuildPlugin.jps", "jps/android-jps-plugin.jar")
+    },
+    plugin("intellij.grazie") {
+      withModule("intellij.grazie.core")
+      withModule("intellij.grazie.java")
+      withModule("intellij.grazie.json")
+      withModule("intellij.grazie.markdown")
+      withModule("intellij.grazie.properties")
+      withModule("intellij.grazie.xml")
+      withModule("intellij.grazie.yaml")
     }
   ]
 
@@ -199,18 +205,17 @@ final class CommunityRepositoryModules {
       withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
     },
     plugin("intellij.cucumber.java") {
-      withModule("intellij.cucumber.jvmFormatter")
-      withModule("intellij.cucumber.jvmFormatter3")
-      withModule("intellij.cucumber.jvmFormatter4")
-      withModule("intellij.cucumber.jvmFormatter5")
-      doNotCreateSeparateJarForLocalizableResources()
+      withModule("intellij.cucumber.jvmFormatter", "cucumber-jvmFormatter.jar")
+      withModule("intellij.cucumber.jvmFormatter3", "cucumber-jvmFormatter3.jar")
+      withModule("intellij.cucumber.jvmFormatter4", "cucumber-jvmFormatter4.jar")
+      withModule("intellij.cucumber.jvmFormatter5", "cucumber-jvmFormatter5.jar")
     },
     plugin("intellij.cucumber.groovy") {
-      doNotCreateSeparateJarForLocalizableResources()
     },
     plugin("intellij.gauge"),
     plugin("intellij.protoeditor") {
       withModule("intellij.protoeditor.core")
+      withModule("intellij.protoeditor.go")
       withModule("intellij.protoeditor.jvm")
       withModule("intellij.protoeditor.python")
     }
@@ -227,10 +232,10 @@ final class CommunityRepositoryModules {
         return "$declaredVersion.$ideVersion"
       })
 
-      withModule("intellij.android.common", "android-common.jar", null)
-      withModule("intellij.android.buildCommon", "build-common.jar", null)
+      withModule("intellij.android.common", "android-common.jar")
+      withModule("intellij.android.buildCommon", "build-common.jar")
 
-      withModule("intellij.android.core", "android.jar", null)
+      withModule("intellij.android.core", "android.jar")
       withModule("intellij.android.adb", "android.jar")
       withModule("intellij.android.app-inspection", "android.jar")
       withModule("intellij.android.app-inspection.ide", "android.jar")
@@ -389,28 +394,30 @@ final class CommunityRepositoryModules {
       mainJarName = "javaFX.jar"
       withModule("intellij.javaFX", mainJarName)
       withModule("intellij.javaFX.jps")
-      withModule("intellij.javaFX.common")
+      withModule("intellij.javaFX.common", "javaFX-common.jar")
+      withModule("intellij.javaFX.properties")
       withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
     }
   }
 
-  static PluginLayout groovyPlugin(List<String> additionalModules) {
+  static PluginLayout groovyPlugin(List<String> additionalModules, @DelegatesTo(PluginLayout.PluginLayoutSpec) Closure addition = {}) {
     plugin("intellij.groovy") {
       directoryName = "Groovy"
       mainJarName = "Groovy.jar"
       withModule("intellij.groovy.psi", mainJarName)
       withModule("intellij.groovy.structuralSearch", mainJarName)
       excludeFromModule("intellij.groovy.psi", "standardDsls/**")
-      withModule("intellij.groovy.jps")
-      withModule("intellij.groovy.rt")
-      withModule("intellij.groovy.constants.rt")
+      withModule("intellij.groovy.jps", "groovy-jps.jar")
+      withModule("intellij.groovy.rt", "groovy-rt.jar")
+      withModule("intellij.groovy.constants.rt", "groovy-constants-rt.jar")
       withResource("groovy-psi/resources/standardDsls", "lib/standardDsls")
       withResource("hotswap/gragent.jar", "lib/agent")
       withResource("groovy-psi/resources/conf", "lib")
       additionalModules.each {
         withModule(it)
       }
-      doNotCreateSeparateJarForLocalizableResources()
+      addition.delegate = delegate
+      addition()
     }
   }
 }

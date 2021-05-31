@@ -39,6 +39,7 @@ import static com.jetbrains.jsonSchema.remote.JsonFileResolver.isAbsoluteUrl;
  */
 public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent implements SearchableConfigurable, Disposable {
   @NonNls public static final String SETTINGS_JSON_SCHEMA = "settings.json.schema";
+  private Runnable myInitializer = null;
 
   private final static Comparator<UserDefinedJsonSchemaConfiguration> COMPARATOR = (o1, o2) -> {
     if (o1.isApplicationDefined() != o2.isApplicationDefined()) {
@@ -289,10 +290,18 @@ public class JsonSchemaMappingsConfigurable extends MasterDetailsComponent imple
     return uiList;
   }
 
+  public void setInitializer(@NotNull Runnable initializer) {
+    myInitializer = initializer;
+  }
+
   @Override
   public void reset() {
     fillTree();
     updateWarningText(true);
+    if (myInitializer != null) {
+      myInitializer.run();
+      myInitializer = null;
+    }
   }
 
   @Override

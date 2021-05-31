@@ -12,7 +12,6 @@ import com.intellij.notification.*;
 import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -86,17 +85,6 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         TooltipController.getInstance().resetCurrent();
       }
     });
-  }
-
-  @Override
-  public void fire(@NotNull Notification notification,
-                   @NotNull AnAction action,
-                   @Nullable DataContext context) {
-    DataContext contextWrapper = dataId -> Notification.KEY.is(dataId) ? notification : context != null ? context.getData(dataId) : null;
-    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, ActionPlaces.NOTIFICATION, contextWrapper);
-    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-    }
   }
 
   @Override
@@ -391,7 +379,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       layoutData.mergeData = null;
     }
     layoutData.id = notification.id;
-    layoutData.displayId = notification.displayId;
+    layoutData.displayId = notification.getDisplayId();
     layoutDataRef.set(layoutData);
 
     if (layoutData.textColor == null) {
@@ -672,8 +660,8 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     balloon.setShadowBorderProvider(new NotificationBalloonShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
 
     if (!layoutData.welcomeScreen) {
-      balloon.setActionProvider(
-        new NotificationBalloonActionProvider(balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.displayId));
+      balloon.setActionProvider(new NotificationBalloonActionProvider(
+        balloon, centerPanel.getTitle(), layoutData, notification.getGroupId(), notification.id, notification.getDisplayId()));
     }
 
     ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
@@ -711,12 +699,12 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   }
 
   private static void createActionPanel(Notification notification, NotificationCenterPanel centerPanel, int gap, HoverAdapter hoverAdapter) {
-    NotificationActionPanel actionPanel = new NotificationActionPanel(gap, notification.getCollapseActionsDirection());
+    NotificationActionPanel actionPanel = new NotificationActionPanel(gap, notification.getCollapseDirection());
     centerPanel.addActionPanel(actionPanel);
 
     List<AnAction> actions = notification.getActions();
 
-    if (actions.size() > 2 && notification.getCollapseActionsDirection() == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
+    if (actions.size() > 2 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
       addDropDownAction(notification, actionPanel);
     }
 
@@ -731,7 +719,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }, action));
     }
 
-    if (actions.size() > 2 && notification.getCollapseActionsDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
+    if (actions.size() > 2 && notification.getCollapseDirection() == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
       addDropDownAction(notification, actionPanel);
     }
 

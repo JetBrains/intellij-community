@@ -5,7 +5,11 @@ package com.intellij.codeInspection.dataFlow.lang.ir;
 import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * A base class for all instructions of DFA IR that could be interpreted.
@@ -52,6 +56,25 @@ public abstract class Instruction {
     return new int[] {myIndex + 1};
   }
 
+  /**
+   * @return list of variables that are known to be always written by this instruction
+   * @param factory
+   */
+  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
+    return Collections.emptyList();
+  }
+
+  /**
+   * @return list of variables that must stay reachable at this instruction. 
+   * Variables that are not required to be reachable by any instructions 
+   * until the next write or the interpretation end, 
+   * could be flushed automatically.
+   * @param factory
+   */
+  public List<DfaVariableValue> getRequiredVariables(DfaValueFactory factory) {
+    return Collections.emptyList();
+  }
+  
   /**
    * @return true if the instruction always moves to the next instruction. Note that the linear instruction
    * may still split the memory state returning several instruction states from accept (but all of them

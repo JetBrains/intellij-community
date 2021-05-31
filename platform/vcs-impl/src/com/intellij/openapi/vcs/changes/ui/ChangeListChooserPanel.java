@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.*;
@@ -100,6 +101,9 @@ public final class ChangeListChooserPanel extends JPanel {
     };
     myOkEnabledListener = okEnabledListener;
     add(myListPanel, BorderLayout.CENTER);
+
+    setChangeLists(null);
+    setDefaultSelection(null);
   }
 
   public void init() {
@@ -112,16 +116,20 @@ public final class ChangeListChooserPanel extends JPanel {
   }
 
   public void setSuggestedName(@NlsSafe @NotNull String name) {
-    setSuggestedName(name, null);
+    setSuggestedName(name, false);
   }
 
-  public void setSuggestedName(@NlsSafe @NotNull String name, @Nls @Nullable String comment) {
+  public void setSuggestedName(@NlsSafe @NotNull String name, boolean forceCreate) {
+    setSuggestedName(name, null, forceCreate);
+  }
+
+  public void setSuggestedName(@NlsSafe @NotNull String name, @Nls @Nullable String comment, boolean forceCreate) {
     if (StringUtil.isEmptyOrSpaces(name)) return;
     LocalChangeList changelistByName = getExistingChangelistByName(name);
     if (changelistByName != null) {
       myExistingListsCombo.setSelectedItem(changelistByName);
     }
-    else {
+    else if (forceCreate || VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY) {
       myNewNameSuggested = true;
       myExistingListsCombo.insertItemAt(LocalChangeList.createEmptyChangeList(myProject, name), 0);
       if (StringUtil.isEmptyOrSpaces(myLastTypedDescription)) {

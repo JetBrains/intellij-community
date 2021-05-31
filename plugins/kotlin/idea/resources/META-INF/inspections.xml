@@ -865,6 +865,21 @@
       <category>Kotlin</category>
     </intentionAction>
 
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.intentions.ConvertCallToOppositeIntention</className>
+      <category>Kotlin</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.intentions.ConvertAnyToAllAndViceVersaIntention</className>
+      <category>Kotlin</category>
+    </intentionAction>
+
+    <intentionAction>
+      <className>org.jetbrains.kotlin.idea.intentions.ConvertAnyToNoneAndViceVersaIntention</className>
+      <category>Kotlin</category>
+    </intentionAction>
+
     <lang.inspectionSuppressor language="kotlin" implementationClass="org.jetbrains.kotlin.idea.inspections.KotlinInspectionSuppressor"/>
 
     <localInspection implementationClass="org.jetbrains.kotlin.idea.intentions.ObjectLiteralToLambdaInspection"
@@ -1537,7 +1552,7 @@
                      language="JAVA"
                      key="inspection.kotlin.sealed.in.java.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.MoveSuspiciousCallableReferenceIntoParenthesesInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SuspiciousCallableReferenceInLambdaInspection"
                      groupPath="Kotlin"
                      groupName="Probable bugs"
                      enabledByDefault="true"
@@ -2627,6 +2642,15 @@
                      level="WARNING"
                      language="kotlin"
                      key="unclear.precedence.of.binary.expression.inspection.display.name" bundle="messages.KotlinBundle"/>
+
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.dfa.KotlinConstantConditionsInspection"
+                     groupPath="Kotlin"
+                     groupName="Probable bugs"
+                     enabledByDefault="true"
+                     isInternal="true"
+                     level="WARNING"
+                     language="kotlin"
+                     key="inspection.kotlin.constant.conditions.display.name" bundle="messages.KotlinBundle"/>
 
   </extensions>
 

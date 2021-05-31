@@ -122,7 +122,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
     }
   }
 
-  override fun afterActionPerformed(action: AnAction, event: AnActionEvent) {
+  override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
     if (action is SearchEverywhereAction && !hotKeyWasUsed) {
       if (event.inputEvent is KeyEvent) {
         if ((event.inputEvent as KeyEvent).keyCode == KeyEvent.VK_SHIFT) {

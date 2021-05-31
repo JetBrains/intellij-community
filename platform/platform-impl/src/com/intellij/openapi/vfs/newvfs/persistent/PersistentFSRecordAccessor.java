@@ -25,50 +25,54 @@ final class PersistentFSRecordAccessor {
   private final PersistentFSContentAccessor myPersistentFSContentAccessor;
   @NotNull
   private final PersistentFSAttributeAccessor myPersistentFSAttributeAccessor;
+  private final PersistentFSConnection myFSConnection;
   @NotNull
-  private final IntList myNewFreeRecords;
+  private final IntList myNewFreeRecords = new IntArrayList();
 
-  PersistentFSRecordAccessor(@NotNull PersistentFSContentAccessor accessor,
-                             @NotNull PersistentFSAttributeAccessor attributeAccessor) {
-    myPersistentFSContentAccessor = accessor;
+  PersistentFSRecordAccessor(@NotNull PersistentFSContentAccessor contentAccessor,
+                             @NotNull PersistentFSAttributeAccessor attributeAccessor,
+                             @NotNull PersistentFSConnection connection) {
+    myPersistentFSContentAccessor = contentAccessor;
     myPersistentFSAttributeAccessor = attributeAccessor;
-    myNewFreeRecords = new IntArrayList();
+    myFSConnection = connection;
   }
 
-  void addToFreeRecordsList(int id, @NotNull PersistentFSConnection connection) {
-    connection.markDirty();
+  void addToFreeRecordsList(int id) throws IOException {
+    myFSConnection.markDirty();
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       myNewFreeRecords.add(id);
     }
     // DbConnection.addFreeRecord(id); // important! Do not add fileId to free list until restart
-    connection.getRecords().setFlags(id, FREE_RECORD_FLAG);
+    myFSConnection.getRecords().setFlags(id, FREE_RECORD_FLAG);
   }
 
   // todo: Address  / capacity store in records table, size store with payload
-  int createRecord(@NotNull PersistentFSConnection connection) throws IOException {
+  int createRecord() throws IOException {
+    PersistentFSConnection connection = myFSConnection;
     connection.markDirty();
 
     final int free = connection.getFreeRecord();
     if (free == 0) {
-      final int fileLength = length(connection);
+      final int fileLength = length();
       LOG.assertTrue(fileLength % RECORD_SIZE == 0);
       int newRecord = fileLength / RECORD_SIZE;
       connection.getRecords().cleanRecord(newRecord);
-      assert fileLength + RECORD_SIZE == length(connection);
+      assert fileLength + RECORD_SIZE == length();
       return newRecord;
     }
     else {
-      deleteContentAndAttributes(free, connection);
+      deleteContentAndAttributes(free);
       connection.getRecords().cleanRecord(free);
       return free;
     }
   }
 
-  void checkSanity(@NotNull PersistentFSConnection connection) throws IOException {
+  void checkSanity() throws IOException {
+    PersistentFSConnection connection = myFSConnection;
     long t = System.currentTimeMillis();
 
-    final int fileLength = length(connection);
+    final int fileLength = length();
     assert fileLength % RECORD_SIZE == 0;
     int recordCount = fileLength / RECORD_SIZE;
 
@@ -83,7 +87,7 @@ final class PersistentFSRecordAccessor {
       }
       else {
         LOG.assertTrue(!isFreeRecord, "Record, not marked free, in free list: " + id);
-        checkRecordSanity(id, recordCount, usedAttributeRecordIds, validAttributeIds, connection);
+        checkRecordSanity(id, recordCount, usedAttributeRecordIds, validAttributeIds);
       }
     }
 
@@ -94,8 +98,8 @@ final class PersistentFSRecordAccessor {
   private void checkRecordSanity(int id,
                                  int recordCount,
                                  @NotNull IntList usedAttributeRecordIds,
-                                 @NotNull IntList validAttributeIds,
-                                 @NotNull PersistentFSConnection connection) throws IOException {
+                                 @NotNull IntList validAttributeIds) throws IOException {
+    PersistentFSConnection connection = myFSConnection;
     int parentId = connection.getRecords().getParent(id);
     assert parentId >= 0 && parentId < recordCount;
     if (parentId > 0 && connection.getRecords().getParent(parentId) > 0) {
@@ -104,11 +108,11 @@ final class PersistentFSRecordAccessor {
       assert BitUtil.isSet(parentFlags, PersistentFS.Flags.IS_DIRECTORY) : parentId + ": " + Integer.toHexString(parentFlags);
     }
 
-    CharSequence name = getName(id, connection);
-    LOG.assertTrue(parentId == 0 || name.length() != 0, "File with empty name found under " + getName(parentId, connection) + ", id=" + id);
+    CharSequence name = getName(id);
+    LOG.assertTrue(parentId == 0 || name.length() != 0, "File with empty name found under " + getName(parentId) + ", id=" + id);
 
-    myPersistentFSContentAccessor.checkContentsStorageSanity(id, connection);
-    myPersistentFSAttributeAccessor.checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds, connection);
+    myPersistentFSContentAccessor.checkContentsStorageSanity(id);
+    myPersistentFSAttributeAccessor.checkAttributesStorageSanity(id, usedAttributeRecordIds, validAttributeIds);
 
     long length = connection.getRecords().getLength(id);
     assert length >= -1 : "Invalid file length found for " + name + ": " + length;
@@ -119,17 +123,16 @@ final class PersistentFSRecordAccessor {
   }
 
   @Nullable
-  private static String getName(int fileId, @NotNull PersistentFSConnection connection) throws IOException {
-    return connection.getNames().valueOf(connection.getRecords().getNameId(fileId));
+  private String getName(int fileId) throws IOException {
+    return myFSConnection.getNames().valueOf(myFSConnection.getRecords().getNameId(fileId));
   }
 
-  private static int length(@NotNull PersistentFSConnection connection) {
-    return (int)connection.getRecords().length();
+  private int length() {
+    return (int)myFSConnection.getRecords().length();
   }
 
-  private void deleteContentAndAttributes(int id,
-                                          @NotNull PersistentFSConnection connection) throws IOException {
-    myPersistentFSContentAccessor.deleteContent(id, connection);
-    myPersistentFSAttributeAccessor.deleteAttributes(id, connection);
+  private void deleteContentAndAttributes(int id) throws IOException {
+    myPersistentFSContentAccessor.deleteContent(id);
+    myPersistentFSAttributeAccessor.deleteAttributes(id);
   }
 }

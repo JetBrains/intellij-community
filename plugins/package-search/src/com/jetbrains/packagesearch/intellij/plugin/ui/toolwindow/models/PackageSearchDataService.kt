@@ -6,8 +6,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.notification.NotificationType
 import com.intellij.notification.impl.NotificationGroupManagerImpl
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.AppUIExecutor
-import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.module.Module
@@ -16,8 +14,6 @@ import com.intellij.openapi.rd.createLifetime
 import com.intellij.openapi.rd.createNestedDisposable
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiUtil
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
 import com.jetbrains.packagesearch.api.v2.ApiRepository
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
@@ -32,12 +28,15 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.RepositoryDeclaration
+import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.ModuleOperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.OperationFailureRenderer
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.PackagesHeaderData
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.debounce
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logError
@@ -46,49 +45,50 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.rd.util.getOrCreate
 import com.jetbrains.rd.util.reactive.IPropertyView
 import com.jetbrains.rd.util.reactive.Property
-import java.net.URI
-import java.util.Locale
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeout
 import kotlinx.coroutines.yield
 import org.apache.commons.lang3.StringUtils
 import org.jetbrains.annotations.Nls
+import java.net.URI
+import java.util.Locale
+
+private val MAVEN_CENTRAL_UNIFIED_REPOSITORY =
+    UnifiedDependencyRepository("central", "Central Repository", "https://repo.maven.apache.org/maven2")
 
 private const val API_TIMEOUT_MILLIS = 10_000L
 private const val DATA_DEBOUNCE_MILLIS = 100L
 private const val SEARCH_DEBOUNCE_MILLIS = 200L
 
-@Suppress("EXPERIMENTAL_API_USAGE") // Just playing around... can't use StateFlows yet
 internal class PackageSearchDataService(
     override val project: Project
-) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, LifetimeProvider, Disposable {
+) : RootDataModelProvider, SearchClient, TargetModuleSetter, SelectedPackageSetter, OperationExecutor, LifetimeProvider, Disposable, CoroutineScope {
 
-    private val mainScope = CoroutineScope(SupervisorJob() + AppUIExecutor.onUiThread().coroutineDispatchingContext()) +
-        CoroutineName("PackageSearchDataService")
+    override val coroutineContext = SupervisorJob() + CoroutineName("PackageSearchDataService")
 
     override val lifetime = createLifetime()
     override val parentDisposable = lifetime.createNestedDisposable()
 
     private val configuration = PackageSearchGeneralConfiguration.getInstance(project)
 
-    private var dataChangeJob: Job? = null
-    private var queryChangeJob: Job? = null
+    private val dataChangeChannel = Channel<TraceInfo>(10)
+    private val queryChangeChannel = Channel<SearchQueryChangeModel>(10)
 
     private val dataProvider = ProjectDataProvider(PackageSearchApiClient(ServerURLs.base))
     private val operationFactory = PackageSearchOperationFactory()
-    private val operationExecutor = ModuleOperationExecutor(project)
+    private val operationExecutor = ModuleOperationExecutor()
     private val operationFailureRenderer = OperationFailureRenderer()
 
     private var knownRepositoriesRemoteInfo = listOf<ApiRepository>()
@@ -113,7 +113,7 @@ internal class PackageSearchDataService(
     init {
         logDebug("PKGSDataService#Starting up the Package Search root model...")
 
-        mainScope.launch {
+        launch {
             refreshKnownRepositories(TraceInfo(TraceInfo.TraceSource.INIT)) // Only doing it at startup, for now, as it won't change often
         }
 
@@ -162,10 +162,35 @@ internal class PackageSearchDataService(
                 }
                 refreshData(traceInfo)
             }
+
+        queryChangeChannel.consumeAsFlow()
+            .debounce(SEARCH_DEBOUNCE_MILLIS)
+            .onEach {
+                try {
+                    performSearch(it.query, it.traceInfo)
+                } catch (e: Throwable) {
+                    logError(it.traceInfo, "onSearchQueryChangedFlow") { "Execution failed: ${e.message}" }
+                } finally {
+                    setStatus(isSearching = false)
+                }
+            }
+            .launchIn(this)
+
+        dataChangeChannel.consumeAsFlow()
+            .debounce(DATA_DEBOUNCE_MILLIS)
+            .onEach {
+                try {
+                    onDataChanged(it)
+                } catch (e: Throwable) {
+                    logError(it, "onDataChangedFlow") { "Execution failed: ${e.message}" }
+                } finally {
+                    setStatus(isRefreshingData = false)
+                }
+            }
+            .launchIn(this)
     }
 
-    @RequiresEdt
-    private suspend fun refreshKnownRepositories(traceInfo: TraceInfo) {
+    private suspend fun refreshKnownRepositories(traceInfo: TraceInfo) = coroutineScope {
         setStatus(isRefreshingData = true)
         logDebug(traceInfo, "PKGSDataService#refreshKnownRepositories()") { "Refreshing known repositories from API..." }
         withContext(Dispatchers.IO) {
@@ -195,45 +220,23 @@ internal class PackageSearchDataService(
         setStatus(isRefreshingData = true)
     }
 
-    @RequiresEdt
+    private data class SearchQueryChangeModel(val query: String, val traceInfo: TraceInfo)
+
     private fun onSearchQueryChanged(query: String, traceInfo: TraceInfo) {
-        queryChangeJob?.cancel()
-        queryChangeJob = mainScope.launch {
-            try {
-                performSearch(query, traceInfo)
-            } catch (e: CancellationException) {
-                logTrace(traceInfo, "onSearchQueryChangedActor") { "Execution cancelled: ${e.message}" }
-                setStatus(isSearching = false)
-            }
-        }
+        queryChangeChannel.offer(SearchQueryChangeModel(query, traceInfo))
     }
 
-    @RequiresEdt
-    private suspend fun performSearch(query: String, traceInfo: TraceInfo) {
+    private fun performSearch(query: String, traceInfo: TraceInfo) = launch {
         logDebug(traceInfo, "PKGSDataService#performSearch()") { "Searching for '$query'..." }
         if (query.isBlank()) {
             logDebug(traceInfo, "PKGSDataService#performSearch()") { "Query is empty, reverting to no results" }
             searchResultsProperty.set(null)
-            return
+            return@launch
         }
 
         setStatus(isSearching = true)
 
-        delay(SEARCH_DEBOUNCE_MILLIS) // Debounce
-
-        withContext(Dispatchers.IO) {
-            try {
-                withTimeout(API_TIMEOUT_MILLIS) {
-                    yield()
-                    dataProvider.doSearch(query, _filterOptionsProperty.value)
-                }
-            } catch (e: CancellationException) {
-                logDebug(traceInfo, "PKGSDataService#performSearch()", e) { "Searching for '$query' cancelled" }
-                setStatus(isSearching = false)
-                ApiResult.Failure(e)
-            }
-        }
-            .also { yield() }
+        withTimeout(API_TIMEOUT_MILLIS) { dataProvider.doSearch(query, _filterOptionsProperty.value) }
             .onFailure {
                 PackageSearchEventsLogger.onSearchFailed(project, query)
                 logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
@@ -247,27 +250,20 @@ internal class PackageSearchDataService(
                 logDebug(traceInfo, "PKGSDataService#performSearch()") {
                     "Searching for '$query' completed, yielded ${it.packages.size} results in ${it.repositories.size} repositories"
                 }
-                searchResultsProperty.set(it)
+                searchResultsProperty.setWithAppUiDispatcher(it)
             }
 
         setStatus(isSearching = false)
     }
 
-    private fun refreshData(traceInfo: TraceInfo) {
-        dataChangeJob?.cancel()
-        dataChangeJob = mainScope.launch {
-            try {
-                delay(DATA_DEBOUNCE_MILLIS)
-                onDataChanged(traceInfo)
-            } catch (e: CancellationException) {
-                logTrace(traceInfo, "onDataChangedActor") { "Execution cancelled: ${e.message}" }
-                setStatus(isRefreshingData = false)
-            }
-        }
-        onSearchQueryChanged(searchQueryProperty.value, traceInfo)
+    private suspend fun <T> Property<T>.setWithAppUiDispatcher(value: T) = withContext(Dispatchers.AppUI) {
+        set(value)
     }
 
-    @RequiresEdt
+    private fun refreshData(traceInfo: TraceInfo) {
+        dataChangeChannel.offer(traceInfo)
+    }
+
     private suspend fun onDataChanged(traceInfo: TraceInfo) {
         val currentStatus = _statusProperty.value
         if (currentStatus.isExecutingOperations) {
@@ -284,62 +280,54 @@ internal class PackageSearchDataService(
         val query = searchQueryProperty.value
         val selectedPackage = _selectedPackageModelProperty.value
 
-        mainScope.launch(Dispatchers.IO) {
-            val moduleModels = fetchProjectModuleModels(targetModules, traceInfo)
-            val targetProjectModules = targetModules.map { it.projectModule }
+        val moduleModels = fetchProjectModuleModels(targetModules, traceInfo)
+        val targetProjectModules = targetModules.map { it.projectModule }
 
-            val installedPackages = installedPackages(targetProjectModules, traceInfo)
-                .filter { it.matches(query, filterOptions.onlyKotlinMultiplatform) }
+        val installedPackages = installedPackages(targetProjectModules, traceInfo)
+            .filter { it.matches(query, filterOptions.onlyKotlinMultiplatform) }
 
-            val installablePackages = installablePackages(currentSearchResults, installedPackages, traceInfo)
-            val allKnownRepositories = allKnownRepositoryModels(moduleModels, knownRepositoriesRemoteInfo)
-            val knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules)
-            val packagesToUpdate = computePackageUpdates(installedPackages, filterOptions.onlyStable)
+        val installablePackages = installablePackages(currentSearchResults, installedPackages, traceInfo)
+        val allKnownRepositories = allKnownRepositoryModels(moduleModels, knownRepositoriesRemoteInfo)
+        val knownRepositoriesInTargetModules = allKnownRepositories.filterOnlyThoseUsedIn(targetModules)
+        val packagesToUpdate = computePackageUpdates(installedPackages, filterOptions.onlyStable)
 
-            yield()
+        logDebug(traceInfo, "PKGSDataService#onDataChanged()") {
+            "New data: ${installedPackages.size} installed, ${installablePackages.size} installable, " +
+                "${knownRepositoriesInTargetModules.size} known repos in target modules, ${moduleModels.size} modules"
+        }
 
-            logDebug(traceInfo, "PKGSDataService#onDataChanged()") {
-                "New data: ${installedPackages.size} installed, ${installablePackages.size} installable, " +
-                    "${knownRepositoriesInTargetModules.size} known repos in target modules, ${moduleModels.size} modules"
-            }
+        val packageModels = installedPackages + installablePackages
+        val headerData = computeHeaderData(
+            installed = installedPackages,
+            installable = installablePackages,
+            isSearching = query.isNotEmpty(),
+            onlyStable = filterOptions.onlyStable,
+            targetModules = targetModules,
+            knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+            allKnownRepositories = allKnownRepositories
+        )
 
-            val packageModels = installedPackages + installablePackages
-            val headerData = computeHeaderData(
-                installed = installedPackages,
-                installable = installablePackages,
-                isSearching = query.isNotEmpty(),
-                onlyStable = filterOptions.onlyStable,
-                targetModules = targetModules,
-                knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
-                allKnownRepositories = allKnownRepositories
-            )
+        val newData = RootDataModel(
+            projectModules = moduleModels,
+            packageModels = packageModels,
+            packagesToUpdate = packagesToUpdate,
+            knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
+            allKnownRepositories = allKnownRepositories,
+            headerData = headerData,
+            targetModules = targetModules,
+            selectedPackage = selectedPackage,
+            filterOptions = filterOptions,
+            traceInfo = traceInfo
+        )
 
-            yield()
-            val newData = RootDataModel(
-                projectModules = moduleModels,
-                packageModels = packageModels,
-                packagesToUpdate = packagesToUpdate,
-                knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
-                allKnownRepositories = allKnownRepositories,
-                headerData = headerData,
-                targetModules = targetModules,
-                selectedPackage = selectedPackage,
-                filterOptions = filterOptions,
-                traceInfo = traceInfo
-            )
+        if (newData != _rootDataModelProperty.value) {
+            logDebug(traceInfo, "PKGSDataService#onDataChanged()") { "Sending data changes through" }
+            _rootDataModelProperty.setWithAppUiDispatcher(newData)
+            setStatus(isRefreshingData = false)
 
-            if (newData != _rootDataModelProperty.value) {
-                yield()
-                logDebug(traceInfo, "PKGSDataService#onDataChanged()") { "Sending data changes through" }
-                mainScope.launch {
-                    _rootDataModelProperty.set(newData)
-                    setStatus(isRefreshingData = false)
-                }
-
-                rerunHighlightingOnOpenBuildFiles()
-            } else {
-                logDebug(traceInfo, "PKGSDataService#onDataChanged()") { "No data changes detected, ignoring update" }
-            }
+            rerunHighlightingOnOpenBuildFiles()
+        } else {
+            logDebug(traceInfo, "PKGSDataService#onDataChanged()") { "No data changes detected, ignoring update" }
         }
     }
 
@@ -362,7 +350,6 @@ internal class PackageSearchDataService(
         return ModuleModel(projectModule, repositories)
     }
 
-    @RequiresBackgroundThread
     private suspend fun installedPackages(projectModules: List<ProjectModule>, traceInfo: TraceInfo): List<PackageModel.Installed> {
         val dependenciesByModule = fetchProjectDependencies(projectModules, traceInfo)
         val usageInfoByDependency = mutableMapOf<UnifiedDependency, MutableList<DependencyUsageInfo>>()
@@ -387,50 +374,38 @@ internal class PackageSearchDataService(
         val installedDependencies = dependenciesByModule.values.flatten()
             .mapNotNull { InstalledDependency.from(it) }
 
-        try {
-            val dependencyRemoteInfoMap = withContext(Dispatchers.IO) {
-                withTimeout(API_TIMEOUT_MILLIS) {
-                    yield()
-                    dataProvider.fetchInfoFor(installedDependencies, traceInfo)
-                }
-            }
-            yield()
-
-            return usageInfoByDependency.mapNotNull { (dependency, usageInfo) ->
-                val installedDependency = InstalledDependency.from(dependency)
-                val remoteInfo = if (installedDependency != null) {
-                    dependencyRemoteInfoMap[installedDependency]
-                } else {
-                    null
-                }
-
-                PackageModel.fromInstalledDependency(
-                    unifiedDependency = dependency,
-                    usageInfo = usageInfo,
-                    remoteInfo = remoteInfo
-                )
-            }.sortedBy { it.sortKey }
-        } catch (e: CancellationException) {
-            logDebug(traceInfo, "PKGSDataService#installedPackages()", e) { "Fetching installed packages info cancelled" }
-            setStatus(isSearching = false)
-            throw e
+        val dependencyRemoteInfoMap = withTimeout(API_TIMEOUT_MILLIS) {
+            dataProvider.fetchInfoFor(installedDependencies, traceInfo)
         }
+
+        return usageInfoByDependency.mapNotNull { (dependency, usageInfo) ->
+            val installedDependency = InstalledDependency.from(dependency)
+            val remoteInfo = if (installedDependency != null) {
+                dependencyRemoteInfoMap[installedDependency]
+            } else {
+                null
+            }
+
+            PackageModel.fromInstalledDependency(
+                unifiedDependency = dependency,
+                usageInfo = usageInfo,
+                remoteInfo = remoteInfo
+            )
+        }.sortedBy { it.sortKey }
     }
 
-    @RequiresBackgroundThread
     private fun fetchProjectDependencies(modules: List<ProjectModule>, traceInfo: TraceInfo): Map<ProjectModule, List<UnifiedDependency>> =
         modules.associateWith { module -> module.installedDependencies(traceInfo) }
 
-    @RequiresBackgroundThread
-    private fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> {
+    private fun ProjectModule.installedDependencies(traceInfo: TraceInfo): List<UnifiedDependency> = runReadAction {
         logDebug(traceInfo, "PKGSDataService#installedDependencies()") { "Fetching installed dependencies for module $name..." }
 
-        val operationProvider = ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-            ?: return emptyList()
-        return operationProvider.listDependenciesInProject(project, buildFile).toList()
+        ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+            ?.listDependenciesInModule(this)
+            ?.toList()
+            ?: emptyList()
     }
 
-    @RequiresBackgroundThread
     private fun PackageModel.matches(query: String, onlyKotlinMultiplatform: Boolean): Boolean {
         if (onlyKotlinMultiplatform && !isKotlinMultiplatform) {
             return false
@@ -445,7 +420,6 @@ internal class PackageSearchDataService(
         return queryTokens.any { searchableInfo.contains(it) }
     }
 
-    @RequiresBackgroundThread
     private fun installablePackages(
         searchResults: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>?,
         installedPackages: List<PackageModel>,
@@ -462,7 +436,6 @@ internal class PackageSearchDataService(
             .toList()
     }
 
-    @RequiresBackgroundThread
     private fun allKnownRepositoryModels(
         allModules: List<ModuleModel>,
         knownRepositoriesRemoteInfo: List<ApiRepository>
@@ -483,7 +456,7 @@ internal class PackageSearchDataService(
     )
 
     private fun List<RepositoryDeclaration>.anyMatches(remoteInfo: ApiRepository): Boolean {
-        val urls = ((remoteInfo.alternateUrls ?: emptyList()) + remoteInfo.url).filterNotNull()
+        val urls = (remoteInfo.alternateUrls ?: emptyList()) + remoteInfo.url
         val id = remoteInfo.id
         if (urls.isEmpty() && id.isBlank()) return false
         return any { declaredRepo ->
@@ -498,7 +471,6 @@ internal class PackageSearchDataService(
         return firstUri.normalize() == secondUri.normalize()
     }
 
-    @RequiresBackgroundThread
     private fun computePackageUpdates(
         installedPackages: List<PackageModel.Installed>,
         onlyStable: Boolean
@@ -522,15 +494,21 @@ internal class PackageSearchDataService(
         return PackagesToUpdate(updatesByModule)
     }
 
-    @RequiresBackgroundThread
-    private fun ProjectModule.declaredRepositories(): List<UnifiedDependencyRepository> {
-        val operationProvider = ProjectModuleOperationProvider.forProjectModuleType(moduleType)
-            ?: return emptyList()
+    private fun ProjectModule.declaredRepositories(): List<UnifiedDependencyRepository> = runReadAction {
+        val declaredRepositories = (ProjectModuleOperationProvider.forProjectModuleType(moduleType)
+            ?.listRepositoriesInModule(this)
+            ?.toList()
+            ?: emptyList())
 
-        return operationProvider.listRepositoriesInProject(project, buildFile).toList()
+        // This is a (sad) workaround for IDEA-267229 — when that's sorted, we shouldn't need this anymore.
+        if (moduleType == MavenProjectModuleType && declaredRepositories.none { it.id == "central" }) {
+            declaredRepositories + MAVEN_CENTRAL_UNIFIED_REPOSITORY
+        } else {
+            declaredRepositories
+        }
+
     }
 
-    @RequiresBackgroundThread
     private fun computeHeaderData(
         installed: List<PackageModel.Installed>,
         installable: List<PackageModel.SearchResult>,
@@ -576,31 +554,27 @@ internal class PackageSearchDataService(
         return PackagesHeaderData(title, count, updatablePackages.count(), operations)
     }
 
-    private fun setStatus(
+    private suspend fun setStatus(
         isSearching: Boolean? = null,
         isRefreshingData: Boolean? = null,
         isExecutingOperations: Boolean? = null
     ) {
-        mainScope.launch {
-            val traceInfo = TraceInfo(TraceInfo.TraceSource.STATUS_CHANGES)
-            val currentStatus = _statusProperty.value
-            val newStatus = currentStatus.copy(
-                isSearching = isSearching ?: currentStatus.isSearching,
-                isRefreshingData = isRefreshingData ?: currentStatus.isRefreshingData,
-                isExecutingOperations = isExecutingOperations ?: currentStatus.isExecutingOperations
-            )
+        val traceInfo = TraceInfo(TraceInfo.TraceSource.STATUS_CHANGES)
+        val currentStatus = _statusProperty.value
+        val newStatus = currentStatus.copy(
+            isSearching = isSearching ?: currentStatus.isSearching,
+            isRefreshingData = isRefreshingData ?: currentStatus.isRefreshingData,
+            isExecutingOperations = isExecutingOperations ?: currentStatus.isExecutingOperations
+        )
 
-            if (currentStatus == newStatus) {
-                logDebug(traceInfo, "PKGSDataService#setStatus()") { "Ignoring status change (not really changed)" }
-                return@launch
-            }
-
-            _statusProperty.set(newStatus)
-            logDebug(traceInfo, "PKGSDataService#setStatus()") { "Status changed: $newStatus" }
+        if (currentStatus == newStatus) {
+            logDebug(traceInfo, "PKGSDataService#setStatusAsync()") { "Ignoring status change (not really changed)" }
+            return
         }
+        _statusProperty.setWithAppUiDispatcher(newStatus)
+        logDebug(traceInfo, "PKGSDataService#setStatusAsync()") { "Status changed: $newStatus" }
     }
 
-    @RequiresBackgroundThread
     private fun rerunHighlightingOnOpenBuildFiles() {
         val daemonCodeAnalyzer = DaemonCodeAnalyzer.getInstance(project)
         val psiManager = PsiManager.getInstance(project)
@@ -609,7 +583,7 @@ internal class PackageSearchDataService(
             FileEditorManager.getInstance(project).openFiles.asSequence()
                 .filter { virtualFile ->
                     val file = PsiUtil.getPsiFile(project, virtualFile)
-                    ProjectModuleOperationProvider.forProjectPsiFile(project, file)
+                    ProjectModuleOperationProvider.forProjectPsiFileOrNull(project, file)
                         ?.hasSupportFor(project, file)
                         ?: false
                 }
@@ -618,28 +592,28 @@ internal class PackageSearchDataService(
         }
     }
 
-    override fun setTargetModules(targetModules: TargetModules) = AppUIExecutor.onUiThread().execute {
+    override fun setTargetModules(targetModules: TargetModules) {
         if (targetModules == _targetModulesProperty.value) {
             logDebug("PKGSDataService#setTargetModules()") { "Ignoring target module change as it is the same we already have" }
-            return@execute
+            return
         }
 
         logDebug("PKGSDataService#setTargetModules()") {
             "Setting target modules: ${targetModules.javaClass.simpleName} (count: ${targetModules.size})"
         }
-        _targetModulesProperty.set(targetModules)
+        launch { _targetModulesProperty.setWithAppUiDispatcher(targetModules) }
     }
 
-    override fun setSelectedPackage(selectedPackageModel: SelectedPackageModel<*>?) = AppUIExecutor.onUiThread().execute {
+    override fun setSelectedPackage(selectedPackageModel: SelectedPackageModel<*>?) {
         if (selectedPackageModel == _selectedPackageModelProperty.value) {
             logDebug("PKGSDataService#setSelectedPackage()") { "Ignoring selected package change as it is the same we already have" }
-            return@execute
+            return
         }
 
         logDebug("PKGSDataService#setSelectedPackage()") {
             "Setting selected package: ${selectedPackageModel?.packageModel?.identifier}"
         }
-        _selectedPackageModelProperty.set(selectedPackageModel)
+        launch { _selectedPackageModelProperty.setWithAppUiDispatcher(selectedPackageModel) }
     }
 
     override fun executeOperations(operations: List<PackageSearchOperation<*>>) {
@@ -649,16 +623,14 @@ internal class PackageSearchDataService(
             return
         }
 
-        mainScope.launch {
+        launch {
             logDebug(traceInfo, "PKGSDataService#execute()") { "Executing ${operations.size} operation(s)..." }
 
             setStatus(isExecutingOperations = true)
-            val failures = operations.map { operation ->
+            val failures = operations.mapNotNull { operation ->
                 logTrace(traceInfo, "PKGSDataService#execute()") { "Executing $operation..." }
-                async(Dispatchers.Default) { operationExecutor.doOperation(operation) }
+                withContext(Dispatchers.AppUI) { operationExecutor.doOperation(operation) }
             }
-                .awaitAll()
-                .filterNotNull()
 
             setStatus(isExecutingOperations = false)
 
@@ -680,7 +652,6 @@ internal class PackageSearchDataService(
         }
     }
 
-    @RequiresEdt
     private fun showErrorNotification(
         @Nls subtitle: String? = null,
         @Nls message: String
@@ -689,51 +660,49 @@ internal class PackageSearchDataService(
         NotificationGroupManagerImpl().getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(
                 PackageSearchBundle.message("packagesearch.title"),
-                subtitle,
                 message,
                 NotificationType.ERROR
             )
+            .setSubtitle(subtitle)
             .notify(project)
     }
 
-    override fun setSearchQuery(query: String) = AppUIExecutor.onUiThread().execute {
+    override fun setSearchQuery(query: String) {
         val normalizedQuery = StringUtils.normalizeSpace(query).trim()
         if (normalizedQuery == searchQueryProperty.value) {
             logDebug("PKGSDataService#setSearchQuery()") { "Ignoring search query update as it has not changed" }
-            return@execute
+            return
         }
 
         logDebug("PKGSDataService#setSearchQuery()") { "Search query changed: '$normalizedQuery'" }
         PackageSearchEventsLogger.onSearchRequest(project, normalizedQuery)
-        searchQueryProperty.set(normalizedQuery)
+        launch { searchQueryProperty.setWithAppUiDispatcher(normalizedQuery) }
     }
 
-    override fun setOnlyStable(onlyStable: Boolean) = AppUIExecutor.onUiThread().execute {
+    override fun setOnlyStable(onlyStable: Boolean) {
         if (onlyStable == _filterOptionsProperty.value.onlyStable) {
             logDebug("PKGSDataService#setOnlyStable()") { "Ignoring onlyStable change as it is the same we already have" }
-            return@execute
+            return
         }
 
         logDebug("PKGSDataService#setOnlyStable()") { "Setting onlyStable: $onlyStable" }
-        _filterOptionsProperty.set(_filterOptionsProperty.value.copy(onlyStable = onlyStable))
+        launch { _filterOptionsProperty.setWithAppUiDispatcher(_filterOptionsProperty.value.copy(onlyStable = onlyStable)) }
     }
 
-    override fun setOnlyKotlinMultiplatform(onlyKotlinMultiplatform: Boolean) = AppUIExecutor.onUiThread().execute {
+    override fun setOnlyKotlinMultiplatform(onlyKotlinMultiplatform: Boolean) {
         if (onlyKotlinMultiplatform == _filterOptionsProperty.value.onlyKotlinMultiplatform) {
             logDebug("PKGSDataService#setOnlyKotlinMultiplatform()") {
                 "Ignoring onlyKotlinMultiplatform change as it is the same we already have"
             }
-            return@execute
+            return
         }
 
         logDebug("PKGSDataService#setOnlyKotlinMultiplatform()") { "Setting onlyKotlinMultiplatform: $onlyKotlinMultiplatform" }
-        _filterOptionsProperty.set(_filterOptionsProperty.value.copy(onlyKotlinMultiplatform = onlyKotlinMultiplatform))
+        launch { _filterOptionsProperty.setWithAppUiDispatcher(_filterOptionsProperty.value.copy(onlyKotlinMultiplatform = onlyKotlinMultiplatform)) }
     }
 
     override fun dispose() {
         logDebug("PKGSDataService#dispose()") { "Disposing PackageSearchDataService..." }
-        dataChangeJob?.cancel("Disposing service")
-        queryChangeJob?.cancel("Disposing service")
-        mainScope.cancel("Disposing service")
+        coroutineContext.cancel(CancellationException("Disposing service"))
     }
 }

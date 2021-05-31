@@ -47,6 +47,14 @@ internal fun assertElementsEquals(left: PackagingElement<*>, right: PackagingEle
       Assert.fail("Elements have different amount of children. Left: ${leftChildren} != right: ${rightChildren}")
     }
 
+    if (leftChildren.size != left.nonWorkspaceModelChildren.size) {
+      Assert.fail("Element has different amount of children in store and internally.")
+    }
+
+    if (rightChildren.size != right.nonWorkspaceModelChildren.size) {
+      Assert.fail("Element has different amount of children in store and internally.")
+    }
+
     for (i in leftChildren.indices) {
       assertElementsEquals(leftChildren[i], rightChildren[i])
     }

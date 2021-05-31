@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.ide.KillRingTransferable;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Stands for emacs <a href="http://www.gnu.org/software/emacs/manual/html_node/emacs/Words.html#Words">kill-word</a> command.
@@ -27,7 +28,7 @@ public class KillToWordEndAction extends TextComponentEditorAction {
     public static final CaretStopPolicy WORD_END_IGNORE_LINE_BREAK = new CaretStopPolicy(CaretStop.END, CaretStop.NONE);
 
     @Override
-    public void executeWriteAction(Editor editor, Caret caret, DataContext dataContext) {
+    public void executeWriteAction(@NotNull Editor editor, Caret caret, DataContext dataContext) {
       boolean camelMode = editor.getSettings().isCamelWords();
       int startOffset = editor.getCaretModel().getOffset();
       int endOffset = EditorActionUtil.getNextCaretStopOffset(editor, WORD_END_IGNORE_LINE_BREAK, camelMode, true);

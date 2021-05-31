@@ -12,7 +12,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.UserDataHolderBase;
@@ -108,8 +107,7 @@ public final class ExecutionEnvironment extends UserDataHolderBase implements Di
 
   @NotNull
   private TargetEnvironmentRequest createTargetEnvironmentRequest() {
-    if (myRunProfile instanceof TargetEnvironmentAwareRunProfile &&
-        Experiments.getInstance().isFeatureEnabled("run.targets")) {
+    if (myRunProfile instanceof TargetEnvironmentAwareRunProfile) {
       String targetName = ((TargetEnvironmentAwareRunProfile)myRunProfile).getDefaultTargetName();
       if (targetName != null) {
         TargetEnvironmentConfiguration config = TargetEnvironmentsManager.getInstance(myProject).getTargets().findByName(targetName);

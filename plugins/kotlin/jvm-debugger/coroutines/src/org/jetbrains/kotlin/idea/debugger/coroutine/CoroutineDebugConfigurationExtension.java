@@ -1,14 +1,10 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.coroutine;
 
 import com.intellij.execution.RunConfigurationExtension;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.RunnerSettings;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +19,7 @@ public class CoroutineDebugConfigurationExtension extends RunConfigurationExtens
             RunnerSettings runnerSettings
     ) {
         Project project = configuration.getProject();
-        DebuggerListener listener = ServiceManager.getService(project, DebuggerListener.class);
+        DebuggerListener listener = project.getService(DebuggerListener.class);
         if (listener != null) {
             listener.registerDebuggerConnection(configuration, params, runnerSettings);
         } else {

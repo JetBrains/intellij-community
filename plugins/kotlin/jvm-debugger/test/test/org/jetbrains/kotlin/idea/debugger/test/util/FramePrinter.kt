@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.debugger.test.util
 
 import com.intellij.debugger.SourcePosition
@@ -21,13 +22,27 @@ import org.jetbrains.kotlin.idea.debugger.coroutine.data.ContinuationVariableVal
 import org.jetbrains.kotlin.idea.debugger.invokeInManagerThread
 import org.jetbrains.kotlin.idea.debugger.test.KOTLIN_LIBRARY_NAME
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.org.objectweb.asm.Type
-import java.lang.Appendable
 import java.util.concurrent.TimeUnit
 
 class FramePrinter(private val suspendContext: SuspendContextImpl) {
     fun print(frame: XStackFrame): String {
-        return buildString { append(frame, 0) }
+        return buildString { appendRecursively(frame, 0) }
+    }
+
+    fun printTopVariables(frame: XStackFrame): String {
+        return buildString {
+            append(frame, 0)
+            for (child in frame) {
+                append(child, 1)
+            }
+        }
+    }
+
+    private fun Appendable.appendRecursively(container: XValueContainer, indent: Int = 0) {
+        append(container, indent)
+        for (child in container) {
+            appendRecursively(child, indent + 1)
+        }
     }
 
     private fun Appendable.append(container: XValueContainer, indent: Int = 0) {
@@ -44,10 +59,6 @@ class FramePrinter(private val suspendContext: SuspendContextImpl) {
         info.sourcePosition?.let { append(" (" + it.render() + ")") }
 
         appendLine()
-
-        for (child in container) {
-            append(child, indent + 1)
-        }
     }
 
     private class ValueInfo(

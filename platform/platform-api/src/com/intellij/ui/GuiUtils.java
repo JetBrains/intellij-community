@@ -4,18 +4,12 @@ package com.intellij.ui;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.fileChooser.FileChooser;
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
@@ -61,63 +55,8 @@ public final class GuiUtils {
     return result;
   }
 
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static JPanel constructDirectoryBrowserField(final JTextField field, final String objectName) {
-    return constructFieldWithBrowseButton(field, new ActionListener() {
-      @SuppressWarnings("HardCodedStringLiteral")
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor().withTitle("Select " + objectName);
-        VirtualFile file = FileChooser.chooseFile(descriptor, field, null, null);
-        if (file != null) {
-          field.setText(FileUtil.toSystemDependentName(file.getPath()));
-          field.postActionEvent();
-        }
-      }
-    });
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static JPanel makeTitledPanel(JComponent aComponent, @NlsContexts.BorderTitle String aTitle) {
-    JPanel result = makePaddedPanel(aComponent, false, true, false, true);
-    return wrapWithBorder(result, IdeBorderFactory.createTitledBorder(aTitle));
-  }
-
-  private static JPanel wrapWithBorder(JComponent aPanel, Border aBorder) {
-    JPanel wrapper = new JPanel(new BorderLayout());
-    wrapper.add(aPanel, BorderLayout.CENTER);
-    wrapper.setBorder(aBorder);
-    return wrapper;
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static BorderLayout createBorderLayout() {
-    return new BorderLayout(paddingInsideDialog.left, paddingInsideDialog.top);
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static GridLayout createGridLayout(int aRows, int aColumns) {
-    return new GridLayout(aRows, aColumns, paddingInsideDialog.left, paddingInsideDialog.top);
-  }
-
   public static Component createVerticalStrut() {
     return Box.createRigidArea(new Dimension(0, paddingInsideDialog.top));
-  }
-
-  private static JPanel makePaddedPanel(JComponent aComponent,
-                                        boolean aTop,
-                                        boolean aLeft,
-                                        boolean aBottom,
-                                        boolean aRight) {
-    return wrapWithBorder(aComponent, BorderFactory.createEmptyBorder(
-      aTop ? paddingInsideDialog.top : 0,
-      aLeft ? paddingInsideDialog.left : 0,
-      aBottom ? paddingInsideDialog.bottom : 0,
-      aRight ? paddingInsideDialog.right : 0));
   }
 
   public static String getTextWithoutMnemonicEscaping(String text) {

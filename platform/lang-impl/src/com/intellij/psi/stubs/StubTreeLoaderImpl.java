@@ -259,16 +259,4 @@ final class StubTreeLoaderImpl extends StubTreeLoader {
   protected IndexingStampInfo getIndexingStampInfo(@NotNull VirtualFile file) {
     return StubUpdatingIndex.readSavedIndexingStampInfo(file);
   }
-
-  @Override
-  protected boolean isPrebuilt(@NotNull VirtualFile virtualFile) {
-    try {
-      FileContent fileContent = FileContentImpl.createByFile(virtualFile);
-      SerializedStubTree prebuiltStub = StubUpdatingIndex.findPrebuiltSerializedStubTree(fileContent);
-      return prebuiltStub != null;
-    }
-    catch (Exception ignored) {
-    }
-    return false;
-  }
 }

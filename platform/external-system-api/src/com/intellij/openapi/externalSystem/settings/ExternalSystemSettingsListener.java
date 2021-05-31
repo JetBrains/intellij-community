@@ -52,13 +52,6 @@ public interface ExternalSystemSettingsListener<S extends ExternalProjectSetting
   void onProjectsUnlinked(@NotNull Set<String> linkedProjectPaths);
 
   /**
-   * @deprecated see {@link ExternalProjectSettings#setUseAutoImport} for details
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default void onUseAutoImportChange(boolean currentValue, @NotNull String linkedProjectPath) {}
-
-  /**
    * External system settings changes might affect project structure, e.g. switching from one external system version to another
    * one can trigger new binaries usage (different external system versions might use different file system directories
    * for holding dependencies).

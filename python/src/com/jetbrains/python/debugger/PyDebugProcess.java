@@ -346,7 +346,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           }
           if (shouldLogConnectionException(e)) {
             NOTIFICATION_GROUP
-              .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR, null)
+              .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR)
               .notify(myProject);
           }
         }
@@ -456,7 +456,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
     printToConsole(PyBundle.message("debugger.connected.to.pydev.debugger.build", remoteVersion), ConsoleViewContentType.SYSTEM_OUTPUT);
 
-    if (!(remoteVersion.equals(currentBuild) || remoteVersion.startsWith(currentBuild))) {
+    if (!remoteVersion.startsWith(currentBuild)) {
       LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
       printToConsole(PyBundle.message("debugger.warning.wrong.debugger.version", currentBuild), ConsoleViewContentType.ERROR_OUTPUT);
     }

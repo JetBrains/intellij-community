@@ -47,12 +47,19 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmField
     val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR = Key.create<Boolean>("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
 
+    @JvmField
+    val PROJECT_NEWLY_OPENED = Key.create<Boolean>("PROJECT_NEWLY_OPENED")
+
     fun Project.isOpenedByPlatformProcessor(): Boolean {
       return getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
     }
 
     fun Project.isConfiguredByPlatformProcessor(): Boolean {
       return getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
+    }
+
+    fun Project.isNewProject(): Boolean {
+      return getUserData(PROJECT_NEWLY_OPENED) == true
     }
 
     @JvmStatic
@@ -162,19 +169,6 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
         openFileFromCommandLine(project, file, options.line, options.column)
       }
       return project
-    }
-
-    @ApiStatus.Internal
-    @JvmStatic
-    @Deprecated(message = "If project base dir differs from project store base dir, specify it as contentRoot in the options", level = DeprecationLevel.ERROR)
-    @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-    fun openExistingProject(file: Path, projectStoreBaseDir: Path, options: OpenProjectTask): Project? {
-      if (file == projectStoreBaseDir) {
-        return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir, options)
-      }
-      else {
-        return ProjectManagerEx.getInstanceEx().openProject(projectStoreBaseDir, options.copy(projectName = file.fileName.toString()))
-      }
     }
 
     @JvmStatic

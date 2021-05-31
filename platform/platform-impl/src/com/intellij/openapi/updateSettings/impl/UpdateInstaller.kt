@@ -25,7 +25,6 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.zip.ZipException
 import java.util.zip.ZipFile
-import javax.swing.JComponent
 import javax.swing.UIManager
 
 internal data class PluginUpdateResult(val pluginsInstalled: List<IdeaPluginDescriptor>, val restartRequired: Boolean)
@@ -104,13 +103,14 @@ internal object UpdateInstaller {
   }
 
   @JvmStatic
-  fun installDownloadedPluginUpdates(downloaders: Collection<PluginDownloader>, ownerComponent: JComponent?, allowInstallWithoutRestart: Boolean): PluginUpdateResult {
+  fun installDownloadedPluginUpdates(downloaders: Collection<PluginDownloader>,
+                                     requiresRestart: (PluginDownloader) -> Boolean): PluginUpdateResult {
     val pluginsInstalled = mutableListOf<IdeaPluginDescriptor>()
     var restartRequired = false
 
     for (downloader in downloaders) {
       try {
-        if (!allowInstallWithoutRestart || !downloader.tryInstallWithoutRestart(ownerComponent)) {
+        if (requiresRestart.invoke(downloader)) {
           downloader.install()
           restartRequired = true
         }
@@ -128,7 +128,7 @@ internal object UpdateInstaller {
   fun installPluginUpdates(downloaders: Collection<PluginDownloader>, indicator: ProgressIndicator): Boolean {
     val downloadedPluginUpdates = downloadPluginUpdates(downloaders, indicator)
     val result = ProgressManager.getInstance().computeInNonCancelableSection<PluginUpdateResult, RuntimeException> {
-      installDownloadedPluginUpdates(downloadedPluginUpdates, null, false)
+      installDownloadedPluginUpdates(downloadedPluginUpdates) { true }
     }
     return result.pluginsInstalled.isNotEmpty()
   }

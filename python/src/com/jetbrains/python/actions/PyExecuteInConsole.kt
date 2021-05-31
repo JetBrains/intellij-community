@@ -26,21 +26,21 @@ object PyExecuteInConsole {
     var isDebug = false
     var newConsoleListener: PydevConsoleRunner.ConsoleListener? = null
     if (canUseExistingConsole) {
-      if (canUseDebugConsole) {
-        existingConsole = getCurrentDebugConsole(project)
-      }
-      if (existingConsole != null) {
-        isDebug = true
+      val virtualFile = (editor as? EditorImpl)?.virtualFile
+      if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
+        val (descriptor, listener) = getCustomDescriptor(project, editor)
+        existingConsole = descriptor
+        newConsoleListener = listener
       }
       else {
-        val virtualFile = (editor as? EditorImpl)?.virtualFile
-        if (virtualFile != null && PyExecuteConsoleCustomizer.instance.isCustomDescriptorSupported(virtualFile)) {
-          val (descriptor, listener) = getCustomDescriptor(project, editor)
-          existingConsole = descriptor
-          newConsoleListener = listener
-        }
-        else {
-          existingConsole = getSelectedPythonConsole(project)
+        existingConsole = getSelectedPythonConsole(project)
+      }
+      if (canUseDebugConsole) {
+        val pythonConsoleView = existingConsole?.executionConsole as? PythonConsoleView
+        if (pythonConsoleView == null || PythonConsoleToolWindow.getInstance(project)?.toolWindow?.isVisible != true) {
+          // PY-48207 Currently visible Python Console has a higher priority than a Debug console
+          existingConsole = getCurrentDebugConsole(project)
+          isDebug = true
         }
       }
     }

@@ -73,9 +73,14 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
       if (processed.contains(dependencyData)) continue;
       processed.add(dependencyData);
 
-      toRemove.remove(Pair.create(dependencyData.getInternalName(), dependencyData.getScope()));
       final ModuleData moduleData = dependencyData.getTarget();
       Module ideDependencyModule = modelsProvider.findIdeModule(moduleData);
+
+      if (ideDependencyModule != null) {
+        final String targetModuleName = ideDependencyModule.getName();
+        toRemove.remove(Pair.create(targetModuleName, dependencyData.getScope()));
+        dependencyData.setInternalName(targetModuleName);
+      }
 
       ModuleOrderEntry orderEntry;
       if (module.equals(ideDependencyModule)) {
@@ -112,6 +117,7 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
 
     return orderEntryDataMap;
   }
+
 
   @Override
   protected void removeData(@NotNull Collection<? extends ExportableOrderEntry> toRemove,

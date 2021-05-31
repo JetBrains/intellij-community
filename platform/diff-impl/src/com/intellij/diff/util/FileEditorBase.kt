@@ -2,7 +2,11 @@
 package com.intellij.diff.util
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter
-import com.intellij.openapi.fileEditor.*
+import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.fileEditor.FileEditorLocation
+import com.intellij.openapi.fileEditor.FileEditorState
+import com.intellij.openapi.fileEditor.FileEditorStateLevel
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.ui.docking.impl.DockManagerImpl
 import java.beans.PropertyChangeListener
@@ -15,7 +19,7 @@ abstract class FileEditorBase : UserDataHolderBase(), FileEditor {
   }
 
   private fun configureDefaults() {
-    putUserData(FileEditorManager.USE_MAIN_WINDOW, true)
+    putUserData(FileEditorManagerImpl.SINGLETON_EDITOR_IN_WINDOW, true)
     putUserData(DockManagerImpl.SHOW_NORTH_PANEL, false)
   }
 

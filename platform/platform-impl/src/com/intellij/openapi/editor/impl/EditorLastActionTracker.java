@@ -90,7 +90,7 @@ public final class EditorLastActionTracker {
     }
 
     @Override
-    public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
       EditorLastActionTracker tracker = getInstance();
       tracker.myLastActionId = getActionId(action);
       tracker.myLastEditor = tracker.myCurrentEditor;

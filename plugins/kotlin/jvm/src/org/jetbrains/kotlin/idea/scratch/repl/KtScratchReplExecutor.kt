@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch.repl
 
@@ -157,8 +154,7 @@ class KtScratchReplExecutor(file: ScratchFile) : SequentialScratchExecutor(file)
             // would try to stop process again (after stop in tests 'stopReplProcess`)
             // via `stopExecution` (because handler is not null) with next exception:
             //
-            // Caused by: com.intellij.testFramework.LoggedErrorProcessor$TestLoggerAssertionError: The pipe is being closed
-            // at com.intellij.testFramework.LoggedErrorProcessor.processError(LoggedErrorProcessor.java:66)
+            // Caused by: com.intellij.testFramework.TestLogger$TestLoggerAssertionError: The pipe is being closed
             // at com.intellij.testFramework.TestLogger.error(TestLogger.java:40)
             // at com.intellij.openapi.diagnostic.Logger.error(Logger.java:170)
             // at org.jetbrains.kotlin.idea.scratch.ScratchExecutor.errorOccurs(ScratchExecutor.kt:50)

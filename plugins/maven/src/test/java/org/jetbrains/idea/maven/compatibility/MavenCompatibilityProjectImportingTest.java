@@ -4,6 +4,7 @@ package org.jetbrains.idea.maven.compatibility;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 import org.junit.After;
 import org.junit.Assume;

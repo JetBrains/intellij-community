@@ -21,7 +21,7 @@ import java.util.Set;
 public final class ExternalFormatProcessorAdapter implements FormattingService {
 
 
-  private final static Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
+  private static final Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
                                                           Feature.FORMAT_FRAGMENTS);
 
   @Override
@@ -30,7 +30,7 @@ public final class ExternalFormatProcessorAdapter implements FormattingService {
   }
 
   @Override
-  public Set<Feature> getFeatures() {
+  public @NotNull Set<Feature> getFeatures() {
     return FEATURES;
   }
 
@@ -47,7 +47,7 @@ public final class ExternalFormatProcessorAdapter implements FormattingService {
   }
 
   @Override
-  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly) {
+  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat) {
     List<CoreCodeStyleUtil.RangeFormatInfo> infos = CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     CoreCodeStyleUtil.postProcessRanges(
       file, infos, range -> ExternalFormatProcessor.formatRangeInFile(file, range, false, false));

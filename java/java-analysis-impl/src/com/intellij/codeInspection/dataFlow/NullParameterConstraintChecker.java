@@ -3,16 +3,15 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
-import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
-import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.PushInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -33,7 +32,7 @@ import java.util.Set;
  * This checker uses following idea:
  * On the checker's start mark all parameters with null-argument usages as violated (i.e. the method fails if parameter is null).
  * A parameter can be amnestied (excluded from violated) when one of following statements is true:
- * 1. If at least one successful method execution ({@link ReturnInstruction#isViaException()} == false)
+ * 1. If at least one successful method execution ({@link ReturnInstruction} visited)
  * doesn't require a not-null value for the parameter
  * OR
  * 2. If the parameter has a reassignment while one of any method execution.
@@ -69,7 +68,7 @@ final class NullParameterConstraintChecker {
       .toArray(PsiParameter[]::new);
   }
 
-  private static class MyDfaMemoryState extends DfaMemoryStateImpl {
+  private static class MyDfaMemoryState extends JvmDfaMemoryStateImpl {
     final Set<PsiParameter> myPossiblyViolatedParameters;
 
     protected MyDfaMemoryState(DfaValueFactory factory, Set<PsiParameter> possiblyViolatedParameters) {
@@ -100,7 +99,7 @@ final class NullParameterConstraintChecker {
     }
   }
 
-  private static class NullParameterCheckerInterpreter extends JvmDataFlowInterpreter {
+  private static class NullParameterCheckerInterpreter extends StandardDataFlowInterpreter {
     final Set<PsiParameter> myPossiblyViolatedParameters;
     final Set<PsiParameter> myUsedParameters;
     final Set<PsiParameter> myParametersWithSuccessfulExecutionInNotNullState;
@@ -135,7 +134,7 @@ final class NullParameterConstraintChecker {
         }
       }
 
-      if (instruction instanceof ReturnInstruction && !((ReturnInstruction)instruction).isViaException()) {
+      if (instruction instanceof ReturnInstruction) {
         DfaMemoryState memState = instructionState.getMemoryState();
         for (PsiParameter parameter : myPossiblyViolatedParameters.toArray(PsiParameter.EMPTY_ARRAY)) {
           final DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), parameter);

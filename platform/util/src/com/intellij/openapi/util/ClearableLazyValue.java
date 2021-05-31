@@ -44,6 +44,10 @@ public abstract class ClearableLazyValue<T> {
     return result;
   }
 
+  public boolean isCached() {
+    return myValue != null;
+  }
+
   public void drop() {
     myValue = null;
   }

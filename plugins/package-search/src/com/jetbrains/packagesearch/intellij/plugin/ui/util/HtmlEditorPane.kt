@@ -6,6 +6,7 @@ import com.intellij.ui.HyperlinkAdapter
 import com.intellij.util.ui.GraphicsUtil
 import com.intellij.util.ui.JBHtmlEditorKit
 import com.intellij.util.ui.JBUI
+import org.jetbrains.annotations.Nls
 import javax.swing.JEditorPane
 import javax.swing.SizeRequirements
 import javax.swing.event.HyperlinkEvent
@@ -16,7 +17,7 @@ import javax.swing.text.ParagraphView
 import javax.swing.text.View
 import kotlin.math.max
 
-internal abstract class HtmlEditorPane : JEditorPane() {
+internal open class HtmlEditorPane : JEditorPane() {
 
     init {
         @Suppress("MagicNumber") // UI code
@@ -57,13 +58,31 @@ internal abstract class HtmlEditorPane : JEditorPane() {
         setBody(emptyList())
     }
 
-    protected fun setBody(chunks: Collection<HtmlChunk>) {
+    fun setBody(chunks: Collection<HtmlChunk>) {
         text = if (chunks.isEmpty()) {
             ""
         } else {
-            HtmlChunk.body().style("color: ${JBUI.CurrentTheme.Label.foreground().toCssHexColorString()};")
-                .children(*chunks.toTypedArray()).toString()
+            createBodyHtmlChunk()
+                .children(*chunks.toTypedArray())
+                .toString()
         }
+    }
+
+    fun setBodyText(@Nls text: String) {
+        this.text = createBodyHtmlChunk()
+            .addText(text)
+            .toString()
+    }
+
+    private fun createBodyHtmlChunk(): HtmlChunk.Element {
+        val style = buildString {
+            append("color: ")
+            append(foreground.toCssHexColorString())
+            append("; font-size: ")
+            append(font.size)
+            append("pt;")
+        }
+        return HtmlChunk.body().style(style)
     }
 
     protected open fun onLinkClicked(anchor: String) {

@@ -766,11 +766,7 @@ public final class FindManagerImpl extends FindManager {
           ourReportedPatterns.put(stringToFind.hashCode(), Boolean.TRUE) == null) {
         String content = FindBundle.message("notification.content.regular.expression.soe", stringToFind, file.getPresentableUrl());
         LOG.info(content);
-        GROUP.createNotification(FindBundle.message("notification.title.regular.expression.failed.to.match"),
-                                 content,
-                                 NotificationType.ERROR,
-                                 null
-                                   ).notify(myProject);
+        GROUP.createNotification(FindBundle.message("notification.title.regular.expression.failed.to.match"), content, NotificationType.ERROR).notify(myProject);
       }
       return NOT_FOUND_RESULT;
     }

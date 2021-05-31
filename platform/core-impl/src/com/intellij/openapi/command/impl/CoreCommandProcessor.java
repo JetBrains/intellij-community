@@ -11,12 +11,12 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Stack;
 
 public class CoreCommandProcessor extends CommandProcessorEx {
   private static class CommandDescriptor implements CommandToken {

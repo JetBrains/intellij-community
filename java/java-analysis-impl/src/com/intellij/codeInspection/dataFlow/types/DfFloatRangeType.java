@@ -7,6 +7,7 @@ import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -78,6 +79,15 @@ class DfFloatRangeType implements DfFloatType {
 
   @Override
   public @NotNull DfType join(@NotNull DfType other) {
+    return join(other, false);
+  }
+
+  @Override
+  public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+    return join(other, true);
+  }
+
+  DfType join(@NotNull DfType other, boolean exact) {
     if (other.isSuperType(this)) return other;
     if (this.isSuperType(other)) return this;
     if (other instanceof DfFloatConstantType) {
@@ -85,43 +95,48 @@ class DfFloatRangeType implements DfFloatType {
       if (Float.isNaN(value)) {
         return create(myFrom, myTo, myInvert, true);
       }
-      return joinRange(value, value);
+      return joinRange(value, value, exact);
     }
     if (!(other instanceof DfFloatRangeType)) {
-      return TOP;
+      return exact ? null : TOP;
     }
     DfFloatRangeType range = (DfFloatRangeType)other;
     DfFloatRangeType res = range.myNaN && !myNaN ? new DfFloatRangeType(myFrom, myTo, myInvert, true) : this;
     if (range.myInvert) {
       if (range.myFrom > Float.NEGATIVE_INFINITY) {
-        res = res.joinRange(Float.NEGATIVE_INFINITY, nextDown(range.myFrom));
+        res = res.joinRange(Float.NEGATIVE_INFINITY, nextDown(range.myFrom), exact);
+        if (res == null) return null;
       }
       if (range.myTo < Float.POSITIVE_INFINITY) {
-        res = res.joinRange(nextUp(range.myTo), Float.POSITIVE_INFINITY);
+        res = res.joinRange(nextUp(range.myTo), Float.POSITIVE_INFINITY, exact);
+        if (res == null) return null;
       }
     } else {
-      res = res.joinRange(range.myFrom, range.myTo);
+      res = res.joinRange(range.myFrom, range.myTo, exact);
     }
     return res;
   }
 
-  private @NotNull DfFloatRangeType joinRange(float from, float to) {
+  private DfFloatRangeType joinRange(float from, float to, boolean exact) {
     if (Float.compare(from, to) > 0) return this;
     if (myInvert) {
       if (Float.compare(to, myFrom) < 0 || Float.compare(from, myTo) > 0) return this;
       float fromCmp = Float.compare(myFrom, from);
       float toCmp = Float.compare(to, myTo);
       if (fromCmp >= 0 && toCmp >= 0 || fromCmp < 0 && toCmp < 0) {
-        return (DfFloatRangeType)create(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, myNaN);
+        return exact ? null : (DfFloatRangeType)create(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, myNaN);
       }
-      if (fromCmp >= 0 && toCmp < 0) {
+      if (fromCmp >= 0) {
         return (DfFloatRangeType)create(nextUp(to), myTo, true, myNaN);
       }
-      if (fromCmp < 0 && toCmp >= 0) {
-        return (DfFloatRangeType)create(myFrom, nextDown(from), true, myNaN);
-      }
-      throw new AssertionError("Impossible!");
+      return (DfFloatRangeType)create(myFrom, nextDown(from), true, myNaN);
     } else {
+      if (Float.compare(myTo, nextDown(from)) < 0 || Float.compare(to, nextDown(myFrom)) < 0) {
+        if (myFrom == Float.NEGATIVE_INFINITY && to == Float.POSITIVE_INFINITY) {
+          return (DfFloatRangeType)create(nextUp(myTo), nextDown(from), true, myNaN);
+        }
+        if (exact) return null;
+      }
       return (DfFloatRangeType)create(Math.min(myFrom, from), Math.max(myTo, to), false, myNaN);
     }
   }
@@ -142,10 +157,10 @@ class DfFloatRangeType implements DfFloatType {
         float fromCmp = Float.compare(myFrom, range.myFrom);
         float toCmp = Float.compare(range.myTo, myTo);
         if (fromCmp >= 0) {
-          return create(nextUp(range.myTo), myTo, false, nan);
+          return create(Math.max(myFrom, nextUp(range.myTo)), myTo, false, nan);
         }
         if (toCmp >= 0) {
-          return create(myFrom, nextDown(range.myFrom), false, nan);
+          return create(myFrom, Math.min(myTo, nextDown(range.myFrom)), false, nan);
         }
         if (myFrom == Float.NEGATIVE_INFINITY && myTo == Float.POSITIVE_INFINITY) {
           return create(range.myFrom, range.myTo, true, nan);
@@ -225,14 +240,14 @@ class DfFloatRangeType implements DfFloatType {
       } else {
         range = LongRangeSet.empty();
         if (myFrom > Float.NEGATIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range(Long.MIN_VALUE, (long)myFrom));
+          range = range.join(LongRangeSet.range(Long.MIN_VALUE, (long)nextDown(myFrom)));
         }
         if (myTo < Float.POSITIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range((long)myTo, Long.MAX_VALUE));
+          range = range.join(LongRangeSet.range((long)nextUp(myTo), Long.MAX_VALUE));
         }
       }
       if (myNaN) {
-        range = range.unite(LongRangeSet.point(0));
+        range = range.join(LongRangeSet.point(0));
       }
       return DfTypes.longRange(range);
     }
@@ -243,14 +258,14 @@ class DfFloatRangeType implements DfFloatType {
       } else {
         range = LongRangeSet.empty();
         if (myFrom > Float.NEGATIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range(Integer.MIN_VALUE, (int)myFrom));
+          range = range.join(LongRangeSet.range(Integer.MIN_VALUE, (int)nextDown(myFrom)));
         }
         if (myTo < Float.POSITIVE_INFINITY) {
-          range = range.unite(LongRangeSet.range((int)myTo, Integer.MAX_VALUE));
+          range = range.join(LongRangeSet.range((int)nextUp(myTo), Integer.MAX_VALUE));
         }
       }
       if (myNaN) {
-        range = range.unite(LongRangeSet.point(0));
+        range = range.join(LongRangeSet.point(0));
       }
       DfType result = DfTypes.intRange(range);
       if (result instanceof DfPrimitiveType && !type.equals(PsiType.INT)) {

@@ -12,7 +12,6 @@ import org.jetbrains.annotations.Nullable;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.Enumeration;
 import java.util.Set;
 import java.util.function.Predicate;
@@ -206,33 +205,4 @@ public final class ZipUtil {
       os.closeEntry();
     }
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link Decompressor.Zip} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void extract(@NotNull ZipFile zip, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
-    Path path = outputDir.toPath();
-    new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(path, filter)).extract(path);
-  }
-
-  /** @deprecated use {@link Decompressor.Zip} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean overwrite) throws IOException {
-    Path outputFile = Decompressor.entryFile(outputDir.toPath(), entry.getName());
-    try {
-      if (entry.isDirectory()) {
-        Files.createDirectories(outputFile);
-      }
-      else if (!Files.exists(outputFile) || overwrite) {
-        Files.createDirectories(outputFile.getParent());
-        Files.copy(inputStream, outputFile, StandardCopyOption.REPLACE_EXISTING);
-      }
-    }
-    finally {
-      inputStream.close();
-    }
-  }
-  //</editor-fold>
 }

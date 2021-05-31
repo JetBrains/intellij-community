@@ -1,11 +1,12 @@
 <html>
 <body>
-This inspection reports guard clause that can be replaced with kotlin's function call. For example:
-<br /><br />
-<pre>
+Reports guard clause that can be replaced with kotlin's function call.
+<p>"Replace with ..." quick-fix can be used to amend the code snippet.</p>
+<p>Example:</p>
+<pre><code>
 fun test(foo: Int?) {
-    if (foo == null) throw IllegalArgumentException("foo") // Replace guard clause with kotlin's function call
+    if (foo == null) throw IllegalArgumentException("foo") // 'checkNotNull(foo)' can be used instead
 }
-</pre>
+</code></pre>
 </body>
 </html>

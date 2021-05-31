@@ -24,9 +24,6 @@
       <option name="BuildArtifacts" enabled="true">
         <artifact name="debugger-agent" />
       </option>
-      <option name="BuildArtifacts" enabled="true">
-        <artifact name="KotlinPluginCommunity" />
-      </option>
     </method>
   </configuration>
 </component>

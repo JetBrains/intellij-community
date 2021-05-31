@@ -4,24 +4,24 @@ package testing
 import kotlin.test.*
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
+import org.junit.Test
 
 @RunWith(Suite::class)
-class <lineMarker descr="Run Test">SessionTest0</lineMarker> {
-
+class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest0</lineMarker> {// LIGHT_CLASS_FALLBACK
 }
 
-class <lineMarker descr="Run Test">SessionTest</lineMarker> {
+class <lineMarker descr="Run Test" icon="runConfigurations/testState/run_run.svg">SessionTest</lineMarker> {
     @Test
-    fun <lineMarker descr="Run Test">testSessionCreateDelete</lineMarker>() {
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">testSessionCreateDelete</lineMarker>() {
 
     }
 
     @Test
-    fun <lineMarker descr="Run Test">configFileWithEnvironmentVariables</lineMarker>() {
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">configFileWithEnvironmentVariables</lineMarker>() {
     }
 
     @Test
-    fun <lineMarker descr="Run Test">`top level extension function as module function`</lineMarker>() {
+    fun <lineMarker descr="Run Test" icon="runConfigurations/testState/run.svg">`top level extension function as module function`</lineMarker>() {
     }
 
     class IsolatedRule : TestRule {

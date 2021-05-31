@@ -4,6 +4,7 @@ package com.intellij.ide.starters.local
 
 import com.intellij.openapi.util.Version
 import org.jdom.Element
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
@@ -12,13 +13,13 @@ import java.time.Instant
 import java.time.LocalDate
 import java.time.ZoneId
 
-internal object StarterUtils {
-
+@ApiStatus.Internal
+object StarterUtils {
   private val PLACEHOLDER_VERSION_PATTERN: Regex = Regex("\\$\\{(.+)}")
 
   private class IncorrectBomFileException(message: String) : IOException(message)
 
-  internal fun parseDependencyConfig(projectTag: Element, resourcePath: String, interpolateProperties: Boolean = true): DependencyConfig {
+  fun parseDependencyConfig(projectTag: Element, resourcePath: String, interpolateProperties: Boolean = true): DependencyConfig {
     val properties: MutableMap<String, String> = mutableMapOf()
     val dependencies: MutableList<Dependency> = mutableListOf()
     val bomVersion: String

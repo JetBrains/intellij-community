@@ -1,15 +1,17 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
-import com.intellij.ide.plugins.advertiser.KnownExtensions
-import com.intellij.ide.plugins.advertiser.KnownExtensionsService
+import com.intellij.ide.IdeBundle
+import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
+import com.intellij.ide.plugins.DependencyCollectorBean
 import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
+import com.intellij.ide.plugins.advertiser.PluginFeatureMap
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileTypes.FileTypeFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
-import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.ui.EditorNotifications
 
 internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
@@ -17,8 +19,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     val application = ApplicationManager.getApplication()
     if (application.isUnitTestMode ||
-        application.isHeadlessEnvironment ||
-        !UpdateSettings.getInstance().isPluginsCheckNeeded) {
+        application.isHeadlessEnvironment) {
       return
     }
 
@@ -27,21 +28,30 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
       return
     }
 
-    val extensionsService = KnownExtensionsService.instance
+    val extensionsService = PluginFeatureCacheService.instance
     val extensions = extensionsService.extensions
-    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures
+
+    val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures.toMutableList()
+    unknownFeatures.addAll(collectDependencyUnknownFeatures(project))
+
     if (extensions != null && unknownFeatures.isEmpty()) {
       return
     }
 
     try {
       if (extensions == null) {
-        val extensionsMap = getExtensionsFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet())
-        extensionsService.extensions = KnownExtensions(extensionsMap)
+        @Suppress("DEPRECATION")
+        val extensionsMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(),
+                                                         FileTypeFactory.FILE_TYPE_FACTORY_EP.name)
+        extensionsService.extensions = PluginFeatureMap(extensionsMap)
         if (project.isDisposed) {
           return
         }
         EditorNotifications.getInstance(project).updateAllNotifications()
+      }
+      if (extensionsService.dependencies == null) {
+        val dependencyMap = getFeatureMapFromMarketPlace(customPlugins.map { it.pluginId.idString }.toSet(), DEPENDENCY_SUPPORT_FEATURE)
+        extensionsService.dependencies = PluginFeatureMap(dependencyMap)
       }
       PluginAdvertiserService.instance.run(
         project,
@@ -57,8 +67,8 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
   companion object {
 
     @JvmStatic
-    private fun getExtensionsFromMarketPlace(customPluginIds: Set<String>): Map<String, Set<PluginData>> {
-      @Suppress("DEPRECATION") val params = mapOf("featureType" to FileTypeFactory.FILE_TYPE_FACTORY_EP.name)
+    private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, Set<PluginData>> {
+      val params = mapOf("featureType" to featureType)
       return MarketplaceRequests.Instance
         .getFeatures(params)
         .groupBy(
@@ -67,4 +77,14 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
         ).mapValues { it.value.filterNotNull().toSet() }
     }
   }
+}
+
+fun collectDependencyUnknownFeatures(project: Project): List<UnknownFeature> {
+  return DependencyCollectorBean.EP_NAME.extensions.flatMap { dependencyCollectorBean ->
+    dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
+      UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
+                     IdeBundle.message("plugins.advertiser.feature.dependency"),
+                     dependencyCollectorBean.kind + ":" + coordinate, null)
+    }
+  }.filterNot { UnknownFeaturesCollector.getInstance(project).isIgnored(it) }
 }

@@ -1,5 +1,13 @@
 <html>
 <body>
-This inspection reports <b>equals()</b> between objects of inconvertible primitive / enum / string types.
+Reports calls to <code>equals()</code> where the receiver and argument are
+of inconvertible primitive, enum or string types.
+
+While such a call might theoretically be useful, most likely it represents a bug.
+<p><b>Example:</b></p>
+<pre><code>
+5.equals("");
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

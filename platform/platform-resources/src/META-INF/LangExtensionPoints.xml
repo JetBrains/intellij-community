@@ -190,6 +190,7 @@
     <extensionPoint name="patternDialectProvider" interface="com.intellij.packageDependencies.ui.PatternDialectProvider"/>
 
     <extensionPoint name="inspectionProfileActionProvider" interface="com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider" dynamic="true"/>
+    <extensionPoint name="emptyInspectionTreeLinkProvider" interface="com.intellij.profile.codeInspection.ui.EmptyInspectionTreeLinkProvider" dynamic="true"/>
 
     <extensionPoint name="liveTemplateSubstitutor" interface="com.intellij.codeInsight.template.TemplateSubstitutor" dynamic="true"/>
     <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate" dynamic="true"/>
@@ -217,6 +218,12 @@
     <extensionPoint name="symbolNavigation" dynamic="true" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
       <with attribute="forClass" implements="com.intellij.model.Symbol"/>
       <with attribute="implementationClass" implements="com.intellij.navigation.SymbolNavigationProvider"/>
+    </extensionPoint>
+    <extensionPoint name="symbolDeclarationPresentationProvider" dynamic="true"
+                    beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="forClass" implements="com.intellij.model.psi.PsiSymbolDeclaration"/>
+      <with attribute="implementationClass"
+            implements="com.intellij.model.presentation.SymbolDeclarationPresentationProvider"/>
     </extensionPoint>
     <extensionPoint name="elementDescriptionProvider" interface="com.intellij.psi.ElementDescriptionProvider" dynamic="true"/>
 
@@ -306,6 +313,8 @@
 
     <extensionPoint name="typeDeclarationProvider" interface="com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider" dynamic="true"/>
     <extensionPoint name="gotoTargetRendererProvider" interface="com.intellij.codeInsight.navigation.GotoTargetRendererProvider" dynamic="true"/>
+    <extensionPoint name="gotoTargetPresentationProvider" dynamic="true"
+                    interface="com.intellij.codeInsight.navigation.GotoTargetPresentationProvider"/>
 
     <extensionPoint name="navbar" interface="com.intellij.ide.navigationToolbar.NavBarModelExtension" dynamic="true"/>
 

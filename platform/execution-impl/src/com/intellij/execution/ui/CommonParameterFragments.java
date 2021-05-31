@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,5 +153,24 @@ public class CommonParameterFragments<Settings extends CommonProgramRunConfigura
 
   public static void setMonospaced(Component field) {
     field.setFont(EditorUtil.getEditorFont(JBUI.Fonts.label().getSize()));
+  }
+
+
+  public static <S> SettingsEditorFragment<S, JLabel> createHeader(@Nls(capitalization = Nls.Capitalization.Title) String title) {
+    JLabel jLabel = new JLabel(title);
+    jLabel.setFont(JBUI.Fonts.label().deriveFont(Font.BOLD));
+    SettingsEditorFragment<S, JLabel> fragment = new SettingsEditorFragment<>(
+      "title",
+      null,
+      null,
+      jLabel,
+      SettingsEditorFragmentType.HEADER,
+      (__, ___) -> {},
+      (__, ___) -> {},
+      (__) -> true
+    );
+    fragment.setCanBeHidden(false);
+    fragment.setRemovable(false);
+    return fragment;
   }
 }

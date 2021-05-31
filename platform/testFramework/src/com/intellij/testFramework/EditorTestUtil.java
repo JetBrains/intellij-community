@@ -107,12 +107,12 @@ public final class EditorTestUtil {
 
   public static void executeAction(@NotNull Editor editor, boolean assertActionIsEnabled, @NotNull AnAction action) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
-    action.beforeActionPerformedUpdate(event);
-    if (!event.getPresentation().isEnabled()) {
-      assertFalse("Action " + action + " is disabled", assertActionIsEnabled);
-      return;
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
-    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
+    else if (assertActionIsEnabled) {
+      fail("Action " + action + " is disabled");
+    }
   }
 
   @NotNull

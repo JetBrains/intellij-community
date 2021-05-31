@@ -4,10 +4,11 @@ package com.jetbrains.python.testing;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.module.Module;
-import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
-import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareModuleConfiguratorImpl;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareService;
 import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceClasses;
+import com.jetbrains.python.defaultProjectAwareService.PyDefaultProjectAwareServiceModuleConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,14 +22,11 @@ abstract public class TestRunnerService
   private static final PyDefaultProjectAwareServiceClasses<ServiceState, TestRunnerService, AppService, ModuleService>
     SERVICE_CLASSES = new PyDefaultProjectAwareServiceClasses<>(AppService.class, ModuleService.class);
   private static final TestRunnerDetector DETECTOR = new TestRunnerDetector();
-  private final List<String> myConfigurations = new ArrayList<>();
+  private final List<String> myConfigurations;
 
   protected TestRunnerService() {
     super(new ServiceState());
-    myConfigurations.add(PythonTestConfigurationsModel.getPythonsUnittestName());
-    for (final String framework : PyTestFrameworkService.getFrameworkNamesArray()) {
-      myConfigurations.add(PyTestFrameworkService.getSdkReadableNameByFramework(framework));
-    }
+    myConfigurations = new ArrayList<>(ContainerUtil.map(PyTestsSharedKt.getPythonFactories(), o -> o.getId()));
   }
 
   @NotNull

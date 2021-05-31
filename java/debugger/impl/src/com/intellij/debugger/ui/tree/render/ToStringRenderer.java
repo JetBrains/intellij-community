@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.tree.render;
 
 import com.intellij.debugger.DebuggerContext;
@@ -135,7 +135,7 @@ public class ToStringRenderer extends NodeRendererImpl implements OnDemandRender
   }
 
   private static CompletableFuture<Boolean> overridesToStringAsync(Type type) {
-    if (!Registry.is("debugger.async.jdi")) {
+    if (!DebuggerUtilsAsync.isAsyncEnabled()) {
       return CompletableFuture.completedFuture(overridesToString(type));
     }
     if (type instanceof ClassType) {

@@ -44,9 +44,7 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
 
     public String PATH_TO_EXECUTABLE = null;
     public boolean OVERRIDE_APPLICATION_PATH_TO_EXECUTABLE = false;
-    public boolean myCheckIncoming = true;
-    public boolean myCheckOutgoing = true;
-    public Boolean CHECK_INCOMING_OUTGOING = null;
+    public boolean CHECK_INCOMING_OUTGOING = false;
     public boolean myIgnoreWhitespacesInAnnotations = true;
     public String RECENT_HG_ROOT_PATH = null;
     public Value ROOT_SYNC = Value.NOT_DECIDED;
@@ -64,9 +62,6 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   @Override
   public void loadState(@NotNull State state) {
     myState = state;
-    if (state.CHECK_INCOMING_OUTGOING == null) {
-      state.CHECK_INCOMING_OUTGOING = state.myCheckIncoming || state.myCheckOutgoing;
-    }
   }
 
   public static HgProjectSettings getInstance(@NotNull Project project) {
@@ -100,15 +95,11 @@ public class HgProjectSettings implements PersistentStateComponent<HgProjectSett
   }
 
   public boolean isCheckIncomingOutgoing() {
-    if (myState.CHECK_INCOMING_OUTGOING == null) {
-      return myState.myCheckIncoming || myState.myCheckOutgoing;
-    }
-    return myState.CHECK_INCOMING_OUTGOING.booleanValue();
+    return myState.CHECK_INCOMING_OUTGOING;
   }
 
   public void setCheckIncomingOutgoing(boolean checkIncomingOutgoing) {
-    Boolean oldValue = myState.CHECK_INCOMING_OUTGOING;
-    if (oldValue == null || oldValue != checkIncomingOutgoing) {
+    if (myState.CHECK_INCOMING_OUTGOING != checkIncomingOutgoing) {
       myState.CHECK_INCOMING_OUTGOING = checkIncomingOutgoing;
       BackgroundTaskUtil.syncPublisher(myProject, HgVcs.INCOMING_OUTGOING_CHECK_TOPIC).updateVisibility();
     }

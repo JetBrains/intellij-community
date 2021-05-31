@@ -2,7 +2,11 @@ class Simple implements Cloneable {
 
 
     @Override
-    public Simple clone() throws CloneNotSupportedException {
-        return (Simple) super.clone();
+    public Simple clone() {
+        try {
+            return (Simple) super.clone();
+        } catch (CloneNotSupportedException e) {
+            throw new AssertionError();
+        }
     }
 }

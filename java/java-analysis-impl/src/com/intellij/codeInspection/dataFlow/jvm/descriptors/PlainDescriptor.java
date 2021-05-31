@@ -63,7 +63,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
 
   @NotNull
   @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
       PsiType type = getType(ObjectUtils.tryCast(qualifier, DfaVariableValue.class));
       return factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, myVariable)));
@@ -72,7 +72,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
         (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
       return factory.getVarFactory().createVariableValue(this);
     }
-    return super.createValue(factory, qualifier, forAccessor);
+    return super.createValue(factory, qualifier);
   }
 
   @Override
@@ -103,20 +103,26 @@ public final class PlainDescriptor extends PsiVarDescriptor {
 
     DfaVariableValue qualifier = value.getQualifier();
     if (field != null && context != null) {
-      PsiMethod method = ObjectUtils.tryCast(context.getParent(), PsiMethod.class);
-      if (method != null) {
-        PsiClass methodClass = method.getContainingClass();
+      PsiMember member = ObjectUtils.tryCast(context.getParent(), PsiMember.class);
+      if (member != null) {
+        PsiClass methodClass = member.getContainingClass();
         if (methodClass != null && methodClass.equals(field.getContainingClass())) {
+          PsiMethod method = ObjectUtils.tryCast(member, PsiMethod.class);
           VariableDescriptor qualifierDescriptor = qualifier == null ? null : qualifier.getDescriptor();
           if (qualifierDescriptor instanceof ThisDescriptor && ((ThisDescriptor)qualifierDescriptor).getPsiElement().equals(methodClass)) {
-            if (!method.isConstructor() && isPossiblyNonInitialized(field, method)) {
-              return DfaNullability.NULLABLE;
-            }
-            else if (method.isConstructor()) {
+            if (member instanceof PsiClassInitializer) {
               return DfaNullability.UNKNOWN;
             }
+            if (method != null) {
+              if (!method.isConstructor() && isPossiblyNonInitialized(field, method)) {
+                return DfaNullability.NULLABLE;
+              }
+              else if (method.isConstructor()) {
+                return DfaNullability.UNKNOWN;
+              }
+            }
           }
-          if (field.hasModifierProperty(PsiModifier.STATIC) && isPossiblyNonInitialized(field, method)) {
+          if (method != null && field.hasModifierProperty(PsiModifier.STATIC) && isPossiblyNonInitialized(field, method)) {
             return DfaNullability.NULLABLE;
           }
         }

@@ -10,15 +10,15 @@ It has:
 Of course, it has an `inline` fragment.
 
 Even big fragment with injected code.
-```kotlin
-val a = "So big!"
+```html
+<tag>This is <warning descr="EN_A_VS_AN">a</warning> error in article, making this paragraph so damn big!</tag>
 ```
 
 ## Now bad part have <warning descr="HAVE_PART_AGREEMENT">go</warning> there
 
 It <warning descr="IT_VBZ">are</warning> written not many good .
 
-Of <warning descr="MISSING_COMMA_AFTER_INTRODUCTORY_PHRASE">course it</warning> has <TYPO descr="Typo: In word 'errosr'">errosr</TYPO> in lists:
+Of <warning descr="MISSING_COMMA_AFTER_INTRODUCTORY_PHRASE">course</warning> it has <TYPO descr="Typo: In word 'errosr'">errosr</TYPO> in lists:
 * so much <TYPO descr="Typo: In word 'errorsss'">errorsss</TYPO>!
 * even here it is <warning descr="BEEN_PART_AGREEMENT">friend</warning> of error
 

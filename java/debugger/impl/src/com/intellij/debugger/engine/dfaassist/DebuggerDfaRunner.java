@@ -1,13 +1,13 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine.dfaassist;
 
-import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
-import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ArrayElementDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
@@ -82,7 +82,7 @@ class DebuggerDfaRunner {
       return null;
     }
     var interceptor = new DebuggerDfaListener();
-    JvmDataFlowInterpreter interpreter = new JvmDataFlowInterpreter(myFlow, interceptor, true);
+    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(myFlow, interceptor, true);
     return interpreter.interpret(List.of(myStartingState)) == RunnerResult.OK ? interceptor : null;
   }
 
@@ -91,7 +91,7 @@ class DebuggerDfaRunner {
     if (myFlow == null) return null;
     int offset = myFlow.getStartOffset(myAnchor).getInstructionOffset();
     if (offset < 0) return null;
-    DfaMemoryState state = new DfaMemoryStateImpl(myFactory);
+    DfaMemoryState state = new JvmDfaMemoryStateImpl(myFactory);
     StateBuilder builder = new StateBuilder(proxy, state);
     for (DfaValue dfaValue : myFactory.getValues().toArray(new DfaValue[0])) {
       if (dfaValue instanceof DfaVariableValue) {
@@ -153,7 +153,7 @@ class DebuggerDfaRunner {
     private Value findJdiValue(@NotNull DfaVariableValue var) throws EvaluateException {
       if (var.getQualifier() != null) {
         VariableDescriptor descriptor = var.getDescriptor();
-        if (descriptor instanceof JvmSpecialField) {
+        if (descriptor instanceof SpecialField) {
           // Special fields facts are applied from qualifiers
           return null;
         }
@@ -270,24 +270,24 @@ class DebuggerDfaRunner {
         String name = type.name();
         myMemState.meetDfType(var, exactType.asDfType().meet(DfTypes.NOT_NULL_OBJECT));
         if (jdiValue instanceof ArrayReference) {
-          DfaValue dfaLength = JvmSpecialField.ARRAY_LENGTH.createValue(myFactory, var);
+          DfaValue dfaLength = SpecialField.ARRAY_LENGTH.createValue(myFactory, var);
           int jdiLength = ((ArrayReference)jdiValue).length();
           myMemState.applyCondition(dfaLength.eq(DfTypes.intValue(jdiLength)));
         }
         else if (TypeConversionUtil.isPrimitiveWrapper(name)) {
-          setSpecialField(var, ref, type, "value", JvmSpecialField.UNBOX);
+          setSpecialField(var, ref, type, "value", SpecialField.UNBOX);
         }
         else if (COLLECTIONS_WITH_SIZE_FIELD.contains(name)) {
-          setSpecialField(var, ref, type, "size", JvmSpecialField.COLLECTION_SIZE);
+          setSpecialField(var, ref, type, "size", SpecialField.COLLECTION_SIZE);
         }
         else if (name.startsWith("java.util.Collections$Empty")) {
-          myMemState.applyCondition(JvmSpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(DfTypes.intValue(0)));
+          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(DfTypes.intValue(0)));
         }
         else if (name.startsWith("java.util.Collections$Singleton")) {
-          myMemState.applyCondition(JvmSpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(DfTypes.intValue(1)));
+          myMemState.applyCondition(SpecialField.COLLECTION_SIZE.createValue(myFactory, var).eq(DfTypes.intValue(1)));
         }
-        else if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(name) && !(var.getDescriptor() instanceof JvmSpecialField)) {
-          setSpecialField(var, ref, type, "value", JvmSpecialField.OPTIONAL_VALUE);
+        else if (CommonClassNames.JAVA_UTIL_OPTIONAL.equals(name) && !(var.getDescriptor() instanceof SpecialField)) {
+          setSpecialField(var, ref, type, "value", SpecialField.OPTIONAL_VALUE);
         }
       }
     }

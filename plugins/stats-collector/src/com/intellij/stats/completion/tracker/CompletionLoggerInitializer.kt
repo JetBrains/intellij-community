@@ -94,6 +94,11 @@ class CompletionLoggerInitializer : LookupTracker() {
         return "JavaScript"
       }
     }
+    Language.findLanguageByID("SQL")?.let { sql ->
+      if (language.isKindOf(sql)) {
+        return sql.displayName
+      }
+    }
     return language.displayName
   }
 
@@ -118,7 +123,7 @@ class CompletionLoggerInitializer : LookupTracker() {
 
     var listener: CompletionPopupListener = CompletionPopupListener.DISABLED
 
-    override fun afterActionPerformed(action: AnAction, event: AnActionEvent) {
+    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
       LOG.runAndLogException {
         when (action) {
           down -> listener.downPressed()

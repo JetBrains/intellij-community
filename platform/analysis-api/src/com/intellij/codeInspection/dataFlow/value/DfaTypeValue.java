@@ -11,7 +11,7 @@ import java.util.Map;
 public final class DfaTypeValue extends DfaValue {
   private final @NotNull DfType myType;
 
-  DfaTypeValue(@NotNull DfaValueFactory factory, @NotNull DfType type) {
+  private DfaTypeValue(@NotNull DfaValueFactory factory, @NotNull DfType type) {
     super(factory);
     myType = type;
   }

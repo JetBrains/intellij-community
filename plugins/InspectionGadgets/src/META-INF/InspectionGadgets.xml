@@ -558,7 +558,7 @@
                      implementationClass="com.siyeh.ig.cloneable.CloneInNonCloneableClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" suppressId="CloneableClassWithoutClone" shortName="CloneableImplementsClone" bundle="messages.InspectionGadgetsBundle"
                      key="cloneable.class.without.clone.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.cloning.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.cloning.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.cloneable.CloneableImplementsCloneInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="CloneReturnsClassType" bundle="messages.InspectionGadgetsBundle"
                      key="clone.returns.class.type.display.name" groupBundle="messages.InspectionsBundle"

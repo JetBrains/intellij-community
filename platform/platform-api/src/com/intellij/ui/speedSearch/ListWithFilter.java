@@ -29,6 +29,7 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
   private final JScrollPane myScrollPane;
   private final MySpeedSearch mySpeedSearch;
   private boolean myAutoPackHeight = true;
+  private boolean mySearchAlwaysVisible = false;
 
   @Override
   public Object getData(@NotNull @NonNls String dataId) {
@@ -63,7 +64,7 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     myScrollPane = scrollPane;
 
     mySearchField.getTextEditor().setFocusable(false);
-    mySearchField.setVisible(false);
+    mySearchField.setVisible(mySearchAlwaysVisible);
 
     add(mySearchField, BorderLayout.NORTH);
     add(myScrollPane, BorderLayout.CENTER);
@@ -102,6 +103,15 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
     return hadPattern;
   }
 
+  public boolean isSearchAlwaysVisible() {
+    return mySearchAlwaysVisible;
+  }
+
+  public void setSearchAlwaysVisible(boolean searchAlwaysVisible) {
+    mySearchField.setVisible(searchAlwaysVisible);
+    mySearchAlwaysVisible = searchAlwaysVisible;
+  }
+
   public SpeedSearch getSpeedSearch() {
     return mySpeedSearch;
   }
@@ -136,7 +146,7 @@ public final class ListWithFilter<T> extends JPanel implements DataProvider {
         searchFieldShown = true;
       }
       else if (!isHoldingFilter() && searchFieldShown) {
-        mySearchField.setVisible(false);
+        mySearchField.setVisible(mySearchAlwaysVisible);
         searchFieldShown = false;
       }
 

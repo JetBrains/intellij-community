@@ -9,7 +9,7 @@ import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.ChangesViewNodeAction
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.HoverIcon
-import git4idea.conflicts.showMergeWindow
+import git4idea.conflicts.GitConflictsUtil.showMergeWindow
 import git4idea.i18n.GitBundle
 import git4idea.index.ui.createMergeHandler
 import git4idea.repo.GitRepositoryManager

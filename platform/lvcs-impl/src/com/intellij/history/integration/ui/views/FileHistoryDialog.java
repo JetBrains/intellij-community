@@ -4,7 +4,9 @@ package com.intellij.history.integration.ui.views;
 
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
+import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.MessageDiffRequest;
+import com.intellij.diff.tools.fragmented.UnifiedDiffPanel;
 import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.SearchTextArea;
@@ -14,6 +16,7 @@ import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
@@ -21,6 +24,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExcludingTraversalPolicy;
 import com.intellij.util.ui.UIUtil;
@@ -34,6 +38,7 @@ import java.awt.*;
 
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffRequestPanel myDiffPanel;
+  private SearchTextArea mySearchTextArea;
 
   public FileHistoryDialog(@NotNull Project p, IdeaGateway gw, VirtualFile f) {
     this(p, gw, f, true);
@@ -57,15 +62,22 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
 
   @Override
   protected void addExtraToolbar(JPanel toolBarPanel) {
-    SearchTextArea comp = new SearchTextArea(new JTextArea(), true);
-    comp.getTextArea().getDocument().addDocumentListener(new DocumentAdapter() {
+    mySearchTextArea = new SearchTextArea(new JTextArea(), true);
+    mySearchTextArea.getTextArea().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        myRevisionsList.setFilterText(StringUtil.nullize(comp.getTextArea().getText()));
+        myRevisionsList.setFilterText(StringUtil.nullize(mySearchTextArea.getTextArea().getText()));
         updateEditorSearch();
       }
     });
-    toolBarPanel.add(comp, BorderLayout.CENTER);
+    toolBarPanel.add(mySearchTextArea, BorderLayout.CENTER);
+  }
+
+  @Override
+  protected ContentDiffRequest createDifference(FileDifferenceModel m) {
+    ContentDiffRequest request = super.createDifference(m);
+    ApplicationManager.getApplication().invokeLater(this::updateEditorSearch, ModalityState.stateForComponent(myRevisionsList.getComponent()));
+    return request;
   }
 
   private void updateEditorSearch() {
@@ -74,7 +86,13 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     String filter = myRevisionsList.getFilterText();
     EditorSearchSession session = EditorSearchSession.get(editor);
     if (StringUtil.isEmpty(filter)) {
-      if (session != null) session.close();
+      if (session != null) {
+        boolean focused = mySearchTextArea.getTextArea().isFocusOwner();
+        session.close();
+        if (focused) {
+          IdeFocusManager.getInstance(myProject).requestFocus(mySearchTextArea.getTextArea(), false);
+        }
+      }
       return;
     }
     if (session == null) {
@@ -86,8 +104,14 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Nullable
   private Editor findLeftEditor() {
     DiffSplitter splitter = UIUtil.findComponentOfType(myDiffPanel.getComponent(), DiffSplitter.class);
-    JComponent left = splitter == null ? null : splitter.getFirstComponent();
-    EditorComponentImpl comp = left == null ? null : UIUtil.findComponentOfType(left, EditorComponentImpl.class);
+    JComponent editorPanel;
+    if (splitter != null) {
+      editorPanel = splitter.getFirstComponent();
+    }
+    else {
+      editorPanel = UIUtil.findComponentOfType(myDiffPanel.getComponent(), UnifiedDiffPanel.class);
+    }
+    EditorComponentImpl comp = editorPanel == null ? null : UIUtil.findComponentOfType(editorPanel, EditorComponentImpl.class);
     return comp == null ? null : comp.getEditor();
   }
 

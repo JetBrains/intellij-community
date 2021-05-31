@@ -153,7 +153,11 @@ public class MultiStateElementsChooser<T, S> extends JPanel implements Component
   }
 
   public void setSingleSelectionMode() {
+    int selectedRow = myTable.getSelectedRow();
     myTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    if (selectedRow != -1) {
+      myTable.getSelectionModel().setSelectionInterval(selectedRow, selectedRow);
+    }
   }
 
   public void refresh() {

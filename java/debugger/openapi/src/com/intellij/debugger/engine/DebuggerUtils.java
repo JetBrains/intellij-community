@@ -431,8 +431,8 @@ public abstract class DebuggerUtils {
       PsiManager psiManager = PsiManager.getInstance(project);
       PsiClass psiClass = ClassUtil.findPsiClass(psiManager, className, null, true, scope);
       if (psiClass == null && fallbackToAllScope) {
-        GlobalSearchScope globalScope = GlobalSearchScope.allScope(project);
-        if (!globalScope.equals(scope)) {
+        GlobalSearchScope globalScope = getInstance().getFallbackAllScope(scope, project);
+        if (globalScope != null) {
           psiClass = ClassUtil.findPsiClass(psiManager, className, null, true, globalScope);
         }
       }
@@ -443,6 +443,9 @@ public abstract class DebuggerUtils {
       return null;
     }
   }
+
+  @Nullable
+  protected abstract GlobalSearchScope getFallbackAllScope(@NotNull GlobalSearchScope scope, @NotNull Project project);
 
   @Nullable
   public static PsiType getType(@NotNull String className, @NotNull Project project) {

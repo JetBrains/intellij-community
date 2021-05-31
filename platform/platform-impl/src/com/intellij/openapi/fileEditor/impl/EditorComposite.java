@@ -24,7 +24,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -572,7 +572,7 @@ public class EditorComposite implements Disposable {
     @Override
     public Color getBackground() {
       EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
-      if (Registry.is("ide.new.editor.tabs.ui")) {
+      if (ExperimentalUI.isNewEditorTabs()) {
         return globalScheme.getDefaultBackground();
       }
       Color color = globalScheme.getColor(EditorColors.GUTTER_BACKGROUND);
@@ -600,7 +600,7 @@ public class EditorComposite implements Disposable {
       @Override
       public Color getLineColor() {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-        if (Registry.is("ide.new.editor.tabs.ui")) {
+        if (ExperimentalUI.isNewEditorTabs()) {
           return scheme.getDefaultBackground();
         }
         Color result = scheme.getColor(top ? EditorColors.SEPARATOR_ABOVE_COLOR : EditorColors.SEPARATOR_BELOW_COLOR);

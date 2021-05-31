@@ -78,7 +78,7 @@ class GitStageLineStatusTrackerProvider : LineStatusTrackerContentLoader {
     val repository = GitRepositoryManager.getInstance(project).getRepositoryForFile(file) ?: return null
 
     val indexFileRefresher = GitIndexFileSystemRefresher.getInstance(project)
-    val indexFile = indexFileRefresher.getFile(repository.root, status.path(ContentVersion.STAGED))
+    val indexFile = indexFileRefresher.getFile(repository.root, status.path(ContentVersion.STAGED)) ?: return null
     val indexDocument = runReadAction { FileDocumentManager.getInstance().getDocument(indexFile) } ?: return null
     indexDocument.putUserData(LineStatusTrackerBase.SEPARATE_UNDO_STACK, Registry.`is`("git.stage.separate.undo.stack"))
 

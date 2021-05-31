@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.buildtool;
 
 import com.intellij.build.BuildDescriptor;
@@ -8,8 +8,6 @@ import com.intellij.build.events.impl.StartBuildEventImpl;
 import com.intellij.build.output.BuildOutputInstantReaderImpl;
 import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessOutputType;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -19,9 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLogOutputParser;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenOutputParserProvider;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
-import org.jetbrains.idea.maven.project.MavenConsoleImpl;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
-import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.util.Collections;
 import java.util.function.Function;
@@ -51,8 +46,8 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     myTaskId = taskId;
     myWorkingDir = workingDir;
     myDescriptor = descriptor;
-    myStartBuildEventSupplier = startBuildEventSupplier != null ? startBuildEventSupplier : ctx -> new StartBuildEventImpl(myDescriptor, "")
-      .withExecutionFilters(MavenConsoleImpl.getMavenConsoleFilters(myProject));
+    myStartBuildEventSupplier = startBuildEventSupplier != null
+                                ? startBuildEventSupplier : ctx -> new StartBuildEventImpl(myDescriptor, "");
 
     myParser = MavenOutputParserProvider.createMavenOutputParser(project, myTaskId, targetFileMapper);
 
@@ -78,11 +73,6 @@ public class MavenBuildEventProcessor implements AnsiEscapeDecoder.ColoredTextAc
     StartBuildEvent startEvent = myStartBuildEventSupplier.apply(getParsingContext());
 
     myBuildProgressListener.onEvent(myDescriptor.getId(), startEvent);
-  }
-
-  public void notifyException(Throwable throwable) {
-    new Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("maven.build.messages.cannot.run.task"), throwable.getMessage(), NotificationType.ERROR, null)
-      .notify(myProject);
   }
 
   public synchronized void onTextAvailable(String text, boolean stdError) {

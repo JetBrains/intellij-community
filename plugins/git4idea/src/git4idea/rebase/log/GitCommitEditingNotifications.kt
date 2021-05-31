@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.rebase.log
 
 import com.intellij.notification.NotificationAction
@@ -26,7 +26,7 @@ internal fun GitCommitEditingOperationResult.Complete.notifySuccess(
   @NlsContexts.ProgressTitle undoErrorTitle: String
 ) {
   val project = repository.project
-  val notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, "", NotificationType.INFORMATION, null)
+  val notification = VcsNotifier.STANDARD_NOTIFICATION.createNotification(title, NotificationType.INFORMATION)
   notification.addAction(NotificationAction.createSimple(
     GitBundle.messagePointer("action.NotificationAction.GitRewordOperation.text.undo"),
     Runnable {

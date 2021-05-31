@@ -14,7 +14,7 @@ class PluginData @JvmOverloads constructor(
   @Attribute("fromCustomRepository") val isFromCustomRepository: Boolean = false,
 ) : Comparable<PluginData> {
 
-  val pluginId: PluginId = PluginId.getId(pluginIdString)
+  val pluginId: PluginId get() = PluginId.getId(pluginIdString)
 
   val pluginName = nullablePluginName ?: pluginIdString
 
@@ -66,18 +66,18 @@ class PluginDataSet @JvmOverloads constructor(dataSet: Set<PluginData> = setOf()
   }
 }
 
-@Tag("extensions")
-class KnownExtensions @JvmOverloads constructor(extensionsMap: Map<String, Set<PluginData>> = mapOf()) {
+@Tag("features")
+class PluginFeatureMap @JvmOverloads constructor(featureMap: Map<String, Set<PluginData>> = mapOf()) {
 
   @JvmField
   @XMap
-  val extensionsMap = mutableMapOf<String, PluginDataSet>()
+  val featureMap = mutableMapOf<String, PluginDataSet>()
 
   init {
-    extensionsMap.entries.forEach { entry ->
-      this.extensionsMap[entry.key] = PluginDataSet(entry.value)
+    featureMap.entries.forEach { entry ->
+      this.featureMap[entry.key] = PluginDataSet(entry.value)
     }
   }
 
-  operator fun get(extension: String): Set<PluginData> = extensionsMap[extension]?.dataSet ?: setOf()
+  operator fun get(implementationName: String): Set<PluginData> = featureMap[implementationName]?.dataSet ?: setOf()
 }

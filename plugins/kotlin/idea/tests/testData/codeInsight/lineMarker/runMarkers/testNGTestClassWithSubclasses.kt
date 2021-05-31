@@ -3,23 +3,20 @@ package testing
 
 import org.testng.annotations.Test
 
-abstract class <lineMarker descr="*"><lineMarker descr="Run Test">KBase</lineMarker></lineMarker> {
+abstract class <lineMarker descr="*"><lineMarker descr="Run Test">KBase</lineMarker></lineMarker> {// LIGHT_CLASS_FALLBACK
     @Test
-    fun <lineMarker descr="*">testFoo</lineMarker>() {
-
+    fun <lineMarker descr="*">testFoo</lineMarker>() {// LIGHT_CLASS_FALLBACK
     }
 }
 
-class <lineMarker descr="*">KTest</lineMarker> : KBase() {
+class <lineMarker descr="*">KTest</lineMarker> : KBase() {// LIGHT_CLASS_FALLBACK
     @Test
-    fun <lineMarker descr="*">testBar</lineMarker>() {
-
+    fun <lineMarker descr="*">testBar</lineMarker>() {// LIGHT_CLASS_FALLBACK
     }
 }
 
-class <lineMarker descr="*">KTest2</lineMarker> : KBase() {
+class <lineMarker descr="*">KTest2</lineMarker> : KBase() {// LIGHT_CLASS_FALLBACK
     @Test
-    fun <lineMarker descr="*">testBaz</lineMarker>() {
-
+    fun <lineMarker descr="*">testBaz</lineMarker>() {// LIGHT_CLASS_FALLBACK
     }
 }

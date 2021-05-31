@@ -9,6 +9,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -41,6 +42,11 @@ public class FinishElementInstruction extends Instruction {
     }
     instruction.setIndex(getIndex());
     return instruction;
+  }
+
+  @Override
+  public List<DfaVariableValue> getWrittenVariables(DfaValueFactory factory) {
+    return List.copyOf(myVarsToFlush);
   }
 
   @Override

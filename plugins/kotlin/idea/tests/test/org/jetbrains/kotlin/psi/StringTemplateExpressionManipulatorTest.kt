@@ -1,14 +1,10 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.psi
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.ElementManipulators
 import com.intellij.testFramework.LoggedErrorProcessor
-import org.apache.log4j.Logger
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.junit.internal.runners.JUnit38ClassRunner
@@ -92,7 +88,7 @@ private fun <T> suppressFallingOnLogError(call: () -> T) {
     val loggedErrorProcessor = LoggedErrorProcessor.getInstance()
     try {
         LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-            override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: Logger) {}
+            override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean = false
         })
         call()
     } finally {

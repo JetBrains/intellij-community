@@ -14,6 +14,7 @@ class WebServerFileContentListener implements AsyncFileListener {
   @Nullable
   @Override
   public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
-    return WebServerPageConnectionService.getInstance().reloadRelatedClients(ContainerUtil.map(events, VFileEvent::getFile));
+    return WebServerPageConnectionService.Companion.getInstance()
+      .reloadRelatedClients(ContainerUtil.mapNotNull(events, VFileEvent::getFile));
   }
 }

@@ -418,10 +418,19 @@ public final class HighlightFixUtil {
       PsiElement blockParent = block.getParent();
       if (blockParent instanceof PsiMethod) {
         PsiType returnType = ((PsiMethod)blockParent).getReturnType();
-        if (returnType != null && returnType.isAssignableFrom(type)) {
+        if (returnType != null && isPossibleReturnValue(expression, type, returnType)) {
           QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createInsertReturnFix(expression));
         }
       }
     }
+  }
+
+  private static boolean isPossibleReturnValue(PsiExpression expression, PsiType type, PsiType returnType) {
+    if (returnType.isAssignableFrom(type)) return true;
+    if (!(type instanceof PsiClassType) || !(returnType instanceof PsiClassType)) return false;
+    if (!returnType.isAssignableFrom(TypeConversionUtil.erasure(type))) return false;
+    PsiExpression copy = (PsiExpression)LambdaUtil.copyWithExpectedType(expression, returnType);
+    PsiType copyType = copy.getType();
+    return copyType != null && returnType.isAssignableFrom(copyType);
   }
 }

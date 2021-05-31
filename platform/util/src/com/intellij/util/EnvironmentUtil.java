@@ -208,7 +208,7 @@ public final class EnvironmentUtil {
     return value != null && value.indexOf('\0') == -1;
   }
 
-  private static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
+  public static final String DISABLE_OMZ_AUTO_UPDATE = "DISABLE_AUTO_UPDATE";
   private static final String INTELLIJ_ENVIRONMENT_READER = "INTELLIJ_ENVIRONMENT_READER";
 
   private static @NotNull Map<String, String> getShellEnv(@NotNull Path reader) throws IOException {

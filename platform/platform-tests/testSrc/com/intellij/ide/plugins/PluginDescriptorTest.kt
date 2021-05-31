@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
 
@@ -29,6 +29,7 @@ import java.nio.file.Path
 import java.nio.file.Paths
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.function.Function
 import java.util.function.Supplier
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -71,14 +72,14 @@ class PluginDescriptorTest {
   fun testOptionalDescriptors() {
     val descriptor = loadDescriptorInTest("family")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.getPluginDependencies().size).isEqualTo(1)
+    assertThat(descriptor.pluginDependencies.size).isEqualTo(1)
   }
 
   @Test
   fun testMultipleOptionalDescriptors() {
     val descriptor = loadDescriptorInTest("multipleOptionalDescriptors")
     assertThat(descriptor).isNotNull()
-    val pluginDependencies = descriptor.getPluginDependencies()
+    val pluginDependencies = descriptor.pluginDependencies
     assertThat(pluginDependencies).hasSize(2)
     assertThat(pluginDependencies.map { it.pluginId.idString }).containsExactly("dep2", "dep1")
   }
@@ -115,9 +116,9 @@ class PluginDescriptorTest {
   fun testProductionPlugins() {
     IoTestUtil.assumeMacOS()
     assumeNotUnderTeamcity()
-    val descriptors = loadAndInitDescriptors(Paths.get("/Applications/Idea.app/Contents/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
+    val descriptors = loadAndInitDescriptors(Paths.get("/Applications/Idea.app/Contents/plugins"), PluginManagerCore.getBuildNumber()).pluginSet.allPlugins
     assertThat(descriptors).isNotEmpty()
-    assertThat(descriptors.find { it!!.pluginId.idString == "com.intellij.java" }).isNotNull
+    assertThat(descriptors.find { it.pluginId.idString == "com.intellij.java" }).isNotNull
   }
 
   @Test
@@ -140,7 +141,7 @@ class PluginDescriptorTest {
     IoTestUtil.assumeMacOS()
 
     assumeNotUnderTeamcity()
-    val descriptors = loadAndInitDescriptors(Paths.get("/Volumes/data/plugins"), PluginManagerCore.getBuildNumber()).sortedPlugins
+    val descriptors = loadAndInitDescriptors(Paths.get("/Volumes/data/plugins"), PluginManagerCore.getBuildNumber()).pluginSet.allPlugins
     assertThat(descriptors).isNotEmpty()
   }
 
@@ -152,8 +153,8 @@ class PluginDescriptorTest {
   fun testDuplicateDependency() {
     val descriptor = loadDescriptorInTest("duplicateDependency")
     assertThat(descriptor).isNotNull()
-    assertThat(descriptor.getPluginDependencies().filter { it.isOptional }).isEmpty()
-    assertThat(descriptor.getPluginDependencies().map { it.pluginId }).containsExactly(PluginId.getId("foo"))
+    assertThat(descriptor.pluginDependencies.filter { it.isOptional }).isEmpty()
+    assertThat(descriptor.pluginDependencies.map { it.pluginId }).containsExactly(PluginId.getId("foo"))
   }
 
   @Test
@@ -195,15 +196,40 @@ class PluginDescriptorTest {
         <version>2.0</version>
       </idea-plugin>""")
 
-    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber())
-    val plugins = result.sortedEnabledPlugins
+    val pluginSet = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).pluginSet
+    val plugins = pluginSet.loadedPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
-    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
+    assertThat(pluginSet.allPlugins.toList()).map(Function { it.id }).containsOnly(foo.pluginId)
+    assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
+  }
+
+  @Suppress("PluginXmlValidity")
+  @Test
+  fun `use newer plugin if disabled`() {
+    val pluginDir = inMemoryFs.fs.getPath("/plugins")
+    writeDescriptor("foo_3-0", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>1.0</version>
+      </idea-plugin>""")
+    writeDescriptor("foo_2-0", pluginDir, """
+      <idea-plugin>
+        <id>foo</id>
+        <vendor>JetBrains</vendor>
+        <version>2.0</version>
+      </idea-plugin>""")
+
+    val context = loadDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("foo")))
+    val plugins = context.result.incompletePlugins
+    assertThat(plugins).hasSize(1)
+    val foo = plugins.values.single()
+    assertThat(foo.version).isEqualTo("2.0")
+    assertThat(foo.pluginId.idString).isEqualTo("foo")
   }
 
   @Suppress("PluginXmlValidity")
@@ -227,8 +253,8 @@ class PluginDescriptorTest {
       </idea-plugin>""")
 
     val result = loadDescriptors(pluginDir, BuildNumber.fromString("4.0")!!).result
-    assertThat(result.pluginErrors).isEmpty()
-    val plugins = result.enabledPlugins
+    assertThat(result.hasPluginErrors).isFalse()
+    val plugins = result.getEnabledPlugins()
     assertThat(plugins).hasSize(1)
     assertThat(result.duplicateModuleMap).isNull()
     assertThat(result.incompletePlugins).isEmpty()
@@ -259,16 +285,16 @@ class PluginDescriptorTest {
         <idea-version since-build="2.0" until-build="4.*"/>
       </idea-plugin>""")
 
-    val result = loadAndInitDescriptors(pluginDir, BuildNumber.fromString("3.12")!!)
+    val pluginSet = loadAndInitDescriptors(pluginDir, BuildNumber.fromString("3.12")!!).pluginSet
 
-    val plugins = result.sortedEnabledPlugins
+    val plugins = pluginSet.loadedPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("2.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
-    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap[foo.pluginId]).isSameAs(foo)
+    assertThat(pluginSet.allPlugins.toList()).map(Function { it.id }).containsOnly(foo.pluginId)
+    assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
   @Suppress("PluginXmlValidity")
@@ -278,15 +304,15 @@ class PluginDescriptorTest {
     PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDir.resolve("foo_1-0"))
     PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDir.resolve("foo_another"))
 
-    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber())
-    val plugins = result.sortedEnabledPlugins
+    val pluginSet = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).pluginSet
+    val plugins = pluginSet.loadedPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("1.0")
     assertThat(foo.pluginId.idString).isEqualTo("foo")
 
-    assertThat(result.idMap).containsOnlyKeys(foo.pluginId)
-    assertThat(result.idMap.get(foo.pluginId)).isSameAs(foo)
+    assertThat(pluginSet.allPlugins.toList()).map(Function { it.id }).containsOnly(foo.pluginId)
+    assertThat(pluginSet.findEnabledPlugin(foo.pluginId)).isSameAs(foo)
   }
 
   @Suppress("PluginXmlValidity")
@@ -328,7 +354,7 @@ class PluginDescriptorTest {
   }
 
   private fun checkClassLoader(pluginDir: Path) {
-    val list = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).sortedEnabledPlugins
+    val list = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).pluginSet.loadedPlugins
     assertThat(list).hasSize(2)
 
     val bar = list[0]
@@ -336,7 +362,7 @@ class PluginDescriptorTest {
 
     val foo = list[1]
 
-    assertThat(foo.getPluginDependencies().map { it.pluginId }).containsExactly(bar.pluginId)
+    assertThat(foo.pluginDependencies.map { it.pluginId }).containsExactly(bar.pluginId)
 
     assertThat(foo.pluginId.idString).isEqualTo("foo")
     val fooClassLoader = foo.pluginClassLoader as PluginClassLoader
@@ -419,7 +445,7 @@ class PluginDescriptorTest {
     val descriptor = loadDescriptorInTest("disabled", setOf(PluginId.getId("com.intellij.disabled")))
     assertFalse(descriptor.isEnabled)
     assertEquals("This is a disabled plugin", descriptor.description)
-    assertThat(descriptor.getPluginDependencies().map { it.pluginId.idString }).containsExactly("com.intellij.modules.lang")
+    assertThat(descriptor.pluginDependencies.map { it.pluginId.idString }).containsExactly("com.intellij.modules.lang")
   }
 
   @Test
@@ -428,8 +454,8 @@ class PluginDescriptorTest {
     PluginBuilder().noDepends().id("foo").depends("bar").build(pluginDir.resolve("foo"))
     PluginBuilder().noDepends().id("bar").build(pluginDir.resolve("bar"))
 
-    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("bar")))
-    assertThat(result.sortedEnabledPlugins).isEmpty()
+    val pluginSet = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("bar"))).pluginSet
+    assertThat(pluginSet.loadedPlugins).isEmpty()
   }
 
   @Test
@@ -452,8 +478,8 @@ class PluginDescriptorTest {
       .id("com.intellij.gradle")
       .build(pluginDir.resolve("intellij.gradle"))
 
-    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("com.intellij.gradle")))
-    assertThat(result.sortedEnabledPlugins).isEmpty()
+    val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("com.intellij.gradle"))).pluginSet
+    assertThat(result.loadedPlugins).isEmpty()
   }
 }
 

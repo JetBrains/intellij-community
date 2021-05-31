@@ -155,7 +155,7 @@ public class AnActionEvent implements PlaceProvider {
     if (dataContext instanceof InjectedDataContextSupplier) {
       return ((InjectedDataContextSupplier)dataContext).getInjectedDataContext();
     }
-    return new InjectedDataContext(dataContext);
+    return dataContext instanceof InjectedDataContext ? dataContext : new InjectedDataContext(dataContext);
   }
 
   /**

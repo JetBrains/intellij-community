@@ -725,15 +725,11 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return isValid();
   }
 
+  /**
+   * @return true if filesystem inherits {@link LocalFileSystem} (including temporary)
+   */
   public boolean isInLocalFileSystem() {
     return false;
-  }
-
-  /** @deprecated use {@link VirtualFileSystem#isValidName(String)} */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isValidName(@NotNull String name) {
-    return !name.isEmpty() && name.indexOf('\\') < 0 && name.indexOf('/') < 0;
   }
 
   private static final Key<String> DETECTED_LINE_SEPARATOR_KEY = Key.create("DETECTED_LINE_SEPARATOR_KEY");

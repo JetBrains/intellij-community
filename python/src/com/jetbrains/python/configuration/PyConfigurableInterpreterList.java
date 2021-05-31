@@ -76,8 +76,8 @@ public class PyConfigurableInterpreterList {
         return -Comparing.compare(o1.getName(), o2.getName());
       }
 
-      final boolean isVEnv1 = PythonSdkUtil.isVirtualEnv(o1);
-      final boolean isVEnv2 = PythonSdkUtil.isVirtualEnv(o2);
+      final boolean isVEnv1 = PythonSdkUtil.isVirtualEnv(o1) || PythonSdkUtil.isCondaVirtualEnv(o1);
+      final boolean isVEnv2 = PythonSdkUtil.isVirtualEnv(o2) || PythonSdkUtil.isCondaVirtualEnv(o2);
       final boolean isRemote1 = PythonSdkUtil.isRemote(o1);
       final boolean isRemote2 = PythonSdkUtil.isRemote(o2);
 

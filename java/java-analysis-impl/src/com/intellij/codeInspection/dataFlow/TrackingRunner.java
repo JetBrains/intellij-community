@@ -9,20 +9,22 @@ import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.FactExtractor
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.MemoryStateChange;
 import com.intellij.codeInspection.dataFlow.TrackingDfaMemoryState.Relation;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.CheckNotNullInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.FieldChecker;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.CheckNotNullInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.InstanceofInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.JvmPushInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.DfConstantType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
@@ -79,9 +81,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   }
 
   @Override
-  protected @NotNull JvmDataFlowInterpreter createInterpreter(@NotNull DfaListener listener,
-                                                              @NotNull ControlFlow flow) {
-    return new JvmDataFlowInterpreter(flow, listener, true) {
+  protected @NotNull StandardDataFlowInterpreter createInterpreter(@NotNull DfaListener listener,
+                                                                   @NotNull ControlFlow flow) {
+    return new StandardDataFlowInterpreter(flow, listener, true) {
       @Override
       protected void beforeInstruction(Instruction instruction) {
         afterStates.clear();
@@ -490,7 +492,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       if (other instanceof RangeDfaProblemType) {
         RangeDfaProblemType rangeProblem = (RangeDfaProblemType)other;
         if (myTemplate.equals(rangeProblem.myTemplate) && Objects.equals(myType, rangeProblem.myType)) {
-          return new RangeDfaProblemType(myTemplate, myRangeSet.unite(((RangeDfaProblemType)other).myRangeSet), myType);
+          return new RangeDfaProblemType(myTemplate, myRangeSet.join(((RangeDfaProblemType)other).myRangeSet), myType);
         }
       }
       return super.tryMerge(other);
@@ -541,11 +543,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
     if (constantExpressionValue != null && constantExpressionValue.equals(expectedValue)) {
       return new CauseItem[]{new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.compile.time.constant", value), expression)};
     }
-    if (value.getDfType() instanceof DfConstantType) {
-      Object constValue = ((DfConstantType<?>)value.getDfType()).getValue();
-      if (Objects.equals(constValue, expectedValue) && constValue instanceof Boolean) {
-        return findBooleanResultCauses(expression, history, ((Boolean)constValue).booleanValue());
-      }
+    Boolean boolConst = value.getDfType().getConstantOfType(Boolean.class);
+    if (boolConst != null && boolConst.equals(expectedValue)) {
+      return findBooleanResultCauses(expression, history, boolConst);
     }
     if (value instanceof DfaVariableValue) {
       MemoryStateChange change = history.findRelation(
@@ -648,6 +648,9 @@ public final class TrackingRunner extends StandardDataFlowRunner {
                 ((JavaExpressionAnchor)pushValueInstruction.getDfaAnchor()).getExpression() == expression) {
               push = push.getPrevious();
             }
+          }
+          if (push != null) {
+            push = push.getNonMerge();
           }
           if (push != null && push.myInstruction instanceof ConditionalGotoInstruction) {
             push = push.getPrevious();
@@ -915,8 +918,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       }
     }
     if (relationType == RelationType.NE) {
-      SpecialField leftField = JvmSpecialField.fromQualifier(leftValue);
-      SpecialField rightField = JvmSpecialField.fromQualifier(rightValue);
+      SpecialField leftField = SpecialField.fromQualifier(leftValue);
+      SpecialField rightField = SpecialField.fromQualifier(rightValue);
       if (leftField != null && leftField == rightField) {
         DfaValue leftSpecial = leftField.createValue(getFactory(), leftValue);
         DfaValue rightSpecial = rightField.createValue(getFactory(), rightValue);
@@ -1398,8 +1401,8 @@ public final class TrackingRunner extends StandardDataFlowRunner {
   private static CauseItem findRangeCause(MemoryStateChange factUse, DfaValue value, LongRangeSet range, @Nls String template) {
     if (value instanceof DfaVariableValue) {
       VariableDescriptor descriptor = ((DfaVariableValue)value).getDescriptor();
-      if (descriptor instanceof JvmSpecialField && range.equals(JvmPsiRangeSetUtil.indexRange())) {
-        switch (((JvmSpecialField)descriptor)) {
+      if (descriptor instanceof SpecialField && range.equals(JvmPsiRangeSetUtil.indexRange())) {
+        switch (((SpecialField)descriptor)) {
           case ARRAY_LENGTH:
             return new CauseItem(JavaAnalysisBundle.message("dfa.find.cause.array.length.is.always.non.negative"), factUse);
           case STRING_LENGTH:
@@ -1453,7 +1456,7 @@ public final class TrackingRunner extends StandardDataFlowRunner {
       }
       if (PsiType.LONG.equals(type) || PsiType.INT.equals(type)) {
         if (expression instanceof PsiBinaryExpression) {
-          boolean isLong = PsiType.LONG.equals(type);
+          LongRangeType lrType = PsiType.LONG.equals(type) ? LongRangeType.INT64 : LongRangeType.INT32;
           PsiBinaryExpression binOp = (PsiBinaryExpression)expression;
           PsiExpression left = PsiUtil.skipParenthesizedExprDown(binOp.getLOperand());
           PsiExpression right = PsiUtil.skipParenthesizedExprDown(binOp.getROperand());
@@ -1465,11 +1468,11 @@ public final class TrackingRunner extends StandardDataFlowRunner {
             DfaValue rightVal = rightPush.myTopOfStack;
             FactDefinition<LongRangeSet> rightSet = rightPush.findFact(rightVal, FactExtractor.range());
             LongRangeSet fromType = Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(type));
-            LongRangeSet leftRange = leftSet.myFact.intersect(fromType);
-            LongRangeSet rightRange = rightSet.myFact.intersect(fromType);
+            LongRangeSet leftRange = leftSet.myFact.meet(fromType);
+            LongRangeSet rightRange = rightSet.myFact.meet(fromType);
             LongRangeBinOp op = JvmPsiRangeSetUtil.binOpFromToken(binOp.getOperationTokenType());
             if (op != null) {
-              LongRangeSet result = op.eval(leftRange, rightRange, isLong);
+              LongRangeSet result = op.eval(leftRange, rightRange, lrType);
               if (range.equals(result)) {
                 String sign = binOp.getOperationSign().getText();
                 CauseItem cause = new CauseItem(new RangeDfaProblemType(

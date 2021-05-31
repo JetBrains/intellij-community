@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class TextMateScope {
                        @Nullable TextMateScope parentScope) {
     this.scopeName = scopeName;
     this.parentScope = parentScope;
-    this.dotsCount = (scopeName != null ? StringUtil.countChars(scopeName, '.') : 0) +
+    this.dotsCount = (scopeName != null ? Strings.countChars(scopeName, '.') : 0) +
                      (parentScope != null ? parentScope.dotsCount : 0);
     this.hashCode = Objects.hash(scopeName, parentScope);
     this.empty = (parentScope == null || parentScope.isEmpty()) && (scopeName == null || scopeName.length() == 0);

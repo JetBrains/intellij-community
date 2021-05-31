@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.testing
 
 import com.intellij.execution.*
@@ -11,7 +11,6 @@ import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesP
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
@@ -35,7 +34,7 @@ import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
 import com.jetbrains.extensions.*
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyNames
+import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
@@ -59,12 +58,14 @@ import java.util.regex.Matcher
 /**
  * New configuration factories
  */
-internal val pythonFactories
-  get() = arrayOf<PythonConfigurationFactoryBase>(
-    PyUnitTestFactory(),
+internal val pythonFactories: Array<PyAbstractTestFactory<*>>
+  get() = arrayOf(
     PyTestFactory(),
     PyNoseTestFactory(),
-    PyTrialTestFactory())
+    PyTrialTestFactory(),
+    PyUnitTestFactory())
+
+fun getFactoryById(id: String): PyAbstractTestFactory<*>? = pythonFactories.firstOrNull { it.id == id }
 
 /**
  * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
@@ -80,12 +81,6 @@ fun processTCMessage(text: String): String {
 }
 
 internal fun getAdditionalArgumentsProperty() = PyAbstractTestConfiguration::additionalArguments
-
-/**
- * If runner name is here that means test runner only can run inheritors for TestCase
- */
-val RunnersThatRequireTestCaseClass: Set<String> = setOf<String>(PythonTestConfigurationsModel.getPythonsUnittestName(),
-                                                                 PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST))
 
 /**
  * Checks if element could be test target
@@ -412,13 +407,12 @@ internal interface PyTestConfigurationWithCustomSymbol {
  *
  */
 abstract class PyAbstractTestConfiguration(project: Project,
-                                           configurationFactory: ConfigurationFactory,
-                                           private val runnerName: String)
-  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
+                                           private val testFactory: PyAbstractTestFactory<*>)
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory), PyRerunAwareConfiguration,
     RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
 
   override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties =
-    PythonTRunnerConsoleProperties(this, executor, true, PyTestsLocator).also {properties ->
+    PythonTRunnerConsoleProperties(this, executor, true, PyTestsLocator).also { properties ->
       if (isIdTestBased) properties.makeIdTestBased()
     }
 
@@ -434,21 +428,17 @@ abstract class PyAbstractTestConfiguration(project: Project,
   @ConfigField("runcfg.python_tests.config.additionalArguments")
   var additionalArguments: String = ""
 
-  val testFrameworkName: String = configurationFactory.name
+  val testFrameworkName: String = testFactory.name
 
   /**
    * @see [RunnersThatRequireTestCaseClass]
    */
-  fun isTestClassRequired(): ThreeState = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
+  fun isTestClassRequired(): ThreeState = if (testFactory.onlyClassesSupported) {
     ThreeState.YES
   }
   else {
     ThreeState.NO
   }
-
-  @Suppress("LeakingThis") // Legacy adapter is used to support legacy configs. Leak is ok here since everything takes place in one thread
-  @DelegationProperty
-  val legacyConfigurationAdapter: PyTestLegacyConfigurationAdapter<PyAbstractTestConfiguration> = PyTestLegacyConfigurationAdapter(this)
 
   /**
    * For real launch use [getWorkingDirectorySafe] instead
@@ -490,7 +480,11 @@ abstract class PyAbstractTestConfiguration(project: Project,
   /**
    * Check if framework is available on SDK
    */
-  abstract fun isFrameworkInstalled(): Boolean
+  open fun isFrameworkInstalled(): Boolean {
+    val sdk = sdk ?: return false // No SDK -- no tests
+    val requiredPackage = testFactory.packageRequired ?: return true // No package required
+    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
+  }
 
   override fun isIdTestBased(): Boolean = true
 
@@ -584,9 +578,6 @@ abstract class PyAbstractTestConfiguration(project: Project,
 
 
   override fun writeExternal(element: org.jdom.Element) {
-    // Write legacy config to preserve it
-    legacyConfigurationAdapter.writeExternal(element)
-    // Super is called after to overwrite legacy settings with new one
     super.writeExternal(element)
 
     val gson = com.google.gson.Gson()
@@ -611,7 +602,6 @@ abstract class PyAbstractTestConfiguration(project: Project,
         it.set(fromJson)
       }
     }
-    legacyConfigurationAdapter.readExternal(element)
   }
 
 
@@ -658,6 +648,21 @@ abstract class PyAbstractTestConfiguration(project: Project,
 abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
   PythonTestConfigurationType.getInstance()) {
   abstract override fun createTemplateConfiguration(project: Project): CONF_T
+
+  /**
+   * Only UnitTest inheritors are supported
+   */
+  abstract val onlyClassesSupported: Boolean
+
+  /**
+   * Test framework needs package to be installed
+   */
+  open val packageRequired: String? = null
+
+  open fun isFrameworkInstalled(sdk: Sdk): Boolean {
+    val requiredPackage = packageRequired ?: return true // No package required
+    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
+  }
 }
 
 
@@ -725,18 +730,12 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
      * Inspects file relative imports, finds farthest and returns folder with imported file
      */
     private fun getDirectoryForFileToBeImportedFrom(file: PyFile): PsiDirectory? {
-      val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.max() ?: 0
+      val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.maxOrNull() ?: 0
       var elementFolder = file.parent ?: return null
       for (i in 1..maxRelativeLevel) {
         elementFolder = elementFolder.parent ?: return null
       }
       return elementFolder
-    }
-  }
-
-  init {
-    if (!isNewTestsModeEnabled()) {
-      throw ExtensionNotApplicableException.INSTANCE
     }
   }
 
@@ -762,13 +761,6 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
     // Since we need module, no need to even try to create config with out of it
     context.module ?: return null
     return super.createConfigurationFromContext(context)
-  }
-
-  override fun findOrCreateConfigurationFromContext(context: ConfigurationContext): ConfigurationFromContext? {
-    if (!isNewTestsModeEnabled()) {
-      return null
-    }
-    return super.findOrCreateConfigurationFromContext(context)
   }
 
   // test configuration is always prefered over regular one

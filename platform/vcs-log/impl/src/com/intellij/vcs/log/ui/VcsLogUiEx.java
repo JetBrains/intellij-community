@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.Disposable;
 import com.intellij.ui.navigation.History;
@@ -47,16 +46,6 @@ public interface VcsLogUiEx extends VcsLogUi, Disposable {
 
   @Nullable
   String getHelpId();
-
-  /**
-   * @deprecated use {@link VcsLog#jumpToReference(String)} instead
-   */
-  @NotNull
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  default ListenableFuture<Boolean> jumpToHash(@NotNull String commitHash) {
-    return ((ListenableFuture<Boolean>)getVcsLog().jumpToReference(commitHash));
-  }
 
   @ApiStatus.Internal
   <T> void jumpTo(@NotNull T commitId,

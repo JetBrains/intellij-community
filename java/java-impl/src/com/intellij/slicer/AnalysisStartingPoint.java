@@ -7,6 +7,7 @@ import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.*;
@@ -216,7 +217,7 @@ class AnalysisStartingPoint {
           PsiType.SHORT.equals(anchorType) ||
           PsiType.BYTE.equals(anchorType) ||
           PsiType.CHAR.equals(anchorType)) {
-        set = set.intersect(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(anchorType)));
+        set = set.meet(Objects.requireNonNull(JvmPsiRangeSetUtil.typeRange(anchorType)));
         return new AnalysisStartingPoint(DfTypes.intRangeClamped(set), anchor);
       }
     }
@@ -233,7 +234,7 @@ class AnalysisStartingPoint {
     }
     DfIntegralType dfType = ObjectUtils.tryCast(origType, DfIntegralType.class);
     if (dfType != null) {
-      boolean isLong = dfType instanceof DfLongType;
+      LongRangeType lrType = dfType.getLongRangeType();
       LongRangeSet origRange = dfType.getRange();
       LongRangeSet newRange = null;
       PsiExpression anchor = null;
@@ -241,10 +242,10 @@ class AnalysisStartingPoint {
         anchor = ((PsiPrefixExpression)expression).getOperand();
         IElementType type = ((PsiPrefixExpression)expression).getOperationTokenType();
         if (type.equals(JavaTokenType.MINUS)) {
-          newRange = origRange.negate(isLong);
+          newRange = origRange.negate(lrType);
         }
         else if (type.equals(JavaTokenType.TILDE)) {
-          newRange = origRange.negate(isLong).minus(LongRangeSet.point(1), isLong);
+          newRange = origRange.negate(lrType).minus(LongRangeSet.point(1), lrType);
         }
       }
       if (expression instanceof PsiBinaryExpression) {
@@ -262,27 +263,27 @@ class AnalysisStartingPoint {
         }
         if (type.equals(JavaTokenType.PLUS)) {
           if (right != null) {
-            newRange = origRange.minus(LongRangeSet.point(right), isLong);
+            newRange = origRange.minus(LongRangeSet.point(right), lrType);
             anchor = binOp.getLOperand();
           }
           else if (left != null) {
-            newRange = origRange.minus(LongRangeSet.point(left), isLong);
+            newRange = origRange.minus(LongRangeSet.point(left), lrType);
             anchor = binOp.getROperand();
           }
         }
         if (type.equals(JavaTokenType.MINUS)) {
           if (right != null) {
-            newRange = origRange.plus(LongRangeSet.point(right), isLong);
+            newRange = origRange.plus(LongRangeSet.point(right), lrType);
             anchor = binOp.getLOperand();
           }
           else if (left != null) {
-            newRange = LongRangeSet.point(left).minus(origRange, isLong);
+            newRange = LongRangeSet.point(left).minus(origRange, lrType);
             anchor = binOp.getROperand();
           }
         }
       }
       if (newRange != null && anchor != null && !(anchor instanceof PsiLiteralExpression)) {
-        analysis = new AnalysisStartingPoint(isLong ? DfTypes.longRange(newRange) : DfTypes.intRangeClamped(newRange), anchor);
+        analysis = new AnalysisStartingPoint(DfTypes.rangeClamped(newRange, lrType), anchor);
       }
     }
     return analysis;

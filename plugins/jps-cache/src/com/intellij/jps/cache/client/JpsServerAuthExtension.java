@@ -1,10 +1,8 @@
 package com.intellij.jps.cache.client;
 
 import com.intellij.jps.cache.JpsCacheBundle;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,12 +60,10 @@ public interface JpsServerAuthExtension {
       if (userData == null) {
         project.putUserData(NOTIFICATION_SHOWN_KEY, Boolean.TRUE);
         ApplicationManager.getApplication().invokeLater(() -> {
-          String message =
-            JpsCacheBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin");
-          Notification notification = ATTENTION.createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), message,
-            NotificationType.WARNING,
-            NotificationListener.URL_OPENING_LISTENER);
-          Notifications.Bus.notify(notification, project);
+          ATTENTION
+            .createNotification(JpsCacheBundle.message("notification.title.jps.caches.downloader"), JpsCacheBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work.plugin"), NotificationType.WARNING)
+            .setListener(NotificationListener.URL_OPENING_LISTENER)
+            .notify(project);
         });
       }
       LOG.warn("JetBrains Internal Authentication plugin is required for the correct work. Please enable it.");

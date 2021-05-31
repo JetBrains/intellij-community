@@ -1,20 +1,23 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.runAnything
 
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup
-import com.intellij.internal.statistic.eventLog.FeatureUsageData
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
-import com.intellij.internal.statistic.utils.getPluginInfo
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.openapi.project.Project
 
-private const val GROUP_ID = "actions.runAnything"
-
-class RunAnythingUsageCollector {
+class RunAnythingUsageCollector : CounterUsagesCollector() {
   companion object {
-    fun trigger(project: Project, featureId: String) {
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, featureId)
-    }
+    private val GROUP = EventLogGroup("actions.runAnything", 3)
+
+    private val WITH_SHIFT_FIELD = EventFields.Boolean("with_shift")
+    private val WITH_ALT_FIELD = EventFields.Boolean("with_alt")
+    private val LIST_FIELD = EventFields.Class("list")
+    private val GROUP_FIELD = EventFields.Class("group")
+    private val EXECUTE = GROUP.registerVarargEvent("execute", WITH_SHIFT_FIELD, WITH_ALT_FIELD, LIST_FIELD, GROUP_FIELD, EventFields.PluginInfo)
+    private val CLICK_MORE = GROUP.registerVarargEvent("click.more", LIST_FIELD, GROUP_FIELD, EventFields.PluginInfo)
 
     fun triggerExecCategoryStatistics(project: Project,
                                       groups: MutableCollection<out RunAnythingGroup>,
@@ -25,11 +28,11 @@ class RunAnythingUsageCollector {
       for (i in index downTo 0) {
         val group = RunAnythingGroup.findGroup(groups, i)
         if (group != null) {
-          FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "execute", FeatureUsageData()
-            .addData("list", getSafeToReportClazzName(clazz))
-            .addData("group", getSafeToReportTitle(group))
-            .addData("with_shift", shiftPressed)
-            .addData("with_alt", altPressed))
+          EXECUTE.log(project,
+                      LIST_FIELD.with(clazz),
+                      GROUP_FIELD.with(getGroupClass(group)),
+                      WITH_SHIFT_FIELD.with(shiftPressed),
+                      WITH_ALT_FIELD.with(altPressed))
           break
         }
       }
@@ -38,19 +41,16 @@ class RunAnythingUsageCollector {
     fun triggerMoreStatistics(project: Project,
                               group: RunAnythingGroup,
                               clazz: Class<out RunAnythingSearchListModel>) {
-      FUCounterUsageLogger.getInstance().logEvent(project, GROUP_ID, "click.more", FeatureUsageData()
-        .addData("list", getSafeToReportClazzName(clazz))
-        .addData("group", getSafeToReportTitle(group)))
+      CLICK_MORE.log(project, LIST_FIELD.with(clazz), GROUP_FIELD.with(getGroupClass(group)))
     }
 
-
-    private fun getSafeToReportClazzName(clazz: Class<*>): String {
-      return if (getPluginInfo(clazz).isSafeToReport()) clazz.name else "third.party"
+    private fun getGroupClass(group: RunAnythingGroup): Class<*> {
+      return if (group is RunAnythingCompletionGroup<*, *>) group.provider.javaClass
+      else group.javaClass
     }
+  }
 
-    private fun getSafeToReportTitle(group: RunAnythingGroup): String {
-      return if (group is RunAnythingCompletionGroup<*, *>) getSafeToReportClazzName(group.provider.javaClass)
-      else getSafeToReportClazzName(group.javaClass)
-    }
+  override fun getGroup(): EventLogGroup {
+    return GROUP
   }
 }

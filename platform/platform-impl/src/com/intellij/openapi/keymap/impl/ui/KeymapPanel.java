@@ -324,7 +324,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private JPanel createToolbarPanel() {
     DefaultActionGroup group = new DefaultActionGroup();
-    final JComponent toolbar = ActionManager.getInstance().createActionToolbar("KeymapEdit", group, true).getComponent();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("KeymapEdit", group, true);
+    toolbar.setTargetComponent(myActionsTree.getTree());
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
     final TreeExpander treeExpander = createTreeExpander(myActionsTree);
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
@@ -356,6 +357,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group = new DefaultActionGroup();
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Keymap", group, true);
+    actionToolbar.setTargetComponent(myActionsTree.getTree());
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
@@ -388,7 +390,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(new ClearFilteringAction());
 
     JPanel panel = new JPanel(new GridLayout(1, 2));
-    panel.add(toolbar);
+    panel.add(toolbar.getComponent());
     panel.add(new BorderLayoutPanel().addToCenter(myFilterComponent).addToRight(searchToolbar));
     return panel;
   }

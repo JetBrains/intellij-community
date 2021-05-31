@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GrGeneratedConstructorUtils")
 
 package org.jetbrains.plugins.groovy.lang.resolve.ast
@@ -15,11 +15,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil
-import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.*
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferBooleanAttribute
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil.inferStringAttribute
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.hasCodeModifierProperty
 import org.jetbrains.plugins.groovy.lang.psi.impl.getArrayValue
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.*
-import java.util.*
 
 val constructorGeneratingAnnotations: List<String> = listOf(
   GROOVY_TRANSFORM_TUPLE_CONSTRUCTOR,

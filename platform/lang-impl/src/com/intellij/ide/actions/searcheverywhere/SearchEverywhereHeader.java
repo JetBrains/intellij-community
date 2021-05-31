@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere;
 
 import com.google.common.collect.Lists;
@@ -7,7 +7,7 @@ import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsag
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.gotoByName.SearchEverywhereConfiguration;
 import com.intellij.ide.util.scopeChooser.ScopeDescriptor;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -74,7 +74,7 @@ public class SearchEverywhereHeader {
                                          : ApplicationManager.getApplication().getMessageBus().connect(ui);
     busConnection.subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+      public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
         if (action == mySelectedTab.everywhereAction && event.getInputEvent() != null) {
           myEverywhereAutoSet = false;
         }
@@ -338,10 +338,10 @@ public class SearchEverywhereHeader {
       @Override
       public void mousePressed(MouseEvent e) {
         switchToTab(tab);
-        FeatureUsageData data = SearchEverywhereUsageTriggerCollector
-          .createData(tab.getReportableID())
-          .addInputEvent(e);
-        SearchEverywhereUsageTriggerCollector.trigger(myProject, SearchEverywhereUsageTriggerCollector.TAB_SWITCHED, data);
+        SearchEverywhereUsageTriggerCollector.TAB_SWITCHED.log(myProject,
+                                                               SearchEverywhereUsageTriggerCollector.CONTRIBUTOR_ID_FIELD.with(tab.getReportableID()),
+                                                               EventFields.InputEventByMouseEvent.with(e));
+
       }
     });
 

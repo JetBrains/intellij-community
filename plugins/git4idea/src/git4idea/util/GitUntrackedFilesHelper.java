@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.util;
 
 import com.intellij.notification.Notification;
@@ -133,8 +133,11 @@ public final class GitUntrackedFilesHelper {
       return GitUtil.findRefreshFileOrLog(absolutePath);
     });
 
-    Notification notification = IMPORTANT_ERROR_NOTIFICATION.createNotification(notificationTitle, notificationDesc,
-                                                                                NotificationType.ERROR, listener, "untracked.files.overwritten");
+    Notification notification = IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(notificationTitle, notificationDesc, NotificationType.ERROR)
+      .setDisplayId("untracked.files.overwritten");
+
+    if (listener != null) notification.setListener(listener);
 
     notification.addAction(new NotificationAction(VcsBundle.messagePointer("action.NotificationAction.VFSListener.text.view.files")) {
       @Override

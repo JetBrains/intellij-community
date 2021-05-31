@@ -18,19 +18,21 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.openapi.externalSystem.autoimport.ProjectNotificationAware;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.dom.MavenDomTestCase;
+import org.junit.Test;
 
 public class CustomPomFileNameTest extends MavenDomTestCase {
 
+  @Test
   public void testCustomPomFileName() throws Exception {
     createProjectSubFile("m1/customName.xml", createPomXml(
-                  "<artifactId>m1</artifactId>" +
-                  "<version>1</version>" +
+      "<artifactId>m1</artifactId>" +
+      "<version>1</version>" +
 
-                  "<parent>" +
-                  "  <groupId>test</groupId>" +
-                  "  <artifactId>project</artifactId>" +
-                  "  <version>1</version>" +
-                  "</parent>"));
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>"));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -44,16 +46,17 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     assertModules("project", "m1");
   }
 
+  @Test
   public void testFolderNameWithXmlExtension() throws Exception {
     createProjectSubFile("customName.xml/pom.xml", createPomXml(
-                  "<artifactId>m1</artifactId>" +
-                  "<version>1</version>" +
+      "<artifactId>m1</artifactId>" +
+      "<version>1</version>" +
 
-                  "<parent>" +
-                  "  <groupId>test</groupId>" +
-                  "  <artifactId>project</artifactId>" +
-                  "  <version>1</version>" +
-                  "</parent>"));
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>"));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -67,16 +70,17 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     assertModules("project", "m1");
   }
 
+  @Test
   public void testModuleCompletion() throws Exception {
     createProjectSubFile("m1/customPom.xml", createPomXml(
-                  "<artifactId>m1</artifactId>" +
-                  "<version>1</version>" +
+      "<artifactId>m1</artifactId>" +
+      "<version>1</version>" +
 
-                  "<parent>" +
-                  "  <groupId>test</groupId>" +
-                  "  <artifactId>project</artifactId>" +
-                  "  <version>1</version>" +
-                  "</parent>"));
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>"));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -88,42 +92,43 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                   "</modules>");
 
     createProjectPom("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
 
-                  "<modules>" +
-                  "  <module><caret></module>" +
-                  "</modules>");
+                     "<modules>" +
+                     "  <module><caret></module>" +
+                     "</modules>");
 
     assertCompletionVariants(myProjectPom, "m1/customPom.xml");
   }
 
+  @Test
   public void testParentCompletion() throws Exception {
     createProjectSubFile("m1/customPom.xml", createPomXml(
-                  "<artifactId>m1</artifactId>" +
-                  "<version>1</version>" +
-                  "<packaging>pom</packaging>" +
+      "<artifactId>m1</artifactId>" +
+      "<version>1</version>" +
+      "<packaging>pom</packaging>" +
 
-                  "<parent>" +
-                  "  <groupId>test</groupId>" +
-                  "  <artifactId>project</artifactId>" +
-                  "  <version>1</version>" +
-                  "</parent>" +
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
 
-                  "<modules>" +
-                  "  <module>m2</module>" +
-                  "</modules>"));
+      "<modules>" +
+      "  <module>m2</module>" +
+      "</modules>"));
 
     createProjectSubFile("m1/m2/pom.xml", createPomXml(
-                  "<artifactId>m2</artifactId>" +
-                  "<version>1</version>" +
+      "<artifactId>m2</artifactId>" +
+      "<version>1</version>" +
 
-                  "<parent>" +
-                  "  <groupId>test</groupId>" +
-                  "  <artifactId>project</artifactId>" +
-                  "  <version>1</version>" +
-                  "  <relativePath>../customPom.xml</relativePath>" +
-                  "</parent>"));
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "  <relativePath>../customPom.xml</relativePath>" +
+      "</parent>"));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -135,38 +140,39 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
                   "</modules>");
 
     VirtualFile m2 = createProjectSubFile("m1/m2/pom.xml", createPomXml(
-                  "<artifactId>m2</artifactId>" +
-                  "<version>1</version>" +
+      "<artifactId>m2</artifactId>" +
+      "<version>1</version>" +
 
-                  "<parent>" +
-                  "  <groupId>test</groupId>" +
-                  "  <artifactId>project</artifactId>" +
-                  "  <version>1</version>" +
-                  "  <relativePath>../<caret></relativePath>" +
-                  "</parent>"));
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "  <relativePath>../<caret></relativePath>" +
+      "</parent>"));
 
     assertCompletionVariants(m2, "m2", "customPom.xml");
   }
 
+  @Test
   public void testReimport() throws Exception {
     createProjectSubFile("m1/customName.xml", createPomXml(
-                  "<artifactId>m1</artifactId>" +
-                  "<version>1</version>" +
+      "<artifactId>m1</artifactId>" +
+      "<version>1</version>" +
 
-                  "<parent>" +
-                  "  <groupId>test</groupId>" +
-                  "  <artifactId>project</artifactId>" +
-                  "  <version>1</version>" +
-                  "</parent>" +
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
 
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.0</version>" +
-                  "    <scope>test</scope>" +
-                  "  </dependency>" +
-                  "</dependencies>"));
+      "<dependencies>" +
+      "  <dependency>" +
+      "    <groupId>junit</groupId>" +
+      "    <artifactId>junit</artifactId>" +
+      "    <version>4.0</version>" +
+      "    <scope>test</scope>" +
+      "  </dependency>" +
+      "</dependencies>"));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -182,23 +188,23 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
 
     myProjectsManager.enableAutoImportInTests();
     VirtualFile m1 = createProjectSubFile("m1/customName.xml", createPomXml(
-                  "<artifactId>m1</artifactId>" +
-                  "<version>1</version>" +
+      "<artifactId>m1</artifactId>" +
+      "<version>1</version>" +
 
-                  "<parent>" +
-                  "  <groupId>test</groupId>" +
-                  "  <artifactId>project</artifactId>" +
-                  "  <version>1</version>" +
-                  "</parent>" +
+      "<parent>" +
+      "  <groupId>test</groupId>" +
+      "  <artifactId>project</artifactId>" +
+      "  <version>1</version>" +
+      "</parent>" +
 
-                  "<dependencies>" +
-                  "  <dependency>" +
-                  "    <groupId>junit</groupId>" +
-                  "    <artifactId>junit</artifactId>" +
-                  "    <version>4.<caret>0</version>" +
-                  "    <scope>test</scope>" +
-                  "  </dependency>" +
-                  "</dependencies>"));
+      "<dependencies>" +
+      "  <dependency>" +
+      "    <groupId>junit</groupId>" +
+      "    <artifactId>junit</artifactId>" +
+      "    <version>4.<caret>0</version>" +
+      "    <scope>test</scope>" +
+      "  </dependency>" +
+      "</dependencies>"));
     type(m1, '1');
 
     assertTrue(ProjectNotificationAware.getInstance(myProject).isNotificationVisible());

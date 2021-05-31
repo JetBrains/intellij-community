@@ -2,16 +2,32 @@
 package com.intellij.collaboration.ui.codereview.timeline.comment
 
 import com.intellij.collaboration.ui.codereview.SimpleEventListener
-import com.intellij.openapi.editor.EditorFactory
+import com.intellij.lang.Language
+import com.intellij.openapi.application.runUndoTransparentWriteAction
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.editor.Document
+import com.intellij.openapi.editor.impl.DocumentImpl
+import com.intellij.openapi.fileTypes.PlainTextLanguage
 import com.intellij.openapi.project.Project
+import com.intellij.ui.LanguageTextField
 import com.intellij.util.EventDispatcher
 
-abstract class SubmittableTextFieldModelBase(initialText: String) : SubmittableTextFieldModel {
-  override val project: Project? = null
+abstract class SubmittableTextFieldModelBase(
+  final override val project: Project?,
+  initialText: String,
+  language: Language = PlainTextLanguage.INSTANCE,
+) : SubmittableTextFieldModel {
 
   private val listeners = EventDispatcher.create(SimpleEventListener::class.java)
 
-  override val document = EditorFactory.getInstance().createDocument(initialText)
+  final override val document: Document = LanguageTextField.createDocument(
+    initialText,
+    language,
+    project,
+    LanguageTextField.SimpleDocumentCreator()
+  )
+
+  override val content: SubmittableTextFieldModelContent = SubmittableTextFieldModelContentImpl(document as DocumentImpl)
 
   override var isBusy = false
     set(value) {
@@ -27,5 +43,33 @@ abstract class SubmittableTextFieldModelBase(initialText: String) : SubmittableT
 
   override fun addStateListener(listener: SimpleEventListener) {
     listeners.addListener(listener)
+  }
+}
+
+private class SubmittableTextFieldModelContentImpl(private val document: DocumentImpl) : SubmittableTextFieldModelContent {
+  override var text: String
+    get() = document.text
+    set(value) {
+      runWriteAction {
+        document.setText(value)
+      }
+    }
+
+  override var isReadOnly: Boolean
+    get() = !document.isWritable
+    set(value) {
+      document.setReadOnly(value)
+    }
+
+  override var isAcceptSlashR: Boolean
+    get() = document.acceptsSlashR()
+    set(value) {
+      document.setAcceptSlashR(value)
+    }
+
+  override fun clear() {
+    runUndoTransparentWriteAction {
+      document.setText("")
+    }
   }
 }

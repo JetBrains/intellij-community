@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
+import com.intellij.ide.impl.dataRules.FileEditorRule;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
@@ -93,7 +94,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
 
   @Override
   public final @NotNull DataContext getInjectedDataContext() {
-    return this instanceof InjectedDataContext ? this : new InjectedDataContext(myCachedData, myUserData, null);
+    return this instanceof InjectedDataContext ? this : new InjectedDataContext(myCachedData, myUserData, myMissedKeysIfFrozen);
   }
 
   @Override
@@ -127,6 +128,11 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
     return answer;
   }
 
+  @Nullable Object getRawDataIfCached(@NotNull String dataId) {
+    Object data = myCachedData.get(dataId);
+    return data == NullResult.Initial || data == NullResult.Final ? null : data;
+  }
+
   static {
     for (KeyedLazyInstance<GetDataRule> instance : GetDataRule.EP_NAME.getExtensionList()) {
       DataKey.create(instance.getKey()); // initialize data keys with rules
@@ -157,7 +163,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
         }
         boolean alreadyComputed = computed.get(i);
         Object data = !alreadyComputed || key == PlatformDataKeys.SLOW_DATA_PROVIDERS ?
-                      dataManager.getDataFromProvider(dataProvider, key.getName(), null, null) : null;
+                      dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key)) : null;
         if (data instanceof Editor) data = validateEditor((Editor)data, component);
         if (data == null) continue;
 
@@ -189,6 +195,12 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
     }
   }
 
+  private static final GetDataRule ourFileEditorRule = new FileEditorRule();
+
+  private static @Nullable GetDataRule getFastDataRule(@NotNull DataKey<?> key) {
+    return key == PlatformDataKeys.FILE_EDITOR ? ourFileEditorRule : null;
+  }
+
   @Override
   public String toString() {
     return (this instanceof InjectedDataContext ? "injected:" : "") +
@@ -212,6 +224,12 @@ class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent
     }
   }
 
+  /**
+   * {@link #myCachedData} contains
+   * - {@code null} for data keys for which the corresponding {@link #getData(String)} was never called (E.g. for {@link DataKey}s created dynamically during other {@link #getData(String)} execution);
+   * - {@link NullResult#Initial} for data keys which returned {@code null} from the corresponding {@link #getData(String)} during {@link #PreCachedDataContext(Component)} execution;
+   * - {@link NullResult#Final} for data keys which returned {@code null} from both {@link #getData(String)} invocations: in constructor and after all data rules execution
+   */
   private enum NullResult {
     Initial, Final
   }

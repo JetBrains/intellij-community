@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports methods marked with <code>@DataProvider</code> annotation which doesn't return <code>Object[][]</code> or <code>Iterator&lt;Object&gt;</code>.
-If other type is returned, TestNG will throw an exception.
-<p>Example of the reported code:</p>
-<pre>
+Reports methods marked with <code>@DataProvider</code> annotation that doesn't return <code>Object[][]</code> or <code>Iterator&lt;Object&gt;</code>.
+If another type is returned, TestNG throws an exception.
+<p>Example:</p>
+<pre><code>
 public class TestNgTest {
   @DataProvider(name = "Languages")
   List&ltString&gt getData() {
@@ -15,6 +15,6 @@ public class TestNgTest {
     System.out.println(language);
   }
 }
-</pre>
+</code></pre>
 </body>
 </html>

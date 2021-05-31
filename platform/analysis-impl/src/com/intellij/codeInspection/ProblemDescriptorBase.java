@@ -111,7 +111,7 @@ public class ProblemDescriptorBase extends CommonProblemDescriptorImpl implement
   protected void assertPhysical(final PsiElement element) {
     if (!element.isPhysical()) {
       LOG.error("Non-physical PsiElement. Physical element is required to be able to anchor the problem in the source tree: " +
-                element + "; file: " + element.getContainingFile());
+                element + "; parent: " + element.getParent() +"; file: " + element.getContainingFile());
     }
   }
 

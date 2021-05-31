@@ -118,8 +118,15 @@ public final class FocusManagerImpl extends IdeFocusManager implements Disposabl
   @DirtyUI
   @Override
   public ActionCallback requestFocusInProject(@NotNull Component c, @Nullable Project project) {
-    logFocusRequest(c, project, true);
-    c.requestFocusInWindow();
+    if (KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow() != null) {
+      // this branch is needed to request focus to detached project windows (editor or tool window)
+      logFocusRequest(c, project, false);
+      c.requestFocus();
+    }
+    else {
+      logFocusRequest(c, project, true);
+      c.requestFocusInWindow();
+    }
     return ActionCallback.DONE;
   }
 

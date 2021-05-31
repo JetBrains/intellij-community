@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.serviceContainer
 
@@ -19,7 +19,7 @@ import com.intellij.openapi.diagnostic.Attachment
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.*
-import com.intellij.openapi.extensions.impl.ExtensionDescriptor
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
@@ -61,41 +61,16 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   }
 
   companion object {
-    @JvmStatic
     @Internal
-    val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
+    @JvmField val fakeCorePluginDescriptor = DefaultPluginDescriptor(PluginManagerCore.CORE_ID, null)
 
     @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
-    @JvmStatic
     @Internal
-    val badWorkspaceComponents: Set<String> = java.util.Set.of(
+    @JvmField val badWorkspaceComponents: Set<String> = java.util.Set.of(
       "jetbrains.buildServer.codeInspection.InspectionPassRegistrar",
       "jetbrains.buildServer.testStatus.TestStatusPassRegistrar",
       "jetbrains.buildServer.customBuild.lang.gutterActions.CustomBuildParametersGutterActionsHighlightingPassRegistrar",
     )
-
-    private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl,
-                                           mainContainerDescriptor: ContainerDescriptor,
-                                           componentManager: ComponentManagerImpl,
-                                           task: (IdeaPluginDescriptorImpl, ContainerDescriptor) -> Unit) {
-      task(mainPluginDescriptor, mainContainerDescriptor)
-      for (dep in mainPluginDescriptor.getPluginDependencies()) {
-        if (dep.isDisabledOrBroken) {
-          continue
-        }
-
-        val subPluginDescriptor = dep.subDescriptor ?: continue
-        task(subPluginDescriptor, componentManager.getContainerDescriptor(subPluginDescriptor))
-
-        for (subDep in subPluginDescriptor.getPluginDependencies()) {
-          if (!subDep.isDisabledOrBroken) {
-            val d = subDep.subDescriptor ?: continue
-            task(d, componentManager.getContainerDescriptor(d))
-            assert(d.getPluginDependencies().isEmpty() || d.getPluginDependencies().all { it.subDescriptor == null })
-          }
-        }
-      }
-    }
 
     // not as file level function to avoid scope cluttering
     @ApiStatus.Internal
@@ -128,6 +103,16 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         catch (e: Throwable) {
           LOG.error("Cannot create $implementation", e)
         }
+      }
+    }
+
+    private inline fun executeRegisterTask(mainPluginDescriptor: IdeaPluginDescriptorImpl,
+                                           mainContainerDescriptor: ContainerDescriptor,
+                                           componentManager: ComponentManagerImpl,
+                                           crossinline task: (IdeaPluginDescriptorImpl, ContainerDescriptor) -> Unit) {
+      task(mainPluginDescriptor, mainContainerDescriptor)
+      executeRegisterTaskForContent(mainPluginDescriptor) {
+        task(it, componentManager.getContainerDescriptor(it))
       }
     }
   }
@@ -243,7 +228,8 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
   @Internal
   open fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
                               app: Application?,
-                              listenerCallbacks: MutableList<Runnable>?) {
+                              precomputedExtensionModel: PrecomputedExtensionModel?,
+                              listenerCallbacks: List<Runnable>?) {
     val activityNamePrefix = activityNamePrefix()
 
     var newComponentConfigCount = 0
@@ -251,16 +237,16 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val isHeadless = app == null || app.isHeadlessEnvironment
     val isUnitTestMode = app?.isUnitTestMode ?: false
 
-    val clonePoint = parent != null
-
     var activity = activityNamePrefix?.let { startActivity("${it}service and ep registration") }
+
     // register services before registering extensions because plugins can access services in their
     // extensions which can be invoked right away if the plugin is loaded dynamically
+    val extensionPoints = if (precomputedExtensionModel == null) HashMap(extensionArea.extensionPoints) else null
     for (mainPlugin in plugins) {
       val mainContainerDescriptor = getContainerDescriptor(mainPlugin)
 
       executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
-        registerServices(containerDescriptor.services ?: return@executeRegisterTask, pluginDescriptor)
+        registerServices(containerDescriptor.services, pluginDescriptor)
       }
 
       executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
@@ -289,9 +275,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
         }
       }
 
-      executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { _, containerDescriptor ->
-        containerDescriptor.extensionPoints?.let {
-          extensionArea.registerExtensionPoints(it, clonePoint)
+      if (extensionPoints != null) {
+        executeRegisterTask(mainPlugin, mainContainerDescriptor, this) { pluginDescriptor, containerDescriptor ->
+          containerDescriptor.extensionPoints?.let {
+            ExtensionsAreaImpl.createExtensionPoints(it, this, extensionPoints, pluginDescriptor)
+          }
         }
       }
     }
@@ -300,11 +288,20 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       activity = activity.endAndStart("${activityNamePrefix}extension registration")
     }
 
-    for (mainPlugin in plugins) {
-      executeRegisterTask(mainPlugin, getContainerDescriptor(mainPlugin), this) { pluginDescriptor, containerDescriptor ->
-        pluginDescriptor.registerExtensions(extensionArea, containerDescriptor, listenerCallbacks)
+    if (precomputedExtensionModel == null) {
+      val immutableExtensionPoints = if (extensionPoints!!.isEmpty()) Collections.emptyMap() else java.util.Map.copyOf(extensionPoints)
+      extensionArea.setPoints(immutableExtensionPoints)
+
+      for (mainPlugin in plugins) {
+        executeRegisterTask(mainPlugin, getContainerDescriptor(mainPlugin), this) { pluginDescriptor, containerDescriptor ->
+          pluginDescriptor.registerExtensions(immutableExtensionPoints, containerDescriptor, listenerCallbacks)
+        }
       }
     }
+    else {
+      registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel, listenerCallbacks)
+    }
+
     activity?.end()
 
     if (componentConfigCount == -1) {
@@ -321,6 +318,35 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
       val messageBus = getOrCreateMessageBusUnderLock()
       map?.let {
         (messageBus as MessageBusEx).setLazyListeners(it)
+      }
+    }
+  }
+
+  private fun registerExtensionPointsAndExtensionByPrecomputedModel(precomputedExtensionModel: PrecomputedExtensionModel,
+                                                                    listenerCallbacks: List<Runnable>?) {
+    assert(extensionArea.extensionPoints.isEmpty())
+    val n = precomputedExtensionModel.pluginDescriptors.size
+    if (n == 0) {
+      return
+    }
+
+    val result = HashMap<String, ExtensionPointImpl<*>>(precomputedExtensionModel.extensionPointTotalCount)
+    for (i in 0 until n) {
+      ExtensionsAreaImpl.createExtensionPoints(precomputedExtensionModel.extensionPoints[i],
+                                               this,
+                                               result,
+                                               precomputedExtensionModel.pluginDescriptors[i])
+    }
+
+    val immutableExtensionPoints = java.util.Map.copyOf(result)
+    extensionArea.setPoints(immutableExtensionPoints)
+
+    for ((name, pairs) in precomputedExtensionModel.nameToExtensions) {
+      val point = immutableExtensionPoints.get(name) ?: continue
+      for ((pluginDescriptor, list) in pairs) {
+        if (!list.isEmpty()) {
+          point.registerExtensions(list, pluginDescriptor, listenerCallbacks)
+        }
       }
     }
   }
@@ -975,7 +1001,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
     val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     for (plugin in plugins) {
-      serviceLoop@ for (service in getContainerDescriptor(plugin).services ?: continue) {
+      serviceLoop@ for (service in getContainerDescriptor(plugin).services) {
         val list: MutableList<ForkJoinTask<*>> = when (service.preload) {
           PreloadMode.TRUE -> {
             if (onlyIfAwait) {

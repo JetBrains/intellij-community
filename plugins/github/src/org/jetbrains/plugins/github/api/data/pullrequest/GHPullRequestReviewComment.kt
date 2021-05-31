@@ -2,12 +2,14 @@
 package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonProperty
+import com.intellij.collaboration.api.dto.GraphQLFragment
 import org.jetbrains.plugins.github.api.data.GHActor
 import org.jetbrains.plugins.github.api.data.GHComment
 import org.jetbrains.plugins.github.api.data.GHCommitHash
 import org.jetbrains.plugins.github.api.data.GHNode
 import java.util.*
 
+@GraphQLFragment("/graphql/fragment/pullRequestReviewComment.graphql")
 open class GHPullRequestReviewComment(id: String,
                                       val databaseId: Long,
                                       val url: String,

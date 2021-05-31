@@ -14,13 +14,9 @@
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-json" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.codehaus.groovy:groovy-nio" type="repository">
-        <properties maven-id="org.codehaus.groovy:groovy-nio:2.5.11">
-          <exclude>
-            <dependency maven-id="org.codehaus.groovy:groovy" />
-          </exclude>
-        </properties>
+        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-nio:2.5.14" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-nio/2.5.11/groovy-nio-2.5.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-nio/2.5.14/groovy-nio-2.5.14.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -30,9 +26,9 @@
     <orderEntry type="library" scope="RUNTIME" name="org.codehaus.groovy:groovy-xml" level="project" />
     <orderEntry type="module-library" scope="RUNTIME">
       <library name="org.codehaus.groovy:groovy-cli-commons" type="repository">
-        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-cli-commons:2.5.11" />
+        <properties include-transitive-deps="false" maven-id="org.codehaus.groovy:groovy-cli-commons:2.5.14" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-cli-commons/2.5.11/groovy-cli-commons-2.5.11.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/groovy/groovy-cli-commons/2.5.14/groovy-cli-commons-2.5.14.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -43,7 +39,8 @@
     <orderEntry type="library" scope="RUNTIME" name="decentxml" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="org.jetbrains.intellij:blockmap:1.0.2" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
+    <orderEntry type="library" name="xz" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.devkit.jps" scope="RUNTIME" />
   </component>
 </module>

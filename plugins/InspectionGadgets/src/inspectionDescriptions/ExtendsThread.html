@@ -3,13 +3,10 @@
 Reports any classes which directly extend <code>java.lang.Thread</code>.
 It is usually recommended to prefer composition over inheritance, to create more reusable code that is easier to modify later,
 <!-- tooltip end -->
-<p>For example:</p>
+<p>Example:</p>
 <pre><code>
-  new Thread() {
-    public void run() {
-      System.out.println("Hello World!");
-    }
-  }.start();
+  <b>class</b> MainThread <b>extends</b> Thread {
+  }
 </code></pre>
 </body>
 </html>

@@ -9,7 +9,6 @@ import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
 class MarkdownSupportTest : GrazieTestBase() {
   override fun setUp() {
     super.setUp()
-    StringUtil.getWordsIn("Sdf")
     // IDEA-228789 markdown change PSI/document/model during highlighting
     (myFixture as CodeInsightTestFixtureImpl).canChangeDocumentDuringHighlighting(true)
   }

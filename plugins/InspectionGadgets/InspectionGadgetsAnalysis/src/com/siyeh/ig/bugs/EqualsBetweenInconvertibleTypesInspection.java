@@ -23,6 +23,8 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.InconvertibleTypesChecker;
+import com.siyeh.ig.psiutils.InconvertibleTypesChecker.Convertible;
+import com.siyeh.ig.psiutils.InconvertibleTypesChecker.TypeMismatch;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,13 +95,21 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
           !TypeUtils.areConvertible(lhsType, rhsType) /* red code */) {
         return;
       }
-      InconvertibleTypesChecker.TypeMismatch mismatch =
-        InconvertibleTypesChecker.deepCheck(lhsType, rhsType, getMutualSubclassMode());
+      TypeMismatch mismatch = InconvertibleTypesChecker.deepCheck(lhsType, rhsType, getMutualSubclassMode());
       if (mismatch != null) {
-        registerError(expression.getOperationSign(), mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+        registerError(expression.getOperationSign(), mismatch);
       }
     }
-    
+
+    private void registerError(@NotNull PsiElement anchor, @NotNull TypeMismatch mismatch) {
+      Convertible convertible = mismatch.isConvertible();
+      if (convertible == Convertible.CONVERTIBLE_MUTUAL_SUBCLASS_UNKNOWN) {
+        registerPossibleProblem(anchor);
+      } else {
+        registerError(anchor, mismatch.getLeft(), mismatch.getRight(), convertible != Convertible.NOT_CONVERTIBLE);
+      }
+    }
+
     private InconvertibleTypesChecker.LookForMutualSubclass getMutualSubclassMode() {
       if (!WARN_IF_NO_MUTUAL_SUBCLASS_FOUND) {
         return InconvertibleTypesChecker.LookForMutualSubclass.NEVER;
@@ -111,10 +121,9 @@ public class EqualsBetweenInconvertibleTypesInspection extends BaseInspection {
 
     @Override
     public void checkTypes(@NotNull PsiReferenceExpression expression, @NotNull PsiType leftType, @NotNull PsiType rightType) {
-      InconvertibleTypesChecker.TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(leftType, rightType, getMutualSubclassMode());
+      TypeMismatch mismatch = InconvertibleTypesChecker.checkTypes(leftType, rightType, getMutualSubclassMode());
       if (mismatch != null) {
-        registerError(Objects.requireNonNull(expression.getReferenceNameElement()), 
-                      mismatch.getLeft(), mismatch.getRight(), mismatch.isConvertible());
+        registerError(Objects.requireNonNull(expression.getReferenceNameElement()), mismatch);
       }
     }
   }

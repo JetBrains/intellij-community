@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
@@ -8,7 +8,6 @@ import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,7 @@ final class ObjectTree {
       Object wasDisposed = getDisposalInfo(parent);
       if (wasDisposed != null) {
         return new IncorrectOperationException("Sorry but parent: " + parent + " (" + parent.getClass()+") has already been disposed " +
-                                              "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
+                                              "(see the cause for stacktrace) so the child: "+child+ " (" + child.getClass()+") will never be disposed",
                                               wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
       }
 
@@ -184,17 +183,22 @@ final class ObjectTree {
   }
 
   private static void handleExceptions(@NotNull List<? extends Throwable> exceptions) {
-    if (!exceptions.isEmpty()) {
-      for (Throwable exception : exceptions) {
-        if (!(exception instanceof ProcessCanceledException)) {
-          getLogger().error(exception);
-        }
-      }
+    if (exceptions.isEmpty()) {
+      return;
+    }
 
-      ProcessCanceledException pce = ContainerUtil.findInstance(exceptions, ProcessCanceledException.class);
-      if (pce != null) {
-        throw pce;
+    ProcessCanceledException processCanceledException = null;
+    for (Throwable exception : exceptions) {
+      if (!(exception instanceof ProcessCanceledException)) {
+        getLogger().error(exception);
       }
+      else if (processCanceledException == null) {
+        processCanceledException = (ProcessCanceledException)exception;
+      }
+    }
+
+    if (processCanceledException != null) {
+      throw processCanceledException;
     }
   }
 

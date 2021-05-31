@@ -5,7 +5,7 @@ import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaNullability;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
@@ -41,7 +41,7 @@ public class OptionalGetWithoutIsPresentInspection extends AbstractBaseJavaLocal
         if (optionalClass == null) return;
         CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(qualifier);
         if (result == null || !result.expressionWasAnalyzed(qualifier)) return;
-        DfType dfType = JvmSpecialField.OPTIONAL_VALUE.getFromQualifier(result.getDfType(qualifier));
+        DfType dfType = SpecialField.OPTIONAL_VALUE.getFromQualifier(result.getDfType(qualifier));
         if (dfType != DfType.TOP && !(dfType instanceof DfReferenceType)) return;
         DfaNullability nullability = DfaNullability.fromDfType(dfType);
         if ((nullability == DfaNullability.UNKNOWN || nullability == DfaNullability.NULLABLE) &&

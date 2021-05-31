@@ -16,13 +16,15 @@ import com.intellij.util.indexing.roots.kind.ModuleRootOriginImpl
 
 open class ModuleIndexableFilesPolicy {
   companion object {
-      fun getInstance() = ApplicationManager.getApplication().getService(ModuleIndexableFilesPolicy::class.java)
+    fun getInstance() = ApplicationManager.getApplication().getService(ModuleIndexableFilesPolicy::class.java)
   }
+
   open fun shouldIndexSeparateRoots() = true
 }
 
 internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
-                                                private val roots: List<VirtualFile>) : ModuleIndexableFilesIterator {
+                                                private val roots: List<VirtualFile>,
+                                                private val shouldPrintSingleRootInDebugName: Boolean) : ModuleIndexableFilesIterator {
   companion object {
     @JvmStatic
     fun getModuleIterators(module: Module): Collection<ModuleIndexableFilesIteratorImpl> {
@@ -31,13 +33,19 @@ internal class ModuleIndexableFilesIteratorImpl(private val module: Module,
       if (moduleRoots.isEmpty()) return emptyList()
 
       if (ModuleIndexableFilesPolicy.getInstance().shouldIndexSeparateRoots()) {
-        return moduleRoots.map { ModuleIndexableFilesIteratorImpl(module, listOf(it)) }
+        return moduleRoots.map { ModuleIndexableFilesIteratorImpl(module, listOf(it), moduleRoots.size > 1) }
       }
-      return listOf(ModuleIndexableFilesIteratorImpl(module, moduleRoots))
+      return listOf(ModuleIndexableFilesIteratorImpl(module, moduleRoots, false))
     }
   }
 
-  override fun getDebugName() = "Module '${module.name}'"
+  override fun getDebugName(): String =
+    "Module '${module.name}'" + if (shouldPrintSingleRootInDebugName) {
+      " (" + roots.first().name + ")"
+    }
+    else {
+      ""
+    }
 
   override fun getIndexingProgressText(): String =
     if (ModuleType.isInternal(module)) {

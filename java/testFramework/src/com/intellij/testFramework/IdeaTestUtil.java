@@ -2,7 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -167,14 +167,11 @@ public final class IdeaTestUtil {
 
   public static String getMockJdkVersion(@NotNull String path) {
     String name = PathUtil.getFileName(path);
-    if (name.startsWith(MOCK_JDK_DIR_NAME_PREFIX)) {
-      return "java " + StringUtil.trimStart(name, MOCK_JDK_DIR_NAME_PREFIX);
-    }
-    return null;
+    return name.startsWith(MOCK_JDK_DIR_NAME_PREFIX) ? "java " + StringUtil.trimStart(name, MOCK_JDK_DIR_NAME_PREFIX) : null;
   }
 
   private static @NotNull File getPathForJdkNamed(@NotNull String name) {
-    return new File(PathManager.getCommunityHomePath(), "java/" + name);
+    return new File(PlatformTestUtil.getCommunityPath(), "java/" + name);
   }
 
   public static void addWebJarsToModule(@NotNull Module module) {

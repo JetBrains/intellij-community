@@ -33,28 +33,28 @@ public class ExtensionsImplTest {
   @Test
   public void testCreateAndAccess() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    int numEP = extensionsArea.getExtensionPoints().size();
+    int numEP = extensionsArea.extensionPoints.size();
     registerInterfaceExtension(extensionsArea);
-    assertEquals("Additional EP available", numEP + 1, extensionsArea.getExtensionPoints().size());
+    assertEquals("Additional EP available", numEP + 1, extensionsArea.extensionPoints.size());
     assertThat(extensionsArea.getExtensionPoint(EXTENSION_POINT_NAME_1)).withFailMessage("EP by name available").isNotNull();
   }
 
   private static void registerInterfaceExtension(@NotNull ExtensionsAreaImpl extensionsArea) {
-    extensionsArea.doRegisterExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName(), ExtensionPoint.Kind.INTERFACE);
+    extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Integer.class.getName(), ExtensionPoint.Kind.INTERFACE, false);
   }
 
   @Test(expected = Throwable.class)
   public void testInvalidActions() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
     registerInterfaceExtension(extensionsArea);
-    extensionsArea.doRegisterExtensionPoint(EXTENSION_POINT_NAME_1, Boolean.class.getName(), ExtensionPoint.Kind.INTERFACE);
+    extensionsArea.registerExtensionPoint(EXTENSION_POINT_NAME_1, Boolean.class.getName(), ExtensionPoint.Kind.INTERFACE, false);
     fail("Should not allow duplicate registration");
   }
 
   @Test
   public void testUnregisterEP() {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    int numEP = extensionsArea.getExtensionPoints().size();
+    int numEP = extensionsArea.extensionPoints.size();
     registerInterfaceExtension(extensionsArea);
 
     final boolean[] removed = {true};
@@ -72,14 +72,14 @@ public class ExtensionsImplTest {
     }, false, null);
     point.registerExtension(123, LoadingOrder.ANY);
     extensionsArea.unregisterExtensionPoint(EXTENSION_POINT_NAME_1);
-    assertThat(extensionsArea.getExtensionPoints().size()).withFailMessage("Extension point should be removed").isEqualTo(numEP);
+    assertThat(extensionsArea.extensionPoints.size()).withFailMessage("Extension point should be removed").isEqualTo(numEP);
     assertThat(removed[0]).withFailMessage("Extension point disposed").isTrue();
   }
 
   @Test
   public void testExtensionsNamespaces() throws IOException, JDOMException {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    extensionsArea.doRegisterExtensionPoint("plugin.ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
+    extensionsArea.registerExtensionPoint("plugin.ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS, false);
     registerExtension(extensionsArea, "plugin", "<plugin:ep1 xmlns:plugin=\"plugin\" order=\"LAST\"><text>3</text></plugin:ep1>");
     registerExtension(extensionsArea, "plugin", "<ep1 xmlns=\"plugin\" order=\"FIRST\"><text>1</text></ep1>");
     registerExtension(extensionsArea, "plugin", "<extension point=\"plugin.ep1\"><text>2</text></extension>");
@@ -94,7 +94,7 @@ public class ExtensionsImplTest {
   @Test
   public void testExtensionsWithOrdering() throws IOException, JDOMException {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    extensionsArea.doRegisterExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
+    extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS, false);
     registerExtension(extensionsArea, "", "<extension point=\"ep1\" order=\"LAST\"><text>3</text></extension>");
     registerExtension(extensionsArea, "", "<extension point=\"ep1\" order=\"FIRST\"><text>1</text></extension>");
     registerExtension(extensionsArea, "", "<extension point=\"ep1\"><text>2</text></extension>");
@@ -109,7 +109,7 @@ public class ExtensionsImplTest {
   @Test
   public void testExtensionsWithOrderingUpdate() throws IOException, JDOMException {
     ExtensionsAreaImpl extensionsArea = new ExtensionsAreaImpl(new ExtensionPointImplTest.MyComponentManager());
-    extensionsArea.doRegisterExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS);
+    extensionsArea.registerExtensionPoint("ep1", TestExtensionClassOne.class.getName(), ExtensionPoint.Kind.BEAN_CLASS, false);
     registerExtension(extensionsArea, "", "<extension point=\"ep1\" id=\"_7\" order=\"LAST\"><text>7</text></extension>");
     registerExtension(extensionsArea, "", "<extension point=\"ep1\" id=\"fst\" order=\"FIRST\"><text>1</text></extension>");
     registerExtension(extensionsArea, "", "<extension point=\"ep1\" id=\"id\"><text>3</text></extension>");
@@ -149,6 +149,6 @@ public class ExtensionsImplTest {
     PluginId id = PluginId.getId(pluginName);
     IdeaPluginDescriptorImpl pluginDescriptor =
       PluginDescriptorTestKt.readDescriptorForTest(Path.of(""), true, moduleXml.getBytes(StandardCharsets.UTF_8), id);
-    pluginDescriptor.registerExtensions(area, pluginDescriptor.appContainerDescriptor, null);
+    pluginDescriptor.registerExtensions(area.extensionPoints, pluginDescriptor.appContainerDescriptor, null);
   }
 }

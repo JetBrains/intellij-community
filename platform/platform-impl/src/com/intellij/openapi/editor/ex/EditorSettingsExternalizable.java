@@ -10,16 +10,12 @@ import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.editor.actions.CaretStopOptions;
-import com.intellij.openapi.editor.impl.TabCharacterPaintMode;
 import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
-import com.intellij.openapi.options.advanced.AdvancedSettings;
-import com.intellij.openapi.options.advanced.AdvancedSettingsChangeListener;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.util.messages.SimpleMessageBusConnection;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
@@ -48,8 +44,6 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   private static final String SOFT_WRAP_FILE_MASKS_ENABLED_DEFAULT = "*";
   @NonNls private static final String SOFT_WRAP_FILE_MASKS_DISABLED_DEFAULT = "*.md; *.txt; *.rst; *.adoc";
-  private static final String EDITOR_TAB_PAINTING = "editor.tab.painting";
-  private static final String SHOW_SPECIAL_CHARS = "editor.show.special.chars";
 
   //Q: make it interface?
   public static final class OptionSet {
@@ -155,27 +149,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @MagicConstant(stringValues = {STRIP_TRAILING_SPACES_NONE, STRIP_TRAILING_SPACES_CHANGED, STRIP_TRAILING_SPACES_WHOLE})
   public @interface StripTrailingSpaces {}
 
-  private TabCharacterPaintMode myTabCharacterPaintMode = AdvancedSettings.getEnum(EDITOR_TAB_PAINTING, TabCharacterPaintMode.class);
-  private boolean myShowSpecialChars = AdvancedSettings.getBoolean(SHOW_SPECIAL_CHARS);
-
   public EditorSettingsExternalizable() {
     this(ApplicationManager.getApplication().getService(OsSpecificState.class));
-
-    SimpleMessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().simpleConnect();
-    connection.subscribe(AdvancedSettingsChangeListener.TOPIC,
-                         new AdvancedSettingsChangeListener() {
-                           @Override
-                           public void advancedSettingChanged(@NotNull String id, @NotNull Object oldValue, @NotNull Object newValue) {
-                             if (id.equals(EDITOR_TAB_PAINTING)) {
-                               myTabCharacterPaintMode = (TabCharacterPaintMode) newValue;
-                               myPropertyChangeSupport.firePropertyChange(EDITOR_TAB_PAINTING, oldValue, newValue);
-                             }
-                             else if (id.equals(SHOW_SPECIAL_CHARS)) {
-                               myShowSpecialChars = (boolean) newValue;
-                               myPropertyChangeSupport.firePropertyChange(SHOW_SPECIAL_CHARS, oldValue, newValue);
-                             }
-                           }
-                         });
   }
 
   @NonInjectable
@@ -748,13 +723,5 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
 
   public void setCaretStopOptions(@NotNull CaretStopOptions options) {
     myOsSpecificState.CARET_STOP_OPTIONS = options;
-  }
-
-  public TabCharacterPaintMode getTabCharacterPaintMode() {
-    return myTabCharacterPaintMode;
-  }
-
-  public boolean isShowSpecialChars() {
-    return myShowSpecialChars;
   }
 }

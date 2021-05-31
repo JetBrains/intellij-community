@@ -52,6 +52,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
+import static com.intellij.codeInsight.template.TemplateManager.TEMPLATE_STARTED_TOPIC;
+
 public final class TemplateState extends TemplateStateBase implements Disposable {
   private static final Logger LOG = Logger.getInstance(TemplateState.class);
   private final @NotNull TemplateStateProcessor myLiveTemplateProcessor;
@@ -76,6 +78,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
   private boolean mySelectionCalculated;
   private boolean myStarted;
 
+  private final TemplateManagerListener myEventPublisher;
+
   public static final Key<Boolean> TEMPLATE_RANGE_HIGHLIGHTER_KEY = Key.create("TemplateState.rangeHighlighterKey");
 
   TemplateState(@NotNull Project project, @Nullable final Editor editor, @NotNull Document document,
@@ -83,6 +87,7 @@ public final class TemplateState extends TemplateStateBase implements Disposable
     super(editor, document);
     myProject = project;
     myLiveTemplateProcessor = processor;
+    myEventPublisher = project.getMessageBus().syncPublisher(TEMPLATE_STARTED_TOPIC);
   }
 
   private void initListeners() {
@@ -359,6 +364,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
       }
 
       if (nextVariableNumber == -1) {
+        myEventPublisher.templateStarted(this);
+
         finishTemplate(false);
       }
       else {
@@ -369,6 +376,8 @@ public final class TemplateState extends TemplateStateBase implements Disposable
         }
         focusCurrentExpression();
         fireCurrentVariableChanged(-1);
+
+        myEventPublisher.templateStarted(this);
         if (!isInteractiveModeSupported()) {
           finishTemplate(false);
         }

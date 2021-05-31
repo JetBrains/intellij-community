@@ -315,7 +315,8 @@ public final class FoldingUpdate {
                      ", PSI element: " + psiElement +
                      ", PSI element range: " + psiElement.getTextRange() + "; " + DebugUtil.diagnosePsiDocumentInconsistency(psiElement, document);
     LOG.error(message, ApplicationManager.getApplication().isInternal()
-                               ? new Attachment[]{AttachmentFactory.createAttachment(document), new Attachment("psiTree.txt", DebugUtil.psiToString(file, false, true))}
+                               ? new Attachment[]{AttachmentFactory.createAttachment(document), new Attachment("psiTree.txt", DebugUtil.psiToString(file,
+                                                                                                                                                    true, true))}
                                : Attachment.EMPTY_ARRAY);
   }
 

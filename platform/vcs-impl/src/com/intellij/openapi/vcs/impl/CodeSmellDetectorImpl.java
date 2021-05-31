@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.codeInsight.CodeSmellInfo;
@@ -44,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+import static com.intellij.openapi.project.ProjectUtil.calcRelativeToProjectPath;
 
 public class CodeSmellDetectorImpl extends CodeSmellDetector {
   private final Project myProject;
@@ -137,7 +138,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
 
       final VirtualFile file = files.get(i);
 
-      progress.setText(VcsBundle.message("searching.for.code.smells.processing.file.progress.text", file.getPresentableUrl()));
+      progress.setText(calcRelativeToProjectPath(file, myProject));
       progress.setFraction((double)i / (double)files.size());
 
       result.addAll(findCodeSmells(file, progress));

@@ -10,7 +10,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
@@ -264,7 +263,7 @@ internal class FilteringBranchesTree(project: Project,
 
   init {
     runInEdt {
-      PopupHandler.installPopupHandler(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup", ActionManager.getInstance())
+      PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup")
       setupTreeExpansionListener()
       project.service<BranchesTreeStateHolder>().setTree(this)
     }

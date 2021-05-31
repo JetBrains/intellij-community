@@ -2,9 +2,7 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
-import com.intellij.internal.statistic.eventLog.events.EventField
-import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.VarargEventId
+import com.intellij.internal.statistic.eventLog.events.*
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 
 class ActionsEventLogGroup : CounterUsagesCollector() {
@@ -14,7 +12,10 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     const val ACTION_INVOKED_EVENT_ID = "action.invoked"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 62)
+    val GROUP = EventLogGroup("actions", 65)
+
+    @JvmField
+    val START_TIME = EventFields.Long("start_time")
 
     @JvmField
     val ACTION_ID = EventFields.StringValidatedByCustomRule("action_id", "action")
@@ -32,14 +33,27 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val CONTEXT_MENU = EventFields.Boolean("context_menu")
 
     @JvmField
+    val DUMB_START = EventFields.Boolean("dumb_start")
+
+    @JvmField
     val DUMB = EventFields.Boolean("dumb")
+
+    @JvmField
+    val RESULT_TYPE = EventFields.String("type", arrayListOf("ignored", "performed", "failed", "unknown"))
+
+    @JvmField
+    val ERROR = EventFields.Class("error")
+
+    @JvmField
+    val RESULT = ObjectEventField("result", RESULT_TYPE, ERROR)
 
     @JvmField
     val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
 
     @JvmField
-    val ACTION_INVOKED = registerActionInvokedEvent(GROUP, ACTION_INVOKED_EVENT_ID, ADDITIONAL, EventFields.Language,
-                                                    EventFields.DurationMs)
+    val ACTION_INVOKED = registerActionInvokedEvent(
+      GROUP, ACTION_INVOKED_EVENT_ID, START_TIME, ADDITIONAL, EventFields.Language, EventFields.DurationMs, DUMB_START, RESULT
+    )
 
     @JvmStatic
     fun registerActionInvokedEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {

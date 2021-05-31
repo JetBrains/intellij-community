@@ -29,8 +29,8 @@ public final class BrowseMethodHierarchyAction extends BrowseHierarchyActionBase
   }
 
   @Override
-  public final void update(@NotNull final AnActionEvent event){
-    final Presentation presentation = event.getPresentation();
+  public final void update(@NotNull AnActionEvent event){
+    Presentation presentation = event.getPresentation();
     if (!ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
       presentation.setText(IdeBundle.messagePointer("action.browse.method.hierarchy"));
     }

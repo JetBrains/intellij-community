@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.FList;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -46,8 +47,27 @@ public final class DfaControlTransferValue extends DfaValue {
   }
 
   public int @NotNull [] getPossibleTargetIndices() {
-    return StreamEx.of(traps).flatCollection(Trap::getPossibleTargets).append(target.getPossibleTargets()).mapToInt(x -> x).toArray();
+    return StreamEx.of(traps).flatCollection(Trap::getPossibleTargets).mapToInt(x -> x).append(target.getPossibleTargets())
+      .distinct().toArray();
   }
+
+  public @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state, @NotNull DataFlowInterpreter interpreter) {
+    return dispatch(state, interpreter, target, traps);
+  }
+
+  public static @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                            @NotNull DataFlowInterpreter interpreter,
+                                                            @NotNull TransferTarget target,
+                                                            @NotNull FList<Trap> nextTraps) {
+    Trap head = nextTraps.getHead();
+    nextTraps = nextTraps.getTail() == null ? FList.emptyList() : nextTraps.getTail();
+    state.emptyStack();
+    if (head != null) {
+      return head.dispatch(state, interpreter, target, nextTraps);
+    }
+    return target.dispatch(state, interpreter);
+  }
+
 
   /**
    * Represents the target location.
@@ -57,14 +77,14 @@ public final class DfaControlTransferValue extends DfaValue {
     /**
      * @return list of possible instruction offsets for given target
      */
-    default @NotNull Collection<@NotNull Integer> getPossibleTargets() {
-      return Collections.emptyList();
+    default int @NotNull [] getPossibleTargets() {
+      return ArrayUtil.EMPTY_INT_ARRAY;
     }
 
     /** 
      * @return next instruction states assuming no traps 
      */
-    default @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state, DataFlowInterpreter runner) {
+    default @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state, DataFlowInterpreter interpreter) {
       return Collections.emptyList();
     }
   }
@@ -89,6 +109,14 @@ public final class DfaControlTransferValue extends DfaValue {
     default @NotNull Collection<@NotNull Integer> getPossibleTargets() {
       return Collections.emptyList();
     }
+
+    default void link(DfaControlTransferValue value) {
+    }
+
+    @NotNull List<DfaInstructionState> dispatch(@NotNull DfaMemoryState state,
+                                                @NotNull DataFlowInterpreter interpreter,
+                                                @NotNull TransferTarget target,
+                                                @NotNull FList<Trap> nextTraps);
 
     /**
      * @return PSI anchor (e.g. catch section)

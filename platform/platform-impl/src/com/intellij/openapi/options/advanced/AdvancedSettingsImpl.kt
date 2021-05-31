@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.advanced
 
 import com.intellij.DynamicBundle
@@ -8,12 +8,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
-import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.extensions.PluginAware
-import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.*
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.text.nullize
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.TestOnly
 import java.util.*
@@ -29,6 +28,7 @@ class AdvancedSettingBean : PluginAware {
       null
   }
 
+  @Transient
   override fun setPluginDescriptor(pluginDescriptor: PluginDescriptor) {
     this.pluginDescriptor = pluginDescriptor
   }
@@ -38,10 +38,12 @@ class AdvancedSettingBean : PluginAware {
   }
 
   @Attribute("id")
+  @RequiredElement
   @JvmField
   var id: String = ""
 
   @Attribute("default")
+  @RequiredElement
   @JvmField
   var defaultValue = ""
 
@@ -56,6 +58,10 @@ class AdvancedSettingBean : PluginAware {
   @Attribute("descriptionKey")
   @JvmField
   var descriptionKey: String = ""
+
+  @Attribute("trailingLabelKey")
+  @JvmField
+  var trailingLabelKey: String = ""
 
   @Attribute("bundle")
   @JvmField
@@ -91,9 +97,38 @@ class AdvancedSettingBean : PluginAware {
     return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.getString(descriptionKey)
   }
 
+  @Nls
+  fun trailingLabel(): String? {
+    val trailingLabelKey = trailingLabelKey.ifEmpty { "advanced.setting.$id.trailingLabel" }
+    return findBundle()?.takeIf { it.containsKey(trailingLabelKey) }?.getString(trailingLabelKey)
+  }
+
+  fun valueFromString(valueString: String): Any {
+    return when (type()) {
+      AdvancedSettingType.Int -> valueString.toInt()
+      AdvancedSettingType.Bool -> valueString.toBoolean()
+      AdvancedSettingType.String -> valueString
+      AdvancedSettingType.Enum -> {
+        try {
+          java.lang.Enum.valueOf(enumKlass!!, valueString)
+        }
+        catch (e: IllegalArgumentException) {
+          java.lang.Enum.valueOf(enumKlass!!, defaultValue)
+        }
+      }
+    }
+  }
+
+  fun valueToString(value: Any): String {
+    return if (type() == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
+  }
+
+  val defaultValueObject by lazy { valueFromString(defaultValue) }
+
   private fun findBundle(): ResourceBundle? {
-    val bundleName = bundle.nullize() ?: pluginDescriptor?.resourceBundleBaseName
+    val bundleName = bundle.nullize()
                      ?: pluginDescriptor?.takeIf { it.pluginId.idString == "com.intellij" } ?.let { ApplicationBundle.BUNDLE }
+                     ?: pluginDescriptor?.resourceBundleBaseName
                      ?: return null
     val classLoader = pluginDescriptor?.pluginClassLoader ?: javaClass.classLoader
     return DynamicBundle.INSTANCE.getResourceBundle(bundleName, classLoader)
@@ -101,71 +136,83 @@ class AdvancedSettingBean : PluginAware {
 
   companion object {
     @JvmField
-    val EP_NAME = ExtensionPointName.create<AdvancedSettingBean>("com.intellij.advancedSetting")
+    val EP_NAME = ExtensionPointName<AdvancedSettingBean>("com.intellij.advancedSetting")
   }
 }
 
-@State(name = "AdvancedSettings", storages = [Storage(value = "other.xml")])
-class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState> {
+@State(name = "AdvancedSettings", storages = [Storage(value = "ide.general.xml")])
+class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState {
     var settings = mutableMapOf<String, String>()
   }
 
-  private var state: AdvancedSettingsState = AdvancedSettingsState()
+  private var state = mutableMapOf<String, Any>()
+  private var defaultValueCache = mutableMapOf<String, Any>()
   private var modificationCount = 0L
 
+  init {
+    AdvancedSettingBean.EP_NAME.addExtensionPointListener(object : ExtensionPointListener<AdvancedSettingBean?> {
+      override fun extensionRemoved(extension: AdvancedSettingBean, pluginDescriptor: PluginDescriptor) {
+        defaultValueCache.remove(extension.id)
+      }
+    }, this)
+  }
+
+  override fun dispose() {
+  }
+
   override fun getState(): AdvancedSettingsState {
-    return state
+    return AdvancedSettingsState().also { state.map { (k, v) -> k to getOption(k).valueToString(v) }.toMap(it.settings) }
   }
 
   override fun loadState(state: AdvancedSettingsState) {
-    this.state = state
+    this.state.clear()
+    state.settings.mapNotNull { (k, v) -> getOptionOrNull(k)?.let { option -> k to option.valueFromString(v) } }.toMap(this.state)
   }
 
-  override fun getStateModificationCount(): Long {
-    return modificationCount
-  }
+  override fun getStateModificationCount() = modificationCount
 
   override fun setSetting(id: String, value: Any, expectType: AdvancedSettingType) {
-    val (oldValue, type) = getSetting(id)
-    if (type != expectType) {
-      throw IllegalArgumentException("Setting type $type does not match parameter type $expectType")
+    val option = getOption(id)
+    if (option.type() != expectType) {
+      throw IllegalArgumentException("Setting type ${option.type()} does not match parameter type $expectType")
     }
-    state.settings[id] = if (expectType == AdvancedSettingType.Enum) (value as Enum<*>).name else value.toString()
+
+    val oldValue = getSetting(id)
+    if (option.defaultValueObject == value) {
+      state.remove(id)
+    }
+    else {
+      state.put(id, value)
+    }
     modificationCount++
-    ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC).advancedSettingChanged(id, oldValue, value)
+
+    ApplicationManager.getApplication().messageBus.syncPublisher(AdvancedSettingsChangeListener.TOPIC)
+      .advancedSettingChanged(id, oldValue, value)
   }
 
-  override fun getSettingString(id: String): String {
-    val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException(
-      "Can't find advanced setting $id")
-    return state.settings[id] ?: option.defaultValue
+  override fun getSetting(id: String): Any {
+    return state.get(id) ?: defaultValueCache.getOrPut(id) { getOption(id).defaultValueObject }
   }
 
-  override fun getSetting(id: String): Pair<Any, AdvancedSettingType> {
-    val option = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id } ?: throw IllegalArgumentException("Can't find advanced setting $id")
-    val valueString = getSettingString(id)
-    val value = when (option.type()) {
-      AdvancedSettingType.Int -> valueString.toInt()
-      AdvancedSettingType.Bool -> valueString.toBoolean()
-      AdvancedSettingType.String -> valueString
-      AdvancedSettingType.Enum -> try {
-        java.lang.Enum.valueOf(option.enumKlass!!, valueString)
-      }
-      catch(e: IllegalArgumentException) {
-        java.lang.Enum.valueOf(option.enumKlass!!, option.defaultValue)
-      }
-    }
-    return value to option.type()
+  private fun getOption(id: String): AdvancedSettingBean {
+    return getOptionOrNull(id) ?: throw IllegalArgumentException("Can't find advanced setting $id")
+  }
+
+  private fun getOptionOrNull(id: String) = AdvancedSettingBean.EP_NAME.findFirstSafe { it.id == id }
+
+  private fun getSettingAndType(id: String): Pair<Any, AdvancedSettingType> {
+    val option = getOption(id)
+    return getSetting(id) to option.type()
   }
 
   fun isNonDefault(id: String): Boolean {
-    return id in state.settings
+    return id in state
   }
 
   @TestOnly
   fun setSetting(id: String, value: Any, revertOnDispose: Disposable) {
-    val (oldValue, type) = getSetting(id)
+    val (oldValue, type) = getSettingAndType(id)
     setSetting(id, value, type)
     Disposer.register(revertOnDispose, Disposable { setSetting(id, oldValue, type )})
   }

@@ -2,38 +2,11 @@
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration;
 import org.jetbrains.annotations.*;
 
 public final class PredefinedConfigurationUtil {
-
-  /**
-   * @deprecated this creates a Java template, which is most likely not what you need. Use
-   * {@link #createSearchTemplateInfo(String, String, String, LanguageFileType)}
-   * instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @NotNull
-  public static Configuration createSearchTemplateInfo(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name,
-                                                       @NonNls @NotNull String criteria, @NotNull String category) {
-    return createSearchTemplateInfo(name, criteria, category, StdFileTypes.JAVA);
-  }
-
-  /**
-   * @deprecated Predefined templates can be reference in other pattern by name, but their name can be translated.
-   * Use {@link #createConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @NotNull
-  public static Configuration createSearchTemplateInfo(@Nls(capitalization = Nls.Capitalization.Sentence) @NotNull String name,
-                                                       @NonNls @NotNull String criteria,
-                                                       @NotNull String category, @NotNull LanguageFileType fileType) {
-    return createSearchTemplateInfo(name, criteria, category, fileType, null);
-  }
 
   /**
    * @deprecated Predefined templates can be reference in other pattern by name, but their name can be translated.
@@ -109,20 +82,6 @@ public final class PredefinedConfigurationUtil {
     final Configuration config = createSearchTemplateInfo(name, criteria, category, fileType, context);
     config.setRefName(refName);
     return config;
-  }
-
-  /**
-   * @deprecated this creates a Java template, which is most likely not what you need.
-   * Use {@link #createNonRecursiveConfiguration(String, String, String, String, LanguageFileType, PatternContext)} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static Configuration createSearchTemplateInfoSimple(@Nls(capitalization = Nls.Capitalization.Sentence) String name,
-                                                             @NonNls String criteria, String category) {
-    final Configuration info = createSearchTemplateInfo(name, criteria, category);
-    info.getMatchOptions().setRecursiveSearch(false);
-
-    return info;
   }
 
   @NotNull

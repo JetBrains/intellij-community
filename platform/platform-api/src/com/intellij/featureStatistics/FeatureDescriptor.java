@@ -92,7 +92,7 @@ public class FeatureDescriptor {
       @NonNls String eventDataId = eventDetectorElement.getAttributeValue(ATTRIBUTE_ID);
       if (detectorTypeStr != null && eventDataId != null) {
         try {
-          LogEventDetector.Type detectorType = LogEventDetector.Type.valueOf(detectorTypeStr.toUpperCase());
+          LogEventDetector.Type detectorType = LogEventDetector.Type.valueOf(detectorTypeStr.toUpperCase(Locale.ROOT));
           myLogEventDetectors.add(LogEventDetector.create(detectorType, myId, eventDataId));
         } catch (Throwable t) {
           LOG.error(String.format("Error on reading event-detector with event data id %s for feature %s", eventDataId, myId), t);

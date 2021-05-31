@@ -10,7 +10,6 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.io.MappingFailedException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,8 +213,7 @@ public final class IncProjectBuilder {
     catch (ProjectBuildException e) {
       LOG.info(e);
       final Throwable cause = e.getCause();
-      if (cause instanceof MappingFailedException ||
-          cause instanceof IOException ||
+      if (cause instanceof IOException ||
           cause instanceof BuildDataCorruptedException ||
           (cause instanceof RuntimeException && cause.getCause() instanceof IOException)) {
         requestRebuild(e, cause);
@@ -1249,7 +1247,6 @@ public final class IncProjectBuilder {
       });
     }
   }
-
 
   private void buildTargetsChunk(CompileContext context, BuildTargetChunk chunk, BuildProgress buildProgress) throws ProjectBuildException {
     final BuildFSState fsState = myProjectDescriptor.fsState;

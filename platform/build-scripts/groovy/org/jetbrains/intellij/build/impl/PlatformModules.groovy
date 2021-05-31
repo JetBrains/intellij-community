@@ -27,6 +27,7 @@ final class PlatformModules {
     "intellij.platform.lvcs",
     "intellij.platform.ide",
     "intellij.platform.projectModel",
+    "intellij.platform.remote.core",
     "intellij.platform.remoteServers.agent.rt",
     "intellij.platform.remoteServers",
     "intellij.platform.tasks",
@@ -143,6 +144,7 @@ final class PlatformModules {
       addModule("intellij.platform.util.text.matching", UTIL_JAR)
       addModule("intellij.platform.util.collections", UTIL_JAR)
       addModule("intellij.platform.util.strings", UTIL_JAR)
+      addModule("intellij.platform.util.xmlDom", UTIL_JAR)
       addModule("intellij.platform.util.diagnostic", UTIL_JAR)
       addModule("intellij.platform.util.ui", UTIL_JAR)
       addModule("intellij.platform.util.ex", UTIL_JAR)
@@ -204,7 +206,6 @@ final class PlatformModules {
         "netty-buffer",
         "netty-codec-http",
         "netty-handler-proxy",
-        "protobuf",
         "Log4J",
         "fastutil-min",
       ))

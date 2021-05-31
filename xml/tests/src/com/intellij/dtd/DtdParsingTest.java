@@ -68,7 +68,7 @@ public class DtdParsingTest extends ParsingTestCase {
   public void testManualEmptyAttributeParsing() {
     String value = "<a><b c=\"\" > </b> </a>";
     final CompositeElement element = parseManually(value, XmlElementType.XML_ELEMENT_DECL, XmlEntityDecl.EntityContextType.GENERIC_XML);
-    checkResult("testManualEmptyAttributeParsing.txt", DebugUtil.treeToString(element, false));
+    checkResult("testManualEmptyAttributeParsing.txt", DebugUtil.treeToString(element, true));
   }
 
   private static CompositeElement parseManually(final String value,
@@ -162,7 +162,7 @@ public class DtdParsingTest extends ParsingTestCase {
     String s = "| %pre.qname; | %blockquote.qname; | %address.qname;";
     CompositeElement element =
       parseManually(s, XmlElementType.XML_ELEMENT_CONTENT_SPEC, XmlEntityDecl.EntityContextType.ELEMENT_CONTENT_SPEC);
-    checkResult("testEntityDeclaration2.txt", DebugUtil.treeToString(element, false));
+    checkResult("testEntityDeclaration2.txt", DebugUtil.treeToString(element, true));
   }
 
   public void testEntityInAttlistDeclaration() throws Exception {

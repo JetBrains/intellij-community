@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.action
 
+import com.intellij.collaboration.async.CompletableFutureUtil.errorOnEdt
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -37,8 +39,6 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.ui.component.GHHtmlErrorPanel
 import org.jetbrains.plugins.github.ui.component.GHSimpleErrorPanelModel
-import org.jetbrains.plugins.github.util.errorOnEdt
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.FlowLayout
 import java.awt.Font
 import java.awt.event.ActionListener

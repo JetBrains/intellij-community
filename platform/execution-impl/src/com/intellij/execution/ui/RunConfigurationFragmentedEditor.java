@@ -56,9 +56,7 @@ public abstract class RunConfigurationFragmentedEditor<Settings extends RunConfi
   @Override
   protected final List<SettingsEditorFragment<Settings, ?>> createFragments() {
     List<SettingsEditorFragment<Settings, ?>> fragments = new ArrayList<>(createRunFragments());
-    for (SettingsEditorFragment<RunConfigurationBase<?>, ?> wrapper : myExtensionsManager.createFragments(mySettings)) {
-      fragments.add((SettingsEditorFragment<Settings, ?>)wrapper);
-    }
+    fragments.addAll(myExtensionsManager.createFragments(mySettings));
     addRunnerSettingsEditors(fragments);
 //    dump fragment ids for FUS
 //    String ids = StringUtil.join(ContainerUtil.sorted(ContainerUtil.map(fragments, (f) -> "\"" + f.getId() + "\"")), ",");

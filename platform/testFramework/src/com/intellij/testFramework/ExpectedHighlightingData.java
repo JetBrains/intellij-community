@@ -29,12 +29,14 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.awt.*;
 import java.lang.reflect.Field;
 import java.text.MessageFormat;
@@ -182,7 +184,8 @@ public class ExpectedHighlightingData {
       LineMarkerInfo<?> value = entry.getValue();
       TextRange range = new TextRange(startOffset, endOffset);
       String tooltip = value.getLineMarkerTooltip();
-      MyLineMarkerInfo markerInfo = new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip);
+      Icon icon = value.getIcon();
+      MyLineMarkerInfo markerInfo = new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip, icon != null ? icon.toString() : null);
       entry.setValue(markerInfo);
     }
   }
@@ -190,7 +193,7 @@ public class ExpectedHighlightingData {
   private void extractExpectedLineMarkerSet(Document document) {
     String text = document.getText();
 
-    String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?>)(.*)";
+    String pat = ".*?((<" + LINE_MARKER + ")(?: descr=\"((?:[^\"\\\\]|\\\\\")*)\")?(?: icon=\"((?:[^\"\\\\]|\\\\\")*)\")?>)(.*)";
     Pattern openingTagRx = Pattern.compile(pat, Pattern.DOTALL);
     Pattern closingTagRx = Pattern.compile("(.*?)(</" + LINE_MARKER + ">)(.*)", Pattern.DOTALL);
 
@@ -200,7 +203,8 @@ public class ExpectedHighlightingData {
 
       int startOffset = opening.start(1);
       String descr = opening.group(3) != null ? opening.group(3) : ANY_TEXT;
-      String rest = opening.group(4);
+      String icon = opening.group(4) != null ? opening.group(4) : ANY_TEXT;
+      String rest = opening.group(5);
 
       Matcher closing = closingTagRx.matcher(rest);
       if (!closing.matches()) {
@@ -219,7 +223,7 @@ public class ExpectedHighlightingData {
       TextRange range = new TextRange(startOffset, endOffset);
       String tooltip = StringUtil.unescapeStringCharacters(descr);
       LineMarkerInfo<PsiElement> markerInfo =
-        new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip);
+        new MyLineMarkerInfo(range, GutterIconRenderer.Alignment.RIGHT, tooltip, icon);
       myLineMarkerInfos.put(document.createRangeMarker(startOffset, endOffset), markerInfo);
 
       text = document.getText();
@@ -244,6 +248,7 @@ public class ExpectedHighlightingData {
                                 "(?:\\s+fonttype=\"([0-9]+)\")?" +
                                 "(?:\\s+textAttributesKey=\"((?:[^\"]|\\\\\"|\\\\\\\\\"|\\\\\\[|\\\\])*)\")?" +
                                 "(?:\\s+bundleMsg=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
+                                "(?:\\s+tooltip=\"((?:[^\"]|\\\\\"|\\\\\\\\\")*)\")?" +
                                 "(/)?>";
 
     Matcher matcher = Pattern.compile(openingTagRx).matcher(text);
@@ -269,6 +274,7 @@ public class ExpectedHighlightingData {
     String fontType = matcher.group(groupIdx++);
     String attrKey = matcher.group(groupIdx++);
     String bundleMessage = matcher.group(groupIdx++);
+    String tooltip = matcher.group(groupIdx++);
     boolean closed = matcher.group(groupIdx) != null;
 
     if (descr == null) {
@@ -280,6 +286,17 @@ public class ExpectedHighlightingData {
     if (descr != null) {
       descr = descr.replaceAll("\\\\\\\\\"", "\"");  // replace: \\" to ", doesn't check symbol before sequence \\"
       descr = descr.replaceAll("\\\\\"", "\"");
+    }
+
+    if (tooltip == null) {
+      tooltip = ANY_TEXT;  // no tooltip any string by default
+    }
+    else if (tooltip.equals("null")) {
+      tooltip = null;  // explicit "null" tooltip
+    }
+    if (tooltip != null) {
+      tooltip = tooltip.replaceAll("\\\\\\\\\"", "\"");  // replace: \\" to ", doesn't check symbol before sequence \\"
+      tooltip = tooltip.replaceAll("\\\\\"", "\"");
     }
 
     HighlightInfoType type = WHATEVER;
@@ -297,9 +314,10 @@ public class ExpectedHighlightingData {
 
     TextAttributes forcedAttributes = null;
     if (foregroundColor != null) {
-      @JdkConstants.FontStyle int ft = Integer.parseInt(fontType);
+      @JdkConstants.FontStyle int ft = fontType != null ? Integer.parseInt(fontType) : 0;
       forcedAttributes = new TextAttributes(
-        Color.decode(foregroundColor), Color.decode(backgroundColor), Color.decode(effectColor), EffectType.valueOf(effectType), ft);
+        Color.decode(foregroundColor), backgroundColor != null ? Color.decode(backgroundColor) : null, effectColor != null ? Color.decode(effectColor) : null, 
+        effectType != null ? EffectType.valueOf(effectType) : null, ft);
     }
 
     int rangeStart = textOffset.get();
@@ -342,7 +360,9 @@ public class ExpectedHighlightingData {
       }
       if (descr != null) {
         builder.description(descr);
-        builder.unescapedToolTip(descr);
+      }
+      if (tooltip != null) {
+        builder.unescapedToolTip(tooltip);
       }
       if (expectedHighlightingSet.endOfLine) builder.endOfLine();
       HighlightInfo highlightInfo = builder.createUnconditionally();
@@ -395,6 +415,10 @@ public class ExpectedHighlightingData {
         failMessage.append(fileName).append("extra ")
           .append(rangeString(text, info.startOffset, info.endOffset))
           .append(": '").append(info.getLineMarkerTooltip()).append('\'');
+        Icon icon = info.getIcon();
+        if (icon != null && !icon.toString().equals(ANY_TEXT)) {
+          failMessage.append(" icon='").append(icon).append('\'');
+        }
       }
     }
 
@@ -404,6 +428,10 @@ public class ExpectedHighlightingData {
         failMessage.append(fileName).append("missing ")
           .append(rangeString(text, expectedLineMarker.startOffset, expectedLineMarker.endOffset))
           .append(": '").append(expectedLineMarker.getLineMarkerTooltip()).append('\'');
+        Icon icon = expectedLineMarker.getIcon();
+        if (icon != null && !icon.toString().equals(ANY_TEXT)) {
+          failMessage.append(" icon='").append(icon).append('\'');
+        }
       }
     }
 
@@ -449,15 +477,24 @@ public class ExpectedHighlightingData {
 
   private static boolean containsLineMarker(LineMarkerInfo info, Collection<? extends LineMarkerInfo> where) {
     String infoTooltip = info.getLineMarkerTooltip();
+    Icon icon = info.getIcon();
     for (LineMarkerInfo markerInfo : where) {
       if (markerInfo.startOffset == info.startOffset &&
           markerInfo.endOffset == info.endOffset &&
-          matchDescriptions(false, infoTooltip, markerInfo.getLineMarkerTooltip())) {
+          matchDescriptions(false, infoTooltip, markerInfo.getLineMarkerTooltip()) &&
+          matchIcons(icon, markerInfo.getIcon())) {
         return true;
       }
     }
 
     return false;
+  }
+
+  private static boolean matchIcons(Icon icon1, Icon icon2) {
+    String s1 = String.valueOf(icon1);
+    String s2 = String.valueOf(icon2);
+    if (Comparing.strEqual(s1, s2)) return true;
+    return Comparing.strEqual(ANY_TEXT, s1) || Comparing.strEqual(ANY_TEXT, s2);
   }
 
   public void checkResult(@Nullable PsiFile psiFile, Collection<? extends HighlightInfo> infos, String text) {
@@ -600,6 +637,10 @@ public class ExpectedHighlightingData {
     boolean showAttributesKeys =
       types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> i.forcedTextAttributesKey != null);
 
+    String anyWrappedInHtml = XmlStringUtil.wrapInHtml(ANY_TEXT);
+    boolean showTooltips =
+      types.values().stream().flatMap(set -> set.infos.stream()).anyMatch(i -> !anyWrappedInHtml.equals(i.getToolTip()));
+
     // sort filtered highlighting data by end offset in descending order
     list.sort((o1, o2) -> {
       HighlightInfo i1 = o1.second;
@@ -625,7 +666,7 @@ public class ExpectedHighlightingData {
 
     // combine highlighting data with original text
     StringBuilder sb = new StringBuilder();
-    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, messageBundles);
+    int[] offsets = composeText(sb, list, 0, text, text.length(), -1, showAttributesKeys, showTooltips, messageBundles);
     sb.insert(0, text.substring(0, offsets[1]));
     return sb.toString();
   }
@@ -652,6 +693,7 @@ public class ExpectedHighlightingData {
                                    List<? extends Pair<String, ? extends HighlightInfo>> list, int index,
                                    String text, int endPos, int startPos,
                                    boolean showAttributesKeys,
+                                   boolean showTooltip,
                                    ResourceBundle... messageBundles) {
     int i = index;
     while (i < list.size()) {
@@ -668,25 +710,30 @@ public class ExpectedHighlightingData {
       sb.insert(0, "</" + severity + '>');
       endPos = info.endOffset;
       if (prev != null && prev.endOffset > info.startOffset) {
-        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, messageBundles);
+        int[] offsets = composeText(sb, list, i + 1, text, endPos, info.startOffset, showAttributesKeys, showTooltip, messageBundles);
         i = offsets[0] - 1;
         endPos = offsets[1];
       }
       sb.insert(0, text.substring(info.startOffset, endPos));
 
-      String str = '<' + severity;
+      StringBuilder str = new StringBuilder().append('<').append(severity);
 
       String bundleMsg = composeBundleMsg(info, messageBundles);
       if (bundleMsg != null) {
-        str += " bundleMsg=\"" + StringUtil.escapeQuotes(bundleMsg) + '"';
+        str.append(" bundleMsg=\"").append(StringUtil.escapeQuotes(bundleMsg)).append('"');
       }
       else if (info.getSeverity() != HighlightInfoType.HIGHLIGHTED_REFERENCE_SEVERITY) {
-        str += " descr=\"" + StringUtil.escapeQuotes(String.valueOf(info.getDescription())) + '"';
+        String description = info.getDescription();
+        String toolTip = info.getToolTip();
+        str.append(" descr=\"").append(StringUtil.escapeQuotes(String.valueOf(description))).append('"');
+        if (showTooltip) {
+          str.append(" tooltip=\"").append(StringUtil.escapeQuotes(String.valueOf(toolTip != null ? XmlStringUtil.stripHtml(toolTip) : null))).append('"');
+        }
       }
       if (showAttributesKeys) {
-        str += " textAttributesKey=\"" + info.forcedTextAttributesKey + '"';
+        str.append(" textAttributesKey=\"").append(info.forcedTextAttributesKey).append('"');
       }
-      str += '>';
+      str.append('>');
       sb.insert(0, str);
 
       endPos = info.startOffset;
@@ -765,7 +812,8 @@ public class ExpectedHighlightingData {
     return info1.startOffset == info2.startOffset &&
            info1.endOffset == info2.endOffset &&
            info1.isAfterEndOfLine() == info2.isAfterEndOfLine() &&
-           matchDescriptions(strictMatch, info1.getDescription(), info2.getDescription());
+           matchDescriptions(strictMatch, info1.getDescription(), info2.getDescription()) &&
+           matchTooltips(strictMatch, info1.getToolTip(), info2.getToolTip());
   }
 
   private static boolean matchDescriptions(boolean strictMatch, String d1, String d2) {
@@ -781,6 +829,14 @@ public class ExpectedHighlightingData {
       }
     }
     return false;
+  }
+
+  private static boolean matchTooltips(boolean strictMatch, String t1, String t2) {
+    if (Comparing.strEqual(t1, t2)) return true;
+    if (strictMatch) return false;
+    t1 = t1 != null ? XmlStringUtil.stripHtml(t1) : null;
+    t2 = t2 != null ? XmlStringUtil.stripHtml(t2) : null;
+    return matchDescriptions(false, t1, t2);
   }
 
   private static String rangeString(String text, int startOffset, int endOffset) {
@@ -830,11 +886,47 @@ public class ExpectedHighlightingData {
       return null;
     }
   };
+  private static class PathIcon implements Icon {
+    private final String path;
+
+    private PathIcon(@NotNull String path) {
+      this.path = path;
+    }
+
+    @Override
+    public void paintIcon(Component c, Graphics g, int x, int y) {
+    }
+
+    @Override
+    public int getIconWidth() {
+      return 16;
+    }
+
+    @Override
+    public int getIconHeight() {
+      return 16;
+    }
+
+    @Override
+    public int hashCode() {
+      return path.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return this == obj || (obj instanceof PathIcon && ((PathIcon)obj).path == path);
+    }
+
+    @Override
+    public String toString() {
+      return path;
+    }
+  }
   private static class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
     private final String myTooltip;
 
-    MyLineMarkerInfo(TextRange range, GutterIconRenderer.Alignment alignment, String tooltip) {
-      super(NULL_POINTER, range, null, null, null, null, alignment);
+    MyLineMarkerInfo(TextRange range, GutterIconRenderer.Alignment alignment, String tooltip, String iconPath) {
+      super(NULL_POINTER, range, new PathIcon(iconPath), null, null, null, alignment);
       myTooltip = tooltip;
     }
 

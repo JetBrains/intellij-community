@@ -2,11 +2,13 @@
 package com.siyeh.ig.redundancy;
 
 import com.intellij.codeInsight.BlockUtils;
+import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.DeleteElementFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.codeInspection.util.IntentionName;
+import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
@@ -25,7 +27,6 @@ import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
-import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -66,6 +67,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
     exactInstanceCall(JAVA_LANG_STRING, "equalsIgnoreCase").parameterTypes(JAVA_LANG_STRING);
   private static final CallMatcher CHANGE_CASE = anyOf(exactInstanceCall(JAVA_LANG_STRING, "toLowerCase").parameterCount(0),
                                                        exactInstanceCall(JAVA_LANG_STRING, "toUpperCase").parameterCount(0));
+  private static final CallMatcher STRING_VALUE_OF = staticCall(JAVA_LANG_STRING, "valueOf").parameterTypes("char[]");
 
   public boolean ignoreStringConstructor = false;
 
@@ -102,7 +104,8 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       .register(STRING_LAST_INDEX_OF, this::getLastIndexOfProblem)
       .register(STRING_IS_EMPTY, this::getRedundantCaseChangeProblem)
       .register(STRING_EQUALS, this::getRedundantSubstringEqualsProblem)
-      .register(anyOf(STRING_EQUALS, STRING_EQUALS_IGNORE_CASE), this::getRedundantCaseEqualsProblem);
+      .register(anyOf(STRING_EQUALS, STRING_EQUALS_IGNORE_CASE), this::getRedundantCaseEqualsProblem)
+      .register(STRING_VALUE_OF, call -> getValueOfProblem(call.getArgumentList()));
     private final InspectionManager myManager;
     private final ProblemsHolder myHolder;
     private final boolean myIsOnTheFly;
@@ -157,20 +160,29 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
         PsiMethodCallExpression methodCall = getMethodCallExpression(params[0]);
 
         if (BYTE_ARRAY_OUTPUT_STREAM_INTO_BYTE_ARRAY.test(methodCall)) {
-          final TextRange range = new TextRange(0, expression.getTextLength());
-
           final PsiElement qualifier = methodCall.getMethodExpression().getQualifier();
           if (qualifier == null) return null;
 
           String newExpressionText = qualifier.getText() + ".toString(" + (params.length == 2 ? params[1].getText() : "") + ")";
           final LocalQuickFix fix = new ByteArrayOutputStreamToStringFix(newExpressionText);
 
-          return myManager.createProblemDescriptor(expression, range,
+          return myManager.createProblemDescriptor(expression, (TextRange)null,
                                                    InspectionGadgetsBundle.message("inspection.byte.array.output.stream.to.string.message"),
                                                    ProblemHighlightType.WARNING, myIsOnTheFly, fix);
         }
       }
       if (args.getExpressionCount() == 1) {
+        final CharArrayCreationArgument charArrayCreationArgument = CharArrayCreationArgument.from(args);
+        if (charArrayCreationArgument != null) {
+          LocalQuickFix[] fixes = {
+            new ReplaceWithValueOfFix(),
+            new SetInspectionOptionFix(
+              myInspection, "ignoreStringConstructor",
+              InspectionGadgetsBundle.message("inspection.redundant.string.option.do.not.report.string.constructors"), true)};
+          return myManager.createProblemDescriptor(expression, (TextRange)null,
+                                                   JavaAnalysisBundle.message("inspection.can.be.replaced.with.message", "String.valueOf()"),
+                                                   ProblemHighlightType.WARNING, myIsOnTheFly, fixes);
+        }
         PsiExpression arg = args.getExpressions()[0];
         if (TypeUtils.isJavaLangString(arg.getType()) &&
             (PsiUtil.isLanguageLevel7OrHigher(expression) || !STRING_SUBSTRING.matches(arg))) {
@@ -575,6 +587,18 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
                                                new RemoveRedundantStringCallFix(name, FixType.REPLACE_WITH_QUALIFIER));
     }
 
+    @Nullable
+    private ProblemDescriptor getValueOfProblem(@NotNull PsiExpressionList argList) {
+      final CharArrayCreationArgument charArrayCreationArgument = CharArrayCreationArgument.from(argList);
+      if (charArrayCreationArgument == null) return null;
+      return myManager.createProblemDescriptor(charArrayCreationArgument.newExpression,
+                                               new TextRange(0, charArrayCreationArgument.arrayInitializer.getStartOffsetInParent()),
+                                               InspectionGadgetsBundle.message("inspection.redundant.string.constructor.message"),
+                                               ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                               myIsOnTheFly,
+                                               new UnwrapArrayInitializerFix(charArrayCreationArgument.initializer.getText()));
+    }
+
     /**
      * An instance of {@link LocalQuickFix} for problems that can be solved by replacing
      * {@link String#substring(int, int)} with {@link String#charAt(int)}
@@ -977,6 +1001,91 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       final PsiMethodCallExpression expression = tryCast(descriptor.getPsiElement(), PsiMethodCallExpression.class);
       if (expression == null) return;
       new CommentTracker().replaceAndRestoreComments(expression, "\"\"");
+    }
+  }
+
+  private static final class ReplaceWithValueOfFix extends InspectionGadgetsFix {
+
+    @Override
+    @NotNull
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.replace.with.x", "String.valueOf()");
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return getName();
+    }
+
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiNewExpression expression = tryCast(descriptor.getPsiElement(), PsiNewExpression.class);
+      if (expression == null) return;
+      final CharArrayCreationArgument charArrayCreationArgument = CharArrayCreationArgument.from(expression.getArgumentList());
+      if (charArrayCreationArgument == null) return;
+      CommentTracker ct = new CommentTracker();
+      final String replacementText = "String.valueOf(" + ct.text(charArrayCreationArgument.initializer) + ")";
+      PsiReplacementUtil.replaceExpression(expression, replacementText, ct);
+    }
+  }
+
+  private static final class UnwrapArrayInitializerFix extends InspectionGadgetsFix {
+    private final String myInitializerText;
+
+    private UnwrapArrayInitializerFix(String initializerText) {
+      myInitializerText = initializerText;
+    }
+
+    @Override
+    @NotNull
+    public String getName() {
+      return CommonQuickFixBundle.message("fix.unwrap", myInitializerText);
+    }
+
+    @NotNull
+    @Override
+    public String getFamilyName() {
+      return QuickFixBundle.message("unwrap.array.initializer.fix");
+    }
+
+    @Override
+    public void doFix(Project project, ProblemDescriptor descriptor) {
+      final PsiNewExpression expression = tryCast(descriptor.getPsiElement(), PsiNewExpression.class);
+      if (expression == null) return;
+      final PsiArrayInitializerExpression initializer = expression.getArrayInitializer();
+      if (initializer == null || initializer.getInitializers().length != 1) return;
+      PsiReplacementUtil.replaceExpression(expression, initializer.getInitializers()[0].getText(), new CommentTracker());
+    }
+  }
+
+  private static final class CharArrayCreationArgument {
+    @NotNull PsiNewExpression newExpression;
+    @NotNull PsiArrayInitializerExpression arrayInitializer;
+    @NotNull PsiExpression initializer;
+
+    private CharArrayCreationArgument(@NotNull PsiNewExpression newExpression,
+                              @NotNull PsiArrayInitializerExpression arrayInitializer,
+                              @NotNull PsiExpression initializer) {
+      this.newExpression = newExpression;
+      this.arrayInitializer = arrayInitializer;
+      this.initializer = initializer;
+    }
+
+    @Nullable
+    private static CharArrayCreationArgument from(@Nullable PsiExpressionList argList) {
+      if (argList == null || argList.getExpressionCount() != 1) return null;
+      final PsiExpression arg = PsiUtil.skipParenthesizedExprDown(argList.getExpressions()[0]);
+      final PsiNewExpression newExpression = tryCast(arg, PsiNewExpression.class);
+      if (newExpression == null) return null;
+      final PsiArrayInitializerExpression arrayInitializer = newExpression.getArrayInitializer();
+      if (arrayInitializer == null || !TypeUtils.typeEquals("char[]", newExpression.getType())) return null;
+      final PsiExpression[] initializers = arrayInitializer.getInitializers();
+      if (initializers.length != 1) return null;
+      final PsiExpression initializer = initializers[0];
+      final PsiType type = initializer.getType();
+      if (!PsiType.CHAR.equals(type) && !TypeUtils.typeEquals(JAVA_LANG_CHARACTER, type)) return null;
+      return new CharArrayCreationArgument(newExpression, arrayInitializer, initializer);
     }
   }
 }

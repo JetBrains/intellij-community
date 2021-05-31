@@ -24,13 +24,16 @@ public final class ThisDescriptor extends PsiVarDescriptor {
   @NotNull
   private final PsiClass myQualifier;
 
-  public ThisDescriptor(@NotNull PsiClass qualifier) {
+  private ThisDescriptor(@NotNull PsiClass qualifier) {
     myQualifier = qualifier;
   }
 
   @NotNull
   @Override
   public String toString() {
+    if (myQualifier instanceof PsiAnonymousClass) {
+      return "(anonymous " + ((PsiAnonymousClass)myQualifier).getBaseClassReference().getText() + ").this";
+    }
     return myQualifier.getName() + ".this";
   }
 

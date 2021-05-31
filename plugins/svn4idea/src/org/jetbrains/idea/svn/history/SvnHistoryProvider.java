@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.intellij.openapi.actionSystem.ActionManager;
@@ -51,6 +51,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.ELLIPSIS;
 import static com.intellij.openapi.util.text.StringUtil.join;
+import static com.intellij.ui.ScrollPaneFactory.createScrollPane;
 import static org.jetbrains.idea.svn.SvnBundle.message;
 import static org.jetbrains.idea.svn.SvnUtil.*;
 
@@ -100,6 +101,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
 
         {
           statusText.setText(message("status.text.merge.sources"));
+          setEditable(false);
           setWrapStyleWord(true);
           setLineWrap(true);
         }
@@ -110,9 +112,6 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
           statusText.paint(this, g);
         }
       };
-      field.setEditable(false);
-      field.setOpaque(false);
-      field.setWrapStyleWord(true);
       listener = vcsFileRevision -> {
         field.setText(mergeSourceColumn.getText(vcsFileRevision));
         field.setCaretPosition(0);
@@ -125,7 +124,7 @@ public class SvnHistoryProvider implements VcsHistoryProvider, VcsCacheableHisto
       JPanel fieldPanel = new ToolbarDecorator() {
         @Override
         protected @NotNull JComponent getComponent() {
-          return field;
+          return createScrollPane(field, true);
         }
 
         @Override

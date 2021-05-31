@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.newvfs.persistent;
 
 import com.intellij.ide.plugins.DynamicPluginsTestUtil;
@@ -29,10 +29,7 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
-import com.intellij.testFramework.LoggedErrorProcessor;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.testFramework.VfsTestUtil;
+import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ArrayUtil;
@@ -43,7 +40,7 @@ import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.SuperUserStatus;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
-import org.apache.log4j.Logger;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Rule;
@@ -66,6 +63,7 @@ import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
 import static com.intellij.openapi.util.io.IoTestUtil.setCaseSensitivity;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static com.intellij.testFramework.UsefulTestCase.assertOneElement;
 import static org.junit.Assert.*;
 import static org.junit.Assume.assumeFalse;
@@ -203,9 +201,9 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     int[] logCount = {0};
     LoggedErrorProcessor.setNewInstance(new LoggedErrorProcessor() {
       @Override
-      public void processWarn(String message, Throwable t, @NotNull Logger logger) {
-        super.processWarn(message, t, logger);
+      public boolean processWarn(@NotNull String category, String message, Throwable t) {
         if (message.contains(jarFile.getName())) logCount[0]++;
+        return super.processWarn(category, message, t);
       }
     });
     try {
@@ -284,6 +282,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
   @Test
   public void testModCountIncreases() throws IOException {
     VirtualFile vFile = tempDirectory.newVirtualFile("file.txt");
+    HeavyPlatformTestCase.setBinaryContent(vFile, "x".getBytes(StandardCharsets.UTF_8)); // make various listeners update their VFS views
     ManagingFS managingFS = ManagingFS.getInstance();
     int inSessionModCount = managingFS.getModificationCount();
     int globalModCount = managingFS.getFilesystemModificationCount();
@@ -965,5 +964,33 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       exp = new VFileContentChangeEvent(this, exp.getFile(), 0, 0, -1, -1, -1, -1, true);
     }
     return exp;
+  }
+
+  @Test
+  public void testSetBinaryContentMustGenerateVFileContentChangedEventWithCorrectOldLength() throws IOException {
+    VirtualFile vDir = refreshAndFind(tempDirectory.newDirectory());
+    VirtualFile vFile = HeavyPlatformTestCase.createChildData(vDir, "file.txt");
+    UIUtil.pump();
+    List<VFileEvent> events = new ArrayList<>();
+    ApplicationManager.getApplication().getMessageBus().connect(getTestRootDisposable()).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
+        for (VFileEvent event : e) {
+          VirtualFile evFile = event.getFile();
+          if (evFile.getParent().equals(vDir)) {
+            events.add(event);
+          }
+        }
+      }
+    });
+
+    WriteAction.runAndWait(()->vFile.setBinaryContent(new byte[]{1,2,3}));
+    VFileEvent event = assertOneElement(events);
+    assertInstanceOf(event, VFileContentChangeEvent.class);
+
+    assertEquals(0, ((VFileContentChangeEvent)event).getOldLength());
+    assertEquals(3, ((VFileContentChangeEvent)event).getNewLength());
+
+    events.clear();
   }
 }

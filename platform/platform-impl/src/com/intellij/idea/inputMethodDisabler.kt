@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea
 
 import com.intellij.ide.IdeBundle
@@ -69,15 +69,12 @@ internal fun disableInputMethodsIfPossible() {
 
   val title = IdeBundle.message("notification.title.input.method.disabler")
   val message = IdeBundle.message("notification.content.input.method.disabler")
-  val notification = Notification(NOTIFICATION_GROUP, title, message, NotificationType.WARNING, null)
-
-  val disableIMAction: AnAction = DumbAwareAction.create(IdeBundle.message("action.text.disable.input.methods")
-  ) { e: AnActionEvent? ->
+  val notification = Notification(NOTIFICATION_GROUP, title, message, NotificationType.WARNING)
+  notification.addAction(DumbAwareAction.create(IdeBundle.message("action.text.disable.input.methods")) { e: AnActionEvent? ->
     PropertiesComponent.getInstance().setValue(PERSISTENT_SETTING_AUTO_DISABLE_KEY, true);
     disableInputMethdosImpl();
     notification.expire()
-  }
-  notification.addAction(disableIMAction)
+  })
   notification.notify(null)
 }
 

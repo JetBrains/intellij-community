@@ -55,7 +55,7 @@ internal abstract class PackageUpdateInspection : LocalInspectionTool() {
     }
 
     private fun shouldCheckFile(file: PsiFile): Boolean =
-        ProjectModuleOperationProvider.forProjectPsiFile(file.project, file)
+        ProjectModuleOperationProvider.forProjectPsiFileOrNull(file.project, file)
             ?.hasSupportFor(file.project, file)
             ?: false
 

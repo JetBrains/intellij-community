@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
@@ -24,7 +24,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.TestApplicationManager
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.CollectConsumer
-import gnu.trove.Equality
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.annotations.NotNull
@@ -32,6 +31,7 @@ import org.jetbrains.annotations.NotNull
 import java.awt.*
 import java.util.List
 import java.util.concurrent.TimeUnit
+import java.util.function.BiPredicate
 
 /**
  * @author peter
@@ -41,8 +41,8 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   private static final DataKey<Boolean> SHOW_HIDDEN_KEY = DataKey.create("GotoActionTest.DataKey")
   private static final Comparator<MatchedValue> MATCH_COMPARATOR =
     { MatchedValue item1, MatchedValue item2 -> return item1.compareWeights(item2) } as Comparator<MatchedValue>
-  private static final Equality<MatchedValue> MATCH_EQUALITY =
-    { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as Equality<MatchedValue>
+  private static final BiPredicate<MatchedValue, MatchedValue> MATCH_EQUALITY =
+    { MatchedValue item1, MatchedValue item2 -> item1 == item2 } as BiPredicate<MatchedValue, MatchedValue>
 
   void "test shorter actions first despite ellipsis"() {
     def pattern = 'Rebas'
@@ -469,10 +469,9 @@ class GotoActionTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   static SearchEverywhereContributor<?> createActionContributor(Project project, Disposable parentDisposable) {
-    def res = new TestActionContributor(project, null, null)
+    TestActionContributor res = new TestActionContributor(project, null, null)
     res.setShowDisabled(true)
     Disposer.register(parentDisposable, res)
-
     return res
   }
 

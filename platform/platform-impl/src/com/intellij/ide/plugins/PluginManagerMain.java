@@ -370,18 +370,19 @@ public final class PluginManagerMain {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification", app.isRestartCapable() ? 1 : 0);
-    Notification notification = UpdateChecker.getNotificationGroup()
-      .createNotification(title, "", NotificationType.INFORMATION, null, "plugins.updated.suggest.restart");
-    notification.addAction(new NotificationAction(action) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
-          notification.expire();
-          ApplicationManagerEx.getApplicationEx().restart(true);
+    UpdateChecker.getNotificationGroup()
+      .createNotification(title, NotificationType.INFORMATION)
+      .setDisplayId("plugins.updated.suggest.restart")
+      .addAction(new NotificationAction(action) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
+            notification.expire();
+            ApplicationManagerEx.getApplicationEx().restart(true);
+          }
         }
-      }
-    });
-    notification.notify(project);
+      })
+      .notify(project);
   }
 
   public static boolean checkThirdPartyPluginsAllowed(Iterable<? extends IdeaPluginDescriptor> descriptors) {
@@ -392,9 +393,8 @@ public final class PluginManagerMain {
       return true;
     }
 
-    PluginManager pluginManager = PluginManager.getInstance();
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (!pluginManager.isDevelopedByJetBrains(descriptor)) {
+      if (!PluginManagerCore.isDevelopedByJetBrains(descriptor)) {
         String title = IdeBundle.message("third.party.plugins.privacy.note.title");
         String message = IdeBundle.message("third.party.plugins.privacy.note.message");
         String yesText = IdeBundle.message("third.party.plugins.privacy.note.yes");

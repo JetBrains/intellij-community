@@ -3,11 +3,16 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -44,11 +49,11 @@ public final class CommonDataflow {
     void addValue(DfaMemoryState memState, DfaValue value) {
       if (myPossibleValues == null) return;
       DfType dfType = memState.getDfType(value);
-      if (!(dfType instanceof DfConstantType)) {
+      Object newValue = dfType.getConstantOfType(Object.class);
+      if (newValue == null && !dfType.equals(DfTypes.NULL)) {
         myPossibleValues = null;
         return;
       }
-      Object newValue = ((DfConstantType<?>)dfType).getValue();
       if (myPossibleValues.contains(newValue)) return;
       if (myPossibleValues.isEmpty()) {
         myPossibleValues = Collections.singleton(newValue);
@@ -63,7 +68,7 @@ public final class CommonDataflow {
       if (myDfType == DfType.TOP) return;
       DfType newType = memState.getDfType(value);
       if (value instanceof DfaVariableValue) {
-        SpecialField field = JvmSpecialField.fromQualifier(value);
+        DerivedVariableDescriptor field = SpecialField.fromQualifier(value);
         if (field != null && newType instanceof DfReferenceType) {
           DfaValue specialField = field.createValue(value.getFactory(), value);
           DfType withSpecialField = field.asDfType(memState.getDfType(specialField));
@@ -72,7 +77,7 @@ public final class CommonDataflow {
         }
       }
       if (value instanceof DfaWrappedValue) {
-        SpecialField field = ((DfaWrappedValue)value).getSpecialField();
+        DerivedVariableDescriptor field = ((DfaWrappedValue)value).getSpecialField();
         DfaVariableValue var = ((DfaWrappedValue)value).getWrappedValue();
         newType = newType.meet(field.asDfType(memState.getDfType(var)));
       }
@@ -342,6 +347,16 @@ public final class CommonDataflow {
                                      @NotNull PsiExpression expression,
                                      @NotNull DfaMemoryState state) {
       myResult.add(expression, state, value);
+    }
+
+    @Override
+    public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                            @NotNull DfaValue value,
+                            @NotNull ThreeState failed,
+                            @NotNull DfaMemoryState state) {
+      if (problem instanceof ContractFailureProblem && failed != ThreeState.NO) {
+        myResult.add(((ContractFailureProblem)problem).getAnchor(), state, value.getFactory().fromDfType(DfType.FAIL));
+      }
     }
   }
 }

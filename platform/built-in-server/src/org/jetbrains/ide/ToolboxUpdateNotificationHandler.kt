@@ -1,16 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.google.gson.JsonElement
 import com.google.gson.JsonObject
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.components.service
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -39,13 +38,11 @@ internal class ToolboxUpdateNotificationHandler : ToolboxServiceHandler<UpdateNo
       onResult(JsonObject().apply { addProperty("status", "accepted") })
     }
 
-    val title = IdeBundle.message("toolbox.updates.download.update.action.text", request.build, request.version)
-    val description = IdeBundle.message("toolbox.updates.download.update.action.description", request.build, request.version)
-    val action = DumbAwareAction.create(title, actionHandler)
-    action.templatePresentation.description = description
-    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.ICON_KEY,
-                                                  SettingsEntryPointAction.IconState.ApplicationUpdate)
-    service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-02-update-${request.build}", action)
+    val fullProductName = ApplicationNamesInfo.getInstance().fullProductName
+    val title = IdeBundle.message("toolbox.updates.download.update.action.text", request.build, request.version, fullProductName)
+    val description = IdeBundle.message("toolbox.updates.download.update.action.description", request.build, request.version, fullProductName)
+    val action = ToolboxUpdateAction("toolbox-02-update-${request.build}", lifetime, title, description, actionHandler)
+    service<ToolboxSettingsActionRegistry>().registerUpdateAction(action)
   }
 }
 
@@ -77,13 +74,10 @@ internal class ToolboxRestartNotificationHandler : ToolboxServiceHandler<UpdateN
       })
     }
 
-    val title = IdeBundle.message("toolbox.updates.download.ready.action.text", request.build, request.version)
-    val description = IdeBundle.message("toolbox.updates.download.ready.action.description", request.build, request.version)
-    val action = DumbAwareAction.create(title, actionHandler)
-    action.templatePresentation.description = description
-    action.templatePresentation.putClientProperty(SettingsEntryPointAction.ActionProvider.ICON_KEY,
-                                                  SettingsEntryPointAction.IconState.ApplicationUpdate)
-
-    service<ToolboxSettingsActionRegistry>().registerUpdateAction(lifetime, "toolbox-01-restart-${request.build}", action)
+    val fullProductName = ApplicationNamesInfo.getInstance().fullProductName
+    val title = IdeBundle.message("toolbox.updates.download.ready.action.text", request.build, request.version, fullProductName)
+    val description = IdeBundle.message("toolbox.updates.download.ready.action.description", request.build, request.version, fullProductName)
+    val action = ToolboxUpdateAction("toolbox-01-restart-${request.build}", lifetime, title, description, actionHandler)
+    service<ToolboxSettingsActionRegistry>().registerUpdateAction(action)
   }
 }

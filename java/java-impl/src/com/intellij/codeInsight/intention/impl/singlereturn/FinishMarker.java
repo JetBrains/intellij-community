@@ -215,7 +215,7 @@ public final class FinishMarker {
     LongRangeSet set = nonTerminalReturns.stream()
       .map(CommonDataflow::getExpressionRange)
       .map(range -> range == null ? fullSet : range)
-      .reduce(LongRangeSet::unite)
+      .reduce(LongRangeSet::join)
       .orElse(fullSet);
     if (!set.isEmpty() && !set.contains(fullSet)) {
       PsiExpression terminalReturnValue = terminalReturn == null ? null : terminalReturn.getReturnValue();

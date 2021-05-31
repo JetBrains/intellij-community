@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring
 
@@ -17,6 +14,7 @@ import org.jetbrains.kotlin.idea.refactoring.introduce.extractFunction.ExtractKo
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceLambdaParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceParameter.KotlinIntroduceParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceProperty.KotlinIntroducePropertyHandler
+import org.jetbrains.kotlin.idea.refactoring.introduce.introduceTypeParameter.KotlinIntroduceTypeParameterHandler
 import org.jetbrains.kotlin.idea.refactoring.introduce.introduceVariable.KotlinIntroduceVariableHandler
 import org.jetbrains.kotlin.idea.refactoring.pullUp.KotlinPullUpHandler
 import org.jetbrains.kotlin.idea.refactoring.pushDown.KotlinPushDownHandler
@@ -35,8 +33,9 @@ class KotlinRefactoringSupportProvider : RefactoringSupportProvider() {
 
     fun getIntroducePropertyHandler(): RefactoringActionHandler = KotlinIntroducePropertyHandler()
 
-    fun getExtractFunctionHandler(): RefactoringActionHandler =
-        ExtractKotlinFunctionHandler()
+    fun getIntroduceTypeParameterHandler(): RefactoringActionHandler = KotlinIntroduceTypeParameterHandler
+
+    fun getExtractFunctionHandler(): RefactoringActionHandler = ExtractKotlinFunctionHandler()
 
     fun getExtractFunctionToScopeHandler(): RefactoringActionHandler =
         ExtractKotlinFunctionHandler(true, ExtractKotlinFunctionHandler.InteractiveExtractionHelper)

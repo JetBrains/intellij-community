@@ -21,16 +21,17 @@ import com.intellij.ide.hierarchy.LanguageTypeHierarchy;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.UpdateInBackground;
 import org.jetbrains.annotations.NotNull;
 
-public final class BrowseTypeHierarchyAction extends BrowseHierarchyActionBase {
+public final class BrowseTypeHierarchyAction extends BrowseHierarchyActionBase implements UpdateInBackground {
   public BrowseTypeHierarchyAction() {
     super(LanguageTypeHierarchy.INSTANCE);
   }
 
   @Override
-  public final void update(@NotNull final AnActionEvent event){
-    final Presentation presentation = event.getPresentation();
+  public final void update(@NotNull AnActionEvent event){
+    Presentation presentation = event.getPresentation();
     if (!ActionPlaces.isMainMenuOrActionSearch(event.getPlace())) {
       presentation.setText(IdeBundle.messagePointer("action.browse.type.hierarchy"));
     }

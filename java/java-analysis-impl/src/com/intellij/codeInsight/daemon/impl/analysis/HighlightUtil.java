@@ -1625,7 +1625,7 @@ public final class HighlightUtil {
     PsiType switchExpressionType = switchExpression.getType();
     if (switchExpressionType != null) {
       for (PsiExpression expression : PsiUtil.getSwitchResultExpressions(switchExpression)) {
-        final PsiType expressionType = PsiResolveHelper.ourGraphGuard.doPreventingRecursion(expression, true, expression::getType);
+        final PsiType expressionType = expression.getType();
         if (expressionType != null && !switchExpressionType.isAssignableFrom(expressionType)) {
           String text = JavaErrorBundle
             .message("bad.type.in.switch.expression", expressionType.getCanonicalText(), switchExpressionType.getCanonicalText());

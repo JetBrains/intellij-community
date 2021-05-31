@@ -13,6 +13,7 @@
 
 import filecmp
 import os
+import re
 
 import toml
 
@@ -20,6 +21,8 @@ consistent_files = [
     {"stdlib/@python2/builtins.pyi", "stdlib/@python2/__builtin__.pyi"},
     {"stdlib/threading.pyi", "stdlib/_dummy_threading.pyi"},
 ]
+metadata_keys = {"version", "python2", "python3", "requires", "extra_description", "obsolete_since"}
+allowed_files = {"README.md"}
 
 
 def assert_stubs_only(directory):
@@ -28,6 +31,8 @@ def assert_stubs_only(directory):
     assert top.isidentifier(), f"Bad directory name: {top}"
     for _, dirs, files in os.walk(directory):
         for file in files:
+            if file in allowed_files:
+                continue
             name, ext = os.path.splitext(file)
             assert name.isidentifier(), f"Files must be valid modules, got: {name}"
             assert ext == ".pyi", f"Only stub flies allowed. Got: {file} in {directory}"
@@ -97,35 +102,44 @@ def check_same_files():
                 )
 
 
+_VERSIONS_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_.]*): [23]\.\d{1,2}-(?:[23]\.\d{1,2})?$")
+
+
 def check_versions():
-    versions = {}
+    versions = set()
     with open("stdlib/VERSIONS") as f:
         data = f.read().splitlines()
     for line in data:
-        if not line or line.lstrip().startswith("#"):
+        line = line.split("#")[0].strip()
+        if line == "":
             continue
-        assert ": " in line, f"Bad line in VERSIONS: {line}"
-        module, version = line.split(": ")
-        msg = f"Unsupported Python version{version}"
-        assert version.count(".") == 1, msg
-        major, minor = version.split(".")
-        assert major in {"2", "3"}, msg
-        assert minor.isdigit(), msg
+        m = _VERSIONS_RE.match(line)
+        if not m:
+            raise AssertionError(f"Bad line in VERSIONS: {line}")
+        module = m.group(1)
         assert module not in versions, f"Duplicate module {module} in VERSIONS"
-        versions[module] = (int(major), int(minor))
-    modules = set()
-    for entry in os.listdir("stdlib"):
-        if entry == "@python2" or entry == "VERSIONS":
-            continue
-        if os.path.isfile(os.path.join("stdlib", entry)):
-            mod, _ = os.path.splitext(entry)
-            modules.add(mod)
-        else:
-            modules.add(entry)
-    extra = modules - set(versions)
+        versions.add(module)
+    modules = _find_stdlib_modules()
+    # Sub-modules don't need to be listed in VERSIONS.
+    extra = {m.split(".")[0] for m in modules} - versions
     assert not extra, f"Modules not in versions: {extra}"
-    extra = set(versions) - modules
+    extra = versions - modules
     assert not extra, f"Versions not in modules: {extra}"
+
+
+def _find_stdlib_modules() -> set[str]:
+    modules = set()
+    for path, _, files in os.walk("stdlib"):
+        if "@python2" in path:
+            continue
+        for filename in files:
+            base_module = ".".join(os.path.normpath(path).split(os.sep)[1:])
+            if filename == "__init__.pyi":
+                modules.add(base_module)
+            elif filename.endswith(".pyi"):
+                mod, _ = os.path.splitext(filename)
+                modules.add(f"{base_module}.{mod}" if base_module else mod)
+    return modules
 
 
 def _strip_dep_version(dependency):
@@ -160,9 +174,7 @@ def check_metadata():
         major, minor = version.split(".")
         assert major.isdigit() and minor.isdigit(), msg
         for key in data:
-            assert key in {
-                "version", "python2", "python3", "requires"
-            }, f"Unexpected key {key} for {distribution}"
+            assert key in metadata_keys, f"Unexpected key {key} for {distribution}"
         assert isinstance(data.get("python2", False), bool), f"Invalid python2 value for {distribution}"
         assert isinstance(data.get("python3", True), bool), f"Invalid python3 value for {distribution}"
         assert isinstance(data.get("requires", []), list), f"Invalid requires value for {distribution}"

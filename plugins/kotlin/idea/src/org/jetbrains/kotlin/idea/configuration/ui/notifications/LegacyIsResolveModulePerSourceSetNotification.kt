@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.configuration.ui.notifications
 
 import com.intellij.notification.*
@@ -37,7 +38,7 @@ fun notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
     notificationSuppressState: SuppressResolveModulePerSourceSetNotificationState,
     isResolveModulePerSourceSetSetting: IsResolveModulePerSourceSetSetting
 ) {
-    if (PlatformVersion.isAndroidStudio() || PlatformUtils.isMobileIde()) return
+    if (PlatformVersion.isAndroidStudio() || PlatformUtils.isMobileIde() || PlatformUtils.isAppCode()) return
     if (notificationSuppressState.isSuppressed) return
     if (isResolveModulePerSourceSetSetting.isResolveModulePerSourceSet) return
     if (previouslyShownNotification.get()?.isExpired == false) return

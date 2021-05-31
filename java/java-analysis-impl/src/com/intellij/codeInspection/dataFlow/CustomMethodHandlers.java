@@ -2,13 +2,18 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.types.DfLongType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaBinOpValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.codeInspection.util.OptionalUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
@@ -28,7 +33,7 @@ import java.util.Calendar;
 import java.util.List;
 import java.util.Locale;
 
-import static com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField.*;
+import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.*;
 import static com.intellij.codeInspection.dataFlow.types.DfTypes.*;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.siyeh.ig.callMatcher.CallMatcher.*;
@@ -180,8 +185,15 @@ public final class CustomMethodHandlers {
               toValue((arguments, state, factory, method) -> floatRange(0.0f, Math.nextDown(1.0f))))
     .register(staticCall(JAVA_LANG_DOUBLE, "isNaN").parameterTypes("double"),
               toValue((arguments, state, factory, method) -> isNaN(arguments, state, DOUBLE_NAN)))
-    .register(staticCall(JAVA_LANG_FLOAT, "isNaN").parameterTypes("float"), 
-              toValue((arguments, state, factory, method) -> isNaN(arguments, state, FLOAT_NAN)));
+    .register(staticCall(JAVA_LANG_FLOAT, "isNaN").parameterTypes("float"),
+              toValue((arguments, state, factory, method) -> isNaN(arguments, state, FLOAT_NAN)))
+    .register(anyOf(
+                staticCall("com.google.common.collect.Lists", "newArrayList", "newLinkedList", "newCopyOnWriteArrayList").parameterCount(0),
+                staticCall("com.google.common.collect.Sets", "newHashSet", "newLinkedHashSet", "newIdentityHashSet",
+                           "newCopyOnWriteArraySet", "newConcurrentHashSet", "newTreeSet").parameterCount(0),
+                staticCall("com.google.common.collect.Maps", "newHashMap", "newLinkedHashMap", "newIdentityHashMap",
+                           "newConcurrentHashMap", "newTreeMap").parameterCount(0)),
+              toValue((arguments, state, factory, method) -> COLLECTION_SIZE.asDfType(intValue(0)).meet(LOCAL_OBJECT)));
 
   public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
@@ -378,7 +390,7 @@ public final class CustomMethodHandlers {
     if (arg == null) return DfType.TOP;
     DfType type = memState.getDfType(arg);
     LongRangeSet range = isLong ? DfLongType.extractRange(type) : DfIntType.extractRange(type);
-    return isLong ? longRange(range.abs(true)) : intRange(range.abs(false));
+    return isLong ? longRange(range.abs(LongRangeType.INT64)) : intRange(range.abs(LongRangeType.INT32));
   }
 
   private static @NotNull DfType calendarGet(DfaCallArguments arguments, DfaMemoryState state, DfaValueFactory factory) {
@@ -447,7 +459,7 @@ public final class CustomMethodHandlers {
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
-    DfType type = memoryState.getUnboxedDfType(value);
+    DfType type = DfaUtil.getUnboxedDfType(memoryState, value);
     Object constant = type.getConstantOfType(Object.class);
     if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
     return constant;
@@ -465,7 +477,7 @@ public final class CustomMethodHandlers {
       fromLowerBound = DfIntType.extractRange(state.getDfType(values[0])).fromRelation(RelationType.GE);
       fromUpperBound = DfIntType.extractRange(state.getDfType(values[1])).fromRelation(RelationType.LT);
     } else return DfType.TOP;
-    LongRangeSet intersection = fromLowerBound.intersect(fromUpperBound);
+    LongRangeSet intersection = fromLowerBound.meet(fromUpperBound);
     return intRangeClamped(intersection);
   }
 
@@ -548,10 +560,10 @@ public final class CustomMethodHandlers {
       DfaValue arrayLength = ARRAY_LENGTH.createValue(factory, array);
       if (!state.areEqual(arrayLength, collectionSize)) {
         LongRangeSet arraySizeRange = DfIntType.extractRange(state.getDfType(arrayLength));
-        LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GT).intersect(arraySizeRange);
-        LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).intersect(collectionSizeRange);
+        LongRangeSet biggerArrays = collectionSizeRange.fromRelation(RelationType.GT).meet(arraySizeRange);
+        LongRangeSet biggerCollections = arraySizeRange.fromRelation(RelationType.GE).meet(collectionSizeRange);
         if (!biggerArrays.isEmpty()) {
-          finalSize = factory.fromDfType(intRange(biggerArrays.unite(biggerCollections)));
+          finalSize = factory.fromDfType(intRange(biggerArrays.join(biggerCollections)));
         }
       }
     }
@@ -577,6 +589,6 @@ public final class CustomMethodHandlers {
 
   private static @NotNull DfType isNaN(DfaCallArguments arguments, DfaMemoryState state, DfType nan) {
     DfType type = state.getDfType(arguments.myArguments[0]);
-    return type.isSuperType(nan) ? type.equals(FLOAT_NAN) ? TRUE : BOOLEAN : FALSE;
+    return type.isSuperType(nan) ? type.equals(FLOAT_NAN) || type.equals(DOUBLE_NAN) ? TRUE : BOOLEAN : FALSE;
   }
 }

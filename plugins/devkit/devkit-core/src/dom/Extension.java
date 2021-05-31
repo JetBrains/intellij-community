@@ -2,7 +2,7 @@
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
-import com.intellij.openapi.extensions.impl.ExtensionDescriptor;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;

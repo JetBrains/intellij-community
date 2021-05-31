@@ -7,7 +7,7 @@ import training.lang.LangSupport
 
 abstract class IftModule(@Nls val name: String,
                          @Nls val description: String,
-                         val primaryLanguage: LangSupport,
+                         val primaryLanguage: LangSupport?,
                          /** It is lessons default type */
                          val moduleType: LessonType,
                          initLessons: () -> List<KLesson>) {

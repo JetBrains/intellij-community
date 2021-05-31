@@ -39,6 +39,24 @@ public class DeprecatedIsStillUsedInspectionTest extends LightJava9ModulesCodeIn
     myFixture.testHighlighting(getTestName(false) + ".java");
   }
 
+  public void testOverloadedAndStaticImport() {
+    myFixture.addClass("package bar;\n" +
+                       "import static foo.OverloadedAndStaticImport.bar;\n" +
+                       "class Bar {\n" +
+                       "  {\n" +
+                       "    bar();\n" +
+                       "  }\n" +
+                       "}");
+    myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+
+  public void testDeprecatedWithManyOccurrences() {
+    for (int i = 0; i < 20; i++) {
+      myFixture.addClass("class MyTest" + i + "{ DeprecatedWithManyOccurrences d;}");
+    }
+    myFixture.testFile(getTestName(false) + ".java").checkSymbolNames().test();
+  }
+
   public void testJavaModuleIsDeprecated() {
     VirtualFile firstModuleInfo = moduleInfo("module first {requires second;}", ModuleDescriptor.MAIN);
     VirtualFile secondModuleInfo = moduleInfo("@Deprecated module second {}", ModuleDescriptor.M2);

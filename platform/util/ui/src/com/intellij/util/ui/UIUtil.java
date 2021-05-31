@@ -168,6 +168,10 @@ public final class UIUtil {
   }
 
   public static int getTransparentTitleBarHeight(JRootPane rootPane) {
+    Object property = rootPane.getClientProperty("Window.transparentTitleBarHeight");
+    if (property instanceof Integer) {
+      return (int)property;
+    }
     return "small".equals(rootPane.getClientProperty("Window.style")) ? 19 : 24;
   }
 
@@ -350,13 +354,6 @@ public final class UIUtil {
     public static @NotNull GrayFilter namedFilter(@NotNull String resourceName, @NotNull GrayFilter defaultFilter) {
       return ObjectUtils.notNull((GrayFilter)UIManager.get(resourceName), defaultFilter);
     }
-  }
-
-  /** @deprecated use {@link JBUIScale} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static boolean isAppleRetina() {
-    return false;
   }
 
   public static @NotNull Couple<Color> getCellColors(@NotNull JTable table, boolean isSel, int row, int column) {
@@ -870,7 +867,6 @@ public final class UIUtil {
     Insets i = cb.getInsets();
 
     size = cb.getSize(size);
-    viewRect.x = i.left;
     viewRect.y = i.top;
     viewRect.width = size.width - (i.right + viewRect.x);
     viewRect.height = size.height - (i.bottom + viewRect.y);
@@ -2299,15 +2295,6 @@ public final class UIUtil {
     editor.reshape(x, y, width, height);
   }
 
-  /**
-   * @deprecated the method was used to fix Aqua Look-n-Feel problems. Now it does not make sense
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static int fixComboBoxHeight(final int height) {
-    return height;
-  }
-
   public static final int LIST_FIXED_CELL_HEIGHT = 20;
 
   /**
@@ -2662,7 +2649,7 @@ public final class UIUtil {
   }
 
   public static int getLcdContrastValue() {
-    int lcdContrastValue = Registry.intValue("lcd.contrast.value", 0);
+    int lcdContrastValue = LoadingState.APP_STARTED.isOccurred() ? Registry.intValue("lcd.contrast.value", 0) : 0;
     if (lcdContrastValue == 0) {
       return StartupUiUtil.doGetLcdContrastValueForSplash(StartupUiUtil.isUnderDarcula());
     }
@@ -3328,25 +3315,6 @@ public final class UIUtil {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static boolean isJreHiDPIEnabled() {
     return JreHiDpiUtil.isJreHiDPIEnabled();
-  }
-
-  /**
-   * @deprecated use {@link JreHiDpiUtil#isJreHiDPI(Graphics2D)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static boolean isJreHiDPI(@Nullable Graphics2D g) {
-    return JreHiDpiUtil.isJreHiDPI(g);
-  }
-
-  /**
-   * @deprecated use {@link UIUtil#getPanelBackground()} instead
-   */
-  @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static @NotNull Color getPanelBackgound() {
-    return getPanelBackground();
   }
 
   public static void doNotScrollToCaret(@NotNull JTextComponent textComponent) {

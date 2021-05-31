@@ -10,13 +10,12 @@ import com.intellij.util.ProcessingContext;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 class SimpleProviderBinding implements ProviderBinding {
-  private final List<ProviderInfo<ElementPattern>> myProviderPairs = new SmartList<>();
+  private final List<ProviderInfo<ElementPattern<?>>> myProviderPairs = new SmartList<>();
 
-  void registerProvider(@NotNull PsiReferenceProvider provider, @NotNull ElementPattern pattern, double priority) {
+  void registerProvider(@NotNull PsiReferenceProvider provider, @NotNull ElementPattern<?> pattern, double priority) {
     myProviderPairs.add(new ProviderInfo<>(provider, pattern, priority));
   }
 
@@ -28,12 +27,8 @@ class SimpleProviderBinding implements ProviderBinding {
   }
 
   @Override
-  public void unregisterProvider(@NotNull final PsiReferenceProvider provider) {
-    for (final ProviderInfo<ElementPattern> trinity : new ArrayList<>(myProviderPairs)) {
-      if (trinity.provider.equals(provider)) {
-        myProviderPairs.remove(trinity);
-      }
-    }
+  public void unregisterProvider(@NotNull PsiReferenceProvider provider) {
+    myProviderPairs.removeIf(trinity -> trinity.provider.equals(provider));
   }
 
   boolean isEmpty() {

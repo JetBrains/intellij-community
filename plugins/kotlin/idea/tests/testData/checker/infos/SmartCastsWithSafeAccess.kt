@@ -12,15 +12,15 @@ interface D : A
 
 fun test(a: A?) {
     if (a != null && a is B?) {
-        <info descr="Smart cast to B">a</info>.bar()
+        <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.bar()
     }
 
     if (a is B && a is C) {
-        <info descr="Smart cast to B">a</info>.foo()
+        <info descr="Smart cast to B" tooltip="Smart cast to B">a</info>.foo()
     }
 
     if (a is B? && a is C?) {
-        <info descr="Smart cast to B?">a</info><info>?.</info>bar()
+        <info descr="Smart cast to B?" tooltip="Smart cast to B?">a</info><info>?.</info>bar()
     }
 
     a<info>?.</info>foo()

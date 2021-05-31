@@ -7,8 +7,9 @@ import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -36,8 +37,12 @@ public final class DfTypes {
 
     @Override
     public @NotNull DfType join(@NotNull DfType other) {
-      if (other instanceof DfBooleanType) return this;
-      return TOP;
+      return other instanceof DfBooleanType ? this : TOP;
+    }
+
+    @Override
+    public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+      return other instanceof DfBooleanType ? this : null;
     }
 
     @Override
@@ -66,12 +71,12 @@ public final class DfTypes {
   /**
    * A true boolean constant
    */
-  public static final DfBooleanConstantType TRUE = new DfBooleanConstantType(true);
+  public static final @NotNull DfBooleanConstantType TRUE = new DfBooleanConstantType(true);
 
   /**
    * A false boolean constant
    */
-  public static final DfBooleanConstantType FALSE = new DfBooleanConstantType(false);
+  public static final @NotNull DfBooleanConstantType FALSE = new DfBooleanConstantType(false);
 
   /**
    * @param value boolean value
@@ -94,7 +99,7 @@ public final class DfTypes {
    * @return resulting type. Might be {@link DfType#BOTTOM} if range is empty or all its values are out of the int domain.
    */
   public static @NotNull DfType intRangeClamped(LongRangeSet range) {
-    return intRange(range.intersect(DfIntRangeType.FULL_RANGE));
+    return intRange(range.meet(DfIntRangeType.FULL_RANGE));
   }
 
   /**
@@ -178,11 +183,29 @@ public final class DfTypes {
   /**
    * A convenience selector method to call {@link #longRange(LongRangeSet)} or {@link #intRangeClamped(LongRangeSet)}
    * @param range range
-   * @param isLong whether int or long type should be created
-   * @return resulting type.
+   * @param lrType LongRangeType
+   * @return resulting DfType.
    */
-  public static @NotNull DfType rangeClamped(LongRangeSet range, boolean isLong) {
-    return isLong ? longRange(range) : intRangeClamped(range);
+  public static @NotNull DfType rangeClamped(@NotNull LongRangeSet range, @NotNull LongRangeType lrType) {
+    switch (lrType) {
+      case INT32:
+        return intRangeClamped(range);
+      case INT64:
+        return longRange(range);
+      default:
+        throw new IllegalStateException("Unexpected value: " + lrType);
+    }
+  }
+
+  static @NotNull DfType range(@NotNull LongRangeSet range, @Nullable LongRangeSet wideRange, @NotNull LongRangeType lrType) {
+    switch (lrType) {
+      case INT32:
+        return intRange(range, wideRange);
+      case INT64:
+        return longRange(range, wideRange);
+      default:
+        throw new IllegalStateException("Unexpected value: " + lrType);
+    }
   }
 
   /**
@@ -434,7 +457,7 @@ public final class DfTypes {
   public static DfReferenceType customObject(@NotNull TypeConstraint constraint,
                                              @NotNull DfaNullability nullability,
                                              @NotNull Mutability mutability,
-                                             @Nullable JvmSpecialField jvmSpecialField,
+                                             @Nullable SpecialField jvmSpecialField,
                                              @NotNull DfType sfType) {
     if (nullability == DfaNullability.NULL) {
       throw new IllegalArgumentException();

@@ -31,7 +31,8 @@ import org.jetbrains.jps.model.java.JavaResourceRootType;
 
 import java.awt.*;
 
-import static java.awt.GridBagConstraints.*;
+import static java.awt.GridBagConstraints.CENTER;
+import static java.awt.GridBagConstraints.HORIZONTAL;
 
 public class PluginModuleBuilder extends JavaModuleBuilder {
 

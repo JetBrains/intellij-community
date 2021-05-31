@@ -43,6 +43,7 @@ import training.util.KeymapUtil
 import training.util.WeakReferenceDelegator
 import training.util.invokeActionForFocusContext
 import java.awt.Rectangle
+import java.awt.event.KeyEvent
 import javax.swing.JDialog
 import javax.swing.text.JTextComponent
 
@@ -55,7 +56,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   protected abstract val confNameForWatches: String
   protected abstract val debuggingMethodName: String
   protected abstract val methodForStepInto: String
-  protected abstract val stepIntoDirection: String
+  protected abstract val stepIntoDirectionToRight: Boolean
 
   protected val afterFixText: String by lazy { sample.text.replaceFirst("[0]", "[1]") }
 
@@ -240,7 +241,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       }
       text(LessonsBundle.message("debug.workflow.choose.method.to.step.in",
                                  code(methodForStepInto),
-                                 "<raw_action>$stepIntoDirection</raw_action>",
+                                 LessonUtil.rawKeyStroke(if (stepIntoDirectionToRight) KeyEvent.VK_RIGHT else KeyEvent.VK_LEFT),
                                  action("EditorEnter")))
       stateCheck {
         val debugLine = debugSession?.currentStackFrame?.sourcePosition?.line
@@ -250,7 +251,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       proposeModificationRestore(sample.text)
       test {
         Thread.sleep(500)
-        invokeActionViaShortcut(if (stepIntoDirection == "→") "RIGHT" else "LEFT")
+        invokeActionViaShortcut(if (stepIntoDirectionToRight) "RIGHT" else "LEFT")
         invokeActionViaShortcut("ENTER")
       }
     }

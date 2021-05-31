@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components.panels;
 
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBValue;
 import org.jetbrains.annotations.NotNull;
@@ -246,5 +247,10 @@ public final class VerticalLayout implements LayoutManager2 {
       JBInsets.addTo(result, container.getInsets());
       return result;
     }
+  }
+
+  @NotNull
+  public List<? extends Component> getComponents() {
+    return ContainerUtil.concat(myTop, myCenter, myBottom);
   }
 }

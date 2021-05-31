@@ -26,14 +26,16 @@ import training.util.WeakReferenceDelegator
 import java.awt.Component
 import kotlin.math.max
 
-class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
+internal class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: Editor?, val predefinedFile: VirtualFile?) : Disposable {
   private data class TaskInfo(val content: () -> Unit,
                               var restoreIndex: Int,
                               var taskProperties: TaskProperties?,
                               val taskContent: (TaskContext.() -> Unit)?,
+                              val taskVisualIndex: Int?,
                               var messagesNumberBeforeStart: Int = 0,
                               var rehighlightComponent: (() -> Component)? = null,
                               var userVisibleInfo: PreviousTaskInfo? = null,
+                              var transparentRestore: Boolean? = null,
                               val removeAfterDoneMessages: MutableList<Int> = mutableListOf())
 
   var predefinedEditor: Editor? by WeakReferenceDelegator(initialEditor)
@@ -55,6 +57,7 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     get() = selectedEditor ?: throw NoTextEditor()
 
   data class TaskData(var shouldRestoreToTask: (() -> TaskContext.TaskId?)? = null,
+                      var transparentRestore: Boolean? = null,
                       var delayMillis: Int = 0)
 
   private val taskActions: MutableList<TaskInfo> = ArrayList()
@@ -66,8 +69,11 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
   private var currentRestoreRecorder: ActionsRecorder? = null
   internal var currentTaskIndex = 0
     private set
+  private var currentVisualIndex = 1
 
   private val parentDisposable: Disposable = LearnToolWindowFactory.learnWindowPerProject[project]?.parentDisposable ?: project
+
+  internal val visualIndexNumber: Int get() = taskActions[currentTaskIndex].taskVisualIndex ?: 0
 
   // Is used from ui detection pooled thread
   @Volatile
@@ -80,7 +86,13 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
 
   private fun addTaskAction(taskProperties: TaskProperties? = null, taskContent: (TaskContext.() -> Unit)? = null, content: () -> Unit) {
     val previousIndex = max(taskActions.size - 1, 0)
-    taskActions.add(TaskInfo(content, previousIndex, taskProperties, taskContent))
+
+
+    val taskVisualIndex = if (taskProperties != null && taskProperties.hasDetection && taskProperties.messagesNumber > 0) {
+      currentVisualIndex++
+    }
+    else null
+    taskActions.add(TaskInfo(content, previousIndex, taskProperties, taskContent, taskVisualIndex))
   }
 
   fun getUserVisibleInfo(index: Int): PreviousTaskInfo {
@@ -232,6 +244,12 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
     processNextTask(restoreIndex)
   }
 
+  fun calculateRestoreIndex(): Int {
+    var i = currentTaskIndex - 1
+    while (i > 0 && taskActions[i].transparentRestore == true) i--
+    return i
+  }
+
   /** @return a callback to clear resources used to track restore */
   private fun checkForRestore(taskContext: TaskContextImpl,
                               taskData: TaskData): () -> Unit {
@@ -290,6 +308,9 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
   private fun chainNextTask(taskContext: TaskContextImpl,
                             recorder: ActionsRecorder,
                             taskData: TaskData) {
+    val taskInfo = taskActions[currentTaskIndex]
+    taskInfo.transparentRestore = taskData.transparentRestore
+
     val clearRestore = checkForRestore(taskContext, taskData)
 
     recorder.tryToCheckCallback()
@@ -301,7 +322,6 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
         if (taskHasBeenDone) {
           clearRestore()
           LessonManager.instance.passExercise()
-          val taskInfo = taskActions[currentTaskIndex]
           if (foundComponent == null) foundComponent = taskInfo.userVisibleInfo?.ui
           if (rehighlightComponent == null) rehighlightComponent = taskInfo.rehighlightComponent
           for (index in taskInfo.removeAfterDoneMessages) {
@@ -345,12 +365,20 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
         break
       }
     }
-    LessonManager.instance.addMessage(text, !hasDetection)
+    // A little bit hacky here: visual index should be shown only for the first paragraph.
+    // But is is passed here for all paragraphs.
+    // But... LessonMessagePane will draw number only for the first active paragraph :)
+    LessonManager.instance.addMessage(text, !hasDetection, taskInfo.taskVisualIndex)
   }
 
   private fun addAllInactiveMessages() {
-    val tasksWithContent = taskActions.mapNotNull { it.taskContent }
-    val messages = tasksWithContent.map { LessonExecutorUtil.textMessages(it, project) }.flatten()
-    LessonManager.instance.addInactiveMessages(messages)
+    for (taskInfo in taskActions) {
+      if (taskInfo.taskContent != null) {
+        val textMessages = LessonExecutorUtil.textMessages(taskInfo.taskContent, project)
+        for ((index, message) in textMessages.withIndex()) {
+          LessonManager.instance.addInactiveMessage(message, taskInfo.taskVisualIndex?.takeIf { index == 0 })
+        }
+      }
+    }
   }
 }

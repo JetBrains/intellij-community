@@ -30,7 +30,7 @@ import java.util.List;
 
 public abstract class QtFileType extends LanguageFileType implements INativeFileType {
   private final String myName;
-  private final String myDisplayName;
+  private final @Nls String myDisplayName;
   private final @Label String myDescription;
   private final String myDefaultExtension;
 

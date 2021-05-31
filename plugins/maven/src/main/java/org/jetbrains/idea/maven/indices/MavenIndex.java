@@ -237,9 +237,10 @@ public final class MavenIndex implements MavenSearchIndex {
   }
 
   @Override
-  public synchronized void close(boolean releaseIndexContext) {
+  public void close(boolean releaseIndexContext) {
+    IndexData data = myData;
     try {
-      if (myData != null) myData.close(releaseIndexContext);
+      if (data != null) data.close(releaseIndexContext);
     }
     catch (MavenIndexException e) {
       MavenLog.LOG.warn(e);
@@ -756,9 +757,11 @@ public final class MavenIndex implements MavenSearchIndex {
     public Set<String> read(@NotNull DataInput s) throws IOException {
       int count = s.readInt();
       Set<String> result = new HashSet<>(count);
-      while (count-- > 0) {
-        result.add(s.readUTF());
-      }
+      try {
+        while (count-- > 0) {
+          result.add(s.readUTF());
+        }
+      } catch (EOFException ignore){}
       return result;
     }
   }

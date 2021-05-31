@@ -431,14 +431,14 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
                         "    PsiElement(LETTER)('x')\n" +
                         "    PsiElement(OTHER)('}')\n";
     FlyweightCapableTreeStructure<LighterASTNode> tree = builder.getLightTree();
-    assertEquals(treeString, DebugUtil.lightTreeToString(tree, false));
+    assertEquals(treeString, DebugUtil.lightTreeToString(tree, true));
     assertEquals(1, parserInvocations.get());
 
-    assertEquals(treeString, DebugUtil.lightTreeToString(tree, false));
+    assertEquals(treeString, DebugUtil.lightTreeToString(tree, true));
     assertEquals(1, parserInvocations.get());
 
     // new tree
-    assertEquals(treeString, DebugUtil.lightTreeToString(builder.getLightTree(), false));
+    assertEquals(treeString, DebugUtil.lightTreeToString(builder.getLightTree(), true));
     assertEquals(1, parserInvocations.get());
   }
 
@@ -488,14 +488,14 @@ public class PsiBuilderQuickTest extends BareTestFixtureTestCase {
 
     // check light tree composition
     FlyweightCapableTreeStructure<LighterASTNode> lightTree = builder.getLightTree();
-    assertEquals(expected, DebugUtil.lightTreeToString(lightTree, false));
+    assertEquals(expected, DebugUtil.lightTreeToString(lightTree, true));
     // verify that light tree can be taken multiple times
     FlyweightCapableTreeStructure<LighterASTNode> lightTree2 = builder.getLightTree();
-    assertEquals(expected, DebugUtil.lightTreeToString(lightTree2, false));
+    assertEquals(expected, DebugUtil.lightTreeToString(lightTree2, true));
 
     // check heavy tree composition
     ASTNode root = builder.getTreeBuilt();
-    assertEquals(expected, DebugUtil.nodeTreeToString(root, false));
+    assertEquals(expected, DebugUtil.nodeTreeToString(root, true));
 
     // check heavy vs. light tree merging
     PsiBuilder builder2 = createBuilder(text);

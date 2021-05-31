@@ -8,6 +8,7 @@ import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInspection.QuickFix;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.DataManagerImpl;
@@ -26,7 +27,9 @@ import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
+import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.extensions.PluginId;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManagerListener;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
@@ -169,9 +172,12 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
   @Override
   public List<AnAction> promote(@NotNull List<? extends AnAction> actions,
                                 @NotNull DataContext context) {
+
     ArrayList<AnAction> sorted = new ArrayList<>(actions);
-    sorted.remove(this);
-    sorted.add(this);
+    if (context.getData(PlatformDataKeys.CONTEXT_COMPONENT) instanceof EditorComponentImpl) {
+      sorted.remove(this);
+      sorted.add(this);
+    }
     return sorted;
   }
 
@@ -926,15 +932,16 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
   }
 
-  private static final class InspectorTable extends JPanel {
+  private static final class InspectorTable extends JPanel implements DataProvider {
     InspectorTableModel myModel;
     DimensionsComponent myDimensionComponent;
     StripeTable myTable;
 
     private InspectorTable(@NotNull final List<? extends PropertyBean> clickInfo) {
-       myModel = new InspectorTableModel(clickInfo);
-       init(null);
+      myModel = new InspectorTableModel(clickInfo);
+      init(null);
     }
+
     private InspectorTable(@NotNull final Component component) {
 
       myModel = new InspectorTableModel(component);
@@ -1033,11 +1040,60 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
           changed = ((InspectorTableModel)model).myProperties.get(row).changed;
         }
 
-        final Color fg = isSelected ? table.getSelectionForeground() : changed ? JBUI.CurrentTheme.Link.Foreground.ENABLED : table.getForeground();
+        Color fg = isSelected ? table.getSelectionForeground()
+                              : changed ? JBUI.CurrentTheme.Link.Foreground.ENABLED
+                                        : table.getForeground();
         final JBFont font = JBFont.label();
         setFont(changed ? font.asBold() : font);
         setForeground(fg);
         return this;
+      }
+    }
+
+    @Override
+    public Object getData(@NotNull String dataId) {
+      if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+        return new MyInspectorTableCopyProvider();
+      }
+      return null;
+    }
+
+    private class MyInspectorTableCopyProvider implements CopyProvider {
+      @Override
+      public void performCopy(@NotNull DataContext dataContext) {
+        int[] rows = myTable.getSelectedRows();
+
+        StringBuilder builder = new StringBuilder();
+        for (int row : rows) {
+          if (builder.length() > 0) builder.append('\n');
+
+          for (int col = 0; col < myTable.getColumnCount(); col++) {
+            builder.append(getTextValue(row, col));
+            if (col < myTable.getColumnCount() - 1) builder.append("\t");
+          }
+        }
+
+        CopyPasteManager.getInstance().setContents(new TextTransferable(builder.toString()));
+      }
+
+      private String getTextValue(int row, int col) {
+        Object value = myTable.getValueAt(row, col);
+        TableColumn tableColumn = myTable.getColumnModel().getColumn(col);
+        Component component = tableColumn.getCellRenderer().getTableCellRendererComponent(myTable, value, false, false, row, col);
+        if (component instanceof JLabel) { // see ValueCellRenderer
+          return ((JLabel)component).getText();
+        }
+        return value.toString();
+      }
+
+      @Override
+      public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+        return true;
+      }
+
+      @Override
+      public boolean isCopyVisible(@NotNull DataContext dataContext) {
+        return myTable.getSelectedRowCount() > 0;
       }
     }
   }
@@ -1180,7 +1236,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     private static final JLabel NULL_RENDERER = new JLabel("-");
 
     @Override
-    public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
+    public JLabel getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       if (value == null) {
         NULL_RENDERER.setOpaque(isSelected);
         NULL_RENDERER.setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());

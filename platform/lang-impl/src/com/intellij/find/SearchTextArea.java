@@ -22,7 +22,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
-import com.intellij.ui.components.JBTextArea;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
@@ -98,21 +97,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
   private boolean myMultilineEnabled = true;
 
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public SearchTextArea(boolean searchMode) {
-    this(new JBTextArea(), searchMode);
-  }
-
-  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode) {
     this (textArea, searchMode);
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode, boolean infoMode, boolean allowInsertTabInMultiline) {
-    this(textArea, searchMode);
   }
 
   public SearchTextArea(@NotNull JTextArea textArea, boolean searchMode) {

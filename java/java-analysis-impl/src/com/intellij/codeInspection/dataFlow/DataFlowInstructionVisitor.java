@@ -7,14 +7,14 @@ import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaMethodReferenceReturnAnchor;
 import com.intellij.codeInspection.dataFlow.java.anchor.JavaSwitchLabelTakenAnchor;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.java.inst.InstanceofInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.ThisDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.*;
 import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.InstanceofInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -291,7 +291,12 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
         throw new IllegalStateException("Non-physical expression is passed");
       }
     }
-    expression.accept(new ExpressionVisitor(value, memState));
+    if (expression instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      if (OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
+        processOfNullableResult(value, memState, call.getArgumentList().getExpressions()[0]);
+      }
+    }
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (parent instanceof PsiTypeCastExpression) {
       TypeConstraint fact = TypeConstraint.fromDfType(memState.getDfType(value));
@@ -317,7 +322,7 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
   private void processOfNullableResult(@NotNull DfaValue value, @NotNull DfaMemoryState memState, PsiElement anchor) {
     DfaValueFactory factory = value.getFactory();
-    DfaValue optionalValue = JvmSpecialField.OPTIONAL_VALUE.createValue(factory, value);
+    DfaValue optionalValue = SpecialField.OPTIONAL_VALUE.createValue(factory, value);
     DfaNullability nullability = DfaNullability.fromDfType(memState.getDfType(optionalValue));
     ThreeState present;
     if (nullability == DfaNullability.NULL) {
@@ -351,6 +356,15 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
     else if (problem instanceof ArrayStoreProblem && failed == ThreeState.YES) {
       myArrayStoreProblems.put(((ArrayStoreProblem)problem).getAnchor(),
                                Pair.create(((ArrayStoreProblem)problem).getFromType(), ((ArrayStoreProblem)problem).getToType()));
+    }
+    else if (problem instanceof ContractFailureProblem) {
+      PsiCallExpression call = tryCast(((ContractFailureProblem)problem).getAnchor(), PsiCallExpression.class);
+      if (call != null) {
+        Boolean isFailing = myFailingCalls.get(call);
+        if (isFailing != null || !hasTrivialFailContract(call)) {
+          myFailingCalls.put(call, failed == ThreeState.YES && !Boolean.FALSE.equals(isFailing));
+        }
+      }
     }
     else if (problem instanceof NullabilityProblemKind.NullabilityProblem) {
       DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
@@ -417,33 +431,6 @@ final class DataFlowInstructionVisitor implements JavaDfaListener {
 
     boolean alwaysFails() {
       return (normalException || ephemeralException) && !normalOk;
-    }
-  }
-
-  private class ExpressionVisitor extends JavaElementVisitor {
-    private final DfaValue myValue;
-    private final DfaMemoryState myMemState;
-
-    ExpressionVisitor(DfaValue value, DfaMemoryState memState) {
-      myValue = value;
-      myMemState = memState;
-    }
-
-    @Override
-    public void visitMethodCallExpression(PsiMethodCallExpression call) {
-      super.visitMethodCallExpression(call);
-      if (OptionalUtil.OPTIONAL_OF_NULLABLE.test(call)) {
-        processOfNullableResult(myValue, myMemState, call.getArgumentList().getExpressions()[0]);
-      }
-    }
-
-    @Override
-    public void visitCallExpression(PsiCallExpression call) {
-      super.visitCallExpression(call);
-      Boolean isFailing = myFailingCalls.get(call);
-      if (isFailing != null || !hasTrivialFailContract(call)) {
-        myFailingCalls.put(call, DfaTypeValue.isContractFail(myValue) && !Boolean.FALSE.equals(isFailing));
-      }
     }
   }
 

@@ -10,4 +10,4 @@ fun test(m: MyClass) {
     }
 }
 
-// REF: (in test.Test).act(Action)
+// REF: of test.Test.act(Action)

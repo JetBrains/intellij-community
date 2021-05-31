@@ -4,7 +4,6 @@ package org.jetbrains.intellij.build.kotlin
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
-import org.jetbrains.intellij.build.impl.CompilationContextImpl
 import org.jetbrains.jps.model.artifact.JpsArtifact
 import org.jetbrains.jps.model.artifact.JpsArtifactService
 
@@ -69,6 +68,7 @@ final class KotlinPluginArtifact {
 
     switch (kind) {
       case KotlinPluginKind.AC:
+      case KotlinPluginKind.AC_KMM:
         def extendedBuild = sinceBuild.substring(0, sinceBuild.lastIndexOf('.'))
         if (!sinceBuild.matches("\\d+\\.\\d+")) {
           sinceBuild = extendedBuild
@@ -111,6 +111,7 @@ final class KotlinPluginArtifact {
         )
         break
       case KotlinPluginKind.MI:
+      case KotlinPluginKind.AC_KMM:
       case KotlinPluginKind.AC:
       case KotlinPluginKind.ROBOSCOPE:
         break

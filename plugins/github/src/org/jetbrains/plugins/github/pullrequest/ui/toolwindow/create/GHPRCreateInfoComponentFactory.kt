@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.CommonBundle
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.dvcs.ui.DvcsBundle
@@ -58,7 +59,6 @@ import org.jetbrains.plugins.github.ui.util.SingleValueModel
 import org.jetbrains.plugins.github.util.CollectionDelta
 import org.jetbrains.plugins.github.util.GHProjectRepositoriesManager
 import org.jetbrains.plugins.github.util.GithubGitHelper
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.awt.Component
 import java.awt.Container
 import java.awt.event.ActionEvent

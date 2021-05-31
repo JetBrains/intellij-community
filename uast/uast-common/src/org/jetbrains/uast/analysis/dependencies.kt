@@ -26,10 +26,14 @@ sealed class Dependent : UserDataHolderBase() {
   }
 }
 
+
 sealed class Dependency : UserDataHolderBase() {
   abstract val elements: Set<UElement>
 
-  data class CommonDependency(val element: UElement) : Dependency() {
+  data class CommonDependency(
+    val element: UElement,
+    override val referenceInfo: DependencyOfReference.ReferenceInfo? = null
+  ) : Dependency(), DependencyOfReference {
     override val elements = setOf(element)
   }
 
@@ -37,10 +41,13 @@ sealed class Dependency : UserDataHolderBase() {
     override val elements = setOf(element)
   }
 
-  data class BranchingDependency(override val elements: Set<UElement>) : Dependency() {
+  data class BranchingDependency(
+    override val elements: Set<UElement>,
+    override val referenceInfo: DependencyOfReference.ReferenceInfo? = null
+  ) :  Dependency(), DependencyOfReference {
     fun unwrapIfSingle(): Dependency =
       if (elements.size == 1) {
-        CommonDependency(elements.single())
+        CommonDependency(elements.single(), referenceInfo)
       }
       else {
         this
@@ -62,18 +69,26 @@ sealed class Dependency : UserDataHolderBase() {
       get() = dependencyFromConnectedGraph.elements
   }
 
-  data class PotentialSideEffectDependency(val candidates: CandidatesTree) : Dependency() {
+  data class PotentialSideEffectDependency(
+    val candidates: CandidatesTree,
+    override val referenceInfo: DependencyOfReference.ReferenceInfo? = null
+  ) : Dependency(), DependencyOfReference {
     data class SideEffectChangeCandidate(
       val updateElement: UElement,
-      val dependencyEvidence: DependencyEvidence
+      val dependencyEvidence: DependencyEvidence,
+      val dependencyWitnessValues: Collection<UValueMark> = emptyList(),
     )
 
     data class DependencyEvidence(
-      val strict: Boolean,
       val evidenceElement: UReferenceExpression? = null,
-      val dependencyWitnessIdentifier: String? = null,
-      val requires: DependencyEvidence? = null
-    )
+      val requires: Collection<DependencyEvidence> = emptyList()
+    ) {
+      companion object : () -> DependencyEvidence {
+        private val DEFAULT = DependencyEvidence()
+
+        override fun invoke(): DependencyEvidence = DEFAULT
+      }
+    }
 
     /**
      * Represents tree of possible update candidates. All branches represents superposition of possible updates, which exist simultaneously,
@@ -91,8 +106,8 @@ sealed class Dependency : UserDataHolderBase() {
       /**
        * Select first proven candidate on each path to leaf.
        */
-      fun selectPotentialCandidates(evidenceChecker: (DependencyEvidence) -> Boolean): Collection<SideEffectChangeCandidate> {
-        return selectFromBranches(root, evidenceChecker)
+      fun selectPotentialCandidates(candidateChecker: (SideEffectChangeCandidate) -> Boolean): Collection<SideEffectChangeCandidate> {
+        return selectFromBranches(root, candidateChecker)
       }
 
       fun addToBegin(candidate: SideEffectChangeCandidate): CandidatesTree {
@@ -109,8 +124,9 @@ sealed class Dependency : UserDataHolderBase() {
       }
 
       companion object {
-        private fun selectFromBranches(node: Node, evidenceChecker: (DependencyEvidence) -> Boolean): Collection<SideEffectChangeCandidate> {
-          return if (node is Node.CandidateNode && evidenceChecker(node.candidate.dependencyEvidence)) {
+        private fun selectFromBranches(node: Node,
+                                       evidenceChecker: (SideEffectChangeCandidate) -> Boolean): Collection<SideEffectChangeCandidate> {
+          return if (node is Node.CandidateNode && evidenceChecker(node.candidate)) {
             listOf(node.candidate)
           }
           else {
@@ -138,5 +154,17 @@ sealed class Dependency : UserDataHolderBase() {
 
   fun and(other: Dependency): Dependency {
     return BranchingDependency(elements + other.elements)
+  }
+}
+
+interface DependencyOfReference {
+  val referenceInfo: ReferenceInfo?
+
+  data class ReferenceInfo(val identifier: String, val possibleReferencedValues: Collection<UValueMark>)
+}
+
+class UValueMark {
+  override fun toString(): String {
+    return "UValueMark@${System.identityHashCode(this)}"
   }
 }

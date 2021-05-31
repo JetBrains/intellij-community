@@ -2,8 +2,6 @@ package org.jetbrains.plugins.textmate.language.syntax.lexer;
 
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
-import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.textmate.Constants;
@@ -95,9 +93,11 @@ public final class TextMateLexer {
   }
 
   private void parseLine(@NotNull CharSequence lineCharSequence, @NotNull Queue<Token> output) {
-    int startLineOffset = myCurrentOffset;
+    int startLinePosition = myCurrentOffset;
     int linePosition = 0;
     int lineByteOffset = 0;
+    boolean matchBeginOfString = startLinePosition == 0;
+    int anchorByteOffset = -1; // makes sense only for a line, cannot be used across lines
     String line = lineCharSequence.length() > 0 && lineCharSequence.charAt(lineCharSequence.length() - 1) == '\n'
                   ? lineCharSequence.toString()
                   : lineCharSequence + "\n";
@@ -105,73 +105,98 @@ public final class TextMateLexer {
     StringWithId string = new StringWithId(line);
     while (true) {
       final TextMateLexerState lexerState = myStates.getHead();
-      if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null
-          && !SyntaxMatchUtils.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, lexerState).matched()) {
-        closeScopeSelector(output, linePosition + startLineOffset);
-        closeScopeSelector(output, linePosition + startLineOffset);
-        myStates = myStates.getTail();
+      if (lexerState.syntaxRule.getStringAttribute(Constants.StringKey.WHILE) != null) {
+        MatchData matchWhile = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.WHILE, string, lineByteOffset, anchorByteOffset,
+                                                                 matchBeginOfString, lexerState);
+        if (!matchWhile.matched()) {
+          closeScopeSelector(output, linePosition + startLinePosition);
+          closeScopeSelector(output, linePosition + startLinePosition);
+          myStates = myStates.getTail();
+          // this is happening on line start, none of previous states couldn't be run on this line, so no need to update anchorByteOffset
+          continue;
+        }
+        else {
+          anchorByteOffset = matchWhile.byteOffset().end;
+        }
       }
-      else {
-        break;
-      }
+      break;
     }
 
-    final Object2IntMap<List<TextMateLexerState>> localStates = new Object2IntOpenHashMap<>();
     while (true) {
       TextMateLexerState lastState = myStates.getHead();
       SyntaxNodeDescriptor lastRule = lastState.syntaxRule;
 
-      TextMateLexerState currentState =
-        SyntaxMatchUtils.matchFirst(lastRule, string, lineByteOffset, TextMateWeigh.Priority.NORMAL, myCurrentScope);
+      TextMateLexerState currentState = SyntaxMatchUtils.matchFirst(lastRule, string, lineByteOffset, anchorByteOffset, matchBeginOfString,
+                                                                    TextMateWeigh.Priority.NORMAL, myCurrentScope);
       SyntaxNodeDescriptor currentRule = currentState.syntaxRule;
       MatchData currentMatch = currentState.matchData;
 
       int endPosition;
-      MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, lastState);
+      MatchData endMatch = SyntaxMatchUtils.matchStringRegex(Constants.StringKey.END, string, lineByteOffset, anchorByteOffset, matchBeginOfString, lastState);
       if (endMatch.matched() && (!currentMatch.matched() ||
                                  currentMatch.byteOffset().start >= endMatch.byteOffset().start ||
                                  lastState.equals(currentState))) {
+        TextMateLexerState poppedState = myStates.getHead();
+        if (poppedState.matchData.matched() && !poppedState.matchedEOL) {
+          // if begin hasn't matched EOL, it was performed on the same line, we need to use its anchor
+          anchorByteOffset = poppedState.matchData.byteOffset().end;
+        }
         myStates = myStates.getTail();
+
         TextMateRange endRange = endMatch.charRange(line, string.bytes);
         int startPosition = endPosition = endRange.start;
-        closeScopeSelector(output, startPosition + startLineOffset); // closing content scope
+        closeScopeSelector(output, startPosition + startLinePosition); // closing content scope
         if (lastRule.getCaptures(Constants.CaptureKey.END_CAPTURES) == null
             && lastRule.getCaptures(Constants.CaptureKey.CAPTURES) == null
             && lastRule.getCaptures(Constants.CaptureKey.BEGIN_CAPTURES) == null
             ||
-            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, startLineOffset)
+            parseCaptures(output, Constants.CaptureKey.END_CAPTURES, lastRule, endMatch, string, line, startLinePosition)
             ||
-            parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, startLineOffset)) {
+            parseCaptures(output, Constants.CaptureKey.CAPTURES, lastRule, endMatch, string, line, startLinePosition)) {
           // move line position only if anything was captured or if there is nothing to capture at all
           endPosition = endRange.end;
         }
-        closeScopeSelector(output, endPosition + startLineOffset); // closing basic scope
+        closeScopeSelector(output, endPosition + startLinePosition); // closing basic scope
+
+        if (linePosition == endPosition && poppedState.enterByteOffset == linePosition) {
+          addToken(output, line.length() + startLinePosition);
+          break;
+        }
       }
       else if (currentMatch.matched()) {
+        anchorByteOffset = currentMatch.byteOffset().end;
+
         TextMateRange currentRange = currentMatch.charRange(line, string.bytes);
         int startPosition = currentRange.start;
         endPosition = currentRange.end;
+
+        FList<TextMateLexerState> localStates = myStates;
         if (currentRule.getStringAttribute(Constants.StringKey.BEGIN) != null) {
-          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.NAME), string, currentMatch, '$');
-          openScopeSelector(output, name, startPosition + startLineOffset);
-
-          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
-
-          String contentName = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.CONTENT_NAME), string, currentMatch, '$');
-          openScopeSelector(output, contentName, endPosition + startLineOffset);
-
           myStates = myStates.prepend(currentState);
+
+          String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
+          openScopeSelector(output, name, startPosition + startLinePosition);
+
+          parseCaptures(output, Constants.CaptureKey.BEGIN_CAPTURES, currentRule, currentMatch, string, line, startLinePosition);
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLinePosition);
+
+          String contentName = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.CONTENT_NAME, currentRule, string, currentMatch);
+          openScopeSelector(output, contentName, endPosition + startLinePosition);
         }
         else if (currentRule.getStringAttribute(Constants.StringKey.MATCH) != null) {
-          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(currentRule.getStringAttribute(Constants.StringKey.NAME), string, currentMatch, '$');
-          openScopeSelector(output, name, startPosition + startLineOffset);
-          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLineOffset);
-          closeScopeSelector(output, endPosition + startLineOffset);
+          String name = SyntaxMatchUtils.getStringAttribute(Constants.StringKey.NAME, currentRule, string, currentMatch);
+          openScopeSelector(output, name, startPosition + startLinePosition);
+          parseCaptures(output, Constants.CaptureKey.CAPTURES, currentRule, currentMatch, string, line, startLinePosition);
+          closeScopeSelector(output, endPosition + startLinePosition);
+        }
+
+        if (linePosition == endPosition && containsLexerState(localStates, currentState)) {
+          addToken(output, line.length() + startLinePosition);
+          break;
         }
       }
       else {
-        addToken(output, line.length() + startLineOffset);
+        addToken(output, line.length() + startLinePosition);
         break;
       }
 
@@ -181,25 +206,13 @@ public final class TextMateLexer {
         if (currentStateSnapshot.equals(lastSuccessState)) {
           lastSuccessStateOccursCount++;
           if (lastSuccessStateOccursCount > MAX_LOOPS_COUNT) {
-            addToken(output, line.length() + startLineOffset);
+            addToken(output, line.length() + startLinePosition);
             break;
           }
         }
       }
 
-      // local looping protection
-      final int currentStateLocalOccurrencesCount = localStates.getInt(currentStateSnapshot);
-      if (currentStateLocalOccurrencesCount <= MAX_LOOPS_COUNT) {
-        localStates.put(currentStateSnapshot, currentStateLocalOccurrencesCount + 1);
-      }
-      else {
-        addToken(output, line.length() + startLineOffset);
-        break;
-      }
-
       if (linePosition != endPosition) {
-        // clear local states history on position changing
-        localStates.clear();
         linePosition = endPosition;
         lineByteOffset = RegexUtil.byteOffsetByCharOffset(line, linePosition);
       }
@@ -208,6 +221,18 @@ public final class TextMateLexer {
         myCheckCancelledCallback.run();
       }
     }
+  }
+
+  private static boolean containsLexerState(FList<TextMateLexerState> states, TextMateLexerState state) {
+    TextMateLexerState cursor = states.getHead();
+    while (cursor != null && cursor.enterByteOffset == state.enterByteOffset) {
+      if (cursor.syntaxRule.equals(state.syntaxRule)) {
+        return true;
+      }
+      states = states.getTail();
+      cursor = states.getHead();
+    }
+    return false;
   }
 
   private void setLastSuccessState(@Nullable List<TextMateLexerState> state) {
@@ -241,7 +266,9 @@ public final class TextMateLexer {
         }
         else if (ends.isEmpty()) {
           CaptureMatchData start = starts.removeLast();
-          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$');
+          CharSequence name = rule.hasBackReference(capturesKey, start.group)
+                              ? SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$')
+                              : start.selectorName;
           openScopeSelector(output, name, start.range.start + startLineOffset);
         }
         else if (ends.getLast().group < starts.getLast().group) {
@@ -250,7 +277,9 @@ public final class TextMateLexer {
         }
         else {
           CaptureMatchData start = starts.removeLast();
-          String name = SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$');
+          CharSequence name = rule.hasBackReference(capturesKey, start.group)
+                              ? SyntaxMatchUtils.replaceGroupsWithMatchData(start.selectorName, string, matchData, '$')
+                              : start.selectorName;
           openScopeSelector(output, name, start.range.start + startLineOffset);
         }
       }

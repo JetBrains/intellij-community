@@ -1,17 +1,10 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.highlighter
 
 import com.intellij.execution.TestStateStorage
 import com.intellij.execution.lineMarker.ExecutorAction
 import com.intellij.execution.lineMarker.RunLineMarkerContributor
-import com.intellij.execution.testframework.TestIconMapper
-import com.intellij.execution.testframework.sm.runner.states.TestStateInfo
-import com.intellij.icons.AllIcons
-import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import com.intellij.util.Function
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -34,25 +27,16 @@ import javax.swing.Icon
 
 class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
     companion object {
-        fun getTestStateIcon(
-            urls: List<String>,
-            project: Project,
-            strict: Boolean,
-            defaultIcon: Icon = AllIcons.RunConfigurations.TestState.Run
-        ): Icon? {
-            for (url in urls) {
-                val state = TestStateStorage.getInstance(project).getState(url) ?: continue
-
-                return when (TestIconMapper.getMagnitude(state.magnitude)) {
-                    TestStateInfo.Magnitude.ERROR_INDEX,
-                    TestStateInfo.Magnitude.FAILED_INDEX -> AllIcons.RunConfigurations.TestState.Red2
-                    TestStateInfo.Magnitude.PASSED_INDEX,
-                    TestStateInfo.Magnitude.COMPLETE_INDEX -> AllIcons.RunConfigurations.TestState.Green2
-                    else -> defaultIcon
+        fun getTestStateIcon(urls: List<String>, declaration: KtNamedDeclaration): Icon {
+            val testStateStorage = TestStateStorage.getInstance(declaration.project)
+            val isClass = declaration is KtClass
+            val state: TestStateStorage.Record? = run {
+                for (url in urls) {
+                    testStateStorage.getState(url)?.let { return@run it }
                 }
+                null
             }
-
-            return if (strict) null else defaultIcon
+            return getTestStateIcon(state, isClass)
         }
 
         fun SimplePlatform.providesRunnableTests(): Boolean {

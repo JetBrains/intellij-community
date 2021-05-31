@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project;
 
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import org.jetbrains.annotations.NotNull;
@@ -18,22 +15,26 @@ public class GradleNotification {
                                                                                     NotificationDisplayType.STICKY_BALLOON,
                                                                                     true);
 
-  @NotNull private final Project myProject;
-
-  @NotNull
-  public static GradleNotification getInstance(@NotNull Project project) {
-    return project.getService(GradleNotification.class);
+  /** @deprecated use {@code NOTIFICATION_GROUP.createNotification(...).notify(project)} */
+  @Deprecated
+  public static @NotNull GradleNotification getInstance(@NotNull Project project) {
+    return new GradleNotification(project);
   }
 
-  public GradleNotification(@NotNull Project project) {
+  private final Project myProject;
+
+  private GradleNotification(Project project) {
     myProject = project;
   }
 
+  /** @deprecated use {@code NOTIFICATION_GROUP.createNotification(...).notify(project)} */
+  @Deprecated
   public void showBalloon(@NotNull @NlsContexts.NotificationTitle final String title,
                           @NotNull  @NlsContexts.NotificationContent final String message,
                           @NotNull final NotificationType type,
                           @Nullable final NotificationListener listener) {
-    NOTIFICATION_GROUP.createNotification(title, message, type, listener).notify(myProject);
+    Notification notification = NOTIFICATION_GROUP.createNotification(title, message, type);
+    if (listener != null) notification.setListener(listener);
+    notification.notify(myProject);
   }
 }
-

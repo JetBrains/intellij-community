@@ -79,7 +79,6 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
                                                   @NotNull String source) {
     showSingletonNotification(project, message,
                               PyCharmCommunityCustomizationBundle.message("pro.advertiser.notification.pycharm.pro.has.support.for.it"),
-                              NotificationType.INFORMATION,
                               (notification, event) -> {
                                 if ("prof".equals(event.getDescription())) {
                                   BrowserUtil.browse(
@@ -102,17 +101,18 @@ public class PyCharmProfessionalAdvertiser implements Annotator {
   private static void showSingletonNotification(@NotNull Project project,
                                                 @NotNull @NotificationTitle String title,
                                                 @NotNull @NotificationContent String htmlContent,
-                                                @NotNull NotificationType type,
                                                 @NotNull NotificationListener listener) {
     getSettings(project).shown = true;
-    BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, type, (notification, event) -> {
-      try {
-        listener.hyperlinkUpdate(notification, event);
-      }
-      finally {
-        notification.expire();
-      }
-    }).notify(project);
+    BALLOON_NOTIFICATIONS.createNotification(title, htmlContent, NotificationType.INFORMATION)
+      .setListener((notification, event) -> {
+        try {
+          listener.hyperlinkUpdate(notification, event);
+        }
+        finally {
+          notification.expire();
+        }
+      })
+      .notify(project);
   }
 
   @NotNull

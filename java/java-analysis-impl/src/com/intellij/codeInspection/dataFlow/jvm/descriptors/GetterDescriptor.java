@@ -84,11 +84,11 @@ public final class GetterDescriptor extends PsiVarDescriptor {
 
   @NotNull
   @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
       return factory.getVarFactory().createVariableValue(this);
     }
-    return super.createValue(factory, qualifier, forAccessor);
+    return super.createValue(factory, qualifier);
   }
 
   @Override

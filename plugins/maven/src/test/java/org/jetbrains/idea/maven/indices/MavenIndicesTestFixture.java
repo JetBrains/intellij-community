@@ -16,11 +16,11 @@
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.maven.MavenCustomRepositoryHelper;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.io.IOException;
@@ -71,8 +71,8 @@ public class MavenIndicesTestFixture {
   }
 
   public void tearDown() {
-    getIndicesManager().doShutdownInTests();
     MavenServerManager.getInstance().shutdown(true);
+    Disposer.dispose(getIndicesManager());
   }
 
   public MavenIndicesManager getIndicesManager() {

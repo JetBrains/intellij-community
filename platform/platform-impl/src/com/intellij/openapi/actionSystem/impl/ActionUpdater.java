@@ -21,7 +21,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -161,29 +160,34 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    Computable<T> adjustedCall = () -> {
+    // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
+    boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
+    boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
+    boolean isEDT = EDT.isCurrentThreadEdt();
+    if (isEDT && canAsync && shallAsync && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
+      LOG.error("Calling " + operation + " on EDT on `" + action.getClass().getName() + "` " +
+                (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
+    }
+    if (isEDT || canAsync && shallAsync) {
       try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
         return call.get();
       }
-    };
-    // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
-    boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
-    if (canAsync && myForceAsync ||
-        EDT.isCurrentThreadEdt() ||
-        canAsync && action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground()) {
-      return adjustedCall.get();
     }
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     return computeOnEdt(() -> {
-      long start = System.currentTimeMillis();
+      long start = System.nanoTime();
       try {
-        return ProgressManager.getInstance().runProcess(adjustedCall, ProgressWrapper.wrap(progress));
+        return ProgressManager.getInstance().runProcess(() -> {
+          try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
+            return call.get();
+          }
+        }, ProgressWrapper.wrap(progress));
       }
       finally {
-        long elapsed = System.currentTimeMillis() - start;
+        long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
-          LOG.warn("Slow (" + elapsed + "ms) '" + operation + "' on action " + action + " of " + action.getClass() +
+          LOG.warn("Slow (" + elapsed + " ms) '" + operation + "' on action " + action + " of " + action.getClass() +
                    ". Consider speeding it up and/or implementing UpdateInBackground.");
         }
       }
@@ -359,7 +363,7 @@ final class ActionUpdater {
       () -> expandGroupChild(child, hideDisabled, strategy),
       1000, ms -> LOG.warn(ms + " ms to expand group child " + ActionManager.getInstance().getId(child))));
     myForceAsync = prevForceAsync;
-    return group.afterExpandGroup(result, asUpdateSession(strategy));
+    return group.postProcessVisibleChildren(result, asUpdateSession(strategy));
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {

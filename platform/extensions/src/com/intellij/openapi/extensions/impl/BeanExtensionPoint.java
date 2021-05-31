@@ -2,6 +2,7 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -13,21 +14,15 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> implement
   public BeanExtensionPoint(@NotNull String name,
                             @NotNull String className,
                             @NotNull PluginDescriptor pluginDescriptor,
+                            @NotNull ComponentManager componentManager,
                             boolean dynamic) {
-    super(name, className, pluginDescriptor, null, dynamic);
+    super(name, className, pluginDescriptor, componentManager, null, dynamic);
   }
 
   @Override
   public final @NotNull Class<?> resolveImplementationClass(@NotNull ComponentManager componentManager, @NotNull ExtensionComponentAdapter adapter)
     throws ClassNotFoundException {
     return getExtensionClass();
-  }
-
-  @Override
-  public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
-    BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
-    result.setComponentManager(manager);
-    return result;
   }
 
   @Override

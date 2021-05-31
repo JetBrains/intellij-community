@@ -58,11 +58,8 @@ internal class DynamicPluginVfsListener : AsyncFileListener {
         }
       }
     }
-    val descriptorsToReload = pluginsToReload
-      .filter { it.isEnabled }
-      .map { loadFullDescriptor(it) }
-      .filter { DynamicPlugins.allowLoadUnloadWithoutRestart(it) }
 
+    val descriptorsToReload = pluginsToReload.filter { it.isEnabled && DynamicPlugins.allowLoadUnloadWithoutRestart(it) }
     if (descriptorsToReload.isEmpty()) {
       return null
     }

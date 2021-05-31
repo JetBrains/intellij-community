@@ -7,18 +7,17 @@ import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
-import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.ThrowInstruction;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.DfaListener;
 import com.intellij.codeInspection.dataFlow.lang.ir.*;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.EnsureInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -180,7 +179,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         ControlFlow flow = ControlFlowAnalyzer.buildFlow(block, factory, true);
         if (flow == null) return null;
         var interpreter = new CatchDataFlowInterpreter(exception, parameter, flow);
-        DfaMemoryState memState = new DfaMemoryStateImpl(factory);
+        DfaMemoryState memState = new JvmDfaMemoryStateImpl(factory);
         DfaVariableValue stableExceptionVar = PlainDescriptor.createVariableValue(factory, new LightParameter("tmp", exception, block));
         DfaVariableValue exceptionVar = PlainDescriptor.createVariableValue(factory, parameter);
         memState.applyCondition(exceptionVar.eq(stableExceptionVar));
@@ -190,7 +189,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     };
   }
 
-  private static class CatchDataFlowInterpreter extends JvmDataFlowInterpreter {
+  private static class CatchDataFlowInterpreter extends StandardDataFlowInterpreter {
     final DfaVariableValue myExceptionVar;
     final @NotNull List<PsiMethod> myMethods;
     final @NotNull PsiParameter myParameter;
@@ -236,7 +235,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
     }
 
     private boolean isSideEffect(Instruction instruction, DfaMemoryState memState) {
-      if (instruction instanceof FlushFieldsInstruction) {
+      if (instruction instanceof FlushFieldsInstruction || instruction instanceof ThrowInstruction) {
         return true;
       }
       if (instruction instanceof FlushVariableInstruction) {
@@ -246,8 +245,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
         return !isModificationAllowed(memState.getStackValue(1));
       }
       if (instruction instanceof ReturnInstruction) {
-        return ((ReturnInstruction)instruction).getAnchor() != null ||
-               ((ReturnInstruction)instruction).isViaException();
+        return ((ReturnInstruction)instruction).getAnchor() != null;
       }
       if (instruction instanceof MethodCallInstruction) {
         return !((MethodCallInstruction)instruction).getMutationSignature().isPure();

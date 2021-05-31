@@ -1,22 +1,8 @@
-/*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.jps.builders.java.dependencyView
 
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
 import org.jetbrains.jps.builders.java.dependencyView.TypeRepr.ClassType
 import org.jetbrains.kotlin.fileClasses.internalNameWithoutInnerClasses
 import org.jetbrains.kotlin.load.java.JAVAX_NONNULL_ANNOTATION
@@ -41,7 +27,6 @@ internal class NullabilityAnnotationsTracker : AnnotationsChangeTracker() {
         return handleNullAnnotationsChanges(context, method, changedAnnotations)
     }
 
-
     override fun fieldAnnotationsChanged(
         context: NamingContext,
         field: FieldRepr,
@@ -55,7 +40,12 @@ internal class NullabilityAnnotationsTracker : AnnotationsChangeTracker() {
         protoMember: ProtoMember,
         annotations: Sequence<TypeRepr.ClassType>
     ): Set<Recompile> {
-        val nullabilityAnnotations = TIntHashSet(this.annotations.toIntArray { context.get(it) })
+        val n = this.annotations.size
+        val nullabilityAnnotations = IntOpenHashSet(n)
+        for (i in 0 until n) {
+            nullabilityAnnotations.add(context.get(this.annotations.get(i)))
+        }
+
         val changedNullAnnotation = annotations.firstOrNull { nullabilityAnnotations.contains(it.className) }
 
         val result = EnumSet.noneOf(Recompile::class.java)
@@ -74,6 +64,4 @@ internal class NullabilityAnnotationsTracker : AnnotationsChangeTracker() {
     private fun <T> Difference.Specifier<T, Difference>.addedOrRemoved(): Sequence<T> =
         added().asSequence() + removed().asSequence()
 
-    private inline fun <T> Array<T>.toIntArray(fn: (T) -> Int): IntArray =
-        IntArray(size) { i -> fn(get(i)) }
 }

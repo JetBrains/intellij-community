@@ -14,8 +14,10 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.ex.ApplicationInfoEx
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionNotApplicableException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.concurrency.NonUrgentExecutor
 import com.intellij.util.io.jackson.IntelliJPrettyPrinter
@@ -33,6 +35,14 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.function.Consumer
 
 class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
+  init {
+    // Since the measurement requires OptionsTopHitProvider.Activity to fire lastOptionTopHitProviderFinishedForProject, and OptionsTopHitProvider.Activity is not available in test or headless mode:
+    val app = ApplicationManager.getApplication()
+    if (app.isUnitTestMode || app.isHeadlessEnvironment) {
+      throw ExtensionNotApplicableException.INSTANCE
+    }
+  }
+
   private var startUpFinishedCounter = AtomicInteger()
 
   private var pluginCostMap: Map<String, Object2LongMap<String>>? = null
@@ -136,7 +146,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
 
       val classReport = System.getProperty("idea.log.class.list.file")
       if (!classReport.isNullOrBlank()) {
-        generateJarAccessLog(Path.of(classReport))
+        generateJarAccessLog(Path.of(FileUtil.expandUserHome(classReport)))
       }
       return StartUpPerformanceReporterValues(pluginCostMap, currentReport, w.publicStatMetrics)
     }

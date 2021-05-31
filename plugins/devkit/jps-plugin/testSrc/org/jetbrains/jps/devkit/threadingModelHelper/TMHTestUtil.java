@@ -3,14 +3,13 @@ package org.jetbrains.jps.devkit.threadingModelHelper;
 
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.org.objectweb.asm.ClassReader;
-import org.jetbrains.org.objectweb.asm.ClassVisitor;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
-import org.jetbrains.org.objectweb.asm.Opcodes;
+import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.util.TraceClassVisitor;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintWriter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TMHTestUtil {
   public static void printDebugInfo(byte[] classData, byte[] instrumentedClassData) {
@@ -50,5 +49,27 @@ public class TMHTestUtil {
     ClassReader reader = new ClassReader(classBytes);
     reader.accept(visitor, 0);
     return contains.get();
+  }
+
+  public static List<Integer> getLineNumbers(byte @NotNull [] classBytes) {
+    List<Integer> lineNumbers = new ArrayList<>();
+    ClassVisitor visitor = new ClassVisitor(Opcodes.API_VERSION) {
+      @Override
+      public MethodVisitor visitMethod(int access,
+                                       String name,
+                                       String descriptor,
+                                       String signature,
+                                       String[] exceptions) {
+        return new MethodVisitor(Opcodes.API_VERSION) {
+          @Override
+          public void visitLineNumber(int line, Label start) {
+            lineNumbers.add(line);
+          }
+        };
+      }
+    };
+    ClassReader reader = new ClassReader(classBytes);
+    reader.accept(visitor, 0);
+    return lineNumbers;
   }
 }

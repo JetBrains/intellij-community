@@ -38,7 +38,7 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
     Document document = documentManager.getDocument(file);
     if (document != null) {
       int offset = element.getTextOffset();
-      formatDocument(document, Collections.singletonList(range), formattingContext, canChangeWhiteSpaceOnly);
+      formatDocument(document, Collections.singletonList(range), formattingContext, canChangeWhiteSpaceOnly, false);
       documentManager.commitDocument(document);
       PsiElement resultingElement = file.findElementAt(offset);
       if (resultingElement != null) {
@@ -49,13 +49,16 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
   }
 
   @Override
-  public final void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly) {
+  public final void formatRanges(@NotNull PsiFile file,
+                                 FormattingRangesInfo rangesInfo,
+                                 boolean canChangeWhiteSpaceOnly,
+                                 boolean quickFormat) {
     TextRange boundRange = ObjectUtils.notNull(rangesInfo.getBoundRange(), file.getTextRange());
     FormattingContext formattingContext = FormattingContext.create(file, boundRange, CodeStyle.getSettings(file), FormattingMode.REFORMAT);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(file.getProject());
     Document document = documentManager.getDocument(file);
     if (document != null) {
-      formatDocument(document, rangesInfo.getTextRanges(), formattingContext, canChangeWhiteSpaceOnly);
+      formatDocument(document, rangesInfo.getTextRanges(), formattingContext, canChangeWhiteSpaceOnly, quickFormat);
       documentManager.commitDocument(document);
     }
   }
@@ -64,6 +67,7 @@ public abstract class AbstractDocumentFormattingService implements FormattingSer
   public abstract void formatDocument(@NotNull Document document,
                                       @NotNull List<TextRange> formattingRanges,
                                       @NotNull FormattingContext formattingContext,
-                                      boolean canChangeWhiteSpaceOnly);
+                                      boolean canChangeWhiteSpaceOnly,
+                                      boolean quickFormat);
 
 }

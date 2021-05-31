@@ -15,10 +15,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.ModuleEx;
-import com.intellij.openapi.project.DumbServiceImpl;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.openapi.project.*;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
@@ -44,15 +41,14 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.FileBasedIndexProjectHandler;
 import com.intellij.util.indexing.UnindexedFilesUpdater;
+import com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor;
+import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -153,6 +149,33 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     });
     AdditionalLibraryRootsProvider.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
     OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
+
+
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
+      if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) {
+        return;
+      }
+      List<VirtualFile> rootsToIndex = new ArrayList<>(newRoots.size());
+      for (VirtualFile root : newRoots) {
+        boolean shouldIndex = true;
+        for (VirtualFile oldRoot : oldRoots) {
+          if (VfsUtilCore.isAncestor(oldRoot, root, false)) {
+            shouldIndex = false;
+            break;
+          }
+        }
+        if (shouldIndex) {
+          rootsToIndex.add(root);
+        }
+      }
+
+      if (rootsToIndex.isEmpty()) return;
+
+      List<IndexableFilesIterator> indexableFilesIterators =
+        Collections.singletonList(AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
+
+      DumbService.getInstance(myProject).queueTask(new UnindexedFilesUpdater(myProject, indexableFilesIterators, "On updated roots of library '" + presentableLibraryName + "'"));
+    });
   }
 
   protected void projectClosed() {
@@ -254,13 +277,11 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     }
 
     // avoid creating empty unnecessary container
-    if ((WorkspaceModel.isEnabled() && !excludedUrls.isEmpty()) ||
-        (!WorkspaceModel.isEnabled() && (!flatPaths.isEmpty() || !excludedUrls.isEmpty()))) {
+    if (!excludedUrls.isEmpty()) {
       Disposer.register(this, disposable);
       // creating a container with these URLs with the sole purpose to get events to getRootsValidityChangedListener() when these roots change
       VirtualFilePointerContainer container =
         VirtualFilePointerManager.getInstance().createContainer(disposable, getRootsValidityChangedListener());
-      if (!WorkspaceModel.isEnabled()) flatPaths.forEach(path -> container.add(VfsUtilCore.pathToUrl(path)));
       ((VirtualFilePointerContainerImpl)container).addAll(excludedUrls);
     }
 
@@ -307,11 +328,12 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       return;
     }
 
-    logRootChanges("project roots have changed");
+    String reason = "Project roots have changed";
+    logRootChanges(reason);
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-      dumbService.queueTask(new UnindexedFilesUpdater(myProject));
+      dumbService.queueTask(new UnindexedFilesUpdater(myProject, reason));
     }
   }
 

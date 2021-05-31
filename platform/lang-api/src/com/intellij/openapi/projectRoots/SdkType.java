@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.progress.ProgressManager;
@@ -165,9 +164,12 @@ public abstract class SdkType implements SdkTypeId {
     return "preferences.jdks";
   }
 
-  @NotNull
+  /**
+   * @deprecated {@link #getIcon} is also used for add actions.
+   */
+  @Deprecated
   public Icon getIconForAddAction() {
-    return AllIcons.General.Add;
+    return getIcon();
   }
 
   @Override

@@ -55,7 +55,7 @@ public final class ZipFilePoolImpl extends ZipFilePool {
     }
 
     @Override
-    public @Nullable byte[] loadZipEntry(@NotNull String path) throws IOException {
+    public byte @Nullable [] loadZipEntry(@NotNull String path) throws IOException {
       ImmutableZipEntry entry = zipFile.getEntry(path.charAt(0) == '/' ? path.substring(1) : path);
       return entry == null ? null : entry.getData(zipFile);
     }

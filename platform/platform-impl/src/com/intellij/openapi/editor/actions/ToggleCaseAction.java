@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.MathUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Locale;
@@ -40,7 +41,7 @@ public class ToggleCaseAction extends TextComponentEditorAction {
 
   private static class Handler extends EditorWriteActionHandler {
     @Override
-    public void executeWriteAction(final Editor editor, @Nullable Caret caret, DataContext dataContext) {
+    public void executeWriteAction(final @NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       final Ref<Boolean> toLowerCase = new Ref<>(Boolean.FALSE);
       runForCaret(editor, caret, c -> {
         if (!c.hasSelection()) {

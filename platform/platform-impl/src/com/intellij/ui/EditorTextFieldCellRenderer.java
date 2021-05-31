@@ -35,6 +35,7 @@ import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextDelegate;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,6 +57,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   /** @deprecated Use {@link EditorTextFieldCellRenderer#EditorTextFieldCellRenderer(Project, Language, Disposable)}*/
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType, @NotNull Disposable parent) {
     this(project, fileType == null ? null : LanguageUtil.getFileTypeLanguage(fileType), true, parent);
   }

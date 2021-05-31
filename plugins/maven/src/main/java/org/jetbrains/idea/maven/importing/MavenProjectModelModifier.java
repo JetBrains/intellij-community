@@ -214,18 +214,25 @@ public final class MavenProjectModelModifier extends JavaProjectModelModifier {
   }
 
   @NotNull
-  private static MavenDomPlugin getCompilerPlugin(MavenDomProjectModel model) {
-    MavenDomPlugins plugins = model.getBuild().getPlugins();
-    for (MavenDomPlugin plugin : plugins.getPlugins()) {
-      if ("org.apache.maven.plugins".equals(plugin.getGroupId().getValue()) &&
-          "maven-compiler-plugin".equals(plugin.getArtifactId().getValue())) {
-        return plugin;
-      }
-    }
-    MavenDomPlugin plugin = plugins.addPlugin();
+  public static MavenDomPlugin getCompilerPlugin(MavenDomProjectModel model) {
+    MavenDomPlugin plugin = findCompilerPlugin(model);
+    if (plugin != null) return plugin;
+    plugin = model.getBuild().getPlugins().addPlugin();
     plugin.getGroupId().setValue("org.apache.maven.plugins");
     plugin.getArtifactId().setValue("maven-compiler-plugin");
     return plugin;
+  }
+
+  @Nullable
+  public static MavenDomPlugin findCompilerPlugin(MavenDomProjectModel model) {
+    MavenDomPlugins plugins = model.getBuild().getPlugins();
+    for (MavenDomPlugin plugin : plugins.getPlugins()) {
+      if ("org.apache.maven.plugins".equals(plugin.getGroupId().getStringValue()) &&
+          "maven-compiler-plugin".equals(plugin.getArtifactId().getStringValue())) {
+        return plugin;
+      }
+    }
+    return null;
   }
 
   private static String getMavenScope(@NotNull DependencyScope scope) {

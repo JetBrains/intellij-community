@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs;
 
 import com.intellij.notification.*;
@@ -222,16 +222,6 @@ public class VcsNotifier {
   @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
   @Deprecated
   @NotNull
-  public Notification notifyInfo(@NotificationContent @NotNull String message) {
-    return notifyInfo(null, "", message);
-  }
-
-  /**
-   * @deprecated use {@link #notifyInfo(String, String, String)} instead
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.4")
-  @Deprecated
-  @NotNull
   public Notification notifyInfo(@NotificationTitle @NotNull String title,
                                  @NotificationContent @NotNull String message) {
     return notifyInfo(null, title, message, null);
@@ -396,7 +386,10 @@ public class VcsNotifier {
       title = "";
     }
     // if both title and message were empty, then it is a problem in the calling code => Notifications engine assertion will notify.
-    return notificationGroup.createNotification(title, message, type, listener, StringUtil.nullize(displayId));
+    Notification notification = notificationGroup.createNotification(title, message, type);
+    if (displayId != null && !displayId.isEmpty()) notification.setDisplayId(displayId);
+    if (listener != null) notification.setListener(listener);
+    return notification;
   }
 
   @NotNull

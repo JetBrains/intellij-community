@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -538,6 +539,9 @@ public class HelpTooltip {
 
   private void scheduleShow(MouseEvent e, int delay) {
     popupAlarm.cancelAllRequests();
+
+    if (ScreenReader.isActive()) return; // Disable HelpTooltip in screen reader mode.
+
     popupAlarm.addRequest(() -> {
       initialShowScheduled = false;
       if (masterPopupOpenCondition == null || masterPopupOpenCondition.getAsBoolean()) {

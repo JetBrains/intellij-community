@@ -642,7 +642,7 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider {
         }
         StringBuilder data = new StringBuilder();
         for (PsiElement psiElement : allToParse) {
-          data.append(DebugUtil.psiToString(psiElement, !myShowWhiteSpacesBox.isSelected(), true));
+          data.append(DebugUtil.psiToString(psiElement, myShowWhiteSpacesBox.isSelected(), true));
         }
         CopyPasteManager.getInstance().setContents(new StringSelection(data.toString()));
       }

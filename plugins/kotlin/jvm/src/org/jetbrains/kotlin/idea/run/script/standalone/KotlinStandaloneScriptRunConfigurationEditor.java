@@ -1,13 +1,11 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.run.script.standalone;
 
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.DefaultJreSelector;
 import com.intellij.execution.ui.JrePathEditor;
+import com.intellij.execution.ui.ShortenCommandLineModeCombo;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.options.SettingsEditor;
@@ -29,12 +27,14 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
     private JrePathEditor jrePathEditor;
     private TextFieldWithBrowseButton chooseScriptFileTextField;
     private LabeledComponent<TextFieldWithBrowseButton> chooseScriptFileComponent;
+    private LabeledComponent<ShortenCommandLineModeCombo> shortenClasspathModeCombo;
     private JComponent anchor;
 
     public KotlinStandaloneScriptRunConfigurationEditor(Project project) {
         initChooseFileField(project);
         jrePathEditor.setDefaultJreSelector(DefaultJreSelector.projectSdk(project));
-        anchor = UIUtil.mergeComponentsWithAnchor(chooseScriptFileComponent, commonProgramParameters, jrePathEditor);
+        anchor = UIUtil.mergeComponentsWithAnchor(chooseScriptFileComponent, commonProgramParameters, jrePathEditor, shortenClasspathModeCombo);
+        shortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(project, jrePathEditor, () -> null, listener -> {}));
     }
 
     void initChooseFileField(Project project) {
@@ -54,6 +54,7 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
         String path = configuration.filePath;
         chooseScriptFileTextField.setText(path != null ? path : "");
         jrePathEditor.setPathOrName(configuration.getAlternativeJrePath(), configuration.isAlternativeJrePathEnabled());
+        shortenClasspathModeCombo.getComponent().setSelectedItem(configuration.getShortenCommandLine());
     }
 
     @Override
@@ -62,6 +63,7 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
         configuration.setAlternativeJrePath(jrePathEditor.getJrePathOrName());
         configuration.setAlternativeJrePathEnabled(jrePathEditor.isAlternativeJreSelected());
         configuration.filePath = chooseScriptFileTextField.getText();
+        configuration.setShortenCommandLine(shortenClasspathModeCombo.getComponent().getSelectedItem());
     }
 
     @NotNull
@@ -81,6 +83,7 @@ public class KotlinStandaloneScriptRunConfigurationEditor extends SettingsEditor
         commonProgramParameters.setAnchor(anchor);
         jrePathEditor.setAnchor(anchor);
         chooseScriptFileComponent.setAnchor(anchor);
+        shortenClasspathModeCombo.setAnchor(anchor);
     }
 
     private void createUIComponents() {

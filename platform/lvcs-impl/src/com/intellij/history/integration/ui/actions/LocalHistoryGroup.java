@@ -2,6 +2,7 @@
 
 package com.intellij.history.integration.ui.actions;
 
+import com.intellij.history.integration.IdeaGateway;
 import com.intellij.ide.actions.NonTrivialActionGroup;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -21,7 +22,7 @@ public class LocalHistoryGroup extends NonTrivialActionGroup implements DumbAwar
     PsiElement element = e.getData(CommonDataKeys.PSI_ELEMENT);
     if (project == null ||
         ActionPlaces.isPopupPlace(e.getPlace()) && (
-          file != null && !file.isInLocalFileSystem() || file == null && element != null)) {
+          file != null && !(file.isInLocalFileSystem() || IdeaGateway.isNonLocalVersioned(file)) || file == null && element != null)) {
       e.getPresentation().setEnabledAndVisible(false);
     }
     else {

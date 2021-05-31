@@ -91,9 +91,14 @@ public final class IDEACoverageRunner extends JavaCoverageRunner {
         return JavaTargetParameter.fixed("-Didea.coverage.thread-safe.enabled=false");
       });
     }
-    if (Registry.is("idea.coverage.new.sampling.enabled")) {
+    if (isSampling && Registry.is("idea.coverage.new.sampling.enabled")) {
       targetParameters.add(request -> {
         return JavaTargetParameter.fixed("-Didea.new.sampling.coverage=true");
+      });
+    }
+    if (!isSampling && Registry.is("idea.coverage.new.tracing.enabled")) {
+      targetParameters.add(request -> {
+        return JavaTargetParameter.fixed("-Didea.new.tracing.coverage=true");
       });
     }
     if (project != null) {

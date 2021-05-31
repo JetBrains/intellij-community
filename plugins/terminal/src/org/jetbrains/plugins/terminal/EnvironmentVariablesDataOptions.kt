@@ -9,9 +9,10 @@ import com.intellij.util.xmlb.annotations.XMap
 
 @Tag("")
 class EnvironmentVariablesDataOptions : BaseState() {
+  // user order of env must be preserved - do not sort user input
   @Property(description = "Environment variables")
   @get:XMap(entryTagName = "env", keyAttributeName = "key")
-  val envs by map<String, String>()
+  val envs by linkedMap<String, String>()
 
   var isPassParentEnvs by property(true)
 

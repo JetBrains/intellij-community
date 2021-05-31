@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -329,19 +329,22 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     });
 
     for (StandardFileType pair : myStandardFileTypes.values()) {
-      notificationsShown.addAll(registerFileTypeWithoutNotification(pair.fileType, coreIdeaPluginDescriptor(), pair.matchers, true));
+      if (mySchemeManager.findSchemeByName(pair.fileType.getName()) == null) {
+        notificationsShown.addAll(registerFileTypeWithoutNotification(pair.fileType, pair.pluginDescriptor, pair.matchers, true));
+      }
     }
 
     try {
       InputStream defaultFileTypeStream = FileTypeManagerImpl.class.getClassLoader().getResourceAsStream("defaultFileTypes.xml");
       if (defaultFileTypeStream != null) {
         Element defaultFileTypesElement = JDOMUtil.load(defaultFileTypeStream);
+        IdeaPluginDescriptor coreIdeaPluginDescriptor = coreIdeaPluginDescriptor();
         for (Element e : defaultFileTypesElement.getChildren()) {
           if ("filetypes".equals(e.getName())) {
             for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
               String fileTypeName = element.getAttributeValue(ATTRIBUTE_NAME);
               if (myPendingFileTypes.get(fileTypeName) == null) {
-                loadFileType("defaultFileTypes.xml", element, coreIdeaPluginDescriptor(), true);
+                loadFileType("defaultFileTypes.xml", element, coreIdeaPluginDescriptor, true);
               }
             }
           }
@@ -663,18 +666,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     else if (fileType == null) {
       return myDetectionService.getOrDetectFromContent(file, content);
     }
-    else if (mightBeReplacedByDetectedFileType(fileType) && FileTypeDetectionService.isDetectable(file)) {
-      FileType detectedFromContent = myDetectionService.getOrDetectFromContent(file, content);
-      // unknown file type means that it was detected as binary, it's better to keep it binary
-      if (detectedFromContent != PlainTextFileType.INSTANCE) {
-        return detectedFromContent;
-      }
-    }
     return ObjectUtils.notNull(fileType, UnknownFileType.INSTANCE);
-  }
-
-  static boolean mightBeReplacedByDetectedFileType(@NotNull FileType fileType) {
-    return fileType instanceof PlainTextLikeFileType && fileType.isReadOnly();
   }
 
   @Nullable // null means all conventional detect methods returned UnknownFileType.INSTANCE, have to detect from content
@@ -699,12 +691,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (specialType.isMyFileType(file)) {
         if (toLog()) {
           log("getByFile(" + file.getName() + "): Special file type: " + specialType.getName());
-        }
-        boolean willBeRedetectedAnyway = mightBeReplacedByDetectedFileType(specialType) && FileTypeDetectionService.isDetectable(file);
-        if (willBeRedetectedAnyway) {
-          LOG.error("File type '"+specialType +"' is inconsistent. " +
-                    "File '"+ file.getPresentableUrl()+ "' was recognized by "+specialType+" but this fact will be promptly ignored and file will be re-detected immediately from its content. " +
-                    "To avoid that, "+specialType+" should be either not PlainTextLike or not readonly");
         }
         return specialType;
       }
@@ -787,7 +773,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     DeprecatedMethodException.report("Use fileType extension instead.");
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
-      registerFileTypeWithoutNotification(type, coreIdeaPluginDescriptor(), defaultAssociations, true);
+      registerFileTypeWithoutNotification(type, detectPluginDescriptor(type).pluginDescriptor, defaultAssociations, true);
       fireFileTypesChanged(type, null);
     });
   }
@@ -1313,19 +1299,26 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static void checkUnique(@NotNull FileTypeWithDescriptor newFtd,
                                   @NotNull Map<? super String, FileTypeWithDescriptor> names,
                                   @NotNull String getterName,
-                                  @NotNull Function<? super FileType, String> getter) {
+                                  @NotNull Function<? super FileType, String> nameExtractor) {
     FileType newFileType = newFtd.fileType;
-    String name = getter.apply(newFileType);
+    String name = nameExtractor.apply(newFileType);
     FileTypeWithDescriptor prevFtd = names.put(name, newFtd);
     if (prevFtd != null
         // should be able to override AbstractFileType silently
-        && (prevFtd.fileType instanceof AbstractFileType) == (newFileType instanceof AbstractFileType)
-        // two plugins can easily conflict between themselves on everything, we wash our hands in this case
-        && (prevFtd.pluginDescriptor.isBundled() || newFtd.pluginDescriptor.isBundled())) {
-      LOG.error("\n" + prevFtd + " (" + prevFtd.fileType.getClass() + ") and" +
-                "\n" + newFtd + " (" + newFileType.getClass() + ")\n" +
-                " both have the same ." + getterName + "(): '" + name + "'. " +
-                "Please override either one's "+getterName+"() to something unique.");
+        && (prevFtd.fileType instanceof AbstractFileType) == (newFileType instanceof AbstractFileType)) {
+      String error = "\n" + prevFtd + " (" + prevFtd.fileType.getClass() + ") and" +
+                     "\n" + newFtd + " (" + newFileType.getClass() + ")\n" +
+                     " both have the same ." + getterName + "(): '" + name + "'. " +
+                     "Please override either one's " + getterName + "() to something unique.";
+      PluginDescriptor pluginToBlame = prevFtd.pluginDescriptor.isBundled() ? newFtd.pluginDescriptor : prevFtd.pluginDescriptor;
+      if (prevFtd.pluginDescriptor.isBundled() || newFtd.pluginDescriptor.isBundled()) {
+        // file type from the plugin conflicts with bundled file type
+        LOG.error(new PluginException(error, pluginToBlame.getPluginId()));
+      }
+      else {
+        // two plugins conflict between themselves (or one plugin has multiple personality disordered file types), we wash our hands in this case
+        LOG.warn(new PluginException(error, pluginToBlame.getPluginId()));
+      }
     }
   }
 

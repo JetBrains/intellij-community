@@ -3,6 +3,7 @@
 package com.intellij.ide.hierarchy;
 
 import com.intellij.ui.content.Content;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
@@ -22,5 +23,5 @@ public interface HierarchyBrowser {
    *
    * @param content the content in which the browser is displayed.
    */
-  void setContent(final Content content);
+  void setContent(@NotNull Content content);
 }

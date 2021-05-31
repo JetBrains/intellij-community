@@ -63,7 +63,7 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
   }
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): ModuleEntity = ModuleEntity(name, type, dependencies).also {
-    addMetaData(it, snapshot)
+    addMetaData(it, snapshot, classId)
   }
 
   override fun persistentId(): ModuleId = ModuleId(name)
@@ -106,6 +106,11 @@ class ModuleEntityData : WorkspaceEntityData.WithCalculablePersistentId<ModuleEn
     result = 31 * result + dependencies.hashCode()
     result = 31 * result + entitySource.hashCode()
     return result
+  }
+
+  companion object {
+    @Transient
+    private val classId: Int = ClassToIntConverter.getInt(ModuleEntity::class.java)
   }
 }
 
@@ -207,6 +212,14 @@ data class ModuleId(val name: String) : PersistentEntityId<ModuleEntity>() {
     get() = null
   override val presentableName: String
     get() = name
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ModuleId) return false
+    return name == other.name
+  }
+
+  override fun hashCode(): Int  = name.hashCode()
 }
 
 sealed class ModuleDependencyItem : Serializable {
@@ -549,10 +562,15 @@ class LibraryEntityData : WorkspaceEntityData.WithCalculablePersistentId<Library
   }
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): LibraryEntity {
-    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot) }
+    return LibraryEntity(tableId, name, roots, excludedRoots).also { addMetaData(it, snapshot, classId) }
   }
 
   override fun persistentId(): LibraryId = LibraryId(name, tableId)
+
+  companion object {
+    @Transient
+    private val classId: Int = ClassToIntConverter.getInt(LibraryEntity::class.java)
+  }
 }
 
 class LibraryEntity(
@@ -569,6 +587,28 @@ data class LibraryId(val name: String, val tableId: LibraryTableId) : Persistent
     get() = null
   override val presentableName: String
     get() = name
+
+  @Transient
+  private var codeCache: Int = 0
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is LibraryId) return false
+
+    if (this.codeCache != 0 && other.codeCache != 0 && this.codeCache != other.codeCache) return false
+    if (name != other.name) return false
+    if (tableId != other.tableId) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    if (codeCache != 0) return codeCache
+    var result = name.hashCode()
+    result = 31 * result + tableId.hashCode()
+    this.codeCache = result
+    return result
+  }
 }
 
 data class LibraryRootTypeId(val name: String) : Serializable {
@@ -771,7 +811,7 @@ class ArtifactEntity(
   val customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
 
   companion object {
-    val rootElementDelegate = OneToAbstractOneChild<CompositePackagingElementEntity, ArtifactEntity>(
+    val rootElementDelegate = OneToAbstractOneParent<ArtifactEntity, CompositePackagingElementEntity>(
       CompositePackagingElementEntity::class.java)
     val customPropertiesDelegate = OneToMany<ArtifactEntity, ArtifactPropertiesEntity>(ArtifactPropertiesEntity::class.java, false)
   }

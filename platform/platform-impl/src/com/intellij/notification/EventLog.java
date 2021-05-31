@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.notification;
 
@@ -177,7 +177,7 @@ public final class EventLog {
         }
       }, isLongLine(actions) ? "<br>" : "&nbsp;&nbsp;&nbsp;") + "</p>";
       //noinspection UnresolvedPluginConfigReference
-      Notification n = new Notification("", "", ".", NotificationType.INFORMATION, new NotificationListener() {
+      Notification n = new Notification("", ".", NotificationType.INFORMATION).setListener(new NotificationListener() {
         @Override
         public void hyperlinkUpdate(@NotNull Notification n, @NotNull HyperlinkEvent event) {
           Object source = event.getSource();

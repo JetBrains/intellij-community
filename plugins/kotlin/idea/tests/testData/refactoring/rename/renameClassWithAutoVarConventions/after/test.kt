@@ -1,13 +1,16 @@
 package test
 
 class Bar {
-
+  companion object {
+      val barKlass: Class<Bar> = Bar::class.java
+  }
 }
 
-val SOME_BAR: Bar = Bar()
-val BAR: Bar = Bar()
+val SOME_Bar: Bar = Bar()
+val Bar: Bar = Bar()
 
-val SOME___BAR: Bar = Bar()
-val BAR: Bar = Bar()
+val some_bar: Bar = Bar()
+val bar: Bar = Bar()
 
-val SOME_BAR: Bar = Bar()
+val SomeBar: Bar = Bar()
+val bar2 = Bar()

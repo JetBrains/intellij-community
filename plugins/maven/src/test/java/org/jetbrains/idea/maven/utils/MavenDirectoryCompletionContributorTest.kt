@@ -7,14 +7,16 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiManager
 import org.assertj.core.api.Assertions
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenDirectoryCompletionContributor
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
+import org.junit.Test
 
-class MavenDirectoryCompletionContributorTest : MavenImportingTestCase() {
+class MavenDirectoryCompletionContributorTest : MavenMultiVersionImportingTestCase() {
 
+  @Test
   fun testVariants() {
     createProjectPom("""
                       <groupId>test</groupId>

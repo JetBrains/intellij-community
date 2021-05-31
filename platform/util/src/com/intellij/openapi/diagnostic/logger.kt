@@ -28,7 +28,7 @@ inline fun Logger.trace(@NonNls lazyMessage : () -> String) {
 
 /** Consider using [Result.getOrLogException] for more straight-forward API instead. */
 inline fun <T> Logger.runAndLogException(runnable: () -> T): T? {
-  return kotlin.runCatching {
+  return runCatching {
     runnable()
   }.getOrLogException(this)
 }

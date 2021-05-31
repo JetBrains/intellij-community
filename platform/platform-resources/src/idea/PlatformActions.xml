@@ -395,6 +395,7 @@
     <group id="Diff.EditorGutterPopupMenu">
       <group id="Diff.EditorGutterPopupMenu.EditorSettings"/>
     </group>
+    <group id="Diff.Binary.Settings" popup="true" icon="AllIcons.General.GearPlain"/>
 
     <action id="ScrollTreeToCenter" class="com.intellij.ide.actions.ScrollTreeToCenterAction" use-shortcut-of="EditorScrollToCenter"/>
 
@@ -1095,6 +1096,7 @@
       <separator/>
       <group id="Internal.Editor" popup="true">
         <action id="AddInlayInternalAction" internal="true" class="com.intellij.internal.AddInlayInternalAction"/>
+        <action id="SetCaretVisualAttributesInternalAction" internal="true" class="com.intellij.internal.SetCaretVisualAttributesAction"/>
         <action id="EditorRenderingBenchmarkAction" internal="true"
                 class="com.intellij.internal.performance.EditorRenderingBenchmarkAction"/>
       </group>
@@ -1107,6 +1109,7 @@
         <action id="ComponentPanelTestAction" internal="true" class="com.intellij.internal.ui.ComponentPanelTestAction"/>
         <action id="AnimationPanelTestAction" internal="true" class="com.intellij.internal.ui.AnimationPanelTestAction"/>
         <action id="RoundedIconTestAction" internal="true" class="com.intellij.internal.ui.RoundedIconTestAction"/>
+        <action id="JEditorPaneDemoAction" internal="true" class="com.intellij.internal.ui.JEditorPaneDemoAction"/>
         <separator/>
         <group id="Internal.focusAndModality" popup="true">
           <action id="CheckMessagesButtonsOrderAction" internal="true"

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -16,7 +13,7 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
     KotlinBundle.lazyMessage("demorgan.law")
 ) {
     override fun isApplicableTo(element: KtBinaryExpression): Boolean {
-        val expr = element.parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression
+        val expr = element.topmostBinaryExpression()
 
         setTextGetter(
             when (expr.operationToken) {
@@ -31,50 +28,60 @@ class ConvertBinaryExpressionWithDemorgansLawIntention : SelfTargetingOffsetInde
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) = applyTo(element)
 
-    fun applyTo(element: KtBinaryExpression) {
-        val expr = element.parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression
-
-        val operatorText = when (expr.operationToken) {
-            KtTokens.ANDAND -> KtTokens.OROR.value
-            KtTokens.OROR -> KtTokens.ANDAND.value
-            else -> throw IllegalArgumentException()
+    companion object {
+        fun convertIfPossible(element: KtBinaryExpression) {
+            val expr = element.topmostBinaryExpression()
+            if (splitBooleanSequence(expr) == null) return
+            applyTo(element)
         }
 
-        val operands = splitBooleanSequence(expr)?.asReversed() ?: return
+        private fun KtBinaryExpression.topmostBinaryExpression(): KtBinaryExpression =
+            parentsWithSelf.takeWhile { it is KtBinaryExpression }.last() as KtBinaryExpression
 
-        val newExpression = KtPsiFactory(expr).buildExpression {
-            appendExpressions(operands.map { it.negate() }, separator = operatorText)
+        private fun applyTo(element: KtBinaryExpression) {
+            val expr = element.topmostBinaryExpression()
+
+            val operatorText = when (expr.operationToken) {
+                KtTokens.ANDAND -> KtTokens.OROR.value
+                KtTokens.OROR -> KtTokens.ANDAND.value
+                else -> throw IllegalArgumentException()
+            }
+
+            val operands = splitBooleanSequence(expr)?.asReversed() ?: return
+
+            val newExpression = KtPsiFactory(expr).buildExpression {
+                appendExpressions(operands.map { it.negate() }, separator = operatorText)
+            }
+
+            val grandParentPrefix = expr.parent.parent as? KtPrefixExpression
+            val negated = expr.parent is KtParenthesizedExpression &&
+                    grandParentPrefix?.operationReference?.getReferencedNameElementType() == KtTokens.EXCL
+            if (negated) {
+                grandParentPrefix?.replace(newExpression)
+            } else {
+                expr.replace(newExpression.negate())
+            }
         }
 
-        val grandParentPrefix = expr.parent.parent as? KtPrefixExpression
-        val negated = expr.parent is KtParenthesizedExpression &&
-                grandParentPrefix?.operationReference?.getReferencedNameElementType() == KtTokens.EXCL
-        if (negated) {
-            grandParentPrefix?.replace(newExpression)
-        } else {
-            expr.replace(newExpression.negate())
+        private fun splitBooleanSequence(expression: KtBinaryExpression): List<KtExpression>? {
+            val result = ArrayList<KtExpression>()
+            val firstOperator = expression.operationToken
+
+            var remainingExpression: KtExpression = expression
+            while (true) {
+                if (remainingExpression !is KtBinaryExpression) break
+
+                val operation = remainingExpression.operationToken
+                if (operation != KtTokens.ANDAND && operation != KtTokens.OROR) break
+
+                if (operation != firstOperator) return null //Boolean sequence must be homogenous
+
+                result.add(remainingExpression.right ?: return null)
+                remainingExpression = remainingExpression.left ?: return null
+            }
+
+            result.add(remainingExpression)
+            return result
         }
     }
-
-    private fun splitBooleanSequence(expression: KtBinaryExpression): List<KtExpression>? {
-        val result = ArrayList<KtExpression>()
-        val firstOperator = expression.operationToken
-
-        var remainingExpression: KtExpression = expression
-        while (true) {
-            if (remainingExpression !is KtBinaryExpression) break
-
-            val operation = remainingExpression.operationToken
-            if (operation != KtTokens.ANDAND && operation != KtTokens.OROR) break
-
-            if (operation != firstOperator) return null //Boolean sequence must be homogenous
-
-            result.add(remainingExpression.right ?: return null)
-            remainingExpression = remainingExpression.left ?: return null
-        }
-
-        result.add(remainingExpression)
-        return result
-    }
-
 }

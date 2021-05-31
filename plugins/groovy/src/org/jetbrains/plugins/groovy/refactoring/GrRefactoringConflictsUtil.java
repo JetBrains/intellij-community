@@ -6,6 +6,7 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -63,7 +64,7 @@ public final class GrRefactoringConflictsUtil {
 
     for (GrMember member : membersToMove) {
       checkUsedElements(member, member, membersToMove, abstractMethods, targetClass, context, conflicts);
-      RefactoringConflictsUtil.checkAccessibilityConflicts(member, newVisibility, targetClass, membersToMove, conflicts);
+      RefactoringConflictsUtil.checkAccessibilityConflicts(member, newVisibility, targetClass, membersToMove, conflicts, Conditions.alwaysTrue());
     }
   }
 

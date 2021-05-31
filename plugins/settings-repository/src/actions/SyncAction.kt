@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository.actions
 
 import com.intellij.notification.NotificationGroup
@@ -42,7 +42,7 @@ private suspend fun syncAndNotify(syncType: SyncType, project: Project?) {
   }
   catch (e: Exception) {
     LOG.warn(e)
-    NOTIFICATION_GROUP.createNotification(icsMessage("sync.rejected.title"), e.message ?: icsMessage("sync.internal.error"), NotificationType.ERROR, null).notify(project)
+    NOTIFICATION_GROUP.createNotification(icsMessage("sync.rejected.title"), e.message ?: icsMessage("sync.internal.error"), NotificationType.ERROR).notify(project)
   }
 }
 

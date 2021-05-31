@@ -1,8 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.execution.Executor;
-import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ReadAction;
@@ -18,6 +16,7 @@ import org.jetbrains.idea.maven.utils.MavenLog;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Consumer;
 
 public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemoteProcessSupportFactory.MavenRemoteProcessSupport {
   protected final Sdk myJdk;
@@ -25,6 +24,7 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
   protected final MavenDistribution myDistribution;
   protected final Project myProject;
   protected final Integer myDebugPort;
+  @Nullable protected Consumer<ProcessEvent> onTerminate;
 
   public AbstractMavenServerRemoteProcessSupport(@NotNull Sdk jdk, @Nullable String vmOptions, @NotNull MavenDistribution mavenDistribution,
                                                  @NotNull Project project, @Nullable Integer debugPort) {
@@ -65,10 +65,21 @@ public abstract class AbstractMavenServerRemoteProcessSupport extends MavenRemot
   }
 
   @Override
+  public void onTerminate(Consumer<ProcessEvent> onTerminate) {
+    this.onTerminate = onTerminate;
+  }
+
+  @Override
   protected void onProcessTerminated(ProcessEvent event) {
     if (event.getExitCode() == 0) {
       return;
     }
+    Consumer<ProcessEvent> eventConsumer = onTerminate;
+
+    if (eventConsumer != null) {
+      eventConsumer.accept(event);
+    }
+
     Project[] openProjects = ProjectManager.getInstance().getOpenProjects();
     for (Project p : openProjects) {
       ReadAction.run(() -> {

@@ -71,19 +71,33 @@ def match(fn, args, exclude_list):
     return True
 
 
+_VERSION_LINE_RE = re.compile(r"^([a-zA-Z_][a-zA-Z0-9_.]*): ([23]\.\d{1,2})-([23]\.\d{1,2})?$")
+
+
 def parse_versions(fname):
-    with open(fname) as f:
-        data = f.read().splitlines()
     result = {}
-    for line in data:
-        # Allow having some comments or empty lines.
-        if not line.strip() or line.startswith("#"):
-            continue
-        mod, ver_str = line.split(": ")
-        assert ver_str.count(".") == 1
-        major, minor = ver_str.split(".")
-        result[mod] = (int(major), int(minor))
+    with open(fname) as f:
+        for line in f:
+            # Allow having some comments or empty lines.
+            line = line.split("#")[0].strip()
+            if line == "":
+                continue
+            m = _VERSION_LINE_RE.match(line)
+            assert m, "invalid VERSIONS line: " + line
+            mod = m.group(1)
+            min_version = parse_version(m.group(2))
+            max_version = parse_version(m.group(3)) if m.group(3) else (99, 99)
+            result[mod] = min_version, max_version
     return result
+
+
+_VERSION_RE = re.compile(r"^([23])\.(\d+)$")
+
+
+def parse_version(v_str):
+    m = _VERSION_RE.match(v_str)
+    assert m, "invalid version: " + v_str
+    return int(m.group(1)), int(m.group(2))
 
 
 def is_supported(distribution, major):
@@ -172,7 +186,7 @@ def main():
         print("Cannot import mypy. Did you install it?")
         sys.exit(1)
 
-    versions = [(3, 9), (3, 8), (3, 7), (3, 6), (2, 7)]
+    versions = [(3, 10), (3, 9), (3, 8), (3, 7), (3, 6), (2, 7)]
     if args.python_version:
         versions = [v for v in versions if any(("%d.%d" % v).startswith(av) for av in args.python_version)]
         if not versions:
@@ -202,9 +216,8 @@ def main():
                 if name == PY2_NAMESPACE or name == "VERSIONS":
                     continue
                 mod, _ = os.path.splitext(name)
-                if supported_versions[mod] > (major, minor):
-                    continue
-                add_files(files, seen, root, name, args, exclude_list)
+                if supported_versions[mod][0] <= (major, minor) <= supported_versions[mod][1]:
+                    add_files(files, seen, root, name, args, exclude_list)
 
         # Next add files for all third party distributions.
         for distribution in os.listdir(THIRD_PARTY_NAMESPACE):

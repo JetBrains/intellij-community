@@ -20,8 +20,9 @@ import java.util.ArrayList;
 public class JavaDfaHelpers {
   public static DfaValue dropLocality(DfaValue value, DfaMemoryState state) {
     if (!(value instanceof DfaVariableValue)) {
-      if (DfReferenceType.isLocal(value.getDfType())) {
-        DfReferenceType dfType = ((DfReferenceType)value.getDfType()).dropLocality();
+      DfType type = value.getDfType();
+      if (type.isLocal() && type instanceof DfReferenceType) {
+        DfReferenceType dfType = ((DfReferenceType)type).dropLocality();
         if (value instanceof DfaWrappedValue) {
           return value.getFactory().getWrapperFactory()
             .createWrapper(dfType, ((DfaWrappedValue)value).getSpecialField(), ((DfaWrappedValue)value).getWrappedValue());

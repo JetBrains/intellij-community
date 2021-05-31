@@ -20,12 +20,14 @@ import com.intellij.psi.impl.file.PsiPackageBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 
 public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectoryContainer> extends DirectoryRenameHandlerBase {
@@ -86,14 +88,14 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
           }
           if (projectDirectories.length > 0) {
             int ret = Messages
-              .showYesNoCancelDialog(project, RefactoringBundle.message("rename.package.with.lib.multiple.message", aPackage.getName(), moduleDirs == null ? 1 : 2),
+              .showYesNoCancelDialog(project, RefactoringBundle.message("rename.package.with.lib.multiple.message", aPackage.getName(), module.getName()),
                                      RefactoringBundle.message("warning.title"),
-                                     RefactoringBundle.message("rename.current.directory"),
-                                     RefactoringBundle.message("rename.directories"), CommonBundle.getCancelButtonText(),
+                                     RefactoringBundle.message("rename.package.button.text"),
+                                     RefactoringBundle.message("rename.directory.button.text"), CommonBundle.getCancelButtonText(),
                                      Messages.getWarningIcon());
             if (ret == Messages.CANCEL) return;
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage,
-                       ret == Messages.YES ? (moduleDirs == null ? new PsiDirectory[]{psiDirectory} : moduleDirs) : projectDirectories);
+                       ret == Messages.YES ? projectDirectories : (moduleDirs == null ? new PsiDirectory[]{psiDirectory} : moduleDirs));
           }
           else {
             if (Messages.showOkCancelDialog(project, RefactoringBundle.message("rename.package.with.lib.message", aPackage.getName(), moduleDirs == null ? 1 : 2), RefactoringBundle.message("warning.title"),
@@ -105,17 +107,28 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
         else {
           final @Nls StringBuffer message = new StringBuffer();
           RenameUtil.buildPackagePrefixChangedMessage(virtualFiles, message, qualifiedName);
+          Module module = Objects.requireNonNull(ModuleUtilCore.findModuleForFile(psiDirectory.getVirtualFile(), project));
           buildMultipleDirectoriesInPackageMessage(message, getQualifiedName(aPackage), directories);
-          message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed",
-                                                   psiDirectory.getVirtualFile().getPresentableUrl()));
-          int ret = Messages.showYesNoCancelDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
-                                        RefactoringBundle.message("rename.package.button.text"),
-                                          RefactoringBundle.message("rename.directory.button.text"), CommonBundle.getCancelButtonText(),
-                                        Messages.getWarningIcon());
-          if (ret == Messages.YES) {
+          PsiDirectory[] moduleDirectories = aPackage.getDirectories(GlobalSearchScope.moduleScope(module));
+          message.append(RefactoringBundle.message("directories.and.all.references.to.package.will.be.renamed"));
+          List<String> options = new ArrayList<>();
+          options.add(RefactoringBundle.message("rename.package.button.text"));
+          if (directories.length > moduleDirectories.length) {
+            options.add(RefactoringBundle.message("rename.directory.button.text"));
+          }
+          if (moduleDirectories.length > 1) {
+            options.add(RefactoringBundle.message("rename.source.root.button.text"));
+          }
+          int ret = Messages.showDialog(project, message.toString(), RefactoringBundle.message("warning.title"),
+                                        ArrayUtil.toStringArray(options), 0, Messages.getWarningIcon());
+          if (ret == 0) {
             PsiElementRenameHandler.rename(aPackage, project, nameSuggestionContext, editor);
           }
-          else if (ret == Messages.NO) {
+          else if (ret == 1) {
+            PsiDirectory[] dirsToRename = directories.length > moduleDirectories.length ? moduleDirectories : new PsiDirectory[]{psiDirectory};
+            renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, dirsToRename);
+          }
+          else if (ret == 2) {
             renameDirs(project, nameSuggestionContext, editor, psiDirectory, aPackage, psiDirectory);
           }
         }

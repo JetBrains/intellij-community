@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.proxy
 
@@ -68,14 +65,14 @@ fun safeSkipCoroutineStackFrameProxy(frameProxy: StackFrameProxyImpl): StackFram
 
 fun safeCoroutineStackFrameProxy(
     location: Location?,
-    spilledVariables: List<JavaValue>?,
+    spilledVariables: List<JavaValue>,
     frameProxy: StackFrameProxyImpl
 ): StackFrameProxyImpl {
     val threadProxy = frameProxy.safeThreadProxy() ?: return frameProxy
     val stackFrame = frameProxy.safeStackFrame() ?: return frameProxy
     return CoroutineStackFrameProxyImpl(
         location,
-        spilledVariables ?: emptyList(),
+        spilledVariables,
         threadProxy,
         stackFrame,
         frameProxy.indexFromBottom

@@ -41,8 +41,7 @@ apply from: 'setupAndroidStudio.gradle'
 //Temporary unbundle VulnerabilitySearch
 //apply from: 'setupVulnerabilitySearchPlugin.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinCompiler',
-                                   'setupJetSign', 'setupBundledMaven'], group: 'dependencies')
+task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinCompiler', 'setupBundledMaven'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinCompiler', 'cleanSetupBundledMaven')
 
 task dependenciesFile() {

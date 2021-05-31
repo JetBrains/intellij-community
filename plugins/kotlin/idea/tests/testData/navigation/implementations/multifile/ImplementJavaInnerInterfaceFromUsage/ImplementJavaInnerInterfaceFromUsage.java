@@ -24,6 +24,6 @@ public class ImplementJavaInnerInterfaceFromUsage {
     }
 }
 
-// REF: (in ImplementJavaInnerInterfaceFromUsage.OtherJava).foo()
+// REF: of ImplementJavaInnerInterfaceFromUsage.OtherJava.foo()
 // REF: (in KotlinTest).foo()
 // REF: <anonymous>.foo()

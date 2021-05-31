@@ -206,8 +206,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   private Map<String, RepositoryListLoader> initUrlAutocomplete() {
     Collection<RepositoryHostingService> repositoryHostingServices = getRepositoryHostingServices();
     if (repositoryHostingServices.size() > 1) {
-      myRepositoryUrlAutoCompletionTooltipAlarm = new Alarm(getDisposable());
-      myRepositoryUrlAutoCompletionTooltipAlarm.setActivationComponent(myRepositoryUrlCombobox);
+      myRepositoryUrlAutoCompletionTooltipAlarm = new Alarm(myRepositoryUrlCombobox, getDisposable());
     }
 
     List<Action> loginActions = new ArrayList<>();

@@ -234,7 +234,8 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
 
   private void doFinish(List<? extends HighlightInfo> highlights, long modificationStampBefore) {
     Editor editor = getEditor();
-    assert editor != null;
+    ModalityState modalityState =
+      editor != null ? ModalityState.stateForComponent(editor.getComponent()) : ModalityState.defaultModalityState();
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
         int start = myRestrictRange.getStartOffset();
@@ -242,7 +243,7 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
         UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
         DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
       }
-    }, ModalityState.stateForComponent(editor.getComponent()), (x -> !myFile.isValid()));
+    }, modalityState, (x -> !myFile.isValid()));
   }
 
   private static void process(Throwable t, ExternalAnnotator annotator, PsiFile root) {

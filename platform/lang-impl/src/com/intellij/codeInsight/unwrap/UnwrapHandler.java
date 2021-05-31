@@ -138,17 +138,6 @@ public class UnwrapHandler implements CodeInsightActionHandler {
     }
   }
 
-  /**
-   * @deprecated operate with
-   * {@link EditorColors#SEARCH_RESULT_ATTRIBUTES} directly
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static TextAttributes getTestAttributesForExtract() {
-    EditorColorsManager manager = EditorColorsManager.getInstance();
-    return manager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
-  }
-
   protected static class MyUnwrapAction extends AnAction {
     private static final Key<Integer> CARET_POS_KEY = new Key<>("UNWRAP_HANDLER_CARET_POSITION");
 

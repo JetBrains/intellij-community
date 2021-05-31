@@ -223,6 +223,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
 
   /**
    * @deprecated use {@link #createTerminalWidget(Disposable, String, boolean)} instead
+   * It will be private in future releases.
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Licensed under the terms of the Eclipse Public License (EPL).
 package com.jetbrains.python.console.pydev;
 
 

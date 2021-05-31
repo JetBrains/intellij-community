@@ -15,13 +15,13 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.dataFlow.DfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
-import com.intellij.codeInspection.dataFlow.JvmDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.MethodContract;
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
@@ -127,12 +127,12 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       DfaValueFactory factory = new DfaValueFactory(owner.getProject());
       ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
       if (flow == null) return;
-      DfaMemoryState state = new DfaMemoryStateImpl(factory);
+      DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
       DfaVariableValue var1 = PlainDescriptor.createVariableValue(factory, parameters[0]);
       DfaVariableValue var2 = PlainDescriptor.createVariableValue(factory, parameters[1]);
       state.applyCondition(var1.eq(var2));
       var interceptor = new ComparatorListener(owner);
-      if (new JvmDataFlowInterpreter(flow, interceptor).interpret(state) != RunnerResult.OK) return;
+      if (new StandardDataFlowInterpreter(flow, interceptor).interpret(state) != RunnerResult.OK) return;
       if (interceptor.myRange.contains(0) || interceptor.myContexts.isEmpty()) return;
       PsiElement context = null;
       if (interceptor.myContexts.size() == 1) {
@@ -172,7 +172,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                                     @NotNull DfaMemoryState state) {
         if (owner != myOwner || expression == null) return;
         myContexts.add(expression);
-        myRange = myRange.unite(DfIntType.extractRange(state.getDfType(value)));
+        myRange = myRange.join(DfIntType.extractRange(state.getDfType(value)));
       }
     }
 

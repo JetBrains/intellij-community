@@ -1,12 +1,12 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <projectServiceContainerInitializedListener implementation="com.intellij.openapi.module.impl.ModuleManagerComponent$MyProjectServiceContainerInitializedListener" order="first"/>
+    <projectServiceContainerInitializedListener implementation="com.intellij.openapi.module.impl.ModuleProjectServiceContainerInitializedListener" order="first"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
                         overrides="true"/>
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootManager"
-                    serviceImplementation="com.intellij.openapi.roots.impl.ProjectRootManagerComponent" preload="await"/>
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge" preload="await"/>
 
     <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
     <appStarter implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
@@ -87,7 +87,7 @@
     <applicationService serviceInterface="com.intellij.concurrency.JobLauncher"
                         serviceImplementation="com.intellij.concurrency.JobLauncherImpl"/>
 
-    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.ProjectFileBasedIndexStartupActivity" order="first"/>
+    <requiredForSmartModeStartupActivity implementation="com.intellij.util.indexing.ProjectFileBasedIndexStartupActivity" order="first" id="projectIndexStartup"/>
     <startupActivity id="dumbServiceStartup" implementation="com.intellij.openapi.project.DumbServiceStartupActivity" order="last"/>
     <startupActivity id="vfsStartup" implementation="com.intellij.psi.impl.file.impl.PsiVFSListener$MyStartUpActivity" order="first, after performanceReporter"/>
 
@@ -99,8 +99,6 @@
                         serviceImplementation="com.intellij.model.BranchServiceImpl"/>
 
     <projectServiceContainerCustomizer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener"/>
-    <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModel"
-                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl" preload="await"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService" preload="await"/>
     <projectServiceContainerInitializedListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService$ModuleBridgeProjectServiceInitializedListener"/>
 
@@ -300,7 +298,7 @@
                     serviceImplementation="com.intellij.psi.impl.include.FileIncludeManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable"
-                    serviceImplementation="com.intellij.openapi.roots.impl.libraries.ProjectLibraryTableImpl"/>
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl"/>
 
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.intellij.psi.search.ProjectScopeBuilderImpl"/>
@@ -309,6 +307,7 @@
                     serviceImplementation="com.intellij.facet.impl.ProjectWideFacetListenersRegistryImpl"/>
 
     <projectService serviceInterface="com.intellij.facet.FacetFinder" serviceImplementation="com.intellij.facet.impl.FacetFinderImpl"/>
+    <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetEntityChangeListener"/>
 
     <projectService serviceInterface="com.intellij.facet.ProjectFacetManager"
                     serviceImplementation="com.intellij.facet.impl.ProjectFacetManagerImpl"/>
@@ -327,7 +326,6 @@
 
     <moduleService serviceInterface="com.intellij.facet.FacetModificationTrackingService"
                    serviceImplementation="com.intellij.facet.impl.FacetModificationTrackingServiceImpl"/>
-    <moduleService serviceImplementation="com.intellij.facet.FacetFromExternalSourcesStorage"/>
 
     <applicationService serviceInterface="com.intellij.framework.detection.impl.FrameworkDetectorRegistry"
                         serviceImplementation="com.intellij.framework.detection.impl.FrameworkDetectorRegistryImpl"/>
@@ -352,9 +350,6 @@
 
     <projectService serviceInterface="com.intellij.refactoring.listeners.RefactoringListenerManager"
                     serviceImplementation="com.intellij.refactoring.listeners.impl.RefactoringListenerManagerImpl"/>
-
-    <projectService serviceInterface="com.intellij.util.LogicalRootsManager"
-                    serviceImplementation="com.intellij.util.LogicalRootsManagerImpl"/>
 
     <projectService serviceImplementation="com.intellij.codeEditor.printing.ExportToHTMLSettings"/>
 
@@ -547,6 +542,7 @@
     <getDataRule key="usageTarget" implementationClass="com.intellij.ide.impl.dataRules.UsageTargetsRule"/>
     <getDataRule key="UsageInfo.List" implementationClass="com.intellij.ide.impl.dataRules.UsageInfo2ListRule"/>
     <getDataRule key="module" implementationClass="com.intellij.ide.impl.dataRules.ModuleRule"/>
+    <getDataRule key="search.targets" implementationClass="com.intellij.find.actions.SearchTargetsDataRule"/>
     <getDataRule key="search.target.variants" implementationClass="com.intellij.find.actions.SearchTargetVariantsDataRule"/>
 
     <dataValidators implementation="com.intellij.ide.impl.LangDataValidators"/>
@@ -706,12 +702,6 @@
     <filePropertyPusher implementation="com.intellij.psi.templateLanguages.TemplateDataLanguagePusher"/>
 
     <!-- execution -->
-    <experimentalFeature id="run.targets" percentOfUsers="0">
-      <description>Makes available running on remote runtime environments (Java on Docker or SSH server)</description>
-    </experimentalFeature>
-    <experimentalFeature id="edit.run.configurations.while.dumb" percentOfUsers="100">
-      <description>Enables editing of Run Configurations during indexing</description>
-    </experimentalFeature>
     <projectService serviceImplementation="com.intellij.execution.target.TargetEnvironmentsManager"/>
 
     <executor implementation="com.intellij.execution.executors.DefaultRunExecutor" order="first" id="run"/>
@@ -761,7 +751,8 @@
     <enterHandlerDelegate implementation="com.intellij.codeInsight.editorActions.enter.EnterAfterJavadocTagHandler"/>
 
     <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.SimpleIndentingBackspaceHandler"/>
-    <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.SmartIndentingBackspaceHandler"/>
+    <backspaceHandlerDelegate implementation="com.intellij.codeInsight.editorActions.SmartIndentingBackspaceHandler"
+                              id="SmartIndentingBackspaceHandler"/>
 
     <codeInsight.linkHandler prefix="#inspection/" handlerClass="com.intellij.codeInsight.hint.InspectionDescriptionLinkHandler"/>
     <codeInsight.linkHandler prefix="#navigation/" handlerClass="com.intellij.codeInsight.hint.NavigationLinkHandler"/>
@@ -1035,15 +1026,15 @@
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.BookmarkUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.BookmarkCounterCollector"/>
 
-    <statistics.counterUsagesCollector groupId="searchEverywhere" version="4"/>
-    <statistics.counterUsagesCollector groupId="actions.runAnything" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.runAnything.RunAnythingUsageCollector"/>
     <statistics.counterUsagesCollector groupId="surround.with" version="2"/>
-    <statistics.counterUsagesCollector groupId="find" version="4"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.find.FindUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="create.directory.dialog" version="2"/>
-    <statistics.counterUsagesCollector groupId="refactoring.dialog" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.ui.RefactoringDialogUsageCollector"/>
     <statistics.counterUsagesCollector groupId="project.view.pane.changes" version="1"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector"/>
-    <statistics.counterUsagesCollector groupId="intentions" version="57"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.IntentionsCollector"/>
     <statistics.counterUsagesCollector groupId="completion.postfix" version="57"/>
 
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension"/>
@@ -1259,6 +1250,7 @@
 
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingContextRecentDirectoryCache"/>
+    <actionConfigurationCustomizer implementation="com.intellij.ide.actions.runAnything.RunAnythingAction$ShortcutTracker"/>
 
     <runAnything.executionProvider id="RunAnythingRunConfigurationProvider"
                                    implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
@@ -1385,7 +1377,7 @@
     <projectService serviceImplementation="com.intellij.execution.segmentedRunDebugWidget.StateWidgetManager"/>
 
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
-    <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.PatternDescriptor$Factory"/>
+    <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor$Factory"/>
 
     <fileBasedIndexLayout id="in-memory"
                           presentableNameKey="in.memory.storage.presentable.name"
@@ -1399,6 +1391,9 @@
     <advancedSetting id="ide.suppress.double.click.handler" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.usages.page.size" default="100" groupKey="group.advanced.settings.find"/>
     <advancedSetting id="bigger.font.in.project.view" default="false" groupKey="group.advanced.settings.project.view"/>
+    <advancedSetting id="editor.comment.line.caret.down" default="true" groupKey="group.advanced.settings.editor"/>
+    <advancedSetting id="editor.maximize.on.double.click" default="true" groupKey="group.advanced.settings.editor"/>
+    <advancedSetting id="editor.maximize.in.splits.on.double.click" default="false" groupKey="group.advanced.settings.editor"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.util.indexing.FileBasedIndexPluginListener" topic="com.intellij.ide.plugins.DynamicPluginListener"/>

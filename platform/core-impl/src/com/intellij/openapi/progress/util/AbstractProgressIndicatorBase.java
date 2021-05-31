@@ -21,13 +21,12 @@ import com.intellij.ui.IconManager;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.exception.FrequentErrorLogger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
-  private static final FrequentErrorLogger LOG = FrequentErrorLogger.newInstance(Logger.getInstance(AbstractProgressIndicatorBase.class));
+  private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
 
   private volatile @NlsContexts.ProgressText String myText;
   private volatile double myFraction;

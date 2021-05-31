@@ -1,18 +1,15 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.project
 
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.project.Project
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.XmlSerializerUtil
 import com.intellij.util.xmlb.annotations.OptionTag
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import java.util.concurrent.atomic.AtomicBoolean
 
 object KotlinLibraryToSourceAnalysisComponent {
@@ -58,13 +55,12 @@ class KotlinLibraryToSourceAnalysisStateComponent : PersistentStateComponent<Kot
     }
 
     companion object {
-        fun getInstance(project: Project): KotlinLibraryToSourceAnalysisStateComponent =
-            ServiceManager.getService(project, KotlinLibraryToSourceAnalysisStateComponent::class.java)
+        fun getInstance(project: Project): KotlinLibraryToSourceAnalysisStateComponent = project.getServiceSafe()
     }
 }
 
 class AtomicBooleanXmlbConverter : Converter<AtomicBoolean>() {
-    override fun toString(value: AtomicBoolean): String? = if (value.get()) TRUE else FALSE
+    override fun toString(value: AtomicBoolean): String = if (value.get()) TRUE else FALSE
 
     override fun fromString(value: String): AtomicBoolean? = when (value) {
         TRUE -> AtomicBoolean(true)

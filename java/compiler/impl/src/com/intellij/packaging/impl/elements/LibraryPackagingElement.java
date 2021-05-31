@@ -136,7 +136,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
           }
           return Unit.INSTANCE;
         });
-      }, true
+      }
     );
   }
 
@@ -156,7 +156,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
           }
           return Unit.INSTANCE;
         });
-      }, true
+      }
     );
   }
 
@@ -180,7 +180,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
           }
           return Unit.INSTANCE;
         });
-      }, true
+      }
     );
   }
 

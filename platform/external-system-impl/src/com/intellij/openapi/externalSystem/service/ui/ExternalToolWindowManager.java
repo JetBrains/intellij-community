@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.ui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListenerAdapter;
@@ -38,7 +39,8 @@ public final class ExternalToolWindowManager {
         public void onProjectsLinked(@NotNull Collection linked) {
 
           Consumer<ToolWindow> activate = (toolWindow) -> toolWindow.setAvailable(true, () -> {
-            boolean shouldShow = settings.getLinkedProjectsSettings().size() == 1;
+            boolean shouldShow = settings.getLinkedProjectsSettings().size() == 1
+                                 && project.getUserData(ExternalSystemDataKeys.NEWLY_CREATED_PROJECT) == null;
             if (shouldShow) {
               toolWindow.show(null);
             }

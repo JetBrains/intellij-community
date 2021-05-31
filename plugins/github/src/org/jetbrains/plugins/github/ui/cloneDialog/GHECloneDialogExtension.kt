@@ -1,9 +1,9 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
-import com.intellij.application.subscribe
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.ui.cloneDialog.VcsCloneDialogExtensionComponent
@@ -17,10 +17,9 @@ import com.intellij.util.ui.cloneDialog.AccountMenuItem
 import com.intellij.util.ui.components.BorderLayoutPanel
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutorManager
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
+import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_REMOVED_TOPIC
-import org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager.Companion.ACCOUNT_TOKEN_CHANGED_TOPIC
 import org.jetbrains.plugins.github.authentication.accounts.isGHAccount
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.util.CachingGHUserAvatarLoader
@@ -50,20 +49,18 @@ private class GHECloneDialogExtensionComponent(project: Project) : GHCloneDialog
 ) {
 
   init {
-    ACCOUNT_REMOVED_TOPIC.subscribe(this, this)
-    ACCOUNT_TOKEN_CHANGED_TOPIC.subscribe(this, this)
-
+    service<GHAccountManager>().addListener(this, this)
     setup()
   }
 
   override fun getAccounts(): Collection<GithubAccount> = getGHEAccounts()
 
-  override fun accountRemoved(removedAccount: GithubAccount) {
-    if (removedAccount.isGHEAccount) super.accountRemoved(removedAccount)
+  override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+    super.onAccountListChanged(old.filter { it.isGHEAccount }, new.filter { it.isGHEAccount })
   }
 
-  override fun tokenChanged(account: GithubAccount) {
-    if (account.isGHEAccount) super.tokenChanged(account)
+  override fun onAccountCredentialsChanged(account: GithubAccount) {
+    if (account.isGHEAccount) super.onAccountCredentialsChanged(account)
   }
 
   override fun createLoginPanel(account: GithubAccount?, cancelHandler: () -> Unit): JComponent =

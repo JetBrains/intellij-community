@@ -3,15 +3,27 @@ package com.intellij.codeInspection.dataFlow.types;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents an integral primitive whose value can be represented as {@link LongRangeSet}.
  */
 public interface DfIntegralType extends DfType {
+  /**
+   * @return a range represented by this type
+   */
   @NotNull
   LongRangeSet getRange();
 
+  /**
+   * @return a LongRangeType that describes this value the best
+   */
+  @NotNull LongRangeType getLongRangeType();
+
+  /**
+   * @return a wide range represented by this type (will be used in case if backbranch is visited)
+   */
   default @NotNull LongRangeSet getWideRange() {
     return getRange();
   }

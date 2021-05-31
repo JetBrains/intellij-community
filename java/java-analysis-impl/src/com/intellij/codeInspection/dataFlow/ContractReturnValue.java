@@ -516,7 +516,7 @@ public abstract class ContractReturnValue {
 
     @Override
     public boolean isValueCompatible(DfaMemoryState state, DfaValue value) {
-      DfType type = state.getUnboxedDfType(value);
+      DfType type = DfaUtil.getUnboxedDfType(state, value);
       return type.isSuperType(DfTypes.booleanValue(myValue));
     }
   }

@@ -28,6 +28,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class MavenIndices {
   private final MavenIndexerWrapper myIndexer;
@@ -35,7 +36,7 @@ public class MavenIndices {
   private final File myIndicesDir;
   private final MavenSearchIndex.IndexListener myListener;
 
-  private final List<MavenIndex> myIndices = new ArrayList<>();
+  private final List<MavenIndex> myIndices = new CopyOnWriteArrayList<>();
   private static final Object ourDirectoryLock = new Object();
 
   public MavenIndices(MavenIndexerWrapper indexer, File indicesDir, MavenSearchIndex.IndexListener listener) {
@@ -77,11 +78,11 @@ public class MavenIndices {
     myIndices.clear();
   }
 
-  public synchronized List<MavenIndex> getIndices() {
+  public List<MavenIndex> getIndices() {
     return new ArrayList<>(myIndices);
   }
 
-  public synchronized MavenIndex add(String repositoryId, String repositoryPathOrUrl, MavenSearchIndex.Kind kind) throws MavenIndexException {
+  public MavenIndex add(String repositoryId, String repositoryPathOrUrl, MavenSearchIndex.Kind kind) throws MavenIndexException {
     MavenIndex index = find(repositoryPathOrUrl, kind);
     if (index != null) {
       index.registerId(repositoryId);

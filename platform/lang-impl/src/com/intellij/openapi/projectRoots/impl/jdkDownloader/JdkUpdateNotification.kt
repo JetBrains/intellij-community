@@ -1,6 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.impl.jdkDownloader
 
+import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationGroupManager
@@ -123,7 +124,7 @@ class JdkUpdateNotification(val jdk: Sdk,
 
   val isUpdateActionVisible get() = !myIsUpdateRunning && !myIsTerminated
 
-  inner class JdkUpdateSuggestionAction : DumbAwareAction() {
+  inner class JdkUpdateSuggestionAction : SettingsEntryPointAction.UpdateAction() {
     val jdkUpdateNotification = this@JdkUpdateNotification
 
     init {
@@ -142,9 +143,10 @@ class JdkUpdateNotification(val jdk: Sdk,
 
   private fun showUpdateErrorNotification(feedItem: JdkItem) : Unit = lock.withLock {
     NotificationGroupManager.getInstance().getNotificationGroup("JDK Update Error")
-      .createNotification(type = NotificationType.ERROR)
-      .setTitle(ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText))
-      .setContent(ProjectBundle.message("progress.title.updating.jdk.failed", feedItem.fullPresentationText))
+      .createNotification(
+        ProjectBundle.message("progress.title.updating.jdk.0.to.1", jdk.name, feedItem.fullPresentationText),
+        ProjectBundle.message("progress.title.updating.jdk.failed", feedItem.fullPresentationText),
+        NotificationType.ERROR)
       .addAction(InstallUpdateNotification())
       .bindNextNotificationAndShow()
   }

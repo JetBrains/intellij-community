@@ -13,7 +13,7 @@ class SingleValueModelImpl<T>(initialValue: T) : SingleValueModel<T> {
       listeners.multicaster.valueUpdated(value)
     }
 
-  override fun addValueUpdatedListener(listener: (newValue: T) -> Unit) {
+  override fun addListener(listener: (newValue: T) -> Unit) {
     listeners.addListener(object : ValueChangedListener {
       override fun valueUpdated(newValue: Any?) {
         @Suppress("UNCHECKED_CAST")

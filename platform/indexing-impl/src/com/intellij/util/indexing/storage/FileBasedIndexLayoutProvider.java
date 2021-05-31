@@ -20,4 +20,8 @@ public interface FileBasedIndexLayoutProvider {
    */
   @NotNull
   <K, V> VfsAwareIndexStorageLayout<K, V> getLayout(@NotNull FileBasedIndexExtension<K, V> extension);
+
+  default boolean isSupported() {
+    return true;
+  }
 }

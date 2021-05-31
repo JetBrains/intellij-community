@@ -9,6 +9,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -68,7 +69,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
                                @NotNull FileEditor preview,
                                @NotNull @Nls String editorName,
                                @NotNull Layout defaultLayout) {
-    this(editor, preview, editorName, defaultLayout, true);
+    this(editor, preview, editorName, defaultLayout, false);
   }
 
   public TextEditorWithPreview(@NotNull TextEditor editor, @NotNull FileEditor preview, @NotNull @Nls String editorName) {
@@ -138,6 +139,14 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     return myComponent;
   }
 
+  public boolean isVerticalSplit() {
+    return myIsVerticalSplit;
+  }
+
+  public void setVerticalSplit(boolean verticalSplit) {
+    myIsVerticalSplit = verticalSplit;
+  }
+
   @NotNull
   private SplitEditorToolbar createMarkdownToolbarWrapper(@NotNull JComponent targetComponentForActions) {
     final ActionToolbar leftToolbar = createToolbar();
@@ -170,9 +179,20 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     }
   }
 
+  @SuppressWarnings("unused")
+  protected void onLayoutChange(Layout oldValue, Layout newValue) {}
+
   private void adjustEditorsVisibility() {
     myEditor.getComponent().setVisible(myLayout == Layout.SHOW_EDITOR || myLayout == Layout.SHOW_EDITOR_AND_PREVIEW);
     myPreview.getComponent().setVisible(myLayout == Layout.SHOW_PREVIEW || myLayout == Layout.SHOW_EDITOR_AND_PREVIEW);
+  }
+
+  protected void setLayout(@NotNull Layout layout) {
+    Layout oldLayout = myLayout;
+    myLayout = layout;
+    PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myId, myDefaultLayout.myId);
+    adjustEditorsVisibility();
+    onLayoutChange(oldLayout, myLayout);
   }
 
   private void invalidateLayout() {
@@ -243,6 +263,11 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   @NotNull
   public TextEditor getTextEditor() {
     return myEditor;
+  }
+
+  @NotNull
+  public FileEditor getPreviewEditor() {
+    return myPreview;
   }
 
   public Layout getLayout() {
@@ -397,22 +422,20 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
   }
 
   public enum Layout {
-    SHOW_EDITOR("Editor only", IdeBundle.messagePointer("tab.title.editor.only"), AllIcons.General.LayoutEditorOnly),
-    SHOW_PREVIEW("Preview only", IdeBundle.messagePointer("tab.title.preview.only"), AllIcons.General.LayoutPreviewOnly),
-    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", IdeBundle.messagePointer("tab.title.editor.and.preview"), AllIcons.General.LayoutEditorPreview);
+    SHOW_EDITOR("Editor only", IdeBundle.messagePointer("tab.title.editor.only")),
+    SHOW_PREVIEW("Preview only", IdeBundle.messagePointer("tab.title.preview.only")),
+    SHOW_EDITOR_AND_PREVIEW("Editor and Preview", IdeBundle.messagePointer("tab.title.editor.and.preview"));
 
     private final @NotNull Supplier<@Nls String> myName;
-    private final Icon myIcon;
     private final String myId;
 
-    Layout(String id, @NotNull Supplier<String> name, Icon icon) {
+    Layout(String id, @NotNull Supplier<String> name) {
       myId = id;
       myName = name;
-      myIcon = icon;
     }
 
     public static Layout fromId(String id, Layout defaultValue) {
-      for (Layout layout : Layout.values()) {
+      for (Layout layout : values()) {
         if (layout.myId.equals(id)) {
           return layout;
         }
@@ -424,8 +447,10 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
       return myName.get();
     }
 
-    public Icon getIcon() {
-      return myIcon;
+    public Icon getIcon(TextEditorWithPreview editor) {
+      if (this == SHOW_EDITOR) return AllIcons.General.LayoutEditorOnly;
+      if (this == SHOW_PREVIEW) return AllIcons.General.LayoutPreviewOnly;
+      return editor.myIsVerticalSplit ? AllIcons.Actions.PreviewDetailsVertically : AllIcons.Actions.PreviewDetails;
     }
   }
 
@@ -433,7 +458,7 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     private final Layout myActionLayout;
 
     ChangeViewModeAction(Layout layout) {
-      super(layout.getName(), layout.getName(), layout.getIcon());
+      super(layout.getName(), layout.getName(), layout.getIcon(TextEditorWithPreview.this));
       myActionLayout = layout;
     }
 
@@ -445,10 +470,19 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     @Override
     public void setSelected(@NotNull AnActionEvent e, boolean state) {
       if (state) {
-        myLayout = myActionLayout;
-        PropertiesComponent.getInstance().setValue(getLayoutPropertyName(), myLayout.myId, myDefaultLayout.myId);
-        adjustEditorsVisibility();
+        setLayout(myActionLayout);
+      } else {
+        if (myActionLayout == Layout.SHOW_EDITOR_AND_PREVIEW) {
+          mySplitter.setOrientation(!myIsVerticalSplit);
+          myIsVerticalSplit = !myIsVerticalSplit;
+        }
       }
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setIcon(myActionLayout.getIcon(TextEditorWithPreview.this));
     }
   }
 
@@ -482,7 +516,12 @@ public class TextEditorWithPreview extends UserDataHolderBase implements TextEdi
     myIsVerticalSplit = isVerticalSplit;
 
     myToolbarWrapper.refresh();
-    mySplitter.setOrientation(!myIsVerticalSplit);
+    mySplitter.setOrientation(myIsVerticalSplit);
     myComponent.repaint();
+  }
+
+  public static void openPreviewForFile(@NotNull Project project, @NotNull VirtualFile file) {
+    file.putUserData(DEFAULT_LAYOUT_FOR_FILE, Layout.SHOW_PREVIEW);
+    FileEditorManager.getInstance(project).openFile(file, true);
   }
 }

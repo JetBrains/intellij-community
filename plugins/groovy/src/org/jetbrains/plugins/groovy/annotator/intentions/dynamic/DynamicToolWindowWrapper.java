@@ -216,7 +216,7 @@ public final class DynamicToolWindowWrapper {
       return "";
     });
 
-    PopupHandler.installUnknownPopupHandler(myTreeTable, new DefaultActionGroup(new RemoveDynamicAction()));
+    PopupHandler.installPopupMenu(myTreeTable, new DefaultActionGroup(new RemoveDynamicAction()), "DynamicToolWindowWrapperPopup");
 
     final MyColoredTreeCellRenderer treeCellRenderer = new MyColoredTreeCellRenderer();
 

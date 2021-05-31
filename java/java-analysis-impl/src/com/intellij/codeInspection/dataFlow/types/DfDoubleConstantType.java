@@ -4,8 +4,11 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleType {
+import java.util.Objects;
+
+public class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleType {
   DfDoubleConstantType(double value) {
     super(value);
   }
@@ -13,9 +16,18 @@ class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleTyp
   @NotNull
   @Override
   public DfType join(@NotNull DfType other) {
+    return Objects.requireNonNull(join(other, false));
+  }
+
+  @Override
+  public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+    return join(other, true);
+  }
+
+  private DfType join(@NotNull DfType other, boolean exact) {
     if (other.isSuperType(this)) return other;
     if (other instanceof DfDoubleRangeType) {
-      return other.join(this);
+      return ((DfDoubleRangeType)other).join(this, exact);
     }
     if (other instanceof DfDoubleConstantType) {
       double val1 = getValue();
@@ -29,9 +41,9 @@ class DfDoubleConstantType extends DfConstantType<Double> implements DfDoubleTyp
       double from = Math.min(val1, val2);
       double to = Math.max(val1, val2);
       // We don't support disjoint sets, so the best we can do is to return a range from min to max
-      return DfDoubleRangeType.create(from, to, false, false);
+      return exact ? null : DfDoubleRangeType.create(from, to, false, false);
     }
-    return DfType.TOP;
+    return exact ? null : DfType.TOP;
   }
 
   @Override

@@ -384,7 +384,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       () -> checkEditorsReleased(),
       () -> super.tearDown(),
       () -> WriteAction.runAndWait(() -> {
-        if (project != null && LegacyBridgeProjectLifecycleListener.Companion.enabled(project)) {
+        if (project != null) {
           ProjectJdkTableImpl jdkTable = (ProjectJdkTableImpl)ProjectJdkTable.getInstance();
           for (Sdk jdk : jdkTable.getAllJdks()) {
             jdkTable.removeTestJdk(jdk);

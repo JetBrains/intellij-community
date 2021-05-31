@@ -178,34 +178,27 @@ private class PyStubPackagesAdvertiser : PyInspection() {
 
         BALLOON_NOTIFICATIONS
           .createNotification(
-            title = PyBundle.message("code.insight.type.hints.are.not.installed"),
-            content = PyBundle.message("code.insight.install.type.hints.content")
+            PyBundle.message("code.insight.type.hints.are.not.installed"),
+            PyBundle.message("code.insight.install.type.hints.content"),
+            NotificationType.INFORMATION)
+          .addAction(
+            NotificationAction.createSimpleExpiring(
+              if (plural) PyBundle.message("code.insight.install.type.hints.action")
+              else "${PyBundle.message("python.packaging.install")} $reqsToString"
+            ) { createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager).applyFix(project, problemDescriptor) }
           )
-          .apply {
-            addAction(
-              NotificationAction.createSimpleExpiring(
-                if (plural) PyBundle.message("code.insight.install.type.hints.action")
-                else "${PyBundle.message("python.packaging.install")} $reqsToString"
-              ) { createInstallStubPackagesQuickFix(reqs, args, module, sdk, packageManager).applyFix(project, problemDescriptor) }
-            )
-
-            addAction(
-              NotificationAction.createSimpleExpiring(
-                PyBundle.message("code.insight.ignore.type.hints")
-              ) { createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor) }
-            )
-
-            addAction(
-              NotificationAction.createSimpleExpiring(
-                InspectionsBundle.message("inspection.action.edit.settings")
-              ) {
-                val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
-                EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
-              }
-            )
-
-            collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
-          }
+          .addAction(
+            NotificationAction.createSimpleExpiring(PyBundle.message("code.insight.ignore.type.hints")) {
+              createIgnorePackagesQuickFix(reqs, packageManager).applyFix(project, problemDescriptor)
+            }
+          )
+          .addAction(
+            NotificationAction.createSimpleExpiring(PyBundle.message("notification.action.edit.settings")) {
+              val profile = ProjectInspectionProfileManager.getInstance(project).currentProfile
+              EditInspectionToolsSettingsAction.editToolSettings(project, profile, PyStubPackagesAdvertiser::class.simpleName)
+            }
+          )
+          .setCollapseDirection(Notification.CollapseActionsDirection.KEEP_LEFTMOST)
           .whenExpired { project.putUserData(BALLOON_SHOWING, false) }
           .notify(project)
       }

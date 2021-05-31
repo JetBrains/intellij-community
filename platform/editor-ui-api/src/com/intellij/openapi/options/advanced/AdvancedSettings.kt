@@ -3,31 +3,33 @@ package com.intellij.openapi.options.advanced
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.messages.Topic
+import com.intellij.util.messages.Topic.BroadcastDirection
 
 enum class AdvancedSettingType { Int, Bool, String, Enum }
 
 abstract class AdvancedSettings  {
-  protected abstract fun getSettingString(id: String): String
-  protected abstract fun getSetting(id: String): Pair<Any, AdvancedSettingType>
-
+  protected abstract fun getSetting(id: String): Any
   abstract fun setSetting(id: String, value: Any, expectType: AdvancedSettingType)
 
   companion object {
-     @JvmStatic
+    @JvmStatic
     fun getInstance(): AdvancedSettings = ApplicationManager.getApplication().getService(AdvancedSettings::class.java)
 
     @JvmStatic
-    fun getBoolean(id: String): Boolean = getInstance().getSettingString(id).toBoolean()
+    fun getInstanceIfCreated(): AdvancedSettings? = ApplicationManager.getApplication()?.getServiceIfCreated(AdvancedSettings::class.java)
 
     @JvmStatic
-    fun getInt(id: String): Int = getInstance().getSettingString(id).toInt()
+    fun getBoolean(id: String): Boolean = getInstance().getSetting(id) as Boolean
 
     @JvmStatic
-    fun getString(id: String): String = getInstance().getSettingString(id)
+    fun getInt(id: String): Int = getInstance().getSetting(id) as Int
+
+    @JvmStatic
+    fun getString(id: String): String = getInstance().getSetting(id) as String
 
     @Suppress("UNCHECKED_CAST")
     @JvmStatic
-    fun <T: Enum<T>> getEnum(id: String, enumClass: Class<T>): T = enumClass.cast(getInstance().getSetting(id).first)
+    fun <T: Enum<T>> getEnum(id: String, enumClass: Class<T>): T = enumClass.cast(getInstance().getSetting(id))
 
     @JvmStatic
     fun setBoolean(id: String, value: Boolean) {
@@ -56,6 +58,7 @@ interface AdvancedSettingsChangeListener {
 
   companion object {
     @JvmField
-    val TOPIC = Topic(AdvancedSettingsChangeListener::class.java)
+    @Topic.AppLevel
+    val TOPIC = Topic(AdvancedSettingsChangeListener::class.java, BroadcastDirection.NONE)
   }
 }

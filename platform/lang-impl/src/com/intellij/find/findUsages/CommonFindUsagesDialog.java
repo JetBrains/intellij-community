@@ -21,6 +21,7 @@ import javax.swing.*;
 public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
   @NotNull protected final PsiElement myPsiElement;
   @Nullable private final String myHelpId;
+  @NotNull protected final FindUsagesHandlerBase myUsagesHandler;
 
   public CommonFindUsagesDialog(@NotNull PsiElement element,
                                 @NotNull Project project,
@@ -32,6 +33,7 @@ public class CommonFindUsagesDialog extends AbstractFindUsagesDialog {
     super(project, findUsagesOptions, toShowInNewTab, mustOpenInNewTab, isSingleFile, isTextSearch(element, isSingleFile, handler),
           true);
     myPsiElement = element;
+    myUsagesHandler = handler;
     String helpId = handler instanceof FindUsagesHandlerUi?
        ((FindUsagesHandlerUi)handler).getHelpId(): null;
     myHelpId = ObjectUtils.chooseNotNull(helpId, HelpID.FIND_OTHER_USAGES);

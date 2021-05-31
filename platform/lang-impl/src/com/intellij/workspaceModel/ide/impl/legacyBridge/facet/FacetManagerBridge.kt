@@ -5,10 +5,15 @@ import com.google.common.collect.HashBiMap
 import com.intellij.facet.*
 import com.intellij.facet.impl.FacetModelBase
 import com.intellij.facet.impl.FacetUtil
+import com.intellij.facet.impl.invalid.InvalidFacet
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
+import com.intellij.openapi.project.isExternalStorageEnabled
+import com.intellij.openapi.roots.ExternalProjectSystemRegistry
+import com.intellij.openapi.util.JDOMExternalizable
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.ide.WorkspaceModel
@@ -56,6 +61,51 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
     return ModifiableFacetModelBridgeImpl(module.entityStorage.current, diff, module, this)
   }
 
+  companion object {
+    internal fun <F : Facet<C>, C : FacetConfiguration> createFacetFromStateRaw(module: Module, type: FacetType<F, C>,
+                                                                                state: FacetState, underlyingFacet: Facet<*>?): F {
+      val configuration: C = type.createDefaultConfiguration()
+      val config = state.configuration
+      FacetUtil.loadFacetConfiguration(configuration, config)
+      val name = state.name
+      val facet: F = createFacet(module, type, name, configuration, underlyingFacet);
+      if (facet is JDOMExternalizable) {
+        //todo[nik] remove
+        facet.readExternal(config)
+      }
+      val externalSystemId = state.externalSystemId
+      if (externalSystemId != null) {
+        facet.externalSource = ExternalProjectSystemRegistry.getInstance().getSourceById(externalSystemId)
+      }
+      return facet;
+    }
+
+    internal fun saveFacetConfiguration(facet: Facet<*>): FacetState? {
+      val facetState = createFacetState(facet, facet.module.project)
+      if (facet !is InvalidFacet) {
+        val config = FacetUtil.saveFacetConfiguration(facet) ?: return null
+        facetState.configuration = config
+      }
+      return facetState
+    }
+
+    private fun createFacetState(facet: Facet<*>, project: Project): FacetState {
+      return if (facet is InvalidFacet) {
+        facet.configuration.facetState
+      }
+      else {
+        val facetState = FacetState()
+        val externalSource = facet.externalSource
+        if (externalSource != null && project.isExternalStorageEnabled) {
+          //set this attribute only if such facets will be stored separately, otherwise we will get modified *.iml files
+          facetState.externalSystemId = externalSource.id
+        }
+        facetState.facetType = facet.type.stringId
+        facetState.name = facet.name
+        facetState
+      }
+    }
+  }
 }
 
 internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) : FacetModelBase() {
@@ -104,7 +154,7 @@ internal open class FacetModelBridge(protected val moduleBridge: ModuleBridge) :
       FacetUtil.loadFacetConfiguration(configuration, JDOMUtil.load(configurationXmlTag))
     }
     val facet = facetType.createFacet(moduleBridge, entity.name, configuration, underlyingFacet)
-    FacetManagerImpl.setExternalSource(facet, (entity.entitySource as? JpsImportedEntitySource)?.toExternalSource())
+    facet.externalSource = (entity.entitySource as? JpsImportedEntitySource)?.toExternalSource()
     return facet
   }
 

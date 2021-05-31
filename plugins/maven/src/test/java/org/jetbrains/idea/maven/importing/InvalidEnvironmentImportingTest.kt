@@ -5,12 +5,14 @@ import com.intellij.build.SyncViewManager
 import com.intellij.build.events.BuildEvent
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.roots.ProjectRootManager
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import com.intellij.testFramework.LoggedErrorProcessor
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.MavenServerCMDState
+import org.junit.Test
 
-class InvalidEnvironmentImportingTest : MavenImportingTestCase() {
+class InvalidEnvironmentImportingTest : MavenMultiVersionImportingTestCase() {
   private lateinit var myTestSyncViewManager: SyncViewManager
   private val myEvents: MutableList<BuildEvent> = ArrayList()
 
@@ -24,12 +26,22 @@ class InvalidEnvironmentImportingTest : MavenImportingTestCase() {
     myProjectsManager.setProgressListener(myTestSyncViewManager);
   }
 
+  @Test
   fun testShouldShowWarningIfBadJDK() {
+    val oldLogger = LoggedErrorProcessor.getInstance()
     val projectSdk = ProjectRootManager.getInstance(myProject).projectSdk
     val jdkForImporter = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter
     try {
+      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+          if (message!=null && message.contains("Maven server exception for tests")){
+            return false
+          }
+          return super.processError(category, message, t, details)
+        }
+      });
       MavenWorkspaceSettingsComponent.getInstance(
-        myProject).settings.importingSettings.jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
+        myProject).settings.getImportingSettings().jdkForImporter = MavenRunnerSettings.USE_PROJECT_JDK;
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = null }
       createAndImportProject()
       assertEvent { it.message.startsWith("Project JDK is not specified") }
@@ -37,16 +49,27 @@ class InvalidEnvironmentImportingTest : MavenImportingTestCase() {
     finally {
       WriteAction.runAndWait<Throwable> { ProjectRootManager.getInstance(myProject).projectSdk = projectSdk }
       MavenWorkspaceSettingsComponent.getInstance(myProject).settings.importingSettings.jdkForImporter = jdkForImporter
+      LoggedErrorProcessor.setNewInstance(oldLogger)
     }
   }
 
-  fun testShouldShowLogsOfMavenServerIfNotStarted() {
+  @Test fun testShouldShowLogsOfMavenServerIfNotStarted() {
+    val oldLogger = LoggedErrorProcessor.getInstance()
     try {
+      LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
+        override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
+          if (message!=null && message.contains("Maven server exception for tests")){
+            return false
+          }
+          return super.processError(category, message, t, details)
+        }
+      });
       MavenServerCMDState.setThrowExceptionOnNextServerStart()
       createAndImportProject()
       assertEvent { it.message.contains("Maven server exception for tests") }
     } finally {
       MavenServerCMDState.resetThrowExceptionOnNextServerStart()
+      LoggedErrorProcessor.setNewInstance(oldLogger)
     }
   }
 

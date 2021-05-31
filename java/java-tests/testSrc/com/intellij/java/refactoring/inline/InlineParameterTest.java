@@ -37,6 +37,10 @@ public class InlineParameterTest extends LightRefactoringTestCase {
     doTest(true);
   }
 
+  public void testStaticFinalFieldDifferentQualifiers() {
+    doTest(true);
+  }
+
   public void testRefIdentical() {
      doTest(true);
    }

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.intentions
 
@@ -28,7 +25,11 @@ import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.isFlexible
 
 @Suppress("DEPRECATION")
-class SimplifyBooleanWithConstantsInspection : IntentionBasedInspection<KtBinaryExpression>(SimplifyBooleanWithConstantsIntention::class)
+class SimplifyBooleanWithConstantsInspection : IntentionBasedInspection<KtBinaryExpression>(SimplifyBooleanWithConstantsIntention::class) {
+    override fun inspectionProblemText(element: KtBinaryExpression): String {
+        return KotlinBundle.message("inspection.simplify.boolean.with.constants.display.name")
+    }
+}
 
 class SimplifyBooleanWithConstantsIntention : SelfTargetingOffsetIndependentIntention<KtBinaryExpression>(
     KtBinaryExpression::class.java,

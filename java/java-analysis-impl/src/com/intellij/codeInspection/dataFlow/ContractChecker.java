@@ -3,16 +3,18 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
 import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.ThrowInstruction;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
 import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
 import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
 import com.intellij.codeInspection.dataFlow.lang.ir.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.lang.ir.Instruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.ReturnInstruction;
+import com.intellij.codeInspection.dataFlow.lang.ir.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
@@ -115,18 +117,16 @@ final class ContractChecker {
     ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
     if (flow == null) return Collections.emptyMap();
     ContractCheckListener interceptor = new ContractCheckListener(method, contract, ownContract);
-    JvmDataFlowInterpreter interpreter = new JvmDataFlowInterpreter(flow, interceptor, true) {
+    StandardDataFlowInterpreter interpreter = new StandardDataFlowInterpreter(flow, interceptor, true) {
       @Override
       protected DfaInstructionState @NotNull [] acceptInstruction(@NotNull DfaInstructionState instructionState) {
         Instruction instruction = instructionState.getInstruction();
         DfaMemoryState memState = instructionState.getMemoryState();
-        if (instruction instanceof ReturnInstruction) {
-          if (((ReturnInstruction)instruction).isViaException()) {
-            ContainerUtil.addIfNotNull(interceptor.myFailures, ((ReturnInstruction)instruction).getAnchor());
-          }
-          else {
-            interceptor.myMayReturnNormally = true;
-          }
+        if (instruction instanceof ThrowInstruction) {
+          ContainerUtil.addIfNotNull(interceptor.myFailures, ((ThrowInstruction)instruction).getAnchor());
+        }
+        else if (instruction instanceof ReturnInstruction) {
+          interceptor.myMayReturnNormally = true;
         }
         else if (instruction instanceof MethodCallInstruction) {
           PsiCall call = ((MethodCallInstruction)instruction).getCallExpression();

@@ -70,7 +70,9 @@ public class RenameJavaClassProcessor extends RenamePsiElementProcessor {
     }
 
     // do actual rename
-    ChangeContextUtil.encodeContextInfo(aClass.getContainingFile(), true, false);
+    PsiElement topLevelScope = aClass.getContainingClass() != null ? PsiTreeUtil.getTopmostParentOfType(aClass, PsiClass.class) //allow conflict resolution 
+                                                                   : aClass.getContainingFile();
+    ChangeContextUtil.encodeContextInfo(topLevelScope, true, false);
     aClass.setName(newName);
 
     for (UsageInfo usage : usages) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 /**
  * @author peter
@@ -308,6 +308,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testanonymous$anonymous17() throws Throwable { doTest() }
 
+  void testanonymous$newlineBeforeBodyInCall() { doTest() }
+
   void testnumbers() throws Throwable { doTest() }
 
   void testparenthed$exprInParenth() throws Throwable { doTest() }
@@ -377,6 +379,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testpath$method$method8() throws Throwable { doTest() }
 
   void testpath$method$method9() throws Throwable { doTest() }
+
+  void testpath$method$newLineBeforeOperatorInCall() { doTest() }
 
   void testpath$method$method14() { doTest() }
   

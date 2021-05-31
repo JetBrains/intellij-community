@@ -6,7 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
-import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.ide.util.PsiClassRenderingInfo;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -14,6 +14,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts;
@@ -21,6 +23,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -138,31 +141,28 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
         }
       };
 
-    final ListPopupImpl popup = new ListPopupImpl(project, step) {
-      @Override
-      protected ListCellRenderer<T> getListElementRenderer() {
-        final PopupListElementRenderer<T> rightArrow = new PopupListElementRenderer<>(this);
-        final StaticMemberRenderer psiRenderer = new StaticMemberRenderer();
-        return new ListCellRenderer<>() {
-          @Override
-          public Component getListCellRendererComponent(JList<? extends T> list,
-                                                        T value,
-                                                        int index,
-                                                        boolean isSelected,
-                                                        boolean cellHasFocus) {
-            JPanel panel = new JPanel(new BorderLayout());
-            Component psiRendererComponent = psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-            JLabel arrowLabel = rightArrow.getNextStepLabel();
-            arrowLabel.setBackground(psiRendererComponent.getBackground());
-            panel.setBackground(psiRendererComponent.getBackground());
-            panel.add(psiRendererComponent, BorderLayout.CENTER);
-            panel.add(arrowLabel, BorderLayout.EAST);
-            return panel;
-          }
-        };
-      }
-    };
+    final JBPopup popup = JBPopupFactory.getInstance().createListPopup(project, step, (superRenderer) -> {
+      final GroupedItemsListRenderer<T> rightArrow = (GroupedItemsListRenderer<T>)superRenderer;
+      final StaticMemberRenderer psiRenderer = new StaticMemberRenderer();
+      return new ListCellRenderer<T>() {
+        @Override
+        public Component getListCellRendererComponent(JList<? extends T> list,
+                                                      T value,
+                                                      int index,
+                                                      boolean isSelected,
+                                                      boolean cellHasFocus) {
+          JPanel panel = new JPanel(new BorderLayout());
+          Component psiRendererComponent = psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          JLabel arrowLabel = rightArrow.getNextStepLabel();
+          arrowLabel.setBackground(psiRendererComponent.getBackground());
+          panel.setBackground(psiRendererComponent.getBackground());
+          panel.add(psiRendererComponent, BorderLayout.CENTER);
+          panel.add(arrowLabel, BorderLayout.EAST);
+          return panel;
+        }
+      };
+    });
     popup.showInBestPositionFor(editor);
   }
 
@@ -175,7 +175,7 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
 
     @Override
     public String getContainerText(final PsiMember element, final String name) {
-      return PsiClassListCellRenderer.getContainerTextStatic(element);
+      return PsiClassRenderingInfo.getContainerTextStatic(element);
     }
 
     @Nullable

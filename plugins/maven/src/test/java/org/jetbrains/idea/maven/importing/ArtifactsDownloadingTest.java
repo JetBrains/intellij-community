@@ -22,13 +22,15 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.junit.Test;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
 public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
-  public void testJavadocsAndSources() {
+  @Test
+  public void JavadocsAndSources() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -53,7 +55,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testIgnoringOfflineSetting() {
+  @Test
+  public void IgnoringOfflineSetting() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -91,7 +94,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testDownloadingSpecificDependency() {
+  @Test
+  public void DownloadingSpecificDependency() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -124,7 +128,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertFalse(new File(getRepositoryPath(), "/junit/junit/4.0/junit-4.0-javadoc.jar").exists());
   }
 
-  public void testReturningNotFoundArtifacts() {
+  @Test
+  public void ReturningNotFoundArtifacts() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -150,7 +155,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertUnorderedElementsAreEqual(unresolvedArtifacts.unresolvedDocs, new MavenId("lib", "xxx", "1"));
   }
 
-  public void testJavadocsAndSourcesForTestDeps() {
+  @Test
+  public void JavadocsAndSourcesForTestDeps() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
@@ -176,7 +182,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     assertTrue(javadoc.exists());
   }
 
-  public void testJavadocsAndSourcesForDepsWithClassifiersAndType() throws Exception {
+  @Test
+  public void JavadocsAndSourcesForDepsWithClassifiersAndType() throws Exception {
     String remoteRepo = FileUtil.toSystemIndependentName(myDir.getPath() + "/repo");
     updateSettingsXmlFully("<settings>" +
                            "<mirrors>" +
@@ -253,7 +260,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     }
   }
 
-  public void testDownloadingPlugins() {
+  @Test
+  public void DownloadingPlugins() {
     try {
       importProject("<groupId>test</groupId>" +
                     "<artifactId>project</artifactId>" +
@@ -282,7 +290,8 @@ public class ArtifactsDownloadingTest extends ArtifactsDownloadingTestCase {
     }
   }
 
-  public void testDownloadBuildExtensionsOnResolve() {
+  @Test
+  public void DownloadBuildExtensionsOnResolve() {
     File f = new File(getRepositoryPath(), "/org/apache/maven/wagon/wagon-ftp/2.10/wagon-ftp-2.10.pom");
     assertFalse(f.exists());
 

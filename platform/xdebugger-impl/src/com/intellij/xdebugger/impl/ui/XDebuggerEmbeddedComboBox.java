@@ -89,6 +89,16 @@ class EmbeddedComboBoxUI extends DarculaComboBoxUI {
   }
 
   @Override
+  protected void installDefaults() {
+    super.installDefaults();
+    // there's no 'ComboBox.padding' option in the tests,
+    // because they don't use DarculaLaF
+    if (padding == null) {
+      padding = JBUI.emptyInsets();
+    }
+  }
+
+  @Override
   protected void installComponents() {
     super.installComponents();
 
