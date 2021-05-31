@@ -21,7 +21,6 @@ import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.ExperimentalUI
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -151,6 +150,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     decorator.addComponentListener(object : ComponentAdapter() {
       private val alarm = SingleAlarm(Runnable {
         toolWindowManager.resized(decorator)
+        windowInfo = toolWindowManager.layout.getInfo(getId()) as WindowInfo
       }, 100, disposable)
 
       override fun componentResized(e: ComponentEvent) {

@@ -54,6 +54,8 @@ import static com.intellij.util.ui.UIUtil.useSafely;
 public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance(ToolWindowsPane.class);
   @NonNls public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
+  //The width of topmost 'resize' area when toolwindow caption is used for both resize and drag
+  public static final int HEADER_RESIZE_WIDTH = 8;
 
   private final JFrame frame;
 
@@ -149,6 +151,9 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     add(layeredPane, JLayeredPane.DEFAULT_LAYER);
 
     setFocusTraversalPolicy(new LayoutFocusTraversalPolicy());
+    if (Registry.is("ide.new.tool.window.dnd")) {
+      new ToolWindowDragHelper(parentDisposable, this).start();
+    }
   }
 
   void initDocumentComponent(@NotNull Project project) {
@@ -408,6 +413,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   @Nullable
   Stripe getStripeFor(@NotNull Rectangle screenRectangle, @NotNull Stripe preferred) {
+    if (!new Rectangle(getLocationOnScreen(), getSize()).intersects(screenRectangle)) {
+      return null;
+    }
+
     if (preferred.containsScreen(screenRectangle)) {
       return preferred;
     }
