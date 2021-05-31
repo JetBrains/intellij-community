@@ -89,13 +89,10 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
 
   private fun writeDependencies(dependentInfo: ModuleInfo, writer: JsonGenerator, dependentId: Int) {
     for (ref in dependentInfo.dependencies) {
-      // com.intellij.modules.
-      val dep = ref.moduleInfo ?: continue
-
+      val dep = ref.moduleInfo
       if (!nodeIdToInfo.containsKey(dep)) {
         writeModuleInfo(writer, dep)
       }
-
       dependencyLinks.computeIfAbsent(dependentId) { mutableListOf() }.add(nodeIdToInfo.get(dep)!!)
     }
   }

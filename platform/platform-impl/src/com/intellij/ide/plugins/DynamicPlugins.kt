@@ -177,7 +177,7 @@ object DynamicPlugins {
   }
 
   private fun pluginsSortedByDependency(descriptors: List<IdeaPluginDescriptorImpl>, load: Boolean): List<IdeaPluginDescriptorImpl> {
-    val plugins = PluginManager.getInstance().getPluginsSortedByDependency(descriptors)
+    val plugins = getTopologicallySorted(descriptors = descriptors, pluginSet = PluginManagerCore.getPluginSet(), withOptional = true)
     return if (load) plugins else plugins.reversed()
   }
 
@@ -1269,15 +1269,9 @@ private fun findLoadedPluginExtensionPointRecursive(pluginDescriptor: IdeaPlugin
       }
     }
   }
-  for (item in pluginDescriptor.dependencies.modules) {
-    pluginSet.findEnabledModule(item.name)?.requireDescriptor()?.let { d ->
-      findLoadedPluginExtensionPointRecursive(d, epName, pluginSet, context, seenPlugins)?.let { return it.first to true }
-    }
-  }
-  for (item in pluginDescriptor.dependencies.plugins) {
-    pluginSet.findEnabledPlugin(item.id)?.let { d ->
-      findLoadedPluginExtensionPointRecursive(d, epName, pluginSet, context, seenPlugins)?.let { return it.first to true }
-    }
+
+  processDirectDependencies(pluginDescriptor, pluginSet) {
+    findLoadedPluginExtensionPointRecursive(it, epName, pluginSet, context, seenPlugins)?.let { return it.first to true }
   }
   return null
 }

@@ -133,16 +133,10 @@ class ClassLoaderConfigurator(
     }
 
     // new format
-    for (item in plugin.dependencies.modules) {
-      val descriptor = (pluginSet.findEnabledModule(item.name) ?: continue).requireDescriptor()
-      if (descriptor.classLoader !== coreLoader) {
-        loaders.add(descriptor.classLoader!!)
-      }
-    }
-    for (item in plugin.dependencies.plugins) {
-      val descriptor = pluginSet.findEnabledPlugin(item.id) ?: continue
-      if (descriptor.classLoader !== coreLoader) {
-        loaders.add(descriptor.classLoader!!)
+    processDirectDependencies(plugin, pluginSet) {
+      val classLoader = it.classLoader!!
+      if (classLoader !== coreLoader) {
+        loaders.add(classLoader)
       }
     }
 

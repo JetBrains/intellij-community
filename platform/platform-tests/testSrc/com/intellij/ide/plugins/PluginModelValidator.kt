@@ -13,6 +13,9 @@ import java.io.StringWriter
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
+import java.util.*
+
+private val emptyPath = Path.of("/")
 
 internal class PluginModelValidator {
   internal interface Module {
@@ -169,7 +172,9 @@ internal class PluginModelValidator {
             continue
           }
 
-          val ref = Reference(id, isPlugin = true, dependency)
+          val ref = Reference(id, isPlugin = true,
+                              moduleInfo = dependency ?: ModuleInfo(null, id, "", emptyPath, null,
+                                                                    XmlElement("", Collections.emptyMap(), Collections.emptyList(), null)))
           assert(!referencingModuleInfo.dependencies.contains(ref))
           referencingModuleInfo.dependencies.add(ref)
           continue
@@ -380,7 +385,7 @@ internal data class ModuleInfo(
     get() = pluginId != null
 }
 
-internal data class Reference(val name: String, val isPlugin: Boolean, val moduleInfo: ModuleInfo?)
+internal data class Reference(val name: String, val isPlugin: Boolean, val moduleInfo: ModuleInfo)
 
 private data class PluginInfo(val pluginId: String,
                               val sourceModuleName: String,
@@ -508,7 +513,11 @@ private fun writeModuleInfo(writer: JsonGenerator, item: ModuleInfo) {
 }
 
 internal fun pathToShortString(file: Path): String {
-  return if (homePath.fileSystem === file.fileSystem) homePath.relativize(file).toString() else file.toString()
+  return when {
+    file === emptyPath -> ""
+    homePath.fileSystem === file.fileSystem -> homePath.relativize(file).toString()
+    else -> file.toString()
+  }
 }
 
 private fun writeDependencies(items: List<Reference>, writer: JsonGenerator) {
