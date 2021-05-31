@@ -59,7 +59,7 @@ public final class IoTestUtil {
     return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
   }
 
-  private static String filterParts(Predicate<? super String> predicate) {
+  private static String filterParts(@NotNull Predicate<? super String> predicate) {
     return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
@@ -70,7 +70,8 @@ public final class IoTestUtil {
     return dir;
   }
 
-  private static File expandWindowsPath(File file) {
+  @NotNull
+  private static File expandWindowsPath(@NotNull File file) {
     if (SystemInfo.isWindows && file.getPath().indexOf('~') > 0) {
       try {
         return file.getCanonicalFile();
@@ -98,8 +99,9 @@ public final class IoTestUtil {
     }
   }
 
-  private static File createSymLink(String target, String link, @Nullable Boolean shouldExist) {
-    File linkFile = getFullLinkPath(link), targetFile = new File(target);
+  private static @NotNull File createSymLink(String target, String link, @Nullable Boolean shouldExist) {
+    File linkFile = getFullLinkPath(link);
+    File targetFile = new File(target);
     try {
       if (symLinkMode == Boolean.TRUE) {
         Files.createSymbolicLink(linkFile.toPath(), targetFile.toPath());
@@ -206,7 +208,7 @@ public final class IoTestUtil {
     throw new RuntimeException("No free roots");
   }
 
-  private static File getFullLinkPath(String link) {
+  private static @NotNull File getFullLinkPath(@NotNull String link) {
     File linkFile = new File(link);
     if (!linkFile.isAbsolute()) {
       linkFile = new File(getTempDirectory(), link);
@@ -354,7 +356,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static void delete(File... files) {
+  public static void delete(File @NotNull ... files) {
     for (File file : files) {
       if (file != null) {
         FileUtil.delete(file);
@@ -362,7 +364,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static void updateFile(@NotNull File file, String content) {
+  public static void writeToFile(@NotNull File file, @NotNull String content) {
     try {
       FileUtil.writeToFile(file, content);
     }
@@ -382,8 +384,7 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            //noinspection RedundantSuppression
-            Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
+            Logger.getInstance(IoTestUtil.class).debug(e);
             runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
             return Boolean.FALSE;
           }
@@ -397,8 +398,7 @@ public final class IoTestUtil {
       }
     }
     catch (Throwable t) {
-      //noinspection RedundantSuppression
-      Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(t);
+      Logger.getInstance(IoTestUtil.class).debug(t);
       return null;
     }
   }

@@ -105,13 +105,13 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
   public static @NotNull String getCalleeType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callees.of");
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
   public static @NotNull String getCallerType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callers.of");
   }
 }
