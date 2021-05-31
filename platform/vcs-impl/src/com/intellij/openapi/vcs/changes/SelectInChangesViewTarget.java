@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.ide.SelectInContext;
@@ -7,15 +7,12 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.LOCAL_CHANGES;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowFor;
-import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.getToolWindowIdFor;
+import static com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.*;
 
 public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   private final Project myProject;
@@ -25,7 +22,7 @@ public class SelectInChangesViewTarget implements SelectInTarget, DumbAware {
   }
 
   public String toString() {
-    return VcsBundle.message("local.changes.tab");
+    return ChangesViewManager.getLocalChangesToolWindowName(myProject);
   }
 
   @Override
