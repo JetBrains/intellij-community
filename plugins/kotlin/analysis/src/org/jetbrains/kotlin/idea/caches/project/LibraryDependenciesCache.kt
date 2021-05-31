@@ -7,6 +7,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
+import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.util.Condition
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -14,12 +15,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.core.util.CachedValue
 import org.jetbrains.kotlin.idea.core.util.getValue
-import org.jetbrains.kotlin.idea.klib.AbstractKlibLibraryInfo
-import org.jetbrains.kotlin.platform.SimplePlatform
-import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.platform.isCommon
-import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
-import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal typealias LibrariesAndSdks = Pair<List<LibraryInfo>, List<SdkInfo>>
@@ -42,7 +38,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     private val moduleDependenciesCache by CachedValue(project) {
         CachedValueProvider.Result(
-            ContainerUtil.createConcurrentWeakMap<Module, Pair<Set<DependencyCandidate>, Set<SdkInfo>>>(),
+            ContainerUtil.createConcurrentWeakMap<Module, Pair<Set<LibraryDependencyCandidate>, Set<SdkInfo>>>(),
             ProjectRootManager.getInstance(project)
         )
     }
@@ -52,17 +48,17 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
 
     private fun computeLibrariesAndSdksUsedWith(libraryInfo: LibraryInfo): LibrariesAndSdks {
         val (dependencyCandidates, sdks) = computeLibrariesAndSdksUsedWithNoFilter(libraryInfo)
-        val chosenCompatibleCandidates = chooseCompatibleDependencies(libraryInfo.platform, dependencyCandidates)
-        val libraries = chosenCompatibleCandidates.map { it.libraries }.flatten()
+        val libraryDependenciesFilter = DefaultLibraryDependenciesFilter union SharedNativeLibraryToNativeInteropFallbackDependenciesFilter
+        val libraries = libraryDependenciesFilter(libraryInfo.platform, dependencyCandidates).map { it.libraries }.flatten()
         return Pair(libraries, sdks.toList())
     }
 
     //NOTE: used LibraryRuntimeClasspathScope as reference
-    private fun computeLibrariesAndSdksUsedWithNoFilter(libraryInfo: LibraryInfo): Pair<Set<DependencyCandidate>, Set<SdkInfo>> {
-        val libraries = LinkedHashSet<DependencyCandidate>()
+    private fun computeLibrariesAndSdksUsedWithNoFilter(libraryInfo: LibraryInfo): Pair<Set<LibraryDependencyCandidate>, Set<SdkInfo>> {
+        val libraries = LinkedHashSet<LibraryDependencyCandidate>()
         val sdks = LinkedHashSet<SdkInfo>()
 
-        for (module in getLibraryUsageIndex().getModulesLibraryIsUsedIn(libraryInfo)) {
+        for (module in getLibraryUsageIndex().modulesLibraryIsUsedIn[libraryInfo.library]) {
             val (moduleLibraries, moduleSdks) = moduleDependenciesCache.getOrPut(module) {
                 computeLibrariesAndSdksUsedIn(module)
             }
@@ -74,8 +70,8 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
         return libraries to sdks
     }
 
-    private fun computeLibrariesAndSdksUsedIn(module: Module): Pair<Set<DependencyCandidate>, Set<SdkInfo>> {
-        val libraries = LinkedHashSet<DependencyCandidate>()
+    private fun computeLibrariesAndSdksUsedIn(module: Module): Pair<Set<LibraryDependencyCandidate>, Set<SdkInfo>> {
+        val libraries = LinkedHashSet<LibraryDependencyCandidate>()
         val sdks = LinkedHashSet<SdkInfo>()
 
         val processedModules = HashSet<Module>()
@@ -93,7 +89,7 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
             override fun visitLibraryOrderEntry(libraryOrderEntry: LibraryOrderEntry, value: Unit) {
                 libraryOrderEntry.library.safeAs<LibraryEx>()?.takeIf { !it.isDisposed }?.let {
                     libraries += createLibraryInfo(project, it).mapNotNull { libraryInfo ->
-                        DependencyCandidate.fromLibraryOrNull(
+                        LibraryDependencyCandidate.fromLibraryOrNull(
                             project,
                             libraryInfo.library
                         )
@@ -129,16 +125,6 @@ class LibraryDependenciesCacheImpl(private val project: Project) : LibraryDepend
                             modulesLibraryIsUsedIn.putValue(library, module)
                         }
                     }
-                }
-            }
-        }
-
-        fun getModulesLibraryIsUsedIn(libraryInfo: LibraryInfo) = sequence<Module> {
-            val ideaModelInfosCache = getIdeaModelInfosCache(project)
-            for (module in modulesLibraryIsUsedIn[libraryInfo.library]) {
-                val mappedModuleInfos = ideaModelInfosCache.getModuleInfosForModule(module)
-                if (mappedModuleInfos.any { it.platform.canDependOn(libraryInfo, module.isHMPPEnabled) }) {
-                    yield(module)
                 }
             }
         }
