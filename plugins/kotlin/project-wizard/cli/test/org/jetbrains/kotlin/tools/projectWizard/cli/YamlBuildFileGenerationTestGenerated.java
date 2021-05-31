@@ -82,9 +82,4 @@ public class YamlBuildFileGenerationTestGenerated extends AbstractYamlBuildFileG
     public void testSinglePlatformJsNode() throws Exception {
         runTest("testData/buildFileGeneration/singlePlatformJsNode/");
     }
-
-    @TestMetadata("singleplatformJs")
-    public void testSingleplatformJs() throws Exception {
-        runTest("testData/buildFileGeneration/singleplatformJs/");
-    }
 }

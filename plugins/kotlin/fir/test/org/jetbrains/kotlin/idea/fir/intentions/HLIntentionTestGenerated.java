@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.fir.intentions;
 
 import com.intellij.testFramework.TestDataPath;
-import org.jetbrains.kotlin.idea.fir.intentions.AbstractHLIntentionTest;
 import org.jetbrains.kotlin.idea.test.JUnit3RunnerWithInners;
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils;
 import org.jetbrains.kotlin.test.TestMetadata;
