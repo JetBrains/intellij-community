@@ -1,8 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie
 
-import com.intellij.grazie.grammar.GrammarEngine
-import com.intellij.grazie.grammar.Typo
+import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.inspection.grammar.GrazieInspection
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.text.TextContent
@@ -58,10 +57,10 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     return texts.flatMap { myFixture.configureByText("${it.hashCode()}.txt", it).filterFor<PsiPlainText>() }
   }
 
-  fun check(tokens: Collection<PsiElement>): List<Typo> {
+  fun check(tokens: Collection<PsiElement>): List<LanguageToolChecker.Problem> {
     return tokens.flatMap {
       val text = TextExtractor.findTextAt(it, TextContent.TextDomain.ALL)
-      if (text == null) emptyList() else GrammarEngine.getTypos(text.toString())
+      if (text == null) emptyList() else LanguageToolChecker.checkText(text)
     }
   }
 }

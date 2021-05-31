@@ -2,7 +2,8 @@ package com.intellij.grazie.grammar
 
 import com.intellij.grazie.GrazieBundle
 import com.intellij.grazie.GrazieConfig
-import com.intellij.grazie.grammar.GrammarEngine.getTypos
+import com.intellij.grazie.GraziePlugin
+import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
 import com.intellij.grazie.text.Rule
@@ -11,15 +12,24 @@ import com.intellij.grazie.text.TextContent
 import com.intellij.grazie.text.TextProblem
 import com.intellij.grazie.utils.*
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
+import com.intellij.util.ExceptionUtil
 import com.intellij.util.containers.Interner
 import kotlinx.html.*
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.VisibleForTesting
+import org.languagetool.JLanguageTool
 import org.languagetool.Languages
+import org.languagetool.markup.AnnotatedTextBuilder
+import org.languagetool.rules.RuleMatch
+import org.slf4j.LoggerFactory
 import java.util.*
 
-internal class LanguageToolChecker : TextChecker() {
+@VisibleForTesting
+class LanguageToolChecker : TextChecker() {
   override fun getRules(locale: Locale): Collection<Rule?> {
     val language = Languages.getLanguageForLocale(locale)
     val lang = GrazieConfig.get().enabledLanguages.find { language == it.jLanguage } ?: return emptyList()
@@ -31,50 +41,74 @@ internal class LanguageToolChecker : TextChecker() {
       .toList()
   }
 
-  private fun defaultEnabledIds(lang: Lang) = defaultTool(lang).allActiveRules.map { it.id }.toSet()
-
-  private fun defaultTool(lang: Lang) = LangTool.getTool(lang, GrazieConfig.State())
-
-  private fun toGrazieRule(rule: org.languagetool.rules.Rule, activeIds: Set<String>) =
-    LanguageToolRule(rule, activeIds.contains(rule.id))
-
   override fun check(extracted: TextContent): @NotNull List<TextProblem> {
-    val str = extracted.toString()
-    val warnings = getTypos(str, 0)
-    return warnings.mapNotNull { typo ->
-      val location = typo.location
-      val patternRange = location.patternRange.toTextRange()
-      if (!extracted.hasUnknownFragmentsIn(patternRange)) {
-        val rule = toGrazieRule(typo.info.rule, defaultEnabledIds(typo.info.lang))
-        val range = location.errorRange.toTextRange()
-        object : TextProblem(rule, extracted, range) {
-          override fun getShortMessage() = typo.info.shortMessage
-          override fun getDescriptionTemplate(isOnTheFly: Boolean) = typo.toDescriptionTemplate(isOnTheFly)
-          override fun getReplacementRange() = range
-          override fun getCorrections() = typo.fixes.toList()
-          override fun getPatternRange() = patternRange
-        }
-      }
-      else null
-    }
+    val warnings = checkText(extracted)
+    return warnings.filterNot { extracted.hasUnknownFragmentsIn(it.patternRange) }
   }
 
-  private fun IntRange.toTextRange() = TextRange.create(start, endInclusive + 1)
+  class Problem(private val match: RuleMatch, lang: Lang, text: TextContent)
+    : TextProblem(toGrazieRule(match.rule, defaultEnabledIds(lang)), text, TextRange(match.fromPos, match.toPos)) {
 
-  @Suppress("UnstableApiUsage")
+    override fun getShortMessage(): String =
+      match.shortMessage.trimToNull() ?: match.rule.description.trimToNull() ?: match.rule.category.name
+
+    override fun getDescriptionTemplate(isOnTheFly: Boolean) = toDescriptionTemplate(match, isOnTheFly)
+    override fun getReplacementRange() = highlightRange
+    override fun getCorrections(): List<String> = match.suggestedReplacements
+    override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
+  }
+
   companion object {
+    private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
     private val interner = Interner.createWeakInterner<String>()
 
+    private fun defaultEnabledIds(lang: Lang) = defaultTool(lang).allActiveRules.map { it.id }.toSet()
+
+    private fun defaultTool(lang: Lang) = LangTool.getTool(lang, GrazieConfig.State())
+
+    private fun toGrazieRule(rule: org.languagetool.rules.Rule, activeIds: Set<String>) =
+      LanguageToolRule(rule, activeIds.contains(rule.id))
+
+    @VisibleForTesting
+    fun checkText(text: TextContent): List<Problem> {
+      val str = text.toString()
+      if (str.isBlank()) return emptyList()
+
+      val lang = LangDetector.getLang(str) ?: return emptyList()
+
+      return try {
+        ClassLoaderUtil.computeWithClassLoader<List<Problem>, Throwable>(GraziePlugin.classLoader) {
+          val annotated = AnnotatedTextBuilder().addText(str).build()
+          LangTool.getTool(lang).check(annotated, true, JLanguageTool.ParagraphHandling.NORMAL,
+                                       null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
+            .asSequence()
+            .filterNotNull()
+            .map { Problem(it, lang, text) }
+            .toList()
+        }
+      }
+      catch (e: Throwable) {
+        if (ExceptionUtil.causedBy(e, ProcessCanceledException::class.java)) {
+          throw ProcessCanceledException()
+        }
+
+        logger.warn("Got exception during check for typos by LanguageTool", e)
+        emptyList()
+      }
+    }
+
     @NlsSafe
-    private fun Typo.toDescriptionTemplate(isOnTheFly: Boolean): String {
-      if (ApplicationManager.getApplication().isUnitTestMode) return info.rule.id
+    private fun toDescriptionTemplate(match: RuleMatch, isOnTheFly: Boolean): String {
+      if (ApplicationManager.getApplication().isUnitTestMode) return match.rule.id
       val html = html {
+        val withCorrections = match.rule.incorrectExamples.filter { it.corrections.isNotEmpty() }.takeIf { it.isNotEmpty() }
+        val incorrectExample = (withCorrections ?: match.rule.incorrectExamples).minByOrNull { it.example.length }
         p {
-          info.incorrectExample?.let {
+          incorrectExample?.let {
             style = "padding-bottom: 8px;"
           }
 
-          +info.message
+          +match.messageSanitized
           if (!isOnTheFly) nbsp()
         }
 
@@ -82,7 +116,7 @@ internal class LanguageToolChecker : TextChecker() {
           cellpading = "0"
           cellspacing = "0"
 
-          info.incorrectExample?.let {
+          incorrectExample?.let {
             tr {
               td {
                 valign = "top"
