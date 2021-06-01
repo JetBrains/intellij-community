@@ -9,10 +9,7 @@ import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.dvcs.ui.LightActionGroup;
 import com.intellij.notification.NotificationAction;
 import com.intellij.notification.NotificationType;
-import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -44,7 +41,9 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
                             @NotNull AbstractRepositoryManager<Repo> repositoryManager,
                             @NotNull DvcsMultiRootBranchConfig<Repo> multiRootBranchConfig,
                             @NotNull DvcsSyncSettings vcsSettings,
-                            @NotNull Condition<AnAction> preselectActionCondition, @Nullable String dimensionKey) {
+                            @NotNull Condition<AnAction> preselectActionCondition,
+                            @Nullable String dimensionKey,
+                            @NotNull DataContext dataContext) {
     myProject = currentRepository.getProject();
     myCurrentRepository = currentRepository;
     myRepositoryManager = repositoryManager;
@@ -56,11 +55,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
                    DvcsBundle.message("branch.popup.vcs.name.branches", myVcs.getDisplayName()) :
                    DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", myVcs.getDisplayName(),
                                       DvcsUtil.getShortRepositoryName(currentRepository));
-    myPopup = new BranchActionGroupPopup(title,
-                                         myProject,
-                                         preselectActionCondition,
-                                         createActions(),
-                                         dimensionKey);
+    myPopup = new BranchActionGroupPopup(title, myProject, preselectActionCondition, createActions(), dimensionKey, dataContext);
     initBranchSyncPolicyIfNotInitialized();
     warnThatBranchesDivergedIfNeeded();
     if (myRepositoryManager.moreThanOneRoot()) {
