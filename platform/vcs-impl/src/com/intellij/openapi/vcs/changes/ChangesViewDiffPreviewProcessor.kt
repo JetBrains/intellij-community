@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePop
 import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesActionProvider
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.util.ui.tree.TreeUtil
 import one.util.streamex.StreamEx
 import java.util.stream.Stream
@@ -50,16 +51,18 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
       return ShowDiffFromLocalChangesActionProvider.collectRequestProducers(project, currentChanges, currentUnversioned, changesView).list
     }
 
-    override fun selectFilePath(filePath: FilePath) {
+    override fun select(change: PresentableChange) {
+      val filePath = change.filePath
       val curChange = currentChange
+
       if (curChange !is ChangeWrapper) {
         this@ChangesViewDiffPreviewProcessor.selectFilePath(filePath)
       }
       else {
         (changesView.getAllChangesFromSameChangelist(curChange.change) ?: changesView.getAllChangesFromSameAmendNode(curChange.change))
           ?.find { ChangesUtil.getFilePath(it) == filePath }
-          ?.let { change ->
-            val changeToSelect = ChangeWrapper(change)
+          ?.let {
+            val changeToSelect = ChangeWrapper(it)
             currentChange = changeToSelect
             selectChange(changeToSelect)
           }
@@ -67,8 +70,8 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
       }
     }
 
-    override fun getSelectedFilePath(): FilePath? {
-      return this@ChangesViewDiffPreviewProcessor.selectedFilePath
+    override fun getSelectedChange(): PresentableChange? {
+      return currentChange
     }
   }
 

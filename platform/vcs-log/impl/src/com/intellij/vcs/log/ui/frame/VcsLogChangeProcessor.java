@@ -9,11 +9,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor;
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
 import com.intellij.openapi.vcs.changes.ui.ChangesTree;
+import com.intellij.openapi.vcs.changes.ui.PresentableChange;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SideBorder;
@@ -84,14 +84,14 @@ public class VcsLogChangeProcessor extends ChangeViewDiffRequestProcessor {
     }
 
     @Override
-    public void selectFilePath(@NotNull FilePath filePath) {
-      VcsLogChangeProcessor.this.selectFilePath(filePath);
+    public void select(@NotNull PresentableChange change) {
+      VcsLogChangeProcessor.this.selectFilePath(change.getFilePath());
     }
 
     @Nullable
     @Override
-    public FilePath getSelectedFilePath() {
-      return VcsLogChangeProcessor.this.getSelectedFilePath();
+    public PresentableChange getSelectedChange() {
+      return VcsLogChangeProcessor.this.getCurrentChange();
     }
   }
 

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
 import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import kotlin.properties.Delegates
 
 open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
@@ -90,13 +91,13 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
       return chain?.requests ?: emptyList()
     }
 
-    override fun getSelectedFilePath(): FilePath? {
+    override fun getSelectedChange(): PresentableChange? {
       val producer = chain?.requests?.getOrNull(currentIndex)
-      return if (producer is ChangeDiffRequestChain.Producer) producer.filePath else null
+      return if (producer is ChangeDiffRequestChain.Producer) producer else null
     }
 
-    override fun selectFilePath(filePath: FilePath) {
-      this@MutableDiffRequestChainProcessor.selectFilePath(filePath)
+    override fun select(change: PresentableChange) {
+      this@MutableDiffRequestChainProcessor.selectFilePath(change.filePath)
     }
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
@@ -1035,9 +1035,10 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       @Override
-      public void selectFilePath(@NotNull FilePath filePath) {
+      public void select(@NotNull PresentableChange presentableChange) {
         ShelvedChangeList selectedList = getOnlyItem(getSelectedLists(myTree, it -> true));
         if (selectedList == null) return;
+        FilePath filePath = presentableChange.getFilePath();
 
         ChangesBrowserNode<?> changeListNode = (ChangesBrowserNode<?>)TreeUtil.findNodeWithObject(myTree.getRoot(), selectedList);
         TreeNode targetNode = TreeUtil.treeNodeTraverser(changeListNode).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
@@ -1060,8 +1061,8 @@ public class ShelvedChangesViewManager implements Disposable {
 
       @Nullable
       @Override
-      public FilePath getSelectedFilePath() {
-        return myCurrentShelvedElement != null ? ChangesUtil.getFilePath(myCurrentShelvedElement.getChange(myProject)) : null;
+      public PresentableChange getSelectedChange() {
+        return myCurrentShelvedElement != null ? myCurrentShelvedElement : null;
       }
     }
 

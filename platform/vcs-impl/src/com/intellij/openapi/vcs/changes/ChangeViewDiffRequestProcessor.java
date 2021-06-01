@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.chains.DiffRequestProducer;
@@ -19,8 +19,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer;
 import com.intellij.openapi.vcs.changes.actions.diff.UnversionedDiffRequestProducer;
+import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
+import com.intellij.openapi.vcs.changes.ui.PresentableChange;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -196,11 +199,6 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     }
   }
 
-  @Nullable
-  protected FilePath getSelectedFilePath() {
-    return myCurrentChange != null ? myCurrentChange.getFilePath() : null;
-  }
-
   @Override
   protected boolean hasNextChange(boolean fromUpdate) {
     PrevNextDifferenceIterable strategy = getSelectionStrategy(fromUpdate);
@@ -332,10 +330,7 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     }
   }
 
-
-  public abstract static class Wrapper {
-    @NotNull
-    public abstract FilePath getFilePath();
+  public abstract static class Wrapper implements PresentableChange {
 
     @NotNull
     public abstract Object getUserObject();
@@ -377,6 +372,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @Override
     public @NotNull FilePath getFilePath() {
       return ChangesUtil.getFilePath(change);
+    }
+
+    @Override
+    public @NotNull FileStatus getFileStatus() {
+      return change.getFileStatus();
     }
 
     @Nullable
@@ -428,6 +428,16 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @Override
     public @NotNull FilePath getFilePath() {
       return path;
+    }
+
+    @Override
+    public @NotNull FileStatus getFileStatus() {
+      return FileStatus.UNKNOWN;
+    }
+
+    @Override
+    public @Nullable ChangesBrowserNode.Tag getTag() {
+      return ChangesBrowserNode.UNVERSIONED_FILES_TAG;
     }
 
     @NotNull
