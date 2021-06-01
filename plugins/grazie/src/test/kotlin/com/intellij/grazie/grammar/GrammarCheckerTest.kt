@@ -5,7 +5,7 @@ import com.intellij.grazie.GrazieTestBase
 import org.junit.Assert
 import org.junit.Test
 
-class GrammarCheckerTests : GrazieTestBase() {
+class GrammarCheckerTest : GrazieTestBase() {
 
   @Test
   fun `test empty text`() {
