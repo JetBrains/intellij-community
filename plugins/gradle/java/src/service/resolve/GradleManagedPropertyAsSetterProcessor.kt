@@ -39,7 +39,7 @@ internal class GradleManagedPropertyAsSetterProcessor(
     if (requiredPropertyName != null && requiredPropertyName != propertyName) {
       return true
     }
-    if (element.hasModifierProperty(PsiModifier.STATIC) || !element.hasModifierProperty(PsiModifier.ABSTRACT)) {
+    if (element.hasModifierProperty(PsiModifier.STATIC)) {
       return true
     }
     val setterName = PropertyKind.SETTER.getAccessorName(propertyName)

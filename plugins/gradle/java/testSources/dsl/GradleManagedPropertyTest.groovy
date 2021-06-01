@@ -29,7 +29,9 @@ package pkg;
 import org.gradle.api.provider.Property;
 public abstract class MyExtension {
     abstract Property<String> getStringProperty();
-    abstract Property<Integer> getIntegerProperty();
+    Property<Integer> getIntegerProperty() {
+      throw new RuntimeException();
+    }
 }
 ''')
     importProject('project.extensions.create("myExt", pkg.MyExtension)')
