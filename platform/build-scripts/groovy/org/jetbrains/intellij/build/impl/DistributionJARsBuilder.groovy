@@ -79,6 +79,9 @@ final class DistributionJARsBuilder {
 
     def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
                       ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
+    if (releaseDate.startsWith('__')) {
+      buildContext.messages.error("Unresolved release-date: $releaseDate")
+    }
     def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
     this.pluginXmlPatcher = new PluginXmlPatcher(buildContext.messages, releaseDate, releaseVersion, buildContext.applicationInfo.productName, buildContext.applicationInfo.isEAP)
 

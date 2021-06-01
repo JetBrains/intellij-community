@@ -295,24 +295,7 @@ idea.fatal.error.notification=disabled
   }
 
   @NotNull String patchApplicationInfo() {
-    Path sourceFile = BuildContextImpl.findApplicationInfoInSources(buildContext.project, buildContext.productProperties, buildContext.messages)
-    String date = ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMddHHmm"))
-
-    ArtifactsServer artifactsServer = buildContext.proprietaryBuildTools.artifactsServer
-    String builtinPluginsRepoUrl = ""
-    if (artifactsServer != null && buildContext.productProperties.productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-      builtinPluginsRepoUrl = artifactsServer.urlToArtifact(buildContext, "${buildContext.applicationInfo.productCode}-plugins/plugins.xml")
-      if (builtinPluginsRepoUrl.startsWith("http:")) {
-        buildContext.messages.error("Insecure artifact server: " + builtinPluginsRepoUrl)
-      }
-    }
-
-    return BuildUtils.replaceAll(Files.readString(sourceFile), Map.<String, String>of(
-      "BUILD_NUMBER", buildContext.fullBuildNumber,
-      "BUILD_DATE", date,
-      "BUILD", buildContext.buildNumber,
-      "BUILTIN_PLUGINS_URL", builtinPluginsRepoUrl ?: ""
-    ), "__")
+    return buildContext.applicationInfo.toString()
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
