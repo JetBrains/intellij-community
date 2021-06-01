@@ -241,16 +241,14 @@ Includes the following features:</p>
       </action>
     </group>
 
-    <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
-            class="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction">
-      <add-to-group group-id="FileExportGroup" anchor="last"/>
-    </action>
-
-    <group id="FileImportGroup" popup="true">
-      <add-to-group group-id="PrintExportGroup" relative-to-action="FileExportGroup" anchor="before"/>
+    <group id="Markdown.Tools" popup="true">
+      <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Internal"/>
       <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"
-              class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction">
-      </action>
+              class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
+      <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
+              class="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"/>
+      <action id="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"
+              class="org.intellij.plugins.markdown.ui.actions.ConfigurePandocAction"/>
     </group>
   </actions>
 </idea-plugin>

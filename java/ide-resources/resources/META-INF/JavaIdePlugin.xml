@@ -18,7 +18,7 @@
   <module value="com.intellij.modules.all"/>
   <module value="com.intellij.modules.jsp.base"/>
 
-  <xi:include href="/META-INF/RemoteServers.xml">
+  <xi:include href="intellij.platform.remoteServers.impl.xml">
     <xi:fallback/>
   </xi:include>
   <xi:include href="/META-INF/DesignerCorePlugin.xml">

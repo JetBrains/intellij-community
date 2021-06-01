@@ -11,6 +11,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.fileTypes.ex.FakeFileType;
 import com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -54,7 +55,9 @@ class OverrideFileTypeAction extends AnAction {
                           ActionsBundle.message("group.OverrideFileTypeAction.fromNamedPlugin", descriptor.getName()))
                   + ")";
       }
-      group.add(new ChangeToThisFileTypeAction(file, type, dupHint));
+      @NlsActions.ActionText
+      String displayText = type.getDisplayName() + StringUtil.notNullize(dupHint);
+      group.add(new ChangeToThisFileTypeAction(displayText, file, type));
     }
     JBPopupFactory.getInstance()
       .createActionGroupPopup(ActionsBundle.message("group.OverrideFileTypeAction.title"),
@@ -66,8 +69,10 @@ class OverrideFileTypeAction extends AnAction {
     private final VirtualFile myFile;
     private final FileType myType;
 
-    ChangeToThisFileTypeAction(@NotNull VirtualFile file, @NotNull FileType type, String dupHint) {
-      super(type.getDisplayName() + StringUtil.notNullize(dupHint),
+    ChangeToThisFileTypeAction(@NotNull @NlsActions.ActionText String displayText,
+                               @NotNull VirtualFile file,
+                               @NotNull FileType type) {
+      super(displayText,
             ActionsBundle.message("action.ChangeToThisFileTypeAction.description", file.getName(), type.getDescription()), type.getIcon());
       myFile = file;
       myType = type;

@@ -2,6 +2,7 @@
 package com.intellij.codeInsight.completion.ml
 
 import com.intellij.codeInsight.completion.CompletionLocation
+import com.intellij.codeInsight.completion.JavaIncorrectElements
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
@@ -58,6 +59,10 @@ class JavaElementFeaturesProvider : ElementFeatureProvider {
           features["keyword_name"] = MLFeatureValue.categorical(it)
         }
       }
+    }
+    val matcher = JavaIncorrectElements.tryGetMatcher(contextFeatures)
+    if (matcher != null && matcher(element)) {
+      features["incorrect_element"] = MLFeatureValue.binary(true)
     }
 
     return features

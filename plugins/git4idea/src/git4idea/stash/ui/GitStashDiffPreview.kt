@@ -14,8 +14,6 @@ import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
-import com.intellij.ui.IdeBorderFactory
-import com.intellij.ui.SideBorder
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.log.runInEdtAsync
 import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
@@ -29,7 +27,6 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, paren
   val toolbarWrapper get() = myToolbarWrapper
 
   init {
-    myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
     tree.addSelectionListener(Runnable {
       updatePreviewLater(tree.isModelUpdateInProgress)
     }, this)

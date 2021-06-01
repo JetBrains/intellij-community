@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -178,14 +178,12 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         }
 
         if (SystemInfo.isMac) {
-          vm.defineProperty("idea.smooth.progress", "false");
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
           vm.defineProperty("apple.awt.fileDialogForDirectories", "true");
         }
 
         if (SystemInfo.isXWindow) {
-          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) // NON-NLS
-          {
+          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) {
             vm.defineProperty("sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
           }
         }

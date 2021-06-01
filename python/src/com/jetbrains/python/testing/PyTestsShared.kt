@@ -65,7 +65,12 @@ internal val pythonFactories: Array<PyAbstractTestFactory<*>>
     PyTrialTestFactory(),
     PyUnitTestFactory())
 
-fun getFactoryById(id: String): PyAbstractTestFactory<*>? = pythonFactories.firstOrNull { it.id == id }
+internal val defaultFactory: PyAbstractTestFactory<*> get() = PyUnitTestFactory()
+
+fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
+  pythonFactories.firstOrNull { it.id == id || it.idForSettings == id }
+
+fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryById(id) ?: defaultFactory
 
 /**
  * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
@@ -124,12 +129,8 @@ private class PyTargetBasedPsiLocation(val target: ConfigurationTarget,
 /**
  * @return factory chosen by user in "test runner" settings
  */
-private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationFactory {
-  val name = TestRunnerService.getInstance(module).projectConfiguration
-  val factories = PythonTestConfigurationType.getInstance().configurationFactories
-  val configurationFactory = factories.find { it.name == name }
-  return configurationFactory ?: factories.first()
-}
+private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationFactory =
+  TestRunnerService.getInstance(module).selectedFactory
 
 
 // folder provided by python side. Resolve test names versus it
@@ -663,6 +664,15 @@ abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> :
     val requiredPackage = packageRequired ?: return true // No package required
     return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
   }
+
+  /**
+   * "Integrated settings" form displays this ID and stores it in the settings.
+   * Pytest has "py.test" id (which can't be changed because it is used in existing configuration) so we added this field
+   * for this case.
+   *
+   * Integrated settings should use "name" instead
+   */
+  open val idForSettings: String = id
 }
 
 

@@ -76,7 +76,7 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
     totalClassesUsages = 0
     val sortedClasses = sortedSetOf<Pair<String, Int>>(compareBy({ it.second }, { it.first }))
     persistentStorage.processKeys(Processor {
-      val count = persistentStorage.get(it) ?: return@Processor true
+      val count = persistentStorage.getOrLogError(it) ?: return@Processor true
       totalClasses++
       totalClassesUsages += count
       if (totalClasses > MAX_CLASSES_IN_MEMORY) {

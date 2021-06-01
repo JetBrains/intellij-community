@@ -32,7 +32,7 @@ public abstract class RangeBasedLocalSearchScope extends LocalSearchScope {
   @NotNull
   public abstract TextRange[] getRanges(@NotNull VirtualFile file);
 
-  protected static void CollectPsiElementsAtRange(PsiFile psiFile, List<PsiElement> elements, int start, int end) {
+  protected static void collectPsiElementsAtRange(PsiFile psiFile, List<PsiElement> elements, int start, int end) {
     final PsiElement startElement = psiFile.findElementAt(start);
     if (startElement == null) {
       return;

@@ -18,11 +18,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public abstract class MouseDragHelper extends MouseAdapter implements MouseMotionListener, KeyEventDispatcher, Weighted {
+public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter implements MouseMotionListener, KeyEventDispatcher, Weighted {
   public static final int DRAG_START_DEADZONE = 7;
 
   @NotNull
-  private final JComponent myDragComponent;
+  protected final T myDragComponent;
 
   private Point myPressPointScreen;
   protected Point myPressedOnScreenPoint;
@@ -40,7 +40,7 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
   private Disposable myGlassPaneListenersDisposable = Disposer.newDisposable();
   private boolean myStopped;
 
-  public MouseDragHelper(@NotNull Disposable parent, @NotNull JComponent dragComponent) {
+  public MouseDragHelper(@NotNull Disposable parent, @NotNull T dragComponent) {
     myDragComponent = dragComponent;
     myParentDisposable = parent;
   }

@@ -26,7 +26,7 @@ abstract public class TestRunnerService
 
   protected TestRunnerService() {
     super(new ServiceState());
-    myConfigurations = new ArrayList<>(ContainerUtil.map(PyTestsSharedKt.getPythonFactories(), o -> o.getId()));
+    myConfigurations = new ArrayList<>(ContainerUtil.map(PyTestsSharedKt.getPythonFactories(), o -> o.getIdForSettings()));
   }
 
   @NotNull
@@ -40,6 +40,11 @@ abstract public class TestRunnerService
   }
 
   @NotNull
+  public final PyAbstractTestFactory<?> getSelectedFactory() {
+    return PyTestsSharedKt.getFactoryByIdOrDefault(getProjectConfiguration());
+  }
+
+  @NotNull
   public static TestRunnerService getInstance(@Nullable Module module) {
     return SERVICE_CLASSES.getService(module);
   }
@@ -49,14 +54,12 @@ abstract public class TestRunnerService
     return new PyDefaultProjectAwareModuleConfiguratorImpl<>(SERVICE_CLASSES, DETECTOR);
   }
 
+  /**
+   * Use {@link #getSelectedFactory()} instead
+   */
   @NotNull
   public final String getProjectConfiguration() {
-    String runnerFromConfig = getState().PROJECT_TEST_RUNNER;
-    // User may have "py.test" in her .xml file
-    if ("py.test".equals(runnerFromConfig)) {
-      runnerFromConfig = "pytest";
-    }
-    return runnerFromConfig;
+    return getState().PROJECT_TEST_RUNNER;
   }
 
   static final class ServiceState {
@@ -69,7 +72,7 @@ abstract public class TestRunnerService
     }
 
     ServiceState() {
-      this(PythonTestConfigurationsModel.getPythonsUnittestName());
+      this(PyTestsSharedKt.getDefaultFactory().getIdForSettings());
     }
   }
 

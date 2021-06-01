@@ -39,10 +39,15 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithAllCompilerChecks
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.util.clearDialogsResults
 import org.jetbrains.kotlin.idea.core.util.setDialogsResult
+import org.jetbrains.kotlin.idea.findUsages.KotlinFunctionFindUsagesOptions
+import org.jetbrains.kotlin.idea.findUsages.KotlinPropertyFindUsagesOptions
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
-import org.jetbrains.kotlin.idea.test.*
+import org.jetbrains.kotlin.idea.test.DirectiveBasedActionUtils
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import org.jetbrains.kotlin.idea.test.TestFixtureExtension
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runReadActionInSmartMode
@@ -376,6 +381,11 @@ internal fun findUsages(
 
         @Suppress("NAME_SHADOWING")
         val options = options ?: handler.getFindUsagesOptions(null)
+
+        handler.getFindUsagesOptions(null).let {
+            if (it is KotlinFunctionFindUsagesOptions) it.isSearchForBaseMethod = searchSuperDeclaration
+            else if (it is KotlinPropertyFindUsagesOptions) it.isSearchForBaseAccessors = searchSuperDeclaration
+        }
 
         options.searchScope = GlobalSearchScope.allScope(project)
 

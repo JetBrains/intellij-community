@@ -14,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.lang.Java11Shim;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -194,7 +193,8 @@ public final class PluginManager {
                                                 boolean withOptionalDeps,
                                                 @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
     @NotNull PluginSet pluginSet = PluginManagerCore.getPluginSet();
-    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = PluginManagerCore.createPluginIdGraph(pluginSet.loadedPlugins, pluginSet, withOptionalDeps);
+    CachingSemiGraph<IdeaPluginDescriptorImpl> semiGraph = CachingSemiGraphKt.createPluginIdGraph(pluginSet.loadedPlugins, pluginSet,
+                                                                                                  withOptionalDeps);
     Graph<IdeaPluginDescriptorImpl> graph = GraphGenerator.generate(semiGraph);
     Set<IdeaPluginDescriptorImpl> dependencies = new LinkedHashSet<>();
     GraphAlgorithms.getInstance().collectOutsRecursively(graph, rootDescriptor, dependencies);
@@ -207,11 +207,6 @@ public final class PluginManager {
       }
     }
     return true;
-  }
-
-  @NotNull List<IdeaPluginDescriptorImpl> getPluginsSortedByDependency(@NotNull List<IdeaPluginDescriptorImpl> descriptors) {
-    InboundSemiGraph<IdeaPluginDescriptorImpl> graph = PluginManagerCore.createPluginIdGraph(descriptors, PluginManagerCore.getPluginSet(), true);
-    return PluginManagerCore.getTopologicallySorted(graph);
   }
 
   public @NotNull Disposable createDisposable(@NotNull Class<?> requestor) {

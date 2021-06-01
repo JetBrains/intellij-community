@@ -11,10 +11,12 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
@@ -202,7 +204,7 @@ public final class Utils {
                                                              @NotNull ActionGroup group,
                                                              boolean hideDisabled,
                                                              @Nullable Consumer<String> missedKeys) {
-    int maxTime = Registry.intValue("actionSystem.update.actions.async.fast.timeout.ms", 20);
+    int maxTime = Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
@@ -239,8 +241,12 @@ public final class Utils {
   static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull DataContext context, @NotNull String place) {
     JRootPane rootPane = point == null ? null : UIUtil.getRootPane(point.getComponent());
     JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
-    if (glassPane == null || !isAsyncDataContext(context)) return () -> {};
+    if (glassPane == null || !isAsyncDataContext(context)) return EmptyRunnable.getInstance();
     Component comp = point.getOriginalComponent();
+    if (ActionPlaces.EDITOR_GUTTER_POPUP.equals(place) && comp instanceof EditorGutterComponentEx &&
+        ((EditorGutterComponentEx)comp).getGutterRenderer(point.getOriginalPoint()) != null) {
+      return EmptyRunnable.getInstance();
+    }
     boolean isMenuItem = comp instanceof ActionMenu;
     JLabel icon = new JLabel(isMenuItem ? AnimatedIcon.Default.INSTANCE : AnimatedIcon.Big.INSTANCE);
     Dimension size = icon.getPreferredSize();
@@ -258,7 +264,7 @@ public final class Utils {
     EdtScheduledExecutorService.getInstance().schedule(() -> {
       if (!icon.isVisible()) return;
       glassPane.add(icon);
-    }, 500, TimeUnit.MILLISECONDS);
+    }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
     return () -> {
       if (icon.getParent() != null) glassPane.remove(icon);
       else icon.setVisible(false);
@@ -534,5 +540,9 @@ public final class Utils {
       result[0] = supplier.getAsBoolean();
     });
     return result[0];
+  }
+
+  public static boolean isFrozenDataContext(DataContext context) {
+    return context instanceof PreCachedDataContext && ((PreCachedDataContext)context).isFrozenDataContext();
   }
 }

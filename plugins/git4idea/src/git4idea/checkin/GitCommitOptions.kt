@@ -150,6 +150,7 @@ class GitCommitOptionsUi(
   override fun refresh() {
     refresh(null)
     commitAuthorChanged()
+    commitAuthorDateChanged()
   }
 
   override fun saveState() {
@@ -204,6 +205,10 @@ class GitCommitOptionsUi(
   override fun commitAuthorChanged() {
     val newAuthor = commitPanel.commitAuthorTracker?.commitAuthor
     if (getAuthor() != newAuthor) setAuthor(newAuthor)
+  }
+
+  override fun commitAuthorDateChanged() {
+    authorDate = commitPanel.commitAuthorTracker?.commitAuthorDate
   }
 
   private fun updateRenamesCheckboxState() {

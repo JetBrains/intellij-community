@@ -15,7 +15,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
-  private static final TextAttributesKey TYPO_KEY = TextAttributesKey.createTextAttributesKey("TYPO");
+  public static final TextAttributesKey TYPO_KEY = TextAttributesKey.createTextAttributesKey("TYPO");
   @SuppressWarnings("UnresolvedPropertyKey")
   public static final HighlightSeverity TYPO = new HighlightSeverity(
     "TYPO",

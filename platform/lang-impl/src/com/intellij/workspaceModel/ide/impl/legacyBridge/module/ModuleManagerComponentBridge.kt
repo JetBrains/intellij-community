@@ -134,8 +134,10 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
 
               for (change in facetChanges) {
                 when (change) {
-                  is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
-                  is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
+                  is EntityChange.Removed -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore,
+                                                                                                          addedModulesNames)
+                  is EntityChange.Replaced -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore,
+                                                                                                           addedModulesNames)
                   is EntityChange.Added -> Unit
                 }
               }
@@ -156,7 +158,8 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
                 when (change) {
                   is EntityChange.Removed -> Unit
                   is EntityChange.Replaced -> Unit
-                  is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore, addedModulesNames)
+                  is EntityChange.Added -> FacetEntityChangeListener.getInstance(project).processChange(change, event.storageBefore,
+                                                                                                        addedModulesNames)
                 }
               }
 
@@ -542,9 +545,9 @@ class ModuleManagerComponentBridge(private val project: Project) : ModuleManager
   }
 
   internal fun createModuleInstance(moduleEntity: ModuleEntity,
-                                      versionedStorage: VersionedEntityStorage,
-                                      diff: WorkspaceEntityStorageDiffBuilder?,
-                                      isNew: Boolean): ModuleBridge {
+                                    versionedStorage: VersionedEntityStorage,
+                                    diff: WorkspaceEntityStorageDiffBuilder?,
+                                    isNew: Boolean): ModuleBridge {
     val plugins = PluginManagerCore.getLoadedPlugins(null)
     return createModuleInstance(plugins = plugins,
                                 corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID },

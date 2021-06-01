@@ -20,10 +20,13 @@ import java.util.*
 class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectories: List<JarDirectoryDescription>) {
   private val virtualFilePointersList: ConcurrentList<VirtualFilePointer> = ContainerUtil.createConcurrentList()
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
+
   @Volatile
   private var timestampOfCachedFiles = -1L
+
   @Volatile
   private var cachedFilesList = arrayOf<VirtualFile>()
+
   @Volatile
   private var cachedUrlsList: Array<String>? = null
 
@@ -45,7 +48,7 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
   fun getFiles(): Array<VirtualFile> {
     val timestamp = timestampOfCachedFiles
     val cachedResults = cachedFilesList
-    return if (timestamp == virtualFilePointerManager.modificationCount) cachedResults else  cacheVirtualFilePointersData()
+    return if (timestamp == virtualFilePointerManager.modificationCount) cachedResults else cacheVirtualFilePointersData()
   }
 
   private fun cacheVirtualFilePointersData(): Array<VirtualFile> {
@@ -87,7 +90,8 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
               return true
             }
           })
-        } else {
+        }
+        else {
           if (!directoryFile.isValid) continue
           val children = directoryFile.children
           for (file in children) {

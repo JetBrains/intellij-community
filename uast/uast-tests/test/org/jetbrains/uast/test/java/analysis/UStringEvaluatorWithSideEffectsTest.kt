@@ -8,7 +8,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.testFramework.PlatformTestUtil
 import junit.framework.TestCase
-import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UReturnExpression
 import org.jetbrains.uast.analysis.*
 import org.jetbrains.uast.getUastParentOfType
@@ -472,7 +471,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
   }
 
   fun `test many appends`() {
-    val size = 400
+    val size = 250
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {
         String b() {

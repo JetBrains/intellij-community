@@ -9,7 +9,7 @@ import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.exists
 import com.intellij.util.io.lastModified
 
-class WorkspaceModelCachesInvalidatorBackgroundActivity: StartupActivity.Background {
+class WorkspaceModelCachesInvalidatorBackgroundActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (!WorkspaceModelCacheImpl.invalidateCachesMarkerFile.exists()) return
     val lastModifiedDate = WorkspaceModelCacheImpl.invalidateCachesMarkerFile.lastModified()

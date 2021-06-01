@@ -9,13 +9,13 @@ class MyClass {
 
 fun testOk() {
     val c = MyClass()
-    with(c) { // <== it's ok since 'f()' is effectively 'c.f()'
+    with(c) { // &lt;== it's ok since 'f()' is effectively 'c.f()'
         println(f())
     }
 }
 
 fun testRedundant() {
-    with (c) { // <== 'with' is redundant since 'c' isn't used
+    with (c) { // &lt;== 'with' is redundant since 'c' isn't used
         println("1")
     }
 }

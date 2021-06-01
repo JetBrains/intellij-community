@@ -17,7 +17,6 @@ import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
@@ -33,6 +32,7 @@ sealed class JpsProjectConfigLocation {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = projectDir
   }
+
   data class FileBased(val iprFile: VirtualFileUrl, val iprFileParent: VirtualFileUrl) : JpsProjectConfigLocation() {
     override val baseDirectoryUrl: VirtualFileUrl
       get() = iprFileParent
@@ -58,7 +58,8 @@ sealed class JpsFileEntitySource : EntitySource {
    * The file name is automatically derived from the entity name.
    */
   @DefaultSerializer(FileInDirectorySerializer::class)
-  data class FileInDirectory(val directory: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
+  data class FileInDirectory(val directory: VirtualFileUrl,
+                             override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
     /**
      * Automatically generated value which is used to distinguish different files in [directory]. The actual name is stored in serialization
      * structures and may change if name of the corresponding entity has changed.

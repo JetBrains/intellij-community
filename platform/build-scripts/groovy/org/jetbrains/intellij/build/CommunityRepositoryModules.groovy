@@ -139,7 +139,7 @@ final class CommunityRepositoryModules {
     },
     plugin("intellij.eclipse") {
       withModule("intellij.eclipse.jps", "eclipse-jps.jar")
-      withModule("intellij.eclipse.common")
+      withModule("intellij.eclipse.common", "eclipse-common.jar")
     },
     plugin("intellij.java.coverage") {
       withModule("intellij.java.coverage.rt")
@@ -398,7 +398,7 @@ final class CommunityRepositoryModules {
       mainJarName = "javaFX.jar"
       withModule("intellij.javaFX", mainJarName)
       withModule("intellij.javaFX.jps")
-      withModule("intellij.javaFX.common")
+      withModule("intellij.javaFX.common", "javaFX-common.jar")
       withModule("intellij.javaFX.properties")
       withModule("intellij.javaFX.sceneBuilder", "rt/sceneBuilderBridge.jar")
     }

@@ -42,14 +42,13 @@ class WorkspaceCacheTest {
 
   @Before
   fun setUp() {
-    WorkspaceModelImpl.forceEnableCaching = true
+    WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
     serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager, WorkspaceModelCacheImpl::collectExternalCacheVersions)
   }
 
   @After
   fun tearDown() {
-    WorkspaceModelImpl.forceEnableCaching = false
     WorkspaceModelCacheImpl.testCacheFile = null
   }
 
@@ -66,7 +65,7 @@ class WorkspaceCacheTest {
       }
     }
 
-    WorkspaceModel.getInstance(project).cache?.saveCacheNow()
+    WorkspaceModelCache.getInstance(project)?.saveCacheNow()
 
     val project2 = loadProject(projectData.projectDir)
 
@@ -90,7 +89,7 @@ class WorkspaceCacheTest {
       }
     }
 
-    WorkspaceModel.getInstance(project).cache?.saveCacheNow()
+    WorkspaceModelCache.getInstance(project)?.saveCacheNow()
 
     val project2 = loadProject(projectData.projectDir)
 
@@ -115,7 +114,7 @@ class WorkspaceCacheTest {
       }
     }
 
-    WorkspaceModel.getInstance(project).cache?.saveCacheNow()
+    WorkspaceModelCache.getInstance(project)?.saveCacheNow()
 
     Disposer.dispose(pointDisposable)
     val anotherPointDisposable = Disposer.newDisposable(project, "Point disposable")

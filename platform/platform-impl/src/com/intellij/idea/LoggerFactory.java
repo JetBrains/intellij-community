@@ -52,8 +52,7 @@ public final class LoggerFactory implements Logger.Factory {
 
   @Override
   public @NotNull Logger getLoggerInstance(@NotNull String name) {
-    IdeaLogger logger = new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
-    return MutedLogger.isEnabled() ? MutedLogger.of(logger) : logger;
+    return new IdeaLogger(LogManager.getLoggerRepository().getLogger(name));
   }
 
   private static void configureFromXmlFile(Path xmlFile) throws Exception {
@@ -96,7 +95,7 @@ public final class LoggerFactory implements Logger.Factory {
       @Override
       public void rollOver() {
         super.rollOver();
-        MutedLogger.dropCaches();
+        IdeaLogger.dropFrequentExceptionsCaches();
       }
     };
     ideaLog.setFile(getLogFilePath().toString());

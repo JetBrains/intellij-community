@@ -1,5 +1,4 @@
 + com.intellij
-  -org-jetbrains-python-concurrency-visualiser-
 + -HtmlTools-
 + -PerforceDirectPlugin-
 + -Refactor-X-
@@ -16,6 +15,7 @@
 + -com-intellij-clion-compdb-
 + -com-intellij-clion-embedded-
 + -com-intellij-clion-gradle-
++ -org-jetbrains-plugins-linkerscript-
 + -com-intellij-java-
 + -ByteCodeViewer-
 + -CFML Support-
@@ -62,8 +62,6 @@
 + -org-jetbrains-plugins-stylus-
 + -gherkin-
 + -cucumber-java-
-  -org-jetbrains-plugins-python-gherkin-
-  -org-jetbrains-plugins-pytest-bdd-
 + -hg4idea-
 + -org-editorconfig-editorconfigjetbrains-
 + -org-intellij-intelliLang-
@@ -105,7 +103,6 @@
 + -org-jetbrains-plugins-gradle-maven-
 + -org-jetbrains-idea-maven-ext-
 + -org-jetbrains-plugins-javaFX-
-  -org-jetbrains-plugins-notebooks-jupyter-
 + -org-intellij-plugins-markdown-
 + -com-intellij-cidr-markdown-
 + -org-jetbrains-plugins-go-template-
@@ -156,9 +153,7 @@
 + -com-jetbrains-php-framework-
 + -org-jetbrains-plugins-remote-run-
 + -org-jetbrains-plugins-phpstorm-remote-interpreter-
-  -org-jetbrains-plugins-python-remote-interpreter-
 + -org-jetbrains-plugins-wsl-
-  -org-jetbrains-plugins-python-wsl-
 + -com-jetbrains-sh-
 + -org-jetbrains-plugins-textmate-
 + -org-jetbrains-plugins-yaml-
@@ -167,7 +162,6 @@
 + -Pythonid-
 + -org-jetbrains-plugins-phpstorm-docker-
 + -org-jetbrains-plugins-node-remote-interpreter-
-  -org-jetbrains-plugins-python-docker-
 + -org-jetbrains-plugins-clangFormat-
 + -com-intellij-spring-boot-
 + -com-intellij-swagger-
@@ -176,6 +170,7 @@
 + -org-jetbrains-plugins-ruby-
 + -org-jetbrains-plugins-ruby-chef-
 + -org-jetbrains-settingsRepository-
+
 
 Plugin &#39;Jupyter Notebook&#39; requires plugin &#39;com.intellij.modules.pycharm&#39; to be installed
 Plugin &#39;Python pytest-bdd support&#39; requires plugin &#39;Python BDD support for engines, based on Gherkin (cucumber, behave)&#39; to be enabled

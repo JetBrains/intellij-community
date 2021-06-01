@@ -5,13 +5,19 @@ import com.github.benmanes.caffeine.cache.CacheLoader
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.progress.util.PotemkinProgress
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.project.ProjectManagerListener
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.vcs.FilePath
@@ -37,8 +43,15 @@ import git4idea.util.GitFileUtils
 import org.jetbrains.annotations.NonNls
 import java.io.ByteArrayInputStream
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 
 class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
+  private val executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Git index file system refresher", 1)
+  private val disposable = Disposer.newDisposable("Git Index File System")
+
+  @Volatile
+  private var isShutDown = false
+
   private val cache = Caffeine.newBuilder()
     .weakValues()
     .build<Key, GitIndexVirtualFile>(CacheLoader { key ->
@@ -46,10 +59,22 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
     })
 
   init {
-    val connection: MessageBusConnection = project.messageBus.connect(this)
+    val connection: MessageBusConnection = project.messageBus.connect(disposable)
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener { repository ->
       LOG.debug("Scheduling refresh for repository ${repository.root.name}")
       refresh { it.root == repository.root }
+    })
+    connection.subscribe(ProjectManager.TOPIC, object : ProjectManagerListener {
+      override fun projectClosing(p: Project) {
+        if (project == p) {
+          isShutDown = true
+          Disposer.dispose(disposable)
+          executor.shutdown()
+          ProgressManager.getInstance().runProcessWithProgressSynchronously({ executor.awaitTermination(100, TimeUnit.MILLISECONDS) },
+                                                                            GitBundle.message("stage.vfs.shutdown.process"),
+                                                                            false, project)
+        }
+      }
     })
   }
 
@@ -67,6 +92,8 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private fun createIndexVirtualFile(root: VirtualFile, filePath: FilePath): GitIndexVirtualFile? {
+    if (isShutDown) return null
+
     val stagedFile = readMetadataFromGit(root, filePath) ?: return null
     val length = readLengthFromGit(root, stagedFile.blobHash)
     return GitIndexVirtualFile(project, root, filePath, stagedFile.hash(), length, stagedFile.isExecutable)
@@ -87,33 +114,51 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
   }
 
   private fun refresh(filesToRefresh: List<GitIndexVirtualFile>) {
+    if (isShutDown) return
+
     LOG.debug("Starting async refresh for ${filesToRefresh.joinToString { it.path }}")
 
-    AppExecutorUtil.getAppExecutorService().submit {
+    BackgroundTaskUtil.execute(executor, disposable) {
       val fileDataList = mutableListOf<IndexFileData>()
       for (file in filesToRefresh) {
         readFromGit(file)?.let { fileDataList.add(it) }
       }
-      if (fileDataList.isEmpty()) return@submit
-      writeInEdt {
-        val events = fileDataList.map { it.event }
-        ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
-        fileDataList.forEach { it.apply() }
-        ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
+      if (fileDataList.isEmpty()) return@execute
+      ProgressManager.getInstance().progressIndicator?.checkCanceled()
+      writeInEdtAndWait {
+        if (isShutDown) return@writeInEdtAndWait
+
+        val dataToApply = fileDataList.filter { !it.isOutdated() }
+        if (dataToApply.isEmpty()) return@writeInEdtAndWait
+
+        applyRefresh(dataToApply)
       }
     }
   }
 
   private fun readFromGit(file: GitIndexVirtualFile): IndexFileData? {
-    val oldHash = file.hash
+    val (oldHash, oldModificationStamp) = runReadAction { Pair(file.hash, file.modificationStamp) }
+    return readFromGit(file, oldHash, oldModificationStamp)
+  }
+
+  private fun readFromGit(file: GitIndexVirtualFile,
+                          oldHash: Hash?,
+                          oldModificationStamp: Long): IndexFileData? {
     val stagedFile = readMetadataFromGit(file.root, file.filePath)
     val newHash = stagedFile?.hash()
     if (oldHash != newHash) {
       val newLength = if (stagedFile != null) readLengthFromGit(file.root, stagedFile.blobHash) else 0
       LOG.debug("Preparing refresh for $file")
-      return IndexFileData(file, oldHash, newHash, file.length, newLength, stagedFile?.isExecutable ?: false, file.modificationStamp)
+      return IndexFileData(file, oldHash, newHash, file.length, newLength, stagedFile?.isExecutable ?: false, oldModificationStamp)
     }
     return null
+  }
+
+  private fun applyRefresh(fileDataList: List<IndexFileData>) {
+    val events = fileDataList.map { it.event }
+    ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(events)
+    fileDataList.forEach { it.apply() }
+    ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(events)
   }
 
   internal fun write(file: GitIndexVirtualFile, requestor: Any?, newContent: ByteArray, newModificationStamp: Long) {
@@ -123,20 +168,24 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).before(listOf(event))
 
       val oldHash = file.hash
-      val newHash = Ref<Hash>(null)
+      val oldModificationStamp = file.modificationStamp
 
-      PotemkinProgress(GitBundle.message("stage.vfs.write.process", file.name), project, null, null).runInBackground {
-        if (oldHash != readMetadataFromGit(file.root, file.filePath)?.hash()) {
-          LOG.warn("Skipping write for $file as it is not up to date")
-          return@runInBackground
+      val applyChanges = computeUnderPotemkinProgress(project, GitBundle.message("stage.vfs.write.process", file.name)) {
+        val indexFileData = readFromGit(file, oldHash, oldModificationStamp)
+        if (indexFileData != null) {
+          LOG.info("Detected memory-disk conflict in $file")
+          return@computeUnderPotemkinProgress {
+            applyRefresh(listOf(indexFileData))
+          }
         }
-        newHash.set(GitIndexUtil.write(project, file.root, file.filePath, ByteArrayInputStream(newContent), file.isExecutable))
+        val newHash = GitIndexUtil.write(project, file.root, file.filePath, ByteArrayInputStream(newContent), file.isExecutable)
         LOG.debug("Written $file. newHash=$newHash")
+        return@computeUnderPotemkinProgress {
+          file.setDataFromWrite(newHash, newContent.size.toLong(), newModStamp)
+        }
       }
 
-      if (newHash.get() != null) {
-        file.setDataFromWrite(newHash.get(), newContent.size.toLong(), newModStamp)
-      }
+      applyChanges.invoke()
 
       ApplicationManager.getApplication().messageBus.syncPublisher(VirtualFileManager.VFS_CHANGES).after(listOf(event))
     }
@@ -212,12 +261,20 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
 
     private fun GitIndexUtil.StagedFile.hash(): Hash = HashImpl.build(blobHash)
 
-    private fun writeInEdt(action: () -> Unit) {
-      ApplicationManager.getApplication().invokeLater {
+    private fun writeInEdtAndWait(action: () -> Unit) {
+      ApplicationManager.getApplication().invokeAndWait {
         ApplicationManager.getApplication().runWriteAction {
           action()
         }
       }
+    }
+
+    private fun <T> computeUnderPotemkinProgress(project: Project, @NlsContexts.ProgressTitle message: String, computation: () -> T): T {
+      val result = Ref<T>(null)
+      PotemkinProgress(message, project, null, null).runInBackground {
+        result.set(computation())
+      }
+      return result.get()
     }
   }
 
@@ -232,11 +289,11 @@ class GitIndexFileSystemRefresher(private val project: Project) : Disposable {
                                                                  0, 0,
                                                                  oldLength, newLength, true)
 
-    fun apply(): Boolean {
+    fun isOutdated() = file.hash != oldHash
+
+    fun apply() {
       LOG.debug("Refreshing $file")
-      if (file.hash != oldHash) return false
       file.setDataFromRefresh(newHash, newLength, newExecutable)
-      return true
     }
 
     override fun toString(): @NonNls String {

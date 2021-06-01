@@ -2510,4 +2510,20 @@ class Abc {
                           "  }\n" +
                           "}")
   }
+
+  @NeedsIndex.ForStandardLibrary
+  void testSystemOutNoInitializer() {
+    myFixture.configureByText("System.java", "package java.lang;\n" +
+                                             "public class System {\n" +
+                                             "public static final PrintStream out = null;\n" +
+                                             "public static void setOut(PrintStream out) {}\n" +
+                                             "void test() {System.o<caret>}\n" +
+                                             "}")
+    def elements = myFixture.completeBasic()
+    assert elements.length > 0
+    def element = elements[0]
+    assert element.lookupString == "out"
+    LookupElementPresentation presentation = renderElement(element)
+    assert renderElement(element).tailText == null
+  }
 }

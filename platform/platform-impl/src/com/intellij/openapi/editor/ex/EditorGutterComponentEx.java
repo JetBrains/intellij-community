@@ -31,11 +31,9 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
    */
   public static final DataKey<Point> ICON_CENTER_POSITION = DataKey.create("EditorGutter.ICON_CENTER_POSITION");
 
-  @Nullable
-  public abstract FoldRegion findFoldingAnchorAt(int x, int y);
+  public abstract @Nullable FoldRegion findFoldingAnchorAt(int x, int y);
 
-  @NotNull
-  public abstract List<GutterMark> getGutterRenderers(int line);
+  public abstract @NotNull List<GutterMark> getGutterRenderers(int line);
 
   public abstract int getWhitespaceSeparatorOffset();
 
@@ -53,8 +51,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract int getAnnotationsAreaWidth();
 
-  @Nullable
-  public abstract Point getCenterPoint(GutterIconRenderer renderer);
+  public abstract @Nullable Point getCenterPoint(GutterIconRenderer renderer);
 
   public abstract void setShowDefaultGutterPopup(boolean show);
 
@@ -77,8 +74,7 @@ public abstract class EditorGutterComponentEx extends JComponent implements Edit
 
   public abstract void setInitialIconAreaWidth(int width);
 
-  @Nullable
-  public GutterMark getGutterRenderer(final Point p) {
-    return null;
-  }
+  public abstract @Nullable GutterMark getGutterRenderer(Point p);
+
+  public abstract @Nullable Runnable setLoadingIconForCurrentGutterMark();
 }

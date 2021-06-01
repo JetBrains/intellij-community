@@ -106,7 +106,10 @@ open class VirtualFileUrlWatcher(val project: Project) {
 data class EntityWithVirtualFileUrl(val entity: WorkspaceEntity, val virtualFileUrl: VirtualFileUrl, val propertyName: String)
 
 private interface LegacyFileWatcher {
-  fun onVfsChange(oldUrl: String, newUrl: String, entitiesWithVFU: List<EntityWithVirtualFileUrl>, virtualFileManager: VirtualFileUrlManager,
+  fun onVfsChange(oldUrl: String,
+                  newUrl: String,
+                  entitiesWithVFU: List<EntityWithVirtualFileUrl>,
+                  virtualFileManager: VirtualFileUrlManager,
                   diff: WorkspaceEntityStorageBuilder)
 }
 
@@ -115,7 +118,10 @@ private class EntitySourceFileWatcher<T : EntitySource>(
   val containerToUrl: (T) -> String,
   val createNewSource: (T, VirtualFileUrl) -> T
 ) : LegacyFileWatcher {
-  override fun onVfsChange(oldUrl: String, newUrl: String, entitiesWithVFU: List<EntityWithVirtualFileUrl>, virtualFileManager: VirtualFileUrlManager,
+  override fun onVfsChange(oldUrl: String,
+                           newUrl: String,
+                           entitiesWithVFU: List<EntityWithVirtualFileUrl>,
+                           virtualFileManager: VirtualFileUrlManager,
                            diff: WorkspaceEntityStorageBuilder) {
     val entities = diff.entitiesBySource { it::class == entitySource }
     for ((entitySource, mapOfEntities) in entities) {
@@ -145,7 +151,10 @@ private class EntityVirtualFileUrlWatcher<E : WorkspaceEntity, M : ModifiableWor
   val propertyName: String,
   val modificator: M.(VirtualFileUrl, VirtualFileUrl) -> Unit
 ) : LegacyFileWatcher {
-  override fun onVfsChange(oldUrl: String, newUrl: String, entitiesWithVFU: List<EntityWithVirtualFileUrl>, virtualFileManager: VirtualFileUrlManager,
+  override fun onVfsChange(oldUrl: String,
+                           newUrl: String,
+                           entitiesWithVFU: List<EntityWithVirtualFileUrl>,
+                           virtualFileManager: VirtualFileUrlManager,
                            diff: WorkspaceEntityStorageBuilder) {
     entitiesWithVFU.filter { entityClass.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
       val existingVirtualFileUrl = entityWithVFU.virtualFileUrl
@@ -166,10 +175,13 @@ private class EntityVirtualFileUrlWatcher<E : WorkspaceEntity, M : ModifiableWor
  * It's responsible for updating complex case than [VirtualFileUrl] contains not in the entity itself but in internal data class.
  * This is about LibraryEntity -> roots (LibraryRoot) -> url (VirtualFileUrl).
  */
-private class LibraryRootFileWatcher: LegacyFileWatcher {
+private class LibraryRootFileWatcher : LegacyFileWatcher {
   private val propertyName = LibraryEntity::roots.name
 
-  override fun onVfsChange(oldUrl: String, newUrl: String, entitiesWithVFU: List<EntityWithVirtualFileUrl>, virtualFileManager: VirtualFileUrlManager,
+  override fun onVfsChange(oldUrl: String,
+                           newUrl: String,
+                           entitiesWithVFU: List<EntityWithVirtualFileUrl>,
+                           virtualFileManager: VirtualFileUrlManager,
                            diff: WorkspaceEntityStorageBuilder) {
     entitiesWithVFU.filter { LibraryEntity::class.isInstance(it.entity) && it.propertyName == propertyName }.forEach { entityWithVFU ->
       val oldVFU = entityWithVFU.virtualFileUrl
@@ -177,7 +189,7 @@ private class LibraryRootFileWatcher: LegacyFileWatcher {
 
       entityWithVFU.entity as LibraryEntity
       val oldLibraryRoots = diff.resolve(entityWithVFU.entity.persistentId())?.roots?.filter { it.url == oldVFU }
-                           ?: error("Incorrect state of the VFU index")
+                            ?: error("Incorrect state of the VFU index")
       oldLibraryRoots.forEach { oldLibraryRoot ->
         val newLibraryRoot = LibraryRoot(newVFU, oldLibraryRoot.type, oldLibraryRoot.inclusionOptions)
         diff.modifyEntity(ModifiableLibraryEntity::class.java, entityWithVFU.entity) {

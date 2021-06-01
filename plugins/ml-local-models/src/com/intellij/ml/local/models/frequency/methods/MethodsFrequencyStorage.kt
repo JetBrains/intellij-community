@@ -74,7 +74,7 @@ class MethodsFrequencyStorage internal constructor(private val storageDirectory:
     totalMethods = 0
     totalMethodsUsages = 0
     storage.processKeys(Processor {
-      val frequencies = storage.get(it) ?: return@Processor true
+      val frequencies = storage.getOrLogError(it) ?: return@Processor true
       totalMethods++
       totalMethodsUsages += frequencies.getTotalFrequency()
       return@Processor true

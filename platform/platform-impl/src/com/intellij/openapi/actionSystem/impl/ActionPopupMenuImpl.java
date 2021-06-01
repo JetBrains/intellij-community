@@ -8,6 +8,7 @@ import com.intellij.internal.inspector.UiInspectorUtil;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.ActionPopupMenu;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.Application;
@@ -52,6 +53,10 @@ final class ActionPopupMenuImpl implements ActionPopupMenu, ApplicationActivatio
   ActionPopupMenuImpl(@NotNull String place, @NotNull ActionGroup group,
                       @NotNull ActionManagerImpl actionManager,
                       @Nullable PresentationFactory factory) {
+    if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
+      LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
+               "Any string unique enough to deduce the popup menu location will do.", new Throwable("popup menu creation trace"));
+    }
     myManager = actionManager;
     myMenu = new MyMenu(place, group, factory);
   }

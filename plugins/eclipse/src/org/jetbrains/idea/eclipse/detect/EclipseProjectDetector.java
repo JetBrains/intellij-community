@@ -48,7 +48,7 @@ class EclipseProjectDetector extends ProjectDetector {
       collectProjects(projects, Path.of(appLocation));
     }
     if (PropertiesComponent.getInstance().getBoolean("eclipse.scan.home.directory", true)) {
-      visitFiles(new File(home), file1 -> scanForProjects(file1.getPath(), projects), 3);
+      visitFiles(new File(home), file1 -> scanForProjects(file1.getPath(), projects), 2);
     }
   }
 
@@ -160,7 +160,7 @@ class EclipseProjectDetector extends ProjectDetector {
   }
 
   private static void visitFiles(File file, Consumer<File> processor, int depth) {
-    if (depth == 0) return;
+    if (depth == 0 || isInSpecialMacFolder(file.getPath())) return;
     processor.accept(file);
     File[] files = file.listFiles(pathname -> !pathname.getName().startsWith("."));
     if (files == null) return;

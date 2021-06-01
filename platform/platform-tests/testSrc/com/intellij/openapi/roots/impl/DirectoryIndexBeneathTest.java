@@ -3,8 +3,11 @@ package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -133,5 +136,33 @@ public class DirectoryIndexBeneathTest extends DirectoryIndexTestCase {
                           root,
                           Arrays.asList(module, src),
                           Arrays.asList(root, g1Txt, g2Txt));
+  }
+
+  public void testTraversingNonProjectFilesShouldBeFast() throws IOException {
+    IoTestUtil.assumeSymLinkCreationIsSupported();
+    VirtualFile root = getTempDir().createVirtualDir();
+    generateSymlinkExplosion(VfsUtilCore.virtualToIoFile(root), 17);
+    PlatformTestUtil.startPerformanceTest("traversing non-project roots", 100, () -> checkIterate(root)).assertTiming();
+  }
+
+  /**
+   * Creates a temporal root directory and generates symlinks inside it
+   * so traversing the root directory with following symlinks results in O(2^depth) files visited.
+   * E.g. amount of files inside the file tree generated for depth=15 is 65536 (`find -follow | wc -l` prints 65536)
+   * generate(16) produces 131072 directories
+   * generate(17): 262144
+   * No symlinks cycles are generated.
+   */
+  private static void generateSymlinkExplosion(@NotNull File root, int depth) {
+    String prevDirPath = "";
+    for (int i = 0; i < depth; i++) {
+      File dir = new File(root, "my-" + i);
+      assertTrue(dir.mkdirs());
+      if (i != 0) {
+        IoTestUtil.createSymLink(prevDirPath, dir + "/a");
+        IoTestUtil.createSymLink(prevDirPath, dir + "/b");
+      }
+      prevDirPath = dir.getPath();
+    }
   }
 }

@@ -12,10 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.SearchScope;
-import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -69,7 +65,7 @@ public class EditorSelectionLocalSearchScope extends RangeBasedLocalSearchScope 
       final List<PsiElement> elements = new ArrayList<>();
 
       for (int i = 0; i < selectionStarts.length; ++i) {
-        CollectPsiElementsAtRange(psiFile, elements, selectionStarts[i], selectionEnds[i]);
+        collectPsiElementsAtRange(psiFile, elements, selectionStarts[i], selectionEnds[i]);
       }
 
       myPsiElements = elements.toArray(PsiElement.EMPTY_ARRAY);

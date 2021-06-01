@@ -27,7 +27,6 @@ import java.nio.file.Paths
 import java.security.SecureRandom
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.atomic.AtomicReference
 import java.util.prefs.Preferences
 
 @ApiStatus.Internal
@@ -110,14 +109,14 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
 
   private val salt: ByteArray = getOrGenerateSalt()
   private val anonymizedCache = ConcurrentHashMap<String, String>()
-  private val machineIdReference: AtomicReference<MachineId>
+  private val machineIdReference: AtomicLazyValue<MachineId>
 
   val machineId: MachineId
-    get() = machineIdReference.get()
+    get() = machineIdReference.getValue()
 
   init {
     val configOptions = EventLogConfigOptionsService.getInstance().getOptions(recorderId)
-    machineIdReference = AtomicReference(generateMachineId(configOptions.machineIdSalt, configOptions.machineIdRevision))
+    machineIdReference = AtomicLazyValue { generateMachineId(configOptions.machineIdSalt, configOptions.machineIdRevision) }
 
     EventLogConfigOptionsService.TOPIC.subscribe(null, object : EventLogRecorderConfigOptionsListener(recorderId) {
       override fun onMachineIdConfigurationChanged(salt: @Nullable String?, revision: Int) {

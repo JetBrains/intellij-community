@@ -411,9 +411,6 @@ namespace intellij::ui::win
                 __func__,
                 applicationCtxName
             );
-
-        // clears all usage data on all Recent items
-        SHAddToRecentDocs(SHARD_PIDL, nullptr);
     }
 
 

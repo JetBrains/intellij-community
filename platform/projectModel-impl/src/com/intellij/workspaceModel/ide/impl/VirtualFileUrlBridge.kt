@@ -11,6 +11,7 @@ class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl, initiali
   VirtualFileUrlImpl(id, manager), VirtualFilePointer {
   @Volatile
   private var file: VirtualFile? = null
+
   @Volatile
   private var timestampOfCachedFiles = -1L
 
@@ -39,7 +40,8 @@ class VirtualFileUrlBridge(id: Int, manager: VirtualFileUrlManagerImpl, initiali
     val fileManager = VirtualFileManager.getInstance()
     val timestamp = timestampOfCachedFiles
     val cachedResults = file
-    return if (timestamp == fileManager.modificationCount) cachedResults else {
+    return if (timestamp == fileManager.modificationCount) cachedResults
+    else {
       file = fileManager.findFileByUrl(url)
       timestampOfCachedFiles = fileManager.modificationCount
       file

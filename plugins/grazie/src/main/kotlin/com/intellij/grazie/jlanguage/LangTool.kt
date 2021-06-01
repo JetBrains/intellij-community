@@ -7,28 +7,20 @@ import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.containers.CollectionFactory
 import org.languagetool.JLanguageTool
-import org.languagetool.broker.ClassBroker
 import org.languagetool.rules.CategoryId
 import java.net.Authenticator
 import java.util.concurrent.ConcurrentHashMap
 
 internal object LangTool : GrazieStateLifecycle {
   private val langs: MutableMap<Lang, JLanguageTool> = ConcurrentHashMap()
-  private val rulesToLanguages = CollectionFactory.createSmallMemoryFootprintMap<String, MutableSet<Lang>>()
 
   init {
     JLanguageTool.setDataBroker(GrazieDynamicDataBroker)
-    JLanguageTool.setClassBrokerBroker(object : ClassBroker {
-      override fun forName(qualifiedName: String): Class<*> {
-        return GrazieDynamic.loadClass(qualifiedName) ?: throw ClassNotFoundException(qualifiedName)
-      }
-    })
+    JLanguageTool.setClassBrokerBroker { qualifiedName ->
+      GrazieDynamic.loadClass(qualifiedName) ?: throw ClassNotFoundException(qualifiedName)
+    }
   }
-
-  val allRules: Set<String>
-    get() = rulesToLanguages.keys
 
   fun getTool(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): JLanguageTool {
     require(lang.jLanguage != null) { "Trying to get LangTool for not available language" }
@@ -76,10 +68,6 @@ internal object LangTool : GrazieStateLifecycle {
 
         allSpellingCheckRules.forEach { rule -> disableRule(rule.id) }
 
-        allRules.distinctBy { it.id }.onEach { rule ->
-          rulesToLanguages.getOrPut(rule.id, {CollectionFactory.createSmallMemoryFootprintSet()}).add(lang)
-        }
-
         //Fix problem with Authenticator installed by LT
         this.language.disambiguator
         Authenticator.setDefault(null)
@@ -100,10 +88,7 @@ internal object LangTool : GrazieStateLifecycle {
     ) return
 
     langs.clear()
-    rulesToLanguages.clear()
 
     init(newState)
   }
-
-  fun getRuleLanguages(ruleId: String) = rulesToLanguages[ruleId]
 }

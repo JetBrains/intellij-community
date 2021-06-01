@@ -139,6 +139,28 @@ public final class AboutPopup {
     catch (Exception ignore) { }
   }
 
+  static @Nullable String loadThirdPartyLibraries() {
+    final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
+    if (thirdPartyLibrariesFile.isFile()) {
+      try {
+        return FileUtil.loadFile(thirdPartyLibrariesFile);
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+    }
+    return null;
+  }
+
+  static @NotNull @Nls String getCopyrightText() {
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    // Copyright message should not be translated
+    @NlsSafe
+    String copyrightText = String.format(Locale.ROOT,
+                                         "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
+    return copyrightText;
+  }
+
   private static final class InfoSurface extends JPanel {
     private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
 
@@ -314,20 +336,6 @@ public final class AboutPopup {
         }
       });
     }
-
-    private static @Nullable String loadThirdPartyLibraries() {
-      final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
-      if (thirdPartyLibrariesFile.isFile()) {
-        try {
-          return FileUtil.loadFile(thirdPartyLibrariesFile);
-        }
-        catch (IOException e) {
-          LOG.warn(e);
-        }
-      }
-      return null;
-    }
-
     private static Rectangle getCopyIconArea() {
       return new Rectangle(getCopyIconCoord(), JBUI.size(16));
     }
@@ -412,15 +420,6 @@ public final class AboutPopup {
         AllIcons.General.CopyHovered.paintIcon(this, g, coord.x, coord.y);
         config.restore();
       }
-    }
-
-    private static @NotNull @Nls String getCopyrightText() {
-      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      // Copyright message should not be translated
-      @NlsSafe
-      String copyrightText = String.format(Locale.ROOT,
-        "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
-      return copyrightText;
     }
 
     private @NotNull TextRenderer createTextRenderer(Graphics2D g) {
@@ -649,7 +648,7 @@ public final class AboutPopup {
     return rgba == -1 ? Color.BLACK : new Color((int)rgba, rgba > 0xffffff);
   }
 
-  private static @NotNull String getExtraInfo() {
+  static @NotNull String getExtraInfo() {
     String extraInfo = SystemInfo.getOsNameAndVersion() + "\n";
 
     for (AboutPopupDescriptionProvider aboutInfoProvider : InfoSurface.EP_NAME.getExtensions()) {
@@ -809,7 +808,9 @@ public final class AboutPopup {
       }
     };
 
-    ourPopup.cancel();
+    if (ourPopup != null) {
+      ourPopup.cancel();
+    }
     dialog.setTitle(IdeBundle.message("dialog.title.third.party.software",
                                       ApplicationNamesInfo.getInstance().getFullProductName(),
                                       ApplicationInfo.getInstance().getFullVersion()));

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.JDOMUtil
@@ -18,6 +18,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.*
 
 @CompileStatic
@@ -173,9 +174,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "product_uc", value: buildContext.productProperties.getEnvironmentVariableBaseName(buildContext.applicationInfo))
         filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
         filter(token: "vm_options", value: vmOptionsFileName)
-        filter(token: "isEap", value: buildContext.applicationInfo.isEAP)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
+        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments.join(' '))
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: scriptName)
         filter(token: "base_name", value: baseName)
@@ -198,10 +198,8 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     architectures.each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.exe.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties)
-      Files.writeString(distBinDir.resolve(fileName), vmOptions.join('\n') + '\n')
+      Files.writeString(distBinDir.resolve(fileName), String.join('\r\n', vmOptions) + '\r\n', StandardCharsets.US_ASCII)
     }
-
-    buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.vmoptions", eol: "dos")
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -210,10 +208,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
       def executableBaseName = "${buildContext.productProperties.baseFileName}${arch.fileSuffix}"
       Path launcherPropertiesPath = buildContext.paths.tempDir.resolve("launcher${arch.fileSuffix}.properties")
       def upperCaseProductName = buildContext.applicationInfo.upperCaseProductName
-      String vmOptions = (buildContext.additionalJvmArguments +
-                          " -Dide.native.launcher=true" +
-                          " -Didea.vendor.name=${buildContext.applicationInfo.shortCompanyName}" +
-                          " -Didea.paths.selector=${buildContext.systemSelector}").trim()
+      List<String> vmOptions = buildContext.additionalJvmArguments + ['-Dide.native.launcher=true']
       def productName = buildContext.applicationInfo.shortProductName
       String classPath = buildContext.bootClassPathJarNames.join(";")
 
@@ -234,7 +229,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
         IDS_VM_OPTIONS_ENV_VAR=$envVarBaseName${vmOptionsEnvVarSuffix}_VM_OPTIONS
         IDS_ERROR_LAUNCHING_APP=Error launching ${productName}
-        IDS_VM_OPTIONS=${vmOptions}
+        IDS_VM_OPTIONS=${vmOptions.join(' ')}
         IDS_CLASSPATH_LIBS=${classPath}""".stripIndent().trim())
 
       def communityHome = "$buildContext.paths.communityHome"

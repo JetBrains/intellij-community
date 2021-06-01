@@ -55,8 +55,8 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
    */
   data class State(
     @Property val enabledLanguages: Set<Lang> = hashSetOf(Lang.AMERICAN_ENGLISH),
-    @Property val enabledGrammarStrategies: Set<String> = HashSet(defaultEnabledStrategies),
-    @Property val disabledGrammarStrategies: Set<String> = HashSet(),
+    @Deprecated("Use checkingContext.disabledLanguages") @Property val enabledGrammarStrategies: Set<String> = HashSet(defaultEnabledStrategies),
+    @Deprecated("Use checkingContext.disabledLanguages") @Property val disabledGrammarStrategies: Set<String> = HashSet(),
     @Deprecated("Moved to checkingContext in version 2") @Property val enabledCommitIntegration: Boolean = false,
     @Property val userDisabledRules: Set<String> = HashSet(),
     @Property val userEnabledRules: Set<String> = HashSet(),

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.openapi.ui.DialogPanel
@@ -10,10 +10,10 @@ import com.intellij.ui.layout.*
 import com.intellij.ui.layout.migLayout.patched.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.SmartList
+import com.intellij.util.containers.CollectionFactory
 import net.miginfocom.layout.*
 import java.awt.Component
 import java.awt.Container
-import java.util.*
 import javax.swing.*
 
 internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuilderImpl {
@@ -51,7 +51,7 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
   /**
    * Map of component to constraints shared among rows (since components are unique)
    */
-  internal val componentConstraints: MutableMap<Component, CC> = IdentityHashMap()
+  internal val componentConstraints: MutableMap<Component, CC> = CollectionFactory.createWeakIdentityMap(4, 0.8f)
   override val rootRow = MigLayoutRow(parent = null, builder = this, indent = 0)
 
   private val buttonGroupStack: MutableList<ButtonGroup> = mutableListOf()
@@ -205,9 +205,6 @@ internal class MigLayoutBuilder(val spacing: SpacingConfiguration) : LayoutBuild
         }
       }
     }
-
-    // do not hold components
-    componentConstraints.clear()
   }
 
   private fun collectPhysicalRows(rootRow: MigLayoutRow): List<MigLayoutRow> {

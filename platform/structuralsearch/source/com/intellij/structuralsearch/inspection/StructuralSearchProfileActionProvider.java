@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -55,7 +55,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
       new AddInspectionAction(panel, true)
     );
     actionGroup.setPopup(true);
-    actionGroup.registerCustomShortcutSet(CommonShortcuts.INSERT, panel);
+    actionGroup.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
     final Presentation presentation = actionGroup.getTemplatePresentation();
     presentation.setIcon(AllIcons.General.Add);
     presentation.setText(SSRBundle.messagePointer("add.inspection.button"));

@@ -19,19 +19,21 @@ object UStringEvaluationStrategy : UNeDfaValueEvaluator.UValueEvaluatorStrategy<
     }
   }
 
-  override fun calculatePolyadicExpression(element: UPolyadicExpression, elementEvaluator: (UElement) -> PartiallyKnownString?): PartiallyKnownString? {
+  override fun calculatePolyadicExpression(element: UPolyadicExpression): UNeDfaValueEvaluator.CalculateRequest<PartiallyKnownString>? {
     if (element.operator == UastBinaryOperator.PLUS) {
-      val entries = mutableListOf<StringEntry>()
-
-      for (operand in element.operands) {
-        val segments = elementEvaluator(operand)?.segments
-        if (segments != null) {
-          entries += segments
-        } else {
-          entries += StringEntry.Unknown(operand.sourcePsi, operand.ownTextRange)
+      return UNeDfaValueEvaluator.CalculateRequest(element.operands) { operandResults ->
+        val entries = mutableListOf<StringEntry>()
+        for (operand in operandResults) {
+          val segments = operand?.segments
+          if (segments != null) {
+            entries += segments
+          }
+          else {
+            entries += StringEntry.Unknown(null, TextRange.EMPTY_RANGE)
+          }
         }
+        PartiallyKnownString(entries)
       }
-      return PartiallyKnownString(entries)
     }
     return null
   }

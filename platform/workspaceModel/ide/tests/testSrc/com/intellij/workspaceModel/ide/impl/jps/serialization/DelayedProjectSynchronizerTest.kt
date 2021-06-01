@@ -29,7 +29,6 @@ import org.apache.commons.lang.RandomStringUtils
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.*
 import org.junit.Assert.*
-import org.junit.Assume.assumeTrue
 import java.io.File
 import java.nio.file.Files
 import kotlin.io.path.name
@@ -53,14 +52,13 @@ class DelayedProjectSynchronizerTest {
 
   @Before
   fun setUp() {
-    WorkspaceModelImpl.forceEnableCaching = true
+    WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
     serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
   }
 
   @After
   fun tearDown() {
-    WorkspaceModelImpl.forceEnableCaching = false
     WorkspaceModelCacheImpl.testCacheFile = null
   }
 

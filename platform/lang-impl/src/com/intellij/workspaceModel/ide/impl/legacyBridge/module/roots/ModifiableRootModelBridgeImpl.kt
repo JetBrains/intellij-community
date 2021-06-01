@@ -32,6 +32,7 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -74,7 +75,7 @@ class ModifiableRootModelBridgeImpl(
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   private val extensionsDelegate = lazy {
-    RootModelBridgeImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
+    RootModelBridgeImpl.loadExtensions(storage = entityStorageOnDiff, module = module, diff = diff, writable = true,
                                        parentDisposable = extensionsDisposable)
       .filterNot { compilerModuleExtensionClass.isAssignableFrom(it.javaClass) }
   }
@@ -182,10 +183,10 @@ class ModifiableRootModelBridgeImpl(
     }
 
     diff.addContentRootEntity(
-        module = moduleEntity,
-        excludedUrls = emptyList(),
-        excludedPatterns = emptyList(),
-        url = virtualFileUrl
+      module = moduleEntity,
+      excludedUrls = emptyList(),
+      excludedPatterns = emptyList(),
+      url = virtualFileUrl
     )
 
     // TODO It's N^2 operations since we need to recreate contentEntries every time
@@ -234,7 +235,8 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun addLibraryEntry(library: Library): LibraryOrderEntry {
-    val libraryId = if (library is LibraryBridge) library.libraryId else {
+    val libraryId = if (library is LibraryBridge) library.libraryId
+    else {
       val libraryName = library.name
       if (libraryName.isNullOrEmpty()) {
         error("Library name is null or empty: $library")
@@ -309,7 +311,7 @@ class ModifiableRootModelBridgeImpl(
     }
     else {
       mutableOrderEntries.add(position, newEntry)
-      for (i in position+1 until mutableOrderEntries.size) {
+      for (i in position + 1 until mutableOrderEntries.size) {
         mutableOrderEntries[i].updateIndex(i)
       }
     }
@@ -428,6 +430,8 @@ class ModifiableRootModelBridgeImpl(
       val element = Element("component")
 
       for (extension in extensions) {
+        if (extension is ModuleExtensionBridge) continue
+
         extension.commit()
 
         if (extension is PersistentStateComponent<*>) {
@@ -495,7 +499,8 @@ class ModifiableRootModelBridgeImpl(
     val moduleDiff = module.diff
     if (moduleDiff != null) {
       moduleDiff.addDiff(diff)
-    } else {
+    }
+    else {
       WorkspaceModel.getInstance(project).updateProjectModel {
         it.addDiff(diff)
       }
@@ -535,12 +540,14 @@ class ModifiableRootModelBridgeImpl(
       if (assertChangesApplied && sdkName != null) {
         error("setSdk: expected sdkName is null, but got: $sdkName")
       }
-    } else {
+    }
+    else {
       if (SdkOrderEntryBridge.findSdk(jdk.name, jdk.sdkType.name) == null) {
         if (ApplicationManager.getApplication().isUnitTestMode) {
           // TODO Fix all tests and remove this
           (ProjectJdkTable.getInstance() as ProjectJdkTableImpl).addTestJdk(jdk, project)
-        } else {
+        }
+        else {
           error("setSdk: sdk '${jdk.name}' type '${jdk.sdkType.name}' is not registered in ProjectJdkTable")
         }
       }
@@ -651,6 +658,7 @@ class ModifiableRootModelBridgeImpl(
   override fun getSourceRoots(includingTests: Boolean): Array<VirtualFile> = currentModel.getSourceRoots(includingTests)
   override fun getSourceRoots(rootType: JpsModuleSourceRootType<*>): MutableList<VirtualFile> = currentModel.getSourceRoots(rootType)
   override fun getSourceRoots(rootTypes: MutableSet<out JpsModuleSourceRootType<*>>): MutableList<VirtualFile> = currentModel.getSourceRoots(rootTypes)
+
   override fun getContentRoots(): Array<VirtualFile> = currentModel.contentRoots
   override fun getContentRootUrls(): Array<String> = currentModel.contentRootUrls
   override fun getModuleDependencies(): Array<Module> = getModuleDependencies(true)

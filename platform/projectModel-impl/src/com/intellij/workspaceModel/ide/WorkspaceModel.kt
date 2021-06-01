@@ -13,6 +13,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 interface WorkspaceModel {
   val entityStorage: VersionedEntityStorage
 
+  @Deprecated("Use [WorkspaceModelCache.getInstance()] directly if you really need it")
   val cache: WorkspaceModelCache?
 
   /**

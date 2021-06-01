@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -341,23 +341,26 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  String getAdditionalJvmArguments() {
-    String jvmArgs
+  @SuppressWarnings('SpellCheckingInspection')
+  @NotNull List<String> getAdditionalJvmArguments() {
+    List<String> jvmArgs = new ArrayList<>()
+
+    jvmArgs.add('-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader')
+
+    jvmArgs.add('-Didea.vendor.name=' + applicationInfo.shortCompanyName)
+
+    jvmArgs.add('-Didea.paths.selector=' + systemSelector)
+
     if (productProperties.platformPrefix != null) {
-      jvmArgs = "-Didea.platform.prefix=${productProperties.platformPrefix}"
-    }
-    else {
-      jvmArgs = ""
+      jvmArgs.add('-Didea.platform.prefix=' + productProperties.platformPrefix)
     }
 
-    String additionalJvmArguments = productProperties.additionalIdeJvmArguments.trim()
-    if (!additionalJvmArguments.isEmpty()) {
-      jvmArgs += " $additionalJvmArguments"
-    }
+    jvmArgs.addAll(productProperties.additionalIdeJvmArguments)
 
     if (productProperties.toolsJarRequired) {
-      jvmArgs += " -Didea.jre.check=true"
+      jvmArgs.add('-Didea.jre.check=true')
     }
-    return jvmArgs.trim()
+
+    return jvmArgs
   }
 }

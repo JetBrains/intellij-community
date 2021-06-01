@@ -12,8 +12,8 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.ApplicationLoader;
+import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.Main;
-import com.intellij.idea.MutedLogger;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -619,7 +619,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           exitCode = Main.RESTART_FAILED;
         }
       }
-      MutedLogger.dropCaches();
+      IdeaLogger.dropFrequentExceptionsCaches();
       System.exit(exitCode);
     }
     finally {

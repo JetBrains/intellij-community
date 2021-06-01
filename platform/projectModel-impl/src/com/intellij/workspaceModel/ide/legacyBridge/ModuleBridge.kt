@@ -1,11 +1,11 @@
 package com.intellij.workspaceModel.ide.legacyBridge
 
 import com.intellij.openapi.module.impl.ModuleEx
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 
-interface ModuleBridge: ModuleEx {
+interface ModuleBridge : ModuleEx {
   val moduleEntityId: ModuleId
 
   /**
