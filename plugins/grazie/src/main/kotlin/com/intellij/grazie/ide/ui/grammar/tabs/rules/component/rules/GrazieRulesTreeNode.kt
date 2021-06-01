@@ -20,15 +20,14 @@ internal class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(us
   val attrs: SimpleTextAttributes
     get() {
       val meta = userObject
-      if (meta is Rule) {
-        val attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES
-        if (meta.isEnabledByDefault != isChecked) {
-          return attributes.derive(-1, JBColor.BLUE, null, null)
-        }
-        return attributes
-      }
-      return SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+      val attributes = if (meta is Rule) SimpleTextAttributes.REGULAR_ATTRIBUTES else SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES
+      return if (differsFromDefault()) attributes.derive(-1, JBColor.BLUE, null, null) else attributes
     }
+
+  private fun differsFromDefault(): Boolean {
+    val meta = userObject
+    return if (meta is Rule) meta.isEnabledByDefault != isChecked else children.any { (it as GrazieRulesTreeNode).differsFromDefault() }
+  }
 
   fun resetMark(state: GrazieConfig.State): Boolean {
     val meta = userObject
