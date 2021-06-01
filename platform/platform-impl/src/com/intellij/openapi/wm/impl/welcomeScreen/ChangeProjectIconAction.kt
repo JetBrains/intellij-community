@@ -8,10 +8,7 @@ import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.ui.fullRow
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DefaultActionGroup
+import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.DumbAwareAction
@@ -41,6 +38,7 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
     val projectPath = (getSelectedElements(e).first() as ReopenProjectAction).projectPath
 
     val ui = ProjectIconUI(projectPath)
+    val deleteButtonToolbar = createToolbar(projectPath)
 
     val panel = panel {
       twoColumnRow(
@@ -52,13 +50,14 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
            fullRow {
              component(ui.setIconActionLink)
                .comment(IdeBundle.message("link.change.project.icon.description"))
-             component(createToolbar(projectPath))
+             component(deleteButtonToolbar.component)
            }
          }).withLargeLeftGap()
         }
       )
     }
 
+    deleteButtonToolbar.setTargetComponent(ui.iconLabel)
 
     if (dialog(IdeBundle.message("dialog.title.change.project.icon"), panel).showAndGet()) {
       val iconSvg = File("$projectPath/.idea/icon.svg")
@@ -72,9 +71,13 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
       }
     }
   }
+
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabled = getSelectedElements(e).size == 1 && !hasGroupSelected(e)
+  }
 }
 
-private fun createToolbar(projectPath: @SystemIndependent String): JComponent {
+private fun createToolbar(projectPath: @SystemIndependent String): ActionToolbar {
   val removeIconAction = object : DumbAwareAction(AllIcons.Actions.GC) {
     override fun actionPerformed(e: AnActionEvent) {
 
@@ -84,10 +87,9 @@ private fun createToolbar(projectPath: @SystemIndependent String): JComponent {
       super.update(e)
     }
   }
-  val actionToolbar = ActionManager.getInstance().createActionToolbar("ProjectIconDialog",
+  return ActionManager.getInstance().createActionToolbar("ProjectIconDialog",
                                                                       DefaultActionGroup(removeIconAction),
                                                                       true)
-  return actionToolbar.component
 }
 
   private class ChangeProjectIcon constructor(private val ui: ProjectIconUI) : AnAction() {
@@ -105,12 +107,6 @@ private fun createToolbar(projectPath: @SystemIndependent String): JComponent {
         catch (ignore: Exception) {
         }
       }
-    }
-
-
-    override fun update(e: AnActionEvent) {
-      e.presentation.isEnabled = RecentProjectsWelcomeScreenActionBase.getSelectedElements(e).size == 1
-                                 && !RecentProjectsWelcomeScreenActionBase.hasGroupSelected(e)
     }
   }
 
