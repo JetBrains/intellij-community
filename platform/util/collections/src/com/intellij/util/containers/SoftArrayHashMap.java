@@ -112,9 +112,7 @@ public final class SoftArrayHashMap<T,V> implements Cloneable {
   private <X> Map<T, X> copyMap(final Map<T, X> map) {
     //noinspection deprecation
     Map<T, X> copy = new SoftHashMap<>(map.size());
-    for (Map.Entry<T, X> entry : map.entrySet()) {
-      copy.put(entry.getKey(), entry.getValue());
-    }
+    copy.putAll(map);
     return copy;
   }
 }
