@@ -21,10 +21,10 @@ object AdditionalKotlinArtifacts {
     }
 
     val parcelizeRuntime: File by lazy {
-        KotlinArtifacts.instance.kotlincDistDir.resolve("kotlinc/lib/parcelize-runtime.jar").also { check(it.exists()) }
+        KotlinArtifacts.instance.kotlincDirectory.resolve("lib/parcelize-runtime.jar").also { check(it.exists()) }
     }
 
     val androidExtensionsRuntime by lazy {
-        KotlinArtifacts.instance.kotlincDistDir.resolve("kotlinc/lib/android-extensions-runtime.jar").also { check(it.exists()) }
+        KotlinArtifacts.instance.kotlincDirectory.resolve("lib/android-extensions-runtime.jar").also { check(it.exists()) }
     }
 }
