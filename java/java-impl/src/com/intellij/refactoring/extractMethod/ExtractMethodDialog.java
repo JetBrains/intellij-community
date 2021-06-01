@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.Nullability;
@@ -180,7 +180,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
 
   @Override
   protected void doAction() {
-    MultiMap<PsiElement, String> conflicts = new MultiMap<>();
+    MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts = new MultiMap<>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
       () -> ApplicationManager.getApplication().runReadAction(
         () -> checkMethodConflicts(conflicts)
@@ -665,7 +665,7 @@ public class ExtractMethodDialog extends RefactoringDialog implements AbstractEx
     return "extract.method.dialog";
   }
 
-  protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+  protected void checkMethodConflicts(MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
     checkParametersConflicts(conflicts);
     PsiMethod prototype;
     try {
