@@ -26,7 +26,7 @@ import static org.jetbrains.idea.svn.SvnBundle.message;
 public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
   private final ServersFileManager myManager;
 
-  private final CompositeRunnable myTreeUpdaterValidator;
+  private final Runnable myTreeUpdaterValidator;
   private final Runnable myValidator;
   private JComponent myComponent;
   private final TestConnectionPerformer myTestConnectionPerformer;
@@ -297,6 +297,21 @@ public class SvnConfigureProxiesComponent extends MasterDetailsComponent {
       final MyNode node = (MyNode) myRoot.getChildAt(i);
       final GroupConfigurable groupConfigurable = (GroupConfigurable) node.getConfigurable();
       groupConfigurable.setIsValid(valid);
+    }
+  }
+
+  private static class CompositeRunnable implements Runnable {
+    private final Runnable[] myRunnables;
+
+    CompositeRunnable(Runnable @NotNull ... runnables) {
+      myRunnables = runnables;
+    }
+
+    @Override
+    public void run() {
+      for (Runnable runnable : myRunnables) {
+        runnable.run();
+      }
     }
   }
 }
