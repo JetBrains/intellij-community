@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -70,7 +70,7 @@ abstract class ProductProperties {
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems
    */
-  String additionalIdeJvmArguments = ""
+  List<String> additionalIdeJvmArguments = []
 
   /**
    * If not null the specified options will be used instead the default memory options in JVM command line (for 64-bit JVM) in IDE launchers

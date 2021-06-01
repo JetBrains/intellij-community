@@ -55,7 +55,11 @@ abstract class BuildContext implements CompilationContext {
 
   abstract void patchInspectScript(@NotNull Path path)
 
-  abstract @NotNull String getAdditionalJvmArguments()
+  /**
+   * Unlike VM options produced by {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator},
+   * these are hard-coded into launchers and aren't supposed to be changed by a user.
+   */
+  abstract @NotNull List<String> getAdditionalJvmArguments()
 
   abstract void notifyArtifactBuilt(String artifactPath)
 

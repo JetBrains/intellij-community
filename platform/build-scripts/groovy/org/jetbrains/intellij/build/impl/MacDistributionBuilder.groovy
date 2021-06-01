@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -10,6 +10,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -74,13 +75,25 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   @Override
   void copyFilesForOsDistribution(@NotNull Path macDistPath, JvmArchitecture arch = null) {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
-    def docTypes = getDocTypes()
-    Map<String, String> customIdeaProperties = [:]
-    if (buildContext.productProperties.toolsJarRequired) {
-      customIdeaProperties["idea.jre.check"] = "true"
+
+    List<String> platformProperties = [
+      "\n#---------------------------------------------------------------------" +
+      "# macOS-specific system properties" +
+      "#---------------------------------------------------------------------",
+      "com.apple.mrj.application.live-resize=false",
+      "apple.laf.useScreenMenuBar=true",
+      "apple.awt.fileDialogForDirectories=true",
+      "apple.awt.graphics.UseQuartz=true",
+      "apple.awt.fullscreencapturealldisplays=false"
+    ]
+    customizer.getCustomIdeaProperties(buildContext.applicationInfo).each {k,v ->
+      platformProperties.add(k + '=' + v)
     }
-    customIdeaProperties.putAll(customizer.getCustomIdeaProperties(buildContext.applicationInfo))
-    layoutMacApp(ideaProperties, customIdeaProperties, docTypes, macDistPath)
+
+    def docTypes = getDocTypes()
+
+    layoutMacApp(ideaProperties, platformProperties, docTypes, macDistPath)
+
     BuildTasksImpl.unpackPty4jNative(buildContext, macDistPath, "darwin")
 
     BuildTasksImpl.generateBuildTxt(buildContext, macDistPath.resolve("Resources"))
@@ -162,7 +175,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void layoutMacApp(@NotNull Path ideaPropertiesFile, Map<String, String> customIdeaProperties, String docTypes, @NotNull Path macDistPath) {
+  private void layoutMacApp(Path ideaPropertiesFile, List<String> platformProperties, String docTypes, Path macDistPath) {
     String target = macDistPath.toString()
     def macCustomizer = customizer
     buildContext.ant.copy(todir: "$target/bin") {
@@ -193,28 +206,25 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String version = isNotRelease ? "EAP $buildContext.fullBuildNumber" : "${buildContext.applicationInfo.majorVersion}.${minor}"
     String EAP = isNotRelease ? "-EAP" : ""
 
-    //todo[nik] don't mix properties for idea.properties file with properties for Info.plist
-    Map<String, String> properties = readIdeaProperties(ideaPropertiesFile, customIdeaProperties)
-    properties["idea.vendor.name"] = buildContext.applicationInfo.shortCompanyName
+    List<String> properties = Files.readAllLines(ideaPropertiesFile)
+    properties += platformProperties
+    Files.write(macDistPath.resolve("bin/idea.properties"), properties)
 
-    def coreKeys = ["idea.platform.prefix", "idea.paths.selector", "idea.executable", "idea.vendor.name"]
-
-    String coreProperties = submapToXml(properties, coreKeys)
-
-    StringBuilder effectiveProperties = new StringBuilder()
-    properties.each { k, v ->
-      if (!coreKeys.contains(k)) {
-        effectiveProperties.append("$k=$v\n")
-      }
+    // todo support aarch64
+    List<String> fileVmOptions = VmOptionsGenerator.computeVmOptions(JvmArchitecture.x64, buildContext.applicationInfo.isEAP, buildContext.productProperties)
+    List<String> launcherVmOptions = buildContext.additionalJvmArguments
+    //todo[r.sh] support arbitrary JVM options in the launcher
+    List<String> nonProperties = launcherVmOptions.findAll { !it.startsWith('-D') }
+    if (!nonProperties.isEmpty()) {
+      fileVmOptions.addAll(nonProperties)
+      launcherVmOptions.removeAll(nonProperties)
     }
 
-    Files.writeString(macDistPath.resolve("bin/idea.properties"), effectiveProperties)
-    // todo support aarch64
-    List<String> vmOptions = VmOptionsGenerator.computeVmOptions(JvmArchitecture.x64, buildContext.applicationInfo.isEAP, buildContext.productProperties)
-    //todo[r.sh] additional VM options should go into the launcher (probably via Info.plist)
-    Collections.addAll(vmOptions, buildContext.productProperties.additionalIdeJvmArguments.split(' '))
-    vmOptions.addAll(["-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log", "-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof"])
-    Files.writeString(macDistPath.resolve("bin/${executable}.vmoptions"), String.join('\n', vmOptions) + '\n')
+    fileVmOptions.add("-XX:ErrorFile=\$USER_HOME/java_error_in_${executable}_%p.log")
+    fileVmOptions.add("-XX:HeapDumpPath=\$USER_HOME/java_error_in_${executable}.hprof")
+    Files.writeString(macDistPath.resolve("bin/${executable}.vmoptions"), String.join('\n', fileVmOptions) + '\n', StandardCharsets.US_ASCII)
+
+    String coreProperties = propertiesToXml(launcherVmOptions, ['idea.executable': buildContext.productProperties.baseFileName])
 
     String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
@@ -353,76 +363,18 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                                                                "../bin/${executable}.vmoptions", OsFamily.MACOS)
   }
 
-
-  private static String submapToXml(Map<String, String> properties, List<String> keys) {
-// generate properties description for Info.plist
+  @CompileStatic
+  private static String propertiesToXml(List<String> properties, Map<String, String> moreProperties) {
     StringBuilder buff = new StringBuilder()
-
-    keys.each { key ->
-      String value = properties[key]
-      if (value != null) {
-        String string =
-          """
-        <key>$key</key>
-        <string>$value</string>
-"""
-        buff.append(string)
-      }
+    properties.each { it ->
+      int p = it.indexOf('=')
+      buff.append('    <key>').append(it.substring(2, p)).append('</key>\n')
+      buff.append('    <string>').append(it.substring(p + 1)).append('</string>\n')
     }
-    return buff.toString()
-  }
-
-  /**
-   * E.g.
-   *
-   * Load all properties from file:
-   *    readIdeaProperties(buildContext, "$home/ruby/build/idea.properties")
-   *
-   * Load all properties except "idea.cycle.buffer.size", change "idea.max.intellisense.filesize" to 3000
-   * and enable "idea.is.internal" mode:
-   *    readIdeaProperties(buildContext, "$home/ruby/build/idea.properties",
-   *                       "idea.properties" : ["idea.max.intellisense.filesize" : 3000,
-   *                                           "idea.cycle.buffer.size" : null,
-   *                                           "idea.is.internal" : true ])
-   * @param args
-   * @return text xml properties description in xml
-   */
-  private Map<String, String> readIdeaProperties(@NotNull Path propertiesFile, Map<String, String> customProperties = [:]) {
-    Map<String, String> ideaProperties = [:]
-    Files.newBufferedReader(propertiesFile).withCloseable {
-      Properties loadedProperties = new Properties()
-      loadedProperties.load(it)
-      ideaProperties.putAll(loadedProperties as Map<String, String>)
+    moreProperties.each { key, value ->
+      buff.append('    <key>').append(key).append('</key>\n')
+      buff.append('    <string>').append(value).append('</string>\n')
     }
-
-    Map<String, String> properties =
-      ["CVS_PASSFILE"                          : "~/.cvspass",
-       "com.apple.mrj.application.live-resize" : "false",
-       "idea.paths.selector"                   : buildContext.systemSelector,
-       "idea.executable"                       : buildContext.productProperties.baseFileName,
-       "java.endorsed.dirs"                    : "",
-       "idea.smooth.progress"                  : "false",
-       "apple.laf.useScreenMenuBar"            : "true",
-       "apple.awt.fileDialogForDirectories"    : "true",
-       "apple.awt.graphics.UseQuartz"          : "true",
-       "apple.awt.fullscreencapturealldisplays": "false"]
-    if (buildContext.productProperties.platformPrefix != null) {
-      properties["idea.platform.prefix"] = buildContext.productProperties.platformPrefix
-    }
-
-    properties += customProperties
-
-    properties.each { k, v ->
-      if (v == null) {
-        // if overridden with null - ignore property
-        ideaProperties.remove(k)
-      }
-      else {
-        // if property is overridden in args map - use new value
-        ideaProperties[k] = v
-      }
-    }
-
-    return ideaProperties
+    return buff.toString().trim()
   }
 }

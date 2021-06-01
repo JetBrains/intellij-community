@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.StringUtil
@@ -9,6 +9,7 @@ import org.jetbrains.intellij.build.*
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoGenerator
 import org.jetbrains.intellij.build.impl.productInfo.ProductInfoValidator
 
+import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -114,7 +115,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "product_vendor", value: buildContext.applicationInfo.shortCompanyName)
         filter(token: "vm_options", value: vmOptionsFileName)
         filter(token: "system_selector", value: buildContext.systemSelector)
-        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments)
+        filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments.join(' '))
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: scriptName)
         filter(token: "x86_jre_url", value: linkToX86Jre)
@@ -127,12 +128,13 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.ant.fixcrlf(srcdir: distBinDir.toString(), includes: "*.sh", eol: "unix")
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   private void generateVMOptions(@NotNull Path distBinDir) {
     [JvmArchitecture.x32, JvmArchitecture.x64].each {
       def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
       def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
                       ['-Dsun.tools.attach.tmp.only=true'] //todo
-      Files.writeString(distBinDir.resolve("$fileName"), String.join("\n", vmOptions) + '\n')
+      Files.writeString(distBinDir.resolve(fileName), String.join('\n', vmOptions) + '\n', StandardCharsets.US_ASCII)
     }
   }
 
