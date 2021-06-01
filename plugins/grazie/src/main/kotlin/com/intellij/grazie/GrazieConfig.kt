@@ -67,14 +67,14 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     @Property override val version: Version = Version.CURRENT
   ) : VersionedState<Version, State> {
     /**
-     * Available languages set depends on current loaded LanguageTool modules.
+     * The available language set depends on currently loaded LanguageTool modules.
      *
-     * Note, that after loading of new module this field will not change. It will
-     * remain equal to the moment field was accessed first time.
+     * Note that after loading of a new module, this field will not change. It will
+     * remain equal to the moment the field was accessed first time.
      *
      * Lazy is used, because deserialized properties are updated during initial deserialization
      *
-     * *NOTE: By default availableLanguages are not included into equals. Check for it manually.*
+     * NOTE: By default, availableLanguages are not included into [equals]. Check for it manually.
      */
     val availableLanguages: Set<Lang> by lazy {
       enabledLanguages.asSequence().filter { lang -> lang.jLanguage != null }.toCollection(CollectionFactory.createSmallMemoryFootprintLinkedSet())
