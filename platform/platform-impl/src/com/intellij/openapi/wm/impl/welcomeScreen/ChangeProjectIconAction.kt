@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle
 import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.RecentProjectIconHelper
 import com.intellij.ide.RecentProjectIconHelper.Companion.createIcon
+import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.ui.fullRow
 import com.intellij.openapi.actionSystem.*
@@ -15,6 +16,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.JBColor
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.components.dialog
@@ -25,9 +27,11 @@ import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.Graphics
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Paths
 import javax.swing.JComponent
 import javax.swing.JPanel
+import kotlin.io.path.Path
 import com.intellij.ide.RecentProjectsManagerBase.Companion.instanceEx as ProjectIcon
 
 /**
@@ -38,7 +42,7 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
     val projectPath = (getSelectedElements(e).first() as ReopenProjectAction).projectPath
 
     val ui = ProjectIconUI(projectPath)
-    val deleteButtonToolbar = createToolbar(projectPath)
+    val deleteButtonToolbar = createToolbar(ui)
 
     val panel = panel {
       twoColumnRow(
@@ -77,15 +81,19 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
   }
 }
 
-private fun createToolbar(projectPath: @SystemIndependent String): ActionToolbar {
+private fun createToolbar(ui: ProjectIconUI): ActionToolbar {
   val removeIconAction = object : DumbAwareAction(AllIcons.Actions.GC) {
     override fun actionPerformed(e: AnActionEvent) {
-
+      Files.delete(pathToIcon())
+      RecentProjectIconHelper.refreshProjectIcon(ui.projectPath)
+      ui.iconLabel.icon = RecentProjectsManagerBase.instanceEx.getProjectIcon(ui.projectPath, !JBColor.isBright(), true)
     }
 
     override fun update(e: AnActionEvent) {
-      super.update(e)
+      e.presentation.isEnabledAndVisible = Files.exists(pathToIcon())
     }
+
+    private fun pathToIcon() = Path("${ui.projectPath}/.idea/icon.svg")
   }
   return ActionManager.getInstance().createActionToolbar("ProjectIconDialog",
                                                                       DefaultActionGroup(removeIconAction),
@@ -110,7 +118,7 @@ private fun createToolbar(projectPath: @SystemIndependent String): ActionToolbar
     }
   }
 
-class ProjectIconUI(projectPath: @SystemIndependent String) {
+class ProjectIconUI(val projectPath: @SystemIndependent String) {
   val setIconActionLink = AnActionLink(IdeBundle.message("link.change.project.icon"), ChangeProjectIcon(this))
   val clearIconActionLink = AnActionLink(IdeBundle.message("link.reset.project.icon"), ChangeProjectIcon(this))
   val iconLabel = JBLabel(ProjectIcon.getProjectIcon(projectPath, false))
