@@ -16,7 +16,6 @@ import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -223,8 +222,7 @@ public class ConvertToRecordFix extends InspectionGadgetsFix {
         @Override
         public void visitMethodCallExpression(PsiMethodCallExpression expression) {
           super.visitMethodCallExpression(expression);
-          if (JavaPsiConstructorUtil.isSuperConstructorCall(expression) ||
-              hasSuperQualifier(expression.getMethodExpression()) && OBJECT_METHOD_CALLS.test(expression)) {
+          if (hasSuperQualifier(expression.getMethodExpression()) && OBJECT_METHOD_CALLS.test(expression)) {
             existsSuperMethodCalls = true;
             stopWalking();
           }
