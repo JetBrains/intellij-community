@@ -49,7 +49,7 @@
         <gradleProjectImportHandler implementation="org.jetbrains.kotlin.kapt.idea.KaptGradleProjectImportHandler"/>
         <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.noarg.NoArgGradleProjectImportHandler"/>
         <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.samWithReceiver.SamWithReceiverGradleProjectImportHandler"/>
-        <gradleProjectImportHandler implementation="org.jetbrains.kotlinx.serialization.idea.KotlinSerializationGradleImportHandler"/>
+        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.kotlinxSerialization.KotlinSerializationGradleImportHandler"/>
 
         <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleModuleConfigurator"/>
         <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinJsGradleModuleConfigurator"/>

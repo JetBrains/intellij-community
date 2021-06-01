@@ -5,7 +5,7 @@
     <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.maven.compilerPlugin.allopen.AllOpenMavenProjectImportHandler"/>
     <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.maven.compilerPlugin.noarg.NoArgMavenProjectImportHandler"/>
     <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.maven.compilerPlugin.samWithReceiver.SamWithReceiverMavenProjectImportHandler"/>
-    <mavenProjectImportHandler implementation="org.jetbrains.kotlinx.serialization.idea.KotlinSerializationMavenImportHandler"/>
+    <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.maven.compilerPlugin.kotlinxSerialization.KotlinSerializationMavenImportHandler"/>
     <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.maven.MavenDetector"/>
   </extensions>
 
