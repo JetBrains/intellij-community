@@ -1091,9 +1091,10 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                           myLastActionableClick.myProgressGutterMark == renderer;
       Icon icon = scaleIcon(renderer.getIcon());
       if (isLoading) {
-        x -= (AnimatedIcon.Default.INSTANCE.getIconWidth() - icon.getIconWidth()) / 2;
-        y -= (AnimatedIcon.Default.INSTANCE.getIconHeight() - icon.getIconHeight()) / 2;
-        icon = AnimatedIcon.Default.INSTANCE;
+        Icon loadingIcon = scaleIcon(AnimatedIcon.Default.INSTANCE);
+        x -= (loadingIcon.getIconWidth() - icon.getIconWidth()) / 2;
+        y -= (loadingIcon.getIconHeight() - icon.getIconHeight()) / 2;
+        icon = loadingIcon;
       }
 
       AffineTransform old = setMirrorTransformIfNeeded(g, x, icon.getIconWidth());
