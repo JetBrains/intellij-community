@@ -280,7 +280,8 @@ object DynamicPlugins {
 
     var dependencyMessage: String? = null
     processOptionalDependenciesOnPlugin(descriptor, pluginSet, isLoaded = true) { mainDescriptor, subDescriptor ->
-      if (!ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(mainDescriptor.pluginId, subDescriptor.packagePrefix)) {
+      if (subDescriptor.packagePrefix == null
+          || !ClassLoaderConfigurator.isMigratedToNewModel(mainDescriptor.pluginId)) {
         dependencyMessage = "Plugin ${subDescriptor.pluginId} that optionally depends on ${descriptor.pluginId} does not have a separate classloader for the dependency"
         return@processOptionalDependenciesOnPlugin false
       }

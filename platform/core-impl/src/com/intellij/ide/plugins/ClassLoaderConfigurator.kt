@@ -5,6 +5,7 @@ package com.intellij.ide.plugins
 import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.util.SmartList
 import com.intellij.util.lang.ClassPath
 import com.intellij.util.lang.ResourceFile
@@ -27,6 +28,21 @@ class ClassLoaderConfigurator(
   private val coreLoader: ClassLoader = ClassLoaderConfigurator::class.java.classLoader,
   private val usePluginClassLoader: Boolean = true, /* grab classes from platform loader only if nothing is found in any of plugin dependencies */
 ) {
+
+  companion object {
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isMigratedToNewModel(idString: String): Boolean {
+      return idString != "org.jetbrains.kotlin"
+             && idString != "com.intellij.java"
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isMigratedToNewModel(pluginId: PluginId) = isMigratedToNewModel(pluginId.idString)
+  }
+
   private var javaDep: Optional<IdeaPluginDescriptorImpl>? = null
 
   // temporary set to produce arrays (avoid allocation for each plugin)
@@ -60,7 +76,8 @@ class ClassLoaderConfigurator(
                                     dependencyPlugin: IdeaPluginDescriptorImpl) {
     for ((mainDependent, modules) in mainToModule) {
       val mainDependentClassLoader = mainDependent.classLoader as PluginClassLoader
-      if (ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(mainDependent.id, mainDependent.packagePrefix)) {
+      if (mainDependent.packagePrefix != null
+          && isMigratedToNewModel(mainDependent.id)) {
         for (module in modules) {
           assert(module.packagePrefix != null)
           configureModule(module, mainDependentClassLoader,
