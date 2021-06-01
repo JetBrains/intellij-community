@@ -46,13 +46,6 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
   }
 
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return CodeInsightBundle
-      .message("intention.family.convert.0.path.to.1", isConvertToRelative() ? "absolute" : "relative", isConvertToRelative() ? "relative" : "absolute");
-  }
-
-  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
     final FileReference fileReference = reference == null ? null : FileReference.findFileReference(reference);
@@ -62,9 +55,15 @@ public class ConvertAbsolutePathToRelativeIntentionAction extends BaseIntentionA
     }
   }
 
+  @Override
+  @NotNull
+  public String getFamilyName() {
+    return CodeInsightBundle.message("intention.family.convert.absolute.path.to.relative");
+  }
+
   @NotNull
   @Override
   public String getText() {
-    return CodeInsightBundle.message("intention.text.convert.path.to.0", isConvertToRelative() ? "relative" : "absolute");
+    return CodeInsightBundle.message("intention.text.convert.path.to.relative");
   }
 }
