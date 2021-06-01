@@ -501,15 +501,10 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
 
     public void setupEditor(@NotNull EditorEx editor) {
-      ConsoleViewUtil.setupConsoleEditor(editor, false, false);
-      editor.getContentComponent().setFocusCycleRoot(false);
+      ConsoleViewUtil.setupLanguageConsoleEditor(editor);
+
       editor.setHorizontalScrollbarVisible(true);
       editor.setVerticalScrollbarVisible(true);
-      editor.setBorder(null);
-
-      EditorSettings editorSettings = editor.getSettings();
-      editorSettings.setAdditionalLinesCount(1);
-      editorSettings.setAdditionalColumnsCount(1);
 
       DataManager.registerDataProvider(editor.getComponent(), (dataId) -> getEditorData(editor, dataId));
     }
