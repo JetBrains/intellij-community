@@ -35,7 +35,7 @@ abstract class AbstractKotlinUClass(givenParent: UElement?) : KotlinAbstractUEle
 
     override val uastSuperTypes: List<UTypeReferenceExpression>
         get() = ktClass?.superTypeListEntries.orEmpty().mapNotNull { it.typeReference }.map {
-            LazyKotlinUTypeReferenceExpression(it, this)
+            KotlinUTypeReferenceExpression(it, this)
         }
 
     val delegateExpressions: List<UExpression>
@@ -66,7 +66,7 @@ class KotlinSupertypeDelegationUExpression(override val sourcePsi: KtDelegatedSu
     override val psi: PsiElement? get() = sourcePsi
 
     val typeReference: UTypeReferenceExpression? by lazy {
-        sourcePsi.typeReference?.let { KotlinUTypeReferenceExpression(it.toPsiType(this), it, this) }
+        sourcePsi.typeReference?.let { KotlinUTypeReferenceExpression(it, this) { it.toPsiType(this) } }
     }
 
     val delegateExpression: UExpression? by lazy {
