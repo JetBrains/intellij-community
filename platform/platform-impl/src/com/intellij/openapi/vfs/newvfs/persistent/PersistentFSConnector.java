@@ -179,7 +179,7 @@ final class PersistentFSConnector {
     int largestId = contentHashesEnumerator.getLargestId();
     int liveRecordsCount = contents.getRecordsCount();
     if (largestId != liveRecordsCount) {
-      throw new AssertionError("Content storage & enumerator corrupted");
+      throw new IOException("Content storage & enumerator corrupted");
     }
   }
 

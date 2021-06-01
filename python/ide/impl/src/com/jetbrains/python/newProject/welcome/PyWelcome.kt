@@ -25,6 +25,8 @@ import com.intellij.openapi.ui.CheckBoxWithDescription
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.ToolWindowId
@@ -56,7 +58,7 @@ internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
   override fun isEdtRequired() = false
 
   override fun configureProject(project: Project, baseDir: VirtualFile, moduleRef: Ref<Module>, isProjectCreatedWithWizard: Boolean) {
-    if (isProjectCreatedWithWizard) {
+    if (isProjectCreatedWithWizard || isInsideTempDirectory(baseDir)) {
       return
     }
 
@@ -66,6 +68,11 @@ internal class PyWelcomeConfigurator : DirectoryProjectConfigurator {
         PyWelcome.welcomeUser(project, baseDir, moduleRef.get())
       }
     )
+  }
+
+  private fun isInsideTempDirectory(baseDir: VirtualFile): Boolean {
+    val tempDir = LocalFileSystem.getInstance().findFileByPath(FileUtil.getTempDirectory()) ?: return false
+    return VfsUtil.isAncestor(tempDir, baseDir, true)
   }
 }
 
@@ -90,7 +97,7 @@ private object PyWelcome {
   private val LOG = Logger.getInstance(PyWelcome::class.java)
 
   @CalledInAny
-  internal fun welcomeUser(project: Project, baseDir: VirtualFile, module: Module?) {
+  fun welcomeUser(project: Project, baseDir: VirtualFile, module: Module?) {
     val enabled = PyWelcomeSettings.instance.createWelcomeScriptForEmptyProject
 
     if (isEmptyProject(project, baseDir, module)) {

@@ -28,6 +28,35 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
     assertContainsElements(variants, "bar.func", "bar.func1");
   }
 
+  // PY-47281
+  public void testVariantsFromInternalThirdPartyModulesExcludedUnlessExported() {
+    runWithAdditionalClassEntryInSdkRoots(getTestName(false) + "/site-packages", () -> {
+      myFixture.copyDirectoryToProject(getTestName(false) + "/src", "");
+      myFixture.configureByFile("main.py");
+      myFixture.completeBasic();
+      List<String> variants = myFixture.getLookupElementStrings();
+      assertNotNull(variants);
+      assertDoesntContain(variants, "mypackage._impl.func", "mypackage._vendor.lib.func");
+      assertContainsElements(variants, "mypackage.func_exported", "mypackage_util._impl.func");
+    });
+  }
+
+  // PY-47281
+  public void testVariantsFromInternalSkeletonsExcludedUnlessExported() {
+    String testName = getTestName(false);
+    runWithAdditionalClassEntryInSdkRoots(testName + "/site-packages", () -> {
+      runWithAdditionalClassEntryInSdkRoots(testName + "/python_stubs", () -> {
+        myFixture.copyDirectoryToProject(testName + "/src", "");
+        myFixture.configureByFile("main.py");
+        myFixture.completeBasic();
+        List<String> variants = myFixture.getLookupElementStrings();
+        assertNotNull(variants);
+        assertDoesntContain(variants, "mypackage._impl.func");
+        assertContainsElements(variants, "mypackage.func_exported", "mypackage_util._impl.func");
+      });
+    });
+  }
+
   public void testQualifiedNameMatcherTest() {
     QualifiedNameMatcher matcher = new QualifiedNameMatcher(QualifiedName.fromDottedString("foo.bar.baz"));
     assertTrue(matcher.prefixMatches("foo.bar.baz"));
@@ -46,38 +75,46 @@ public class PyNotImportedQualifiedNameCompletionTest extends PyTestCase {
   }
 
   public void testImportForModuleFunction() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    doTestBasicCompletion();
   }
 
   public void testImportForModuleClass() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    doTestBasicCompletion();
   }
 
   public void testImportForAlias() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    doTestBasicCompletion();
   }
 
   public void testImportForAliasWithNonEmptyAttribute() {
-    final String testName = getTestName(false);
-    myFixture.copyDirectoryToProject(testName, "");
-    myFixture.configureByFile("main.py");
-    myFixture.completeBasic();
-    myFixture.checkResultByFile(testName + "/main.after.py");
+    doTestBasicCompletion();
   }
 
   public void testUseImportPriorityWhenAddingImport() {
+    doTestBasicCompletion();
+  }
+
+  // PY-47304
+  public void testDirectModuleAttributesSuggestedForNonEmptyAttributePrefix() {
+    doTestBasicCompletion();
+  }
+
+  //PY-47247
+  public void testNoImportForSubpackages() {
+    doTestBasicCompletion();
+  }
+
+  //PY-47247
+  public void testNoImportForSubmodules() {
+    doTestBasicCompletion();
+  }
+
+  //PY-47247
+  public void testShouldNotSuggestSubmodulesForAliases() {
+    doTestBasicCompletion();
+  }
+
+  private void doTestBasicCompletion() {
     final String testName = getTestName(false);
     myFixture.copyDirectoryToProject(testName, "");
     myFixture.configureByFile("main.py");

@@ -2,11 +2,12 @@
 package org.jetbrains.plugins.gradle.util
 
 import com.intellij.util.ReflectionUtil
+import java.io.Closeable
 import java.lang.reflect.Array
 import java.lang.reflect.Field
 import java.util.*
 
-class ReflectionTraverser {
+class ReflectionTraverser : Closeable {
   interface Visitor {
     fun process(instance: Any)
   }
@@ -41,6 +42,11 @@ class ReflectionTraverser {
         else -> walkFields(stack, current)
       }
     }
+  }
+
+  override fun close() {
+    visited.clear()
+    classCache.clear()
   }
 
   private fun walkFields(stack: Deque<Any>, current: Any) {
@@ -89,10 +95,7 @@ class ReflectionTraverser {
   companion object {
     @JvmStatic
     fun traverse(o: Any, visitor: Visitor) {
-      val traverse = ReflectionTraverser()
-      traverse.walk(o, visitor)
-      traverse.visited.clear()
-      traverse.classCache.clear()
+      ReflectionTraverser().use { it.walk(o, visitor) }
     }
 
     private fun walkCollection(stack: Deque<Any>, col: Collection<Any?>) {

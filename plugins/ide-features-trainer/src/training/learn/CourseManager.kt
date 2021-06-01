@@ -64,10 +64,12 @@ class CourseManager internal constructor() : Disposable {
     OpenLessonActivities.openLesson(projectWhereToOpen, lesson)
   }
 
-  fun findLesson(lessonName: String): Lesson? {
-    return modules
-      .flatMap { it.lessons }
-      .firstOrNull { it.name.equals(lessonName, ignoreCase = true) }
+  fun findLessonById(lessonId: String): Lesson? {
+    return lessonsForModules.firstOrNull { it.id == lessonId }
+  }
+
+  fun findLessonByName(lessonName: String): Lesson? {
+    return lessonsForModules.firstOrNull { it.name.equals(lessonName, ignoreCase = true) }
   }
 
   fun calcLessonsForLanguage(primaryLangSupport: LangSupport): Int {

@@ -1,10 +1,12 @@
 package de.plushnikov.intellij.plugin.lombokconfig;
 
+import java.util.Locale;
+
 public enum ConfigKey {
 
   CONFIG_STOP_BUBBLING("config.stopBubbling", "false"),
 
-  COPYABLE_ANNOTATIONS("lombok.copyableAnnotations", ""),
+  COPYABLE_ANNOTATIONS("lombok.copyableAnnotations", "", false),
 
   LOG_FIELDNAME("lombok.log.fieldName", "log"),
   LOG_FIELD_IS_STATIC("lombok.log.fieldIsStatic", "true"),
@@ -19,7 +21,7 @@ public enum ConfigKey {
   TOSTRING_DO_NOT_USE_GETTERS("lombok.toString.doNotUseGetters", "false"),
   TOSTRING_INCLUDE_FIELD_NAMES("lombok.toString.includeFieldNames", "true"),
 
-  ACCESSORS_PREFIX("lombok.accessors.prefix", ""),
+  ACCESSORS_PREFIX("lombok.accessors.prefix", "", false),
   ACCESSORS_CHAIN("lombok.accessors.chain", "false"),
   ACCESSORS_FLUENT("lombok.accessors.fluent", "false"),
   GETTER_NO_IS_PREFIX("lombok.getter.noIsPrefix", "false"),
@@ -87,10 +89,16 @@ public enum ConfigKey {
   */
   private final String configKey;
   private final String configDefaultValue;
+  private final boolean configScalarValue;
 
   ConfigKey(String configKey, String configDefaultValue) {
-    this.configKey = configKey.toLowerCase();
+    this(configKey, configDefaultValue, true);
+  }
+
+  ConfigKey(String configKey, String configDefaultValue, boolean configScalarValue) {
+    this.configKey = configKey.toLowerCase(Locale.ENGLISH);
     this.configDefaultValue = configDefaultValue;
+    this.configScalarValue = configScalarValue;
   }
 
   public String getConfigKey() {
@@ -99,6 +107,10 @@ public enum ConfigKey {
 
   public String getConfigDefaultValue() {
     return configDefaultValue;
+  }
+
+  boolean isConfigScalarValue() {
+    return configScalarValue;
   }
 
   public static ConfigKey fromConfigStringKey(String configStringKey) {

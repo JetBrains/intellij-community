@@ -8,10 +8,14 @@
 7(8) element: PyBinaryExpression
 8(9) READ ACCESS: isinstance
 9(10) READ ACCESS: var
-10(11,13,15) READ ACCESS: A
-11(12) ASSERTTYPE ACCESS: var
-12(13,15) READ ACCESS: var
-13(14) element: PyStatementList. Condition: isinstance(var, A) and var:true
-14(16) ASSERTTYPE ACCESS: var
-15(16) ASSERTTYPE ACCESS: var
-16() element: null
+10(11,12) READ ACCESS: A
+11(19) element: null. Condition: isinstance(var, A):false
+12(13) element: null. Condition: isinstance(var, A):true
+13(14) ASSERTTYPE ACCESS: var
+14(15,16) READ ACCESS: var
+15(19) element: null. Condition: var:false
+16(17) element: null. Condition: var:true
+17(18) element: PyStatementList. Condition: isinstance(var, A) and var:true
+18(20) ASSERTTYPE ACCESS: var
+19(20) ASSERTTYPE ACCESS: var
+20() element: null

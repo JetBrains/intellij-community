@@ -307,9 +307,6 @@ class LessonExecutor(val lesson: KLesson, val project: Project, initialEditor: E
 
   private fun isTaskCompleted(taskContext: TaskContextImpl) = taskContext.steps.all { it.isDone && it.get() }
 
-  internal val taskCount: Int
-    get() = taskActions.size
-
   private fun canBeRestored(taskContext: TaskContextImpl): Boolean {
     return !hasBeenStopped && taskContext.steps.any { !it.isCancelled && !it.isCompletedExceptionally && (!it.isDone || !it.get()) }
   }

@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -31,6 +32,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -572,6 +574,16 @@ public class WSLDistribution {
     String wsl1LoopbackAddress = getWsl1LoopbackAddress();
     if (wsl1LoopbackAddress != null) {
       return wsl1LoopbackAddress;
+    }
+    if (Registry.is("wsl.obtain.windows.host.ip.alternatively")) {
+      InetAddress wslAddr = getWslIpAddress();
+      try (DatagramSocket datagramSocket = new DatagramSocket()) {
+        datagramSocket.connect(wslAddr, 0);
+        return datagramSocket.getLocalAddress().getHostAddress();
+      }
+      catch (Exception e) {
+        LOG.error("Cannot obtain Windows host IP alternatively: failed to connect to WSL IP " + wslAddr + ". Fallback to default way.", e);
+      }
     }
     final String releaseInfo = "/etc/resolv.conf"; // available for all distributions
     final ProcessOutput output;

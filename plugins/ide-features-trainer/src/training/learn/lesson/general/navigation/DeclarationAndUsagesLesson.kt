@@ -4,6 +4,7 @@ package training.learn.lesson.general.navigation
 import com.intellij.codeInsight.TargetElementUtil
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
 import com.intellij.openapi.fileEditor.FileEditorManager
+import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.openapi.wm.impl.content.BaseLabel
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -27,6 +28,13 @@ abstract class DeclarationAndUsagesLesson
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       setInitialPosition()
+
+      prepareRuntimeTask {
+        val focusManager = IdeFocusManager.getInstance(project)
+        if (focusManager.focusOwner != editor.contentComponent) {
+          focusManager.requestFocus(editor.contentComponent, true)
+        }
+      }
 
       task("GotoDeclaration") {
         text(LessonsBundle.message("declaration.and.usages.jump.to.declaration", action(it)))

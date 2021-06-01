@@ -406,6 +406,7 @@
     <notificationGroup id="ConfiguredPythonInterpreter" displayType="BALLOON" isLogByDefault="true" bundle="messages.PyBundle" key="sdk.has.been.configured.notification.name"/>
 
     <toolWindow id="Python Packages" anchor="bottom"
+                icon="PythonIcons.Python.PythonPackages"
                 factoryClass="com.jetbrains.python.packaging.toolwindow.PyPackagesToolWindowFactory"/>
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.add.PyAddNewEnvCollector"/>
   </extensions>

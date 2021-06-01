@@ -189,7 +189,7 @@ public class ActionButtonWithText extends ActionButton {
     look.paintIcon(g, this, icon, iconRect.x, iconRect.y);
     look.paintBorder(g, this);
 
-    g.setColor(isButtonEnabled() ? getForeground() : getInactiveTextColor());
+    g.setColor(isEnabled() ? getForeground() : getInactiveTextColor());
     UIUtilities.drawStringUnderlineCharAt(this, g, text, getMnemonicCharIndex(text),
                                           textRect.x, textRect.y + fm.getAscent());
     if (arrowIcon != null) {

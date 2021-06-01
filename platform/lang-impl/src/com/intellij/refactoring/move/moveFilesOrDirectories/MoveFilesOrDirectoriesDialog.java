@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
@@ -158,8 +159,12 @@ public abstract class MoveFilesOrDirectoriesDialog extends RefactoringDialog {
     RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
 
     CommandProcessor.getInstance().executeCommand(myProject, () -> {
-      PsiDirectory targetDirectory = ApplicationManager.getApplication().runWriteAction((Computable<PsiDirectory>)() -> {
-        String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
+      String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
+      PsiDirectory directory = DirectoryUtil.findLongestExistingDirectory(PsiManager.getInstance(myProject), directoryName);
+      PsiDirectory targetDirectory = 
+        directory == null || !CommonRefactoringUtil.checkReadOnlyStatus(myProject, Collections.singletonList(directory), false) 
+        ? null 
+        : ApplicationManager.getApplication().runWriteAction((Computable<PsiDirectory>)() -> {
         try {
           return DirectoryUtil.mkdirs(PsiManager.getInstance(myProject), directoryName);
         }

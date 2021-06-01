@@ -19,8 +19,8 @@ abstract class FileStructureLesson
   abstract val methodToFindPosition: LogicalPosition
 
   private val searchSubstring: String = "hosa"
-  private val firstWord: String = "homo"
-  private val secondWord: String = "sapience"
+  private val firstWord: String = "Homo"
+  private val secondWord: String = "Sapiens"
 
   override val lessonType = LessonType.SINGLE_EDITOR
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import org.jetbrains.annotations.NonNls;
@@ -7,6 +7,8 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * This class is serialized into StartupActionScript stream and must thus reside in bootstrap module.
@@ -36,5 +38,10 @@ public final class ImportSettingsFilenameFilter implements Predicate<String>, Se
       }
     }
     return false;
+  }
+
+  @Override
+  public String toString() {
+    return Stream.of(myRelativeNamesToExtract).sorted().collect(Collectors.joining(",", "ImportSettingsFilenameFilter[", "]"));
   }
 }

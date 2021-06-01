@@ -87,13 +87,18 @@ public final class EditorHistoryManager implements PersistentStateComponent<Elem
     myEntriesList.add(entry);
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public interface IncludeInEditorHistoryFile {}
+
   /**
    * Makes file most recent one
    */
   private void fileOpenedImpl(@NotNull VirtualFile file, @Nullable FileEditor fallbackEditor, @Nullable FileEditorProvider fallbackProvider) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     // don't add files that cannot be found via VFM (light & etc.)
-    if (VirtualFileManager.getInstance().findFileByUrl(file.getUrl()) == null) {
+    if (!(file instanceof IncludeInEditorHistoryFile) &&
+        VirtualFileManager.getInstance().findFileByUrl(file.getUrl()) == null) {
       return;
     }
 

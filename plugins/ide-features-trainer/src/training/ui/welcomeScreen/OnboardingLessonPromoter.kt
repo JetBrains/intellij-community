@@ -2,10 +2,10 @@
 package training.ui.welcomeScreen
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.StartPagePromoter
-import com.intellij.openapi.wm.impl.welcomeScreen.learnIde.HeightLimitedPane
-import com.intellij.ui.JBColor
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import icons.FeaturesTrainerIcons
@@ -27,6 +27,8 @@ import javax.swing.*
 import javax.swing.border.MatteBorder
 
 open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : StartPagePromoter {
+  open fun promoImage(): Icon = FeaturesTrainerIcons.Img.PluginIcon
+
   override fun needToHideSingleProject(path: String): Boolean {
     val langSupport = LangManager.getInstance().getLangSupport() ?: return false
     return LangManager.getInstance().getLearningProjectPath(langSupport) == path
@@ -45,10 +47,15 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     header.font = UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(UIUtil.getLabelFont().size2D + JBUI.scale(4))
     vPanel.add(header)
     vPanel.add(rigid(0, 4))
-    val text = LearnBundle.message("welcome.promo.description", LessonUtil.productName)
-    val heightLimitedPane = HeightLimitedPane(text, -1, UIUtil.getContextHelpForeground() as JBColor)
-    heightLimitedPane.preferredSize
-    vPanel.add(heightLimitedPane)
+    val description = JLabel("<html>${LearnBundle.message("welcome.promo.description", LessonUtil.productName)}</html>").also {
+      it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
+        SystemInfo.isLinux -> JBUIScale.scale(-2)
+        SystemInfo.isMac -> JBUIScale.scale(-1)
+        else -> 0
+      }))
+      it.foreground = UIUtil.getContextHelpForeground()
+    }
+    vPanel.add(description)
     val jButton = JButton()
     jButton.isOpaque = false
     jButton.action = object : AbstractAction(LearnBundle.message("welcome.promo.start.tour")) {
@@ -70,8 +77,8 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     hPanel.layout = BoxLayout(hPanel, BoxLayout.X_AXIS)
     hPanel.add(vPanel)
     hPanel.add(Box.createHorizontalGlue())
-    hPanel.add(rigid(54, 0))
-    val picture = JLabel(FeaturesTrainerIcons.Img.PluginIcon)
+    hPanel.add(rigid(20, 0))
+    val picture = JLabel(promoImage())
     picture.alignmentY = Component.TOP_ALIGNMENT
     hPanel.add(picture)
 

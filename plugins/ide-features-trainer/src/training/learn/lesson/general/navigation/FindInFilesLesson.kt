@@ -146,7 +146,7 @@ class FindInFilesLesson(override val existedFile: String)
       val replaceAllButtonText = FindBundle.message("find.popup.replace.all.button").dropMnemonic()
       text(LessonsBundle.message("find.in.files.press.replace.all", strong(replaceAllButtonText)))
       triggerByUiComponentAndHighlight { button: JButton ->
-        button.text == replaceAllButtonText
+        button.text?.contains(replaceAllButtonText) == true
       }
       stateCheck {
         insideConfirmation()

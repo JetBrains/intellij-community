@@ -114,12 +114,12 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
                                         final ParameterInfoHandler<?, ?> handler,
                                         final boolean requestFocus,
                                         boolean singleParameterInfo) {
-    //if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
+    if (editor.isDisposed() || !editor.getComponent().isVisible()) return;
 
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
-      //if (editor.isDisposed() || !element.isValid() ||
-      //    (!ApplicationManager.getApplication().isUnitTestMode() /*&&
-      //     !EditorActivityManager.getInstance().isVisible(editor)*/)) return;
+      if (editor.isDisposed() || !element.isValid() ||
+          (!ApplicationManager.getApplication().isUnitTestMode() &&
+           !EditorActivityManager.getInstance().isVisible(editor))) return;
 
       final Document document = editor.getDocument();
       if (document.getTextLength() < elementStart) return;

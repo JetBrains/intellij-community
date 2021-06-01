@@ -2,11 +2,8 @@
 package training.learn.lesson.general.refactorings
 
 import com.intellij.ui.components.JBList
-import training.dsl.LessonContext
-import training.dsl.LessonSample
-import training.dsl.LessonUtil
+import training.dsl.*
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
-import training.dsl.restoreAfterStateBecomeFalse
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
@@ -15,6 +12,8 @@ class ExtractVariableFromBubbleLesson(private val sample: LessonSample)
   override val lessonContent: LessonContext.() -> Unit
     get() = {
       prepareSample(sample)
+      showWarningIfInplaceRefactoringsDisabled()
+
       task("IntroduceVariable") {
         text(LessonsBundle.message("extract.variable.start.refactoring", action(it), code("i + 1")))
         triggerStart("IntroduceVariable")

@@ -8,10 +8,14 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.impl.SystemDock;
+import com.intellij.util.PathUtil;
 import com.intellij.util.system.CpuArch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemDependent;
+import org.jetbrains.annotations.SystemIndependent;
 
 import java.nio.file.Paths;
 import java.util.Arrays;
@@ -31,7 +35,7 @@ public final class WinDockDelegate implements SystemDock.Delegate {
   public void updateRecentProjectsMenu() {
     final List<AnAction> recentProjectActions = RecentProjectListActionProvider.getInstance().getActions(false);
 
-    final Task[] tasks = convertToJumpTasks(recentProjectActions);
+    final @NotNull Task @NotNull [] tasks = convertToJumpTasks(recentProjectActions);
 
     try {
       wsi.postShellTask((@NotNull final WinShellIntegration.ShellContext ctx) -> {
@@ -57,20 +61,45 @@ public final class WinDockDelegate implements SystemDock.Delegate {
     final String launcherFileName = ApplicationNamesInfo.getInstance().getScriptName() + (CpuArch.isIntel64() ? "64" : "") + ".exe";
     final String launcherPath = Paths.get(PathManager.getBinPath(), launcherFileName).toString();
 
-    final Task[] result = new Task[actions.size()];
+    final @NotNull Task @NotNull [] result = new Task[actions.size()];
 
     int i = 0;
     for (final var action : actions) {
       if (!(action instanceof ReopenProjectAction)) {
+        LOG.debug("Failed to convert an action \"" + action + "\" to Jump Task: the action is not ReopenProjectAction");
         continue;
       }
 
       final ReopenProjectAction reopenProjectAction = (ReopenProjectAction)action;
 
-      final String reopenProjectActionPath = reopenProjectAction.getProjectPath();
-      final String reopenProjectActionPathEscaped = "\"" + reopenProjectActionPath + "\"";
+      final @SystemIndependent String projectPath = reopenProjectAction.getProjectPath();
+      final @SystemDependent String projectPathSystem = PathUtil.toSystemDependentName(projectPath);
 
-      result[i++] = new Task(launcherPath, reopenProjectActionPathEscaped, reopenProjectAction.getTemplatePresentation().getText());
+      if (Strings.isEmptyOrSpaces(projectPathSystem)) {
+        LOG.debug("Failed to convert a ReopenProjectAction \"" + reopenProjectAction +
+                  "\" to Jump Task: path to the project is empty (\"" + projectPathSystem + "\")");
+        continue;
+      }
+
+      final @NotNull String taskTitle;
+      {
+        final @Nullable String presentationText;
+        final @Nullable String projectName;
+
+        if (!Strings.isEmptyOrSpaces(presentationText = reopenProjectAction.getTemplatePresentation().getText())) {
+          taskTitle = presentationText;
+        }
+        else if (!Strings.isEmptyOrSpaces(projectName = reopenProjectAction.getProjectName())) {
+          taskTitle = projectName;
+        }
+        else {
+          taskTitle = projectPathSystem;
+        }
+      }
+
+      final String taskArgs = "\"" + projectPathSystem + "\"";
+
+      result[i++] = new Task(launcherPath, taskArgs, taskTitle);
     }
 
     if (i < result.length) {

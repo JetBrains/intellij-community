@@ -216,22 +216,6 @@ public final class AboutPopup {
       myLines.add(new AboutBoxLine(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
       appendLast();
 
-      for (AboutPopupDescriptionProvider aboutInfoProvider : EP_NAME.getExtensions()) {
-        String description = aboutInfoProvider.getDescription();
-        if (description == null) continue;
-
-        String[] lines = description.split("[\n]+");
-
-        if (lines.length == 0) continue;
-
-        myLines.add(new AboutBoxLine(""));
-
-        for (String line : lines) {
-          myLines.add(new AboutBoxLine(line));
-          appendLast();
-        }
-      }
-
       myLines.add(new AboutBoxLine(""));
       myLines.add(new AboutBoxLine(""));
       myLines.add(new AboutBoxLine(IdeBundle.message("about.box.powered.by") + " ").keepWithNext());
@@ -404,10 +388,8 @@ public final class AboutPopup {
         g2.setFont(JBUI.Fonts.miniFont());
       }
       else {
-        g2.setFont(JBUI.Fonts.create("Segoe UI", 12));
+        g2.setFont(JBUI.Fonts.create("Segoe UI", 10));
       }
-
-      g2.setColor(createColor(appInfo.getAboutForeground()));
 
       JBPoint copyrightCoord = getCopyrightCoord();
       g2.drawString(getCopyrightText(), copyrightCoord.x, copyrightCoord.y);
@@ -446,15 +428,15 @@ public final class AboutPopup {
     }
 
     private static JBRectangle getTextRendererRect() {
-      return new JBRectangle(115, 156, 500, 220);
+      return new JBRectangle(49, 169, 500, 220);
     }
 
     private static JBPoint getCopyrightCoord() {
-      return new JBPoint(115, 395);
+      return new JBPoint(49, 365);
     }
 
     private static JBPoint getCopyIconCoord() {
-      return new JBPoint(66, 156);
+      return new JBPoint(15, 155);
     }
 
     public String getText() {
@@ -668,6 +650,13 @@ public final class AboutPopup {
 
   private static @NotNull String getExtraInfo() {
     String extraInfo = SystemInfo.getOsNameAndVersion() + "\n";
+
+    for (AboutPopupDescriptionProvider aboutInfoProvider : InfoSurface.EP_NAME.getExtensions()) {
+      String description = aboutInfoProvider.getDescription();
+      if (description != null) {
+        extraInfo += description + "\n";
+      }
+    }
 
     extraInfo += "GC: " + ManagementFactory.getGarbageCollectorMXBeans().stream()
              .map(GarbageCollectorMXBean::getName).collect(StringUtil.joining()) + "\n";

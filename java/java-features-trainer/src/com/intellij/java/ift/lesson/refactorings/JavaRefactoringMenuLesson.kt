@@ -40,11 +40,12 @@ class JavaRefactoringMenuLesson : RefactoringMenuLessonBase("java.refactoring.me
                 return lines;
             }
         }
-    }      
+    }
   """.trimIndent())
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
+    showWarningIfInplaceRefactoringsDisabled()
     extractParameterTasks()
     moreRefactoringsTasks()
   }

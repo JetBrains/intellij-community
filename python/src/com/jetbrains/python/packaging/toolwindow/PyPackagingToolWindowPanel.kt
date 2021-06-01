@@ -390,6 +390,9 @@ class PyPackagingToolWindowPanel(service: PyPackagingToolWindowService, toolWind
     private const val HORIZONTAL_SPLITTER_KEY = "Python.PackagingToolWindow.Horizontal"
     private const val VERTICAL_SPLITTER_KEY = "Python.PackagingToolWindow.Vertical"
 
+
+    val REMOTE_INTERPRETER_TEXT: String
+      get() = message("python.toolwindow.packages.remote.interpreter.placeholder")
     val REQUEST_FAILED_TEXT: String
       get() = message("python.toolwindow.packages.request.failed")
     val NO_DESCRIPTION: String

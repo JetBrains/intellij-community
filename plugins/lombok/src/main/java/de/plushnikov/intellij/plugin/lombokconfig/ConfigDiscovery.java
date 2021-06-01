@@ -9,9 +9,10 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
-import com.intellij.util.ArrayUtil;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.indexing.FileBasedIndex;
-import de.plushnikov.intellij.plugin.psi.LombokLightClassBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,14 +24,17 @@ public class ConfigDiscovery {
     return ApplicationManager.getApplication().getService(ConfigDiscovery.class);
   }
 
+  public @NotNull Collection<String> getMultipleValueLombokConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
+    return getConfigProperty(configKey, psiClass);
+  }
+
   @NotNull
   public String getStringLombokConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
-    @Nullable VirtualFile file = calculateDirectory(psiClass);
-    if (null != file) {
-      return discoverProperty(configKey, file, psiClass.getProject());
-    } else {
-      return configKey.getConfigDefaultValue();
+    Collection<String> result = getConfigProperty(configKey, psiClass);
+    if (!result.isEmpty()) {
+      return result.iterator().next();
     }
+    return configKey.getConfigDefaultValue();
   }
 
   public boolean getBooleanLombokConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
@@ -38,75 +42,62 @@ public class ConfigDiscovery {
     return Boolean.parseBoolean(configProperty);
   }
 
-  public String @NotNull [] getMultipleValueLombokConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
-    final Collection<String> result = new HashSet<>();
-
-    @Nullable VirtualFile file = calculateDirectory(psiClass);
-    if (file != null) {
-      final List<String> properties = discoverProperties(configKey, file, psiClass.getProject());
-      Collections.reverse(properties);
-
-      for (String configProperty : properties) {
-        if (StringUtil.isNotEmpty(configProperty)) {
-          final String[] values = configProperty.split(";");
-          for (String value : values) {
-            if (value.startsWith("+")) {
-              result.add(value.substring(1));
-            } else if (value.startsWith("-")) {
-              result.remove(value.substring(1));
-            }
-          }
-        }
-      }
-    } else {
-      result.add(configKey.getConfigDefaultValue());
+  @NotNull
+  private Collection<String> getConfigProperty(@NotNull ConfigKey configKey, @NotNull PsiClass psiClass) {
+    @Nullable PsiFile psiFile = calculatePsiFile(psiClass);
+    if (psiFile != null) {
+      return discoverPropertyWithCache(configKey, psiFile);
     }
-    return ArrayUtil.toStringArray(result);
+    return Collections.singletonList(configKey.getConfigDefaultValue());
   }
 
   @Nullable
-  private static VirtualFile calculateDirectory(@NotNull PsiClass psiClass) {
-    PsiFile psiFile;
-    if (psiClass instanceof LombokLightClassBuilder) {
-      // Use containing class for all LombokLightClasses
-      final PsiClass containingClass = psiClass.getContainingClass();
-      if (null != containingClass) {
-        psiFile = containingClass.getContainingFile();
-      } else {
-        psiFile = null;
-      }
-    } else {
-      psiFile = psiClass.getContainingFile();
-    }
+  private static PsiFile calculatePsiFile(@NotNull PsiClass psiClass) {
+    PsiFile psiFile = psiClass.getContainingFile();
     if (psiFile != null) {
-      PsiFile originalFile = psiFile.getOriginalFile();
-      if (originalFile != null) {
-        psiFile = originalFile;
-      }
+      psiFile = psiFile.getOriginalFile();
     }
-
-    return psiFile != null ? psiFile.getVirtualFile() : null;
+    return psiFile;
   }
 
   @NotNull
-  private String discoverProperty(@NotNull ConfigKey configKey, @Nullable VirtualFile file, @NotNull Project project) {
-    @Nullable VirtualFile currentFile = file;
+  protected Collection<String> discoverPropertyWithCache(@NotNull ConfigKey configKey,
+                                                         @NotNull PsiFile psiFile) {
+    return CachedValuesManager.getCachedValue(psiFile, () -> {
+      Map<ConfigKey, Collection<String>> result =
+        ConcurrentFactoryMap.createMap(configKeyInner -> discoverProperty(configKeyInner, psiFile));
+      return CachedValueProvider.Result.create(result, LombokConfigChangeListener.CONFIG_CHANGE_TRACKER);
+    }).get(configKey);
+  }
+
+  @NotNull
+  protected Collection<String> discoverProperty(@NotNull ConfigKey configKey, @NotNull PsiFile psiFile) {
+    if (configKey.isConfigScalarValue()) {
+      return discoverScalarProperty(configKey, psiFile);
+    }
+    return discoverCollectionProperty(configKey, psiFile);
+  }
+
+  @NotNull
+  private Collection<String> discoverScalarProperty(@NotNull ConfigKey configKey, @NotNull PsiFile psiFile) {
+    @Nullable VirtualFile currentFile = psiFile.getVirtualFile();
     while (currentFile != null) {
-      ConfigValue configValue = readProperty(configKey, project, currentFile);
+      ConfigValue configValue = readProperty(configKey, psiFile.getProject(), currentFile);
       if (null != configValue) {
         if (null == configValue.getValue()) {
           if (configValue.isStopBubbling()) {
             break;
           }
-        } else {
-          return configValue.getValue();
+        }
+        else {
+          return Collections.singletonList(configValue.getValue());
         }
       }
 
       currentFile = currentFile.getParent();
     }
 
-    return configKey.getConfigDefaultValue();
+    return Collections.singletonList(configKey.getConfigDefaultValue());
   }
 
   @VisibleForTesting
@@ -125,23 +116,42 @@ public class ConfigDiscovery {
   }
 
   @NotNull
-  private List<String> discoverProperties(@NotNull ConfigKey configKey, @Nullable VirtualFile file, @NotNull Project project) {
-    List<String> result = new ArrayList<>();
+  private Collection<String> discoverCollectionProperty(@NotNull ConfigKey configKey, @NotNull PsiFile file) {
+    List<String> properties = new ArrayList<>();
 
-    @Nullable VirtualFile currentFile = file;
+    @Nullable VirtualFile currentFile = file.getVirtualFile();
     while (currentFile != null) {
-      final ConfigValue configValue = readProperty(configKey, project, currentFile);
+      final ConfigValue configValue = readProperty(configKey, file.getProject(), currentFile);
       if (null != configValue) {
         if (null == configValue.getValue()) {
           if (configValue.isStopBubbling()) {
             break;
           }
-        } else {
-          result.add(configValue.getValue());
+        }
+        else {
+          properties.add(configValue.getValue());
         }
       }
 
       currentFile = currentFile.getParent();
+    }
+
+    Collections.reverse(properties);
+
+    Set<String> result = new HashSet<>();
+
+    for (String configProperty : properties) {
+      if (StringUtil.isNotEmpty(configProperty)) {
+        final String[] values = configProperty.split(";");
+        for (String value : values) {
+          if (value.startsWith("+")) {
+            result.add(value.substring(1));
+          }
+          else if (value.startsWith("-")) {
+            result.remove(value.substring(1));
+          }
+        }
+      }
     }
 
     return result;

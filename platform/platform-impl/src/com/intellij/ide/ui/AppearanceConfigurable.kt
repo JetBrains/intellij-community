@@ -291,7 +291,12 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           },
           {
             label(message("label.text.antialiasing.scope.editor"))
-            comboBox(DefaultComboBoxModel(AntialiasingType.values()), settings::editorAAType, renderer = AAListCellRenderer(true))
+            val editorAAOptions =
+              if (!AntialiasingType.canUseSubpixelAAForEditor())
+                arrayOf(AntialiasingType.GREYSCALE, AntialiasingType.OFF)
+              else
+                AntialiasingType.values()
+            comboBox(DefaultComboBoxModel(editorAAOptions), settings::editorAAType, renderer = AAListCellRenderer(true))
               .shouldUpdateLaF()
               .component.accessibleContext.accessibleName = message("label.text.antialiasing.scope.editor")
           }

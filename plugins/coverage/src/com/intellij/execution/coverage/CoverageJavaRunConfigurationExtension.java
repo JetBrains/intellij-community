@@ -56,12 +56,11 @@ import java.util.List;
  */
 public class CoverageJavaRunConfigurationExtension extends RunConfigurationExtension {
 
-  @NotNull
-  private JavaTargetDependentParameters myTargetDependentParameters = new JavaTargetDependentParameters();
+  private JavaTargetDependentParameters myTargetDependentParameters;
 
   @Override
   public void attachToProcess(@NotNull final RunConfigurationBase configuration, @NotNull ProcessHandler handler, RunnerSettings runnerSettings) {
-    if (myTargetDependentParameters.getTargetEnvironment() == null || !(configuration instanceof TargetEnvironmentAwareRunProfile)) {
+    if (myTargetDependentParameters == null || myTargetDependentParameters.getTargetEnvironment() == null) {
       CoverageDataManager.getInstance(configuration.getProject()).attachToProcess(handler, configuration, runnerSettings);
       return;
     }
@@ -150,15 +149,16 @@ public class CoverageJavaRunConfigurationExtension extends RunConfigurationExten
     JavaParameters coverageParams = new JavaParameters();
     coverageConfig.appendCoverageArgument(configuration, coverageParams);
 
-    if (!(configuration instanceof TargetEnvironmentAwareRunProfile)) {
-      // workaround for custom configuration extensions that do not support targets and use JavaParameters in its own specific way
-      // (like javaee, see PatchedLocalState)
+    boolean runsUnderNonLocalTarget = configuration instanceof TargetEnvironmentAwareRunProfile
+                                      && ((TargetEnvironmentAwareRunProfile)configuration).needPrepareTarget();
+    if (!runsUnderNonLocalTarget) {
       params.getVMParametersList().addAll(coverageParams.getTargetDependentParameters().toLocalParameters());
+      myTargetDependentParameters = null;
     }
     else {
       coverageParams.getTargetDependentParameters().asTargetParameters().forEach(params.getTargetDependentParameters().asTargetParameters()::add);
+      myTargetDependentParameters = params.getTargetDependentParameters();
     }
-    myTargetDependentParameters = params.getTargetDependentParameters();
   }
 
   @Override

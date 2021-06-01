@@ -14,6 +14,7 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.size
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
@@ -128,6 +129,16 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
 
     @Throws(IOException::class)
     override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
+      // Synchronization may be slow -- let us wait until file size does not change
+      // in a reasonable amount of time
+      val path = localRoot.resolve(relativePath)
+      var previousSize = -1L
+      var newSize = path.size()
+      while (previousSize < newSize) {
+        Thread.sleep(100)
+        previousSize = newSize
+        newSize = path.size()
+      }
     }
   }
 
