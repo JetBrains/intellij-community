@@ -25,3 +25,9 @@ class MavenJavaBuildSystemType : JavaBuildSystemType("Maven") {
     TODO("Not yet implemented")
   }
 }
+
+class IntelliJJavaBuildSystemType : JavaBuildSystemType("IntelliJ") {
+  override fun setupProject(settings: JavaSettings) {
+    TODO("Not yet implemented")
+  }
+}
