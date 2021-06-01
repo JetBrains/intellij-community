@@ -11,7 +11,7 @@ import kotlin.io.path.*
 
 const val KOTLINC_DIST_JPS_LIB_XML_NAME = "kotlinc_kotlin_dist.xml"
 
-abstract class KotlinArtifacts(val kotlincDistDir: File) {
+abstract class KotlinArtifacts(val kotlincDirectory: File) {
     companion object {
         @get:JvmStatic
         val instance: KotlinArtifacts by lazy {
@@ -21,7 +21,6 @@ abstract class KotlinArtifacts(val kotlincDistDir: File) {
         }
     }
 
-    val kotlincDirectory = File(kotlincDistDir, "kotlinc")
     val kotlincLibDirectory = File(kotlincDirectory, "lib")
 
     val jetbrainsAnnotations = File(kotlincLibDirectory, KotlinArtifactNames.JETBRAINS_ANNOTATIONS)
@@ -63,39 +62,40 @@ private object ProductionKotlinArtifacts : KotlinArtifacts(run {
         if ("compile-server" in pluginJar.pathString && pluginJar.resolveSibling("kotlinc").exists()) {
             // WSL JPS build copies all JPS plugin jars to the cache directory, without an intervening 'lib' directory,
             // and the kotlinc directory becomes a subdirectory of the cache directory (see KotlinBuildProcessParametersProvider.getAdditionalPluginPaths())
-            pluginJar.parent.toFile()
+            pluginJar.parent.resolve("kotlinc").toFile()
         } else {
             // Don't throw exception because someone may want to just try to initialize
             // KotlinArtifacts but won't actually use it. E.g. KotlinPluginMacros does it
             File("\"<invalid_kotlinc_path>\"")
         }
     } else {
-        libFile.parent.toFile()
+        libFile.parent.resolve("kotlinc").toFile()
     }
 })
 
 private object KotlinArtifactsFromSources : KotlinArtifacts(run {
-    val outDir = File(PathManager.getHomePath(), "out")
-    val kotlincDistDir = outDir.resolve("kotlinc-dist")
-    val hashFile = outDir.resolve("kotlinc-dist/kotlinc-dist.md5")
-    val kotlincJar = findLibrary(
+    val jar = findLibrary(
         RepoLocation.MAVEN_REPOSITORY,
         KOTLINC_DIST_JPS_LIB_XML_NAME,
         "org.jetbrains.kotlin",
         "kotlin-dist-for-ide"
     )
-    val hash = kotlincJar.md5()
-    if (hashFile.exists() && hashFile.readText() == hash && kotlincDistDir.exists()) {
-        return@run kotlincDistDir
-    }
-    val dirWhereToExtractKotlinc = kotlincDistDir.resolve("kotlinc").also {
-        it.deleteRecursively()
-        it.mkdirs()
-    }
-    hashFile.writeText(hash)
-    Decompressor.Zip(kotlincJar).extract(dirWhereToExtractKotlinc)
-    return@run kotlincDistDir
+    lazyUnpackJar(jar, File(PathManager.getHomePath(), "out").resolve("kotlinc-dist"), "kotlinc")
 })
+
+internal fun lazyUnpackJar(jar: File, holderDir: File, dirName: String): File {
+    val hashFile = holderDir.resolve("md5")
+    val hash = jar.md5()
+    val dirWhereToExtract = holderDir.resolve(dirName)
+    if (hashFile.exists() && hashFile.readText() == hash) {
+        return dirWhereToExtract
+    }
+    dirWhereToExtract.deleteRecursively()
+    dirWhereToExtract.mkdirs()
+    hashFile.writeText(hash)
+    Decompressor.Zip(jar).extract(dirWhereToExtract)
+    return dirWhereToExtract
+}
 
 private fun File.md5(): String {
     return MessageDigest.getInstance("MD5").digest(readBytes()).joinToString("") { "%02x".format(it) }
