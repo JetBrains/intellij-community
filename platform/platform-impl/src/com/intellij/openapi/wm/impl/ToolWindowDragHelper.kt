@@ -2,9 +2,6 @@
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.TimerListener
-import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ToolWindowType
@@ -15,6 +12,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.util.IconUtil
+import com.intellij.util.MathUtil
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
@@ -27,11 +25,13 @@ import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
 import java.lang.ref.WeakReference
-import javax.swing.*
+import javax.swing.JComponent
+import javax.swing.JDialog
+import javax.swing.JLabel
+import javax.swing.SwingUtilities
 
 internal class ToolWindowDragHelper(parent: @NotNull Disposable,
-                                    toolWindowsPane: @NotNull ToolWindowsPane) : MouseDragHelper<ToolWindowsPane>(parent,
-                                                                                                                  toolWindowsPane), TimerListener {
+                                    toolWindowsPane: @NotNull ToolWindowsPane) : MouseDragHelper<ToolWindowsPane>(parent, toolWindowsPane) {
   private val myPane = myDragComponent
 
   private var toolWindowRef = null as WeakReference<ToolWindowImpl?>?
@@ -48,19 +48,6 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   companion object {
     val THUMB_SIZE = 220
     val THUMB_OPACITY = .85f
-  }
-
-
-  override fun getModalityState(): ModalityState {
-    return ModalityState.NON_MODAL
-  }
-
-  override fun run() {
-    if (getToolWindow() != null)
-      SwingUtilities.invokeLater {
-        myHighlighter.revalidate()
-        myHighlighter.repaint()
-      }
   }
 
   override fun isDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point): Boolean {
@@ -219,8 +206,11 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     val window = getToolWindow()
     getStripeButton(window)?.isVisible = true
     myPane.stopDrag()
-    myPane.rootPane.layeredPane.remove(myHighlighter)
-    myPane.rootPane.layeredPane.repaint()
+    with(myPane.rootPane.glassPane as JComponent) {
+      remove(myHighlighter)
+      revalidate()
+      repaint()
+    }
 
     @Suppress("SSBasedInspection")
     myDialog?.dispose()
@@ -232,7 +222,6 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       myLastStripe = null
     }
     myInitialButton = null
-    ActionManager.getInstance()?.removeTimerListener(this)
   }
 
   override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
@@ -250,9 +239,12 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       myInitialButton!!.isVisible = false
     }
     myDialog?.isVisible = true
-    myPane.rootPane.layeredPane.add(myHighlighter, Integer.valueOf(JLayeredPane.POPUP_LAYER + 1))
+    with(myPane.rootPane.glassPane as JComponent) {
+      add(myHighlighter)
+      revalidate()
+      repaint()
+    }
     myPane.startDrag()
-    ActionManager.getInstance().addTimerListener(0, this)
   }
 
   private fun ToolWindowImpl.getBoundsOnScreen(anchor: ToolWindowAnchor): Rectangle {
@@ -261,7 +253,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     location.y += getStripeHeight(TOP)
     var width = myPane.width - getStripeWidth(LEFT) - getStripeWidth(RIGHT)
     var height = myPane.height - getStripeHeight(TOP) - getStripeHeight(BOTTOM)
-    val weight = windowInfo.weight //todo: maybe limit weight for highlighter
+    val weight = if (anchor === myInitialAnchor) windowInfo.weight  else MathUtil.clamp(windowInfo.weight, .1F, .25F)
 
     if (anchor.isHorizontal) height = (myPane.rootPane.height * weight).toInt()
     else width = (myPane.rootPane.width * weight).toInt()
@@ -333,17 +325,28 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       //  stripe.remove(button)
       //}
       stripe.processDropButton(myInitialButton as StripeButton, dialog.contentPane as @NotNull JComponent, screenPoint)
-      val bounds = toolWindowRef?.get()?.getBoundsOnScreen(stripe.anchor)
-      if (bounds != null) {
+      SwingUtilities.invokeLater(Runnable {
+        val bounds = toolWindow.getBoundsOnScreen(stripe.anchor)
         val p = bounds.location
         SwingUtilities.convertPointFromScreen(p, myPane.rootPane.layeredPane)
         bounds.location = p
+        val dropToSide = stripe.dropToSide
+        if (dropToSide != null) {
+          val half = if (stripe.anchor.isHorizontal) bounds.width / 2 else bounds.height / 2
+          if (!stripe.anchor.isHorizontal) {
+            bounds.height -= half
+            if (dropToSide) {
+              bounds.y += half
+            };
+          } else {
+            bounds.width -= half
+            if (dropToSide) {
+              bounds.x += half
+            }
+          }
+        }
         myHighlighter.bounds = bounds
-      }
-      else {
-        myHighlighter.bounds = Rectangle()
-      }
-      myHighlighter.repaint()
+      })
     }
     myLastStripe = stripe
   }

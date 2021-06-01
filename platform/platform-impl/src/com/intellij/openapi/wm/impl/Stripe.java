@@ -494,6 +494,12 @@ class Stripe extends JPanel implements UISettingsListener {
     repaint();
   }
 
+  @Nullable
+  Boolean getDropToSide() {
+    if (myLastLayoutData == null || !myLastLayoutData.dragTargetChosen) return null;
+    return myLastLayoutData.dragToSide;
+  }
+
   private boolean isDroppingButton() {
     return myDragButton != null;
   }
