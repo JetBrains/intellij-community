@@ -139,4 +139,6 @@ public interface ProcessDebugger {
   void removeExceptionBreakpoint(ExceptionBreakpointCommandFactory factory);
 
   void suspendOtherThreads(PyThreadInfo thread);
+
+  default void interruptDebugConsole() {}
 }

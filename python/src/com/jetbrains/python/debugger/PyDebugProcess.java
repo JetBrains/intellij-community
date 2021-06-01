@@ -1149,6 +1149,11 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return "";
   }
 
+  public void interruptDebugConsole() {
+    if (isConnected()) {
+      myDebugger.interruptDebugConsole();
+    }
+  }
 
   @Override
   public void startNotified(@NotNull ProcessEvent event) {
