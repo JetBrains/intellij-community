@@ -101,21 +101,14 @@ public final class VcsLogUiUtil {
   }
 
   public static void installDetailsListeners(@NotNull VcsLogGraphTable graphTable,
-                                             @NotNull VcsLogCommitDetailsListPanel detailsPanel,
                                              @NotNull VcsLogData logData,
                                              @NotNull Disposable disposableParent) {
     Runnable miniDetailsLoadedListener = () -> {
       graphTable.reLayout();
       graphTable.repaint();
     };
-    Runnable containingBranchesListener = () -> {
-      detailsPanel.branchesChanged();
-    };
     logData.getMiniDetailsGetter().addDetailsLoadedListener(miniDetailsLoadedListener);
-    logData.getContainingBranchesGetter().addTaskCompletedListener(containingBranchesListener);
-
     Disposer.register(disposableParent, () -> {
-      logData.getContainingBranchesGetter().removeTaskCompletedListener(containingBranchesListener);
       logData.getMiniDetailsGetter().removeDetailsLoadedListener(miniDetailsLoadedListener);
     });
   }
