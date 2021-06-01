@@ -83,7 +83,7 @@ internal class RecentProjectIconHelper {
     if (!RecentProjectsManagerBase.isFileSystemPath(path)) {
       return EmptyIcon.create(projectIconSize())
     }
-    return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(path, isDark)) {
+    return IconDeferrer.getInstance().deferAutoUpdatable(EmptyIcon.create(projectIconSize()), Pair(path, isDark)) {
       val calculateIcon = calculateIcon(path = it.first, isDark = it.second)
       if (calculateIcon == null && generateFromName) {
         val name = RecentProjectsManagerBase.instanceEx.getProjectName(path)
