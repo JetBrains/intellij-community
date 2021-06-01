@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtReferenceExpression
+import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
@@ -31,6 +32,11 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
             else ->
                 return null
         }
+    }
+
+    override fun resolveToType(ktTypeReference: KtTypeReference, source: UElement): PsiType? {
+        // TODO: use type conversions in firLightUtils.kt
+        return PsiType.NULL
     }
 
     override fun getExpressionType(uExpression: UExpression): PsiType? {
