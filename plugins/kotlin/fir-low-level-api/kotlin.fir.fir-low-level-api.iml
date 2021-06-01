@@ -27,5 +27,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.impl" />
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
+    <orderEntry type="module" module-name="kotlin.fir" scope="RUNTIME" />
   </component>
 </module>
