@@ -377,8 +377,9 @@ class Stats(
 
             buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
             agentName = buildProperties["agent.name"]?.toString()
-            buildBranch = buildProperties["teamcity.build.branch"]?.toString()
-            commit = buildProperties["build.vcs.number"]?.toString()
+            buildBranch = (buildProperties["teamcity.build.branch"] ?: System.getProperty("teamcity.build.branch"))?.toString()
+            if (buildBranch == null || buildBranch == "<default>") buildBranch = "master"
+            commit = (buildProperties["build.vcs.number"] ?: System.getProperty("build.vcs.number"))?.toString()
         }
 
         if (perfTestRawDataMs.isNotEmpty()) {
