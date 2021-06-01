@@ -77,7 +77,6 @@ abstract class AbstractKotlinUVariable(givenParent: UElement?) : KotlinAbstractU
         annotations
     }
 
-
     protected abstract fun acceptsAnnotationTarget(target: AnnotationUseSiteTarget?): Boolean
 
     override val typeReference: UTypeReferenceExpression? by lz {
