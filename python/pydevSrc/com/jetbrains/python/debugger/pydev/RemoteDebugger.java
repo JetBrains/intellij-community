@@ -810,4 +810,15 @@ public class RemoteDebugger implements ProcessDebugger {
       }
     }
   }
+
+  @Override
+  public void interruptDebugConsole() {
+    InterruptDebugConsoleCommand interruptCommand = new InterruptDebugConsoleCommand(this);
+    try {
+      interruptCommand.execute();
+    }
+    catch (PyDebuggerException e) {
+      LOG.error(e);
+    }
+  }
 }
