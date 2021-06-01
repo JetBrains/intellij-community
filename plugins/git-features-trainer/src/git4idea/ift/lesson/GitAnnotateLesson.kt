@@ -5,14 +5,12 @@ import com.intellij.diff.impl.DiffWindowBase
 import com.intellij.diff.tools.util.DiffSplitter
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem
-import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorBundle
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.vcs.actions.ActiveAnnotationGutter
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction
 import com.intellij.ui.components.JBScrollPane
@@ -20,6 +18,8 @@ import com.intellij.util.ui.UIUtil
 import git4idea.ift.GitLessonsBundle
 import git4idea.ift.GitLessonsUtil.checkoutBranch
 import training.dsl.*
+import training.dsl.LessonUtil.adjustPopupPosition
+import training.dsl.LessonUtil.restorePopupPosition
 import training.learn.LearnBundle
 import training.ui.LearningUiHighlightingManager
 import java.awt.Component
@@ -112,11 +112,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     }
 
     prepareRuntimeTask l@{
-      val window = UIUtil.getWindow(previous.ui) ?: return@l
-      val oldWindowLocation = WindowStateService.getInstance(project).getLocation(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
-      if (LessonUtil.adjustPopupPosition(project, window)) {
-        backupDiffLocation = oldWindowLocation
-      }
+      backupDiffLocation = adjustPopupPosition(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
     }
 
     if (isAnnotateShortcutSet()) {
@@ -218,12 +214,8 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
   }
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
-    if (backupDiffLocation != null) {
-      invokeLater {
-        WindowStateService.getInstance(project).putLocation(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY, backupDiffLocation)
-        backupDiffLocation = null
-      }
-    }
+    restorePopupPosition(project, DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY, backupDiffLocation)
+    backupDiffLocation = null
   }
 
   private fun TaskContext.highlightGutterComponent(splitter: DiffSplitter?, partOfEditorText: String, highlightRight: Boolean) {
