@@ -12,7 +12,7 @@
     <!-- Numbers -->
     <intentionAction>
       <className>com.siyeh.ipp.integer.JavaNumberConversionIntention</className>
-      <categoryKey>intention.category.numbers</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
 
     <!-- Boolean -->
@@ -60,12 +60,12 @@
     <!-- Shift -->
     <intentionAction>
       <className>com.siyeh.ipp.shift.ReplaceMultiplyWithShiftIntention</className>
-      <categoryKey>intention.category.shift.operation</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
 
     <intentionAction>
       <className>com.siyeh.ipp.shift.ReplaceShiftWithMultiplyIntention</className>
-      <categoryKey>intention.category.shift.operation</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
 
     <!-- JUnit -->
@@ -219,7 +219,7 @@
     <!-- Modifiers -->
     <intentionAction>
       <className>com.siyeh.ipp.modifiers.ChangeModifierIntention</className>
-      <categoryKey>intention.category.modifiers</categoryKey>
+      <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
 
     <!-- Strings -->
@@ -269,19 +269,19 @@
     <!-- Other -->
     <intentionAction>
       <className>com.siyeh.ipp.expression.FlipExpressionIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.expression.eliminate.EliminateParenthesesIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.expression.FlipSetterCallIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.commutative.FlipCommutativeMethodCallIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.concatenation.MakeCallChainIntoCallSequenceIntention</className>
@@ -293,27 +293,27 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithAssignmentIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.opassign.ReplaceOperatorAssignmentWithPostfixExpressionIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.opassign.ReplacePostfixExpressionWithOperatorAssignmentIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.opassign.ReplacePostfixExpressionWithAssignmentIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.opassign.ReplaceAssignmentWithPostfixExpressionIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.constant.ConstantSubexpressionIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.increment.ExtractIncrementIntention</className>
@@ -329,7 +329,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.unicode.ReplaceOctalEscapeWithUnicodeEscapeIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.strings</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.asserttoif.ObjectsRequireNonNullIntention</className>
@@ -337,7 +337,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.opassign.PostfixPrefixIntention</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.siyeh.ipp.collections.ReplaceWithArraysAsListIntention</className>

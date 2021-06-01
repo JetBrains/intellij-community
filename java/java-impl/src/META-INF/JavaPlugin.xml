@@ -1851,7 +1851,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ReplaceCastWithVariableAction</className>
-      <categoryKey>intention.category.imports</categoryKey>
+      <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SortContentAction</className>
@@ -1919,7 +1919,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.testIntegration.intention.MoveInitializerToSetUpMethodAction</className>
-      <categoryKey>intention.category.declaration</categoryKey>
+      <categoryKey>intention.category.junit</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.MoveInitializerToConstructorAction</className>
@@ -1943,7 +1943,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateCastExpressionFromInstanceofAction</className>
-      <categoryKey>intention.category.declaration</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.impl.quickfix.CreateLocalVarFromInstanceofAction</className>
@@ -1971,7 +1971,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompareToToEqualsIntention</className>
-      <categoryKey>intention.category.control.flow</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SwapIfStatementsIntentionAction</className>
@@ -2060,7 +2060,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.expressions</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitSwitchBranchWithSeveralCaseValuesAction</className>
@@ -2076,27 +2076,27 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaChopParametersAction</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaChopArgumentsAction</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinParametersAction</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinArgumentsAction</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaChopRecordComponentsAction</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.lists.JavaJoinRecordComponentsAction</className>
-      <categoryKey>intention.category.other</categoryKey>
+      <categoryKey>intention.category.code.style</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertCompactConstructorToCanonicalAction</className>
