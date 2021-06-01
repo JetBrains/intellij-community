@@ -47,7 +47,9 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
 
     task("que") {
       before {
-        backupPopupLocation = adjustPopupPosition(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)
+        if (backupPopupLocation == null) {
+          backupPopupLocation = adjustPopupPosition(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)
+        }
       }
       text(LessonsBundle.message("search.everywhere.type.prefixes", strong("quadratic"), strong("equation"), code(it)))
       stateCheck { checkWordInSearch(it) }
