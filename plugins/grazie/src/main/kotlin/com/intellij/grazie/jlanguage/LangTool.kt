@@ -13,7 +13,9 @@ import java.net.Authenticator
 import java.util.concurrent.ConcurrentHashMap
 
 internal object LangTool : GrazieStateLifecycle {
-  private val langs: MutableMap<Lang, JLanguageTool> = ConcurrentHashMap()
+  private val langs: MutableMap<CacheKey, JLanguageTool> = ConcurrentHashMap()
+
+  private data class CacheKey(val lang: Lang, val disabledRules: Set<String>, val enabledRules: Set<String>)
 
   init {
     JLanguageTool.setDataBroker(GrazieDynamicDataBroker)
@@ -25,13 +27,15 @@ internal object LangTool : GrazieStateLifecycle {
   fun getTool(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): JLanguageTool {
     require(lang.jLanguage != null) { "Trying to get LangTool for not available language" }
 
-    return langs.computeIfAbsent(lang) {
+    val key = CacheKey(lang, state.userDisabledRules, state.userEnabledRules)
+
+    return langs.computeIfAbsent(key) {
       JLanguageTool(lang.jLanguage!!).apply {
         setCheckCancelledCallback { ProgressManager.checkCanceled(); false }
         addMatchFilter(UppercaseMatchFilter())
 
-        state.userDisabledRules.forEach { id -> disableRule(id) }
-        state.userEnabledRules.forEach { id -> enableRule(id) }
+        key.disabledRules.forEach { id -> disableRule(id) }
+        key.enabledRules.forEach { id -> enableRule(id) }
 
         fun loadConfigFile(path: String, block: (iso: String, id: String) -> Unit) {
           GrazieDynamicDataBroker.getFromResourceDirAsStream(path).use { stream ->
@@ -43,13 +47,13 @@ internal object LangTool : GrazieStateLifecycle {
         }
 
         loadConfigFile("en/enabled_rules.txt") { iso, ruleId ->
-          if (iso == lang.iso.name && ruleId !in state.userDisabledRules) {
+          if (iso == lang.iso.name && ruleId !in key.disabledRules) {
             enableRule(ruleId)
           }
         }
 
         loadConfigFile("en/disabled_rules.txt") { iso, ruleId ->
-          if (iso == lang.iso.name && ruleId !in state.userEnabledRules) {
+          if (iso == lang.iso.name && ruleId !in key.enabledRules) {
             disableRule(ruleId)
           }
         }
