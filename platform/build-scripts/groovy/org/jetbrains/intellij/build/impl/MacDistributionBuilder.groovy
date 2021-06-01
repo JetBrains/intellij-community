@@ -77,8 +77,8 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     buildContext.messages.progress("Building distributions for $targetOs.osName")
 
     List<String> platformProperties = [
-      "\n#---------------------------------------------------------------------" +
-      "# macOS-specific system properties" +
+      "\n#---------------------------------------------------------------------",
+      "# macOS-specific system properties",
       "#---------------------------------------------------------------------",
       "com.apple.mrj.application.live-resize=false",
       "apple.laf.useScreenMenuBar=true",
