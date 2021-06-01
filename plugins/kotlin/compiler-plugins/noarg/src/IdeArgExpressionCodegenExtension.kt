@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.noarg.ide
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.annotation.plugin.ide.CachedAnnotationNames
-import org.jetbrains.kotlin.annotation.plugin.ide.getAnnotationNames
+import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
+import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
 import org.jetbrains.kotlin.noarg.AbstractNoArgExpressionCodegenExtension
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 

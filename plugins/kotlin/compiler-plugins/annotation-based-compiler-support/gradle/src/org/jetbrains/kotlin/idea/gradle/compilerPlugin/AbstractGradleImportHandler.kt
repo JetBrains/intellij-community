@@ -1,13 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.annotation.plugin.ide
+package org.jetbrains.kotlin.idea.gradle.compilerPlugin
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.Key
-import org.jetbrains.kotlin.annotation.plugin.ide.AnnotationBasedCompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.annotation.plugin.ide.AnnotationBasedPluginModel
+import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup
+import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
 import org.jetbrains.kotlin.idea.configuration.GradleProjectImportHandler
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData

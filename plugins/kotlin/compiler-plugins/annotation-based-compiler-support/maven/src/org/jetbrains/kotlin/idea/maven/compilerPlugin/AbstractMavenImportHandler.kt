@@ -1,11 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.annotation.plugin.ide
+package org.jetbrains.kotlin.idea.maven.compilerPlugin
 
 import org.jdom.Element
 import org.jdom.Text
 import org.jetbrains.idea.maven.project.MavenProject
-import org.jetbrains.kotlin.annotation.plugin.ide.AnnotationBasedCompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.idea.compilerPlugin.modifyCompilerArgumentsForPlugin
+import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup
+import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.maven.MavenProjectImportHandler
 import org.jetbrains.kotlin.idea.maven.KotlinMavenImporter.Companion.KOTLIN_PLUGIN_GROUP_ID

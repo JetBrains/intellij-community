@@ -1,13 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.annotation.plugin.ide
+package org.jetbrains.kotlin.idea.compilerPlugin
 
 import com.intellij.openapi.module.Module
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtDeclaration
 import java.io.File
 
 fun Module.getSpecialAnnotations(prefix: String): List<String> {
@@ -24,7 +21,7 @@ class AnnotationBasedCompilerPluginSetup(val options: List<PluginOption>, val cl
     class PluginOption(val key: String, val value: String)
 }
 
-internal fun modifyCompilerArgumentsForPlugin(
+fun modifyCompilerArgumentsForPlugin(
     facet: KotlinFacet,
     setup: AnnotationBasedCompilerPluginSetup?,
     compilerPluginId: String,

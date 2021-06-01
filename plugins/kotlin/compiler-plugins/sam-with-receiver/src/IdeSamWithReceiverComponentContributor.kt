@@ -9,7 +9,7 @@ import com.intellij.psi.util.CachedValueProvider.Result
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.analyzer.ModuleInfo
-import org.jetbrains.kotlin.annotation.plugin.ide.getSpecialAnnotations
+import org.jetbrains.kotlin.idea.compilerPlugin.getSpecialAnnotations
 import org.jetbrains.kotlin.container.StorageComponentContainer
 import org.jetbrains.kotlin.container.useInstance
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor

@@ -1,12 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.annotation.plugin.ide
+package org.jetbrains.kotlin.idea.gradle.compilerPlugin
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
+import org.jetbrains.kotlin.annotation.plugin.ide.AnnotationBasedPluginModel
 import org.jetbrains.plugins.gradle.service.project.AbstractProjectResolverExtension
 
 @Suppress("unused")

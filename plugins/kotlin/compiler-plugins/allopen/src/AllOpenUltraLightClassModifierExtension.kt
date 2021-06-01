@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.descriptors.*
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiModifier
-import org.jetbrains.kotlin.annotation.plugin.ide.CachedAnnotationNames
-import org.jetbrains.kotlin.annotation.plugin.ide.getAnnotationNames
+import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
+import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
 import org.jetbrains.kotlin.asJava.UltraLightClassModifierExtension
 import org.jetbrains.kotlin.extensions.AnnotationBasedExtension
 import org.jetbrains.kotlin.psi.*

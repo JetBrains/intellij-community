@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.allopen.ide
 
 import org.jetbrains.kotlin.allopen.AllOpenCommandLineProcessor
-import org.jetbrains.kotlin.annotation.plugin.ide.AbstractMavenImportHandler
-import org.jetbrains.kotlin.annotation.plugin.ide.AnnotationBasedCompilerPluginSetup.PluginOption
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 
 class AllOpenMavenProjectImportHandler : AbstractMavenImportHandler() {

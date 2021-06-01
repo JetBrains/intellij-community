@@ -30,7 +30,9 @@
     <orderEntry type="module" module-name="kotlin.maven" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-tooling" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" />
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.gradle.common" />
   </component>

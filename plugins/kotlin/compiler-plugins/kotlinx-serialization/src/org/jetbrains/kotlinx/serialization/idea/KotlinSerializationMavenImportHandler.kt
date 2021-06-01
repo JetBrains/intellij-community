@@ -2,8 +2,8 @@
 
 package org.jetbrains.kotlinx.serialization.idea
 
-import org.jetbrains.kotlin.annotation.plugin.ide.AbstractMavenImportHandler
-import org.jetbrains.kotlin.annotation.plugin.ide.AnnotationBasedCompilerPluginSetup
+import org.jetbrains.kotlin.idea.maven.compilerPlugin.AbstractMavenImportHandler
+import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup
 import java.io.File
 
 class KotlinSerializationMavenImportHandler : AbstractMavenImportHandler() {

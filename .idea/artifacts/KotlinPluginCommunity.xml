@@ -34,7 +34,9 @@
           <element id="module-output" name="kotlin.compiler-plugins.allopen" />
         </element>
         <element id="archive" name="kotlin-compiler-plugins-annotation-based-compiler-support.jar">
-          <element id="module-output" name="kotlin.compiler-plugins.annotation-based-compiler-support" />
+          <element id="module-output" name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
+          <element id="module-output" name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" />
+          <element id="module-output" name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" />
         </element>
         <element id="archive" name="kotlin-compiler-plugins-kapt.jar">
           <element id="module-output" name="kotlin.compiler-plugins.kapt" />

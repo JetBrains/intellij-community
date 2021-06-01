@@ -6,7 +6,9 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module" module-name="kotlin.common" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen" exported="" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support" exported="" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization" exported="" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg" exported="" />
