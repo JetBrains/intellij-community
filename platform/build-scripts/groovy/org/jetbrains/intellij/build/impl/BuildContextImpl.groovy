@@ -35,6 +35,16 @@ final class BuildContextImpl extends BuildContext {
   // thread-safe - forkForParallelTask pass it to child context
   private final ConcurrentLinkedQueue<Pair<Path, String>> distFiles
 
+  @Override
+  String getFullBuildNumber() {
+    return "$applicationInfo.productCode-$buildNumber"
+  }
+
+  @Override
+  String getSystemSelector() {
+    return productProperties.getSystemSelector(applicationInfo, buildNumber)
+  }
+
   static BuildContextImpl create(String communityHome, String projectHome, ProductProperties productProperties,
                                  ProprietaryBuildTools proprietaryBuildTools, BuildOptions options) {
     WindowsDistributionCustomizer windowsDistributionCustomizer = productProperties.createWindowsCustomizer(projectHome)
@@ -63,25 +73,17 @@ final class BuildContextImpl extends BuildContext {
     this.linuxDistributionCustomizer = linuxDistributionCustomizer
     this.macDistributionCustomizer = macDistributionCustomizer
 
-    applicationInfo = new ApplicationInfoProperties(findApplicationInfoInSources(project, productProperties, messages))
-    if (productProperties.customProductCode != null) {
-      applicationInfo.productCode = productProperties.customProductCode
-    }
-    else if (productProperties.productCode != null && applicationInfo.productCode == null) {
-      applicationInfo.productCode = productProperties.productCode
-    }
-    else if (productProperties.productCode == null && applicationInfo.productCode != null) {
-      productProperties.productCode = applicationInfo.productCode
-    }
-
     bundledJreManager = new BundledJreManager(this)
 
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
-    fullBuildNumber = "$applicationInfo.productCode-$buildNumber"
-    systemSelector = productProperties.getSystemSelector(applicationInfo, buildNumber)
 
     bootClassPathJarNames = List.of("bootstrap.jar", "util.jar", "jna.jar")
     dependenciesProperties = new DependenciesProperties(this)
+    applicationInfo = new ApplicationInfoProperties(project, productProperties, messages)
+    applicationInfo = applicationInfo.patch(this)
+    if (productProperties.productCode == null && applicationInfo.productCode != null) {
+      productProperties.productCode = applicationInfo.productCode
+    }
     messages.info("Build steps to be skipped: ${options.buildStepsToSkip.join(',')}")
   }
 
@@ -102,23 +104,9 @@ final class BuildContextImpl extends BuildContext {
   private static BiFunction<JpsProject, BuildMessages, String> createBuildOutputRootEvaluator(String projectHome,
                                                                                               ProductProperties productProperties) {
     return { JpsProject project, BuildMessages messages ->
-      ApplicationInfoProperties applicationInfo = new ApplicationInfoProperties(findApplicationInfoInSources(project, productProperties, messages))
+      ApplicationInfoProperties applicationInfo = new ApplicationInfoProperties(project, productProperties, messages)
       return "$projectHome/out/${productProperties.getOutputDirectoryName(applicationInfo)}"
     } as BiFunction<JpsProject, BuildMessages, String>
-  }
-
-  static @NotNull Path findApplicationInfoInSources(JpsProject project, ProductProperties productProperties, BuildMessages messages) {
-    JpsModule module = project.modules.find { it.name == productProperties.applicationInfoModule }
-    if (module == null) {
-      messages.error("Cannot find required '${productProperties.applicationInfoModule}' module")
-    }
-    def appInfoRelativePath = "idea/${productProperties.platformPrefix ?: ""}ApplicationInfo.xml"
-    def appInfoFile = module.sourceRoots.collect { new File(it.file, appInfoRelativePath) }.find { it.exists() }
-    if (appInfoFile == null) {
-      messages.error("Cannot find $appInfoRelativePath in '$module.name' module")
-      return null
-    }
-    return appInfoFile.toPath()
   }
 
   @Override
