@@ -3,19 +3,17 @@ package org.jetbrains.plugins.github.authentication.ui
 
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils.checkCancelledEvenWithPCEDisabled
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.UIUtil.getInactiveTextColor
-import org.jetbrains.concurrency.CancellablePromise
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.GHOAuthService
 import org.jetbrains.plugins.github.i18n.GithubBundle.message
 import org.jetbrains.plugins.github.ui.util.Validator
-import java.util.concurrent.TimeoutException
 import javax.swing.JComponent
 
 internal class GHOAuthCredentialsUi(
@@ -58,24 +56,13 @@ internal class GHOAuthCredentialsUi(
   }
 
   private fun acquireToken(indicator: ProgressIndicator): String {
-    val tokenPromise = GHOAuthService.instance.requestToken()
+    val credentialsFuture = GHOAuthService.instance.authorize()
     try {
-      return tokenPromise.blockingGet(indicator)
+      return ProgressIndicatorUtils.awaitWithCheckCanceled(credentialsFuture, indicator).accessToken
     }
-    catch (e: ProcessCanceledException) {
-      tokenPromise.cancel()
-      throw e
-    }
-  }
-
-  private fun CancellablePromise<String>.blockingGet(indicator: ProgressIndicator): String {
-    while (true) {
-      checkCancelledEvenWithPCEDisabled(indicator)
-      try {
-        return blockingGet(1000) ?: throw ProcessCanceledException()
-      }
-      catch (ignored: TimeoutException) {
-      }
+    catch (pce: ProcessCanceledException) {
+      credentialsFuture.completeExceptionally(pce)
+      throw pce
     }
   }
 }
