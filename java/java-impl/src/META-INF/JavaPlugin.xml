@@ -1859,7 +1859,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SortContentAction</className>
-      <category>Other</category>
+      <category>Java/Other</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
@@ -2068,7 +2068,7 @@
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
-      <category>Serialization</category>
+      <category>Java/Other</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SplitSwitchBranchWithSeveralCaseValuesAction</className>
