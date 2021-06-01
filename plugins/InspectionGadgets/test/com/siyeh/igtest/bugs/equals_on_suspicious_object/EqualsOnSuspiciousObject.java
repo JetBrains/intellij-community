@@ -26,5 +26,8 @@ public class EqualsOnSuspiciousObject {
     if(Objects.<warning descr="Suspicious call to 'equals()' on 'StringBuilder' object">equals</warning>(sb1, sb2)) {
       System.out.println("Strange");
     }
+    if(java.util.function.Predicate.<warning descr="Suspicious call to 'equals()' on 'StringBuilder' object">isEqual</warning>(sb1).test(sb2)) {
+      System.out.println("Strange");
+    }
   }
 }
