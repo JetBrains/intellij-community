@@ -1854,16 +1854,8 @@
       <category>Java/Imports</category>
     </intentionAction>
     <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.ConvertRelativePathToAbsoluteIntentionAction</className>
-      <category>Other</category>
-    </intentionAction>
-    <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.SortContentAction</className>
       <category>Java/Other</category>
-    </intentionAction>
-    <intentionAction>
-      <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
-      <category>Other</category>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInsight.intention.impl.AddJavadocIntention</className>
