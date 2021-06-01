@@ -52,7 +52,9 @@
           <element id="module-output" name="kotlin.compiler-plugins.noarg.maven" />
         </element>
         <element id="archive" name="kotlin-compiler-plugins-sam-with-receiver.jar">
-          <element id="module-output" name="kotlin.compiler-plugins.sam-with-receiver" />
+          <element id="module-output" name="kotlin.compiler-plugins.sam-with-receiver.common" />
+          <element id="module-output" name="kotlin.compiler-plugins.sam-with-receiver.gradle" />
+          <element id="module-output" name="kotlin.compiler-plugins.sam-with-receiver.maven" />
         </element>
         <element id="archive" name="kotlin-compiler-plugins-scripting.jar">
           <element id="module-output" name="kotlin.compiler-plugins.scripting" />

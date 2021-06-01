@@ -197,7 +197,7 @@
         <idePlatformKindTooling implementation="org.jetbrains.kotlin.idea.core.platform.impl.CommonIdePlatformKindTooling"/>
 
         <diagnosticSuppressor implementation="org.jetbrains.kotlin.idea.debugger.DiagnosticSuppressorForDebugger"/>
-        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.samWithReceiver.ide.IdeSamWithReceiverComponentContributor"/>
+        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.samWithReceiver.IdeSamWithReceiverComponentContributor"/>
 
         <declarationAttributeAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>

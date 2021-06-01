@@ -17,7 +17,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.maven" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir" />
