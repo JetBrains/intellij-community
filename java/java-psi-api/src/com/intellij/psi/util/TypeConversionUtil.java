@@ -255,11 +255,13 @@ public final class TypeConversionUtil {
     final LanguageLevel languageLevel = toClassType.getLanguageLevel();
     //  jep-397
     if (languageLevel.isAtLeast(LanguageLevel.JDK_16_PREVIEW)) {
-      if (fromClass.hasModifierProperty(PsiModifier.SEALED)) {
-        if (!canConvertSealedTo(fromClass, toClass)) return false;
-      }
-      else if (toClass.hasModifierProperty(PsiModifier.SEALED)) {
-        if (!canConvertSealedTo(toClass, fromClass)) return false;
+      if (fromClass.isInterface() || toClass.isInterface()) {
+        if (fromClass.hasModifierProperty(PsiModifier.SEALED)) {
+          if (!canConvertSealedTo(fromClass, toClass)) return false;
+        }
+        else if (toClass.hasModifierProperty(PsiModifier.SEALED)) {
+          if (!canConvertSealedTo(toClass, fromClass)) return false;
+        }
       }
     }
     if (!fromClass.isInterface()) {
@@ -333,7 +335,7 @@ public final class TypeConversionUtil {
   /**
    * Check if sealed class can be narrowed down to a given class.
    * Check performed only if sealed class or class that it should be narrowed down to is an interface.
-   * 
+   *
    * Sealed class can be narrowed down to an interface in one of the following cases:
    * <ul>
    *  <li>sealed class implements interface
@@ -353,13 +355,15 @@ public final class TypeConversionUtil {
    * <p>See JEP-397 for more details.</p>
    */
   public static boolean canConvertSealedTo(@NotNull PsiClass sealedClass, @NotNull PsiClass psiClass) {
+    LOG.assertTrue(sealedClass.isInterface() || psiClass.isInterface());
     return canConvertSealedTo(sealedClass, psiClass, new HashSet<>());
   }
-  
-  private static boolean canConvertSealedTo(@NotNull PsiClass sealedClass, @NotNull PsiClass psiClass, @NotNull Set<PsiClass> visited) {
+
+  private static boolean canConvertSealedTo(@NotNull PsiClass sealedClass,
+                                            @NotNull PsiClass psiClass,
+                                            @NotNull Set<PsiClass> visited) {
     if (visited.contains(sealedClass)) return true;
     visited.add(sealedClass);
-    if (!sealedClass.isInterface() && !psiClass.isInterface()) return true;
     PsiReferenceList permitsList = sealedClass.getPermitsList();
     List<PsiClass> sealedSubClasses = new SmartList<>();
     boolean hasClassInheritors;
