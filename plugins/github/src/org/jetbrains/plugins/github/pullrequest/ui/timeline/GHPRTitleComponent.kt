@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
@@ -12,6 +14,7 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
+import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRDetailsDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
@@ -20,14 +23,13 @@ import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRDetailsModel
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import org.jetbrains.plugins.github.ui.util.HtmlEditorPane
 import org.jetbrains.plugins.github.ui.util.SingleValueModel
-import org.jetbrains.plugins.github.util.successOnEdt
 import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JLabel
 
 internal object GHPRTitleComponent {
 
-  fun create(model: SingleValueModel<GHPullRequestShort>, detailsDataProvider: GHPRDetailsDataProvider): JComponent {
+  fun create(project: Project, model: SingleValueModel<GHPullRequestShort>, detailsDataProvider: GHPRDetailsDataProvider): JComponent {
     val icon = JLabel()
     val title = HtmlEditorPane().apply {
       font = font.deriveFont((font.size * 1.5).toFloat())
@@ -39,7 +41,8 @@ internal object GHPRTitleComponent {
     }
 
     if (model.value.viewerCanUpdate) {
-      val panelHandle = object : GHEditableHtmlPaneHandle(title,
+      val panelHandle = object : GHEditableHtmlPaneHandle(project,
+                                                          title,
                                                           { CompletableFuture.completedFuture(model.value.title) },
                                                           { newText ->
                                                             detailsDataProvider.updateDetails(EmptyProgressIndicator(),

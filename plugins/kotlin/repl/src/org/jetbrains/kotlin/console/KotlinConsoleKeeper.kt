@@ -1,11 +1,12 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.console
 
-import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.CompositeParameterTargetedValue
+import com.intellij.execution.configurations.JavaCommandLineState
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.module.Module
@@ -17,12 +18,15 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinClassPath
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.projectStructure.version
 import org.jetbrains.kotlin.platform.jvm.JdkPlatform
 import org.jetbrains.kotlin.platform.subplatformsOfType
-import java.io.File
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.exists
+import kotlin.io.path.notExists
 
 class KotlinConsoleKeeper(val project: Project) {
     private val consoleMap: MutableMap<VirtualFile, KotlinConsoleRunner> = ConcurrentHashMap()
@@ -33,9 +37,10 @@ class KotlinConsoleKeeper(val project: Project) {
 
     fun run(module: Module, previousCompilationFailed: Boolean = false): KotlinConsoleRunner {
         val path = module.moduleFilePath
-        val cmdLine = createReplCommandLine(project, module)
+        val (environmentRequest, cmdLine) = createReplCommandLine(project, module)
         val consoleRunner = KotlinConsoleRunner(
             module,
+            environmentRequest,
             cmdLine,
             previousCompilationFailed,
             project,
@@ -51,13 +56,16 @@ class KotlinConsoleKeeper(val project: Project) {
         private val LOG = Logger.getInstance("#org.jetbrains.kotlin.console")
 
         @JvmStatic
-        fun getInstance(project: Project) = ServiceManager.getService(project, KotlinConsoleKeeper::class.java)
+        fun getInstance(project: Project): KotlinConsoleKeeper = project.getServiceSafe()
 
-        fun createReplCommandLine(project: Project, module: Module?): GeneralCommandLine {
+        fun createReplCommandLine(project: Project, module: Module?): Pair<TargetEnvironmentRequest, TargetedCommandLine> {
             val javaParameters = JavaParametersBuilder(project)
                 .withSdkFrom(module, true)
                 .withMainClassName("org.jetbrains.kotlin.cli.jvm.K2JVMCompiler")
                 .build()
+
+            val wslConfiguration = JavaCommandLineState.checkCreateWslConfiguration(javaParameters.jdk)
+            val request = wslConfiguration?.createEnvironmentRequest(project) ?: LocalTargetEnvironmentRequest()
 
             javaParameters.charset = null
             with(javaParameters.vmParametersList) {
@@ -76,9 +84,10 @@ class KotlinConsoleKeeper(val project: Project) {
 
             javaParameters.classPath.apply {
                 val classPath = KotlinClassPath.CompilerWithScripting.computeClassPath()
-                addAll(classPath.map {
-                    val absolutePath = it.absolutePath
-                    if (!it.exists()) {
+                addAll(classPath.map { file ->
+                    val path = file.toPath()
+                    val absolutePath = path.absolutePathString()
+                    if (path.notExists()) {
                         LOG.warn("Compiler dependency classpath $absolutePath does not exist")
                     }
                     absolutePath
@@ -91,7 +100,14 @@ class KotlinConsoleKeeper(val project: Project) {
                     javaParameters.setUseDynamicParameters(javaParameters.isDynamicClasspath)
                     with(javaParameters.programParametersList) {
                         add("-cp")
-                        add(classPath.joinToString(File.pathSeparator))
+                        val compositeValue = CompositeParameterTargetedValue()
+                        for ((index, s) in classPath.withIndex()) {
+                            if (index > 0) {
+                                compositeValue.addLocalPart(request.targetPlatform.platform.pathSeparator.toString())
+                            }
+                            compositeValue.addPathPart(s)
+                        }
+                        add(compositeValue)
                     }
                 }
                 TargetPlatformDetector.getPlatform(module).subplatformsOfType<JdkPlatform>().firstOrNull()?.targetVersion?.let {
@@ -104,14 +120,15 @@ class KotlinConsoleKeeper(val project: Project) {
 
             with(javaParameters.programParametersList) {
                 add("-kotlin-home")
-                add(KotlinArtifacts.instance.kotlincDirectory.also {
+                val kotlinHome = KotlinArtifacts.instance.kotlincDirectory.toPath().also {
                     check(it.exists()) {
                         "Kotlinc directory does not exist"
                     }
-                }.absolutePath)
+                }.absolutePathString()
+                add(CompositeParameterTargetedValue().addPathPart(kotlinHome))
             }
 
-            return javaParameters.toCommandLine()
+            return request to javaParameters.toCommandLine(request).build()
         }
     }
 }

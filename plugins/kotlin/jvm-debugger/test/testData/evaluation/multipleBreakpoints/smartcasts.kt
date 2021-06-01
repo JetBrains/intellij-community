@@ -22,7 +22,7 @@ fun test1(derived: Base) =
 // RESULT: 1: I
 
 // EXPRESSION: nullable.prop
-// RESULT: java.lang.NullPointerException
+// RESULT: Method threw 'java.lang.NullPointerException' exception.
 fun test2(nullable: Derived?) =
         nullable != null &&
         //Breakpoint!

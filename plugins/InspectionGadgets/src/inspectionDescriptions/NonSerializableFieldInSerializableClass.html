@@ -1,24 +1,34 @@
 <html>
 <body>
-Reports non-<b>Serializable</b>
-fields in <b>Serializable</b> classes. Such fields will result
+Reports non-serializable
+fields in classes which implement <code>java.io.Serializable</code> interface. Such fields will result
 in runtime exceptions if the object is serialized. Fields declared
-<b>transient</b> or <b>static</b>
-are not reported, nor are fields of classes which have defined a <b>writeObject</b>
+<code>transient</code> or <code>static</code>
+are not reported, nor are fields of classes which have defined a <code>writeObject</code>
 method. For purposes of this inspection, fields with
-<b>java.util.Collection</b> or
-<b>java.util.Map</b> types are assumed to be
-<b>Serializable</b>, unless the types
-they are declared to contain are non-<b>Serializable</b>.
+<code>java.util.Collection</code> or
+<code>java.util.Map</code> types are assumed to be
+<code>Serializable</code>, unless the types
+they are declared to contain are non-<code>Serializable</code>.
+<p><b>Example:</b></p>
+<pre><code>
+  class NonSerializableClass {}
+
+  public class SerializableClass implements Serializable {
+      NonSerializableClass clazz; // warning: Non-serializable field 'clazz' in a Serializable class
+      static NonSerializableClass staticClazz; // no warnings
+  }
+  </code>
+</pre>
 <!-- tooltip end -->
 <p>
 Use the first list below to specify what specific classes and inheritors should be excluded
 from being checked by this inspection. This is meant for those classes which, although they inherit
-Serializable from a superclass, are not intended for serialization. Such classes would lead this
-inspection to report unnecessarily.
+  <code>Serializable</code> from a superclass, are not intended for serialization.
 <p>
-Use the second list below to specify special annotations. Fields annotated with one of
-these annotations will be ignored by this inspection.
+Use the second list below to specify filed annotations which should be ignored by this inspection.
+<p>
+Use the checkbox below to ignore fields initialized with anonymous class.
 <p>
 
 </body>

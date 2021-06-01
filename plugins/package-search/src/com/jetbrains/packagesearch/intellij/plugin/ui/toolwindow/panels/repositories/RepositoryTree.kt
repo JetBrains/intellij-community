@@ -11,7 +11,6 @@ import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RepositoryModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.rd.util.lifetime.Lifetime
 import com.jetbrains.rd.util.reactive.IPropertyView
@@ -41,7 +40,7 @@ internal class RepositoryTree(
         isRootVisible = false
         showsRootHandles = true
 
-        @Suppress("MagicNumber") // Gotta love Swing APIs
+        @Suppress("MagicNumber") // Swing dimension constants
         border = scaledEmptyBorder(left = 8)
         emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.repositories.no.repositories.configured")
 

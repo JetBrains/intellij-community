@@ -9,6 +9,7 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="jetbrains-annotations" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
-    <orderEntry type="library" name="Trove4j" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.strings" />
+    <orderEntry type="library" name="fastutil-min" level="project" />
   </component>
 </module>

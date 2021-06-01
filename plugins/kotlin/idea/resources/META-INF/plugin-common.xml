@@ -307,6 +307,11 @@
                  defaultValue="true"
                  restartRequired="false"/>
 
+    <registryKey key="kotlin.resolve.scripting.limit.dependency.element.finder"
+                 description="Limit applicability of an element finder for scripting dependencies"
+                 defaultValue="true"
+                 restartRequired="true"/>
+
     <iconProvider implementation="org.jetbrains.kotlin.idea.KotlinIconProvider"/>
     <gotoSymbolContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoSymbolContributor"/>
     <gotoClassContributor implementation="org.jetbrains.kotlin.idea.goto.KotlinGotoClassContributor"/>
@@ -314,7 +319,9 @@
     <lang.importOptimizer language="kotlin" implementationClass="org.jetbrains.kotlin.idea.imports.KotlinImportOptimizer"/>
     <lang.namesValidator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.refactoring.KotlinNamesValidator"/>
 
-    <compileServer.plugin classpath="jps/kotlin-jps-plugin.jar;kotlin-stdlib.jar;kotlin-stdlib-jdk7.jar;kotlin-stdlib-jdk8.jar;kotlin-reflect.jar;kotlin-plugin.jar;kotlin-jps-common.jar;kotlin-common.jar"/>
+    <compileServer.plugin classpath="jps/kotlin-jps-plugin.jar;kotlin-jps-common.jar;kotlin-common.jar"/>
+    <buildProcess.parametersProvider implementation="org.jetbrains.kotlin.idea.KotlinJpsClasspathProvider"/>
+
     <compiler.task execute="BEFORE" implementation="org.jetbrains.kotlin.idea.internal.makeBackup.MakeBackupCompileTask"/>
     <jps.plugin />
 
@@ -563,7 +570,7 @@
         implementationClass="org.jetbrains.kotlin.idea.hierarchy.overrides.KotlinOverrideHierarchyProvider" />
 
     <java.elementFinder implementation="org.jetbrains.kotlin.asJava.finder.JavaElementFinder"/>
-    <java.elementFinder implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder"/>
+    <java.elementFinder implementation="org.jetbrains.kotlin.idea.core.script.KotlinScriptDependenciesClassFinder" order="last"/>
     <java.shortNamesCache implementation="org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache"/>
 
 

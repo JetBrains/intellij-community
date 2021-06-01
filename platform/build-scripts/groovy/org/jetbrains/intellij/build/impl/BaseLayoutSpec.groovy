@@ -23,7 +23,7 @@ class BaseLayoutSpec {
   }
 
   /**
-   * Register an additional module to be included into the plugin distribution into a separate JAR file. Module-level libraries from
+   * Register an additional module to be included into the plugin distribution. Module-level libraries from
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
   void withModule(String moduleName) {
@@ -37,15 +37,18 @@ class BaseLayoutSpec {
    *
    * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
    * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
-   * @param localizableResourcesJar specifies relative path to the JAR where translatable resources from the module (messages, inspection descriptions, etc) will be
-   * placed. If {@code null}, the resources will be placed into the JAR specified by {@code relativeJarPath}. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
    */
-  void withModule(String moduleName, String relativeJarPath, String localizableResourcesJar = "resources_en.jar") {
-    if (localizableResourcesJar != null) {
-      layout.localizableResourcesJars.put(moduleName, localizableResourcesJar)
-    }
+  void withModule(String moduleName, String relativeJarPath) {
     layout.moduleJars.putValue(relativeJarPath, moduleName)
     layout.explicitlySetJarPaths.add(relativeJarPath)
+  }
+
+  /**
+   * @deprecated localizable resources are now put to the module JAR, so {@code localizableResourcesJars} parameter is ignored now
+   */
+  @Deprecated
+  void withModule(String moduleName, String relativeJarPath, String localizableResourcesJar) {
+    withModule(moduleName, relativeJarPath)
   }
 
   /**

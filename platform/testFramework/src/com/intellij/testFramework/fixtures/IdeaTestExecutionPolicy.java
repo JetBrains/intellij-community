@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework.fixtures;
 
 import com.intellij.TestCaseLoader;
@@ -17,12 +17,12 @@ import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.lang.reflect.InvocationTargetException;
+
 /**
  * Allows to customize the test execution environment for the entire test execution without modifying the source code
  * of tests. To specify a test execution policy, set the system property "idea.test.execution.policy" to the FQ name
  * of a class implementing this interface.
- *
- * @author yole
  */
 public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
   protected IdeaTestExecutionPolicy() {
@@ -85,8 +85,9 @@ public abstract class IdeaTestExecutionPolicy implements TestModeFlagListener {
     if (policyClassName == null) return null;
     try {
       Class<?> policyClass = Class.forName(policyClassName);
-      ourCurrent = (IdeaTestExecutionPolicy)  policyClass.newInstance();
-    } catch (ClassNotFoundException | InstantiationException | IllegalAccessException e) {
+      ourCurrent = (IdeaTestExecutionPolicy)policyClass.getDeclaredConstructor().newInstance();
+    }
+    catch (ClassNotFoundException | InstantiationException | IllegalAccessException | NoSuchMethodException | InvocationTargetException e) {
       throw new RuntimeException(e);
     }
     return ourCurrent;

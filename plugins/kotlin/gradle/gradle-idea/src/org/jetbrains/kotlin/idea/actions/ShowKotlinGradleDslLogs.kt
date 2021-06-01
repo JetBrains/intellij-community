@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions
 
@@ -19,7 +16,9 @@ import com.intellij.openapi.wm.WindowManager
 import com.intellij.psi.PsiFile
 import com.intellij.ui.BrowserHyperlinkListener
 import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 class ShowKotlinGradleDslLogs : IntentionAction, AnAction(), DumbAware {
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
@@ -65,14 +64,13 @@ class ShowKotlinGradleDslLogs : IntentionAction, AnAction(), DumbAware {
     /** The way how to find Gradle logs is described here
      * @see org.jetbrains.kotlin.idea.actions.ShowKotlinGradleDslLogs.gradleTroubleshootingLink
      */
-    private fun findLogsDir(): File? {
-        val userHome = System.getProperty("user.home")
-        return when {
-            SystemInfo.isMac -> File("$userHome/Library/Logs/gradle-kotlin-dsl")
-            SystemInfo.isLinux -> File("$userHome/.gradle-kotlin-dsl/logs")
-            SystemInfo.isWindows -> File("$userHome/AppData/Local/gradle-kotlin-dsl/log")
+    private fun findLogsDir(): Path? = System.getProperty("user.home")?.let { userHome ->
+        when {
+            SystemInfo.isMac -> Path("$userHome/Library/Logs/gradle-kotlin-dsl")
+            SystemInfo.isLinux -> Path("$userHome/.gradle-kotlin-dsl/logs")
+            SystemInfo.isWindows -> Path("$userHome/AppData/Local/gradle-kotlin-dsl/log")
             else -> null
-        }.takeIf { it?.exists() == true }
+        }?.takeIf(Path::exists)
     }
 
     override fun startInWriteAction() = false

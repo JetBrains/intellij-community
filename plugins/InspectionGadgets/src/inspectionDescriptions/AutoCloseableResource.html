@@ -5,6 +5,14 @@ Reports <code>AutoCloseable</code> instances which are not used in a try-with-re
 This means that the open resource before/in <code>try</code>, close in <code>finally</code> style which was used before
 try-with-resources was available is also reported.
 This inspection is meant to replace all <i>opened but not safely closed</i> inspections when developing in Java 7 and higher.
+<p>Example: </p>
+<pre>
+  private static void foo() throws IOException {
+    InputStream profile = Thread.currentThread().getContextClassLoader().getResourceAsStream("/someFile");
+    System.out.println(profile.read());
+  }
+</pre>
+<!-- tooltip end -->
 <p>
 Use the first table below to specify which <code>AutoCloseable</code> subclasses should be ignored by this inspection.
 Specify <code>AutoCloseable</code> subclasses here which do not need to be closed.

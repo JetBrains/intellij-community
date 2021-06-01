@@ -2,8 +2,6 @@
 
 package com.intellij.refactoring.move;
 
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -32,12 +30,6 @@ import java.util.List;
 import java.util.Set;
 
 public class MoveHandler implements RefactoringActionHandler {
-  /**
-   * @deprecated Use {@link #getRefactoringName()} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final String REFACTORING_NAME = "Move";
 
   /**
    * called by an Action in AtomicAction when refactoring is invoked from Editor
@@ -82,10 +74,7 @@ public class MoveHandler implements RefactoringActionHandler {
   }
 
   private static void logDelegate(@NotNull Project project, @NotNull MoveHandlerDelegate delegate, @Nullable Language language) {
-    FeatureUsageData data = new FeatureUsageData()
-      .addLanguage(language)
-      .addData("handler", delegate.getClass().getName());
-    FUCounterUsageLogger.getInstance().logEvent(project, "move.refactoring", "handler.invoked", data);
+    MoveUsagesCollector.HANDLER_INVOKED.log(project, language, delegate.getClass());
   }
 
   private static PsiReference findReferenceAtCaret(PsiElement element, int caretOffset) {
@@ -121,7 +110,7 @@ public class MoveHandler implements RefactoringActionHandler {
           }
         }
       }
-      FUCounterUsageLogger.getInstance().logEvent(project, "move.refactoring", "move.files.or.directories");
+      MoveUsagesCollector.MOVE_FILES_OR_DIRECTORIES.log(project);
       MoveFilesOrDirectoriesUtil
         .doMove(project, PsiUtilCore.toPsiElementArray(filesOrDirs), new PsiElement[]{targetContainer}, null);
       return;

@@ -34,8 +34,6 @@ import java.util.function.Supplier;
  * <pre>{@code file.getFileType()}</pre>.
  * Otherwise consider moving the computation into background, e.g. via {@link com.intellij.openapi.vfs.AsyncFileListener} or
  * {@link com.intellij.openapi.application.ReadAction#nonBlocking}.
- *
- * @author yole
  */
 public abstract class FileTypeRegistry {
   /**
@@ -133,7 +131,6 @@ public abstract class FileTypeRegistry {
   /**
    * Finds a file type with the specified name.
    */
-  @Nullable
   public abstract FileType findFileTypeByName(@NonNls @NotNull String fileTypeName);
 
   /**

@@ -52,6 +52,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.EdtExecutorService;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
@@ -931,31 +932,26 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     return progress;
   }
 
-  private static class MyDaemonProgressIndicator extends DaemonProgressIndicator {
+  private static final class MyDaemonProgressIndicator extends DaemonProgressIndicator {
     private final Project myProject;
-    private Collection<? extends FileEditor> myFileEditors;
+    private final Collection<? extends FileEditor> myFileEditors;
 
     MyDaemonProgressIndicator(@NotNull Project project, @NotNull Collection<? extends FileEditor> fileEditors) {
-      myFileEditors = fileEditors;
+      myFileEditors = ContainerUtil.createConcurrentList(fileEditors);
       myProject = project;
     }
 
     @Override
-    public void dispose() {
-      super.dispose();
-      myFileEditors = null;
-    }
-
-    @Override
-    public void stopIfRunning() {
-      Collection<? extends FileEditor> editors = myFileEditors;
-      super.stopIfRunning();
-      myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(editors);
-      myFileEditors = null;
-      HighlightingSessionImpl.clearProgressIndicator(this);
+    boolean stopIfRunning() {
+      boolean wasStopped = super.stopIfRunning();
+      if (wasStopped) {
+        myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(myFileEditors);
+        myFileEditors.clear();
+        HighlightingSessionImpl.clearProgressIndicator(this);
+      }
+      return wasStopped;
     }
   }
-
 
   @Override
   public void autoImportReferenceAtCursor(@NotNull Editor editor, @NotNull PsiFile psiFile) {
@@ -977,7 +973,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     app.assertIsDispatchThread();
 
     // editors in modal context
-    List<Editor> editors = myEditorTracker.getActiveEditors();
+    List<? extends Editor> editors = myEditorTracker.getActiveEditors();
     Collection<FileEditor> activeTextEditors;
     if (editors.isEmpty()) {
       activeTextEditors = Collections.emptyList();
@@ -1020,16 +1016,6 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
       }
     }
     return result;
-  }
-
-  /**
-   * @deprecated Use {@link DaemonCodeAnalyzerImpl#serializeCodeInsightPasses(boolean)} instead
-   */
-  @Deprecated
-  @ApiStatus.Internal
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void runLocalInspectionPassAfterCompletionOfGeneralHighlightPass(boolean flag) {
-    serializeCodeInsightPasses(flag);
   }
 
   /**

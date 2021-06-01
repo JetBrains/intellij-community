@@ -1,9 +1,9 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
 import com.intellij.util.text.VersionComparatorUtil
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Version
-import com.jetbrains.packagesearch.intellij.plugin.version.looksLikeStableVersion
+import com.jetbrains.packagesearch.packageversionutils.PackageVersionUtils
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 
@@ -43,14 +43,14 @@ sealed class PackageVersion(
 
     companion object {
 
-        internal fun from(rawVersion: StandardV2Version): PackageVersion {
+        internal fun from(rawVersion: ApiStandardPackage.ApiStandardVersion): PackageVersion {
             if (rawVersion.version.isBlank()) return Missing
             return Named(rawVersion.version.trim(), rawVersion.stable)
         }
 
         fun from(rawVersion: String?): PackageVersion {
             if (rawVersion.isNullOrBlank()) return Missing
-            return Named(rawVersion.trim(), isStable = looksLikeStableVersion(rawVersion))
+            return Named(rawVersion.trim(), isStable = PackageVersionUtils.evaluateStability(rawVersion))
         }
     }
 }

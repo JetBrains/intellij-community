@@ -15,9 +15,7 @@ import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyInitReferenceSearchExecutor extends QueryExecutorBase<PsiReference, ReferencesSearch.SearchParameters> {
   @Override
   public void processQuery(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull Processor<? super PsiReference> consumer) {

@@ -24,14 +24,15 @@ import com.intellij.util.SmartList
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.getInstance
-import com.intellij.workspaceModel.ide.impl.jps.serialization.levelToLibraryTableId
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeModifiableBase
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridgeImpl
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -74,7 +75,7 @@ class ModifiableRootModelBridgeImpl(
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   private val extensionsDelegate = lazy {
-    RootModelBridgeImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
+    RootModelBridgeImpl.loadExtensions(storage = entityStorageOnDiff, module = module, diff = diff, writable = true,
                                        parentDisposable = extensionsDisposable)
       .filterNot { compilerModuleExtensionClass.isAssignableFrom(it.javaClass) }
   }
@@ -182,10 +183,10 @@ class ModifiableRootModelBridgeImpl(
     }
 
     diff.addContentRootEntity(
-        module = moduleEntity,
-        excludedUrls = emptyList(),
-        excludedPatterns = emptyList(),
-        url = virtualFileUrl
+      module = moduleEntity,
+      excludedUrls = emptyList(),
+      excludedPatterns = emptyList(),
+      url = virtualFileUrl
     )
 
     // TODO It's N^2 operations since we need to recreate contentEntries every time
@@ -234,13 +235,14 @@ class ModifiableRootModelBridgeImpl(
   }
 
   override fun addLibraryEntry(library: Library): LibraryOrderEntry {
-    val libraryId = if (library is LibraryBridge) library.libraryId else {
+    val libraryId = if (library is LibraryBridge) library.libraryId
+    else {
       val libraryName = library.name
       if (libraryName.isNullOrEmpty()) {
         error("Library name is null or empty: $library")
       }
 
-      LibraryId(libraryName, levelToLibraryTableId(library.table.tableLevel))
+      LibraryId(libraryName, LibraryNameGenerator.getLibraryTableId(library.table.tableLevel))
     }
 
     val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(
@@ -257,7 +259,7 @@ class ModifiableRootModelBridgeImpl(
 
   override fun addInvalidLibrary(name: String, level: String): LibraryOrderEntry {
     val libraryDependency = ModuleDependencyItem.Exportable.LibraryDependency(
-      library = LibraryId(name, levelToLibraryTableId(level)),
+      library = LibraryId(name, LibraryNameGenerator.getLibraryTableId(level)),
       exported = false,
       scope = ModuleDependencyItem.DependencyScope.COMPILE
     )
@@ -309,7 +311,7 @@ class ModifiableRootModelBridgeImpl(
     }
     else {
       mutableOrderEntries.add(position, newEntry)
-      for (i in position+1 until mutableOrderEntries.size) {
+      for (i in position + 1 until mutableOrderEntries.size) {
         mutableOrderEntries[i].updateIndex(i)
       }
     }
@@ -321,12 +323,12 @@ class ModifiableRootModelBridgeImpl(
     return newEntry
   }
 
-  internal fun removeDependencies(filter: (ModuleDependencyItem) -> Boolean) {
+  internal fun removeDependencies(filter: (Int, ModuleDependencyItem) -> Boolean) {
     val newDependencies = ArrayList<ModuleDependencyItem>()
     val newOrderEntries = ArrayList<OrderEntryBridge>()
     val oldDependencies = moduleEntity.dependencies
     for (i in oldDependencies.indices) {
-      if (!filter(oldDependencies[i])) {
+      if (!filter(i, oldDependencies[i])) {
         newDependencies.add(oldDependencies[i])
         val entryBridge = mutableOrderEntries[i]
         entryBridge.updateIndex(newOrderEntries.size)
@@ -372,11 +374,9 @@ class ModifiableRootModelBridgeImpl(
       moduleLibraryTable.removeLibrary(orderEntry.library as LibraryBridge)
     }
     else {
-      removeDependencies { it == item }
+      val itemIndex = entryImpl.currentIndex
+      removeDependencies { index, _ -> index == itemIndex }
     }
-
-    if (assertChangesApplied && mutableOrderEntries.any { it.item == item })
-      error("removeOrderEntry: removed order entry $item still exists after removing")
   }
 
   override fun rearrangeOrderEntries(newOrder: Array<out OrderEntry>) {
@@ -405,7 +405,7 @@ class ModifiableRootModelBridgeImpl(
     val currentSdk = sdk
     val jdkItem = currentSdk?.let { ModuleDependencyItem.SdkDependency(it.name, it.sdkType.name) }
     if (moduleEntity.dependencies != listOfNotNull(jdkItem, ModuleDependencyItem.ModuleSourceDependency)) {
-      removeDependencies { true }
+      removeDependencies { _, _ -> true }
       if (jdkItem != null) {
         appendDependency(jdkItem)
       }
@@ -430,6 +430,8 @@ class ModifiableRootModelBridgeImpl(
       val element = Element("component")
 
       for (extension in extensions) {
+        if (extension is ModuleExtensionBridge) continue
+
         extension.commit()
 
         if (extension is PersistentStateComponent<*>) {
@@ -497,7 +499,8 @@ class ModifiableRootModelBridgeImpl(
     val moduleDiff = module.diff
     if (moduleDiff != null) {
       moduleDiff.addDiff(diff)
-    } else {
+    }
+    else {
       WorkspaceModel.getInstance(project).updateProjectModel {
         it.addDiff(diff)
       }
@@ -515,7 +518,7 @@ class ModifiableRootModelBridgeImpl(
 
   override fun dispose() {
     disposeWithoutLibraries()
-    moduleLibraryTable.disposeLibraryCopies()
+    moduleLibraryTable.restoreLibraryMappingsAndDisposeCopies()
     Disposer.dispose(moduleLibraryTable)
   }
 
@@ -537,12 +540,14 @@ class ModifiableRootModelBridgeImpl(
       if (assertChangesApplied && sdkName != null) {
         error("setSdk: expected sdkName is null, but got: $sdkName")
       }
-    } else {
+    }
+    else {
       if (SdkOrderEntryBridge.findSdk(jdk.name, jdk.sdkType.name) == null) {
         if (ApplicationManager.getApplication().isUnitTestMode) {
           // TODO Fix all tests and remove this
           (ProjectJdkTable.getInstance() as ProjectJdkTableImpl).addTestJdk(jdk, project)
-        } else {
+        }
+        else {
           error("setSdk: sdk '${jdk.name}' type '${jdk.sdkType.name}' is not registered in ProjectJdkTable")
         }
       }
@@ -591,7 +596,7 @@ class ModifiableRootModelBridgeImpl(
   override fun isDisposed(): Boolean = modelIsCommittedOrDisposed
 
   private fun setSdkItem(item: ModuleDependencyItem?) {
-    removeDependencies { it is ModuleDependencyItem.InheritedSdkDependency || it is ModuleDependencyItem.SdkDependency }
+    removeDependencies { _, it -> it is ModuleDependencyItem.InheritedSdkDependency || it is ModuleDependencyItem.SdkDependency }
     if (item != null) {
       insertDependency(item, 0)
     }
@@ -653,6 +658,7 @@ class ModifiableRootModelBridgeImpl(
   override fun getSourceRoots(includingTests: Boolean): Array<VirtualFile> = currentModel.getSourceRoots(includingTests)
   override fun getSourceRoots(rootType: JpsModuleSourceRootType<*>): MutableList<VirtualFile> = currentModel.getSourceRoots(rootType)
   override fun getSourceRoots(rootTypes: MutableSet<out JpsModuleSourceRootType<*>>): MutableList<VirtualFile> = currentModel.getSourceRoots(rootTypes)
+
   override fun getContentRoots(): Array<VirtualFile> = currentModel.contentRoots
   override fun getContentRootUrls(): Array<String> = currentModel.contentRootUrls
   override fun getModuleDependencies(): Array<Module> = getModuleDependencies(true)

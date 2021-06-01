@@ -1,13 +1,27 @@
 <html>
 <body>
-Reports methods of which the body is contained in a single
-<b>synchronized</b> statement. The lock expression
-for this <b>synchronized</b> statement must be
-equal to <b>this</b> for instance methods
-or ClassName.<b>class</b> for static methods. In
+Reports methods which body is contained in a single
+<code>synchronized</code> statement. The lock expression
+for this <code>synchronized</code> statement must be
+equal to <code>this</code> for instance methods
+or ClassName.<code>class</code> for static methods. In
 such cases the synchronized statements may be replaced by their contents and the
-containing method marked <b>synchronized</b>.
+containing method marked as <code>synchronized</code>.
 <!-- tooltip end -->
+<p>Example: </p>
+<pre>
+  public int generateInt(int x) {
+    synchronized (this) {
+      return 1;
+    }
+  }
+</pre>
+<p>After applying the quick-fix the code looks as follows:</p>
+<pre>
+  public synchronized int generateInt(int x) {
+    return 1;
+  }
+</pre>
 <p>
 
 </body>

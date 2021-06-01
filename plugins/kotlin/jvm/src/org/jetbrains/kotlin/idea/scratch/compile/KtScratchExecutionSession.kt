@@ -1,13 +1,13 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch.compile
 
-import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.JavaCommandLineState
 import com.intellij.execution.process.CapturingProcessHandler
-import com.intellij.openapi.application.ModalityState
+import com.intellij.execution.target.TargetEnvironmentRequest
+import com.intellij.execution.target.TargetProgressIndicatorAdapter
+import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.module.Module
@@ -17,11 +17,8 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.NonUrgentExecutor
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.core.KotlinCompilerIde
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.scratch.LOG
 import org.jetbrains.kotlin.idea.scratch.ScratchExpression
@@ -29,7 +26,8 @@ import org.jetbrains.kotlin.idea.scratch.ScratchFile
 import org.jetbrains.kotlin.idea.scratch.printDebugMessage
 import org.jetbrains.kotlin.idea.util.JavaParametersBuilder
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi.KtPsiFactory
 import java.io.File
 
 class KtScratchExecutionSession(
@@ -106,11 +104,13 @@ class KtScratchExecutionSession(
         }) ?: return
 
         try {
-            val commandLine = createCommandLine(psiFile, file.module, result.mainClassName, tempDir.path)
+            val (environmentRequest, commandLine) = createCommandLine(psiFile, file.module, result.mainClassName, tempDir.path)
+            val environment = environmentRequest.prepareEnvironment(TargetProgressIndicatorAdapter(indicator))
 
-            LOG.printDebugMessage(commandLine.commandLineString)
+            val commandLinePresentation = commandLine.getCommandPresentation(environment)
+            LOG.printDebugMessage(commandLinePresentation)
 
-            val processHandler = CapturingProcessHandler(commandLine)
+            val processHandler = CapturingProcessHandler(environment.createProcess(commandLine, indicator), null, commandLinePresentation)
             val executionResult = processHandler.runProcessWithProgressIndicator(indicator, TIMEOUT_MS)
             when {
                 executionResult.isTimeout -> {
@@ -148,7 +148,7 @@ class KtScratchExecutionSession(
         return tmpDir
     }
 
-    private fun createCommandLine(originalFile: KtFile, module: Module?, mainClassName: String, tempOutDir: String): GeneralCommandLine {
+    private fun createCommandLine(originalFile: KtFile, module: Module?, mainClassName: String, tempOutDir: String): Pair<TargetEnvironmentRequest, TargetedCommandLine> {
         val javaParameters = JavaParametersBuilder(originalFile.project)
             .withSdkFrom(module, true)
             .withMainClassName(mainClassName)
@@ -165,6 +165,9 @@ class KtScratchExecutionSession(
                 javaParameters.classPath.addAll(it.dependenciesClassPath.map { f -> f.absolutePath })
             }
 
-        return javaParameters.toCommandLine()
+        val wslConfiguration = JavaCommandLineState.checkCreateWslConfiguration(javaParameters.jdk)
+        val request = wslConfiguration?.createEnvironmentRequest(originalFile.project) ?: LocalTargetEnvironmentRequest()
+
+        return request to javaParameters.toCommandLine(request).build()
     }
 }

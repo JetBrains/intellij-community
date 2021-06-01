@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.statistics
 
@@ -12,14 +9,16 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.statistics.BuildSessionLogger
-import java.io.File
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.atomic.AtomicBoolean
 import org.jetbrains.kotlin.statistics.BuildSessionLogger.Companion.STATISTICS_FOLDER_NAME
 import org.jetbrains.kotlin.statistics.fileloggers.MetricsContainer
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.NumericalMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
+import java.io.File
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
 
@@ -224,8 +223,7 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
             result.add(path)
             result.addAll(currentState)
 
-            gradleUserDirs =
-                result.filter { filePath -> File(filePath).exists() }.take(MAXIMUM_USER_DIRS).toTypedArray()
+            gradleUserDirs = result.filter { filePath -> Path(filePath).exists() }.take(MAXIMUM_USER_DIRS).toTypedArray()
         }
     }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -20,7 +6,7 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
 import com.intellij.codeInsight.hint.QuestionAction;
 import com.intellij.codeInsight.intention.impl.AddSingleMemberStaticImportAction;
-import com.intellij.ide.util.PsiClassListCellRenderer;
+import com.intellij.ide.util.PsiClassRenderingInfo;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -28,6 +14,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts;
@@ -35,6 +23,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import org.jetbrains.annotations.NotNull;
@@ -152,71 +141,60 @@ public class StaticImportMethodQuestionAction<T extends PsiMember> implements Qu
         }
       };
 
-    final ListPopupImpl popup = new ListPopupImpl(project, step) {
-      final PopupListElementRenderer rightArrow = new PopupListElementRenderer(this);
-      @Override
-      protected ListCellRenderer getListElementRenderer() {
-        return new PsiElementListCellRenderer<T>() {
-          @Override
-          public String getElementText(T element) {
-            return getElementPresentableName(element);
-          }
-
-          @Override
-          public String getContainerText(final T element, final String name) {
-            return PsiClassListCellRenderer.getContainerTextStatic(element);
-          }
-
-          @Override
-          public int getIconFlags() {
-            return 0;
-          }
-
-          @Nullable
-          @Override
-          protected TextAttributes getNavigationItemAttributes(Object value) {
-            TextAttributes attrs = super.getNavigationItemAttributes(value);
-            if (value instanceof PsiDocCommentOwner && !((PsiDocCommentOwner)value).isDeprecated()) {
-              PsiClass psiClass = ((T)value).getContainingClass();
-              if (psiClass != null && psiClass.isDeprecated()) {
-                return TextAttributes.merge(attrs, super.getNavigationItemAttributes(psiClass));
-              }
-            }
-            return attrs;
-          }
-
-          @Override
-          protected DefaultListCellRenderer getRightCellRenderer(final Object value) {
-            final DefaultListCellRenderer moduleRenderer = super.getRightCellRenderer(value);
-            return new DefaultListCellRenderer(){
-              @Override
-              public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                JPanel panel = new JPanel(new BorderLayout());
-                if (moduleRenderer != null) {
-                  Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                  if (!isSelected) {
-                    moduleComponent.setBackground(getBackgroundColor(value));
-                  }
-                  panel.add(moduleComponent, BorderLayout.CENTER);
-                }
-                rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                Component rightArrowComponent = rightArrow.getNextStepLabel();
-                panel.add(rightArrowComponent, BorderLayout.EAST);
-                return panel;
-              }
-            };
-          }
-        };
-      }
-    };
+    final JBPopup popup = JBPopupFactory.getInstance().createListPopup(project, step, (superRenderer) -> {
+      final GroupedItemsListRenderer<T> rightArrow = (GroupedItemsListRenderer<T>)superRenderer;
+      final StaticMemberRenderer psiRenderer = new StaticMemberRenderer();
+      return new ListCellRenderer<T>() {
+        @Override
+        public Component getListCellRendererComponent(JList<? extends T> list,
+                                                      T value,
+                                                      int index,
+                                                      boolean isSelected,
+                                                      boolean cellHasFocus) {
+          JPanel panel = new JPanel(new BorderLayout());
+          Component psiRendererComponent = psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+          JLabel arrowLabel = rightArrow.getNextStepLabel();
+          arrowLabel.setBackground(psiRendererComponent.getBackground());
+          panel.setBackground(psiRendererComponent.getBackground());
+          panel.add(psiRendererComponent, BorderLayout.CENTER);
+          panel.add(arrowLabel, BorderLayout.EAST);
+          return panel;
+        }
+      };
+    });
     popup.showInBestPositionFor(editor);
   }
 
-  private @NlsSafe String getElementPresentableName(T element) {
+  private static final class StaticMemberRenderer extends PsiElementListCellRenderer<PsiMember> {
+
+    @Override
+    public String getElementText(PsiMember element) {
+      return getElementPresentableName(element);
+    }
+
+    @Override
+    public String getContainerText(final PsiMember element, final String name) {
+      return PsiClassRenderingInfo.getContainerTextStatic(element);
+    }
+
+    @Nullable
+    @Override
+    protected TextAttributes getNavigationItemAttributes(Object value) {
+      TextAttributes attrs = super.getNavigationItemAttributes(value);
+      if (value instanceof PsiDocCommentOwner && !((PsiDocCommentOwner)value).isDeprecated()) {
+        PsiClass psiClass = ((PsiMember)value).getContainingClass();
+        if (psiClass != null && psiClass.isDeprecated()) {
+          return TextAttributes.merge(attrs, super.getNavigationItemAttributes(psiClass));
+        }
+      }
+      return attrs;
+    }
+  }
+
+  private static @NlsSafe String getElementPresentableName(PsiMember element) {
     final PsiClass aClass = element.getContainingClass();
     LOG.assertTrue(aClass != null);
     return ClassPresentationUtil.getNameForClass(aClass, false) + "." + element.getName();
   }
 }
-
-

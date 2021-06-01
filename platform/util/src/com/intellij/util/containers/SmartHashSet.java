@@ -1,20 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashSet;
-import gnu.trove.TObjectProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.HashSet;
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.stream.Stream;
 
 /**
- * Hash set (based on THashSet) which is fast when contains one or zero elements (avoids to calculate hash codes and call equals whenever possible).
+ * Hash set which is fast when contains one or zero elements (avoids to calculate hash codes and call equals whenever possible).
  * For other sizes it delegates to THashSet.
  * Null keys are NOT PERMITTED.
  */
-public final class SmartHashSet<T> extends THashSet<T> {
+public final class SmartHashSet<T> extends HashSet<T> {
   private T theElement; // contains the only element if size() == 1
 
   public SmartHashSet() {
@@ -34,7 +35,7 @@ public final class SmartHashSet<T> extends THashSet<T> {
       T element = collection.iterator().next();
       //noinspection ConstantConditions
       if (element == null) {
-        throw new IllegalArgumentException("Null elements are not permitted but got: "+collection);
+        throw new IllegalArgumentException("Null elements are not permitted but got: " + collection);
       }
       theElement = element;
     }
@@ -44,7 +45,7 @@ public final class SmartHashSet<T> extends THashSet<T> {
   public boolean contains(@NotNull Object obj) {
     T theElement = this.theElement;
     if (theElement != null) {
-      return eq(theElement, (T)obj);
+      return Objects.equals(obj, theElement);
     }
     return !super.isEmpty() && super.contains(obj);
   }
@@ -53,27 +54,28 @@ public final class SmartHashSet<T> extends THashSet<T> {
   public boolean add(@NotNull T obj) {
     T theElement = this.theElement;
     if (theElement != null) {
-      if (eq(theElement, obj)) return false;
-      super.add(theElement);
+      if (Objects.equals(obj, theElement)) {
+        return false;
+      }
+
+      super.add(this.theElement);
       this.theElement = null;
-      // fallthrough
+      return super.add(obj);
     }
     else if (super.isEmpty()) {
       this.theElement = obj;
       return true;
     }
-    return super.add(obj);
-  }
-
-  private boolean eq(T obj, T theElement) {
-    return theElement == obj || _hashingStrategy.equals(theElement, obj);
+    else {
+      return super.add(obj);
+    }
   }
 
   @Override
   public boolean equals(@Nullable Object other) {
     T theElement = this.theElement;
     if (theElement != null) {
-      return other instanceof Set && ((Set<?>)other).size() == 1 && eq(theElement, ((Set<T>)other).iterator().next());
+      return other instanceof Set && ((Set<?>)other).size() == 1 && Objects.equals(((Set<?>)other).iterator().next(), theElement);
     }
 
     return super.equals(other);
@@ -82,10 +84,7 @@ public final class SmartHashSet<T> extends THashSet<T> {
   @Override
   public int hashCode() {
     T theElement = this.theElement;
-    if (theElement != null) {
-      return _hashingStrategy.computeHashCode(theElement);
-    }
-    return super.hashCode();
+    return theElement == null ? super.hashCode() : theElement.hashCode();
   }
 
   @Override
@@ -96,10 +95,7 @@ public final class SmartHashSet<T> extends THashSet<T> {
 
   @Override
   public int size() {
-    if (theElement != null) {
-      return 1;
-    }
-    return super.size();
+    return theElement == null ? super.size() : 1;
   }
 
   @Override
@@ -110,74 +106,90 @@ public final class SmartHashSet<T> extends THashSet<T> {
   @Override
   public boolean remove(@NotNull Object obj) {
     T theElement = this.theElement;
-    if (theElement != null) {
-      if (eq(theElement, (T)obj)) {
-        this.theElement = null;
-        return true;
+    if (theElement == null) {
+      return super.remove(obj);
+    }
+
+    if (Objects.equals(obj, theElement)) {
+      this.theElement = null;
+      return true;
+    }
+    return false;
+  }
+
+  @Override
+  public @NotNull Iterator<T> iterator() {
+    if (theElement == null) {
+      return super.iterator();
+    }
+
+    return new SingletonIteratorBase<T>() {
+      @Override
+      protected void checkCoModification() {
+        if (theElement == null) {
+          throw new ConcurrentModificationException();
+        }
       }
-      return false;
-    }
-    return super.remove(obj);
-  }
 
-  @NotNull
-  @Override
-  public Iterator<T> iterator() {
-    if (theElement != null) {
-      return new SingletonIteratorBase<T>() {
-        @Override
-        protected void checkCoModification() {
-          if (theElement == null) {
-            throw new ConcurrentModificationException();
-          }
-        }
+      @Override
+      protected T getElement() {
+        return theElement;
+      }
 
-        @Override
-        protected T getElement() {
-          return theElement;
-        }
-
-        @Override
-        public void remove() {
-          checkCoModification();
-          clear();
-        }
-      };
-    }
-    return super.iterator();
+      @Override
+      public void remove() {
+        checkCoModification();
+        clear();
+      }
+    };
   }
 
   @Override
-  public boolean forEach(@NotNull TObjectProcedure<T> procedure) {
+  public void forEach(Consumer<? super T> action) {
     T theElement = this.theElement;
-    if (theElement != null) {
-      return procedure.execute(theElement);
+    if (theElement == null) {
+      super.forEach(action);
     }
-    return super.forEach(procedure);
+    else {
+      action.accept(theElement);
+    }
   }
 
   @Override
   public Object @NotNull [] toArray() {
     T theElement = this.theElement;
-    if (theElement != null) {
-      return new Object[]{theElement};
+    if (theElement == null) {
+      return super.toArray();
     }
-    return super.toArray();
+    return new Object[]{theElement};
   }
 
   @Override
-  public <T> T @NotNull [] toArray(T @NotNull [] a) {
-    T theElement = (T)this.theElement;
-    if (theElement != null) {
-      if (a.length == 0) {
-        a = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
-      }
-      a[0] = theElement;
-      if (a.length > 1) {
-        a[1] = null;
-      }
-      return a;
+  public <O> O @NotNull [] toArray(O @NotNull [] a) {
+    @SuppressWarnings("unchecked")
+    O theElement = (O)this.theElement;
+    if (theElement == null) {
+      //noinspection SuspiciousToArrayCall
+      return super.toArray(a);
     }
-    return super.toArray(a);
+
+    if (a.length == 0) {
+      a = ArrayUtil.newArray(ArrayUtil.getComponentType(a), 1);
+    }
+    a[0] = theElement;
+    if (a.length > 1) {
+      a[1] = null;
+    }
+    return a;
+  }
+
+  @Override
+  public Stream<T> stream() {
+    return theElement == null ? super.stream() : Stream.of(theElement);
+  }
+
+  @Override
+  public Spliterator<T> spliterator() {
+    return theElement == null ? super.spliterator() : Stream.of(theElement).spliterator();
   }
 }

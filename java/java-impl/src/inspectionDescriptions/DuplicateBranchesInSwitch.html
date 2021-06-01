@@ -1,9 +1,8 @@
 <html>
 <body>
-Reports <code>switch</code> statements or expressions containing the same code in different branches
-and suggests to merge the duplicate branches.
-<p>
-For example:
+Reports <code>switch</code> statements or expressions that contain the same code in different branches
+and suggests merging the duplicate branches.
+<p>Example:</p>
 <pre><code>
   <b>switch</b> (n) {
     <b>case</b> 1:
@@ -16,7 +15,7 @@ For example:
       System.out.println("default");
   }
 </code></pre>
-Can be replaced with:
+<p>Can be replaced with:</p>
 <pre><code>
   <b>switch</b> (n) {
     <b>case</b> 1:

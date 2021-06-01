@@ -75,7 +75,7 @@ public class ComparatorResultComparisonInspection extends AbstractBaseJavaLocalI
       }
 
       private boolean coversPartially(LongRangeSet testedRange, LongRangeSet coveredRange) {
-        LongRangeSet intersection = testedRange.intersect(coveredRange);
+        LongRangeSet intersection = testedRange.meet(coveredRange);
         return !intersection.isEmpty() && !coveredRange.subtract(intersection).isEmpty();
       }
 

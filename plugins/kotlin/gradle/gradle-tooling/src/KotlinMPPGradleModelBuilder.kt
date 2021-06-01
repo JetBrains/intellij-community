@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.gradle
 
@@ -724,7 +721,8 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService {
         val abstractKotlinCompileClass =
             compileKotlinTask.javaClass.classLoader.loadClass(AbstractKotlinGradleModelBuilder.ABSTRACT_KOTLIN_COMPILE_CLASS)
         val getCompileClasspath =
-            abstractKotlinCompileClass.getDeclaredMethodOrNull("getCompileClasspath") ?: return emptyList()
+            abstractKotlinCompileClass.getDeclaredMethodOrNull("getCompileClasspath") ?:
+            abstractKotlinCompileClass.getDeclaredMethodOrNull("getClasspath") ?: return emptyList()
         @Suppress("UNCHECKED_CAST")
         return (getCompileClasspath(compileKotlinTask) as? Collection<File>)?.map { it.path } ?: emptyList()
     }

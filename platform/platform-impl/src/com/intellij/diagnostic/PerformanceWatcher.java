@@ -1,10 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
 import com.intellij.execution.process.OSProcessUtil;
 import com.intellij.featureStatistics.fusCollectors.LifecycleUsageTriggerCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
+import com.intellij.internal.statistic.utils.PluginInfo;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -23,6 +25,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.management.ThreadInfo;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
 import java.util.Date;
@@ -100,19 +104,21 @@ public final class PerformanceWatcher implements Disposable {
   }
 
   private static void reportCrashesIfAny() {
-    File systemDir = new File(PathManager.getSystemPath());
+    Path systemDir = Path.of(PathManager.getSystemPath());
     try {
-      File appInfoFile = new File(systemDir, IdeaFreezeReporter.APPINFO_FILE_NAME);
-      File pidFile = new File(systemDir, PID_FILE_NAME);
+      Path appInfoFile = systemDir.resolve(IdeaFreezeReporter.APPINFO_FILE_NAME);
+      Path pidFile = systemDir.resolve(PID_FILE_NAME);
       // TODO: check jre in app info, not the current
       // Only report if on JetBrains jre
-      if (SystemInfo.isJetBrainsJvm && appInfoFile.isFile() && pidFile.isFile()) {
-        String pid = FileUtil.loadFile(pidFile);
-        File[] crashFiles = new File(SystemProperties.getUserHome())
-          .listFiles(file -> file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile());
+      if (SystemInfo.isJetBrainsJvm && Files.isRegularFile(appInfoFile) && Files.isRegularFile(pidFile)) {
+        String pid = Files.readString(pidFile);
+        File[] crashFiles = new File(SystemProperties.getUserHome()).listFiles(file -> {
+          return file.getName().startsWith("java_error_in") && file.getName().endsWith(pid + ".log") && file.isFile();
+        });
         if (crashFiles != null) {
+          long appInfoFileLastModified = Files.getLastModifiedTime(appInfoFile).toMillis();
           for (File file : crashFiles) {
-            if (file.lastModified() > appInfoFile.lastModified()) {
+            if (file.lastModified() > appInfoFileLastModified) {
               if (file.length() > 5 * FileUtilRt.MEGABYTE) {
                 LOG.info("Crash file " + file + " is too big to report");
                 break;
@@ -124,10 +130,21 @@ public final class PerformanceWatcher implements Disposable {
               }
               Attachment attachment = new Attachment("crash.txt", content);
               attachment.setIncluded(true);
-              Attachment[] attachments = new Attachment[]{attachment};
+
+              // include plugins list
+              String plugins = StreamEx.of(PluginManagerCore.getLoadedPlugins())
+                .filter(d -> d.isEnabled() && !d.isBundled())
+                .map(PluginInfoDetectorKt::getPluginInfoByDescriptor)
+                .filter(PluginInfo::isSafeToReport)
+                .map(i -> i.getId() + " (" + i.getVersion() + ")")
+                .joining("\n", "Extra plugins:\n", "");
+              Attachment pluginsAttachment = new Attachment("plugins.txt", plugins);
+              attachment.setIncluded(true);
+
+              Attachment[] attachments = new Attachment[]{attachment, pluginsAttachment};
 
               // look for extended crash logs
-              File extraLog = findExtraLogFile(pid, appInfoFile.lastModified());
+              File extraLog = findExtraLogFile(pid, appInfoFileLastModified);
               if (extraLog != null) {
                 Attachment extraAttachment = new Attachment("jbr_err.txt", FileUtil.loadFile(extraLog));
                 extraAttachment.setIncluded(true);
@@ -136,7 +153,7 @@ public final class PerformanceWatcher implements Disposable {
 
               String message = StringUtil.substringBefore(content, "---------------  P R O C E S S  ---------------");
               IdeaLoggingEvent event = LogMessage.createEvent(new JBRCrash(), message, attachments);
-              IdeaFreezeReporter.setAppInfo(event, FileUtil.loadFile(appInfoFile));
+              IdeaFreezeReporter.setAppInfo(event, Files.readString(appInfoFile));
               IdeaFreezeReporter.report(event);
               LifecycleUsageTriggerCollector.onCrashDetected();
               break;
@@ -144,8 +161,10 @@ public final class PerformanceWatcher implements Disposable {
           }
         }
       }
-      IdeaFreezeReporter.saveAppInfo(systemDir, true);
-      FileUtil.writeToFile(new File(systemDir, PID_FILE_NAME), OSProcessUtil.getApplicationPid());
+
+      IdeaFreezeReporter.saveAppInfo(appInfoFile, true);
+      Files.createDirectories(pidFile.getParent());
+      Files.writeString(pidFile, OSProcessUtil.getApplicationPid());
     }
     catch (IOException e) {
       LOG.info(e);

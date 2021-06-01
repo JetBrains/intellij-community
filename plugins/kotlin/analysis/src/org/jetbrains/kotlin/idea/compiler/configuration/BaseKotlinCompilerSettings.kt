@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.compiler.configuration
 
@@ -15,7 +12,6 @@ import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilterBase
 import com.intellij.util.xmlb.XmlSerializer
-import gnu.trove.THashMap
 import org.jdom.Element
 import org.jetbrains.kotlin.cli.common.arguments.*
 import org.jetbrains.kotlin.idea.syncPublisherWithDisposeCheck
@@ -25,7 +21,7 @@ abstract class BaseKotlinCompilerSettings<T : Freezable> protected constructor(p
     PersistentStateComponent<Element>, Cloneable {
     // Based on com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters
     private object DefaultValuesFilter : SerializationFilterBase() {
-        private val defaultBeans = THashMap<Class<*>, Any>()
+        private val defaultBeans = HashMap<Class<*>, Any>()
 
         private fun createDefaultBean(beanClass: Class<Any>): Any {
             return ReflectionUtil.newInstance<Any>(beanClass).apply {

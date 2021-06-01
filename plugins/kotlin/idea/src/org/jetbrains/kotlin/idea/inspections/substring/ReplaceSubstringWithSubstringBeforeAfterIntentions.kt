@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections.substring
 
@@ -14,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtExpression
 
 class ReplaceSubstringWithSubstringAfterInspection : ReplaceSubstringInspection() {
     override fun inspectionText(element: KtDotQualifiedExpression): String =
-        KotlinBundle.message("replace.substring.call.with.substringafter.call")
+        KotlinBundle.message("inspection.replace.substring.with.substring.after.display.name")
 
     override val defaultFixText: String get() = KotlinBundle.message("replace.substring.call.with.substringafter.call")
 
@@ -33,7 +30,7 @@ class ReplaceSubstringWithSubstringAfterInspection : ReplaceSubstringInspection(
 
 class ReplaceSubstringWithSubstringBeforeInspection : ReplaceSubstringInspection() {
     override fun inspectionText(element: KtDotQualifiedExpression): String =
-        KotlinBundle.message("replace.substring.call.with.substringbefore.call")
+        KotlinBundle.message("inspection.replace.substring.with.substring.before.display.name")
 
     override val defaultFixText: String get() = KotlinBundle.message("replace.substring.call.with.substringbefore.call")
 

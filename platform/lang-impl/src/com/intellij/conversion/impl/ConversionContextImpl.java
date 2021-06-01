@@ -19,8 +19,8 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.PathUtil;
@@ -277,7 +277,7 @@ public final class ConversionContextImpl implements ConversionContext {
   private @NotNull ExpandMacroToPathMap createExpandMacroMap(@Nullable ComponentManagerSettings moduleSettings) {
     ExpandMacroToPathMap map = createExpandMacroMap();
     if (moduleSettings != null) {
-      String modulePath = FileUtil.toSystemIndependentName(moduleSettings.getPath().getParent().toAbsolutePath().toString());
+      String modulePath = FileUtilRt.toSystemIndependentName(moduleSettings.getPath().getParent().toAbsolutePath().toString());
       map.addMacroExpand(PathMacroUtil.MODULE_DIR_MACRO_NAME, modulePath);
     }
     return map;
@@ -287,23 +287,23 @@ public final class ConversionContextImpl implements ConversionContext {
   @NotNull
   public String expandPath(@NotNull String path) {
     ExpandMacroToPathMap map = createExpandMacroMap(null);
-    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
+    return map.substitute(path, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   @Override
   public @NotNull String collapsePath(@NotNull String path) {
     ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.PROJECT_DIR_MACRO_NAME, myProjectBaseDir);
-    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
+    return map.substitute(path, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   public static String collapsePath(@NotNull String path, @NotNull ComponentManagerSettings moduleSettings) {
     ReplacePathToMacroMap map = createCollapseMacroMap(PathMacroUtil.MODULE_DIR_MACRO_NAME, moduleSettings.getPath().getParent());
-    return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
+    return map.substitute(path, SystemInfoRt.isFileSystemCaseSensitive);
   }
 
   private static ReplacePathToMacroMap createCollapseMacroMap(final String macroName, @NotNull Path dir) {
     ReplacePathToMacroMap map = new ReplacePathToMacroMap();
-    map.addMacroReplacement(FileUtil.toSystemIndependentName(dir.toAbsolutePath().toString()), macroName);
+    map.addMacroReplacement(FileUtilRt.toSystemIndependentName(dir.toAbsolutePath().toString()), macroName);
     PathMacrosImpl.getInstanceEx().addMacroReplacements(map);
     return map;
   }
@@ -412,7 +412,7 @@ public final class ConversionContextImpl implements ConversionContext {
 
   private ExpandMacroToPathMap createExpandMacroMap() {
     final ExpandMacroToPathMap macros = new ExpandMacroToPathMap();
-    final String projectDir = FileUtil.toSystemIndependentName(myProjectBaseDir.toAbsolutePath().toString());
+    final String projectDir = FileUtilRt.toSystemIndependentName(myProjectBaseDir.toAbsolutePath().toString());
     macros.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, projectDir);
     PathMacrosImpl.getInstanceEx().addMacroExpands(macros);
     return macros;

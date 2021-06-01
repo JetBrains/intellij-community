@@ -380,8 +380,8 @@ public final class HighlightManagerImpl extends HighlightManager {
 
   private class MyAnActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull final DataContext dataContext, @NotNull AnActionEvent event) {
-      requestHideHighlights(dataContext);
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
+      requestHideHighlights(event.getDataContext());
     }
 
     @Override

@@ -4,6 +4,7 @@ package com.intellij.openapi.editor.impl;
 import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.MergingCharSequence;
@@ -118,8 +119,8 @@ public final class LineSet {
                        Math.max(patch.myStarts.length - 1, 0) +
                        (addEndLine ? 1 : 0) + Math.max(myStarts.length - endLine - 1, 0);
 
-    int[] starts = new int[newLineCount];
-    byte[] flags = new byte[newLineCount];
+    int[] starts = ArrayUtil.newIntArray(newLineCount);
+    byte[] flags = ArrayUtil.newByteArray(newLineCount);
 
     if (startLine > 0) {
       System.arraycopy(myStarts, 0, starts, 0, startLine);

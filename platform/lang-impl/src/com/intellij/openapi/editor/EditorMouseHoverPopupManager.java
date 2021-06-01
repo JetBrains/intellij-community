@@ -936,13 +936,13 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
   private static class MyActionListener implements AnActionListener {
     @Override
-    public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
       if (action instanceof HintManagerImpl.ActionToIgnore) {
         return;
       }
       AbstractPopup currentHint = getInstance().getCurrentHint();
       if (currentHint != null) {
-        Component contextComponent = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+        Component contextComponent = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
         JBPopup contextPopup = PopupUtil.getPopupContainerFor(contextComponent);
         if (contextPopup == currentHint) {
           return;

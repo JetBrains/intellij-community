@@ -6,10 +6,6 @@ import com.intellij.build.SyncViewManager;
 import com.intellij.configurationStore.SettingsSavingComponentJavaAdapter;
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.ide.startup.StartupManagerEx;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -23,17 +19,14 @@ import com.intellij.openapi.externalSystem.service.project.autoimport.ExternalSy
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
@@ -44,7 +37,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.ui.navigation.Place;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.NullableConsumer;
@@ -53,8 +45,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.Update;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,7 +70,6 @@ import org.jetbrains.idea.maven.tasks.MavenShortcutsManager;
 import org.jetbrains.idea.maven.tasks.MavenTasksManager;
 import org.jetbrains.idea.maven.utils.*;
 
-import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -89,8 +78,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static org.jetbrains.idea.maven.utils.MavenUtil.MAVEN_NOTIFICATION_GROUP;
 
 @State(name = "MavenProjectsManager")
 public final class MavenProjectsManager extends MavenSimpleProjectComponent
@@ -352,7 +339,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void applyTreeToState() {
     myState.originalFiles = myProjectsTree.getManagedFilesPaths();
-    myState.ignoredFiles = new THashSet<>(myProjectsTree.getIgnoredFilesPaths());
+    myState.ignoredFiles = new HashSet<>(myProjectsTree.getIgnoredFilesPaths());
     myState.ignoredPathMasks = myProjectsTree.getIgnoredFilesPatterns();
   }
 
@@ -463,7 +450,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         }
 
         // resolve updated, theirs dependents, and dependents of deleted
-        Set<MavenProject> toResolve = new THashSet<>(updatedProjects);
+        Set<MavenProject> toResolve = new HashSet<>(updatedProjects);
         toResolve.addAll(myProjectsTree.getDependentProjects(ContainerUtil.concat(updatedProjects, deleted)));
 
         // do not try to resolve projects with syntactic errors
@@ -844,7 +831,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public Set<MavenRemoteRepository> getRemoteRepositories() {
-    Set<MavenRemoteRepository> result = new THashSet<>();
+    Set<MavenRemoteRepository> result = new HashSet<>();
     for (MavenProject each : getProjects()) {
       result.addAll(each.getRemoteRepositories());
     }
@@ -1338,7 +1325,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private Map<VirtualFile, Module> getFileToModuleMapping(MavenModelsProvider modelsProvider) {
-    Map<VirtualFile, Module> result = new THashMap<>();
+    Map<VirtualFile, Module> result = new HashMap<>();
     for (Module each : modelsProvider.getModules()) {
       VirtualFile f = findPomFile(each, modelsProvider);
       if (f != null) result.put(f, each);

@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
 import com.intellij.concurrency.JobScheduler
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.DefaultLogger
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.ApplicationRule
@@ -358,8 +357,9 @@ class AsyncPromiseTest {
   fun testExceptionInsideComputationIsLogged() {
     val loggedError = AtomicBoolean()
     LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-      override fun processError(message: String?, t: Throwable?, details: Array<out String>?, logger: org.apache.log4j.Logger) {
+      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
         loggedError.set(true)
+        return false
       }
     })
 

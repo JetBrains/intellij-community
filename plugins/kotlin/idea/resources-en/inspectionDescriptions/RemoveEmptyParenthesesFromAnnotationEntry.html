@@ -1,14 +1,24 @@
 <html>
 <body>
-This inspection reports unnecessary parentheses in annotation entries. For example:
-<br /><br />
-<pre>
-annotation class MyAnnotation
+Reports unnecessary parentheses in annotation entries.
+<p>'Remove unnecessary parentheses' quick-fix can be used to clean up the code.</p>
+<p>Examples:</p>
+<pre><code>
+annotation class MyAnnotationA
+annotation class MyAnnotationB(val x: Int)
+annotation class MyAnnotationC(val x: Int = 10) // default value is present
 
-@MyAnnotation<b>()</b> // There parentheses can be omitted
-fun test() {
-
+@MyAnnotationA() // &lt;== parentheses are redundant
+fun testA() {
 }
-</pre>
+
+@MyAnnotationB() // &lt;== missing argument, parentheses are required
+fun testB() {
+}
+
+@MyAnnotationC() // &lt;== parentheses are redundant
+fun testC() {
+}
+</code></pre>
 </body>
 </html>

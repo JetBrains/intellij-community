@@ -13,7 +13,6 @@ import com.intellij.ide.structureView.StructureViewBuilder
 import com.intellij.ide.structureView.impl.java.JavaAnonymousClassesNodeProvider
 import com.intellij.ide.structureView.newStructureView.StructureViewComponent
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
@@ -198,7 +197,12 @@ class IdeaDecompilerTest : LightJavaCodeInsightFixtureTestCase() {
         println(file.path)
       }
       else if (file.fileType === JavaClassFileType.INSTANCE && !file.name.contains('$')) {
-        val decompiled = (psiManager.findFile(file)!! as ClsFileImpl).mirror.text
+        val psiFile = psiManager.findFile(file)!!
+        if (psiFile !is ClsFileImpl) {
+          assertTrue("Psi file for ${file.name} should be an instance of ${ClsFileImpl::javaClass.name}", psiFile is ClsFileImpl)
+          return true
+        }
+        val decompiled = psiFile.mirror.text
         assertTrue(file.path, decompiled.startsWith(IdeaDecompiler.BANNER) || file.name.endsWith("-info.class"))
 
         // check that no mapped line number is on an empty line

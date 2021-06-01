@@ -187,7 +187,7 @@ final class FileBasedIndexDataInitialization extends IndexDataInitializer<IndexC
     }
 
     NotificationGroupManager.getInstance().getNotificationGroup("Indexing")
-      .createNotification(IndexingBundle.message("index.rebuild.notification.title"), rebuildNotification, NotificationType.INFORMATION, null)
+      .createNotification(IndexingBundle.message("index.rebuild.notification.title"), rebuildNotification, NotificationType.INFORMATION)
       .notify(null);
   }
 

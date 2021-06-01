@@ -3,11 +3,14 @@ package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.DfaExpressionFactory;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaValueFactory;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.*;
-import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.codeInspection.dataFlow.value.DfaTypeValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
+import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
@@ -19,10 +22,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * A descriptor that represents an array element with fixed index
  */
-public final class ArrayElementDescriptor implements VariableDescriptor {
+public final class ArrayElementDescriptor extends JvmVariableDescriptor {
   private final int myIndex;
 
-  public ArrayElementDescriptor(int index) {
+  private ArrayElementDescriptor(int index) {
     myIndex = index;
   }
 
@@ -110,6 +113,12 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
   public static @NotNull DfaValue getArrayElementValue(@NotNull DfaValueFactory factory,
                                                        @Nullable DfaValue array,
                                                        @NotNull LongRangeSet indexSet) {
+    if (array instanceof DfaTypeValue) {
+      PsiVariable var = array.getDfType().getConstantOfType(PsiVariable.class);
+      if (var != null) {
+        array = new PlainDescriptor(var).createValue(factory, null);
+      }
+    }
     if (!(array instanceof DfaVariableValue)) return factory.getUnknown();
     if (indexSet.isEmpty()) return factory.getUnknown();
     long min = indexSet.min();
@@ -125,7 +134,7 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
     DfType targetType = TypeConstraint.fromDfType(arrayType).getArrayComponentType();
     PsiExpression[] elements = ExpressionUtils.getConstantArrayElements(arrayPsiVar);
     if (elements == null || elements.length == 0) return factory.getUnknown();
-    indexSet = indexSet.intersect(LongRangeSet.range(0, elements.length - 1));
+    indexSet = indexSet.meet(LongRangeSet.range(0, elements.length - 1));
     if (indexSet.isEmpty() || indexSet.isCardinalityBigger(100)) return factory.getUnknown();
     return LongStreamEx.of(indexSet.stream())
       .mapToObj(idx -> getAdvancedExpressionDfaValue(factory, elements[(int)idx], targetType))
@@ -140,8 +149,11 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
                                                         @Nullable PsiExpression expression,
                                                         @NotNull DfType targetType) {
     if (expression == null) return factory.getUnknown();
-    DfaValue value = DfaExpressionFactory.getExpressionDfaValue(factory, expression);
+    DfaValue value = JavaDfaValueFactory.getExpressionDfaValue(factory, expression);
     if (value != null) {
+      if (value instanceof DfaVariableValue) {
+        value = factory.fromDfType(value.getDfType());
+      }
       return DfaUtil.boxUnbox(value, targetType);
     }
     if (expression instanceof PsiConditionalExpression) {
@@ -151,7 +163,7 @@ public final class ArrayElementDescriptor implements VariableDescriptor {
     PsiType type = expression.getType();
     if (expression instanceof PsiArrayInitializerExpression) {
       int length = ((PsiArrayInitializerExpression)expression).getInitializers().length;
-      return factory.fromDfType(JvmSpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length))
+      return factory.fromDfType(SpecialField.ARRAY_LENGTH.asDfType(DfTypes.intValue(length))
                                   .meet(DfTypes.typedObject(type, Nullability.NOT_NULL)));
     }
     DfType dfType = DfTypes.typedObject(type, NullabilityUtil.getExpressionNullability(expression));

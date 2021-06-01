@@ -92,7 +92,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   @Override
   public void stopKillRings() {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Kill ring reset", new Throwable());
+      LOG.debug("Kill ring reset");
     }
     doStopKillRings();
   }
@@ -100,7 +100,7 @@ public class CopyPasteManagerEx extends CopyPasteManager implements ClipboardOwn
   @Override
   public void stopKillRings(@NotNull Document document) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Kill ring reset for " + document, new Throwable());
+      LOG.debug("Kill ring reset for " + document);
     }
     if (!myData.isEmpty()) {
       Transferable top = myData.get(0);

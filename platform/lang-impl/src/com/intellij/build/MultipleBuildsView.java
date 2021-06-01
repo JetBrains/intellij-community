@@ -159,6 +159,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         if (contentDescriptor != null) {
           buildInfo.setActivateToolWindowWhenAdded(contentDescriptor.isActivateToolWindowWhenAdded());
           if (contentDescriptor instanceof BuildContentDescriptor) {
+            buildInfo.setNavigateToError(((BuildContentDescriptor)contentDescriptor).isNavigateToError());
             buildInfo.setActivateToolWindowWhenFailed(((BuildContentDescriptor)contentDescriptor).isActivateToolWindowWhenFailed());
           }
           buildInfo.setAutoFocusContent(contentDescriptor.isAutoFocusContent());

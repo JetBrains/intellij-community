@@ -5,6 +5,7 @@ import com.intellij.application.options.colors.InspectionColorSettingsPage;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeveritiesProvider;
 import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.template.impl.TemplateColors;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.editor.HighlighterColors;
@@ -164,6 +165,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.soft.wrap.sign"), EditorColors.SOFT_WRAP_SIGN_COLOR, ColorDescriptor.Kind.FOREGROUND),
 
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.documentation"), EditorColors.DOCUMENTATION_COLOR, ColorDescriptor.Kind.BACKGROUND),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.lookup"), Lookup.LOOKUP_COLOR, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.information"), HintUtil.INFORMATION_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.question"), HintUtil.QUESTION_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.popups.error"), HintUtil.ERROR_COLOR_KEY, ColorDescriptor.Kind.BACKGROUND),

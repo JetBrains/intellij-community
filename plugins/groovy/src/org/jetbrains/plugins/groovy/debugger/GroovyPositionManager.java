@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.debugger;
 
@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.DebugProcess;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.PositionManagerImpl;
 import com.intellij.debugger.engine.jdi.VirtualMachineProxy;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.requests.ClassPrepareRequestor;
 import com.intellij.openapi.application.ReadAction;
@@ -72,8 +73,8 @@ public class GroovyPositionManager implements PositionManager {
       }
       int line = position.getLine() + 1;
       List<Location> locations = getDebugProcess().getVirtualMachineProxy().versionHigher("1.4")
-                                 ? type.locationsOfLine(DebugProcess.JAVA_STRATUM, null, line)
-                                 : type.locationsOfLine(line);
+                                 ? DebuggerUtilsAsync.locationsOfLineSync(type, DebugProcess.JAVA_STRATUM, null, line)
+                                 : DebuggerUtilsAsync.locationsOfLineSync(type, line);
       if (locations == null || locations.isEmpty()) throw NoDataException.INSTANCE;
       return locations;
     }
@@ -372,7 +373,7 @@ public class GroovyPositionManager implements PositionManager {
 
       try {
         final int lineNumber = classPosition.getLine() + 1;
-        if (!fromClass.locationsOfLine(lineNumber).isEmpty()) {
+        if (!DebuggerUtilsAsync.locationsOfLineSync(fromClass, lineNumber).isEmpty()) {
           return fromClass;
         }
         //noinspection LoopStatementThatDoesntLoop

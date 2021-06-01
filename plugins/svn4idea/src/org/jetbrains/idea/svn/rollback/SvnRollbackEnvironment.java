@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.rollback;
 
 import com.intellij.openapi.util.Comparing;
@@ -29,9 +29,7 @@ import java.util.Map;
 
 import static org.jetbrains.idea.svn.SvnBundle.message;
 
-/**
- * @author yole
- */
+
 public class SvnRollbackEnvironment extends DefaultRollbackEnvironment {
   private final SvnVcs mySvnVcs;
 

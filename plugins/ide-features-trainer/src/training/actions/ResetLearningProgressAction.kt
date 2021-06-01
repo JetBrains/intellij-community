@@ -8,7 +8,7 @@ import com.intellij.openapi.ui.showYesNoDialog
 import training.learn.LearnBundle
 import training.util.clearTrainingProgress
 
-class ResetLearningProgressAction : AnAction(AllIcons.Actions.Restart) {
+private class ResetLearningProgressAction : AnAction(AllIcons.Actions.Restart) {
   override fun actionPerformed(e: AnActionEvent) {
     if (showYesNoDialog(LearnBundle.message("learn.option.reset.progress.dialog"), LearnBundle.message("learn.option.reset.progress.confirm"), null)) {
       clearTrainingProgress()

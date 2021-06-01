@@ -1,9 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.newItemPopup;
 
 import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -84,6 +85,7 @@ public class NewItemWithTemplatesPopupPanel<T> extends NewItemSimplePopupPanel {
     list.setCellRenderer(renderer);
     list.setFocusable(false);
     list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+    list.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
 
     Border border = JBUI.Borders.merge(
       JBUI.Borders.emptyLeft(JBUIScale.scale(5)),

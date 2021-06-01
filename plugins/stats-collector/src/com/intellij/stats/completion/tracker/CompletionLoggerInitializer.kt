@@ -2,20 +2,20 @@
 package com.intellij.stats.completion.tracker
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
+import com.intellij.completion.ml.experiment.ExperimentInfo
+import com.intellij.completion.ml.experiment.ExperimentStatus
+import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.completion.ml.tracker.LookupTracker
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.lang.Language
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
-import com.intellij.completion.ml.experiment.ExperimentInfo
-import com.intellij.completion.ml.experiment.ExperimentStatus
-import com.intellij.completion.ml.storage.MutableLookupStorage
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.stats.completion.CompletionStatsPolicy
+import com.intellij.stats.completion.sender.isCompletionLogsSendAllowed
 import kotlin.random.Random
 
 class CompletionLoggerInitializer : LookupTracker() {
@@ -94,6 +94,11 @@ class CompletionLoggerInitializer : LookupTracker() {
         return "JavaScript"
       }
     }
+    Language.findLanguageByID("SQL")?.let { sql ->
+      if (language.isKindOf(sql)) {
+        return sql.displayName
+      }
+    }
     return language.displayName
   }
 
@@ -118,7 +123,7 @@ class CompletionLoggerInitializer : LookupTracker() {
 
     var listener: CompletionPopupListener = CompletionPopupListener.DISABLED
 
-    override fun afterActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
       LOG.runAndLogException {
         when (action) {
           down -> listener.downPressed()
@@ -128,7 +133,7 @@ class CompletionLoggerInitializer : LookupTracker() {
       }
     }
 
-    override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+    override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
       LOG.runAndLogException {
         when (action) {
           down -> listener.beforeDownPressed()

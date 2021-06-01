@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -15,17 +15,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author AG
- * @author yole
- */
 public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   private static final ExtensionPointName<UnquotingFilter> EP_NAME = ExtensionPointName.create("com.intellij.selectionUnquotingFilter");
-  private static final ExtensionPointName<DequotingFilter> OLD_EP_NAME = ExtensionPointName.create("com.intellij.selectionDequotingFilter");
 
   @NotNull
   @Override
@@ -141,8 +134,7 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
   }
 
   public static boolean shouldSkipReplacementOfQuotesOrBraces(PsiFile psiFile, Editor editor, String selectedText, char c) {
-    return EP_NAME.getExtensionList().stream().anyMatch(filter -> filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c)) ||
-           OLD_EP_NAME.getExtensionList().stream().anyMatch(filter -> filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c));
+    return EP_NAME.getExtensionList().stream().anyMatch(filter -> filter.skipReplacementQuotesOrBraces(psiFile, editor, selectedText, c));
   }
 
   private static char getMatchingDelimiter(char c) {
@@ -178,16 +170,5 @@ public class SelectionQuotingTypedHandler extends TypedHandlerDelegate {
                                                           @NotNull Editor editor,
                                                           @NotNull String selectedText,
                                                           char c);
-  }
-
-  /**
-   * @deprecated in order to disable replacement of surrounding quotes/braces in some cases override {@link UnquotingFilter} and register
-   * the implementation as {@code selectionDequotingFilter} extension; if you need to check whether surrounding quotes/braces should be
-   * replaced use {@link #shouldSkipReplacementOfQuotesOrBraces}
-   */
-  @SuppressWarnings("SpellCheckingInspection")
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  public static abstract class DequotingFilter extends UnquotingFilter {
   }
 }

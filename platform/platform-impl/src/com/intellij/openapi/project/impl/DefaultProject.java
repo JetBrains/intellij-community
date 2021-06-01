@@ -42,7 +42,7 @@ final class DefaultProject extends UserDataHolderBase implements Project {
       LOG.assertTrue(!ApplicationManager.getApplication().isDisposed(), "Application is being disposed!");
       DefaultProjectImpl project = new DefaultProjectImpl(DefaultProject.this);
       ProjectStoreFactory componentStoreFactory = ApplicationManager.getApplication().getService(ProjectStoreFactory.class);
-      project.registerServiceInstance(IComponentStore.class, componentStoreFactory.createDefaultProjectStore(project), ComponentManagerImpl.getFakeCorePluginDescriptor());
+      project.registerServiceInstance(IComponentStore.class, componentStoreFactory.createDefaultProjectStore(project), ComponentManagerImpl.fakeCorePluginDescriptor);
 
       // mark myDelegate as not disposed if someone cluelessly did Disposer.dispose(getDefaultProject())
       Disposer.register(DefaultProject.this,this);
@@ -305,15 +305,15 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
 
   @Override
   protected boolean isComponentSuitable(@NotNull ComponentConfig componentConfig) {
-    return super.isComponentSuitable(componentConfig) && componentConfig.isLoadForDefaultProject();
+    return componentConfig.loadForDefaultProject && super.isComponentSuitable(componentConfig);
   }
 
   public void init() {
     // do not leak internal delegate, use DefaultProject everywhere instead
-    registerServiceInstance(Project.class, actualContainerInstance, ComponentManagerImpl.getFakeCorePluginDescriptor());
+    registerServiceInstance(Project.class, actualContainerInstance, ComponentManagerImpl.fakeCorePluginDescriptor);
 
     //noinspection unchecked
-    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), ApplicationManager.getApplication(), null);
+    registerComponents((List<IdeaPluginDescriptorImpl>)PluginManagerCore.getLoadedPlugins(), ApplicationManager.getApplication(), null, null);
     createComponents(null);
     Disposer.register(actualContainerInstance, this);
   }
@@ -336,7 +336,7 @@ final class DefaultProjectImpl extends ComponentManagerImpl implements Project {
   @NotNull
   @Override
   protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.getProject();
+    return pluginDescriptor.projectContainerDescriptor;
   }
 
   @Override

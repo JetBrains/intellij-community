@@ -18,6 +18,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -174,6 +175,16 @@ public class ClassesTreeStructureProvider implements SelectableTreeStructureProv
         }
       }
       return result;
+    }
+
+    @Override
+    protected boolean isDeprecated() {
+      PsiFile file = getValue();
+      if (file == null || !file.isValid() || !(file instanceof PsiJavaFile)) {
+        return super.isDeprecated();
+      }
+      PsiJavaModule javaModule = ((PsiJavaFile)file).getModuleDeclaration();
+      return javaModule != null && PsiImplUtil.isDeprecated(javaModule);
     }
   }
 }

@@ -35,8 +35,6 @@ import java.util.*;
 
 /**
  * TODO: Merge PythonDataflowUtil and {@link PyEvaluator} and all its inheritors and improve Abstract Interpretation
- *
- * @author yole
  */
 public class PyEvaluator {
 

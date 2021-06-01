@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
+import com.intellij.application.options.EditorFontsConstants;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.GeneralSettings;
 import com.intellij.ide.IdeEventQueue;
@@ -97,9 +98,12 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     "ResizeToolWindowDown",
     "MaximizeToolWindow",
     
-    "MaintenanceAction"
+    "MaintenanceAction",
+
+    "TerminalIncreaseFontSize",
+    "TerminalDecreaseFontSize",
+    "TerminalResetFontSize"
   };
-  private static final int MIN_FONT_SIZE = 8;
 
   private final TerminalEventDispatcher myEventDispatcher = new TerminalEventDispatcher();
   private final JBTerminalSystemSettingsProviderBase mySettingsProvider;
@@ -118,6 +122,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
     addFocusListener(this);
 
     mySettingsProvider.getUiSettingsManager().addListener(this);
+    setCursorShape(settingsProvider.getCursorShape());
     myEscapeKeyListener = new TerminalEscapeKeyListener(this);
   }
 
@@ -294,12 +299,16 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
   protected void processMouseWheelEvent(MouseWheelEvent e) {
     if (EditorSettingsExternalizable.getInstance().isWheelFontChangeEnabled() && EditorUtil.isChangeFontSize(e)) {
       int newFontSize = (int)mySettingsProvider.getTerminalFontSize() - e.getWheelRotation();
-      if (newFontSize >= MIN_FONT_SIZE) {
+      if (newFontSize >= EditorFontsConstants.getMinEditorFontSize() && newFontSize <= EditorFontsConstants.getMaxEditorFontSize()) {
         mySettingsProvider.getUiSettingsManager().setFontSize(newFontSize);
       }
       return;
     }
     super.processMouseWheelEvent(e);
+  }
+
+  @NotNull JBTerminalSystemSettingsProviderBase getSettingsProvider() {
+    return mySettingsProvider;
   }
 
   @Nullable ToolWindow getContextToolWindow() {
@@ -337,9 +346,7 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
           LOG.debug("Consuming " + KeyStroke.getKeyStrokeForEvent(e) + ", registered:" + myRegistered);
         }
         IdeEventQueue.getInstance().flushDelayedKeyEvents();
-        // Workaround for https://youtrack.jetbrains.com/issue/IDEA-214830
-        // Once it's fixed, replace "processKeyEvent(e)" with "dispatchEvent(e)".
-        JBTerminalPanel.this.processKeyEvent(e);
+        JBTerminalPanel.this.dispatchEvent(e);
         return true;
       }
       return false;

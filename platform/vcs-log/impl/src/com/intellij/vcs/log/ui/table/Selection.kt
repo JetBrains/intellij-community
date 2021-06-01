@@ -19,21 +19,22 @@ import com.google.common.primitives.Ints
 import com.intellij.ui.ScrollingUtil
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.vcs.log.graph.VisibleGraph
-import com.intellij.vcs.log.util.TroveUtil
-import gnu.trove.TIntHashSet
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet
+import it.unimi.dsi.fastutil.ints.IntSet
 import java.awt.Rectangle
+import java.util.function.IntConsumer
 import javax.swing.JTable
 import kotlin.math.max
 
 internal class Selection(private val table: VcsLogGraphTable) {
-  private val selectedCommits: TIntHashSet = TIntHashSet()
+  private val selectedCommits: IntSet = IntOpenHashSet()
   private val isOnTop: Boolean
   private val scrollingTarget: ScrollingTarget?
 
   init {
     val selectedRows = ContainerUtil.sorted(Ints.asList(*table.selectedRows))
     val selectedRowsToCommits = selectedRows.associateWith { table.visibleGraph.getRowInfo(it).commit }
-    TroveUtil.addAll(selectedCommits, selectedRowsToCommits.values)
+    selectedCommits.addAll(selectedRowsToCommits.values)
 
     val visibleRows = getVisibleRows(table)
     if (visibleRows == null) {
@@ -63,12 +64,12 @@ internal class Selection(private val table: VcsLogGraphTable) {
     val commitsToRows = mapCommitsToRows(graph, scroll && !scrollToTop)
 
     table.selectionModel.valueIsAdjusting = true
-    for (commit in selectedCommits) {
+    selectedCommits.forEach(IntConsumer { commit ->
       val row = commitsToRows[commit]
       if (row != null) {
         table.addRowSelectionInterval(row, row)
       }
-    }
+    })
     table.selectionModel.valueIsAdjusting = false
 
     if (scroll) {
@@ -86,7 +87,7 @@ internal class Selection(private val table: VcsLogGraphTable) {
 
   private fun mapCommitsToRows(graph: VisibleGraph<Int>, scroll: Boolean): MutableMap<Int, Int> {
     val commits = mutableSetOf<Int>()
-    TroveUtil.addAll(commits, selectedCommits)
+    commits.addAll(selectedCommits)
     if (scroll && scrollingTarget != null) commits.add(scrollingTarget.commit)
     return mapCommitsToRows(commits, graph)
   }

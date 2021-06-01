@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
@@ -109,7 +109,7 @@ public class DefUseInspection extends AbstractBaseJavaLocalInspectionTool {
   }
 
   private void processFieldsViaDfa(PsiCodeBlock body, ProblemsHolder holder) {
-    DfaValueFactory factory = new DfaValueFactory(holder.getProject(), body);
+    DfaValueFactory factory = new DfaValueFactory(holder.getProject());
     var flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
     if (flow != null) {
       Set<AssignInstruction> variables = new OverwrittenFieldAnalyzer(flow).getOverwrittenFields();

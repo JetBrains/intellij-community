@@ -1,10 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("DynamicPluginsTestUtil")
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
-import com.intellij.ide.plugins.DynamicPlugins.unloadPlugin
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
@@ -20,18 +18,19 @@ import java.util.function.Supplier
 internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = emptySet(), isBundled: Boolean = false): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
-  val buildNumber = BuildNumber.fromString("2042.42")
-  val parentContext = DescriptorListLoadingContext(0, disabledPlugins, PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
-  val result = PluginDescriptorLoader.loadDescriptorFromFileOrDir(file = dir,
-                                                                  pathName = PluginManagerCore.PLUGIN_XML,
-                                                                  context = parentContext,
-                                                                  pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                                                  isBundled = isBundled,
-                                                                  isEssential = true,
-                                                                  isDirectory = Files.isDirectory(dir))
+  val buildNumber = BuildNumber.fromString("2042.42")!!
+  val parentContext = DescriptorListLoadingContext(disabledPlugins = disabledPlugins,
+                                                   result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
+  val result = loadDescriptorFromFileOrDir(file = dir,
+                                           pathName = PluginManagerCore.PLUGIN_XML,
+                                           context = parentContext,
+                                           pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+                                           isBundled = isBundled,
+                                           isEssential = true,
+                                           isDirectory = Files.isDirectory(dir))
   if (result == null) {
     @Suppress("USELESS_CAST")
-    assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty
+    assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
   }
   return result!!
 }
@@ -59,27 +58,24 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
   pluginBuilder.build(pluginDirectory)
   val descriptor = loadDescriptorInTest(pluginDirectory)
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
-  setPluginClassLoaderForMainAndSubPlugins(descriptor, loader)
   try {
-    loadPlugin(descriptor)
+    DynamicPlugins.loadPlugin(pluginDescriptor = descriptor, classLoaderForTest = loader)
   }
   catch (e: Exception) {
-    unloadPlugin(descriptor)
+    DynamicPlugins.unloadPlugin(descriptor)
     throw e
   }
 
   return Disposable {
-    val unloadDescriptor = loadDescriptorInTest(pluginDirectory)
-    val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(unloadDescriptor)
-    unloadPlugin(descriptor)
-
-    assertThat(canBeUnloaded).isTrue()
+    val reason = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)
+    DynamicPlugins.unloadPlugin(descriptor)
+    assertThat(reason).isNull()
   }
 }
 
 internal fun setPluginClassLoaderForMainAndSubPlugins(rootDescriptor: IdeaPluginDescriptorImpl, classLoader: ClassLoader?) {
   rootDescriptor.classLoader = classLoader
-  for (dependency in rootDescriptor.getPluginDependencies()) {
+  for (dependency in rootDescriptor.pluginDependencies) {
     if (dependency.subDescriptor != null) {
       dependency.subDescriptor!!.classLoader = classLoader
     }

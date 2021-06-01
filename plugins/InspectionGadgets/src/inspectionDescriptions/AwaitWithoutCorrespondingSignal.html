@@ -1,11 +1,29 @@
 <html>
 <body>
-Reports on any call to <b>Condition.signal()</b>
-or <b>Condition.signalAll()</b>
-for which no call to a corresponding <b>Condition.await()</b>
-can be found. Only calls which target fields of the current class are reported by this inspection.
+Reports on any call to <code>Condition.await()</code>
+for which no call to a corresponding <code>Condition.signal()</code> or <code>Condition.signalAll()</code> can be found.
+Calling <code>Condition.await()</code> in a thread without corresponding <code>Condition.signal()</code> may cause the thread
+becomes disabled until it is interrupted or "spurious wakeup" occurs.
+Only calls that target fields of the current class are reported by this inspection.
+<p>Example:</p>
+<pre>
+  class Queue {
+    private final Condition isEmpty = ...;
+
+    void add(Object elem) {
+      // ...
+      // isEmpty.signal();
+      // ...
+    }
+
+    void remove(Object elem) throws InterruptedException {
+      // ...
+      isEmpty.await(); // 'await()' doesn't contain corresponding 'signal()'/'signalAll()' call
+      // ...
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-
 </body>
 </html>

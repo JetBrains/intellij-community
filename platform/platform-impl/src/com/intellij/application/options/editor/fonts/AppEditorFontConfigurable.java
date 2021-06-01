@@ -37,7 +37,7 @@ public final class AppEditorFontConfigurable implements SearchableConfigurable, 
 
   @Override
   public boolean isModified() {
-    getFontPanel().getOptionsPanel().updateWarning();
+    getFontPanel().updateWarning();
     return !getStoredPreferences().equals(getUIFontPreferences());
   }
 

@@ -14,7 +14,6 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
-import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.TypeConversionUtil;
@@ -22,7 +21,7 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-abstract class PsiVarDescriptor implements VariableDescriptor {
+abstract class PsiVarDescriptor extends JvmVariableDescriptor {
   abstract @Nullable PsiType getType(@Nullable DfaVariableValue qualifier);
 
   @NotNull
@@ -46,8 +45,7 @@ abstract class PsiVarDescriptor implements VariableDescriptor {
   }
 
   @Override
-  public @NotNull DfaValue createValue(@NotNull DfaValueFactory factory,
-                                       @Nullable DfaValue qualifier, boolean forAccessor) {
+  public @NotNull DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (qualifier instanceof DfaVariableValue) {
       return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
@@ -72,14 +70,12 @@ abstract class PsiVarDescriptor implements VariableDescriptor {
     }
     if (dfType instanceof DfReferenceType) {
       dfType = dfType.meet(Mutability.getMutability(psi).asDfType());
-      dfType = dfType.meet(calcCanBeNull(psi, thisValue, context).asDfType());
+      dfType = dfType.meet(calcCanBeNull(thisValue, context).asDfType());
     }
     return dfType;
   }
 
-  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var,
-                                        @NotNull DfaVariableValue value,
-                                        @Nullable PsiElement context) {
+  @NotNull DfaNullability calcCanBeNull(@NotNull DfaVariableValue value, @Nullable PsiElement context) {
     return DfaNullability.UNKNOWN;
   }
 }

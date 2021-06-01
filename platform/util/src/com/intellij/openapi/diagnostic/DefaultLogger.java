@@ -3,13 +3,11 @@ package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -73,15 +71,15 @@ public class DefaultLogger extends Logger {
   @Override
   public void setLevel(@NotNull Level level) { }
 
-  public static String attachmentsToString(@Nullable Throwable t) {
+  public static @NotNull String attachmentsToString(@Nullable Throwable t) {
     if (t != null) {
-      List<Attachment> attachments = ExceptionUtil
-        .findCauseAndSuppressed(t, ExceptionWithAttachments.class)
-        .stream()
+      String prefix = "\n\nAttachments:\n";
+      String attachments = ExceptionUtil.findCauseAndSuppressed(t, ExceptionWithAttachments.class).stream()
         .flatMap(e -> Stream.of(e.getAttachments()))
-        .collect(Collectors.toList());
-      if (!attachments.isEmpty()) {
-        return "\n\nAttachments:\n" + StringUtil.join(attachments, ATTACHMENT_TO_STRING::apply, "\n----\n");
+        .map(ATTACHMENT_TO_STRING)
+        .collect(Collectors.joining("\n----\n", prefix, ""));
+      if (!attachments.equals(prefix)) {
+        return attachments;
       }
     }
     return "";

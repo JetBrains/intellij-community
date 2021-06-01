@@ -5,13 +5,11 @@
 
   "ui": {
     "*": {
-      "background": "#ececec",
-      "foreground": "#1d1d1d",
-      "selectionBackground": "system",
-      "selectionBackgroundInactive": "system",
-      "selectionForeground": "system",
+      "selectionBackground": "#2961DA",
+      "selectionBackgroundInactive": "#D8D8D8",
+      "selectionForeground": "#ffffff",
       "selectionForegroundInactive": "#000000",
-      "selectionInactiveBackground": "system"
+      "selectionInactiveBackground": "#D8D8D8"
     },
 
     "ActionButton": {
@@ -37,6 +35,7 @@
     "Borders.ContrastBorderColor": "#c9c9c9",
 
     "Button": {
+      "background": "#ececec",
       "border": "com.intellij.laf.macos.MacIntelliJButtonBorder",
       "UI": "com.intellij.laf.macos.MacIntelliJButtonUI"
     },
@@ -88,15 +87,14 @@
 
     "Menu": {
       "background": "#f6f6f6",
-      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder",
-      "borderCornerRadius": 14,
+      "border": "0,5,2,5",
       "separatorColor": "#dfdfdf"
     },
 
     "MenuItem": {
       "acceleratorSelectionForeground": "#dcdcdc",
       "background": "#f6f6f6",
-      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuItemBorder"
+      "border": "0,5,2,5"
     },
 
     "MnemonicIcon": {
@@ -125,17 +123,16 @@
 
     "PopupMenu": {
       "background": "#f6f6f6",
-      "border": "com.intellij.ide.ui.laf.darcula.ui.DarculaPopupMenuBorder",
-      "borderInsets": "8,1,8,1",
+      "borderInsets": "4,0,4,0",
       "borderWidth": 0,
       "translucentBackground": "#ececec",
       "UI": "com.intellij.ide.ui.laf.intellij.MacPopupMenuUI"
     },
 
     "PopupMenuSeparator": {
-      "height": 9,
-      "stripeWidth": 1,
-      "stripeIndent": 4,
+      "height": 12,
+      "stripeIndent": 5,
+      "stripeWidth": 2,
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaMenuSeparatorUI"
     },
 

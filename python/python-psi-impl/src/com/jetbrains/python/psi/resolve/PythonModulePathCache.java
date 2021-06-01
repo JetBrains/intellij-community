@@ -13,9 +13,7 @@ import com.jetbrains.python.packaging.PyPackageManager;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public final class PythonModulePathCache extends PythonPathCache implements Disposable {
   public static PythonPathCache getInstance(Module module) {
     return module.getService(PythonPathCache.class);

@@ -7,6 +7,7 @@ import com.intellij.util.lang.CompoundRuntimeException
 import java.util.*
 import java.util.stream.Stream
 import kotlin.collections.ArrayDeque
+import kotlin.collections.HashSet
 
 fun <K, V> MutableMap<K, MutableList<V>>.remove(key: K, value: V) {
   val list = get(key)
@@ -26,6 +27,10 @@ fun <K, V> MutableMap<K, MutableList<V>>.putValue(key: K, value: V) {
 }
 
 fun Collection<*>?.isNullOrEmpty(): Boolean = this == null || isEmpty()
+
+@Deprecated("use tail()", ReplaceWith("tail()"), DeprecationLevel.ERROR)
+val <T> List<T>.tail: List<T>
+  get() = tail()
 
 /**
  * @return all the elements of a non-empty list except the first one
@@ -180,7 +185,7 @@ inline fun <T, R> Collection<T>.mapSmartSet(transform: (T) -> R): Set<R> {
       Collections.singleton(transform(first()))
     }
     0 -> emptySet()
-    else -> mapTo(HashSet(size), transform)
+    else -> mapTo(java.util.HashSet(size), transform)
   }
 }
 
@@ -290,55 +295,22 @@ fun <T> Array<T>.mapInPlace(transform: (T) -> T): Array<T> {
 }
 
 /**
- * returns sequence of distinct nodes in breadth-first order.
+ * @return sequence of distinct nodes in breadth-first order
  */
-fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: (Node) -> Sequence<Node>): Sequence<Node> {
-  return Sequence {
-    val initialIterator = initialSequence.iterator()
-    if (!initialIterator.hasNext()) emptySequence<Node>().iterator()
-    else object : Iterator<Node> {
-      private var currentNode: Node? = null
-      private var currentSequenceIterator: Iterator<Node>? = initialIterator
-
-      private val nextSequences = ArrayDeque<Sequence<Node>>()
-      private val visited = mutableSetOf<Node>()
-
-      private fun getNext(): Node? {
-        currentNode?.let { return it }
-
-        while (true) {
-          val iterator = getCurrentSequenceIterator() ?: return null
-
-          while (iterator.hasNext()) {
-            val next = iterator.next()
-            if (visited.add(next)) {
-              currentNode = next
-              return next
-            }
-          }
-
-          currentSequenceIterator = null
-        }
-      }
-
-      private fun getCurrentSequenceIterator(): Iterator<Node>? {
-        currentSequenceIterator?.let { return it }
-
-        val nextIterator = nextSequences.removeFirstOrNull()?.iterator() ?: return null
-        currentSequenceIterator = nextIterator
-
-        return nextIterator
-      }
-
-      override fun hasNext(): Boolean = getNext() != null
-
-      override fun next(): Node {
-        val node = getNext() ?: throw NoSuchElementException()
-
-        nextSequences += children(node)
-        currentNode = null
-
-        return node
+fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: (Node) -> Sequence<Node>): Sequence<Node> = sequence {
+  val initialIterator = initialSequence.iterator()
+  if (!initialIterator.hasNext()) {
+    return@sequence
+  }
+  val visited = HashSet<Node>()
+  val sequences = ArrayDeque<Sequence<Node>>()
+  sequences.addLast(initialIterator.asSequence())
+  while (sequences.isNotEmpty()) {
+    val currentSequence = sequences.removeFirst()
+    for (node in currentSequence) {
+      if (visited.add(node)) {
+        yield(node)
+        sequences.addLast(children(node))
       }
     }
   }

@@ -3,12 +3,13 @@ package com.intellij.tests.targets.java
 
 import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.testframework.TestSearchScope
-import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.roots.CompilerProjectExtension
 import com.intellij.openapi.vfs.LocalFileSystem
+import com.intellij.testFramework.PlatformTestUtil
 import org.junit.Test
 
 abstract class JavaTargetMultiModuleTestBase(executionMode: ExecutionMode) : CommonJavaTargetTestBase(executionMode) {
-  override fun getTestAppPath(): String = "${PathManager.getCommunityHomePath()}/platform/remote-servers/target-integration-tests/multiModuleTargetApp"
+  override fun getTestAppPath(): String = "${PlatformTestUtil.getCommunityPath()}/platform/remote-servers/target-integration-tests/multiModuleTargetApp"
 
   override fun setUpModule() {
     super.setUpModule()
@@ -18,6 +19,16 @@ abstract class JavaTargetMultiModuleTestBase(executionMode: ExecutionMode) : Com
     val contentRoot = LocalFileSystem.getInstance().findFileByPath(testAppPath)!!
     initializeSampleModule(module, contentRoot)
     initializeSampleModule(secondModule, contentRoot.findChild("secondModule")!!)
+  }
+
+  override fun setUp() {
+    super.setUp()
+
+    // Recompile the test project to restore `com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl.myCompilerOutput` otherwise the
+    // classes of `secondModule` is out of scope
+    if (CompilerProjectExtension.getInstance(project)?.compilerOutput == null) {
+      compileProject()
+    }
   }
 
   @Test
@@ -61,5 +72,6 @@ abstract class JavaTargetMultiModuleTestBase(executionMode: ExecutionMode) : Com
     conf.defaultTargetName = targetName
     conf.persistentData.scope = TestSearchScope.WHOLE_PROJECT
     conf.persistentData.TEST_OBJECT = testObject
+    conf.persistentData.workingDirectory = testAppPath
   }
 }

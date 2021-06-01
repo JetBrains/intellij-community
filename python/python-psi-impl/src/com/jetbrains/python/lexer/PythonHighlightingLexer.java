@@ -23,9 +23,7 @@ import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyStringLiteralUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PythonHighlightingLexer extends PythonLexer {
   private final LanguageLevel myLanguageLevel;
 

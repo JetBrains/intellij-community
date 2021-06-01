@@ -24,6 +24,13 @@ class JavaExtractMethodCocktailSortLesson
         LessonsBundle.message("extract.method.invoke.action", action(it))
       }
 
+      task {
+        transparentRestore = true
+        stateCheck {
+          TemplateManagerImpl.getTemplateState(editor) != null
+        }
+      }
+
       val processDuplicatesTitle = JavaRefactoringBundle.message("process.duplicates.title")
       task {
         text(JavaLessonsBundle.message("java.extract.method.edit.method.name", rawEnter()))

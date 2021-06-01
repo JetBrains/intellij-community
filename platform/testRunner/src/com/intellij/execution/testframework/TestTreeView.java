@@ -189,7 +189,7 @@ public abstract class TestTreeView extends Tree implements DataProvider, CopyPro
       return getPresentableName(testProxy);
     }, Registry.is("tests.view.node.expanding.search"));
     TreeUtil.installActions(this);
-    PopupHandler.installPopupHandler(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
+    PopupHandler.installPopupMenu(this, IdeActions.GROUP_TESTTREE_POPUP, ActionPlaces.TESTTREE_VIEW_POPUP);
     HintUpdateSupply.installHintUpdateSupply(this, obj -> {
       Object userObject = TreeUtil.getUserObject(obj);
       Object element = userObject instanceof NodeDescriptor? ((NodeDescriptor<?>)userObject).getElement() : null;

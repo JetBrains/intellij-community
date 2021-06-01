@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -76,7 +73,7 @@ abstract class GradleKotlinFrameworkSupportProvider(
         specifyPluginVersionIfNeeded: Boolean,
         explicitPluginVersion: String? = null
     ) {
-        var kotlinVersion = explicitPluginVersion ?: kotlinCompilerVersionForWizard()
+        var kotlinVersion = explicitPluginVersion ?: kotlinCompilerVersionShort()
         val additionalRepository = getRepositoryForVersion(kotlinVersion)
         if (isSnapshot(kotlinVersion)) {
             kotlinVersion = LAST_SNAPSHOT_VERSION

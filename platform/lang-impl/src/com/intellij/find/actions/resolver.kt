@@ -9,7 +9,6 @@ import com.intellij.codeInsight.navigation.targetPresentation
 import com.intellij.find.FindBundle
 import com.intellij.find.usages.api.SearchTarget
 import com.intellij.navigation.TargetPresentation
-import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataKey
@@ -17,6 +16,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts.PopupTitle
 import com.intellij.psi.PsiElement
+import com.intellij.ui.list.createTargetPopup
 import com.intellij.usages.UsageTarget
 import org.jetbrains.annotations.ApiStatus
 
@@ -51,7 +51,7 @@ internal fun findShowUsages(project: Project,
       allTargets.single().handle(handler)
     }
     else -> {
-      chooseTargetPopup(popupTitle, allTargets, TargetVariant::presentation) {
+      createTargetPopup(popupTitle, allTargets, TargetVariant::presentation) {
         it.handle(handler)
       }.showInBestPositionFor(dataContext)
     }

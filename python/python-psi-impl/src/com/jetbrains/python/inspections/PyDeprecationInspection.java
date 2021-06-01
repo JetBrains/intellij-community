@@ -30,9 +30,7 @@ import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PyDeprecationInspection extends PyInspection {
 
   @NotNull

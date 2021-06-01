@@ -1,5 +1,19 @@
 <html>
 <body>
-This inspection warns about local variables referenced before assignment.
+<p>Reports local variables referenced before assignment.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+x = 0
+if x > 10:
+    b = 3
+print(b)
+</pre>
+<p>The IDE reports a problem for <code>print(b)</code>. A possible fix is:</p>
+<pre style="font-family: monospace">
+x = 0
+if x > 10:
+    b = 3
+    print(b)
+</pre>
 </body>
 </html>

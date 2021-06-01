@@ -34,7 +34,7 @@ import java.nio.file.Path
 @ApiStatus.Internal
 open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   private var lastSavedProjectName: String? = null
-  protected val moduleSavingCustomizer: ModuleSavingCustomizer? = if (WorkspaceModel.isEnabled) ProjectStoreBridge(project) else null
+  protected val moduleSavingCustomizer: ModuleSavingCustomizer = ProjectStoreBridge(project)
 
   init {
     assert(!project.isDefault)
@@ -139,7 +139,7 @@ open class ProjectStoreImpl(project: Project) : ProjectStoreBase(project) {
   }
 
   final override fun createSaveSessionProducerManager(): ProjectSaveSessionProducerManager {
-    return moduleSavingCustomizer?.createSaveSessionProducerManager() ?: ProjectSaveSessionProducerManager(project)
+    return moduleSavingCustomizer.createSaveSessionProducerManager()
   }
 
   final override fun commitObsoleteComponents(session: SaveSessionProducerManager, isProjectLevel: Boolean) {
@@ -163,7 +163,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
   final override suspend fun saveModules(errors: MutableList<Throwable>,
                                          isForceSavingAllSettings: Boolean,
                                          projectSaveSessionManager: SaveSessionProducerManager): List<SaveSession> {
-    moduleSavingCustomizer?.saveModules(projectSaveSessionManager, this)
+    moduleSavingCustomizer.saveModules(projectSaveSessionManager, this)
     val modules = ModuleManager.getInstance(project)?.modules ?: Module.EMPTY_ARRAY
     if (modules.isEmpty()) {
       return emptyList()
@@ -192,7 +192,7 @@ open class ProjectWithModulesStoreImpl(project: Project) : ProjectStoreImpl(proj
                                      projectSaveSessionManager: SaveSessionProducerManager, isForceSavingAllSettings: Boolean,
                                      errors: MutableList<Throwable>) {
     moduleStore.commitComponents(isForceSavingAllSettings, moduleSaveSessionManager, errors)
-    moduleSavingCustomizer?.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
+    moduleSavingCustomizer.commitModuleComponents(projectSaveSessionManager, moduleStore, moduleSaveSessionManager)
   }
 }
 

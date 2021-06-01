@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -54,8 +55,6 @@ import java.util.zip.ZipOutputStream
 @CompileStatic
 final class DistributionJARsBuilder {
   private static final boolean COMPRESS_JARS = false
-  private static final String RESOURCES_INCLUDED = "resources.included"
-  private static final String RESOURCES_EXCLUDED = "resources.excluded"
   /**
    * Path to file with third party libraries HTML content,
    * see the same constant at com.intellij.ide.actions.AboutPopup#THIRD_PARTY_LIBRARIES_FILE_PATH
@@ -83,41 +82,14 @@ final class DistributionJARsBuilder {
     def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
     this.pluginXmlPatcher = new PluginXmlPatcher(buildContext.messages, releaseDate, releaseVersion, buildContext.applicationInfo.productName, buildContext.applicationInfo.isEAP)
 
-    buildContext.ant.patternset(id: RESOURCES_INCLUDED) {
-      include(name: "**/*Bundle*.properties")
-      include(name: "**/*Messages.properties")
-      include(name: "messages/**/*.properties")
-      include(name: "fileTemplates/**")
-      include(name: "inspectionDescriptions/**")
-      include(name: "intentionDescriptions/**")
-      include(name: "tips/**")
-      include(name: "search/**")
-    }
-
-    buildContext.ant.patternset(id: RESOURCES_EXCLUDED) {
-      exclude(name: "**/*Bundle*.properties")
-      exclude(name: "**/*Messages.properties")
-      exclude(name: "messages/**/*.properties")
-      exclude(name: "fileTemplates/**")
-      exclude(name: "fileTemplates")
-      exclude(name: "inspectionDescriptions/**")
-      exclude(name: "inspectionDescriptions")
-      exclude(name: "intentionDescriptions/**")
-      exclude(name: "intentionDescriptions")
-      exclude(name: "tips/**")
-      exclude(name: "tips")
-      exclude(name: "search/**")
-      exclude(name: "**/icon-robots.txt")
-    }
-
-    def productLayout = buildContext.productProperties.productLayout
-    def enabledPluginModules = getEnabledPluginModules()
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    Set<String> enabledPluginModules = getEnabledPluginModules()
     buildContext.messages.debug("Collecting project libraries used by plugins: ")
     List<JpsLibrary> projectLibrariesUsedByPlugins = getPluginsByModules(buildContext, enabledPluginModules).collectMany { plugin ->
       final Collection<String> libsToUnpack = plugin.projectLibrariesToUnpack.values()
       plugin.moduleJars.values().collectMany {
-        def module = buildContext.findRequiredModule(it)
-        def libraries =
+        JpsModule module = buildContext.findRequiredModule(it)
+        Set<JpsLibrary> libraries =
           JpsJavaExtensionService.dependencies(module).includedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME).libraries.findAll { library ->
             !(library.createReference().parentReference instanceof JpsModuleReference) && !plugin.includedProjectLibraries.any {
               it.libraryName == library.name && it.relativeOutputPath == ""
@@ -142,12 +114,11 @@ final class DistributionJARsBuilder {
     platform = PlatformModules.createPlatformLayout(productLayout, allProductDependencies, projectLibrariesUsedByPlugins, buildContext)
   }
 
-
   @NotNull Set<PluginLayout> filterPluginsToPublish(@NotNull Set<PluginLayout> plugins) {
     plugins = plugins.findAll {
       // Kotlin Multiplatform Mobile plugin is excluded since:
       // * is compatible with Android Studio only;
-      // * has release cycle of its 
+      // * has release cycle of its
       // * shadows IntelliJ utility modules included via Kotlin Compiler;
       // * breaks searchable options index and jar order generation steps.
       it.mainModule != 'kotlin-ultimate.kmm-plugin'
@@ -241,7 +212,9 @@ final class DistributionJARsBuilder {
                                                                                   currentBuildString,
                                                                                   buildContext.options.isInDevelopmentMode,
                                                                                   buildContext.messages)
-      buildContext.addDistFile(new Pair<Path, String>(targetFile, "bin"))
+      if (Files.exists(targetFile)) {
+        buildContext.addDistFile(new Pair<Path, String>(targetFile, "bin"))
+      }
     }
   }
 
@@ -341,7 +314,7 @@ final class DistributionJARsBuilder {
       def modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
         productProperties.includeIntoSourcesArchiveFilter.test(buildContext.findRequiredModule(moduleName), buildContext)
       }
-      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, "$buildContext.paths.artifacts/$archiveName")
+      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, Path.of(buildContext.paths.artifacts, archiveName), true)
     }
   }
 
@@ -888,8 +861,6 @@ final class DistributionJARsBuilder {
                      MultiMap<String, String> moduleJars,
                      List<Pair<File, String>> additionalResources) {
     AntBuilder ant = buildContext.ant
-    String resourceExcluded = RESOURCES_EXCLUDED
-    String resourcesIncluded = RESOURCES_INCLUDED
     BuildContext buildContext = buildContext
     if (layoutSpec.copyFiles) {
       checkModuleExcludes(layout.moduleExcludes)
@@ -909,18 +880,10 @@ final class DistributionJARsBuilder {
           String jarPath = entry.key
           jar(jarPath, true) {
             for (String moduleName in modules) {
-              modulePatches(List.of(moduleName)) {
-                if (layout.localizableResourcesJarName(moduleName) != null) {
-                  ant.patternset(refid: resourceExcluded)
-                }
-              }
+              modulePatches(List.of(moduleName))
               module(moduleName) {
-                if (layout.localizableResourcesJarName(moduleName) != null) {
-                  ant.patternset(refid: resourceExcluded)
-                }
-                else {
-                  ant.exclude(name: "**/icon-robots.txt")
-                }
+                ant.exclude(name: "**/icon-robots.txt")
+                ant.exclude(name: ".unmodified")
 
                 for (String exclude in layout.moduleExcludes.get(moduleName)) {
                   //noinspection GrUnresolvedAccess
@@ -933,31 +896,6 @@ final class DistributionJARsBuilder {
                 if (layoutSpec.copyFiles) {
                   ant.zipfileset(src: it.absolutePath)
                 }
-              }
-            }
-          }
-        }
-
-        MultiMap<String, String> outputResourceJars = MultiMap.createLinked()
-        for (String moduleName in actualModuleJars.values()) {
-          String resourcesJarName = layout.localizableResourcesJarName(moduleName)
-          if (resourcesJarName != null) {
-            outputResourceJars.putValue(resourcesJarName, moduleName)
-          }
-        }
-
-        for (String resourceJarName : outputResourceJars.keySet()) {
-          jar(resourceJarName, true) {
-            for (String moduleName in outputResourceJars.get(resourceJarName)) {
-              modulePatches(List.of(moduleName)) {
-                ant.patternset(refid: resourcesIncluded)
-              }
-              module(moduleName) {
-                for (String moduleExclude in layout.moduleExcludes.get(moduleName)) {
-                  //noinspection GrUnresolvedAccess
-                  ant.exclude(name: "$moduleExclude/**")
-                }
-                ant.patternset(refid: resourcesIncluded)
               }
             }
           }
@@ -999,11 +937,11 @@ final class DistributionJARsBuilder {
       }
       if (layoutSpec.copyFiles) {
         for (ModuleResourceData resourceData in layout.resourcePaths) {
-          String path = FileUtil.toSystemIndependentName(new File(basePath(buildContext, resourceData.moduleName),
-                                                                  resourceData.resourcePath).absolutePath)
+          String path = FileUtilRt.toSystemIndependentName(new File(basePath(buildContext, resourceData.moduleName),
+                                                                    resourceData.resourcePath).absolutePath)
           if (resourceData.packToZip) {
             zip(resourceData.relativeOutputPath) {
-              if (Files.isRegularFile(Paths.get(path))) {
+              if (Files.isRegularFile(Path.of(path))) {
                 ant.fileset(file: path)
               }
               else {
@@ -1013,7 +951,7 @@ final class DistributionJARsBuilder {
           }
           else {
             dir(resourceData.relativeOutputPath) {
-              if (Files.isRegularFile(Paths.get(path))) {
+              if (Files.isRegularFile(Path.of(path))) {
                 ant.fileset(file: path)
               }
               else {
@@ -1038,11 +976,12 @@ final class DistributionJARsBuilder {
   }
 
   @SuppressWarnings('SpellCheckingInspection')
-  private static Set<String> excludedFromMergeLibs = Set.of(
-    "JDOM", "jna", "Log4J", "sqlite", "Slf4j", "Trove4j", "async-profiler", "precompiled_jshell-frontend",
+  private static final Set<String> excludedFromMergeLibs = Set.of(
+    "jna", "Log4J", "sqlite", "Slf4j", "async-profiler", "precompiled_jshell-frontend",
     "dexlib2", // android-only lib
     "intellij-coverage", "intellij-test-discovery", // used as agent
-    "winp", "junixsocket-core", "pty4j" // contains native library
+    "winp", "junixsocket-core", "pty4j", // contains native library
+    "protobuf", // https://youtrack.jetbrains.com/issue/IDEA-268753
   )
 
   private static void copyProjectLibraries(Path outputDir,
@@ -1086,14 +1025,12 @@ final class DistributionJARsBuilder {
         String lowerCasedLibName = libName.toLowerCase()
         if (mergeLibs) {
           String key
-          if (libName.startsWith("netty-")) {
-            key = "netty"
-          }
-          else if (!excludedFromMergeLibs.contains(libName) && !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
-                   !lowerCasedLibName.contains("annotations") &&
-                   !lowerCasedLibName.startsWith("junit") &&
-                   !lowerCasedLibName.startsWith("cucumber-") &&
-                   !lowerCasedLibName.contains("groovy")) {
+          if (!excludedFromMergeLibs.contains(libName) &&
+              !libName.startsWith("kotlin") && !libName.startsWith("rd-") &&
+              !lowerCasedLibName.contains("annotations") &&
+              !lowerCasedLibName.startsWith("junit") &&
+              !lowerCasedLibName.startsWith("cucumber-") &&
+              !lowerCasedLibName.contains("groovy")) {
             key = "3rd-party"
           }
           else {

@@ -28,7 +28,7 @@ public class DeferingPrinter implements Printer {
   }
 
   @Override
-  public void print(final String text, final ConsoleViewContentType contentType) {
+  public void print(final @NotNull String text, final @NotNull ConsoleViewContentType contentType) {
     myCompositePrintable.addLast(new Printable() {
       @Override
       public void printOn(final Printer printer) {
@@ -43,7 +43,7 @@ public class DeferingPrinter implements Printer {
   }
 
   @Override
-  public void printHyperlink(final String text, final HyperlinkInfo info) {
+  public void printHyperlink(final @NotNull String text, final HyperlinkInfo info) {
     myCompositePrintable.addLast(new HyperLink(text, info));
   }
 

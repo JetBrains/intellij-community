@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -212,7 +212,7 @@ public final class ScrollingUtil {
     int first = list.getFirstVisibleIndex();
     int last = list.getLastVisibleIndex();
 
-    if (index < 0 || first < 0 || last < 0 || index < first || index > last) {
+    if (first < 0 || last < 0 || index < first || index > last) {
       return false;
     }
     if (index > first && index < last) {
@@ -485,7 +485,7 @@ public final class ScrollingUtil {
         return;
       }
     }
-    _ensureIndexIsVisible(c, indexToSelect, -1, size);
+    _ensureIndexIsVisible(c, indexToSelect, direction, size);
     selectOrAddSelection(selectionModel, indexToSelect, modifiers);
   }
 
@@ -857,7 +857,7 @@ public final class ScrollingUtil {
   private static class TableMovePageDownAction extends MyScrollingAction {
     private @NotNull final JTable myTable;
 
-    public TableMovePageDownAction(@NotNull JTable table) {
+    private TableMovePageDownAction(@NotNull JTable table) {
       super(table);
       myTable = table;
     }

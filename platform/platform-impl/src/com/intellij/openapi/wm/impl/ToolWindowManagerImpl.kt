@@ -19,7 +19,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -50,6 +49,7 @@ import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.*
+import com.intellij.openapi.util.registry.ExperimentalUI
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.*
@@ -137,6 +137,12 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     fun getRegisteredMutableInfoOrLogError(decorator: InternalDecoratorImpl): WindowInfoImpl {
       val toolWindow = decorator.toolWindow
       return toolWindow.toolWindowManager.getRegisteredMutableInfoOrLogError(toolWindow.id)
+    }
+
+    fun getAdjustedRatio(partSize: Int, totalSize: Int, direction: Int): Float {
+      var ratio = partSize.toFloat() / totalSize
+      ratio += (((partSize.toFloat() + direction) / totalSize) - ratio) / 2
+      return ratio
     }
   }
 
@@ -260,7 +266,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       })
 
       connection.subscribe(AnActionListener.TOPIC, object : AnActionListener {
-        override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+        override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
           process { manager ->
             if (manager.currentState != KeyState.HOLD) {
               manager.resetHoldState()
@@ -858,7 +864,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     updateStateAndRemoveDecorator(info, entry, dirtyMode = false)
     entry.applyWindowInfo(info.copy())
 
-    if (Registry.`is`("ide.new.stripes.ui")) {
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
       toolWindowPane?.onStripeButtonRemoved(project, entry.toolWindow)
     }
 
@@ -1077,7 +1083,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     button.updatePresentation()
     addStripeButton(button, toolWindowPane.getStripeFor((contentFactory as? ToolWindowFactoryEx)?.anchor ?: info.anchor))
 
-    if (Registry.`is`("ide.new.stripes.ui")) {
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
       toolWindow.largeStripeAnchor = if (toolWindow.largeStripeAnchor == ToolWindowAnchor.NONE) task.anchor else toolWindow.largeStripeAnchor
     }
 
@@ -1301,7 +1307,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   override fun notifyByBalloon(options: ToolWindowBalloonShowOptions) {
-    if (Registry.`is`("ide.new.stripes.ui")) {
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
       notifySquareButtonByBalloon(options)
       return
     }
@@ -2000,7 +2006,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
    * Spies on IdeToolWindow properties and applies them to the window
    * state.
    */
-  internal fun toolWindowPropertyChanged(toolWindow: ToolWindowImpl, property: ToolWindowProperty) {
+  @ApiStatus.Internal
+  open fun toolWindowPropertyChanged(toolWindow: ToolWindow, property: ToolWindowProperty) {
     val entry = idToEntry[toolWindow.id]
 
     if (property == ToolWindowProperty.AVAILABLE && !toolWindow.isAvailable && entry?.readOnlyWindowInfo?.isVisible == true) {
@@ -2079,13 +2086,6 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       }
     }
   }
-
-  private fun getAdjustedRatio(partSize: Int, totalSize: Int, direction: Int): Float {
-    var ratio = partSize.toFloat() / totalSize
-    ratio += (((partSize.toFloat() + direction) / totalSize) - ratio) / 2
-    return ratio
-  }
-
   private fun focusToolWindowByDefault() {
     var toFocus: ToolWindowEntry? = null
     for (each in activeStack.stack) {
@@ -2247,7 +2247,7 @@ private const val ACTIVE_ATTR_VALUE = "active"
 private const val LAYOUT_TO_RESTORE = "layout-to-restore"
 private const val RECENT_TW_TAG = "recentWindows"
 
-internal enum class ToolWindowProperty {
+enum class ToolWindowProperty {
   TITLE, ICON, AVAILABLE, STRIPE_TITLE
 }
 

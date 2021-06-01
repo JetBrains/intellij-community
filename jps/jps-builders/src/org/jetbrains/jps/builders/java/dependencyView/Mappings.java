@@ -610,9 +610,8 @@ public final class Mappings {
           if (!visitedClasses.add(s.className)) {
             continue;
           }
-          final Boolean inheritorOf = isInheritorOf(s.className, whom, visitedClasses);
-          if (inheritorOf != null && inheritorOf) {
-            return true;
+          if (Boolean.TRUE.equals(isInheritorOf(s.className, whom, visitedClasses))) {
+            return Boolean.TRUE;
           }
         }
       }
@@ -1216,34 +1215,33 @@ public final class Mappings {
         }
       }
 
-      for (final MethodRepr m : added) {
-        debug("Method: ", m.name);
+      for (final MethodRepr addedMethod : added) {
+        debug("Method: ", addedMethod.name);
 
-        final Supplier<TIntHashSet> propagated = lazy(()-> myFuture.propagateMethodAccess(m, it.name));
+        final Supplier<TIntHashSet> propagated = lazy(()-> myFuture.propagateMethodAccess(addedMethod, it.name));
 
-        if (!m.isPrivate() && m.myArgumentTypes.length > 0 && !myPresent.hasOverriddenMethods(it, MethodRepr.equalByJavaRules(m), null)) {
+        if (!addedMethod.isPrivate() && addedMethod.myArgumentTypes.length > 0 && !myPresent.hasOverriddenMethods(it, MethodRepr.equalByJavaRules(addedMethod), null)) {
           debug("Conservative case on overriding methods, affecting method usages");
           // do not propagate constructors access, since constructors are always concrete and not accessible via references to subclasses
-          myFuture.affectMethodUsages(m, m.name == myInitName? null : propagated.get(), m.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+          myFuture.affectMethodUsages(addedMethod, addedMethod.name == myInitName? null : propagated.get(), addedMethod.createMetaUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
         }
 
-        if (!m.isPrivate()) {
-          if (m.isStatic()) {
+        if (!addedMethod.isPrivate()) {
+          if (addedMethod.isStatic()) {
             myFuture.affectStaticMemberOnDemandUsages(it.name, propagated.get(), state.myAffectedUsages, state.myDependants);
           }
 
-          final Collection<MethodRepr> lessSpecific = it.findMethods(myFuture.lessSpecific(m));
           final Collection<MethodRepr> removed = diff.methods().removed();
-          for (final MethodRepr mm : lessSpecific) {
-            if (!mm.equals(m) && !removed.contains(mm))  {
+          for (final MethodRepr lessSpecific : it.findMethods(myFuture.lessSpecific(addedMethod))) {
+            if (!lessSpecific.equals(addedMethod) && !removed.contains(lessSpecific))  {
               debug("Found less specific method, affecting method usages");
-              myFuture.affectMethodUsages(mm, propagated.get(), mm.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
+              myFuture.affectMethodUsages(lessSpecific, propagated.get(), lessSpecific.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
             }
           }
 
           debug("Processing affected by specificity methods");
-          final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myFuture.findAllMethodsBySpecificity(m, it);
-          final Predicate<MethodRepr> overrides = MethodRepr.equalByJavaRules(m);
+          final Collection<Pair<MethodRepr, ClassRepr>> affectedMethods = myFuture.findAllMethodsBySpecificity(addedMethod, it);
+          final Predicate<MethodRepr> overrides = MethodRepr.equalByJavaRules(addedMethod);
 
           for (final Pair<MethodRepr, ClassRepr> pair : affectedMethods) {
             final MethodRepr method = pair.first;
@@ -1252,8 +1250,7 @@ public final class Mappings {
             if (methodClass == MOCK_CLASS) {
               continue;
             }
-            final Boolean inheritorOf = myPresent.isInheritorOf(methodClass.name, it.name, null);
-            final boolean isInheritor = inheritorOf != null && inheritorOf;
+            final boolean isInheritor = Boolean.TRUE.equals(myPresent.isInheritorOf(methodClass.name, it.name, null));
 
             debug("Method: ", method.name);
             debug("Class : ", methodClass.name);
@@ -1297,7 +1294,7 @@ public final class Mappings {
               final int outerClass = r.getOuterClassName();
               if (!isEmpty(outerClass)) {
                 final ClassRepr outerClassRepr = myFuture.classReprByName(outerClass);
-                if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, m) || myFuture.extendsLibraryClass(outerClassRepr, null))) {
+                if (outerClassRepr != null && (myFuture.isMethodVisible(outerClassRepr, addedMethod) || myFuture.extendsLibraryClass(outerClassRepr, null))) {
                   ContainerUtil.addAll(myAffectedFiles, sourceFileNames);
                   for (File sourceFileName : sourceFileNames) {
                     debug("Affecting file due to local overriding: ", sourceFileName);

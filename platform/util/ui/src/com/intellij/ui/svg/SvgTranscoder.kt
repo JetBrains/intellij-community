@@ -24,7 +24,6 @@ import org.w3c.dom.svg.SVGDocument
 import java.awt.*
 import java.awt.geom.AffineTransform
 import java.awt.image.BufferedImage
-import java.io.StringReader
 import java.lang.ref.WeakReference
 import kotlin.math.max
 import kotlin.math.min
@@ -167,7 +166,7 @@ class SvgTranscoder private constructor(private var width: Float, private var he
                        "  <line x1=\"1\" y1=\"1\" x2=\"15\" y2=\"15\" stroke=\"red\" stroke-width=\"2\"/>\n" +
                        "  <line x1=\"1\" y1=\"15\" x2=\"15\" y2=\"1\" stroke=\"red\" stroke-width=\"2\"/>\n" +
                        "</svg>\n"
-    return createSvgDocument(null, StringReader(fallbackIcon)) as SVGDocument
+    return createSvgDocument(null, fallbackIcon.byteInputStream()) as SVGDocument
   }
 
   override fun getTransform() = currentTransform!!

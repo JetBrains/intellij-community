@@ -64,7 +64,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   }
 
   @Override
-  protected Map<String, Supplier<String>> getPresentableNameMap() {
+  protected @NotNull Map<String, Supplier<String>> getPresentableNameMap() {
     HashMap<String, Supplier<String>> map = new HashMap<>();
     map.put(CALLER_TYPE, CallHierarchyBrowserBase::getCallerType);
     map.put(CALLEE_TYPE, CallHierarchyBrowserBase::getCalleeType);
@@ -74,18 +74,18 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
   private final class ChangeViewTypeActionBase extends ToggleAction {
     private final String myTypeName;
 
-    private ChangeViewTypeActionBase(final @NlsActions.ActionText String shortDescription, final @NlsActions.ActionDescription String longDescription, final Icon icon, String typeName) {
+    private ChangeViewTypeActionBase(@NlsActions.ActionText String shortDescription, @NlsActions.ActionDescription String longDescription, Icon icon, String typeName) {
       super(shortDescription, longDescription, icon);
       myTypeName = typeName;
     }
 
     @Override
-    public final boolean isSelected(@NotNull final AnActionEvent event) {
+    public final boolean isSelected(@NotNull AnActionEvent event) {
       return myTypeName.equals(getCurrentViewType());
     }
 
     @Override
-    public final void setSelected(@NotNull final AnActionEvent event, final boolean flag) {
+    public final void setSelected(@NotNull AnActionEvent event, boolean flag) {
       if (flag) {
         // invokeLater is called to update state of button before long tree building operation
         ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));
@@ -93,7 +93,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final void update(@NotNull final AnActionEvent event) {
+    public final void update(@NotNull AnActionEvent event) {
       super.update(event);
       setEnabled(isValidBase());
     }
@@ -105,13 +105,13 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getCalleeType() {
+  public static @NotNull String getCalleeType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callees.of");
   }
 
-  @SuppressWarnings("UnresolvedPropertyKey")
-  public static String getCallerType() {
+  public static @NotNull String getCallerType() {
+    //noinspection UnresolvedPropertyKey
     return IdeBundle.message("title.hierarchy.callers.of");
   }
 }

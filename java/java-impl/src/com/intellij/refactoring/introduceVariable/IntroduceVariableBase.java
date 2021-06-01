@@ -71,6 +71,7 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.*;
 
 import java.util.*;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -696,8 +697,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
 
       @Override
       public void pass(final JavaReplaceChoice choice) {
-        if (choice == null || !SlowOperations.allowSlowOperations(() -> tryIntroduceInplace(project, editor, choice, occurrenceManager, originalType))) {
-          CommandProcessor.getInstance().executeCommand(project, () -> introduce(choice), getRefactoringName(), null);
+        Consumer<JavaReplaceChoice> dialogIntroduce = c -> CommandProcessor.getInstance().executeCommand(project, () -> introduce(c), getRefactoringName(), null);
+        if (choice == null) {
+          dialogIntroduce.accept(null);
+        }
+        else {
+           SlowOperations.allowSlowOperations(() -> inplaceIntroduce(project, editor, choice, occurrenceManager, originalType, dialogIntroduce));
         }
       }
 
@@ -780,11 +785,12 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     return callback.wasSucceed;
   }
 
-  private boolean tryIntroduceInplace(@NotNull Project project,
-                                      Editor editor,
-                                      @NotNull JavaReplaceChoice choice,
-                                      @NotNull ExpressionOccurrenceManager occurrenceManager,
-                                      @NotNull PsiType originalType) {
+  private void inplaceIntroduce(@NotNull Project project,
+                                Editor editor,
+                                @NotNull JavaReplaceChoice choice,
+                                @NotNull ExpressionOccurrenceManager occurrenceManager,
+                                @NotNull PsiType originalType,
+                                @NotNull Consumer<JavaReplaceChoice> dialogIntroduce) {
     boolean inFinalContext = occurrenceManager.isInFinalContext();
     PsiExpression expr = occurrenceManager.getMainOccurence();
     PsiExpression[] selectedOccurrences = choice.filter(occurrenceManager);
@@ -806,18 +812,24 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
                                                            selectedOccurrences,
                                                            typeSelectorManager,
                                                            getRefactoringName());
+      if (!myInplaceIntroducer.startInplaceIntroduceTemplate()) {
+        dialogIntroduce.accept(choice);
+      }
     }
     else {
       final boolean cantChangeFinalModifier = hasWriteAccess || inFinalContext;
-      myInplaceIntroducer = new JavaVariableInplaceIntroducer(project,
-                                                              settings,
-                                                              chosenAnchor,
-                                                              editor, expr, cantChangeFinalModifier,
-                                                              selectedOccurrences,
-                                                              typeSelectorManager,
-                                                              getRefactoringName());
+      Pass<PsiElement> callback = new Pass<>() {
+        @Override
+        public void pass(final PsiElement container) {
+          myInplaceIntroducer = new JavaVariableInplaceIntroducer(project, settings, container, editor, expr, 
+                                                                  cantChangeFinalModifier, selectedOccurrences, typeSelectorManager, getRefactoringName());
+          if (!myInplaceIntroducer.startInplaceIntroduceTemplate()) {
+            dialogIntroduce.accept(choice);
+          }
+        }
+      };
+      IntroduceVariableTargetBlockChooser.chooseTargetAndPerform(editor, chosenAnchor, expr, callback);
     }
-    return myInplaceIntroducer.startInplaceIntroduceTemplate();
   }
 
   public static boolean canBeExtractedWithoutExplicitType(PsiExpression expr) {

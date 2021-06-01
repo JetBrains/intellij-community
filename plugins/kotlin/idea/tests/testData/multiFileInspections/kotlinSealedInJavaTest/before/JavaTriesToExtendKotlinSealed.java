@@ -4,7 +4,7 @@ public class JavaTriesToExtendKotlinSealed {
     private static interface TryToExtend extends KotlinSealedInterface {}
     private static class TryToExtendClass extends KotlinSealedClass {}
 
-    class OkToImplement implements KotlinInterface {}
+    class OkToImplement<T extends KotlinSealedInterface> implements KotlinInterface {}
     interface OkToExtend extends KotlinInterface {}
     class OkToExtendClass extends KotlinClass{}
 

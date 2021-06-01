@@ -1,18 +1,12 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
-import com.intellij.util.IncorrectOperationException
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtDestructuringDeclaration
 import org.jetbrains.kotlin.psi.KtDestructuringDeclarationEntry
 import org.jetbrains.kotlin.resolve.BindingContext
 
@@ -23,8 +17,15 @@ class KtDestructuringDeclarationReferenceDescriptorsImpl(
         super<KtDescriptorsBasedReference>.isReferenceTo(element)
 
     override fun getTargetDescriptors(context: BindingContext): Collection<DeclarationDescriptor> {
-        return listOfNotNull(context[BindingContext.COMPONENT_RESOLVED_CALL, element]?.candidateDescriptor)
+        return listOfNotNull(
+            context[BindingContext.VARIABLE, element],
+            context[BindingContext.COMPONENT_RESOLVED_CALL, element]?.candidateDescriptor
+        )
     }
+
+    override fun resolve() = multiResolve(false).asSequence()
+        .map { it.element }
+        .first { it is KtDestructuringDeclarationEntry }
 
     override fun getRangeInElement() = TextRange(0, element.textLength)
 

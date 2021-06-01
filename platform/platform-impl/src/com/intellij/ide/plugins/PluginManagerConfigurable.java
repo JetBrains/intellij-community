@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -201,6 +202,10 @@ public final class PluginManagerConfigurable
     });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
 
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
+    });
+
     createMarketplaceTab();
     createInstalledTab();
 
@@ -342,9 +347,12 @@ public final class PluginManagerConfigurable
       @Override
       protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
-        myMarketplacePanel =
-          new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler,
-                                                d -> new ListPluginComponent(myPluginModel, d, mySearchListener, true));
+        myMarketplacePanel = new PluginsGroupComponentWithProgress(eventHandler) {
+          @Override
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
+            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, true);
+          }
+        };
 
         myMarketplacePanel.setSelectionListener(selectionListener);
         registerCopyProvider(myMarketplacePanel);
@@ -626,9 +634,12 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         marketplaceController.setSearchResultEventHandler(eventHandler);
 
-        PluginsGroupComponentWithProgress panel =
-          new PluginsGroupComponentWithProgress(new PluginListLayout(), eventHandler,
-                                                descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, true));
+        PluginsGroupComponentWithProgress panel = new PluginsGroupComponentWithProgress(eventHandler) {
+          @Override
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
+            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, true);
+          }
+        };
 
         panel.setSelectionListener(selectionListener);
         registerCopyProvider(panel);
@@ -749,9 +760,12 @@ public final class PluginManagerConfigurable
       @Override
       protected JComponent createPluginsPanel(@NotNull Consumer<? super PluginsGroupComponent> selectionListener) {
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
-        myInstalledPanel =
-          new PluginsGroupComponent(new PluginListLayout(), eventHandler,
-                                    descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
+        myInstalledPanel = new PluginsGroupComponent(eventHandler) {
+          @Override
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
+            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false);
+          }
+        };
 
         myInstalledPanel.setSelectionListener(selectionListener);
         registerCopyProvider(myInstalledPanel);
@@ -917,16 +931,13 @@ public final class PluginManagerConfigurable
               );
           }
 
-          @Nullable
           @Override
-          protected List<String> getValues(@NotNull String attribute) {
-            if (SearchWords.ORGANIZATION.getValue().equals(attribute)) {
-              return myPluginModel.getVendors();
-            }
-            if (SearchWords.TAG.getValue().equals(attribute)) {
-              return myPluginModel.getTags();
-            }
-            return null;
+          protected @Nullable SortedSet<String> getValues(@NotNull String attribute) {
+            return SearchWords.ORGANIZATION.getValue().equals(attribute) ?
+                   myPluginModel.getVendors() :
+                   SearchWords.TAG.getValue().equals(attribute) ?
+                   myPluginModel.getTags() :
+                   null;
           }
 
           @Override
@@ -938,9 +949,12 @@ public final class PluginManagerConfigurable
         MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
         installedController.setSearchResultEventHandler(eventHandler);
 
-        PluginsGroupComponent panel =
-          new PluginsGroupComponent(new PluginListLayout(), eventHandler,
-                                    descriptor -> new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false));
+        PluginsGroupComponent panel = new PluginsGroupComponent(eventHandler) {
+          @Override
+          protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
+            return new ListPluginComponent(myPluginModel, descriptor, mySearchListener, false);
+          }
+        };
 
         panel.setSelectionListener(selectionListener);
         registerCopyProvider(panel);
@@ -1191,8 +1205,7 @@ public final class PluginManagerConfigurable
     DataManager.registerDataProvider(component, dataId -> PlatformDataKeys.COPY_PROVIDER.is(dataId) ? copyProvider : null);
   }
 
-  @NotNull
-  public static List<String> getTags(@NotNull IdeaPluginDescriptor plugin) {
+  public static @NotNull List<String> getTags(@NotNull IdeaPluginDescriptor plugin) {
     List<String> tags = null;
     String productCode = plugin.getProductCode();
 
@@ -1207,11 +1220,20 @@ public final class PluginManagerConfigurable
           }
         }
         else if (tags == null) {
-          return Collections.singletonList(Tags.Paid.name());
+          return List.of(Tags.Paid.name());
         }
         else if (!tags.contains(Tags.Paid.name())) {
           tags = new ArrayList<>(tags);
           tags.add(Tags.Paid.name());
+        }
+      }
+      else {
+        if (!LicensePanel.isEA2Product(plugin.getPluginId().getIdString()) &&
+            tags != null && tags.contains(Tags.Paid.name())) {
+          return List.of(Tags.Paid.name());
+        }
+        else {
+          tags = null;
         }
       }
     }
@@ -1220,13 +1242,13 @@ public final class PluginManagerConfigurable
       if (instance != null) {
         String stamp = instance.getConfirmationStamp(productCode);
         if (stamp != null) {
-          return Collections.singletonList(stamp.startsWith("eval:") ? Tags.Trial.name() : Tags.Purchased.name());
+          return List.of(stamp.startsWith("eval:") ? Tags.Trial.name() : Tags.Purchased.name());
         }
       }
-      return Collections.singletonList(Tags.Paid.name());
+      return List.of(Tags.Paid.name());
     }
     if (ContainerUtil.isEmpty(tags)) {
-      return Collections.emptyList();
+      return List.of();
     }
 
     if (tags.size() > 1) {

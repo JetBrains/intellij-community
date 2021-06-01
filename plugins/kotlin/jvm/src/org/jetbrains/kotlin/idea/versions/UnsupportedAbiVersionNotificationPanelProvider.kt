@@ -1,14 +1,11 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.versions
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.compiler.CompilerManager
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
@@ -23,12 +20,14 @@ import com.intellij.openapi.ui.popup.PopupStep
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkAdapter
 import com.intellij.ui.HyperlinkLabel
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.kotlin.idea.*
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
@@ -36,7 +35,6 @@ import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
-import java.util.*
 import javax.swing.Icon
 import javax.swing.JLabel
 import javax.swing.event.HyperlinkEvent
@@ -50,8 +48,8 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
 
         val kotlinLibraries = findAllUsedLibraries(project).keySet()
         val badRuntimeLibraries = kotlinLibraries.filter { library ->
-            val runtimeJar = getLocalJar(LibraryJarDescriptor.RUNTIME_JAR.findExistingJar(library))
-            val jsLibJar = getLocalJar(LibraryJarDescriptor.JS_STDLIB_JAR.findExistingJar(library))
+            val runtimeJar = LibraryJarDescriptor.RUNTIME_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
+            val jsLibJar = LibraryJarDescriptor.JS_STDLIB_JAR.findExistingJar(library)?.let { VfsUtil.getLocalFile(it) }
             badRootFiles.contains(runtimeJar) || badRootFiles.contains(jsLibJar)
         }
 
@@ -69,7 +67,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
                     otherBadRootsCount
                 )
 
-                answer.setText(text)
+                answer.text = text
 
                 if (isPluginOldForAllRoots) {
                     createUpdatePluginLink(answer)
@@ -102,21 +100,17 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
 
                 when {
                     isPluginOldForAllRoots -> {
-                        answer.setText(
-                            KotlinJvmBundle.htmlMessage(
-                                "html.kotlin.library.b.0.b.was.compiled.with.a.newer.kotlin.compiler.and.can.t.be.read.please.update.kotlin.plugin.html",
-                                presentableName
-                            )
+                        answer.text = KotlinJvmBundle.htmlMessage(
+                            "html.kotlin.library.b.0.b.was.compiled.with.a.newer.kotlin.compiler.and.can.t.be.read.please.update.kotlin.plugin.html",
+                            presentableName
                         )
                         createUpdatePluginLink(answer)
                     }
 
                     isPluginNewForAllRoots ->
-                        answer.setText(
-                            KotlinJvmBundle.htmlMessage(
-                                "html.kotlin.library.b.0.b.has.outdated.binary.format.and.can.t.be.read.by.current.plugin.please.update.the.library.html",
-                                presentableName
-                            )
+                        answer.text = KotlinJvmBundle.htmlMessage(
+                            "html.kotlin.library.b.0.b.has.outdated.binary.format.and.can.t.be.read.by.current.plugin.please.update.the.library.html",
+                            presentableName
                         )
 
                     else -> {
@@ -133,9 +127,8 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
             }
 
             isPluginOldForAllRoots -> {
-                answer.setText(
+                answer.text =
                     KotlinJvmBundle.message("some.kotlin.libraries.attached.to.this.project.were.compiled.with.a.newer.kotlin.compiler.and.can.t.be.read.please.update.kotlin.plugin")
-                )
                 createUpdatePluginLink(answer)
             }
 
@@ -227,7 +220,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
     }
 
     fun checkAndCreate(module: Module): EditorNotificationPanel? {
-        val state = ServiceManager.getService(project, SuppressNotificationState::class.java).state
+        val state = project.service<SuppressNotificationState>().state
         if (state.isSuppressed) {
             return null
         }
@@ -257,7 +250,7 @@ class UnsupportedAbiVersionNotificationPanelProvider(private val project: Projec
 
         badRuntimeLibraries.forEach { library ->
             for (descriptor in LibraryJarDescriptor.values()) {
-                addToBadRoots(getLocalJar(descriptor.findExistingJar(library)))
+                addToBadRoots(descriptor.findExistingJar(library)?.let<VirtualFile, @NotNull VirtualFile> { VfsUtil.getLocalFile(it) })
             }
         }
 

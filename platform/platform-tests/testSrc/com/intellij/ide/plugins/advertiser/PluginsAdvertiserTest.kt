@@ -7,9 +7,7 @@ import org.junit.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
 
-/**
- * @author yole
- */
+
 class PluginsAdvertiserTest {
 
   companion object {
@@ -20,10 +18,10 @@ class PluginsAdvertiserTest {
 
   @Test
   fun testSerializeKnownExtensions() {
-    val expected = KnownExtensions(mapOf("foo" to setOf(PluginData("foo", "Foo"))))
-    KnownExtensionsService.instance.extensions = expected
+    val expected = PluginFeatureMap(mapOf("foo" to setOf(PluginData("foo", "Foo"))))
+    PluginFeatureCacheService.instance.extensions = expected
 
-    val actual = KnownExtensionsService.instance.extensions
+    val actual = PluginFeatureCacheService.instance.extensions
     assertNotNull(actual, "Extensions information for PluginsAdvertiser has not been loaded")
     assertEquals("foo", actual["foo"].single().pluginIdString)
   }

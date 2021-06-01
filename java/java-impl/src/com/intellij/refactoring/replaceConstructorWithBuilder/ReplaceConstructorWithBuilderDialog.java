@@ -389,11 +389,6 @@ public class ReplaceConstructorWithBuilderDialog extends RefactoringDialog {
 
   private class MySetterPrefixInputValidator implements InputValidatorEx {
     @Override
-    public boolean checkInput(String inputString) {
-      return getErrorText(inputString) == null;
-    }
-
-    @Override
     public boolean canClose(String inputString) {
       return checkInput(inputString);
     }

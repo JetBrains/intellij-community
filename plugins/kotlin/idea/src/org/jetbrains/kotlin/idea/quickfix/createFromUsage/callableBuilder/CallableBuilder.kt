@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix.createFromUsage.callableBuilder
 
@@ -134,7 +131,7 @@ sealed class CallablePlacement {
 class CallableBuilder(val config: CallableBuilderConfiguration) {
     private var finished: Boolean = false
 
-    val currentFileContext = config.currentFile.analyzeWithContent()
+    val currentFileContext: BindingContext by lazy { config.currentFile.analyzeWithContent() }
 
     private lateinit var _currentFileModule: ModuleDescriptor
     val currentFileModule: ModuleDescriptor
@@ -1028,7 +1025,9 @@ class CallableBuilder(val config: CallableBuilderConfiguration) {
                             CodeStyleManager.getInstance(project).reformat(newDeclaration)
 
                             // change short type names to fully qualified ones (to be shortened below)
-                            setupTypeReferencesForShortening(newDeclaration, parameterTypeExpressions)
+                            if (newDeclaration.getValueParameters().size == parameterTypeExpressions.size) {
+                                setupTypeReferencesForShortening(newDeclaration, parameterTypeExpressions)
+                            }
                             if (!transformToJavaMemberIfApplicable(newDeclaration)) {
                                 elementsToShorten.add(newDeclaration)
                                 setupEditor(newDeclaration)

@@ -15,6 +15,13 @@
  */
 package org.jetbrains.idea.maven.dom;
 
+import com.intellij.openapi.vfs.VfsUtilCore;
+import org.junit.Test;
+
+import java.io.File;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
 public class MavenPropertyRenameTest extends MavenDomTestCase {
   @Override
   protected void setUpInWriteAction() throws Exception {
@@ -25,6 +32,7 @@ public class MavenPropertyRenameTest extends MavenDomTestCase {
                   "<version>1</version>");
   }
 
+  @Test
   public void testRenamingPropertyTag() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -46,6 +54,7 @@ public class MavenPropertyRenameTest extends MavenDomTestCase {
                        "</properties>");
   }
 
+  @Test
   public void testDoNotRuinTextAroundTheReferenceWhenRenaming() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -67,6 +76,7 @@ public class MavenPropertyRenameTest extends MavenDomTestCase {
                        "</properties>");
   }
 
+  @Test
   public void testRenamingChangesTheReferenceAccordingly() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -98,6 +108,7 @@ public class MavenPropertyRenameTest extends MavenDomTestCase {
                        "</properties>");
   }
 
+  @Test
   public void testRenamingPropertyFromReference() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -119,8 +130,11 @@ public class MavenPropertyRenameTest extends MavenDomTestCase {
                        "</properties>");
   }
 
+  @Test
   public void testRenamingPropertyInResourceFile() throws Exception {
-    createProjectSubFile("src/main/resources/data.properties","foo=test");
+    final File actual = VfsUtilCore.virtualToIoFile(
+      createProjectSubFile("src/main/resources/data.properties", "foo=test"));
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
                      "<version>1</version>" +
@@ -140,9 +154,10 @@ public class MavenPropertyRenameTest extends MavenDomTestCase {
                        "  <xxx>value</xxx>" +
                        "</properties>");
 
-    assertSameLinesWithFile("src/main/resources/data.properties","xxx=test");
+    assertThat(actual).hasContent("xxx=test");
   }
 
+  @Test
   public void testDoNotRenameModelProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -154,6 +169,7 @@ public class MavenPropertyRenameTest extends MavenDomTestCase {
     assertCannotRename();
   }
 
+  @Test
   public void testDoNotRenameModelPropertiesFromReference() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +
@@ -165,6 +181,7 @@ public class MavenPropertyRenameTest extends MavenDomTestCase {
     assertCannotRename();
   }
 
+  @Test
   public void testDoNotRenameModelPropertiesTag() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>module1</artifactId>" +

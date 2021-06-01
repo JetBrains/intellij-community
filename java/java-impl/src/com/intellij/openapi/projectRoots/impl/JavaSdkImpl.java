@@ -120,11 +120,6 @@ public final class JavaSdkImpl extends JavaSdk {
   }
 
   @Override
-  public @NotNull Icon getIconForAddAction() {
-    return AllIcons.General.AddJdk;
-  }
-
-  @Override
   public @Nullable String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
     JavaSdkVersion version = getVersion(sdk);
     int release = version != null ? version.ordinal() : 0;
@@ -409,11 +404,6 @@ public final class JavaSdkImpl extends JavaSdk {
 
   private @Nullable JavaVersion getJavaVersion(@Nullable String versionString) {
     return versionString != null ? myCachedVersionStringToJdkVersion.computeIfAbsent(versionString, JavaVersion::tryParse) : null;
-  }
-
-  @Override
-  public @Nullable JavaSdkVersion getVersion(@NotNull String versionString) {
-    return JavaSdkVersion.fromVersionString(versionString);
   }
 
   @Override

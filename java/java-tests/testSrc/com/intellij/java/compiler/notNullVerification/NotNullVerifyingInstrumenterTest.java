@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.compiler.notNullVerification;
 
 import com.intellij.JavaTestUtil;
@@ -39,9 +39,7 @@ import java.util.List;
 import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
 import static org.junit.Assert.*;
 
-/**
- * @author yole
- */
+
 public abstract class NotNullVerifyingInstrumenterTest {
   @Retention(RetentionPolicy.RUNTIME)
   private @interface TestDirectory { String value(); }

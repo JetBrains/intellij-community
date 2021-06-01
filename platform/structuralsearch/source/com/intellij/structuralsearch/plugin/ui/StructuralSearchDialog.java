@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
@@ -16,7 +16,6 @@ import com.intellij.ide.plugins.DynamicPluginListener;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.Language;
-import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
@@ -315,7 +314,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         if (myReplace) {
           setTextForEditor(text, myReplaceCriteriaEdit);
         }
-        myScopePanel.setScopesFromContext();
+        myScopePanel.setScopesFromContext(null);
         ApplicationManager.getApplication().invokeLater(() -> startTemplate());
         return;
       }
@@ -393,7 +392,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
 
-    final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));
     myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
     myTargetComboBox.setItemConsumer(item -> {
       final MatchOptions matchOptions = myConfiguration.getMatchOptions();
@@ -402,6 +400,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
       initValidation();
     });
+    final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));
+    searchTargetLabel.setLabelFor(myTargetComboBox);
 
     final JPanel centerPanel = new JPanel(null);
     final GroupLayout layout = new GroupLayout(centerPanel);
@@ -1048,10 +1048,13 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
     }
     if (scripts > 0) {
-      final NotificationGroup notificationGroup = NotificationGroupManager.getInstance().getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID);
-      notificationGroup.createNotification(NotificationType.WARNING)
-        .setTitle(SSRBundle.message("import.template.script.warning.title"))
-        .setContent(SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName(), scripts))
+      NotificationGroupManager.getInstance()
+        .getNotificationGroup(UIUtil.SSR_NOTIFICATION_GROUP_ID)
+        .createNotification(
+          SSRBundle.message("import.template.script.warning.title"),
+          SSRBundle.message("import.template.script.warning", ApplicationNamesInfo.getInstance().getFullProductName(), scripts),
+          NotificationType.WARNING
+        )
         .notify(mySearchContext.getProject());
     }
   }
@@ -1140,9 +1143,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
     setSearchTargets(matchOptions);
     if (!myEditConfigOnly) {
-      myScopePanel.setScopesFromContext();
       final SearchScope scope = matchOptions.getScope();
-      if (scope != null) myScopePanel.setScope(scope);
+      myScopePanel.setScopesFromContext(scope);
     }
 
 

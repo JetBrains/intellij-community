@@ -26,7 +26,7 @@ object GrazieToastNotifications {
     MISSED_LANGUAGES_GROUP
       .createNotification(msg("grazie.notification.missing-languages.title"),
                           msg("grazie.notification.missing-languages.body", langs.joinToString()),
-                          NotificationType.WARNING, null)
+                          NotificationType.WARNING)
       .addAction(object : NotificationAction(msg("grazie.notification.missing-languages.action.download")) {
         override fun actionPerformed(e: AnActionEvent, notification: Notification) {
           GrazieRemote.downloadMissing(project)

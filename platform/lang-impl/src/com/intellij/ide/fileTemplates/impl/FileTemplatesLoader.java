@@ -191,7 +191,11 @@ class FileTemplatesLoader implements Disposable {
           if (!processedUrls.add(url)) {
             continue;
           }
-          loadDefaultsFromRoot(url, prefixes, result);
+
+          List<String> children = UrlUtil.getChildrenRelativePaths(url);
+          if (!children.isEmpty()) {
+            loadDefaultsFromRoot(url, children, prefixes, result);
+          }
         }
       }
       catch (IOException e) {
@@ -201,14 +205,11 @@ class FileTemplatesLoader implements Disposable {
     return result;
   }
 
-  private static void loadDefaultsFromRoot(@NotNull URL root, @NotNull List<String> prefixes, @NotNull FileTemplateLoadResult result)
-    throws IOException {
-    final List<String> children = UrlUtil.getChildrenRelativePaths(root);
-    if (children.isEmpty()) {
-      return;
-    }
-
-    final Set<String> descriptionPaths = new HashSet<>();
+  private static void loadDefaultsFromRoot(@NotNull URL root,
+                                           @NotNull List<String> children,
+                                           @NotNull List<String> prefixes,
+                                           @NotNull FileTemplateLoadResult result) throws IOException {
+    Set<String> descriptionPaths = new HashSet<>();
     for (String path : children) {
       if (path.equals("default.html")) {
         result.setDefaultTemplateDescription(
@@ -222,7 +223,7 @@ class FileTemplatesLoader implements Disposable {
       }
     }
 
-    for (final String path : children) {
+    for (String path : children) {
       if (!path.endsWith(FTManager.TEMPLATE_EXTENSION_SUFFIX)) {
         continue;
       }

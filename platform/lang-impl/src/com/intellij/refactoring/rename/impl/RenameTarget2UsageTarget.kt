@@ -40,7 +40,7 @@ internal class RenameTarget2UsageTarget(
       "rename.target.text.0.1", target.presentation.presentableText, newName
     )
 
-    override fun getLocationString(): String? = error("must not be called")
+    override fun getLocationString(): String? = target.presentation.locationText
   }
 
 

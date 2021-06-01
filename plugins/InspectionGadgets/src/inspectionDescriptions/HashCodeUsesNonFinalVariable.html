@@ -1,9 +1,31 @@
 <html>
 <body>
-Reports any implementations of <b>hashcode()</b> which access
-non-<b>final</b> variables. Such access may result in <b>hashcode()</b>
+Reports any implementations of <code>hashCode()</code> which access
+non-<code>final</code> variables. Such access may result in <code>hashCode()</code>
 returning different values at different points in an object's lifecycle, which may in turn cause problems when
-using the standard Collections classes.
+using the standard collection classes.
+<p>Example:</p>
+<pre>
+  class Drink {
+    String name;
+    Drink(String name) { this.name = name; }
+    @Override public int hashCode() {
+      return Objects.hash(name); //warning
+    }
+  }
+  ...
+    Drink coffee = new Drink("Coffee");
+    priceMap.put(coffee, 10.0);
+    coffee.name = "Tea";
+    double coffeePrice = priceMap.get(coffee); //not found
+</pre>
+<p>The quick-fix tries to make the field final:</p>
+<pre>
+  class Drink {
+    final String name;
+    ...
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

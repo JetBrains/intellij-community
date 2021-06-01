@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.designSurface;
 
@@ -10,9 +10,7 @@ import com.intellij.openapi.wm.ex.WindowManagerEx;
 
 import java.awt.*;
 
-/**
- * @author yole
- */
+
 public final class CachedGridImage {
   private static final Object CACHED_GRID_IMAGE_KEY = new Object();
   private static final float[] ourDashes = new float[] { 3.0f, 1.0f };

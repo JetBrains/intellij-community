@@ -123,7 +123,7 @@ public class JsonSchemaMappingsView implements Disposable {
       }).showInCenterOf(urlButton);
     });
     SwingHelper.installFileCompletionAndBrowseDialog(myProject, mySchemaField, JsonBundle.message("json.schema.add.schema.chooser.title"),
-                                                     FileChooserDescriptorFactory.createSingleFileDescriptor());
+                                                     FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor());
     mySchemaField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {

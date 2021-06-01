@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.editor;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -30,9 +30,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Matcher;
 
-/**
- * @author yole
- */
+
 public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
   private int myPostprocessShift = 0;
 
@@ -262,12 +260,12 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
 
   @Nullable
   private static PsiElement findStatementBeforeCaret(ASTNode node) {
-    return findBeforeCaret(node, PyStatement.class);
+    return findBeforeCaret(node, PyStatement.class, PyStatementPart.class);
   }
 
   @Nullable
   private static PsiElement findStatementAfterCaret(ASTNode node) {
-    return findAfterCaret(node, PyStatement.class);
+    return findAfterCaret(node, PyStatement.class, PyStatementPart.class);
   }
 
   private static PsiElement findBeforeCaret(ASTNode atCaret, Class<? extends PsiElement>... classes) {

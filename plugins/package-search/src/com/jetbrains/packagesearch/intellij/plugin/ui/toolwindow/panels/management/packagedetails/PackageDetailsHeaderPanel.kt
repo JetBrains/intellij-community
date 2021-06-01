@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.JBPopupMenu
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
@@ -25,6 +26,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetMo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.AbstractLayoutManager2
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.HtmlEditorPane
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.MenuAction
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.ScaledPixels
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.bottom
@@ -39,20 +41,17 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.showUnderneath
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.top
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.vertical
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.verticalCenter
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.withHtmlStyling
 import com.jetbrains.packagesearch.intellij.plugin.util.nullIfBlank
 import org.apache.commons.lang3.StringUtils
 import java.awt.BorderLayout
 import java.awt.Component
 import java.awt.Container
 import java.awt.Dimension
-import java.awt.Font
 import java.awt.Rectangle
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
-import javax.swing.JTextArea
 import javax.swing.text.JTextComponent
 
 private val minPopupMenuWidth = 175.scaled()
@@ -66,26 +65,15 @@ internal class PackageDetailsHeaderPanel(
         isVisible = false
     }
 
-    private val nameLabel = JTextArea().apply {
+    private val nameLabel = HtmlEditorPane().apply {
         border = emptyBorder()
-        font = JBFont.label().deriveFont(Font.BOLD, 16.scaledFontSize())
-        foreground = PackageSearchUI.getTextColorPrimary()
-        background = PackageSearchUI.UsualBackgroundColor
-        isEditable = false
-        lineWrap = true
-        wrapStyleWord = true
+        font = JBFont.label().asBold().deriveFont(16.scaledFontSize())
     }
 
-    private val identifierLabel = JTextArea().apply {
+    private val identifierLabel = HtmlEditorPane().apply {
         border = emptyBorder()
         foreground = PackageSearchUI.getTextColorSecondary()
-        background = PackageSearchUI.UsualBackgroundColor
-        isEditable = false
-        lineWrap = true
-        wrapStyleWord = true
     }
-
-    private val descriptionLabel = PackageSearchUI.createLabel()
 
     private val primaryActionButton = ColorButton().apply {
         addActionListener { onPrimaryActionClicked() }
@@ -138,7 +126,6 @@ internal class PackageDetailsHeaderPanel(
         add(primaryActionButton, HeaderLayout.Role.PRIMARY_ACTION)
         add(overflowButton, HeaderLayout.Role.OVERFLOW_BUTTON)
         add(identifierLabel, HeaderLayout.Role.IDENTIFIER)
-        add(descriptionLabel, HeaderLayout.Role.DESCRIPTION)
     }
 
     init {
@@ -148,6 +135,9 @@ internal class PackageDetailsHeaderPanel(
 
         add(repoWarningBanner, BorderLayout.NORTH)
         add(infoPanel, BorderLayout.CENTER)
+
+        UIUtil.enableEagerSoftWrapping(nameLabel)
+        UIUtil.enableEagerSoftWrapping(identifierLabel)
 
         nameLabel.onRightClick { if (nameLabel.isVisible) copyMenu.showUnderneath(nameLabel) }
         identifierLabel.onRightClick { if (identifierLabel.isVisible) copyMenu.showUnderneath(identifierLabel) }
@@ -164,24 +154,19 @@ internal class PackageDetailsHeaderPanel(
 
         val name = packageModel.remoteInfo?.name
         if (name != null && name != packageModel.identifier) {
-            nameLabel.text = StringUtils.normalizeSpace(packageModel.remoteInfo.name)
-            identifierLabel.text = packageModel.identifier
+            @Suppress("HardCodedStringLiteral") // Name comes from the API
+            nameLabel.setBody(
+                listOf(
+                    HtmlChunk.span("font-size: ${16.scaledFontSize()};")
+                        .addRaw("<b>" + StringUtils.normalizeSpace(packageModel.remoteInfo.name) + "</b>")
+                )
+            )
+            identifierLabel.setBodyText(packageModel.identifier)
             identifierLabel.isVisible = true
         } else {
-            nameLabel.text = packageModel.identifier
+            nameLabel.setBodyText(packageModel.identifier)
             identifierLabel.text = null
             identifierLabel.isVisible = false
-        }
-
-        UIUtil.enableEagerSoftWrapping(nameLabel)
-        UIUtil.enableEagerSoftWrapping(identifierLabel)
-
-        val description = packageModel.remoteInfo?.description
-        if (!description.isNullOrBlank() && description != name) {
-            descriptionLabel.isVisible = true
-            descriptionLabel.text = description.withHtmlStyling(wordWrap = true)
-        } else {
-            descriptionLabel.isVisible = false
         }
 
         val selectedVersion = selectedPackageModel.selectedVersion
@@ -330,9 +315,6 @@ private class HeaderLayout : AbstractLayoutManager2() {
     @ScaledPixels
     private val vGapBetweenNameAndIdentifier = 4.scaled()
 
-    @ScaledPixels
-    private val vGapBetweenIdentifierAndDescription = 12.scaled()
-
     private val componentByRole = mutableMapOf<Role, JComponent>()
     private var dirty = true
 
@@ -346,10 +328,10 @@ private class HeaderLayout : AbstractLayoutManager2() {
     override fun preferredLayoutSize(parent: Container): Dimension {
         layoutContainer(parent) // Re-layout if needed
 
-        val descriptionLabel = componentByRole[Role.DESCRIPTION]?.bottom ?: throw IllegalStateException("Description label missing")
+        val identifierLabel = componentByRole[Role.IDENTIFIER]?.bottom ?: error("Identifier label missing")
         return Dimension(
             parent.width - parent.insets.horizontal,
-            descriptionLabel + parent.insets.vertical
+            identifierLabel + parent.insets.vertical
         )
     }
 
@@ -365,7 +347,7 @@ private class HeaderLayout : AbstractLayoutManager2() {
             val insets = parent.insets
             val bounds = Rectangle(insets.left, insets.top, parent.width - insets.horizontal, parent.height - insets.vertical)
 
-            val overflowButton = componentByRole[Role.OVERFLOW_BUTTON] ?: throw IllegalStateException("Overflow button missing")
+            val overflowButton = componentByRole[Role.OVERFLOW_BUTTON] ?: error("Overflow button missing")
             val overflowButtonWidth = if (overflowButton.isVisible) overflowButtonSize else 0
             overflowButton.setBounds(
                 bounds.right - overflowButtonSize,
@@ -374,7 +356,7 @@ private class HeaderLayout : AbstractLayoutManager2() {
                 overflowButtonSize
             )
 
-            val primaryActionButton = componentByRole[Role.PRIMARY_ACTION] ?: throw IllegalStateException("Primary action button missing")
+            val primaryActionButton = componentByRole[Role.PRIMARY_ACTION] ?: error("Primary action button missing")
             val primaryActionWidth = if (primaryActionButton.isVisible) primaryActionButton.preferredSize.width else 0
             val buttonsGap = if (primaryActionButton.isVisible && overflowButton.isVisible) gapBetweenPrimaryActionAndOverflow else 0
             primaryActionButton.setBounds(
@@ -384,7 +366,7 @@ private class HeaderLayout : AbstractLayoutManager2() {
                 primaryActionButtonHeight
             )
 
-            val nameLabel = componentByRole[Role.NAME] ?: throw IllegalStateException("Name label missing")
+            val nameLabel = componentByRole[Role.NAME] ?: error("Name label missing")
             val nameLabelHeight = nameLabel.preferredSize.height
             val nameLabelButtonGap = if (primaryActionButton.isVisible || overflowButton.isVisible) gapBetweenNameAndButtons else 0
             val nameLabelWidth = primaryActionButton.left - bounds.left - nameLabelButtonGap
@@ -400,7 +382,7 @@ private class HeaderLayout : AbstractLayoutManager2() {
                 )
             }
 
-            val identifierLabel = componentByRole[Role.IDENTIFIER] ?: throw IllegalStateException("Identifier label missing")
+            val identifierLabel = componentByRole[Role.IDENTIFIER] ?: error("Identifier label missing")
             val labelsY = maxOf(nameLabel.bottom + vGapBetweenNameAndIdentifier, primaryActionButton.bottom + vGapBetweenNameAndIdentifier)
             if (identifierLabel.isVisible) {
                 identifierLabel.setBounds(
@@ -411,18 +393,6 @@ private class HeaderLayout : AbstractLayoutManager2() {
                 )
             } else {
                 identifierLabel.setBounds(0, nameLabel.bottom, bounds.width, 0)
-            }
-
-            val descriptionLabel = componentByRole[Role.DESCRIPTION] ?: throw IllegalStateException("Description label missing")
-            if (descriptionLabel.isVisible) {
-                descriptionLabel.setBounds(
-                    bounds.left,
-                    identifierLabel.bottom + vGapBetweenIdentifierAndDescription,
-                    bounds.width,
-                    if (descriptionLabel.isVisible) descriptionLabel.preferredSize.height else 0
-                )
-            } else {
-                descriptionLabel.setBounds(0, identifierLabel.bottom, bounds.width, 0)
             }
 
             dirty = false
@@ -441,7 +411,6 @@ private class HeaderLayout : AbstractLayoutManager2() {
         NAME,
         PRIMARY_ACTION,
         OVERFLOW_BUTTON,
-        IDENTIFIER,
-        DESCRIPTION
+        IDENTIFIER
     }
 }

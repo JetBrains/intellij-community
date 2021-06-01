@@ -1,16 +1,11 @@
-/*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.jps.targets
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.StandardFileSystems
-import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.FileCollectionFactory
 import com.intellij.util.io.URLUtil
-import gnu.trove.THashSet
 import org.jetbrains.jps.ModuleChunk
 import org.jetbrains.jps.builders.java.JavaBuilderUtil
 import org.jetbrains.jps.builders.storage.BuildDataPaths
@@ -49,6 +44,9 @@ import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
+import kotlin.io.path.exists
+import kotlin.io.path.extension
+import kotlin.io.path.notExists
 
 private const val JVM_BUILD_META_INFO_FILE_NAME = "jvm-build-meta-info.txt"
 
@@ -269,19 +267,18 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
         }.toFile()
     }
 
-    private fun findClassPathRoots(): Collection<File> {
-        return allDependencies.classes().roots.filter { file ->
-            if (!file.exists()) {
-                val extension = file.extension
+    private fun findClassPathRoots(): Collection<File> = allDependencies.classes().roots.filter { file ->
+        val path = file.toPath()
+        if (path.notExists()) {
+            val extension = path.extension
 
-                // Don't filter out files, we want to report warnings about absence through the common place
-                if (extension != "class" && extension != "jar") {
-                    return@filter false
-                }
+            // Don't filter out files, we want to report warnings about absence through the common place
+            if (extension != "class" && extension != "jar") {
+                return@filter false
             }
-
-            true
         }
+
+        true
     }
 
     private fun findModularJdkRoot(): File? {
@@ -298,12 +295,12 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
 
     private fun findSourceRoots(context: CompileContext): List<JvmSourceRoot> {
         val roots = context.projectDescriptor.buildRootIndex.getTargetRoots(jpsModuleBuildTarget, context)
-        val result = ContainerUtil.newArrayList<JvmSourceRoot>()
+        val result = mutableListOf<JvmSourceRoot>()
         for (root in roots) {
             val file = root.rootFile
             val prefix = root.packagePrefix
-            if (file.exists()) {
-                result.add(JvmSourceRoot(file, if (prefix.isEmpty()) null else prefix))
+            if (file.toPath().exists()) {
+                result.add(JvmSourceRoot(file, prefix.ifEmpty { null }))
             }
         }
         return result
@@ -356,7 +353,7 @@ class KotlinJvmModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleB
             for (output in outputs) {
                 if (output !is GeneratedJvmClass) continue
 
-                val sourceFiles = THashSet(FileUtil.FILE_HASHING_STRATEGY)
+                val sourceFiles = FileCollectionFactory.createCanonicalFileSet()
                 sourceFiles.addAll(getOldSourceFiles(target, output))
                 sourceFiles.removeAll(targetDirtyFiles[target] ?: emptySet())
                 sourceFiles.addAll(output.sourceFiles)

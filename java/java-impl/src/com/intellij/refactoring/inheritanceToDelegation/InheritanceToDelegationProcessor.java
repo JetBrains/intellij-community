@@ -904,7 +904,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       PsiClass containingClass = superMethod.getContainingClass();
       if (InheritanceUtil.isInheritorOrSelf(myBaseClass, containingClass, true)) {
         String qName = containingClass.getQualifiedName();
-        if (qName == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) {
+        if (!CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) {
           return superMethod;
         }
       }
@@ -1219,7 +1219,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       final PsiClass aClass = PsiUtil.resolveClassInType(type);
       if (aClass == null) return;
       String qName = aClass.getQualifiedName();
-      if (qName != null && CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) {
+      if (CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) {
         myUsageInfoStorage.add(new ObjectUpcastedUsageInfo(instanceRef, aClass, getFieldAccessibility(instanceRef)));
       } else {
         if (myBaseClassBases.contains(aClass)

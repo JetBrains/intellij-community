@@ -19,8 +19,6 @@ import java.util.ResourceBundle;
  * Provides type name for instances of given class.
  * <p/>
  * Register via {@code com.intellij.typeName} extension point.
- *
- * @author yole
  */
 public final class TypeNameEP implements PluginAware {
   public static final ExtensionPointName<TypeNameEP> EP_NAME = new ExtensionPointName<>("com.intellij.typeName");

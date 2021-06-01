@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.navigation;
 
@@ -45,6 +45,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.list.PopupListElementRenderer;
 import com.intellij.util.Processor;
+import com.intellij.util.TextWithIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -198,7 +199,8 @@ public final class NavigationUtil {
     if (!EditorHistoryManager.getInstance(elt.getProject()).hasBeenOpen(vFile)) return false;
 
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
-    if (!fem.isFileOpen(vFile)) {
+    boolean wasAlreadyOpen = fem.isFileOpen(vFile);
+    if (!wasAlreadyOpen) {
       fem.openFile(vFile, requestFocus, searchForOpen);
     }
 
@@ -212,8 +214,10 @@ public final class NavigationUtil {
         final int offset = text.getCaretModel().getOffset();
 
         if (range.containsOffset(offset)) {
-          // select the file
-          fem.openFile(vFile, requestFocus, searchForOpen);
+          if (wasAlreadyOpen) {
+            // select the file
+            fem.openFile(vFile, requestFocus, searchForOpen);
+          }
           return true;
         }
       }
@@ -293,9 +297,6 @@ public final class NavigationUtil {
 
     final Ref<Boolean> hasMnemonic = Ref.create(false);
     final DefaultPsiElementCellRenderer renderer = new DefaultPsiElementCellRenderer() {
-      {
-        setFocusBorderEnabled(false);
-      }
 
       @Override
       public String getElementText(PsiElement element) {
@@ -323,8 +324,8 @@ public final class NavigationUtil {
       }
 
       @Override
-      protected DefaultListCellRenderer getRightCellRenderer(Object value) {
-        return showContainingModules ? super.getRightCellRenderer(value) : null;
+      protected @Nullable TextWithIcon getItemLocation(Object value) {
+        return showContainingModules ? super.getItemLocation(value) : null;
       }
 
       @Override
@@ -341,13 +342,21 @@ public final class NavigationUtil {
         if (name == null) return false;
         renderer.append(name, nameAttributes);
         renderer.setIcon(item.getCustomIcon());
+        final String containerName = item.getCustomContainerName();
+        if (containerName != null) {
+          renderer.append(" " + containerName, SimpleTextAttributes.GRAYED_ATTRIBUTES);
+        }
+
         return true;
       }
 
       @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-        final JPanel component = (JPanel)super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-        if (!hasMnemonic.get()) return component;
+        final Component psiComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        if (!hasMnemonic.get() || !(psiComponent instanceof JPanel)) {
+          return psiComponent;
+        }
+        JPanel component = (JPanel)psiComponent;
 
         final JPanel panelWithMnemonic = new JPanel(new BorderLayout());
         final int mnemonic = getMnemonic(value, itemsMap);

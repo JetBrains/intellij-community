@@ -26,6 +26,14 @@ interface ULambdaExpression : UExpression {
    */
   val functionalInterfaceType: PsiType?
 
+  /**
+   * Returns the list of all lambda parameters including this, it and e.t.c.
+   * It is more preferable than [valueParameters], because this parameters corresponds to parameters of functional interface method, which can be retrieved from [getExpressionType]
+   */
+  @JvmDefault
+  val parameters: List<UParameter>
+    get() = valueParameters
+
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitLambdaExpression(this)) return
     uAnnotations.acceptList(visitor)

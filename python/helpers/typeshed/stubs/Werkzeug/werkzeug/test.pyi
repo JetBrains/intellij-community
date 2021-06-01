@@ -3,12 +3,12 @@ from _typeshed.wsgi import WSGIEnvironment
 from typing import Any, Generic, Optional, Text, Tuple, Type, TypeVar, overload
 from typing_extensions import Literal
 
-if sys.version_info < (3,):
-    from cookielib import CookieJar
-    from urllib2 import Request as U2Request
-else:
+if sys.version_info >= (3, 0):
     from http.cookiejar import CookieJar
     from urllib.request import Request as U2Request
+else:
+    from cookielib import CookieJar
+    from urllib2 import Request as U2Request
 
 def stream_encode_multipart(
     values, use_tempfile: int = ..., threshold=..., boundary: Optional[Any] = ..., charset: Text = ...

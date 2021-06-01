@@ -53,11 +53,6 @@ import java.util.Set;
 public class RestRoleInspection extends RestInspection {
   public JDOMExternalizableStringList ignoredRoles = new JDOMExternalizableStringList();
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {

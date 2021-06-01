@@ -268,7 +268,7 @@
   </applicationListeners>
 
   <actions>
-    <group id="LombokActionGroup" icon="LombokIcons.Lombok" popup="true">
+    <group id="LombokActionGroup" class="de.plushnikov.intellij.plugin.action.LombokMenuGroup" icon="LombokIcons.Lombok" popup="true">
 
       <action id="defaultLombokData" class="de.plushnikov.intellij.plugin.action.lombok.LombokDataAction"/>
       <separator/>
@@ -281,7 +281,7 @@
 
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
-    <group id="DelombokActionGroup" icon="LombokIcons.Lombok" popup="true">
+    <group id="DelombokActionGroup" class="de.plushnikov.intellij.plugin.action.LombokMenuGroup" icon="LombokIcons.Lombok" popup="true">
       <action id="delombokAny" class="de.plushnikov.intellij.plugin.action.delombok.DelombokEverythingAction"/>
       <separator/>
       <action id="delombokData" class="de.plushnikov.intellij.plugin.action.delombok.DelombokDataAction"/>

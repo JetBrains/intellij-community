@@ -34,9 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.EnumSet;
 import java.util.Set;
 
-/**
- * @author yole
- */
+
 public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   private static final Logger LOG = Logger.getInstance(StatementParsing.class);
   @NonNls protected static final String TOK_FUTURE_IMPORT = PyNames.FUTURE_MODULE;
@@ -57,6 +55,8 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
   @NonNls protected static final  String TOK_IMPORT = PyNames.IMPORT;
   @NonNls protected static final  String TOK_IN = PyNames.IN;
   @NonNls protected static final  String TOK_FROM = PyNames.FROM;
+  @NonNls protected static final String TOK_MATCH = PyNames.MATCH;
+  @NonNls protected static final String TOK_CASE = PyNames.CASE;
 
   protected enum Phase {NONE, FROM, FUTURE, IMPORT} // 'from __future__ import' phase
 
@@ -133,8 +133,85 @@ public class StatementParsing extends Parsing implements ITokenTypeRemapper {
         return;
       }
     }
+    if (atToken(PyTokenTypes.IDENTIFIER, TOK_MATCH)) {
+      if (parseMatchStatement()) {
+        return;
+      }
+    }
 
     parseSimpleStatement();
+  }
+
+  private boolean parseMatchStatement() {
+    assert atToken(PyTokenTypes.IDENTIFIER, TOK_MATCH);
+    SyntaxTreeBuilder.Marker mark = myBuilder.mark();
+    myBuilder.remapCurrentToken(PyTokenTypes.MATCH_KEYWORD);
+    myBuilder.advanceLexer();
+    myContext.getExpressionParser().parseTupleExpression(true, false, false);
+    if (!matchToken(PyTokenTypes.COLON)) {
+      mark.rollbackTo();
+      myBuilder.remapCurrentToken(PyTokenTypes.IDENTIFIER);
+      return false;
+    }
+    parseCaseClauses();
+    mark.done(PyElementTypes.MATCH_STATEMENT);
+    return true;
+  }
+
+  private boolean parseCaseClauses() {
+    if (myBuilder.getTokenType() == PyTokenTypes.STATEMENT_BREAK) {
+      myBuilder.advanceLexer();
+
+      final boolean indentFound = myBuilder.getTokenType() == PyTokenTypes.INDENT;
+      if (indentFound) {
+        myBuilder.advanceLexer();
+        if (myBuilder.eof()) {
+          myBuilder.error(PyPsiBundle.message("indented.block.expected"));
+          return false;
+        }
+        else {
+          while (!myBuilder.eof() && myBuilder.getTokenType() != PyTokenTypes.DEDENT) {
+            if (!parseCaseClause()) {
+              SyntaxTreeBuilder.Marker illegalStatement = myBuilder.mark();
+              parseStatement();
+              illegalStatement.error(PyPsiBundle.message("PARSE.expected.case.clause"));
+            }
+          }
+        }
+        if (!myBuilder.eof()) {
+          checkMatches(PyTokenTypes.DEDENT, PyPsiBundle.message("dedent.expected"));
+        }
+      }
+      else {
+        myBuilder.error(PyPsiBundle.message("indent.expected"));
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private boolean parseCaseClause() {
+    if (atToken(PyTokenTypes.IDENTIFIER, TOK_CASE)) {
+      SyntaxTreeBuilder.Marker mark = myBuilder.mark();
+      myBuilder.remapCurrentToken(PyTokenTypes.CASE_KEYWORD);
+      myBuilder.advanceLexer();
+      if (!getPatternParser().parseCasePattern()) {
+        SyntaxTreeBuilder.Marker patternError = myBuilder.mark();
+        while (!myBuilder.eof() && !atAnyOfTokens(PyTokenTypes.IF_KEYWORD, PyTokenTypes.COLON)) {
+          nextToken();
+        }
+        patternError.error(PyPsiBundle.message("PARSE.expected.pattern"));
+      }
+      if (matchToken(PyTokenTypes.IF_KEYWORD)) {
+        if (!getExpressionParser().parseNamedTestExpression(false, false)) {
+          myBuilder.error(PyPsiBundle.message("PARSE.expected.expression"));
+        }
+      }
+      parseColonAndSuite();
+      mark.done(PyElementTypes.CASE_CLAUSE);
+      return true;
+    }
+    return false;
   }
 
   protected void parseSimpleStatement() {

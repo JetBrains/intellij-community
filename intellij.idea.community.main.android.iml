@@ -10,6 +10,6 @@
     <orderEntry type="module" module-name="intellij.android.jpsBuildPlugin.jps" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.plugin" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.android.jpsBuildPlugin" scope="RUNTIME" />
-    <orderEntry type="library" scope="RUNTIME" name="KotlinPlugin" level="project" />
+    <orderEntry type="module" module-name="intellij.android.layoutlib-native" scope="RUNTIME" />
   </component>
 </module>

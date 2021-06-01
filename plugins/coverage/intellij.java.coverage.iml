@@ -11,27 +11,27 @@
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="module-library">
       <library name="JaCoCo" type="repository">
-        <properties maven-id="org.jacoco:org.jacoco.ant:0.8.6" />
+        <properties maven-id="org.jacoco:org.jacoco.ant:0.8.7" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.6/org.jacoco.ant-0.8.6.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.6/org.jacoco.core-0.8.6.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/8.0.1/asm-8.0.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/8.0.1/asm-commons-8.0.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/8.0.1/asm-analysis-8.0.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/8.0.1/asm-tree-8.0.1.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.6/org.jacoco.report-0.8.6.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.6/org.jacoco.agent-0.8.6.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.7/org.jacoco.ant-0.8.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.7/org.jacoco.core-0.8.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.1/asm-9.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.1/asm-commons-9.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.1/asm-analysis-9.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.1/asm-tree-9.1.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.7/org.jacoco.report-0.8.7.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.7/org.jacoco.agent-0.8.7.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.6/org.jacoco.ant-0.8.6-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.6/org.jacoco.core-0.8.6-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/8.0.1/asm-8.0.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/8.0.1/asm-commons-8.0.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/8.0.1/asm-analysis-8.0.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/8.0.1/asm-tree-8.0.1-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.6/org.jacoco.report-0.8.6-sources.jar!/" />
-          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.6/org.jacoco.agent-0.8.6-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.ant/0.8.7/org.jacoco.ant-0.8.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.core/0.8.7/org.jacoco.core-0.8.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm/9.1/asm-9.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-commons/9.1/asm-commons-9.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-analysis/9.1/asm-analysis-9.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/ow2/asm/asm-tree/9.1/asm-tree-9.1-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.report/0.8.7/org.jacoco.report-0.8.7-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jacoco/org.jacoco.agent/0.8.7/org.jacoco.agent-0.8.7-sources.jar!/" />
         </SOURCES>
       </library>
     </orderEntry>

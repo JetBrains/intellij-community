@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.platform.testintegration
 
 import com.intellij.psi.JavaPsiFacade
@@ -25,8 +26,6 @@ abstract class AbstractLightTestFramework: LightTestFramework {
         val testFramework = framework
         if (testFramework == null) return UnsureLightTestFrameworkResult
 
-        if (!namedDeclaration.containingKtFile.hasThisFramework()) return UnsureLightTestFrameworkResult
-
         return when (namedDeclaration) {
             is KtClassOrObject -> {
                 if (isNotACandidateFastCheck(namedDeclaration)) {
@@ -45,11 +44,16 @@ abstract class AbstractLightTestFramework: LightTestFramework {
                     return NoLightTestFrameworkResult
                 }
 
-                when(isAUnitTestMethod(namedDeclaration)) {
-                    true -> ResolvedLightTestFrameworkResult(testFramework)
+                when (namedDeclaration.getParentOfType<KtClassOrObject>(true)?.run { isAUnitTestClass(this) }) {
+                    true -> when (isAUnitTestMethod(namedDeclaration)) {
+                        true -> ResolvedLightTestFrameworkResult(testFramework)
+                        false -> UnsureLightTestFrameworkResult
+                        null -> NoLightTestFrameworkResult
+                    }
                     false -> UnsureLightTestFrameworkResult
                     null -> NoLightTestFrameworkResult
                 }
+
             }
             else -> UnsureLightTestFrameworkResult
         }
@@ -76,11 +80,6 @@ abstract class AbstractLightTestFramework: LightTestFramework {
                     || getStrictParentOfType<KtObjectDeclaration>()?.isObjectLiteral() == true
         }
 
-    protected fun KtFile.hasThisFramework(): Boolean =
-        detectFramework(this).let {
-            it is ResolvedLightTestFrameworkResult && it.testFramework == framework
-        }
-
     protected fun detectFramework(ktFile: KtFile): LightTestFrameworkResult {
         val testFramework = framework
         if (testFramework == null) return UnsureLightTestFrameworkResult
@@ -89,9 +88,15 @@ abstract class AbstractLightTestFramework: LightTestFramework {
             CachedValueProvider.Result
                 .create(
                     {
+                        val anyNotUnitTestClass = ktFile.declarations.filterIsInstance<KtClassOrObject>().any {
+                            !isNotACandidateFastCheck(it) && isAUnitTestClass(it) == false
+                        }
+                        if (anyNotUnitTestClass) return@create UnsureLightTestFrameworkResult
+
                         val anyUnitTestClass = ktFile.declarations.filterIsInstance<KtClassOrObject>().any {
                             !isNotACandidateFastCheck(it) && isAUnitTestClass(it) == true
                         }
+
                         if (anyUnitTestClass) ResolvedLightTestFrameworkResult(testFramework) else UnsureLightTestFrameworkResult
                     },
                     PsiModificationTracker.MODIFICATION_COUNT

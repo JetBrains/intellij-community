@@ -3,6 +3,16 @@
 Reports any uses of concrete AWT peer classes. Such classes represent
 native windowing system widgets, and will be non-portable between different windowing
 systems.
+<p>Example: </p>
+<pre>
+  import java.awt.peer.ButtonPeer;
+
+  abstract class Sample implements ButtonPeer {
+    public void foo() {
+        Sample sample;
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

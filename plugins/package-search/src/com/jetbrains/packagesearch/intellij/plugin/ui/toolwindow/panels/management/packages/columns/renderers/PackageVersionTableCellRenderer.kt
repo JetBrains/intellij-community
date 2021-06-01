@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.intellij.icons.AllIcons
 import com.intellij.ui.components.JBComboBoxLabel
+import com.intellij.ui.components.JBLabel
 import com.jetbrains.packagesearch.intellij.plugin.looksLikeGradleVariable
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
@@ -30,6 +31,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
         column: Int
     ) = JPanel(MigLayout("al left center, insets 0 8 0 0")).apply {
         table.colors.applyTo(this, isSelected)
+
         val bgColor = if (!isSelected && value is VersionViewModel.InstallablePackage) {
             PackageSearchUI.ListRowHighlightBackground
         } else {
@@ -38,17 +40,27 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
 
         background = bgColor
 
-        add(
+        val viewModel = checkNotNull(value as? VersionViewModel<*>)
+        val hasVersionsToChooseFrom = viewModel.packageModel.getAvailableVersions(onlyStable).isNotEmpty()
+        val labelText = when (value) {
+            is VersionViewModel.InstalledPackage -> versionMessage(value.packageModel, onlyStable)
+            is VersionViewModel.InstallablePackage -> value.selectedVersion.displayName
+            else -> throw IllegalArgumentException("The value is expected to be a VersionViewModel, but wasn't.")
+        }
+
+        val labelComponent = if (hasVersionsToChooseFrom) {
             JBComboBoxLabel().apply {
+                icon = AllIcons.General.LinkDropTriangle
+                text = labelText
+            }
+        } else {
+            JBLabel().apply { text = labelText }
+        }
+
+        add(
+            labelComponent.apply {
                 table.colors.applyTo(this, isSelected)
                 background = bgColor
-                icon = AllIcons.General.LinkDropTriangle
-
-                text = when (value) {
-                    is VersionViewModel.InstalledPackage -> versionMessage(value.packageModel, onlyStable)
-                    is VersionViewModel.InstallablePackage -> value.selectedVersion.displayName
-                    else -> throw IllegalArgumentException("The value is expected to be a VersionViewModel, but wasn't.")
-                }
             }
         )
     }
@@ -71,7 +83,7 @@ internal class PackageVersionTableCellRenderer : TableCellRenderer {
                 val latestAvailableVersion = packageModel.getLatestAvailableVersion(onlyStable)
                     ?: return@buildString
                 append(" → ")
-                append(latestAvailableVersion?.displayName)
+                append(latestAvailableVersion.displayName)
             }
         }
     }

@@ -114,7 +114,7 @@ object FileUtils {
     return false
   }
 
-  fun ensureDirectoryExists(f: File): Boolean = f.exists() || f.mkdirs()
+  private fun ensureDirectoryExists(f: File): Boolean = f.exists() || f.mkdirs()
 
   private fun splitJarPath(path: String): Pair<String, String> {
     val lastIndexOf = path.lastIndexOf(".jar!/")

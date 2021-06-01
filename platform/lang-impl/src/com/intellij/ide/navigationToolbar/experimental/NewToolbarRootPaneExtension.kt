@@ -56,16 +56,14 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
 
   private val registryListener = object : RegistryValueListener {
     override fun afterValueChanged(value: RegistryValue) {
-      revalidate()
+      clearAndRevalidate()
     }
   }
 
   init {
     Disposer.register(myProject, this)
     Registry.get(navBarKey).addListener(registryListener, this)
-    revalidate()
-    myProject.messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener { revalidate() })
-
+    myProject.messageBus.connect().subscribe(UISettingsListener.TOPIC, UISettingsListener { clearAndRevalidate() })
   }
 
   private fun addGroupComponent(panel: JPanel, layoutConstrains: String, vararg children: AnAction) {
@@ -83,42 +81,58 @@ class NewToolbarRootPaneExtension(val myProject: Project) : IdeRootPaneNorthExte
     return NEW_TOOLBAR_KEY
   }
 
-  override fun revalidate() {
+  private fun clearAndRevalidate(){
     myPanelWrapper.removeAll()
     myPanel.removeAll()
     myRightPanel.removeAll()
     myCenterPanel.removeAll()
     myLeftPanel.removeAll()
 
+    revalidate()
+  }
+
+  override fun revalidate() {
+
     val toolbarSettingsService = ToolbarSettings.Companion.getInstance()
     if (toolbarSettingsService is ExperimentalToolbarSettings) {
-      logger.info("ToolbarSettingsService is ExperimentalToolbarSettings")
-      logger.info("Show new toolbar: ${toolbarSettingsService.showNewToolbar}, presentation mode: ${instance.presentationMode}")
-      logger.info("Show old main toolbar: ${toolbarSettingsService.isToolbarVisible()}, old navbar visible: ${toolbarSettingsService.isNavBarVisible()}")
+      val visibleAndEnabled = toolbarSettingsService.showNewToolbar && !instance.presentationMode
+      if(visibleAndEnabled) {
+        logger.info("ToolbarSettingsService is ExperimentalToolbarSettings")
+        logger.info("Show new toolbar: ${toolbarSettingsService.showNewToolbar}, presentation mode: ${instance.presentationMode}")
+        logger.info(
+          "Show old main toolbar: ${toolbarSettingsService.isToolbarVisible()}, old navbar visible: ${toolbarSettingsService.isNavBarVisible()}")
 
-      myPanelWrapper.add(myPanel, BorderLayout.CENTER)
-      myPanel.add(myRightPanel, BorderLayout.EAST)//"growx, align trailing")
-      myPanel.add(myCenterPanel, BorderLayout.CENTER)//"growx, align leading")
-      myPanel.add(myLeftPanel, BorderLayout.WEST)//"growx, align leading")
+        myPanelWrapper.add(myPanel, BorderLayout.CENTER)
+        myPanel.add(myRightPanel, BorderLayout.EAST)
+        myPanel.add(myCenterPanel, BorderLayout.CENTER)
+        myPanel.add(myLeftPanel, BorderLayout.WEST)
 
-      val newToolbarActions = CustomActionsSchema.getInstance().getCorrectedAction("NewToolbarActions")
+        val newToolbarActions = CustomActionsSchema.getInstance().getCorrectedAction("NewToolbarActions")
 
-      val listChildren = (newToolbarActions as ActionGroup).getChildren(null)
-      addGroupComponent(myLeftPanel, "align leading", listChildren[0])
-      addGroupComponent(myCenterPanel, "align trailing, width 0:pref:max", listChildren[1])
-      addGroupComponent(myRightPanel, "align trailing, width pref!", listChildren[2])
+        val listChildren = (newToolbarActions as ActionGroup).getChildren(null)
+        if(myLeftPanel.components.isEmpty()) {
+          addGroupComponent(myLeftPanel, "align leading", listChildren[0])
+        }
+        myCenterPanel.removeAll()
+        addGroupComponent(myCenterPanel, "align trailing, width 0:pref:max", listChildren[1])
+        if(myRightPanel.components.isEmpty()) {
+          addGroupComponent(myRightPanel, "align trailing, width pref!", listChildren[2])
+        }
 
-      myPanelWrapper.isVisible = toolbarSettingsService.showNewToolbar && !instance.presentationMode
-      myPanelWrapper.isEnabled = myPanelWrapper.isVisible
-      myPanel.isVisible = myPanelWrapper.isVisible
-      myLeftPanel.isVisible = myPanelWrapper.isVisible
-      myRightPanel.isVisible = myPanelWrapper.isVisible
-      logger.info("finish revalidate newtoolbar")
+        myPanelWrapper.isVisible = true
+        myPanelWrapper.isEnabled = true
+        logger.info("finish revalidate newtoolbar")
+      } else{
+        myPanelWrapper.removeAll()
+        myPanel.removeAll()
+        myRightPanel.removeAll()
+        myCenterPanel.removeAll()
+        myLeftPanel.removeAll()
+      }
     }
     else {
-      myPanel.isVisible = false
-      myLeftPanel.isVisible = false
-      myRightPanel.isVisible = false
+      myPanelWrapper.isVisible = false
+      myPanelWrapper.isEnabled = false
     }
   }
 

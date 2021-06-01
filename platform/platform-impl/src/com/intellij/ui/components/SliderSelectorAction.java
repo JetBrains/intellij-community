@@ -20,10 +20,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Collections;
-import java.util.Dictionary;
-import java.util.Enumeration;
-import java.util.Hashtable;
+import java.util.*;
 
 /**
  * @author Irina.Chernushina on 11/12/2014.
@@ -55,8 +52,7 @@ public class SliderSelectorAction extends DumbAwareAction {
     JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(label, BorderLayout.NORTH);
 
-    final Dictionary dictionary = myConfiguration.getDictionary();
-    final Enumeration elements = dictionary.elements();
+    final Map<Integer, JLabel> map = myConfiguration.getDictionary();
     final JSlider slider = new JSlider(SwingConstants.HORIZONTAL, myConfiguration.getMin(), myConfiguration.getMax(), myConfiguration.getSelected()) {
       Integer myWidth = null;
       @Override
@@ -65,8 +61,8 @@ public class SliderSelectorAction extends DumbAwareAction {
         if (myWidth == null) {
           myWidth = 10;
           final FontMetrics fm = getFontMetrics(getFont());
-          while (elements.hasMoreElements()) {
-            String text = ((JLabel)elements.nextElement()).getText();
+          for (JLabel confLabel : map.values()) {
+            String text = confLabel.getText();
             myWidth += fm.stringWidth(text + "W");
           }
         }
@@ -80,7 +76,8 @@ public class SliderSelectorAction extends DumbAwareAction {
     slider.setSnapToTicks(true);
     UIUtil.setSliderIsFilled(slider, true);
     slider.setPaintLabels(true);
-    slider.setLabelTable(dictionary);
+    //noinspection UseOfObsoleteCollectionType
+    slider.setLabelTable(new Hashtable<>(map));
 
     result.add(wrapper, BorderLayout.WEST);
     result.add(slider, BorderLayout.CENTER);
@@ -139,7 +136,7 @@ public class SliderSelectorAction extends DumbAwareAction {
     @NotNull
     private final @Nls String mySelectText;
     @NotNull
-    private final Dictionary myDictionary;
+    private final Map<Integer, JLabel> myDictionary;
     private final int mySelected;
     private final int myMin;
     private final int myMax;
@@ -147,18 +144,19 @@ public class SliderSelectorAction extends DumbAwareAction {
     private final Consumer<Integer> myResultConsumer;
     private boolean showOk = false;
 
-    public Configuration(int selected, @NotNull Dictionary dictionary, @NotNull @Nls String selectText, @NotNull Consumer<Integer> consumer) {
+    public Configuration(int selected, @NotNull Dictionary<Integer, @Nls String> dictionary, 
+                         @NotNull @Nls String selectText, @NotNull Consumer<Integer> consumer) {
       mySelected = selected;
-      myDictionary = new Hashtable<Integer, JComponent>();
+      myDictionary = new HashMap<>();
       mySelectText = selectText;
       myResultConsumer = consumer;
 
       int min = 1;
       int max = 0;
-      final Enumeration keys = dictionary.keys();
+      final Enumeration<Integer> keys = dictionary.keys();
       while (keys.hasMoreElements()) {
-        final Integer key = (Integer)keys.nextElement();
-        final String value = (String)dictionary.get(key);
+        final Integer key = keys.nextElement();
+        final String value = dictionary.get(key);
         myDictionary.put(key, markLabel(value));
         min = Math.min(min, key);
         max = Math.max(max, key);
@@ -179,7 +177,7 @@ public class SliderSelectorAction extends DumbAwareAction {
     }
 
     @NotNull
-    public Dictionary getDictionary() {
+    public Map<Integer, JLabel> getDictionary() {
       return myDictionary;
     }
 

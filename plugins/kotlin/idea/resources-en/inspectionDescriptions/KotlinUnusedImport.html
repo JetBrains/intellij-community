@@ -1,5 +1,34 @@
 <html>
 <body>
-This inspection reports <b>import</b> statements in Kotlin code that are unused.
+Reports <code>import</code> statements in Kotlin code that are not used or not required and can be safely removed.
+
+<p>Default imports are not required</p>
+<p><b>Example:</b></p>
+<pre><code>
+import kotlin.*
+import kotlin.collections.*
+import kotlin.comparisons.*
+import kotlin.io.*
+import kotlin.ranges.*
+import kotlin.sequences.*
+import kotlin.text.*
+
+// jvm specific
+import java.lang.*
+import kotlin.jvm.*
+
+// js specific
+import kotlin.js.*
+</code></pre>
+<p>Unused imports</p>
+<p><b>Example:</b></p>
+<pre><code>
+import java.io.* // this import is unused and could be removed
+import java.util.*
+
+fun foo(list: ArrayList&lt;String&gt;) {
+    list.add("")
+}
+</code></pre>
 </body>
 </html>

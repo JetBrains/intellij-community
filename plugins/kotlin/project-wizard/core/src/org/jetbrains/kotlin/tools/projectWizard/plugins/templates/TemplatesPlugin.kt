@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.plugins.templates
 
 
@@ -9,8 +10,8 @@ import org.jetbrains.kotlin.tools.projectWizard.core.entity.settings.PluginSetti
 import org.jetbrains.kotlin.tools.projectWizard.core.service.TemplateEngineService
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.*
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.ModuleConfiguratorWithTests
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.MppModuleConfigurator.runArbitraryTask
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.isPresent
+import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.settingValue
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.BuildSystemPlugin
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
@@ -21,7 +22,6 @@ import org.jetbrains.kotlin.tools.projectWizard.templates.*
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.InterceptionPoint
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.TemplateInterceptionApplicationState
 import org.jetbrains.kotlin.tools.projectWizard.transformers.interceptors.applyAll
-import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.settingValue
 import java.nio.file.Path
 
 class TemplatesPlugin(context: Context) : Plugin(context) {
@@ -176,7 +176,7 @@ class TemplatesPlugin(context: Context) : Plugin(context) {
                     }
                     SRC_DIR / "${module.name}${filePath.sourcesetType.name.capitalize()}" / directory
                 }
-                is FakeMultiplatformModuleIR -> error("Not supported for FakeMultiplatformModuleIR")
+                else -> error("Not supported for ${module.javaClass}")
             }
         }
     }

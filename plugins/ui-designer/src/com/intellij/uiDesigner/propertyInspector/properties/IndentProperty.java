@@ -5,9 +5,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.radComponents.RadComponent;
 
-/**
- * @author yole
- */
+
 public class IndentProperty extends AbstractIntProperty<RadComponent> {
   public static IndentProperty getInstance(Project project) {
     return project.getService(IndentProperty.class);

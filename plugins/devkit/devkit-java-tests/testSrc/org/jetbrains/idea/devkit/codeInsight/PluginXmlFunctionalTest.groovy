@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package org.jetbrains.idea.devkit.codeInsight
 
@@ -22,9 +22,12 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.RecursionManager
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.psi.ElementDescriptionUtil
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiField
+import com.intellij.psi.PsiReference
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.TestDataPath
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
@@ -111,6 +114,13 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
             "MyBundle.properties", "AnotherBundle.properties")
   }
 
+  void testMessageBundleViaIncluding() {
+    myFixture.copyFileToProject("messageBundleIncluding.xml", "META-INF/messageBundleIncluding.xml")
+    myFixture.copyFileToProject("messageBundleViaIncluding.xml", "META-INF/messageBundleViaIncluding.xml")
+    doHighlightingTest("META-INF/messageBundleViaIncluding.xml",
+                       "MyBundle.properties")
+  }
+
   void testExtensionsHighlighting() {
     final String root = "idea_core"
     addPluginXml(root, """
@@ -164,6 +174,7 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "  @Attribute public int intPropertyForClass; " +
                        "  @Attribute @RequiredElement(allowEmpty=true) public String canBeEmptyString; " +
                        "  @Attribute public boolean forClass; " +
+                       "  @Attribute(\"class\") public boolean _class; " +
                        "}")
 
     configureByFile()
@@ -397,28 +408,47 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
     myFixture.configureByFile("languageAttribute.xml")
 
 
-    def lookupElements = myFixture.complete(CompletionType.BASIC).sort { it.lookupString }
-    assertLookupElement(lookupElements[0], "MyAnonymousLanguageID", "MyLanguage.MySubLanguage")
-    assertLookupElement(lookupElements[1], "MyLanguageID", "MyLanguage")
-  }
-
-  private static void assertLookupElement(LookupElement element, String lookupString, String typeText) {
-    def presentation = new LookupElementPresentation()
-    element.renderElement(presentation)
-    assertEquals(lookupString, presentation.itemText)
-    assertEquals(typeText, presentation.typeText)
+    def lookupElements = myFixture.complete(CompletionType.BASIC)
+    assertLookupElement(lookupElements, "MyAnonymousLanguageID", null, "MyLanguage.MySubLanguage")
+    assertLookupElement(lookupElements, "MyLanguageID", null, "MyLanguage")
   }
 
   @SuppressWarnings("ComponentNotRegistered")
   void testIconAttribute() {
     myFixture.addClass("package foo; public class FooAction extends com.intellij.openapi.actionSystem.AnAction { }")
 
+    myFixture.enableInspections(DeprecatedClassUsageInspection.class)
+    addIconClasses()
+    doHighlightingTest("iconAttribute.xml",
+                       "MyIconAttributeEPBean.java")
+  }
+
+  void testIconAttributeCompletion() {
+    addIconClasses()
+    myFixture.configureByFile("iconAttributeCompletion.xml")
+    Registry.get("ide.completion.variant.limit").setValue("5000", getTestRootDisposable())
+    myFixture.completeBasic()
+
+    List<String> lookupElementStrings = myFixture.getLookupElementStrings()
+    assertContainsElements(lookupElementStrings,
+                           "AllIcons.Providers.Mysql",
+                           "MyIcons.MyCustomIcon",
+                           "my.FqnIcons.MyFqnIcon", "my.FqnIcons.Inner.MyInnerFqnIcon")
+  }
+
+  private void addIconClasses() {
     myFixture.addClass("package icons; " +
                        "public class MyIcons {" +
                        "  public static final javax.swing.Icon MyCustomIcon = null; " +
                        "}")
-    doHighlightingTest("iconAttribute.xml",
-                       "MyIconAttributeEPBean.java")
+    myFixture.addClass("package my; " +
+                       "public class FqnIcons {" +
+                       "  public static final javax.swing.Icon MyFqnIcon = null; " +
+                       "  " +
+                       "  public static class Inner {" +
+                       "    public static final javax.swing.Icon MyInnerFqnIcon = null; " +
+                       "  }" +
+                       "}")
   }
 
   void testPluginWithModules() {
@@ -621,6 +651,37 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.testHighlighting()
   }
 
+  @SuppressWarnings("ComponentNotRegistered")
+  void testActionCompletion() {
+    configureByFile()
+    myFixture.addClass("package foo.bar; public class BarAction extends com.intellij.openapi.actionSystem.AnAction { }")
+    myFixture.copyFileToProject("ActionCompletionBundle.properties")
+
+    myFixture.completeBasic()
+    LookupElement[] lookupElements = myFixture.getLookupElements()
+    assertLookupElement(lookupElements, "actionId", " \"ActionId Text\"", "ActionId description")
+    assertLookupElement(lookupElements, "actionId.localized", " \"Action Localized Text\"", "Action localized description")
+    assertLookupElement(lookupElements, "actionId.missing.localized", null, null)
+  }
+
+  void testActionOverrideTextPlaceCompletion() {
+    configureByFile()
+    myFixture.addClass("public interface CustomPlaces { String CUSTOM=\"custom\"; }")
+
+    myFixture.completeBasic()
+    LookupElement[] lookupElements = myFixture.getLookupElements()
+    assertLookupElement(lookupElements, "FavoritesPopup", " (FAVORITES_VIEW_POPUP)", "ActionPlaces")
+    assertLookupElement(lookupElements, "custom", " (CUSTOM)", "CustomPlaces")
+  }
+
+  void testActionOverrideTextPlaceResolve() {
+    configureByFile()
+
+    PsiReference reference = myFixture.getReferenceAtCaretPositionWithAssertion()
+    PsiField resolvedField = assertInstanceOf(reference.resolve(), PsiField.class)
+    assertEquals("FAVORITES_VIEW_POPUP", resolvedField.getName())
+  }
+
   void testExtensionPointNameValidity() {
     doHighlightingTest(getTestName(true) + ".xml")
   }
@@ -721,10 +782,6 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     doHighlightingTest("pluginWithSinceBuildGreaterThanUntilBuild.xml")
   }
 
-  private void doHighlightingTest(String... filePaths) {
-    myFixture.testHighlighting(true, false, false, filePaths)
-  }
-
   void testProductDescriptor() {
     doHighlightingTest("productDescriptor.xml")
   }
@@ -756,5 +813,21 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
 
   void testRedundantServiceInterfaceClass() {
     doHighlightingTest("redundantServiceInterfaceClass.xml")
+  }
+
+  private void doHighlightingTest(String... filePaths) {
+    myFixture.testHighlighting(true, false, false, filePaths)
+  }
+
+  private static void assertLookupElement(LookupElement[] variants, String lookupText, String tailText, String typeText) {
+    LookupElement lookupElement = variants.find { it.lookupString == lookupText }
+    assertNotNull(toString(variants, "\n"), lookupElement)
+    
+    def presentation = new LookupElementPresentation()
+    lookupElement.renderElement(presentation)
+
+    assertEquals(lookupText, presentation.itemText)
+    assertEquals(tailText, presentation.tailText)
+    assertEquals(typeText, presentation.typeText)
   }
 }

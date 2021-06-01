@@ -33,7 +33,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   private final Project myProject;
   private NavBarPanel myNavigationBar;
   private JPanel myRunPanel;
-  private final boolean myNavToolbarGroupExist;
+  private static Boolean myNavToolbarGroupExist;
   private JScrollPane myScrollPane;
 
   public NavBarRootPaneExtension(@NotNull Project project) {
@@ -42,8 +42,6 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     myProject.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, uiSettings -> {
       toggleRunPanel(isShowToolPanel(uiSettings));
     });
-
-    myNavToolbarGroupExist = runToolbarExists();
   }
 
   private static boolean isShowToolPanel(@NotNull UISettings uiSettings) {
@@ -67,15 +65,18 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
   public boolean isMainToolbarVisible() {
     var b = !UISettings.getInstance().getPresentationMode() &&
-           (UISettings.getInstance().getShowMainToolbar() || !myNavToolbarGroupExist);
+           (UISettings.getInstance().getShowMainToolbar() || !runToolbarExists());
     LOG.debug("Toolbar visibility: " + b);
     return  b;
   }
 
   public static boolean runToolbarExists() {
-    final AnAction correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
-    return correctedAction instanceof DefaultActionGroup && ((DefaultActionGroup)correctedAction).getChildrenCount() > 0 ||
-           correctedAction instanceof CustomisedActionGroup && ((CustomisedActionGroup)correctedAction).getFirstAction() != null;
+    if (myNavToolbarGroupExist == null) {
+      final AnAction correctedAction = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_NAVBAR_TOOLBAR);
+      myNavToolbarGroupExist = correctedAction instanceof DefaultActionGroup && ((DefaultActionGroup)correctedAction).getChildrenCount() > 0 ||
+             correctedAction instanceof CustomisedActionGroup && ((CustomisedActionGroup)correctedAction).getFirstAction() != null;
+    }
+    return myNavToolbarGroupExist;
   }
 
   @NotNull

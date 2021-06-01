@@ -73,7 +73,7 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
 
   @Override
   public final boolean containsKey(int key) {
-    throw RefValueHashMap.pointlessContainsKey();
+    throw RefValueHashMapUtil.pointlessContainsKey();
   }
 
   @Override

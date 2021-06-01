@@ -1,8 +1,8 @@
 <html><body>
-Reports the reference to the data provider method that doesn't exist or is not accessible.
+Reports references to data provider methods that do not exist or are not accessible.
 <!-- tooltip end -->
-<p>Example: </p>
-<pre>
+<p>Example:</p>
+<pre><code>
 public class InstanceDataProviderFromForeignClass {
   // method data() doesn't exist in class A
   @Test(dataProvider = "data", dataProviderClass = A.class)
@@ -10,9 +10,9 @@ public class InstanceDataProviderFromForeignClass {
   }
 }
 class A { }
-</pre>
-<p>After the fix:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
 //the needed data() method is created in class A
 class A {
   @DataProvider
@@ -20,5 +20,5 @@ class A {
     return new Object[][]{};
   }
 }
-</pre>
+</code></pre>
 </body></html>

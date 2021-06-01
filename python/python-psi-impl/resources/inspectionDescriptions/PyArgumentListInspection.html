@@ -1,6 +1,28 @@
 <html>
 <body>
-Reports discrepancies between declared parameters and actual arguments, as well as
-incorrect arguments (e.g. duplicate named arguments) and incorrect argument order. Decorators are analyzed, too.
+<p>Reports discrepancies between declared parameters and actual arguments, as well as
+  incorrect arguments, for example, duplicate named arguments, and incorrect argument order.</p>
+<p><b>Example:</b></p>
+<pre style="font-family: monospace">
+class Foo:
+    def __call__(self, p1: int, *, p2: str = "%"):
+        return p2 * p1
+
+
+bar = Foo()
+bar.__call__() # unfilled parameter
+bar(5, "#") # unexpected argument
+</pre>
+<p>The correct code fragment looks at follows:</p>
+<pre style="font-family: monospace">
+class Foo:
+    def __call__(self, p1: int, *, p2: str = "%"):
+        return p2 * p1
+
+
+bar = Foo()
+bar.__call__(5)
+bar(5, p2="#")
+</pre>
 </body>
 </html>

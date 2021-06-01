@@ -17,7 +17,7 @@ internal class MavenProjectModuleProvider : ProjectModuleProvider {
     override fun obtainAllProjectModulesFor(project: Project): Sequence<ProjectModule> =
         ModuleManager.getInstance(project).modules.asSequence()
             .flatMap { obtainProjectModulesFor(project, it) }
-            .distinct()
+            .distinctBy { it.buildFile }
 
     private fun obtainProjectModulesFor(project: Project, module: Module): Sequence<ProjectModule> {
         if (!MavenUtil.isMavenModule(module)) {

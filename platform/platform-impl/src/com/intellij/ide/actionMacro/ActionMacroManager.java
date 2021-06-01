@@ -78,7 +78,7 @@ public final class ActionMacroManager implements PersistentStateComponent<Elemen
   ActionMacroManager() {
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         String id = ActionManager.getInstance().getId(action);
         if (id == null) {
           return;

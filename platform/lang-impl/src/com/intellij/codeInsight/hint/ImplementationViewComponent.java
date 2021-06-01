@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.application.options.CodeStyle;
@@ -253,43 +253,35 @@ public class ImplementationViewComponent extends JPanel {
   }
 
   private static ListCellRenderer<FileDescriptor> createRenderer(Project project) {
-    return new LeftRightRenderer<>() {
-      @NotNull
+    ListCellRenderer<FileDescriptor> mainRenderer = new ColoredListCellRenderer<>() {
       @Override
-      protected ListCellRenderer<FileDescriptor> getMainRenderer() {
-        return new ColoredListCellRenderer<>() {
-          @Override
-          protected void customizeCellRenderer(@NotNull JList<? extends FileDescriptor> list,
-                                               FileDescriptor value, int index, boolean selected, boolean hasFocus) {
-            if (value != null) {
-              ImplementationViewElement element = value.myElement;
-              setIcon(getIconForFile(value.myFile, project));
-              append(element.getPresentableText());
-              String presentation = element.getContainerPresentation();
-              if (presentation != null) {
-                append("  ");
-                append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
-              }
-            }
+      protected void customizeCellRenderer(@NotNull JList<? extends FileDescriptor> list,
+                                           FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setBackground(UIUtil.getListBackground(selected, true));
+        if (value != null) {
+          ImplementationViewElement element = value.myElement;
+          setIcon(getIconForFile(value.myFile, project));
+          append(element.getPresentableText());
+          String presentation = element.getContainerPresentation();
+          if (presentation != null) {
+            append("  ");
+            append(StringUtil.trimStart(StringUtil.trimEnd(presentation, ")"), "("), SimpleTextAttributes.GRAYED_ATTRIBUTES);
           }
-        };
-      }
-
-      @NotNull
-      @Override
-      protected ListCellRenderer<FileDescriptor> getRightRenderer() {
-        return new SimpleListCellRenderer<>() {
-          @Override
-          public void customize(@NotNull JList<? extends FileDescriptor> list,
-                                FileDescriptor value, int index, boolean selected, boolean hasFocus) {
-            if (value != null) {
-              setText(value.myElement.getLocationText());
-              setIcon(value.myElement.getLocationIcon());
-            }
-          }
-        };
+        }
       }
     };
+    ListCellRenderer<FileDescriptor> rightRenderer = new SimpleListCellRenderer<>() {
+      @Override
+      public void customize(@NotNull JList<? extends FileDescriptor> list,
+                            FileDescriptor value, int index, boolean selected, boolean hasFocus) {
+        setForeground(UIUtil.getListForeground(selected, true));
+        if (value != null) {
+          setText(value.myElement.getLocationText());
+          setIcon(value.myElement.getLocationIcon());
+        }
+      }
+    };
+    return new LeftRightRenderer<>(mainRenderer, rightRenderer);
   }
 
   @TestOnly
@@ -563,6 +555,7 @@ public class ImplementationViewComponent extends JPanel {
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(IMPLEMENTATION_VIEW_PLACE, group, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
+    toolbar.setTargetComponent(myEditor.getContentComponent());
     return toolbar;
   }
 

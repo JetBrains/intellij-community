@@ -75,8 +75,8 @@ public abstract class DfaCondition {
         return Exact.fromBoolean(relationType == RelationType.IS_NOT);
       }
     } else {
-      DfType meetRelation = leftType.meet(rightType.fromRelation(relationType));
-      DfType meetNegatedRelation = leftType.meet(rightType.fromRelation(relationType.getNegated()));
+      DfType meetRelation = leftType.meetRelation(relationType, rightType);
+      DfType meetNegatedRelation = leftType.meetRelation(relationType.getNegated(), rightType);
       if (meetRelation == DfType.BOTTOM) {
         // both could be BOTTOM if declared type mismatches
         return meetNegatedRelation == DfType.BOTTOM ? null : Exact.FALSE;

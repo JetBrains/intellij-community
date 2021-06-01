@@ -31,8 +31,8 @@
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.properties.psi.impl" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
+    <orderEntry type="module" module-name="intellij.spellchecker" />
   </component>
 </module>

@@ -3,11 +3,7 @@ package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
 import com.intellij.execution.process.*
-import com.intellij.execution.target.HostPort
-import com.intellij.execution.target.TargetProgressIndicator
-import com.intellij.execution.target.TargetEnvironmentType
-import com.intellij.execution.target.TargetPlatform
-import com.intellij.execution.target.TargetedCommandLine
+import com.intellij.execution.target.*
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
@@ -75,7 +71,11 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
 
     val serverConfigurationProvider = connection.environmentConfigurationProvider as? GradleServerConfigurationProvider
     val connectionAddressResolver: (HostPort) -> HostPort = {
-      serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.environmentConfiguration, it) ?: it
+      val serverBindingPort = serverEnvironmentSetup.serverBindingPort
+      val localPort = serverBindingPort?.localValue?.blockingGet(0)
+      val targetPort = serverBindingPort?.targetValue?.blockingGet(0)
+      val hostPort = if (targetPort == it.port && localPort != null) HostPort(it.host, localPort) else it
+      serverConfigurationProvider?.getClientCommunicationAddress(serverEnvironmentSetup.environmentConfiguration, hostPort) ?: hostPort
     }
     val gradleServerEventsListener = GradleServerEventsListener(targetBuildParameters, connectionAddressResolver) {
       when (it) {
@@ -296,7 +296,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
 
     companion object {
-      private const val connectionConfLinePrefix = "Gradle target server hostName: "
+      private const val connectionConfLinePrefix = "Gradle target server hostAddress: "
     }
   }
 

@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide.impl.legacyBridge.module
 
-import com.intellij.facet.FacetFromExternalSourcesStorage
-import com.intellij.facet.FacetManager
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.Application
@@ -10,14 +9,12 @@ import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.impl.ModuleImpl
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.serviceContainer.PrecomputedExtensionModel
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.ide.WorkspaceModelChangeListener
 import com.intellij.workspaceModel.ide.WorkspaceModelTopics
 import com.intellij.workspaceModel.ide.impl.VirtualFileUrlBridge
-import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
@@ -32,7 +29,6 @@ internal class ModuleBridgeImpl(
   override var entityStorage: VersionedEntityStorage,
   override var diff: WorkspaceEntityStorageDiffBuilder?
 ) : ModuleImpl(name, project, virtualFileUrl as? VirtualFileUrlBridge), ModuleBridge {
-
   init {
     // default project doesn't have modules
     if (!project.isDefault) {
@@ -64,23 +60,42 @@ internal class ModuleBridgeImpl(
     super<ModuleImpl>.rename(newName, notifyStorage)
   }
 
-  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>, app: Application?, listenerCallbacks: MutableList<Runnable>?) {
-    super.registerComponents(plugins, app, null)
+  override fun registerComponents(plugins: List<IdeaPluginDescriptorImpl>,
+                                  app: Application?,
+                                  precomputedExtensionModel: PrecomputedExtensionModel?,
+                                  listenerCallbacks: List<Runnable>?) {
+    registerComponents(corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID },
+                       plugins = plugins,
+                       precomputedExtensionModel = precomputedExtensionModel,
+                       app = app,
+                       listenerCallbacks = listenerCallbacks)
+  }
 
-    val corePlugin = plugins.find { it.pluginId == PluginManagerCore.CORE_ID } ?: return
-    registerComponent(ModuleRootManager::class.java, ModuleRootComponentBridge::class.java, corePlugin, true)
-    registerComponent(FacetManager::class.java, FacetManagerBridge::class.java, corePlugin, true)
+  fun callCreateComponents() {
+    createComponents(null)
+  }
+
+  fun registerComponents(corePlugin: IdeaPluginDescriptor?,
+                         plugins: List<IdeaPluginDescriptorImpl>,
+                         precomputedExtensionModel: PrecomputedExtensionModel?,
+                         app: Application?,
+                         listenerCallbacks: List<Runnable>?) {
+    super.registerComponents(plugins = plugins,
+                             app = app,
+                             precomputedExtensionModel = precomputedExtensionModel,
+                             listenerCallbacks = listenerCallbacks)
+    if (corePlugin == null) return
     unregisterComponent(DeprecatedModuleOptionManager::class.java)
 
-    try { //todo improve
-      val apiClass = Class.forName("com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager", true, javaClass.classLoader)
-      val implClass = Class.forName("com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge", true,
-                                    javaClass.classLoader)
-      registerService(apiClass, implClass, corePlugin, true)
+    try {
+      //todo improve
+      val classLoader = javaClass.classLoader
+      val apiClass = classLoader.loadClass("com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager")
+      val implClass = classLoader.loadClass("com.intellij.openapi.externalSystem.service.project.ExternalSystemModulePropertyManagerBridge")
+      registerService(serviceInterface = apiClass, implementation = implClass, pluginDescriptor = corePlugin, override = true)
     }
     catch (ignored: Throwable) {
     }
-    unregisterComponent(FacetFromExternalSourcesStorage::class.java.name)
   }
 
   override fun getOptionValue(key: String): String? {

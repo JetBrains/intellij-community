@@ -5,7 +5,6 @@ import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
  * @deprecated Please use com.intellij.codeInsight.editorActions.TypedHandlerDelegate instead
- * @author yole
  */
 @Deprecated
 public final class EditorTypedHandlerBean {

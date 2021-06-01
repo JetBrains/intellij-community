@@ -58,7 +58,6 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
     private final @NotNull ListTableModel<InvocationsInfo> myInvocationsModel;
     private final @NotNull ListTableModel<InvocationDescription> myRunnablesModel;
     private final @NotNull ListTableModel<WrapperDescription> myWrappersModel;
-    private final @NotNull ListTableModel<LockAcquirementDescription> myAcquirementsModel;
 
     @NotNull
     private final List<Content> myContents;
@@ -88,18 +87,10 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
         new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.usages.count"), Integer.TYPE, WrapperDescription::getUsagesCount)
       );
 
-      myAcquirementsModel = new ListTableModel<>(
-        FunctionBasedColumnInfo.stringBased(DiagnosticBundle.message("event.watcher.column.name.runnable"), LockAcquirementDescription::getFQN),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.reads"), Long.TYPE, LockAcquirementDescription::getReads),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.writes"), Long.TYPE, LockAcquirementDescription::getWrites),
-        new FunctionBasedColumnInfo<>(DiagnosticBundle.message("event.watcher.column.name.write.intents"), Long.TYPE, LockAcquirementDescription::getWriteIntents)
-      );
-
       myContents = Arrays.asList(
         createTableContent(DiagnosticBundle.message("event.watcher.tab.title.invocations"), myInvocationsModel),
         createTableContent(DiagnosticBundle.message("event.watcher.tab.title.runnables"), myRunnablesModel),
-        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.wrappers"), myWrappersModel),
-        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.locks"), myAcquirementsModel)
+        createTableContent(DiagnosticBundle.message("event.watcher.tab.title.wrappers"), myWrappersModel)
       );
     }
 
@@ -110,11 +101,6 @@ public final class EventWatcherToolWindowFactory implements ToolWindowFactory, D
       myRunnablesModel.addRows(invocations);
       myInvocationsModel.setItems(new ArrayList<>(infos));
       myWrappersModel.setItems(new ArrayList<>(wrappers));
-    }
-
-    @Override
-    public void locksAcquired(@NotNull Collection<LockAcquirementDescription> acquirements) {
-      myAcquirementsModel.setItems(new ArrayList<>(acquirements));
     }
 
     @NotNull

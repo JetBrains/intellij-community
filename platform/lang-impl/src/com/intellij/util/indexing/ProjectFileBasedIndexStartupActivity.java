@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
+import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdaterImpl;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
@@ -39,12 +40,15 @@ final class ProjectFileBasedIndexStartupActivity implements StartupActivity.Requ
     }
 
     FileBasedIndex fileBasedIndex = FileBasedIndex.getInstance();
-    PushedFilePropertiesUpdater.getInstance(project).initializeProperties();
+    PushedFilePropertiesUpdater propertiesUpdater = PushedFilePropertiesUpdater.getInstance(project);
+    if (propertiesUpdater instanceof PushedFilePropertiesUpdaterImpl) {
+      ((PushedFilePropertiesUpdaterImpl)propertiesUpdater).initializeProperties();
+    }
 
     // schedule dumb mode start after the read action we're currently in
     if (fileBasedIndex instanceof FileBasedIndexImpl) {
       DumbService.getInstance(project)
-        .queueTask(new UnindexedFilesUpdater(project, IndexInfrastructure.isIndexesInitializationSuspended()));
+        .queueTask(new UnindexedFilesUpdater(project, IndexInfrastructure.isIndexesInitializationSuspended(), null, "On project open"));
     }
     fileBasedIndex.registerProjectFileSets(project);
 

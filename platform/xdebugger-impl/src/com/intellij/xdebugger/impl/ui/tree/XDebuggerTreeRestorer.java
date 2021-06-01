@@ -7,15 +7,17 @@ import com.intellij.xdebugger.impl.ui.tree.nodes.RestorableStateNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XDebuggerTreeNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueContainerNode;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
-import java.awt.Rectangle;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.event.TreeSelectionEvent;
+import javax.swing.event.TreeSelectionListener;
+import javax.swing.tree.TreePath;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import javax.swing.event.TreeSelectionEvent;
-import javax.swing.event.TreeSelectionListener;
-import javax.swing.tree.TreePath;
-import org.jetbrains.annotations.NotNull;
+import java.util.concurrent.CompletableFuture;
 
 public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelectionListener {
   public static final String SELECTION_PATH_PROPERTY = "selection.path";
@@ -26,7 +28,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   private boolean myStopRestoringSelection;
   private boolean myInsideRestoring;
   private final TreePath mySelectionPath;
-  private boolean myFinished;
+  private final @NotNull CompletableFuture<XDebuggerTree> myFinished = new CompletableFuture<>();
 
   public XDebuggerTreeRestorer(final XDebuggerTree tree, Rectangle lastVisibleNodeRect) {
     myTree = tree;
@@ -137,8 +139,7 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   private void disposeIfFinished() {
-    if (myNode2ParentState.isEmpty() && myNode2State.isEmpty()) {
-      myFinished = true;
+    if (myNode2ParentState.isEmpty() && myNode2State.isEmpty() && myFinished.complete(myTree)) {
       if (myLastVisibleNodeRect != null) {
         myTree.scrollRectToVisible(myLastVisibleNodeRect);
       }
@@ -161,14 +162,19 @@ public class XDebuggerTreeRestorer implements XDebuggerTreeListener, TreeSelecti
   }
 
   public void dispose() {
+    myFinished.cancel(false);
     myNode2ParentState.clear();
     myNode2State.clear();
     myTree.removeTreeListener(this);
     myTree.removeTreeSelectionListener(this);
   }
 
+  public @NotNull CompletableFuture<XDebuggerTree> onFinished() {
+    return myFinished.copy();
+  }
+
   public boolean isFinished() {
-    return myFinished;
+    return myFinished.isDone() && !myFinished.isCompletedExceptionally();
   }
 
   @Override

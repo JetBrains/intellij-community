@@ -65,7 +65,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
     PsiReferenceExpression expression = getMethodExpression();
     PsiReferenceParameterList result = expression.getParameterList();
     if (result != null) return result;
-    LOG.error("Invalid method call expression. Children:\n" + DebugUtil.psiTreeToString(expression, false));
+    LOG.error("Invalid method call expression. Children:\n" + DebugUtil.psiTreeToString(expression, true));
     return result;
   }
 
@@ -85,7 +85,7 @@ public class PsiMethodCallExpressionImpl extends ExpressionPsiElement implements
   public PsiExpressionList getArgumentList() {
     PsiExpressionList list = (PsiExpressionList)findChildByRoleAsPsiElement(ChildRole.ARGUMENT_LIST);
     if (list == null) {
-      LOG.error("Invalid PSI for'" + getText() + ". Parent:" + DebugUtil.psiToString(getParent(), false));
+      LOG.error("Invalid PSI for'" + getText() + ". Parent:" + DebugUtil.psiToString(getParent(), true));
     }
     return list;
   }

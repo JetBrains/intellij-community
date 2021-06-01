@@ -14,7 +14,6 @@ import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.impl.JpsProjectLoadingManagerImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.jps.serialization.LoadedProjectData
 import com.intellij.workspaceModel.ide.impl.jps.serialization.copyAndLoadProject
 import com.intellij.workspaceModel.storage.EntityStorageSerializer
@@ -39,14 +38,13 @@ class JpsProjectLoadingListenerTest {
 
   @Before
   fun setUp() {
-    WorkspaceModelImpl.forceEnableCaching = true
+    WorkspaceModelCacheImpl.forceEnableCaching(disposableRule.disposable)
     virtualFileManager = VirtualFileUrlManager.getInstance(projectModel.project)
     serializer = EntityStorageSerializerImpl(WorkspaceModelCacheImpl.PluginAwareEntityTypesResolver, virtualFileManager)
   }
 
   @After
   fun tearDown() {
-    WorkspaceModelImpl.forceEnableCaching = false
     WorkspaceModelCacheImpl.testCacheFile = null
   }
 
@@ -76,7 +74,7 @@ class JpsProjectLoadingListenerTest {
 
     val project = loadProject(projectData.projectDir)
     waitAndAssert(1_000, "Project is not loaded") {
-      (JpsProjectLoadingManager.getInstance(project) as JpsProjectLoadingManagerImpl).projectLoaded.get()
+      (JpsProjectLoadingManager.getInstance(project) as JpsProjectLoadingManagerImpl).isProjectLoaded()
     }
 
     var listenerCalled = false
@@ -87,7 +85,6 @@ class JpsProjectLoadingListenerTest {
   }
 
   private fun prepareProject(): LoadedProjectData {
-    Assume.assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val projectFile = projectFile("moduleAdded/after")
     val projectData = copyAndLoadProject(projectFile, virtualFileManager)
     val storage = projectData.storage

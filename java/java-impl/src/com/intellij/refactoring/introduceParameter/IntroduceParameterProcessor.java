@@ -17,6 +17,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.MethodReferencesSearch;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
+import com.intellij.psi.util.JavaPsiRecordUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.IntroduceParameterRefactoring;
@@ -253,6 +254,19 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
 
     if (!myGenerateDelegate) {
       detectAccessibilityConflicts(usagesIn, conflicts);
+      if (myMethodToReplaceIn == myMethodToSearchFor) {
+        PsiRecordComponent recordComponent = JavaPsiRecordUtil.getRecordComponentForAccessor(myMethodToReplaceIn);
+        if (recordComponent != null) {
+          String message = JavaRefactoringBundle.message("0.will.no.longer.be.record.component.accessor",
+                                                         RefactoringUIUtil.getDescription(myMethodToReplaceIn, true),
+                                                         RefactoringUIUtil.getDescription(recordComponent, true));
+          conflicts.putValue(myMethodToReplaceIn, message);
+        }
+        else if (JavaPsiRecordUtil.isCanonicalConstructor(myMethodToReplaceIn)) {
+          String message = JavaRefactoringBundle.message("0.will.no.longer.be.canonical.constructor");
+          conflicts.putValue(myMethodToReplaceIn, message);
+        }
+      }
     }
 
     if (myParameterInitializer != null && !myMethodToReplaceIn.hasModifierProperty(PsiModifier.PRIVATE)) {

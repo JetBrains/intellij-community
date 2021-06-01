@@ -53,11 +53,6 @@ public class EditProjectGroupAction extends RecentProjectsWelcomeScreenActionBas
                                                }
                                                return true;
                                              }
-
-                                             @Override
-                                             public boolean canClose(String inputString) {
-                                               return true;
-                                             }
                                            });
     if (name != null && model != null) {
       group.setName(name);

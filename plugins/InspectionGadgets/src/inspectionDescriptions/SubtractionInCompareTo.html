@@ -10,9 +10,9 @@ Comparing the integer values directly and returning <code>-1</code>, <code>0</co
   rounding.
 </p>
 <p>
-The warning is not issued when it's statically determined that value ranges are limited, and overflow never occurs.
-Additionally subtraction on <code>int</code> numbers greater than or equal to <code>0</code> will never overflow.
-Therefore this inspection tries not to warn in those cases.
+A warning is not issued when it's statically determined that value ranges are limited, and overflow never occurs.
+Additionally, subtraction on <code>int</code> numbers greater than or equal to <code>0</code> will never overflow.
+Therefore, this inspection tries not to warn in those cases.
 Methods that always return zero or greater can be specified in this inspection's settings.
 <p>Example:</p>
 <pre><code>class DoubleHolder implements Comparable&lt;DoubleHolder&gt; {
@@ -22,7 +22,7 @@ Methods that always return zero or greater can be specified in this inspection's
     }
 }
 </code></pre>
-The no-warning example because <code>String.length()</code> is known to be non-negative:
+A no-warning example because <code>String.length()</code> is known to be non-negative:
 <pre><code>class A implements Comparable&lt;A&gt; {
     final String s = "";
     public int compareTo(A a) {

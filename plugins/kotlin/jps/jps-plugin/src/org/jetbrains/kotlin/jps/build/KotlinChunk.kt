@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.jps.build
 
@@ -15,7 +12,8 @@ import org.jetbrains.kotlin.jps.incremental.getKotlinCache
 import org.jetbrains.kotlin.jps.model.kotlinCompilerArguments
 import org.jetbrains.kotlin.jps.targets.KotlinModuleBuildTarget
 import org.jetbrains.kotlin.utils.keysToMapExceptNulls
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.writeText
 
 /**
  * Chunk of cyclically dependent [KotlinModuleBuildTarget]s
@@ -82,11 +80,10 @@ class KotlinChunk internal constructor(val context: KotlinCompileContext, val ta
         return false
     }
 
-    fun buildMetaInfoFile(target: ModuleBuildTarget): File =
-        File(
-            context.dataPaths.getTargetDataRoot(target),
-            representativeTarget.buildMetaInfoFileName
-        )
+    fun buildMetaInfoFile(target: ModuleBuildTarget): Path = context.dataPaths
+        .getTargetDataRoot(target)
+        .toPath()
+        .resolve(representativeTarget.buildMetaInfoFileName)
 
     fun saveVersions() {
         context.ensureLookupsCacheAttributesSaved()

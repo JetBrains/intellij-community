@@ -80,15 +80,15 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(myProject);
     final PsiField field = WriteAction.compute(() -> {
       PsiField field1 = elementFactory.createField(chooseName(names, getParentClass().getLanguage()), defaultType);
-      field1 = (PsiField)getParentClass().add(field1);
-      if (myExprText != null) {
-        updateInitializer(elementFactory, field1);
-      }
       PsiUtil.setModifierProperty(field1, PsiModifier.FINAL, myIntroduceFieldPanel.isDeclareFinal());
       PsiUtil.setModifierProperty(field1, PsiModifier.STATIC, myStatic);
       final String visibility = myIntroduceFieldPanel.getFieldVisibility();
       if (visibility != null) {
         PsiUtil.setModifierProperty(field1, visibility, true);
+      }
+      field1 = (PsiField)getParentClass().add(field1);
+      if (myExprText != null) {
+        updateInitializer(elementFactory, field1);
       }
       myFieldRangeStart = myEditor.getDocument().createRangeMarker(field1.getTextRange());
       return field1;
@@ -218,8 +218,7 @@ public class InplaceIntroduceFieldPopup extends AbstractInplaceIntroduceFieldPop
       WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
         if (getLocalVariable() != null) {
           final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings,
-                                                           myStatic, myOccurrences);
+            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, myOccurrences);
           fieldRunnable.run();
         }
         else {

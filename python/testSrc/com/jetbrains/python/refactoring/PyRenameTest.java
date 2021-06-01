@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.refactoring;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -20,9 +20,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyRenameTest extends PyTestCase {
   public static final String RENAME_DATA_PATH = "refactoring/rename/";
 

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.findUsages.handlers
 
@@ -26,18 +23,21 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.MethodReferencesSearch
+import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.usageView.UsageInfo
 import com.intellij.util.*
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightMethods
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.idea.KotlinBundleIndependent
+import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightMethods
 import org.jetbrains.kotlin.idea.findUsages.*
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.getTopMostOverriddenElementsToHighlight
 import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.isDataClassComponentFunction
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinFindFunctionUsagesDialog
 import org.jetbrains.kotlin.idea.findUsages.dialogs.KotlinFindPropertyUsagesDialog
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.filterDataClassComponentsIfDisabled
+import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.HierarchySearchRequest
 import org.jetbrains.kotlin.idea.search.declarationsSearch.searchOverriders
 import org.jetbrains.kotlin.idea.search.excludeKotlinSources
@@ -48,6 +48,7 @@ import org.jetbrains.kotlin.idea.search.isImportUsage
 import org.jetbrains.kotlin.idea.search.isOnlyKotlinSearch
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
@@ -64,6 +65,13 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
     ) : KotlinFindMemberUsagesHandler<KtFunction>(declaration, elementsToSearch, factory) {
 
         override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions = factory.findFunctionOptions
+
+        override fun getPrimaryElements(): Array<PsiElement> =
+            if (factory.findFunctionOptions.isSearchForBaseMethod) {
+                val supers = KotlinFindUsagesSupport.getSuperMethods(psiElement as KtFunction, null)
+                if (supers.contains(psiElement)) supers.toTypedArray() else (supers + psiElement).toTypedArray()
+            }
+            else super.getPrimaryElements()
 
         override fun getFindUsagesDialog(
             isSingleFile: Boolean,
@@ -85,7 +93,8 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
                 acceptCallableOverrides = true,
                 acceptOverloads = kotlinOptions.isIncludeOverloadUsages,
                 acceptExtensionsOfDeclarationClass = kotlinOptions.isIncludeOverloadUsages,
-                searchForExpectedUsages = kotlinOptions.searchExpected
+                searchForExpectedUsages = kotlinOptions.searchExpected,
+                searchForComponentConventions = !forHighlight
             )
         }
 
@@ -127,6 +136,33 @@ abstract class KotlinFindMemberUsagesHandler<T : KtNamedDeclaration> protected c
             propertyDeclaration.parent is KtParameterList &&
                     propertyDeclaration.parent.parent is KtPrimaryConstructor &&
                     propertyDeclaration.parent.parent.parent.let { it is KtClass && it.isData() }
+        }
+
+        override fun getPrimaryElements(): Array<PsiElement> {
+            val element = psiElement as KtNamedDeclaration
+            if (element is KtParameter && !element.hasValOrVar() && factory.findPropertyOptions.isSearchInOverridingMethods) {
+                val function = element.ownerFunction
+                if (function != null && function.isOverridable()) {
+                    function.providedToLightMethods().singleOrNull()?.let { method ->
+                        if (OverridingMethodsSearch.search(method).any()) {
+                            val parametersCount = method.parameterList.parametersCount
+                            val parameterIndex = element.parameterIndex()
+
+                            assert(parameterIndex < parametersCount)
+                            return OverridingMethodsSearch.search(method, true)
+                                .filter { method.parameterList.parametersCount == parametersCount }
+                                .mapNotNull { method.parameterList.parameters[parameterIndex].unwrapped }
+                                .toTypedArray()
+                        }
+                    }
+                }
+            }
+            else if (factory.findPropertyOptions.isSearchForBaseAccessors) {
+                val supers = KotlinFindUsagesSupport.getSuperMethods(element, null)
+                return if (supers.contains(psiElement)) supers.toTypedArray() else (supers + psiElement).toTypedArray()
+            }
+
+            return super.getPrimaryElements()
         }
 
         override fun getFindUsagesOptions(dataContext: DataContext?): FindUsagesOptions = factory.findPropertyOptions

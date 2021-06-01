@@ -13,7 +13,6 @@ import com.intellij.execution.ui.TargetAwareRunConfigurationEditor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.NonBlockingReadAction;
 import com.intellij.openapi.application.ReadAction;
@@ -200,10 +199,13 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     JComponent result = myComponent.getWholePanel();
     DataManager.registerDataProvider(result, dataId -> {
+      if (myComponent == null) {
+        return null; // disposed
+      }
       if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
         return getEditor();
       }
-      if (RUN_ON_TARGET_NAME_KEY.is(dataId) && myComponent != null) {
+      if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
         RunOnTargetComboBox runOnComboBox = (RunOnTargetComboBox)myComponent.myRunOnComboBox;
         if (runOnComboBox != null) {
           return runOnComboBox.getSelectedTargetName();
@@ -454,7 +456,6 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       myRCStorageUi = !myProject.isDefault() ? new RunConfigurationStorageUi(myProject, () -> setModified(true))
                                              : null;
       if (myRCStorageUi != null) {
-        myRCStorageUi.setShowCompatibilityHint(true);
         myRCStoragePanel.add(myRCStorageUi.createComponent());
       }
 
@@ -498,7 +499,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       boolean targetAware =
         configuration instanceof TargetEnvironmentAwareRunProfile &&
         ((TargetEnvironmentAwareRunProfile)configuration).getDefaultLanguageRuntimeType() != null &&
-        Experiments.getInstance().isFeatureEnabled("run.targets");
+        RunTargetsEnabled.get();
       myRunOnPanel.setVisible(targetAware);
       if (targetAware) {
         String defaultTargetName = ((TargetEnvironmentAwareRunProfile)configuration).getDefaultTargetName();

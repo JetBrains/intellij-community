@@ -565,4 +565,19 @@ class X {
 }
 """)
   }
+  
+  void testParseShort() {
+    doTest("""class X {
+  boolean validate(String s) {
+    try {
+      Short.parseShort(s);
+      return true;
+    }
+    catch (NumberFormatException e) {
+      return false;
+    }
+  }
+}
+""")
+  }
 }

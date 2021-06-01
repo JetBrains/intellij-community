@@ -42,7 +42,7 @@ abstract class BaseAddAccountWithTokenAction : DumbAwareAction() {
 private fun newAddAccountDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate): BaseLoginDialog =
   GHTokenLoginDialog(project, parent, isAccountUnique).apply {
     title = message("dialog.title.add.github.account")
-    setLoginButtonText(message("button.add.account"))
+    setLoginButtonText(message("accounts.add.button"))
   }
 
 internal class GHTokenLoginDialog(project: Project?, parent: Component?, isAccountUnique: UniqueLoginPredicate) :

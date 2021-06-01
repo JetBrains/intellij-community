@@ -93,7 +93,7 @@ public abstract class TableSpeedSearchBase<Comp extends JTable> extends SpeedSea
       @Override
       public void processKeyEvent(KeyEvent e) {
         if (ignoreSpaceTyped && e.getModifiersEx() == 0 &&
-            e.getID() == KeyEvent.KEY_TYPED && e.getKeyCode() == KeyEvent.VK_SPACE) {
+            e.getID() == KeyEvent.KEY_TYPED && e.getKeyChar() == ' ') {
           return;
         }
         super.processKeyEvent(e);

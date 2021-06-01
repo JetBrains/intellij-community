@@ -22,5 +22,5 @@ per-file-ignores =
 
 # We are checking with Python 3 but many of the stubs are Python 2 stubs.
 builtins = StandardError,apply,basestring,buffer,cmp,coerce,execfile,file,intern,long,raw_input,reduce,reload,unichr,unicode,xrange
-exclude = .venv*,@*,.git,*_pb2.pyi
+exclude = .venv*,.git,*_pb2.pyi
 max-line-length = 130

@@ -13,6 +13,7 @@ import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.vcs.FileStatusListener;
@@ -50,7 +51,7 @@ public class ProjectTreeBuilder extends BaseProjectTreeBuilder {
         queueUpdate();
       }
     });
-
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> queueUpdate());
     connection.subscribe(BookmarksListener.TOPIC, new MyBookmarksListener());
 
     PsiManager.getInstance(project).addPsiTreeChangeListener(createPsiTreeChangeListener(project), this);

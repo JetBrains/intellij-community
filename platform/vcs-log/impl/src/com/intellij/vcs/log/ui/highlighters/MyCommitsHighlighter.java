@@ -19,11 +19,12 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcs.log.visible.filters.VcsLogFilterObject;
-import gnu.trove.THashSet;
+import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
+import java.util.Set;
 
 public class MyCommitsHighlighter implements VcsLogHighlighter {
   @NotNull private final VcsLogData myLogData;
@@ -52,7 +53,7 @@ public class MyCommitsHighlighter implements VcsLogHighlighter {
 
   // returns true if only one user commits to this repository
   private boolean isSingleUser() {
-    THashSet<VcsUser> users = new THashSet<>(myLogData.getCurrentUser().values(), new VcsUserUtil.VcsUserHashingStrategy());
+    Set<VcsUser> users = new ObjectOpenCustomHashSet<>(myLogData.getCurrentUser().values(), new VcsUserUtil.VcsUserHashingStrategy());
     return myLogData.getUserRegistry().all(user -> users.contains(user));
   }
 

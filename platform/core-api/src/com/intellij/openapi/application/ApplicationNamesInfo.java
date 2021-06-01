@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.PlatformUtils;
-import org.jdom.Element;
+import com.intellij.util.XmlDomReader;
+import com.intellij.util.XmlElement;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +26,7 @@ public final class ApplicationNamesInfo {
 
   private static volatile ApplicationNamesInfo instance;
 
-  private static @NotNull Element loadData() {
+  private static @NotNull XmlElement loadData() {
     String prefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "");
 
     String filePath;
@@ -55,7 +55,7 @@ public final class ApplicationNamesInfo {
     if (filePath != null) {
       Path file = Paths.get(filePath);
       try {
-        return JDOMUtil.load(Files.newBufferedReader(file));
+        return XmlDomReader.readXmlAsModel(Files.newInputStream(file));
       }
       catch (NoSuchFileException ignore) {
       }
@@ -72,7 +72,7 @@ public final class ApplicationNamesInfo {
     }
 
     try {
-      return JDOMUtil.load(stream);
+      return XmlDomReader.readXmlAsModel(stream);
     }
     catch (Exception e) {
       throw new RuntimeException("Cannot load resource: " + resource, e);
@@ -80,10 +80,10 @@ public final class ApplicationNamesInfo {
   }
 
   @ApiStatus.Internal
-  public static @NotNull Element initAndGetRawData() {
+  public static @NotNull XmlElement initAndGetRawData() {
     //noinspection SynchronizeOnThis
     synchronized (ApplicationNamesInfo.class) {
-      Element data = loadData();
+      XmlElement data = loadData();
       if (instance == null) {
         instance = new ApplicationNamesInfo(data);
       }
@@ -106,8 +106,9 @@ public final class ApplicationNamesInfo {
     return result;
   }
 
-  private ApplicationNamesInfo(@NotNull Element rootElement) {
-    Element names = rootElement.getChild("names", rootElement.getNamespace());
+  private ApplicationNamesInfo(@NotNull XmlElement rootElement) {
+    XmlElement names = rootElement.getChild("names");
+    assert names != null;
     myProductName = names.getAttributeValue("product");
     myFullProductName = names.getAttributeValue("fullname", myProductName);
     myEditionName = names.getAttributeValue("edition");

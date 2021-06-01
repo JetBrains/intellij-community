@@ -6,13 +6,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
-import com.intellij.psi.javadoc.PsiDocTagValue;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -84,17 +82,6 @@ public class ReplaceWithJavadocIntention extends Intention {
     while (node != null && !(node instanceof PsiModifierList));
 
     return result;
-  }
-
-  @NotNull
-  @NonNls
-  private static String extractJavadocTagContent(PsiDocTag tag) {
-    final PsiDocTagValue element = tag.getValueElement();
-    final String result = "@" + tag.getName();
-
-    if (element == null) return result;
-
-    return result + " " + element.getText();
   }
 
   /**
@@ -197,7 +184,8 @@ public class ReplaceWithJavadocIntention extends Intention {
 
       final PsiComment comment = (PsiComment)element;
 
-      if (!(comment.getParent() instanceof PsiMember)) return false;
+      final PsiElement parent = comment.getParent();
+      if (!(parent instanceof PsiMember) || parent instanceof PsiAnonymousClass) return false;
 
       // the comment node might have a method as its parent,
       // but the comment itself can be defined before/after the modifier list/type/name/parameters of the method

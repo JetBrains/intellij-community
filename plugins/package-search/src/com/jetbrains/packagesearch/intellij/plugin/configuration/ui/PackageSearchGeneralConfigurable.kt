@@ -2,18 +2,15 @@ package com.jetbrains.packagesearch.intellij.plugin.configuration.ui
 
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
-import com.intellij.ui.RelativeFont
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor
-import javax.swing.JCheckBox
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
-import javax.swing.event.ChangeListener
 
 class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurable {
 

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration.ui.notifications
 
@@ -31,16 +28,19 @@ class ConfigureKotlinNotification(
     KotlinConfigurationCheckerService.CONFIGURE_NOTIFICATION_GROUP_ID,
     KotlinJvmBundle.message("configure.kotlin"),
     notificationState.notificationString,
-    NotificationType.WARNING,
-    NotificationListener { notification, event ->
-        if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-            val configurator = getConfiguratorByName(event.description) ?: throw AssertionError("Missed action: " + event.description)
-            notification.expire()
-
-            configurator.configure(project, excludeModules)
-        }
-    }
+    NotificationType.WARNING
 ) {
+    init {
+        setListener(NotificationListener { notification, event ->
+            if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
+                val configurator = getConfiguratorByName(event.description) ?: throw AssertionError("Missed action: " + event.description)
+                notification.expire()
+
+                configurator.configure(project, excludeModules)
+            }
+        })
+    }
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is ConfigureKotlinNotification) return false

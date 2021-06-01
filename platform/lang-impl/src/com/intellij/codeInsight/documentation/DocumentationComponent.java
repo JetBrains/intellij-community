@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -70,6 +70,7 @@ import com.intellij.ui.popup.PopupPositionManager;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.*;
+import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.*;
@@ -363,11 +364,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
     myExternalDocAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
     edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
-    ActionPopupMenu contextMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(
-      ActionPlaces.JAVADOC_TOOLBAR, actions, new MenuItemPresentationFactory(true));
     PopupHandler popupHandler = new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
+        ActionPopupMenu contextMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(
+          ActionPlaces.JAVADOC_TOOLBAR, actions, new MenuItemPresentationFactory(true));
         contextMenu.getComponent().show(comp, x, y);
       }
     };
@@ -408,6 +409,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     };
     myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
+    myToolBar.setTargetComponent(this);
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -894,7 +896,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     hint.addResizeListener(this::onManualResizing, this);
     ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void afterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void afterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
         if (action instanceof WindowAction) onManualResizing();
       }
     });
@@ -1202,9 +1204,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       private Image getImage() {
         if (!myImageLoaded) {
           Image image = loadImageFromUrl();
-          myImage = ImageUtil.toBufferedImage(image != null ?
-                                              image :
-                                              ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage());
+          myImage = ImageUtil.toBufferedImage(
+            image != null ? image : ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage(),
+            false, true);
+
           myImageLoaded = true;
         }
         return myImage;

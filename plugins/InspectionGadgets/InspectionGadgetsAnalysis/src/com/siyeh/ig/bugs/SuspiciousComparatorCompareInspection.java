@@ -15,13 +15,20 @@
  */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
+import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter;
+import com.intellij.codeInspection.dataFlow.java.ControlFlowAnalyzer;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.PlainDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -117,26 +124,22 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
     }
 
     private void checkReflexivity(PsiParameterListOwner owner, PsiParameter[] parameters, PsiElement body) {
-      var runner = new StandardDataFlowRunner(owner.getProject(), body) {
-        @NotNull
-        @Override
-        protected DfaMemoryState createMemoryState() {
-          DfaMemoryState state = super.createMemoryState();
-          DfaVariableValue var1 = PlainDescriptor.createVariableValue(getFactory(), parameters[0]);
-          DfaVariableValue var2 = PlainDescriptor.createVariableValue(getFactory(), parameters[1]);
-          state.applyCondition(var1.eq(var2));
-          return state;
-        }
-      };
-      var visitor = new ComparatorInterceptor(owner);
-      if (runner.analyzeMethod(body, new JavaDfaInstructionVisitor(visitor)) != RunnerResult.OK) return;
-      if (visitor.myRange.contains(0) || visitor.myContexts.isEmpty()) return;
+      DfaValueFactory factory = new DfaValueFactory(owner.getProject());
+      ControlFlow flow = ControlFlowAnalyzer.buildFlow(body, factory, true);
+      if (flow == null) return;
+      DfaMemoryState state = new JvmDfaMemoryStateImpl(factory);
+      DfaVariableValue var1 = PlainDescriptor.createVariableValue(factory, parameters[0]);
+      DfaVariableValue var2 = PlainDescriptor.createVariableValue(factory, parameters[1]);
+      state.applyCondition(var1.eq(var2));
+      var interceptor = new ComparatorListener(owner);
+      if (new StandardDataFlowInterpreter(flow, interceptor).interpret(state) != RunnerResult.OK) return;
+      if (interceptor.myRange.contains(0) || interceptor.myContexts.isEmpty()) return;
       PsiElement context = null;
-      if (visitor.myContexts.size() == 1) {
-        context = visitor.myContexts.iterator().next();
+      if (interceptor.myContexts.size() == 1) {
+        context = interceptor.myContexts.iterator().next();
       }
       else {
-        PsiElement commonParent = PsiTreeUtil.findCommonParent(visitor.myContexts.toArray(PsiElement.EMPTY_ARRAY));
+        PsiElement commonParent = PsiTreeUtil.findCommonParent(interceptor.myContexts.toArray(PsiElement.EMPTY_ARRAY));
         if (commonParent instanceof PsiExpression) {
           context = commonParent;
         } else {
@@ -153,12 +156,12 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                     InspectionGadgetsBundle.message("suspicious.comparator.compare.descriptor.non.reflexive"));
     }
 
-    private static final class ComparatorInterceptor implements DfaInterceptor<PsiExpression> {
+    private static final class ComparatorListener implements JavaDfaListener {
       private final PsiParameterListOwner myOwner;
       private final Set<PsiElement> myContexts = new HashSet<>();
       LongRangeSet myRange = LongRangeSet.empty();
 
-      private ComparatorInterceptor(PsiParameterListOwner owner) {
+      private ComparatorListener(PsiParameterListOwner owner) {
         myOwner = owner;
       }
 
@@ -169,7 +172,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
                                     @NotNull DfaMemoryState state) {
         if (owner != myOwner || expression == null) return;
         myContexts.add(expression);
-        myRange = myRange.unite(DfIntType.extractRange(state.getDfType(value)));
+        myRange = myRange.join(DfIntType.extractRange(state.getDfType(value)));
       }
     }
 

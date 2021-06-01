@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions
 
 import com.intellij.execution.process.ProcessOutputType
@@ -24,10 +24,15 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   @Test
   fun testShortenProjectId() {
     val action = LogEventAction(eventId)
-    action.addData("project", "5410c65eafb1f0abd78c6d9bdf33752f13c17b17ed57c3ae26801ae6ee7d17ea")
-    action.addData("plugin_type", "PLATFORM")
+    val data = hashMapOf(
+      "project" to "5410c65eafb1f0abd78c6d9bdf33752f13c17b17ed57c3ae26801ae6ee7d17ea",
+      "plugin_type" to "PLATFORM"
+    )
+    for ((key, value) in data) {
+      action.addData(key, value)
+    }
 
-    doTestCountCollector("{\"plugin_type\":\"PLATFORM\", \"project\":\"5410c65e...ea\"}", action)
+    doTestCountCollector("{\"plugin_type\":\"PLATFORM\", \"project\":\"5410c65e...ea\"}", action, data)
   }
 
   @Test
@@ -36,16 +41,21 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val projectId = "12345"
     action.addData("project", projectId)
 
-    doTestCountCollector("{\"project\":\"$projectId\"}", action)
+    doTestCountCollector("{\"project\":\"$projectId\"}", action, hashMapOf("project" to projectId))
   }
 
   @Test
   fun testFilterSystemFields() {
     val action = LogEventAction(eventId)
-    action.addData("last", "1564643442610")
-    action.addData("created", "1564643442610")
+    val data = hashMapOf(
+      "last" to "1564643442610",
+      "created" to "1564643442610"
+    )
+    for ((key, value) in data) {
+      action.addData(key, value)
+    }
 
-    doTestCountCollector("{}", action)
+    doTestCountCollector("{}", action, data)
   }
 
   @Test
@@ -54,7 +64,9 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val action = LogEventAction(incorrectEventId)
 
     val filterModel = StatisticsLogFilterModel()
-    val processingResult = filterModel.processLine(StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action)))
+    val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
+    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$incorrectEventId[$eventId]\" {}", logMessage)
+    val processingResult = filterModel.processLine(logMessage)
     assertEquals(processingResult.key, ProcessOutputType.STDERR)
   }
 
@@ -65,7 +77,32 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     action.addData("project", UNDEFINED_RULE.description)
 
     val filterModel = StatisticsLogFilterModel()
-    val processingResult = filterModel.processLine(StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action)))
+    val rawData = hashMapOf(
+      "test" to "foo",
+      "project" to "5410c65eafb1f0abd78c6d9bdf33752f13c17b17ed57c3ae26801ae6ee7d17ea"
+    )
+    val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, rawData)
+    val expectedLine = buildExpectedLine(
+      "{\"test\":\"validation.incorrect_rule[foo]\", \"project\":\"validation.undefined_rule[5410c65eafb1f0abd78c6d9bdf33752f13c17b17ed57c3ae26801ae6ee7d17ea]\"}")
+    assertEquals(expectedLine, logMessage)
+    val processingResult = filterModel.processLine(logMessage)
+    assertEquals(processingResult.key, ProcessOutputType.STDERR)
+  }
+
+  @Test
+  fun testLogIncorrectEventDataWithoutRawData() {
+    val action = LogEventAction(eventId)
+    action.addData("test", INCORRECT_RULE.description)
+    action.addData("project", UNDEFINED_RULE.description)
+    action.addData("map", hashMapOf("foo" to "bar"))
+    action.addData("list", listOf("foo"))
+
+    val filterModel = StatisticsLogFilterModel()
+    val logMessage = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), null, null)
+    val expectedLine = buildExpectedLine(
+      "{\"test\":\"validation.incorrect_rule\", \"project\":\"validation.undefined_rule\", \"list\":[\"foo\"], \"map\":{\"foo\":\"bar\"}}")
+    assertEquals(expectedLine, logMessage)
+    val processingResult = filterModel.processLine(logMessage)
     assertEquals(processingResult.key, ProcessOutputType.STDERR)
   }
 
@@ -83,7 +120,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val action = LogEventAction(eventId)
     action.addData("dataKey", listOf("1", "2", "3"))
 
-    doTestCountCollector("{\"dataKey\":[\"1\",\"2\",\"3\"]}", action)
+    doTestCountCollector("{\"dataKey\":[\"1\",\"2\",\"3\"]}", action, hashMapOf("dataKey" to listOf("1", "2", "3")))
   }
 
   @Test
@@ -91,7 +128,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val count = 2
     val action = LogEventAction(eventId, false, count)
 
-    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action))
+    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" (count=${count}) {}", actual)
   }
 
@@ -99,7 +136,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
   fun testLogLineWithCountMatchesRegexpPattern() {
     val action = LogEventAction(eventId, false, 2)
 
-    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action))
+    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     val matcher = LOG_PATTERN.matcher(logLineWithCount)
     assertTrue(matcher.find())
     assertEquals(eventGroup, matcher.group("groupId"))
@@ -112,7 +149,7 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     val action = LogEventAction(eventId, true)
     action.addData("plugin_type", "PLATFORM")
 
-    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action))
+    val logLineWithCount = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, emptyMap())
     val matcher = LOG_PATTERN.matcher(logLineWithCount)
     assertTrue(matcher.find())
     assertEquals(eventGroup, matcher.group("groupId"))
@@ -120,11 +157,14 @@ class StatisticsEventLogToolWindowTest : BasePlatformTestCase() {
     assertEquals("{\"plugin_type\":\"PLATFORM\"}", matcher.group("eventData"))
   }
 
-  private fun doTestCountCollector(expectedEventDataPart: String, action: LogEventAction) {
-    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action))
-    assertEquals("$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" $expectedEventDataPart", actual)
+  private fun doTestCountCollector(expectedEventDataPart: String, action: LogEventAction, rawData: Map<String, Any> = emptyMap()) {
+    val actual = StatisticsEventLogMessageBuilder().buildLogMessage(buildLogEvent(action), eventId, rawData)
+    assertEquals(buildExpectedLine(expectedEventDataPart), actual)
   }
 
-  private fun buildLogEvent(action: LogEventAction) = LogEvent("2e5b2e32e061", "193.1801", "176", eventTime,
-                                                               eventGroup, groupVersion, "32", action)
+  private fun buildExpectedLine(expectedEventDataPart: String) =
+    "$formattedEventTime - [\"$eventGroup\", v$groupVersion]: \"$eventId\" $expectedEventDataPart"
+
+  private fun buildLogEvent(action: LogEventAction, groupId: String = eventGroup) = LogEvent("2e5b2e32e061", "193.1801", "176", eventTime,
+                                                                                             groupId, groupVersion, "32", action)
 }

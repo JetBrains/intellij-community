@@ -11,8 +11,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 /**
- * Stores list of tokens (a token is {@link TokenInfo} which is a text plus {@link ConsoleViewContentType} plus {@link HyperlinkInfo})
+ * Stores list of tokens (a token is {@link TokenInfo} which is a text plus {@link ConsoleViewContentType} plus {@link HyperlinkInfo}).
  * Tries to maintain the total token text length not more than {@link #maxCapacity}, trims tokens from the beginning on overflow.
+ * Not thread-safe.
+ *
  * Add token via {@link #print(String, ConsoleViewContentType, HyperlinkInfo)}
  * Get all tokens via {@link #drain()}
  */

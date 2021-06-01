@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation
 
+import com.intellij.ide.util.DefaultModuleRendererFactory
 import com.intellij.ide.util.PsiElementListCellRenderer
-import com.intellij.ide.util.PsiElementModuleRenderer
 import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.navigation.NavigationItem
@@ -21,15 +21,11 @@ import com.intellij.problems.WolfTheProblemSolver
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.ui.JBColor
+import com.intellij.util.TextWithIcon
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
-import org.jetbrains.annotations.NotNull
 import java.awt.Font
 import java.util.regex.Pattern
-import javax.swing.Icon
-import javax.swing.JLabel
-import javax.swing.JList
-import com.intellij.openapi.util.Pair as JBPair
 
 private val CONTAINER_PATTERN: Pattern = Pattern.compile("(\\(in |\\()?([^)]*)(\\))?")
 
@@ -63,16 +59,14 @@ fun targetPresentation(element: PsiElement): TargetPresentation {
   val presentableText: String = itemPresentation?.presentableText
                                 ?: (element as? PsiNamedElement)?.name
                                 ?: element.text
-  val moduleRendererComponent = PsiElementListCellRenderer.getModuleRenderer(element)
-    ?.getListCellRendererComponent(JList<PsiElement>(), element, -1, false, false) as? JLabel
-
+  val moduleTextWithIcon = PsiElementListCellRenderer.getModuleTextWithIcon(element)
   return TargetPresentation
     .builder(presentableText)
     .backgroundColor(file?.let { VfsPresentationUtil.getFileBackgroundColor(project, file) })
     .icon(element.getIcon(Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS))
     .presentableTextAttributes(itemPresentation?.getColoredAttributes())
     .containerText(itemPresentation?.getContainerText(), file?.let { fileStatusAttributes(project, file) })
-    .locationText(moduleRendererComponent?.text, moduleRendererComponent?.icon)
+    .locationText(moduleTextWithIcon?.text, moduleTextWithIcon?.icon)
     .presentation()
 }
 
@@ -88,16 +82,18 @@ fun fileStatusAttributes(project: Project, file: VirtualFile): TextAttributes? {
 }
 
 @ApiStatus.Experimental
-fun fileLocation(project: Project, file: VirtualFile): JBPair<@Nls @NotNull String, @NotNull Icon>? {
+fun fileLocation(project: Project, file: VirtualFile): TextWithIcon? {
   val fileIndex = ProjectRootManager.getInstance(project).fileIndex
   return if (fileIndex.isInLibrary(file)) {
-    PsiElementModuleRenderer().libraryLocation(fileIndex, file)
+    DefaultModuleRendererFactory().libraryLocation(fileIndex, file)
   }
   else {
     val module = ModuleUtilCore.findModuleForFile(file, project)
     if (module != null) {
-      PsiElementModuleRenderer.projectLocation(file, module, fileIndex)
+      DefaultModuleRendererFactory.projectLocation(file, module, fileIndex)
     }
-    else null
+    else {
+      null
+    }
   }
 }

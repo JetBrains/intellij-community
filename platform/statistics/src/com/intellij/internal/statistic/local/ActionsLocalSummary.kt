@@ -4,7 +4,6 @@ package com.intellij.internal.statistic.local
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -86,7 +85,7 @@ private class ActionsLocalSummaryListener : AnActionListener {
   private val service = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
                         ?: throw ExtensionNotApplicableException.INSTANCE
 
-  override fun beforeActionPerformed(action: AnAction, dataContext: DataContext, event: AnActionEvent) {
+  override fun beforeActionPerformed(action: AnAction, event: AnActionEvent) {
     if (getPluginInfo(action::class.java).isSafeToReport()) {
       service.updateActionsSummary(event.actionManager.getId(action) ?: action.javaClass.name)
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide
 
 import com.google.gson.JsonElement
@@ -8,16 +8,20 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.util.Disposer
+import com.intellij.util.castSafelyTo
 import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.util.io.delete
 import io.netty.buffer.Unpooled
 import io.netty.channel.ChannelHandlerContext
+import io.netty.channel.ChannelOption
 import io.netty.handler.codec.http.*
-import io.netty.util.concurrent.Future
-import io.netty.util.concurrent.GenericFutureListener
 import org.jetbrains.io.addCommonHeaders
+import java.nio.file.Files
+import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.writeText
 
 val toolboxHandlerEP: ExtensionPointName<ToolboxServiceHandler<*>> = ExtensionPointName.create("com.intellij.toolboxServiceHandler")
 
@@ -76,6 +80,26 @@ private fun <T> wrapHandler(handler: ToolboxServiceHandler<T>, request: JsonElem
   }
 }
 
+internal class ToolboxRestServiceConfig : Disposable {
+  override fun dispose() = Unit
+
+  init {
+    val toolboxPortFilePath = System.getProperty("toolbox.notification.portFile")
+    if (toolboxPortFilePath != null) {
+      AppExecutorUtil.getAppExecutorService().submit {
+        val server = BuiltInServerManager.getInstance()
+        val port = server.waitForStart().port
+        val portFile = Path.of(toolboxPortFilePath)
+        runCatching { Files.createDirectories(portFile.parent) }
+        runCatching { portFile.writeText("$port") }
+        Disposer.register(this) {
+          runCatching { portFile.delete() }
+        }
+      }
+    }
+  }
+}
+
 internal class ToolboxRestService : RestService() {
   internal companion object {
     @Suppress("SSBasedInspection")
@@ -113,7 +137,6 @@ internal class ToolboxRestService : RestService() {
       return null
     }
 
-    val lifetime = Disposer.newDisposable("toolbox-service-request")
     val response = DefaultHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK)
     response.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/json; charset=utf-8")
     response.addCommonHeaders()
@@ -121,29 +144,25 @@ internal class ToolboxRestService : RestService() {
     response.headers().set(HttpHeaderNames.CACHE_CONTROL, "private, must-revalidate") //NON-NLS
     response.headers().set(HttpHeaderNames.TRANSFER_ENCODING, HttpHeaderValues.CHUNKED)
     response.headers().set(HttpHeaderNames.LAST_MODIFIED, Date(Calendar.getInstance().timeInMillis))
-    channel.write(response)
+    channel.writeAndFlush(response).get()
 
-    val heartbeatDelay = System.getProperty("toolbox.heartbeat.millis", "1000").toLong()
-    val heartbeat = context.executor().scheduleWithFixedDelay(
-      object: Runnable {
-        private fun handleError(t: Throwable) {
+    val heartbeatDelay = requestJson.castSafelyTo<JsonObject>()?.get("heartbeatMillis")?.asLong
+                         ?: System.getProperty("toolbox.heartbeat.millis", "5000").toLong()
+
+    runCatching { channel.config().setOption(ChannelOption.TCP_NODELAY, true) }
+    runCatching { channel.config().setOption(ChannelOption.SO_KEEPALIVE, true) }
+    runCatching { channel.config().setOption(ChannelOption.SO_TIMEOUT, heartbeatDelay.toInt() * 2) }
+
+    val lifetime = Disposer.newDisposable("toolbox-service-request")
+    val heartbeat = context.executor().scheduleWithFixedDelay(Runnable {
+        try {
+          channel
+            .writeAndFlush(Unpooled.copiedBuffer(" ", Charsets.UTF_8))
+            .get()
+        }
+        catch (t: Throwable) {
           LOG.debug("Failed to write next heartbeat. ${t.message}", t)
           Disposer.dispose(lifetime)
-        }
-
-        private val futureListener = GenericFutureListener<Future<in Void>> { f ->
-          f.cause()?.let { t -> handleError(t) }
-        }
-
-        override fun run() {
-          try {
-            channel
-              .writeAndFlush(Unpooled.copiedBuffer(" ", Charsets.UTF_8))
-              .addListener(futureListener)
-          }
-          catch (t: Throwable) {
-            handleError(t)
-          }
         }
       }, heartbeatDelay, heartbeatDelay, TimeUnit.MILLISECONDS)
 
@@ -152,6 +171,10 @@ internal class ToolboxRestService : RestService() {
     val callback = CompletableFuture<JsonElement?>()
     AppExecutorUtil.getAppExecutorService().submit {
       toolboxRequest.handleToolboxRequest(lifetime) { r -> callback.complete(r) }
+    }
+
+    channel.closeFuture().addListener {
+      Disposer.dispose(lifetime)
     }
 
     callback
@@ -174,8 +197,8 @@ internal class ToolboxRestService : RestService() {
             return@thenAcceptAsync
           }
 
-          runCatching { channel.write(Unpooled.copiedBuffer(gson.toJson(json), Charsets.UTF_8)) }
-          runCatching { channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT) }
+          runCatching { channel.writeAndFlush(Unpooled.copiedBuffer(gson.toJson(json), Charsets.UTF_8)).get() }
+          runCatching { channel.writeAndFlush(LastHttpContent.EMPTY_LAST_CONTENT).get() }
 
           Disposer.dispose(lifetime)
         },

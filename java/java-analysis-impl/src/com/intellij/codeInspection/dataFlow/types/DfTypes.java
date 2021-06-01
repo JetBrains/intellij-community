@@ -7,8 +7,9 @@ import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.psi.PsiKeyword;
 import com.intellij.psi.PsiPrimitiveType;
 import com.intellij.psi.PsiType;
@@ -36,8 +37,12 @@ public final class DfTypes {
 
     @Override
     public @NotNull DfType join(@NotNull DfType other) {
-      if (other instanceof DfBooleanType) return this;
-      return TOP;
+      return other instanceof DfBooleanType ? this : TOP;
+    }
+
+    @Override
+    public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+      return other instanceof DfBooleanType ? this : null;
     }
 
     @Override
@@ -66,12 +71,12 @@ public final class DfTypes {
   /**
    * A true boolean constant
    */
-  public static final DfBooleanConstantType TRUE = new DfBooleanConstantType(true);
+  public static final @NotNull DfBooleanConstantType TRUE = new DfBooleanConstantType(true);
 
   /**
    * A false boolean constant
    */
-  public static final DfBooleanConstantType FALSE = new DfBooleanConstantType(false);
+  public static final @NotNull DfBooleanConstantType FALSE = new DfBooleanConstantType(false);
 
   /**
    * @param value boolean value
@@ -94,7 +99,7 @@ public final class DfTypes {
    * @return resulting type. Might be {@link DfType#BOTTOM} if range is empty or all its values are out of the int domain.
    */
   public static @NotNull DfType intRangeClamped(LongRangeSet range) {
-    return intRange(range.intersect(DfIntRangeType.FULL_RANGE));
+    return intRange(range.meet(DfIntRangeType.FULL_RANGE));
   }
 
   /**
@@ -178,88 +183,40 @@ public final class DfTypes {
   /**
    * A convenience selector method to call {@link #longRange(LongRangeSet)} or {@link #intRangeClamped(LongRangeSet)}
    * @param range range
-   * @param isLong whether int or long type should be created
-   * @return resulting type.
+   * @param lrType LongRangeType
+   * @return resulting DfType.
    */
-  public static @NotNull DfType rangeClamped(LongRangeSet range, boolean isLong) {
-    return isLong ? longRange(range) : intRangeClamped(range);
+  public static @NotNull DfType rangeClamped(@NotNull LongRangeSet range, @NotNull LongRangeType lrType) {
+    switch (lrType) {
+      case INT32:
+        return intRangeClamped(range);
+      case INT64:
+        return longRange(range);
+      default:
+        throw new IllegalStateException("Unexpected value: " + lrType);
+    }
+  }
+
+  static @NotNull DfType range(@NotNull LongRangeSet range, @Nullable LongRangeSet wideRange, @NotNull LongRangeType lrType) {
+    switch (lrType) {
+      case INT32:
+        return intRange(range, wideRange);
+      case INT64:
+        return longRange(range, wideRange);
+      default:
+        throw new IllegalStateException("Unexpected value: " + lrType);
+    }
   }
 
   /**
    * A type that corresponds to JVM float type
    */
-  public static final DfFloatType FLOAT = new DfFloatType() {
-    @Override
-    public boolean isSuperType(@NotNull DfType other) {
-      return other == BOTTOM || other instanceof DfFloatType;
-    }
+  public static final DfFloatType FLOAT = new DfFloatRangeType(Float.NEGATIVE_INFINITY, Float.POSITIVE_INFINITY, false, true);
 
-    @Override
-    public @NotNull DfType join(@NotNull DfType other) {
-      if (other instanceof DfFloatType) return this;
-      return TOP;
-    }
-
-    @Override
-    public @NotNull DfType meet(@NotNull DfType other) {
-      if (other == TOP) return this;
-      if (other instanceof DfFloatType) return other;
-      return BOTTOM;
-    }
-
-    @Override
-    public @NotNull DfType tryNegate() {
-      return BOTTOM;
-    }
-
-    @Override
-    public int hashCode() {
-      return 521441254;
-    }
-
-    @Override
-    public @NotNull String toString() {
-      return PsiKeyword.FLOAT;
-    }
-  };
   /**
-   * Represents +0.0f and -0.0f at the same time
+   * A type that corresponds to JVM float NaN constant
    */
-  public static final DfFloatType FLOAT_ZERO = new DfFloatType() {
-    @Override
-    public boolean isSuperType(@NotNull DfType other) {
-      if (other == BOTTOM || other == this) return true;
-      Float constant = other.getConstantOfType(Float.class);
-      return constant != null && constant == 0.0f;
-    }
-
-    @Override
-    public @NotNull DfType join(@NotNull DfType other) {
-      if (isSuperType(other)) return this;
-      if (other.isSuperType(this)) return other;
-      if (other instanceof DfFloatNotValueType) return other.join(this);
-      if (other instanceof DfFloatType) return FLOAT;
-      return TOP;
-    }
-
-    @Override
-    public @NotNull DfType meet(@NotNull DfType other) {
-      if (isSuperType(other)) return other;
-      if (other.isSuperType(this)) return this;
-      if (other instanceof DfFloatNotValueType) return other.meet(this);
-      return BOTTOM;
-    }
-
-    @Override
-    public @NotNull DfType tryNegate() {
-      return new DfFloatNotValueType(FLOAT_ZERO_SET);
-    }
-
-    @Override
-    public @NotNull String toString() {
-      return "\u00B10.0f";
-    }
-  };
+  public static final DfFloatType FLOAT_NAN = new DfFloatConstantType(Float.NaN);
 
   /**
    * @param value float value
@@ -270,80 +227,24 @@ public final class DfTypes {
   }
 
   /**
+   * @param min minimal value (inclusive, not NaN)
+   * @param max maximal value (inclusive, not NaN)
+   * @return a float type that contains all the values between min and max
+   */
+  public static DfType floatRange(float min, float max) {
+    if (min > max) throw new IllegalArgumentException();
+    return DfFloatRangeType.create(min, max, false, false);
+  }
+
+  /**
    * A type that corresponds to JVM double type
    */
-  public static final DfDoubleType DOUBLE = new DfDoubleType() {
-    @Override
-    public boolean isSuperType(@NotNull DfType other) {
-      return other == BOTTOM || other instanceof DfDoubleType;
-    }
+  public static final DfDoubleType DOUBLE = new DfDoubleRangeType(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY, false, true);
 
-    @Override
-    public @NotNull DfType join(@NotNull DfType other) {
-      if (other instanceof DfDoubleType) return this;
-      return TOP;
-    }
-
-    @Override
-    public @NotNull DfType meet(@NotNull DfType other) {
-      if (other == TOP) return this;
-      if (other instanceof DfDoubleType) return other;
-      return BOTTOM;
-    }
-
-    @Override
-    public @NotNull DfType tryNegate() {
-      return BOTTOM;
-    }
-
-    @Override
-    public int hashCode() {
-      return 5645123;
-    }
-
-    @Override
-    public @NotNull String toString() {
-      return PsiKeyword.DOUBLE;
-    }
-  };
   /**
-   * Represents +0.0 and -0.0 at the same time
+   * A type that corresponds to JVM double NaN constant
    */
-  public static final DfDoubleType DOUBLE_ZERO = new DfDoubleType() {
-    @Override
-    public boolean isSuperType(@NotNull DfType other) {
-      if (other == BOTTOM || other == this) return true;
-      Double constant = other.getConstantOfType(Double.class);
-      return constant != null && constant == 0.0;
-    }
-
-    @Override
-    public @NotNull DfType join(@NotNull DfType other) {
-      if (isSuperType(other)) return this;
-      if (other.isSuperType(this)) return other;
-      if (other instanceof DfDoubleNotValueType) return other.join(this);
-      if (other instanceof DfDoubleType) return DOUBLE;
-      return TOP;
-    }
-
-    @Override
-    public @NotNull DfType meet(@NotNull DfType other) {
-      if (isSuperType(other)) return other;
-      if (other.isSuperType(this)) return this;
-      if (other instanceof DfDoubleNotValueType) return other.meet(this);
-      return BOTTOM;
-    }
-
-    @Override
-    public @NotNull DfType tryNegate() {
-      return new DfDoubleNotValueType(DfDoubleType.DOUBLE_ZERO_SET);
-    }
-
-    @Override
-    public @NotNull String toString() {
-      return "\u00B10.0";
-    }
-  };
+  public static final DfDoubleType DOUBLE_NAN = new DfDoubleConstantType(Double.NaN);
 
   /**
    * @param value double value
@@ -351,6 +252,16 @@ public final class DfTypes {
    */
   public static DfDoubleConstantType doubleValue(double value) {
     return new DfDoubleConstantType(value);
+  }
+
+  /**
+   * @param min minimal value (inclusive, not NaN)
+   * @param max maximal value (inclusive, not NaN)
+   * @return a double type that contains all the values between min and max
+   */
+  public static DfType doubleRange(double min, double max) {
+    if (min > max) throw new IllegalArgumentException();
+    return DfDoubleRangeType.create(min, max, false, false);
   }
 
   /**
@@ -546,7 +457,7 @@ public final class DfTypes {
   public static DfReferenceType customObject(@NotNull TypeConstraint constraint,
                                              @NotNull DfaNullability nullability,
                                              @NotNull Mutability mutability,
-                                             @Nullable JvmSpecialField jvmSpecialField,
+                                             @Nullable SpecialField jvmSpecialField,
                                              @NotNull DfType sfType) {
     if (nullability == DfaNullability.NULL) {
       throw new IllegalArgumentException();

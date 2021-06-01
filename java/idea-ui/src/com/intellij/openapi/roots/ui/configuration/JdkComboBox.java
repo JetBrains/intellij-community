@@ -32,8 +32,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
   private final @Nullable Project myProject;
   @NotNull private final Consumer<Sdk> myOnNewSdkAdded;
 
-  @Nullable private JButton mySetUpButton;
-
   /**
    * @deprecated since {@link #setSetupButton} methods are deprecated, use the
    * more specific constructor to pass all parameters
@@ -182,26 +180,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                                 final JdkComboBoxItem firstItem,
                                 @Nullable final Condition<? super Sdk> additionalSetup,
                                 final boolean moduleJdkSetup) {
-    setSetupButton(setUpButton, project, jdksModel, firstItem, additionalSetup,"");
-  }
-
-  /**
-   * @deprecated Use the overloaded constructor to pass these parameters directly to
-   * that class. The {@param setUpButton} is no longer used, the JdkComboBox shows
-   * all the needed actions in the popup. The button will be made invisible.
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void setSetupButton(final JButton setUpButton,
-                                @Nullable final Project project,
-                                final ProjectSdksModel jdksModel,
-                                final JdkComboBoxItem firstItem,
-                                @Nullable final Condition<? super Sdk> additionalSetup,
-                                final String actionGroupTitle) {
-
-    mySetUpButton = setUpButton;
-    mySetUpButton.setVisible(false);
   }
 
   public void setEditButton(@NotNull JButton editButton,
@@ -222,20 +200,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
         editButton.setEnabled(selectedItem != null && selectedItem.getJdk() != null);
       }
     });
-  }
-
-  /**
-   *
-   * @deprecated the popup shown by the SetUp button is now included
-   * directly into the popup, you may remove the button from your UI,
-   * see {@link #setSetupButton(JButton, Project, ProjectSdksModel, JdkComboBoxItem, Condition, boolean)}
-   * for more details
-   */
-  @Nullable
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public JButton getSetUpButton() {
-    return mySetUpButton;
   }
 
   @Nullable
@@ -260,18 +224,6 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
 
   public void setSelectedJdk(@Nullable Sdk jdk) {
     setSelectedItem(jdk);
-  }
-
-  /**
-   * @deprecated use {@link #reloadModel()}, you may also need to call
-   * {@link #showNoneSdkItem()} or {@link #showProjectSdkItem()} once
-   */
-  @Deprecated
-  @SuppressWarnings("unused")
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void reloadModel(JdkComboBoxItem firstItem, @Nullable Project project) {
-    processFirstItem(firstItem);
-    reloadModel();
   }
 
   private void processFirstItem(@Nullable JdkComboBoxItem firstItem) {

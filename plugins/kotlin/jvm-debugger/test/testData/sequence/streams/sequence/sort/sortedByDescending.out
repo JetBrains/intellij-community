@@ -7,19 +7,21 @@ arrayOf(Person("Bob", 42), Person("Alice", 27)).asSequence()
 .count()
 sortedByDescending
     before: 1,2
-    after: nothing
+    after: 3,4
 count
-    before: nothing
+    before: 3,4
     after: nothing
 mappings for sortedByDescending
   direct:
     1 -> nothing
     2 -> nothing
   reverse:
-    empty
+    nothing <- 3
+    nothing <- 4
 mappings for count
   direct:
-    empty
+    3 -> nothing
+    4 -> nothing
   reverse:
     empty
 Disconnected from the target VM

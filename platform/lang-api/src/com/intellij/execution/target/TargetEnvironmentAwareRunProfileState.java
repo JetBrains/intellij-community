@@ -10,7 +10,10 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
@@ -30,7 +33,8 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
   default <T> Promise<T> prepareTargetToCommandExecution(@NotNull ExecutionEnvironment env,
                                                          @NotNull Logger logger,
                                                          @NonNls String logFailureMessage,
-                                                         @NotNull ThrowableComputable<? extends T, ? extends Throwable> afterPreparation) throws ExecutionException {
+                                                         @NotNull ThrowableComputable<? extends T, ? extends ExecutionException> afterPreparation)
+    throws ExecutionException {
     Promise<Object> preparationTasks;
     if (((TargetEnvironmentAwareRunProfile)env.getRunProfile()).needPrepareTarget()) {
       preparationTasks = ExecutionManager.getInstance(env.getProject()).executePreparationTasks(env, this);
@@ -48,9 +52,13 @@ public interface TargetEnvironmentAwareRunProfileState extends RunProfileState {
         catch (ProcessCanceledException e) {
           promise.setError(StringUtil.notNullize(e.getLocalizedMessage()));
         }
-        catch (Throwable t) {
+        catch (ExecutionException t) {
           logger.warn(logFailureMessage, t);
-          promise.setError(StringUtil.notNullize(t.getLocalizedMessage()));
+          promise.setError(t);
+        }
+        catch (Throwable t) {
+          logger.error(logFailureMessage, t);
+          promise.setError(t);
         }
       });
       return promise;

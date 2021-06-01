@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.navigation;
 
@@ -114,6 +111,21 @@ public abstract class KotlinGotoTestGenerated extends AbstractKotlinGotoTest {
         @TestMetadata("javaMethods.kt")
         public void testJavaMethods() throws Exception {
             runTest("testData/navigation/gotoSymbol/javaMethods.kt");
+        }
+
+        @TestMetadata("jvmNameAnnotatedFile.kt")
+        public void testJvmNameAnnotatedFile() throws Exception {
+            runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFile.kt");
+        }
+
+        @TestMetadata("jvmNameAnnotatedFunctions.kt")
+        public void testJvmNameAnnotatedFunctions() throws Exception {
+            runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedFunctions.kt");
+        }
+
+        @TestMetadata("jvmNameAnnotatedProperties.kt")
+        public void testJvmNameAnnotatedProperties() throws Exception {
+            runTest("testData/navigation/gotoSymbol/jvmNameAnnotatedProperties.kt");
         }
 
         @TestMetadata("localFunction.kt")

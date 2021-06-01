@@ -28,10 +28,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public final class LambdaRefactoringUtil {
   private static final Logger LOG = Logger.getInstance(LambdaRefactoringUtil.class);
@@ -209,7 +206,7 @@ public final class LambdaRefactoringUtil {
             }
           }
         } else {
-          buf.append(((PsiMember)resolveElement).getName());
+          buf.append(getMemberQualifier((PsiMember)resolveElement));
 
           final PsiSubstitutor substitutor = resolveResult.getSubstitutor();
 
@@ -245,6 +242,17 @@ public final class LambdaRefactoringUtil {
     return buf.toString();
   }
 
+  private static @NotNull String getMemberQualifier(PsiMember member) {
+    String qualifiedName = null;
+    if (member instanceof PsiClass) {
+      qualifiedName = ((PsiClass)member).getQualifiedName();
+    }
+    if (qualifiedName == null) {
+      qualifiedName = Objects.requireNonNull(member.getName());
+    }
+    return qualifiedName;
+  }
+
   private static boolean isQualifierUnnecessary(PsiElement qualifier, PsiClass containingClass) {
     if (qualifier instanceof PsiReferenceExpression) {
       PsiReferenceExpression reference = (PsiReferenceExpression)qualifier;
@@ -276,6 +284,7 @@ public final class LambdaRefactoringUtil {
           PsiClassType.ClassResolveResult funcResult = functionalInterfaceType.resolveGenerics();
           PsiClass funcClass = funcResult.getElement();
           PsiSubstitutor funcSubstitutor = funcResult.getSubstitutor();
+          PsiSubstitutor recapture = new RecaptureTypeMapper().recapture(funcSubstitutor);
           PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)methodReferenceInCopy.replace(lambdaExpression);
 
           PsiClassType lambdaCopyType = (PsiClassType)lambdaCopy.getFunctionalInterfaceType();
@@ -284,7 +293,7 @@ public final class LambdaRefactoringUtil {
           PsiClass lambdaCopyClass = lambdaCopyResult.getElement();
           PsiSubstitutor lambdaCopySubstitutor = lambdaCopyResult.getSubstitutor();
           return lambdaExpression.getManager().areElementsEquivalent(funcClass, lambdaCopyClass)
-                 && new RecaptureTypeMapper().recapture(funcSubstitutor).equals(lambdaCopySubstitutor);
+                 && recapture.equals(lambdaCopySubstitutor);
         }
       }
     }

@@ -66,7 +66,6 @@ public final class ContentUtilEx extends ContentsUtil {
     content.setTabName(tabGroupId.getDisplayName(tab));
     content.putUserData(Content.TABBED_CONTENT_KEY, Boolean.TRUE);
     content.putUserData(Content.TAB_GROUP_ID_KEY, tabGroupId);
-    content.putUserData(Content.TAB_GROUP_NAME_KEY, tabGroupId.getId()); // for backward compatibility
     content.putUserData(Content.TAB_DESCRIPTOR_KEY, tab);
 
     Disposer.register(content, tab);

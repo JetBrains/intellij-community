@@ -1,13 +1,11 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight.generate
 
 import com.intellij.codeInsight.actions.CodeInsightAction
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.Presentation
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.refactoring.util.CommonRefactoringUtil
 import com.intellij.testFramework.TestActionEvent
@@ -41,9 +39,8 @@ abstract class AbstractCodeInsightActionTest : KotlinLightCodeInsightFixtureTest
 
     protected open fun testAction(action: AnAction, forced: Boolean): Presentation {
         val e = TestActionEvent(action)
-        action.beforeActionPerformedUpdate(e)
-        if (forced || (e.presentation.isEnabled && e.presentation.isVisible)) {
-            action.actionPerformed(e)
+        if (ActionUtil.lastUpdateAndCheckDumb(action, e, true) || forced) {
+            ActionUtil.performActionDumbAwareWithCallbacks(action,e);
         }
         return e.presentation
     }

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.codeInsight
 
@@ -18,7 +15,7 @@ import org.jetbrains.kotlin.idea.inspections.runInspection
 import org.jetbrains.kotlin.idea.test.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
-import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.plugins.groovy.GroovyFileType
@@ -104,7 +101,7 @@ abstract class AbstractInspectionTest : KotlinLightCodeInsightFixtureTestCase() 
 
                         file.extension == "gradle" -> {
                             val text = FileUtil.loadFile(file, true)
-                            val fileText = text.replace("\$PLUGIN_VERSION", bundledRuntimeVersion())
+                            val fileText = text.replace("\$PLUGIN_VERSION", kotlinCompilerVersionShort())
                             configureByText(file.name, fileText)!!
                         }
 

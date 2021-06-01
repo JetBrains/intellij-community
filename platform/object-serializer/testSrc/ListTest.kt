@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
@@ -122,9 +122,9 @@ class ListTest {
     file.writeList(list, String::class.java, configuration = configuration)
     assertThat(file.file.readChars().trim()).isEqualTo(StringUtil.convertLineSeparators("""
     {
-      version: 42,
-      formatVersion: 3,
-      data: [
+      version:42,
+      formatVersion:3,
+      data:[
         foo,
         bar
       ]

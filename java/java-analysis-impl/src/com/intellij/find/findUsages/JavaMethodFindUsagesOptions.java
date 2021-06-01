@@ -19,6 +19,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
   public boolean isIncludeInherited;
   public boolean isIncludeOverloadUsages;
   public boolean isImplicitToString = true;
+  public boolean isSearchForBaseMethod = true;
 
   public JavaMethodFindUsagesOptions(@NotNull Project project) {
     super(project);
@@ -41,6 +42,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     isIncludeInherited = properties.getBoolean(prefix + "isIncludeInherited");
     isIncludeOverloadUsages = properties.getBoolean(prefix + "isIncludeOverloadUsages");
     isImplicitToString = properties.getBoolean(prefix + "isImplicitToString", true);
+    isSearchForBaseMethod = properties.getBoolean(prefix + "isSearchForBaseMethod", true);
   }
 
   @Override
@@ -54,6 +56,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     properties.setValue(prefix + "isIncludeInherited", isIncludeInherited);
     properties.setValue(prefix + "isIncludeOverloadUsages", isIncludeOverloadUsages);
     properties.setValue(prefix + "isImplicitToString", isImplicitToString, true);
+    properties.setValue(prefix + "isSearchForBaseMethod", isSearchForBaseMethod, true);
   }
 
   public boolean equals(Object o) {
@@ -69,6 +72,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     if (isIncludeOverloadUsages != that.isIncludeOverloadUsages) return false;
     if (isOverridingMethods != that.isOverridingMethods) return false;
     if (isImplicitToString != that.isImplicitToString) return false;
+    if (isSearchForBaseMethod != that.isSearchForBaseMethod) return false;
 
     return true;
   }
@@ -81,6 +85,7 @@ public class JavaMethodFindUsagesOptions extends JavaFindUsagesOptions {
     result = 31 * result + (isIncludeInherited ? 1 : 0);
     result = 31 * result + (isIncludeOverloadUsages ? 1 : 0);
     result = 31 * result + (isImplicitToString ? 1 : 0);
+    result = 31 * result + (isSearchForBaseMethod ? 1 : 0);
     return result;
   }
 

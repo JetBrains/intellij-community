@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
@@ -18,6 +18,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -27,7 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ex.MessagesEx;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -51,8 +52,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.FileSystemException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -374,43 +376,23 @@ public final class DeleteHandler {
       indicator.setIndeterminate(true);
 
       try {
-        for (PsiElement e : myFileElements) {
+        for (PsiElement element : myFileElements) {
           if (indicator.isCanceled()) break;
 
-          VirtualFile file = ((PsiFileSystemItem)e).getVirtualFile();
+          VirtualFile file = ((PsiFileSystemItem)element).getVirtualFile();
           aborted = file;
           Path path = file.toNioPath();
           indicator.setText(path.toString());
 
-          Files.walkFileTree(path, new SimpleFileVisitor<>() {
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) throws IOException {
-              if (SystemInfo.isWindows && attrs.isOther()) {  // a junction
-                visitFile(dir, null);
-                return FileVisitResult.SKIP_SUBTREE;
-              }
-              else {
-                return FileVisitResult.CONTINUE;
-              }
-            }
-
-            @Override
-            public FileVisitResult visitFile(Path file, @Nullable BasicFileAttributes attrs) throws IOException {
-              indicator.setText2(path.relativize(file).toString());
-              Files.delete(file);
-              return indicator.isCanceled() ? FileVisitResult.TERMINATE : FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
-              return visitFile(dir, null);
-            }
-          });
-
-          if (!indicator.isCanceled()) {
-            processed.add(e);
+          try {
+            NioFiles.deleteRecursively(path, p -> {
+              indicator.checkCanceled();
+              indicator.setText2(path.relativize(p).toString());
+            });
+            processed.add(element);
             aborted = null;
           }
+          catch (ProcessCanceledException ignored) { }
         }
       }
       catch (Throwable t) {

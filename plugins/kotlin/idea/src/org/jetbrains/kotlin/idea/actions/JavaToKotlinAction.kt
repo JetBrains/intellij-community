@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.actions
 
@@ -64,21 +50,21 @@ import org.jetbrains.kotlin.j2k.J2kConverterExtension
 import org.jetbrains.kotlin.j2k.OldJavaToKotlinConverter
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.UserDataProperty
-import java.io.File
 import java.io.IOException
+import kotlin.io.path.notExists
 import kotlin.system.measureTimeMillis
 
-var VirtualFile.pathBeforeJ2K: String? by UserDataProperty(Key.create<String>("PATH_BEFORE_J2K_CONVERSION"))
+var VirtualFile.pathBeforeJ2K: String? by UserDataProperty(Key.create("PATH_BEFORE_J2K_CONVERSION"))
 
 class JavaToKotlinAction : AnAction() {
     companion object {
         private fun uniqueKotlinFileName(javaFile: VirtualFile): String {
-            val ioFile = File(javaFile.path.replace('/', File.separatorChar))
+            val nioFile = javaFile.fileSystem.getNioPath(javaFile)
 
             var i = 0
             while (true) {
                 val fileName = javaFile.nameWithoutExtension + (if (i > 0) i else "") + ".kt"
-                if (!ioFile.resolveSibling(fileName).exists()) return fileName
+                if (nioFile == null || nioFile.resolveSibling(fileName).notExists()) return fileName
                 i++
             }
         }
@@ -144,7 +130,8 @@ class JavaToKotlinAction : AnAction() {
                 converterResult = converter.filesToKotlin(
                     javaFiles,
                     if (forceUsingOldJ2k) J2kPostProcessor(formatCode = true)
-                    else J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled).createPostProcessor(formatCode = true),
+                    else J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled)
+                        .createPostProcessor(formatCode = true),
                     progress = ProgressManager.getInstance().progressIndicator!!
                 )
             }
@@ -237,7 +224,9 @@ class JavaToKotlinAction : AnAction() {
                 .showInCenterOf(statusBar.component)
         }
 
-        if (!J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled).doCheckBeforeConversion(project, module)) return
+        if (!J2kConverterExtension.extension(useNewJ2k = ExperimentalFeatures.NewJ2k.isEnabled)
+                .doCheckBeforeConversion(project, module)
+        ) return
 
         val firstSyntaxError = javaFiles.asSequence().map { PsiTreeUtil.findChildOfType(it, PsiErrorElement::class.java) }.firstOrNull()
 

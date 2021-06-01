@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification
 
 import com.intellij.openapi.actionSystem.AnAction
@@ -25,29 +25,39 @@ class SingletonNotificationManager(private val group: NotificationGroup, private
   @JvmOverloads
   fun notify(@NotificationTitle title: String = "",
              @NotificationContent content: String,
-             project: Project? = null, listener: NotificationListener? = defaultListener, action: AnAction? = null): Boolean {
+             project: Project? = null,
+             listener: NotificationListener? = defaultListener,
+             action: AnAction? = null): Boolean {
     val oldNotification = notification.get()
-    // !oldNotification.isExpired() is not enough - notification could be closed, but not expired
     if (oldNotification != null) {
-      val toolWindowId = group.toolWindowId
-      if (!oldNotification.isExpired && toolWindowId != null && (oldNotification.balloon != null || project != null &&
-                                                                 group.displayType == NotificationDisplayType.TOOL_WINDOW &&
-                                                                 ToolWindowManager.getInstance(project).getToolWindowBalloon(toolWindowId) != null)) {
+      if (!isExpired(oldNotification, group.toolWindowId, project)) {
         return false
       }
       oldNotification.whenExpired(null)
       oldNotification.expire()
     }
 
-    val newNotification = group.createNotification(title, content, type, listener)
+    val newNotification = group.createNotification(title, content, type)
     if (action != null) {
       newNotification.addAction(action)
+    }
+    if (listener != null) {
+      newNotification.setListener(listener)
     }
     newNotification.whenExpired(expiredListener)
     notification.set(newNotification)
     newNotification.notify(project)
     return true
   }
+
+  // oldNotification.isExpired() is not enough - notification could be closed, but not expired
+  private fun isExpired(oldNotification: Notification, toolWindowId: String?, project: Project?) =
+    oldNotification.isExpired ||
+    toolWindowId == null ||
+    oldNotification.balloon == null && (
+      project == null ||
+      group.displayType != NotificationDisplayType.TOOL_WINDOW ||
+      ToolWindowManager.getInstance(project).getToolWindowBalloon(toolWindowId) == null)
 
   fun clear() {
     notification.getAndSet(null)?.let {

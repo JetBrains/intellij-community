@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.uiDesigner.clientProperties;
 
@@ -27,9 +27,7 @@ import javax.swing.tree.TreePath;
 import javax.swing.tree.TreeSelectionModel;
 import java.util.*;
 
-/**
- * @author yole
- */
+
 public class ConfigureClientPropertiesDialog extends DialogWrapper {
   private JTree myClassTree;
   private JTable myPropertiesTable;

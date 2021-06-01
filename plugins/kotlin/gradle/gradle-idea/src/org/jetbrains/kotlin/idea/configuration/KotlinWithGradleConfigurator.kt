@@ -1,7 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -25,6 +22,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.util.PathUtil
+import com.intellij.util.io.exists
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.config.ApiVersion
@@ -43,8 +41,9 @@ import org.jetbrains.kotlin.idea.versions.getStdlibArtifactId
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import java.io.File
-import java.util.*
+import java.nio.file.Path
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
@@ -373,20 +372,14 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
                 result
             }
 
-        private fun changeBuildGradle(module: Module, body: (PsiFile) -> PsiElement?): PsiElement? {
-            val buildScriptFile = module.getBuildScriptPsiFile()
-            if (buildScriptFile != null && canConfigureFile(buildScriptFile)) {
-                return buildScriptFile.project.executeWriteCommand(KotlinIdeaGradleBundle.message("change.build.gradle.configuration"), null) {
-                    body(buildScriptFile)
-                }
+        private fun changeBuildGradle(module: Module, body: (PsiFile) -> PsiElement?): PsiElement? = module.getBuildScriptPsiFile()
+            ?.takeIf { canConfigureFile(it) }
+            ?.let {
+                it.project.executeWriteCommand(KotlinIdeaGradleBundle.message("change.build.gradle.configuration"), null) { body(it) }
             }
-            return null
-        }
 
-        fun getKotlinStdlibVersion(module: Module): String? {
-            return module.getBuildScriptPsiFile()?.let {
-                getManipulator(it).getKotlinStdlibVersion()
-            }
+        fun getKotlinStdlibVersion(module: Module): String? = module.getBuildScriptPsiFile()?.let {
+            getManipulator(it).getKotlinStdlibVersion()
         }
 
         private fun canConfigureFile(file: PsiFile): Boolean = WritingAccessProvider.isPotentiallyWritable(file.virtualFile, null)
@@ -403,11 +396,13 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
 
         fun Module.getTopLevelBuildScriptSettingsPsiFile() =
             ExternalSystemApiUtil.getExternalRootProjectPath(this)?.let { externalProjectPath ->
-                findBuildGradleFile(externalProjectPath, GradleConstants.SETTINGS_FILE_NAME, KOTLIN_SETTINGS_SCRIPT_NAME)?.getPsiFile(project)
+                findBuildGradleFile(externalProjectPath, GradleConstants.SETTINGS_FILE_NAME, KOTLIN_SETTINGS_SCRIPT_NAME)?.getPsiFile(
+                    project
+                )
             }
 
-        private fun Module.getBuildScriptFile(vararg fileNames: String): File? {
-            val moduleDir = File(moduleFilePath).parent
+        private fun Module.getBuildScriptFile(vararg fileNames: String): Path? {
+            val moduleDir = Path(moduleFilePath).parent.pathString
             findBuildGradleFile(moduleDir, *fileNames)?.let {
                 return it
             }
@@ -427,10 +422,10 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             return null
         }
 
-        private fun Module.getBuildScriptSettingsFile(vararg fileNames: String): File? {
+        private fun Module.getBuildScriptSettingsFile(vararg fileNames: String): Path? {
             ExternalSystemApiUtil.getExternalProjectPath(this)?.let { externalProjectPath ->
                 return generateSequence(externalProjectPath) {
-                    PathUtil.getParentPath(it).let { if (it.isBlank()) null else it }
+                    PathUtil.getParentPath(it).ifBlank { null }
                 }.mapNotNull {
                     findBuildGradleFile(it, *fileNames)
                 }.firstOrNull()
@@ -439,10 +434,11 @@ abstract class KotlinWithGradleConfigurator : KotlinProjectConfigurator {
             return null
         }
 
-        private fun findBuildGradleFile(path: String, vararg fileNames: String): File? =
-            fileNames.asSequence().map { File("$path/$it") }.firstOrNull { it.exists() }
+        private fun findBuildGradleFile(path: String, vararg fileNames: String): Path? = fileNames.asSequence()
+            .map { Path("$path/$it") }
+            .firstOrNull(Path::exists)
 
-        private fun File.getPsiFile(project: Project) = VfsUtil.findFileByIoFile(this, true)?.let {
+        private fun Path.getPsiFile(project: Project) = VfsUtil.findFile(this, true)?.let {
             PsiManager.getInstance(project).findFile(it)
         }
 

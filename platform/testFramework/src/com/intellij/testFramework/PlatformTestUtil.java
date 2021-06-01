@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.configurationStore.StateStorageManagerKt;
@@ -32,6 +32,7 @@ import com.intellij.ide.util.treeView.AbstractTreeUi;
 import com.intellij.model.psi.PsiSymbolReferenceService;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -46,6 +47,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.paths.UrlReference;
 import com.intellij.openapi.paths.WebReference;
@@ -73,7 +75,6 @@ import com.intellij.util.io.Decompressor;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
-import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -103,6 +104,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiPredicate;
 import java.util.function.BooleanSupplier;
 import java.util.function.Function;
 import java.util.function.Predicate;
@@ -112,9 +114,7 @@ import java.util.stream.Stream;
 
 import static org.junit.Assert.*;
 
-/**
- * @author yole
- */
+
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "TestOnlyProblems"})
 public final class PlatformTestUtil {
   private static final Logger LOG = Logger.getInstance(PlatformTestUtil.class);
@@ -592,12 +592,11 @@ public final class PlatformTestUtil {
   public static void invokeNamedAction(@NotNull String actionId) {
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     assertNotNull(action);
-    final Presentation presentation = new Presentation();
     @SuppressWarnings("deprecation") final DataContext context = DataManager.getInstance().getDataContext();
-    final AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
-    action.beforeActionPerformedUpdate(event);
-    assertTrue(presentation.isEnabled());
-    action.actionPerformed(event);
+    AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", context);
+    assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, event, false));
+    assertTrue(event.getPresentation().isEnabled());
+    ActionUtil.performActionDumbAwareWithCallbacks(action, event);
   }
 
   public static void assertTiming(@NotNull String message, final long expectedMs, final long actual) {
@@ -818,9 +817,9 @@ public final class PlatformTestUtil {
   }
 
   public static @NotNull String getCommunityPath() {
-    final String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
+    String homePath = IdeaTestExecutionPolicy.getHomePathWithPolicy();
     if (new File(homePath, "community/.idea").isDirectory()) {
-      return homePath + File.separatorChar + "community";
+      homePath = homePath + File.separatorChar + "community";
     }
     return homePath;
   }
@@ -967,7 +966,7 @@ public final class PlatformTestUtil {
 
   public static <T> void assertComparisonContractNotViolated(@NotNull List<? extends T> values,
                                                              @NotNull Comparator<? super T> comparator,
-                                                             @NotNull Equality<? super T> equality) {
+                                                             @NotNull BiPredicate<? super T, ? super T> equality) {
     for (int i1 = 0; i1 < values.size(); i1++) {
       for (int i2 = i1; i2 < values.size(); i2++) {
         T value1 = values.get(i1);
@@ -975,7 +974,7 @@ public final class PlatformTestUtil {
 
         int result12 = comparator.compare(value1, value2);
         int result21 = comparator.compare(value2, value1);
-        if (equality.equals(value1, value2)) {
+        if (equality.test(value1, value2)) {
           if (result12 != 0) fail(String.format("Equal, but not 0: '%s' - '%s'", value1, value2));
           if (result21 != 0) fail(String.format("Equal, but not 0: '%s' - '%s'", value2, value1));
         }
@@ -1038,7 +1037,7 @@ public final class PlatformTestUtil {
     final Location<PsiElement> location = PsiLocation.fromPsiElement(element);
     dataContext.put(Location.DATA_KEY, location);
 
-    ConfigurationContext cc = ConfigurationContext.getFromContext(dataContext);
+    ConfigurationContext cc = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
     final ConfigurationFromContext configuration = producer.createConfigurationFromContext(cc);
     return configuration != null ? configuration.getConfiguration() : null;
@@ -1215,5 +1214,10 @@ public final class PlatformTestUtil {
     if (ApplicationManager.getApplication().isDispatchThread()) {
       dispatchAllInvocationEventsInIdeEventQueue();
     }
+  }
+
+  public static boolean isUnderCommunityClassPath() {
+    // StdFileTypes.JSPX is assigned to PLAIN_TEXT in community
+    return StdFileTypes.JSPX == FileTypes.PLAIN_TEXT;
   }
 }

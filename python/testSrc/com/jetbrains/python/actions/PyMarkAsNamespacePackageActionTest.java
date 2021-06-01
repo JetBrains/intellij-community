@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.MapDataContext;
@@ -122,9 +123,8 @@ public class PyMarkAsNamespacePackageActionTest extends PyTestCase {
 
     AnAction action = new PyMarkAsNamespacePackageAction();
     TestActionEvent e = new TestActionEvent(mapDataContext, action);
-    action.beforeActionPerformedUpdate(e);
-    if (e.getPresentation().isEnabledAndVisible()) {
-      action.actionPerformed(e);
+    if (ActionUtil.lastUpdateAndCheckDumb(action, e, true)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, e);
     }
 
     return e.getPresentation();

@@ -352,7 +352,7 @@ object TemplateInlayUtil {
                               anActionEvent?.place ?: ActionPlaces.UNKNOWN, renameAction.templatePresentation.clone(),
                               ActionManager.getInstance(), 0)
     if (ActionUtil.lastUpdateAndCheckDumb(renameAction, event, true)) {
-      ActionUtil.performActionDumbAware(renameAction, event)
+      ActionUtil.performActionDumbAwareWithCallbacks(renameAction, event)
     }
   }
 }

@@ -19,9 +19,10 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.junit.Test;
 
 import java.io.BufferedInputStream;
 import java.io.FileInputStream;
@@ -34,8 +35,9 @@ import java.util.Properties;
 /**
  * @author Sergey Evdokimov
  */
-public abstract class MavenResolveToWorkspaceTest extends MavenImportingTestCase {
+public abstract class MavenResolveToWorkspaceTest extends MavenMultiVersionImportingTestCase {
 
+  @Test
   public void testIgnoredProject() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

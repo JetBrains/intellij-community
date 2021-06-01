@@ -9,13 +9,15 @@ import com.intellij.openapi.util.text.HtmlChunk.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper
 import com.intellij.util.indexing.diagnostic.IndexingJobStatistics
+import com.intellij.util.indexing.diagnostic.JsonSharedIndexDiagnosticEvent
 import com.intellij.util.indexing.diagnostic.dto.*
 import org.intellij.lang.annotations.Language
 import org.jetbrains.annotations.Nls
 
 fun createAggregateHtml(
   projectName: String,
-  diagnostics: List<IndexDiagnosticDumper.ExistingDiagnostic>
+  diagnostics: List<IndexDiagnosticDumper.ExistingDiagnostic>,
+  sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>
 ): String {
   val appInfo = JsonIndexDiagnosticAppInfo.create()
   val runtimeInfo = JsonRuntimeInfo.create()
@@ -29,46 +31,93 @@ fun createAggregateHtml(
         h1("Project name")
         text(projectName)
 
-        printAppInfo(appInfo)
-        printRuntimeInfo(runtimeInfo)
+        div {
+          h1("Indexing history")
+          table {
+            thead {
+              tr {
+                th("IDE")
+                th("Reason")
+                th("Started")
+                th("Total time")
+                th("Scanning time")
+                th("Indexing time")
+                th("Content loading time")
+                th("Cancelled?")
+                th(TITLE_NUMBER_OF_FILE_PROVIDERS)
+                th(TITLE_NUMBER_OF_SCANNED_FILES)
+                th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
+                th(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
+                th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
+                th(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
+                th("Details")
+              }
+            }
+            tbody {
+              for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
+                tr {
+                  td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build + ", " +
+                     StringUtil.formatFileSize(runtimeInfo.maxMemory) + ", " +
+                     runtimeInfo.maxNumberOfIndexingThreads + " CPU"
+                  )
+                  td(diagnostic.indexingTimes.indexingReason ?: NOT_APPLICABLE)
+                  td(diagnostic.indexingTimes.updatingStart.presentableDateTime())
+                  td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
+                  td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
+                  td(diagnostic.indexingTimes.indexingTime.presentableDuration())
+                  td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
+                  td(if (diagnostic.indexingTimes.wasInterrupted) "Yes" else "No")
 
-        h1("Indexing history")
-        table {
-          thead {
-            tr {
-              th("Started")
-              th("Total time")
-              th("Scanning time")
-              th("Indexing time")
-              th("Content loading time")
-              th(TITLE_NUMBER_OF_FILE_PROVIDERS)
-              th(TITLE_NUMBER_OF_SCANNED_FILES)
-              th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
-              th(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
-              th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
-              th(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
-              th("Details")
+                  val fileCount = diagnostic.fileCount
+                  td(fileCount?.numberOfFileProviders?.toString() ?: NOT_APPLICABLE)
+                  td(fileCount?.numberOfScannedFiles?.toString() ?: NOT_APPLICABLE)
+                  td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: NOT_APPLICABLE)
+                  td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: NOT_APPLICABLE)
+                  td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: NOT_APPLICABLE)
+                  td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: NOT_APPLICABLE)
+
+                  td {
+                    link(diagnostic.htmlFile.fileName.toString(), "details")
+                  }
+                }
+              }
             }
           }
-          tbody {
-            for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
-              tr {
-                td(diagnostic.indexingTimes.updatingStart.presentableDateTime())
-                td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
-                td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
-                td(diagnostic.indexingTimes.indexingTime.presentableDuration())
-                td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
+        }
 
-                val fileCount = diagnostic.fileCount
-                td(fileCount?.numberOfFileProviders?.toString() ?: "N/A")
-                td(fileCount?.numberOfScannedFiles?.toString() ?: "N/A")
-                td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: "N/A")
-                td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: "N/A")
-                td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: "N/A")
-                td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: "N/A")
-
-                td {
-                  link(diagnostic.htmlFile.fileName.toString(), "details")
+        if (sharedIndexEvents.isNotEmpty()) {
+          val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
+          div {
+            h1("Shared Indexes")
+            table {
+              thead {
+                tr {
+                  th("Time")
+                  th("Kind")
+                  th("Name")
+                  th("Size")
+                  th("Download time")
+                  th("Download speed")
+                  th("Status")
+                  th("ID")
+                }
+              }
+              tbody {
+                for (event in sharedIndexEvents.filterIsInstance<JsonSharedIndexDiagnosticEvent.Downloaded>().sortedByDescending { it.time.instant }) {
+                  val events = indexIdToEvents.getOrDefault(event.chunkUniqueId, emptyList())
+                  val lastAttach = events.filterIsInstance<JsonSharedIndexDiagnosticEvent.Attached>().maxByOrNull { it.time.instant } ?: continue
+                  tr {
+                    td(event.time.presentableDateTime())
+                    td(lastAttach.kind)
+                    td((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.indexName ?: NOT_APPLICABLE)
+                    td(event.packedSize.presentableSize())
+                    td(event.downloadTime.presentableDuration())
+                    td(event.downloadSpeed.presentableSpeed())
+                    td(event.finishType + ((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.let {
+                      " FB: ${it.fbMatch.presentablePercentages()}, Stub: ${it.stubMatch.presentablePercentages()}"
+                    } ?: " Incompatible"))
+                    td(event.chunkUniqueId)
+                  }
                 }
               }
             }
@@ -78,6 +127,8 @@ fun createAggregateHtml(
     }
   }.toString()
 }
+
+private const val NOT_APPLICABLE = "N/A"
 
 private const val SECTION_PROJECT_NAME_ID = "id-project-name"
 private const val SECTION_PROJECT_NAME_TITLE = "Project name"
@@ -106,12 +157,18 @@ private const val SECTION_SCANNING_TITLE = "Scanning"
 private const val SECTION_INDEXING_ID = "id-indexing"
 private const val SECTION_INDEXING_TITLE = "Indexing"
 
+/**
+ * For now we have only Shared Indexes implementation of FileBasedIndexInfrastructureExtension,
+ * so for simplicity let's use this name instead of a general "index infrastructure extensions".
+ */
+private const val INDEX_INFRA_EXTENSIONS = "shared indexes"
+
 private const val TITLE_NUMBER_OF_FILE_PROVIDERS = "Number of file providers"
 private const val TITLE_NUMBER_OF_SCANNED_FILES = "Number of scanned files"
-private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN = "Number of files indexed by infrastructure extensions during the scan (without loading content)"
+private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN = "Number of files indexed by $INDEX_INFRA_EXTENSIONS during the scan (without loading content)"
 private const val TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN = "Number of files scheduled for indexing after scanning"
-private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING = "Number of files indexed by infrastructure extensions during the indexing stage (with loading content)"
-private const val TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT = "Number of files indexed during the indexing stage with loading content (including indexed by infrastructure extension)"
+private const val TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING = "Number of files indexed by $INDEX_INFRA_EXTENSIONS during the indexing stage (with loading content)"
+private const val TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT = "Number of files indexed during the indexing stage with loading content (including indexed by $INDEX_INFRA_EXTENSIONS)"
 
 private fun HtmlBuilder.printRuntimeInfo(runtimeInfo: JsonRuntimeInfo) {
   div(id = SECTION_RUNTIME_INFO_ID) {
@@ -325,7 +382,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 th("Index")
                 th("Number of files")
                 th("Part of total indexing time")
-                th("Total number of files indexed by extensions")
+                th("Total number of files indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Total files size")
                 th("Indexing speed")
                 th("Snapshot input mapping statistics")
@@ -364,7 +421,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 th("Provider name")
                 th("Number of scanned files")
                 th("Number of files scheduled for indexing")
-                th("Number of files fully indexed by infrastructure extensions")
+                th("Number of files fully indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Number of double-scanned skipped files")
                 th("Scanning time")
                 th("Time processing up-to-date files")
@@ -418,7 +475,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
                 th("Indexing time")
                 th("Content loading time")
                 th("Number of indexed files")
-                th("Number of files indexed by infrastructure extensions")
+                th("Number of files indexed by $INDEX_INFRA_EXTENSIONS")
                 th("Number of too large for indexing files")
                 if (shouldPrintIndexedFiles) {
                   th("Indexed files")

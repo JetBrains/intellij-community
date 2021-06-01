@@ -17,7 +17,6 @@ import java.awt.Color
 import java.awt.Component
 import java.awt.Dimension
 import java.awt.FlowLayout
-import java.awt.Font
 import java.awt.Rectangle
 import java.awt.event.ActionEvent
 import javax.swing.AbstractAction
@@ -35,8 +34,7 @@ import javax.swing.Scrollable
 
 internal object PackageSearchUI {
 
-    private val MAIN_BG_COLOR: Color =
-        JBColor.namedColor("Plugins.background", JBColor(UIUtil.getListBackground(), Color(0x313335)))
+    private val MAIN_BG_COLOR: Color = JBColor.namedColor("Plugins.background", UIUtil.getListBackground())
 
     internal val GRAY_COLOR: Color = JBColor.namedColor("Label.infoForeground", JBColor(Gray._120, Gray._135))
 
@@ -45,8 +43,6 @@ internal object PackageSearchUI {
     internal val UsualBackgroundColor = MAIN_BG_COLOR
     internal val ListRowHighlightBackground = JBColor(0xF2F5F9, 0x4C5052)
     internal val InfoBannerBackground = JBColor(0xE6EEF7, 0x1C3956)
-
-    internal val BigFont: Font = UIUtil.getListFont().let { Font(it.family, Font.BOLD, (it.size * 1.3).toInt()) }
 
     internal const val MediumHeaderHeight = 30
     internal const val SmallHeaderHeight = 24

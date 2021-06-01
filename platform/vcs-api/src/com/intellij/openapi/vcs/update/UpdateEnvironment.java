@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.update;
 
 import com.intellij.openapi.options.Configurable;
@@ -62,7 +62,6 @@ public interface UpdateEnvironment {
    * Returns true if the {@link UpdateSession} created by this UpdateEnvironment will
    * {@link UpdateSession#showNotification() show a custom notification} instead of the standard one.
    */
-  @RequiresEdt
   default boolean hasCustomNotification() {
     return false;
   }

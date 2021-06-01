@@ -19,7 +19,7 @@ import java.util.Set;
 
 public final class CoreFormattingService implements FormattingService {
 
-  private final static Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
+  private static final Set<Feature> FEATURES = EnumSet.of(Feature.AD_HOC_FORMATTING,
                                                           Feature.FORMAT_FRAGMENTS);
 
   @Override
@@ -28,7 +28,7 @@ public final class CoreFormattingService implements FormattingService {
   }
 
   @Override
-  public Set<Feature> getFeatures() {
+  public @NotNull Set<Feature> getFeatures() {
     return FEATURES;
   }
 
@@ -57,7 +57,7 @@ public final class CoreFormattingService implements FormattingService {
   }
 
   @Override
-  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly) {
+  public void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat) {
     List<CoreCodeStyleUtil.RangeFormatInfo> infos =
       canChangeWhiteSpaceOnly ? null : CoreCodeStyleUtil.getRangeFormatInfoList(file, rangesInfo);
     final CodeFormatterFacade codeFormatter = new CodeFormatterFacade(getSettings(file), file.getLanguage());

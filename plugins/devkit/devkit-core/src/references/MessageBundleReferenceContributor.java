@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.references;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -52,6 +52,8 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
   @NonNls private static final String GROUP = "group.";
   @NonNls private static final String TEXT = ".text";
   @NonNls private static final String DESCRIPTION = ".description";
+  @NonNls private static final String TRAILING_LABEL = ".trailingLabel";
+  @NonNls private static final String ADVANCED_SETTING = "advanced.setting.";
   @NonNls public static final String BUNDLE_PROPERTIES = "Bundle.properties";
 
   @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";
@@ -77,7 +79,8 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
             createActionOrGroupIdReference(element, text),
             createToolwindowIdReference(element, text),
             createExportableIdReference(element, text),
-            createPluginIdReference(element, text)
+            createPluginIdReference(element, text),
+            createAdvancedSettingReference(element, text)
           ).filter(Objects::nonNull).toArray(PsiReference.EMPTY_ARRAY);
         }
 
@@ -85,8 +88,14 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
         private PsiReference createActionOrGroupIdReference(@NotNull PsiElement element, String text) {
           if (!isActionOrGroupKey(text)) return null;
 
-          final int prefixEndIdx = text.indexOf('.') + 1;
-          String id = text.substring(prefixEndIdx, text.lastIndexOf('.'));
+          final int dotAfterPrefix = text.indexOf('.');
+          if (dotAfterPrefix == -1) return null;
+          final int prefixEndIdx = dotAfterPrefix + 1;
+
+          final int dotBeforeSuffix = text.lastIndexOf('.');
+          if (dotBeforeSuffix == -1) return null;
+
+          String id = text.substring(prefixEndIdx, dotBeforeSuffix);
           String prefix = text.substring(0, prefixEndIdx);
 
           return new ActionOrGroupIdReference(element, id, prefix);
@@ -115,6 +124,16 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
           String id = StringUtil.substringAfter(StringUtil.notNullize(StringUtil.substringBefore(text, DESCRIPTION)), PLUGIN);
           return new PluginIdReference(element, id);
         }
+
+        @Nullable
+        private PsiReference createAdvancedSettingReference(@NotNull PsiElement element, String text) {
+          if (!isAdvancedSettingKey(text)) return null;
+
+          String s = StringUtil.notNullize(StringUtil.substringAfter(text, ADVANCED_SETTING));
+          String id = s.endsWith(DESCRIPTION) ? StringUtil.trimEnd(s, DESCRIPTION) :
+                      (s.endsWith(TRAILING_LABEL) ? StringUtil.trimEnd(s, TRAILING_LABEL) : s);
+          return new AdvancedSettingReference(element, id);
+        }
       });
   }
 
@@ -141,6 +160,10 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
 
   private static boolean isPluginDescriptionKey(String name) {
     return name.startsWith(PLUGIN) && name.endsWith(DESCRIPTION);
+  }
+
+  private static boolean isAdvancedSettingKey(String name) {
+    return name.startsWith(ADVANCED_SETTING);
   }
 
 
@@ -285,6 +308,40 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
   }
 
 
+  private static class AdvancedSettingReference extends ExtensionPointReferenceBase {
+
+    private AdvancedSettingReference(PsiElement element, String id) {
+      super(element, TextRange.allOf(id).shiftRight(ADVANCED_SETTING.length()));
+    }
+
+    @Override
+    protected String getExtensionPointFqn() {
+      return "com.intellij.advancedSetting";
+    }
+
+    @Override
+    public @NotNull String getUnresolvedMessagePattern() {
+      return DevKitBundle.message("message.bundle.convert.advanced.setting.id.cannot.resolve", getValue());
+    }
+
+    @Override
+    public Object @NotNull [] getVariants() {
+      final List<LookupElement> variants = Collections.synchronizedList(new SmartList<>());
+      processCandidates(extension -> {
+        final GenericAttributeValue<String> id = extension.getId();
+        if (id == null || extension.getXmlElement() == null) return true;
+
+        final String value = id.getStringValue();
+        if (value == null) return true;
+
+        variants.add(LookupElementBuilder.create(extension.getXmlElement(), value));
+        return true;
+      });
+      return variants.toArray(LookupElement.EMPTY_ARRAY);
+    }
+  }
+
+
   private static class ExportableIdReference extends PsiReferenceBase.Poly<PsiElement> {
 
     private ExportableIdReference(PsiElement element, String id) {
@@ -360,7 +417,8 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
       if (isActionOrGroupKey(name) ||
           isExportableKey(name) ||
           isToolwindowKey(name) ||
-          isPluginDescriptionKey(name)) {
+          isPluginDescriptionKey(name) ||
+          isAdvancedSettingKey(name)) {
         PsiElement key = property.getFirstChild();
         PsiReference[] references = key == null ? PsiReference.EMPTY_ARRAY : key.getReferences();
 

@@ -20,7 +20,7 @@ public class UnnecessaryUnaryMinusFixTest extends IGQuickFixesTestCase {
   }
 
   public void testFinalVariable() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.unary.minus.decrement.quickfix", "i"));
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("convert.double.unary.quickfix", "--", "i"));
   }
 
   public void testLocalVariableRemoveMinus() {
@@ -28,14 +28,14 @@ public class UnnecessaryUnaryMinusFixTest extends IGQuickFixesTestCase {
   }
 
   public void testLocalVariableDecrement() {
-    doTest(InspectionGadgetsBundle.message("unnecessary.unary.minus.decrement.quickfix", "i"));
+    doTest(InspectionGadgetsBundle.message("convert.double.unary.quickfix", "--", "i"));
   }
 
   public void testMethodCall() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.unary.minus.decrement.quickfix", "i"));
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("convert.double.unary.quickfix", "--", "i"));
   }
 
   public void testCommentBetweenOperatorAndOperand() {
-    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("unnecessary.unary.minus.decrement.quickfix", "i"));
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("convert.double.unary.quickfix", "--", "i"));
   }
 }

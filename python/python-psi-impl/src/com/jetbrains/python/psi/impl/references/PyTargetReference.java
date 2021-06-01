@@ -14,9 +14,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyTargetReference extends PyReferenceImpl {
   public PyTargetReference(PyQualifiedExpression element, PyResolveContext context) {
     super(element, context);

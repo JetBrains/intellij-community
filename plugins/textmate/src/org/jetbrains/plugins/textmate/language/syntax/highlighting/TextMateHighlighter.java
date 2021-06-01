@@ -12,6 +12,7 @@ import org.jetbrains.plugins.textmate.TextMateService;
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
 import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
 
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
@@ -39,8 +40,9 @@ public class TextMateHighlighter extends SyntaxHighlighterBase {
     Map<CharSequence, TextMateTextAttributesAdapter> customHighlightingColors = service.getCustomHighlightingColors();
 
     Set<CharSequence> highlightingRules = ContainerUtil.union(customHighlightingColors.keySet(), TextMateTheme.INSTANCE.getRules());
-    return ContainerUtil.map2Array(new TextMateScopeComparator<>(tokenType.toString(), Function.identity())
-                                     .sortAndFilter(highlightingRules), TextAttributesKey.class, rule -> {
+    List<CharSequence> selectors = ContainerUtil.reverse(
+      new TextMateScopeComparator<>(((TextMateElementType)tokenType).getScope(), Function.identity()).sortAndFilter(highlightingRules));
+    return ContainerUtil.map2Array(selectors, TextAttributesKey.class, rule -> {
       TextMateTextAttributesAdapter customTextAttributes = customHighlightingColors.get(rule);
       return customTextAttributes != null ? customTextAttributes.getTextAttributesKey(TextMateTheme.INSTANCE)
                                           : TextMateTheme.INSTANCE.getTextAttributesKey(rule);

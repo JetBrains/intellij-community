@@ -66,12 +66,13 @@ internal fun searchTestRoots(project: String): Set<Path> {
 
 internal fun jpsProject(path: String): JpsProject {
   val file = Paths.get(FileUtil.toCanonicalPath(path))
-  return if (path.endsWith(".ipr")
-             || Files.isDirectory(file.resolve(PathMacroUtil.DIRECTORY_STORE_NAME))
-             || Files.isDirectory(file) && file.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME)) {
-    JpsSerializationManager.getInstance().loadModel(path, null).project
-  }
-  else {
-    jpsProject(file.parent.toString())
+  return when {
+    path.endsWith(".ipr") ||
+    Files.isDirectory(file.resolve(PathMacroUtil.DIRECTORY_STORE_NAME)) ||
+    Files.isDirectory(file) && file.endsWith(PathMacroUtil.DIRECTORY_STORE_NAME) -> {
+      JpsSerializationManager.getInstance().loadModel(path, null).project
+    }
+    file.parent == null -> error("Jps project isn't found at $file")
+    else -> jpsProject(file.parent.toString())
   }
 }

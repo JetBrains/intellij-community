@@ -35,34 +35,36 @@ public final class UrlUtil {
     }
   }
 
-  @NotNull
-  public static List<String> getChildrenRelativePaths(@NotNull URL root) throws IOException {
-    final String protocol = root.getProtocol();
+  public static @NotNull List<String> getChildrenRelativePaths(@NotNull URL root) throws IOException {
+    String protocol = root.getProtocol();
     if ("jar".equalsIgnoreCase(protocol)) {
       return getChildPathsFromJar(root);
     }
-    if (FILE_PROTOCOL.equalsIgnoreCase(protocol)){
+    else if (FILE_PROTOCOL.equalsIgnoreCase(protocol)) {
       return getChildPathsFromFile(root);
     }
-    return Collections.emptyList();
+    else {
+      return Collections.emptyList();
+    }
   }
 
-  @NotNull
-  private static List<String> getChildPathsFromFile(@NotNull URL root) {
+  private static @NotNull List<String> getChildPathsFromFile(@NotNull URL root) {
     final List<String> paths = new ArrayList<>();
     final File rootFile = new File(FileUtil.unquote(root.getPath()));
     new Object() {
       void collectFiles(File fromFile, String prefix) {
-        final File[] list = fromFile.listFiles();
-        if (list != null) {
-          for (File file : list) {
-            final String childRelativePath = prefix.isEmpty() ? file.getName() : prefix + URL_PATH_SEPARATOR + file.getName();
-            if (file.isDirectory()) {
-              collectFiles(file, childRelativePath);
-            }
-            else {
-              paths.add(childRelativePath);
-            }
+        File[] list = fromFile.listFiles();
+        if (list == null) {
+          return;
+        }
+
+        for (File file : list) {
+          String childRelativePath = prefix.isEmpty() ? file.getName() : prefix + URL_PATH_SEPARATOR + file.getName();
+          if (file.isDirectory()) {
+            collectFiles(file, childRelativePath);
+          }
+          else {
+            paths.add(childRelativePath);
           }
         }
       }
@@ -70,24 +72,24 @@ public final class UrlUtil {
     return paths;
   }
 
-  @NotNull
-  private static List<String> getChildPathsFromJar(@NotNull URL root) throws IOException {
+  private static @NotNull List<String> getChildPathsFromJar(@NotNull URL root) throws IOException {
     String file = root.getFile();
     file = StringUtil.trimStart(file, FILE_PROTOCOL_PREFIX);
-    final int jarSeparatorIndex = file.indexOf(JAR_SEPARATOR);
+    int jarSeparatorIndex = file.indexOf(JAR_SEPARATOR);
     assert jarSeparatorIndex > 0;
 
     String rootDirName = file.substring(jarSeparatorIndex + 2);
     if (!rootDirName.endsWith(URL_PATH_SEPARATOR)) {
       rootDirName += URL_PATH_SEPARATOR;
     }
+
     try (ZipFile zipFile = new ZipFile(FileUtil.unquote(file.substring(0, jarSeparatorIndex)))) {
-      final Enumeration<? extends ZipEntry> entries = zipFile.entries();
-      final List<String> paths = new ArrayList<>();
+      Enumeration<? extends ZipEntry> entries = zipFile.entries();
+      List<String> paths = new ArrayList<>();
       while (entries.hasMoreElements()) {
-        final ZipEntry entry = entries.nextElement();
+        ZipEntry entry = entries.nextElement();
         if (!entry.isDirectory()) {
-          final String relPath = entry.getName();
+          String relPath = entry.getName();
           if (relPath.startsWith(rootDirName)) {
             paths.add(relPath.substring(rootDirName.length()));
           }

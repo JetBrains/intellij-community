@@ -1,10 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.devkit.threadingModelHelper;
 
-import org.jetbrains.org.objectweb.asm.AnnotationVisitor;
-import org.jetbrains.org.objectweb.asm.MethodVisitor;
-import org.jetbrains.org.objectweb.asm.Opcodes;
-import org.jetbrains.org.objectweb.asm.Type;
+import org.jetbrains.org.objectweb.asm.*;
 import org.jetbrains.org.objectweb.asm.commons.Method;
 
 class TMHAssertionGenerator {
@@ -38,7 +35,12 @@ class TMHAssertionGenerator {
     return new AnnotationChecker(api, onShouldGenerateAssertion);
   }
 
-  void generateAssertion(MethodVisitor writer) {
+  void generateAssertion(MethodVisitor writer, int methodStartLineNumber) {
+    if (methodStartLineNumber != -1) {
+      Label generatedCodeStart = new Label();
+      writer.visitLabel(generatedCodeStart);
+      writer.visitLineNumber(methodStartLineNumber, generatedCodeStart);
+    }
     writer.visitMethodInsn(Opcodes.INVOKESTATIC, myApplicationManagerClass.getInternalName(), myGetApplicationMethod.getName(),
         myGetApplicationMethod.getDescriptor(), false);
     writer.visitMethodInsn(Opcodes.INVOKEINTERFACE, myApplicationClass.getInternalName(), myAssetionMethod.getName(),
@@ -143,6 +145,24 @@ class TMHAssertionGenerator {
 
     AssertWriteAccess(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
       super(annotationClass, applicationManagerClass, applicationClass, new Method("assertWriteAccessAllowed", "()V"));
+    }
+  }
+
+  static class AssertNoReadAccess extends TMHAssertionGenerator {
+    private static final String DEFAULT_ANNOTATION_CLASS_NAME = "com/intellij/util/concurrency/annotations/RequiresNoReadLock";
+
+    AssertNoReadAccess() {
+      this(DEFAULT_ANNOTATION_CLASS_NAME, DEFAULT_APPLICATION_MANAGER_CLASS_NAME, DEFAULT_APPLICATION_CLASS_NAME);
+    }
+
+    AssertNoReadAccess(String annotationClassName, String applicationManagerClassName, String applicationClassName) {
+      this(Type.getType("L" + annotationClassName + ";"),
+           Type.getType("L" + applicationManagerClassName + ";"),
+           Type.getType("L" + applicationClassName + ";"));
+    }
+
+    AssertNoReadAccess(Type annotationClass, Type applicationManagerClass, Type applicationClass) {
+      super(annotationClass, applicationManagerClass, applicationClass, new Method("assertReadAccessNotAllowed", "()V"));
     }
   }
 }

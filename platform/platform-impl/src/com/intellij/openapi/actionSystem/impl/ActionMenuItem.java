@@ -8,7 +8,6 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.Application;
@@ -266,29 +265,20 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
     @Override
     public void actionPerformed(@NotNull ActionEvent e) {
       IdeFocusManager focusManager = IdeFocusManager.findInstanceByContext(myContext);
-      ActionCallback typeAhead = new ActionCallback();
       String id = ActionManager.getInstance().getId(myAction.getAction());
       if (id != null) {
         FeatureUsageTracker.getInstance().triggerFeatureUsed("context.menu.click.stats." + id.replace(' ', '.'));
       }
 
-      focusManager.typeAheadUntil(typeAhead, getText());
       focusManager.runOnOwnContext(myContext, () -> {
         AWTEvent currentEvent = IdeEventQueue.getInstance().getTrueCurrentEvent();
         final AnActionEvent event = new AnActionEvent(
           currentEvent instanceof InputEvent ? (InputEvent)currentEvent : null,
           myContext, myPlace, myPresentation, ActionManager.getInstance(), e.getModifiers(), true, false
         );
-        final AnAction menuItemAction = myAction.getAction();
+        AnAction menuItemAction = myAction.getAction();
         if (ActionUtil.lastUpdateAndCheckDumb(menuItemAction, event, false)) {
-          ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-          actionManager.fireBeforeActionPerformed(menuItemAction, myContext, event);
-          focusManager.doWhenFocusSettlesDown(typeAhead::setDone);
-          ActionUtil.performActionDumbAware(menuItemAction, event);
-          actionManager.fireAfterActionPerformed(menuItemAction, myContext, event);
-        }
-        else {
-          typeAhead.setDone();
+          ActionUtil.performActionDumbAwareWithCallbacks(menuItemAction, event);
         }
       });
     }

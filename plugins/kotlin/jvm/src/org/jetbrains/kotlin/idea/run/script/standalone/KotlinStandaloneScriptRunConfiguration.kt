@@ -1,19 +1,14 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.run.script.standalone
 
 import com.intellij.execution.*
 import com.intellij.execution.application.BaseJavaApplicationCommandLineState
-import com.intellij.execution.configuration.EnvironmentVariablesComponent
 import com.intellij.execution.configurations.*
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.execution.util.JavaParametersUtil
 import com.intellij.execution.util.ProgramParametersUtil
 import com.intellij.ide.projectView.impl.ProjectRootsUtil
-import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.SettingsEditor
@@ -21,6 +16,7 @@ import com.intellij.openapi.options.SettingsEditorGroup
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderEnumerator
 import com.intellij.openapi.util.DefaultJDOMExternalizer
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
@@ -28,6 +24,7 @@ import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
 import org.jdom.Element
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
@@ -36,7 +33,6 @@ import org.jetbrains.kotlin.idea.run.script.standalone.KotlinStandaloneScriptRun
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil.isProjectSourceFile
 import org.jetbrains.kotlin.psi.KtFile
 import java.io.File
-import java.util.*
 
 class KotlinStandaloneScriptRunConfiguration(
     project: Project,
@@ -45,10 +41,11 @@ class KotlinStandaloneScriptRunConfiguration(
 ) : KotlinRunConfiguration(name, JavaRunConfigurationModule(project, true), factory), CommonJavaRunConfigurationParameters,
     RefactoringListenerProvider {
     @JvmField
+    @NlsSafe
     var filePath: String? = null
 
-    override fun getState(executor: Executor, environment: ExecutionEnvironment): RunProfileState =
-        ScriptCommandLineState(environment, this)
+    override fun getState(executor: Executor, executionEnvironment: ExecutionEnvironment): RunProfileState =
+        ScriptCommandLineState(executionEnvironment, this)
 
     override fun suggestedName() = filePath?.substringAfterLast('/')
 
@@ -75,7 +72,7 @@ class KotlinStandaloneScriptRunConfiguration(
     }
 
     override fun getModules(): Array<Module> {
-        val scriptVFile = LocalFileSystem.getInstance().findFileByIoFile(File(filePath))
+        val scriptVFile = filePath?.let { LocalFileSystem.getInstance().findFileByIoFile(File(it)) }
         return scriptVFile?.module(project)?.let { arrayOf(it) } ?: emptyArray()
     }
 
@@ -93,14 +90,14 @@ class KotlinStandaloneScriptRunConfiguration(
         }
     }
 
-    private fun runtimeConfigurationWarning(message: String): Nothing {
+    private fun runtimeConfigurationWarning(@Nls message: String): Nothing {
         throw RuntimeConfigurationWarning(message)
     }
 
     // NOTE: this is needed for coverage
-    override fun getRunClass() = null
+    override fun getRunClass(): String? = null
 
-    override fun getPackage() = null
+    override fun getPackage(): String? = null
 
     override fun getRefactoringElementListener(element: PsiElement): RefactoringElementListener? {
         val file = element as? KtFile ?: return null
@@ -139,12 +136,12 @@ private class ScriptCommandLineState(
     configuration: KotlinStandaloneScriptRunConfiguration
 ) : BaseJavaApplicationCommandLineState<KotlinStandaloneScriptRunConfiguration>(environment, configuration) {
 
-    override fun createJavaParameters(): JavaParameters? {
+    override fun createJavaParameters(): JavaParameters {
         val params = commonParameters()
 
-        val filePath = configuration.filePath ?: throw CantRunException("Script file was not specified")
+        val filePath = configuration.filePath ?: throw CantRunException(KotlinJvmBundle.message("dialog.message.script.file.was.not.specified"))
         val scriptVFile =
-            LocalFileSystem.getInstance().findFileByIoFile(File(filePath)) ?: throw CantRunException("Script file was not found in project")
+            LocalFileSystem.getInstance().findFileByIoFile(File(filePath)) ?: throw CantRunException(KotlinJvmBundle.message("dialog.message.script.file.was.not.found.in.project"))
 
         params.classPath.add(KotlinArtifacts.instance.kotlinCompiler)
 
@@ -154,9 +151,9 @@ private class ScriptCommandLineState(
         }
 
         params.mainClass = "org.jetbrains.kotlin.cli.jvm.K2JVMCompiler"
-        params.programParametersList.prepend(filePath)
+        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(filePath))
         params.programParametersList.prepend("-script")
-        params.programParametersList.prepend(KotlinArtifacts.instance.kotlincDirectory.absolutePath)
+        params.programParametersList.prepend(CompositeParameterTargetedValue().addPathPart(KotlinArtifacts.instance.kotlincDirectory.absolutePath))
         params.programParametersList.prepend("-kotlin-home")
 
         val module = scriptVFile.module(environment.project)
@@ -165,9 +162,17 @@ private class ScriptCommandLineState(
                 if (!ProjectRootsUtil.isInTestSource(scriptVFile, environment.project)) it.productionOnly() else it
             }
 
-            val moduleDependencies = orderEnumerator.classes().pathsList.pathsString
-            if (moduleDependencies.isNotBlank()) {
-                params.programParametersList.prepend(moduleDependencies)
+            val moduleDependencies = orderEnumerator.classes().pathsList
+            if (!moduleDependencies.isEmpty) {
+                val classpath = CompositeParameterTargetedValue()
+                for ((index, path) in moduleDependencies.pathList.withIndex()) {
+                    if (index > 0) {
+                        classpath.addPathSeparator()
+                    }
+                    classpath.addPathPart(path)
+                }
+
+                params.programParametersList.prepend(classpath)
                 params.programParametersList.prepend("-cp")
             }
         }

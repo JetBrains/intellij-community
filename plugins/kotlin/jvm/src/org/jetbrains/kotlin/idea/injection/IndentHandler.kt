@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.injection
 
 import com.intellij.codeInsight.intention.impl.QuickEditHandler
@@ -15,8 +16,6 @@ internal interface IndentHandler {
 internal object NoIndentHandler: IndentHandler {
     override fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange> = listOf(givenRange)
 }
-
-private val STORED_TRIM_LENGTH = Key.create<Int>("STORED_TRIM_LENGTH")
 
 internal class TrimIndentHandler(val marginChar: String? = null) : IndentHandler {
     override fun getUntrimmedRanges(literal: KtStringTemplateExpression, givenRange: TextRange): List<TextRange> {
@@ -51,13 +50,9 @@ internal class TrimIndentHandler(val marginChar: String? = null) : IndentHandler
         }
 
         if (ranges.isEmpty()) return listOf(givenRange)
-
-        val storedTrimLength = STORED_TRIM_LENGTH.get(literal)
-        // Dont change the indent if Fragment Editor is open
-        if(QuickEditHandler.getFragmentEditors(literal).isNotEmpty() && storedTrimLength != null)
-            minLength = storedTrimLength
         
-        STORED_TRIM_LENGTH[literal] = minLength
+        // Dont change the indent if Fragment Editor is open
+        minLength = com.intellij.codeInsight.intention.impl.reuseFragmentEditorIndent(literal) { minLength }
 
         val indentText = minLength?.let { " ".repeat(it) }?.let { spaces ->
             if (marginChar == null) return@let spaces

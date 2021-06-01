@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.core.platform.impl
 
@@ -22,10 +19,7 @@ import org.jetbrains.kotlin.idea.platform.testintegration.NoLightTestFrameworkRe
 import org.jetbrains.kotlin.idea.platform.testintegration.ResolvedLightTestFrameworkResult
 import org.jetbrains.kotlin.idea.platform.testintegration.UnsureLightTestFrameworkResult
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
-import org.jetbrains.kotlin.psi.KtClassOrObject
-import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.psi.KtNamedDeclaration
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.PathUtil
 import javax.swing.Icon
 
@@ -76,12 +70,12 @@ class JvmIdePlatformKindTooling : IdePlatformKindTooling() {
         val (urls, framework) = calculateUrlsToFramework(declaration) ?: return null
 
         framework?.let {
-            return getTestStateIcon(urls, declaration.project, strict = false, it.icon)
+            return getTestStateIcon(urls, declaration)
         }
 
         descriptorProvider()?.takeIf { it.isKotlinTestDeclaration() } ?: return null
 
-        return getTestStateIcon(urls, declaration.project, strict = false)
+        return getTestStateIcon(urls, declaration)
     }
 
     override fun acceptsAsEntryPoint(function: KtFunction) = true

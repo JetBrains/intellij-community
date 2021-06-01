@@ -62,7 +62,7 @@ public final class PyNames {
   public static final String VERBOSE_REG_EXP_LANGUAGE_ID = "PythonVerboseRegExp";
   @NonNls public static final String PYTHON_MODULE_ID = "PYTHON_MODULE";
   public static final String TESTCASE_SETUP_NAME = "setUp";
-  public static final String PY_DOCSTRING_ID = "PyDocstring";
+  public static final String PY_DOCSTRING_ID = "Doctest";
   public static final String END_WILDCARD = ".*";
 
   private PyNames() {
@@ -147,8 +147,6 @@ public final class PyNames {
   public static final String MUTABLE_MAPPING = "MutableMapping";
   public static final String ABC_SET = "Set";
   public static final String ABC_MUTABLE_SET = "MutableSet";
-  public static final String PATH_LIKE = "PathLike";
-  public static final String BUILTIN_PATH_LIKE = "_PathLike";
 
   public static final String AWAITABLE = "Awaitable";
   public static final String ASYNC_ITERABLE = "AsyncIterable";
@@ -223,10 +221,6 @@ public final class PyNames {
   public static final String SETDEFAULT = "setdefault";
 
   public static final String PASS = "pass";
-
-  public static final String NOSE_TEST = "nose";
-  public static final String PY_TEST = "pytest";
-  public static final String TRIAL_TEST = "Twisted";
 
   public static final String TEST_CASE = "TestCase";
 
@@ -548,6 +542,8 @@ public final class PyNames {
   public static final String LAMBDA = "lambda";
   public static final String ASYNC = "async";
   public static final String AWAIT = "await";
+  public static final String MATCH = "match";
+  public static final String CASE = "case";
 
   /**
    * Contains keywords as of CPython 2.5.

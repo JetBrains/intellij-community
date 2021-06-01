@@ -1,13 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import javax.swing.JRadioButton
 import javax.swing.JTextField
 
-/**
- * @author yole
- */
+
 class UiDslBindingsTest : BasePlatformTestCase() {
   private var booleanValue = false
   private var intValue = 0

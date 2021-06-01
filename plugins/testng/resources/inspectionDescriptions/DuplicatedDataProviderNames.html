@@ -1,8 +1,8 @@
 <html>
 <body>
-Reports about <code>TestNG</code> data providers with equal names as <code>org.testng.TestNGException</code> is occurred.
-<p>Example of duplicated data providers:</p>
-<pre>
+Reports <code>TestNG</code> data providers with equal names if <code>org.testng.TestNGException</code> has occurred.
+<p>Example:</p>
+<pre><code>
   public class DuplicatedDataProviders {
     @DataProvider
     public Object[][] intTestData() { // duplicate 1
@@ -23,7 +23,7 @@ Reports about <code>TestNG</code> data providers with equal names as <code>org.t
       assertEquals(key, value);
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
 </body>

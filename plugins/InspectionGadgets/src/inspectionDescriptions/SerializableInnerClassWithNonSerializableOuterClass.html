@@ -1,15 +1,28 @@
 <html>
 <body>
-Reports <b>Serializable</b> non-static
-inner classes whose outer classes are non-<b>Serializable</b>. Such classes
-are unlikely to serialize correctly, due to implicit references from the inner to outer class.
+Reports non-static inner classes that implement <code>Serializable</code> and are inside of a class that doesn't implement <code>Serializable</code>.
+<p>
+  Such classes are unlikely to serialize correctly due to implicit references to the outer class.
+</p>
+<p>Example:</p>
+<pre>
+  <code>
+    class A {
+      class Main implements Serializable {
+      }
+    }
+  </code>
+</pre>
 <!-- tooltip end -->
-<p>
-Use the table below to specify what specific classes and inheritors should be excluded
-from being checked by this inspection. This is meant for those classes which, although they inherit
-Serializable from a superclass, are not intended for serialization. Such classes would lead this
-inspection to report unnecessarily.
-<p>
-
+<p>Use the Options panel to configure the inspection:</p>
+<ul>
+  <li>
+    Fill the <strong>"Ignore subclasses of:"</strong> table below to suppress the reporting subclasses
+    of a class that implement <code>Serializable</code> as they are not intended to be serialized.
+  </li>
+  <li>
+    Enable the <strong>"Ignore anonymous inner classes"</strong> checkbox to ignore <code>Serializable</code> anonymous classes.
+  </li>
+</ul>
 </body>
 </html>

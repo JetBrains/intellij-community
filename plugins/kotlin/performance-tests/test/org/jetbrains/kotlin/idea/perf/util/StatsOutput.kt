@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.util
 
@@ -17,19 +14,38 @@ import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.BufferedWriter
 import java.io.File
 
-internal fun List<Metric>.writeCSV(name: String, header: Array<String>) {
-    fun Metric.append(prefix: String, output: BufferedWriter) {
-        val s = "$prefix ${this.metricName}".trim()
-        output.appendLine("$s,${metricValue ?: ""},")
-        metrics?.forEach {
-            it.append(s, output)
+internal fun List<Benchmark>.writeCSV(name: String) {
+    val header = listOf("benchmark", "name", "measurement", "value", "buildId", "timestamp")
+    fun Benchmark.append(output: BufferedWriter, warmUpValues: Boolean = false) {
+
+        fun values(n: String, value: Long?): String? = value?.let {
+            listOf(
+                benchmark,
+                this.name,
+                n,
+                value,
+                buildId?.toString() ?: "",
+                buildTimestamp
+            ).joinToString()
         }
+
+        val s = if (warmUpValues) {
+            val warmUpValue = metrics.firstOrNull { it.metricName == "_value" }?.let { metric ->
+                metric.rawMetrics?.firstOrNull { it.warmUp == true && it.index == 0 }?.metricValue
+            }
+            values(Stats.WARM_UP + " #0", warmUpValue)
+        } else {
+            values(Stats.GEOM_MEAN, metricValue)
+        }
+        s?.let(output::appendLine)
     }
 
     val statsFile = statsFile(name, "csv")
     statsFile.bufferedWriter().use { output ->
         output.appendLine(header.joinToString())
-        forEach { it.append("$name:", output) }
+        for (warmUpValue in arrayOf(true, false)) {
+            filterNot { it.name == Stats.GEOM_MEAN }.forEach { it.append(output, warmUpValues = warmUpValue) }
+        }
         output.flush()
     }
 }

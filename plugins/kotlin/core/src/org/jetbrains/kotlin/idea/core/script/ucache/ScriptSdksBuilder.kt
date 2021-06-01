@@ -1,11 +1,9 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkType
 import com.intellij.openapi.projectRoots.Sdk
@@ -35,7 +33,8 @@ class ScriptSdksBuilder(
         val nonIndexedSdks = sdks.values.filterNotNullTo(mutableSetOf())
 
         runReadAction {
-            for (module in ModuleManager.getInstance(project).modules) {
+            for (module in ModuleManager.getInstance(project).modules.filter { !it.isDisposed }) {
+                ProgressManager.checkCanceled()
                 if (nonIndexedSdks.isEmpty()) break
                 nonIndexedSdks.remove(ModuleRootManager.getInstance(module).sdk)
             }

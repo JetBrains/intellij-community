@@ -5,7 +5,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 
@@ -13,7 +13,7 @@ import java.util.Collection;
 import java.util.Map;
 
 public class PresentationFactory {
-  private final Map<AnAction, Presentation> myPresentations = ContainerUtil.createConcurrentWeakMap();
+  private final Map<AnAction, Presentation> myPresentations = CollectionFactory.createConcurrentWeakMap();
   private boolean myNeedRebuild;
 
   private static final Collection<PresentationFactory> ourAllFactories = new WeakList<>();

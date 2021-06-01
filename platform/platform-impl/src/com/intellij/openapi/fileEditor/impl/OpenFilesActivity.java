@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -6,13 +6,13 @@ import com.intellij.ide.util.RunOnceUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.TextEditorWithPreview;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,7 +43,7 @@ final class OpenFilesActivity implements StartupActivity {
       EditorsSplitters.stopOpenFilesActivity(project);
       if (!manager.hasOpenFiles() && !ProjectUtil.isNotificationSilentMode(project)) {
         project.putUserData(FileEditorManagerImpl.NOTHING_WAS_OPENED_ON_START, true);
-        if (Registry.is("ide.open.readme.md.on.startup")) {
+        if (AdvancedSettings.getBoolean("ide.open.readme.md.on.startup")) {
           RunOnceUtil.runOnceForProject(project, "ShowReadmeOnStart", () -> findAndOpenReadme(project, manager));
         }
       }
@@ -55,8 +55,7 @@ final class OpenFilesActivity implements StartupActivity {
     if (dir != null) {
       VirtualFile readme = dir.findChild("README.md");
       if (readme != null && !readme.isDirectory()) {
-        readme.putUserData(TextEditorWithPreview.DEFAULT_LAYOUT_FOR_FILE, TextEditorWithPreview.Layout.SHOW_PREVIEW);
-        ApplicationManager.getApplication().invokeLater(() -> manager.openFile(readme, true), project.getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> TextEditorWithPreview.openPreviewForFile(project, readme), project.getDisposed());
       }
     }
   }

@@ -8,10 +8,7 @@ import com.intellij.openapi.options.*;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.SimpleColoredComponent;
-import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.TabbedPaneWrapper;
+import com.intellij.ui.*;
 import com.intellij.util.CollectConsumer;
 import com.intellij.util.ReflectionUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -376,6 +373,10 @@ public final class SearchUtil {
   }
 
   public static String markup(@NotNull String textToMarkup, @Nullable String filter) {
+    return markup(textToMarkup, filter, Color.white, ColorUtil.fromHex("1d5da7"));
+  }
+
+  public static String markup(@NotNull String textToMarkup, @Nullable String filter, Color textColor, Color backgroundColor) {
     if (filter == null || filter.length() == 0) {
       return textToMarkup;
     }
@@ -406,14 +407,14 @@ public final class SearchUtil {
     final Set<String> words = registrar.getProcessedWords(textToMarkup);
     for (String option : options) {
       if (words.contains(option)) {
-        textToMarkup = markup(textToMarkup, insideHtmlTagPattern, option);
+        textToMarkup = markup(textToMarkup, insideHtmlTagPattern, option, textColor, backgroundColor);
       }
     }
     for (String stripped : quoted) {
       if (registrar.isStopWord(stripped)) {
         continue;
       }
-      textToMarkup = markup(textToMarkup, insideHtmlTagPattern, stripped);
+      textToMarkup = markup(textToMarkup, insideHtmlTagPattern, stripped, textColor, backgroundColor);
     }
     return head + textToMarkup + foot;
   }
@@ -432,17 +433,17 @@ public final class SearchUtil {
     return cur.toString();
   }
 
-  private static String markup(String textToMarkup, final Pattern insideHtmlTagPattern, final String option) {
+  private static String markup(String textToMarkup, final Pattern insideHtmlTagPattern, final String option, Color textColor, Color backgroundColor) {
     final int styleIdx = textToMarkup.indexOf("<style");
     final int styleEndIdx = textToMarkup.indexOf("</style>");
     if (styleIdx < 0 || styleEndIdx < 0) {
-      return markupInText(textToMarkup, insideHtmlTagPattern, option);
+      return markupInText(textToMarkup, insideHtmlTagPattern, option, textColor, backgroundColor);
     }
-    return markup(textToMarkup.substring(0, styleIdx), insideHtmlTagPattern, option) +
-           markup(textToMarkup.substring(styleEndIdx + STYLE_END.length()), insideHtmlTagPattern, option);
+    return markup(textToMarkup.substring(0, styleIdx), insideHtmlTagPattern, option, textColor, backgroundColor) +
+           markup(textToMarkup.substring(styleEndIdx + STYLE_END.length()), insideHtmlTagPattern, option, textColor, backgroundColor);
   }
 
-  private static String markupInText(String textToMarkup, Pattern insideHtmlTagPattern, String option) {
+  private static String markupInText(String textToMarkup, Pattern insideHtmlTagPattern, String option, Color textColor, Color backgroundColor) {
     StringBuilder result = new StringBuilder();
     int beg = 0;
     int idx;
@@ -455,7 +456,9 @@ public final class SearchUtil {
         beg = lastIdx + 1;
       }
       else {
-        result.append(prefix).append("<font color='#ffffff' bgColor='#1d5da7'>").append(toMark).append("</font>");
+        result.append(prefix)
+          .append("<font color='#").append(ColorUtil.toHex(textColor)).append("' bgColor='#").append(ColorUtil.toHex(backgroundColor)).append("'>")
+          .append(toMark).append("</font>");
         beg = idx + option.length();
       }
     }

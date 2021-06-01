@@ -6,8 +6,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.idea.maven.dom.MavenDomTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.junit.Test;
 
-import java.io.IOException;
 import java.util.List;
 
 import static java.util.Collections.singletonList;
@@ -17,6 +17,7 @@ import static java.util.Collections.singletonList;
  */
 public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase {
 
+  @Test
   public void testExternalDependencyPath() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
@@ -46,16 +47,21 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
     assertNotEmpty(annotationProcessors);
 
     assertTrue(annotationProcessors.stream().anyMatch(a ->
-      "com.google.dagger".equals(a.getGroupId()) && "dagger-compiler".equals(a.getArtifactId()) && "2.2".equals(a.getVersion())
+                                                        "com.google.dagger".equals(a.getGroupId()) &&
+                                                        "dagger-compiler".equals(a.getArtifactId()) &&
+                                                        "2.2".equals(a.getVersion())
     ));
     assertTrue(annotationProcessors.stream().anyMatch(a ->
-      "com.google.dagger".equals(a.getGroupId()) && "dagger".equals(a.getArtifactId()) && "2.2".equals(a.getVersion())
+                                                        "com.google.dagger".equals(a.getGroupId()) &&
+                                                        "dagger".equals(a.getArtifactId()) &&
+                                                        "2.2".equals(a.getVersion())
     ));
 
     String path = mavenProject.getAnnotationProcessorPath(myProject);
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")));
   }
 
+  @Test
   public void testExternalDependencyAnnotationPath() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
@@ -85,16 +91,21 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
     assertNotEmpty(annotationProcessors);
 
     assertTrue(annotationProcessors.stream().anyMatch(a ->
-      "com.google.dagger".equals(a.getGroupId()) && "dagger-compiler".equals(a.getArtifactId()) && "2.2".equals(a.getVersion())
+                                                        "com.google.dagger".equals(a.getGroupId()) &&
+                                                        "dagger-compiler".equals(a.getArtifactId()) &&
+                                                        "2.2".equals(a.getVersion())
     ));
     assertTrue(annotationProcessors.stream().anyMatch(a ->
-      "com.google.dagger".equals(a.getGroupId()) && "dagger".equals(a.getArtifactId()) && "2.2".equals(a.getVersion())
+                                                        "com.google.dagger".equals(a.getGroupId()) &&
+                                                        "dagger".equals(a.getArtifactId()) &&
+                                                        "2.2".equals(a.getVersion())
     ));
 
     String path = mavenProject.getAnnotationProcessorPath(myProject);
     assertTrue(path.contains(FileUtil.toSystemDependentName("/com/google/dagger/dagger-compiler/2.2/dagger-compiler-2.2.jar")));
   }
 
+  @Test
   public void testLocalDependency() throws Exception {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>project</artifactId>\n" +
@@ -107,37 +118,37 @@ public class MavenAnnotationProcessorPathsImportingTest extends MavenDomTestCase
                      "</modules>");
 
     createModulePom("m1", "<groupId>test</groupId>\n" +
-                    "<artifactId>m1</artifactId>\n" +
-                    "<version>1</version>\n" +
+                          "<artifactId>m1</artifactId>\n" +
+                          "<version>1</version>\n" +
 
-                    "<dependencies>\n" +
-                    "  <dependency>\n" +
-                    "    <groupId>com.google.guava</groupId>\n" +
-                    "    <artifactId>guava</artifactId>\n" +
-                    "    <version>19.0</version>\n" +
-                    "  </dependency>\n" +
-                    "</dependencies>");
+                          "<dependencies>\n" +
+                          "  <dependency>\n" +
+                          "    <groupId>com.google.guava</groupId>\n" +
+                          "    <artifactId>guava</artifactId>\n" +
+                          "    <version>19.0</version>\n" +
+                          "  </dependency>\n" +
+                          "</dependencies>");
 
     createModulePom("m2", "<groupId>test</groupId>\n" +
-                    "<artifactId>m2</artifactId>\n" +
-                    "<version>1</version>\n" +
+                          "<artifactId>m2</artifactId>\n" +
+                          "<version>1</version>\n" +
 
-                    "<build>\n" +
-                    "  <plugins>\n" +
-                    "    <plugin>\n" +
-                    "      <artifactId>maven-compiler-plugin</artifactId>\n" +
-                    "      <configuration>\n" +
-                    "        <annotationProcessorPaths>\n" +
-                    "          <path>\n" +
-                    "            <groupId>test</groupId>\n" +
-                    "            <artifactId>m1</artifactId>\n" +
-                    "            <version>1</version>\n" +
-                    "          </path>\n" +
-                    "        </annotationProcessorPaths>\n" +
-                    "      </configuration>\n" +
-                    "    </plugin>\n" +
-                    "  </plugins>\n" +
-                    "</build>");
+                          "<build>\n" +
+                          "  <plugins>\n" +
+                          "    <plugin>\n" +
+                          "      <artifactId>maven-compiler-plugin</artifactId>\n" +
+                          "      <configuration>\n" +
+                          "        <annotationProcessorPaths>\n" +
+                          "          <path>\n" +
+                          "            <groupId>test</groupId>\n" +
+                          "            <artifactId>m1</artifactId>\n" +
+                          "            <version>1</version>\n" +
+                          "          </path>\n" +
+                          "        </annotationProcessorPaths>\n" +
+                          "      </configuration>\n" +
+                          "    </plugin>\n" +
+                          "  </plugins>\n" +
+                          "</build>");
 
     createProjectSubFile("m1/src/main/java/A.java", "public class A{}");
 

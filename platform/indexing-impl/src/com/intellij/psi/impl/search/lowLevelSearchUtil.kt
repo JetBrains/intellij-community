@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search
 
 import com.intellij.lang.ASTNode
@@ -65,12 +65,14 @@ private fun processOffset(scopeNode: ASTNode,
                           processor: OccurrenceProcessor): Boolean {
   var currentNode = node
   var currentOffset = offsetInNode
-  while (currentNode !== scopeNode) {
+  while (true) {
     if (currentNode.textLength >= currentOffset + patternLength) {
       return processor(LeafOccurrenceData(scopeNode.psi, currentNode.psi, currentOffset))
+    }
+    if (currentNode === scopeNode) {
+      return true
     }
     currentOffset += currentNode.startOffsetInParent
     currentNode = currentNode.treeParent ?: return true
   }
-  return true
 }

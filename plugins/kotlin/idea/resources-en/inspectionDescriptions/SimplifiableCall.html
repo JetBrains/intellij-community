@@ -1,6 +1,20 @@
 <html>
 <body>
-This inspection reports library function calls which could be replaced by simplified one,
-e.g. <b>flatMap { it }</b> call could be simplified to <b>flatten()</b>.
+Reports library function calls which could be replaced by simplified one.
+<p>Using a corresponding functions makes your code simpler.</p>
+<p>The quick-fix replaces the function calls with another one.</p>
+<p><b>Example:</b></p>
+<pre><code>
+  fun test(list: List&lt;Any&gt;) {
+      list.filter { it is String }
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test(list: List&lt;Any&gt;) {
+      list.filterIsInstance&lt;String&gt;()
+  }
+</code></pre>
+<!-- tooltip end -->
 </body>
 </html>

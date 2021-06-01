@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.server;
 
-import com.intellij.build.events.BuildEventsNls;
 import com.intellij.execution.DefaultExecutionResult;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
@@ -13,21 +12,12 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.options.ShowSettingsUtil;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.THashMap;
 import gnu.trove.TIntHashSet;
 import org.apache.lucene.search.Query;
 import org.jdom.Element;
@@ -35,21 +25,15 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.jetbrains.idea.maven.execution.RunnerBundle;
-import org.jetbrains.idea.maven.project.MavenProjectBundle;
-import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
-import javax.swing.event.HyperlinkEvent;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MavenServerCMDState extends CommandLineState {
-
   private static boolean setupThrowMainClass = false;
 
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
@@ -82,8 +66,7 @@ public class MavenServerCMDState extends CommandLineState {
     params.setWorkingDirectory(getWorkingDirectory());
 
 
-    Map<String, String> defs = new THashMap<>();
-    defs.putAll(getMavenOpts());
+    Map<String, String> defs = new HashMap<>(getMavenOpts());
 
     configureSslRelatedOptions(defs);
 
@@ -101,7 +84,8 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
 
-    boolean xmxSet = false;
+    String xmxProperty = null;
+    String xmsProperty = null;
 
     if (myVmOptions != null) {
       ParametersList mavenOptsList = new ParametersList();
@@ -109,7 +93,12 @@ public class MavenServerCMDState extends CommandLineState {
 
       for (String param : mavenOptsList.getParameters()) {
         if (param.startsWith("-Xmx")) {
-          xmxSet = true;
+          xmxProperty = param;
+          continue;
+        }
+        if (param.startsWith("-Xms")) {
+          xmsProperty = param;
+          continue;
         }
         params.getVMParametersList().add(param);
       }
@@ -120,20 +109,23 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty(MavenServerEmbedder.MAVEN_EMBEDDER_VERSION, myDistribution.getVersion());
 
-    final List<String> classPath = collectRTLibraries(myDistribution.getVersion());
-    params.getClassPath().add(PathManager.getResourceRoot(getClass(), "/messages/CommonBundle.properties"));
-    params.getClassPath().addAll(classPath);
+    Collection<String> classPath = collectRTLibraries(myDistribution.getVersion());
+    for (String s : classPath) {
+      params.getClassPath().add(s);
+    }
     params.getClassPath().addAllFiles(MavenServerManager.collectClassPathAndLibsFolder(myDistribution));
 
     String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
     if (embedderXmx != null) {
-      params.getVMParametersList().add("-Xmx" + embedderXmx);
+      xmxProperty = "-Xmx" + embedderXmx;
     }
     else {
-      if (!xmxSet) {
-        params.getVMParametersList().add("-Xmx768m");
+      if (xmxProperty == null) {
+        xmxProperty = getDefaultXmxProperty("-Xmx768m", xmsProperty);
       }
     }
+    params.getVMParametersList().add(xmsProperty);
+    params.getVMParametersList().add(xmxProperty);
 
 
     String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
@@ -149,6 +141,24 @@ public class MavenServerCMDState extends CommandLineState {
     //TODO: WSL
     //MavenUtil.addEventListener(mavenVersion, params);
     return params;
+  }
+
+  @NotNull
+  static String getDefaultXmxProperty(@NotNull String xmxProperty, @Nullable String xmsProperty) {
+    assert xmxProperty.startsWith("-Xmx");
+    if (xmsProperty != null) {
+      assert xmsProperty.startsWith("-Xms");
+      Matcher matcherXms = MemoryProperty.MEMORY_PROPERTY_PATTERN.matcher(xmsProperty);
+      Matcher matcherXmx = MemoryProperty.MEMORY_PROPERTY_PATTERN.matcher(xmxProperty);
+      if (matcherXms.find() && matcherXmx.find()) {
+        MemoryProperty xmsMemoryProperty = new MemoryProperty(matcherXms.group(1), matcherXms.group(2), matcherXms.group(3));
+        MemoryProperty xmxMemoryProperty = new MemoryProperty(matcherXmx.group(1), matcherXmx.group(2), matcherXmx.group(3));
+        if (xmsMemoryProperty.valueBytes > xmxMemoryProperty.valueBytes) {
+          xmxProperty = xmxMemoryProperty.updateValue(xmsMemoryProperty.valueBytes).toString(xmsMemoryProperty.unit);
+        }
+      }
+    }
+    return xmxProperty;
   }
 
   private void configureSslRelatedOptions(Map<String, String> defs) {
@@ -170,10 +180,8 @@ public class MavenServerCMDState extends CommandLineState {
     return PathManager.getBinPath();
   }
 
-
-  @NotNull
-  protected List<String> collectRTLibraries(String mavenVersion) {
-    final List<String> classPath = new ArrayList<>();
+  protected @NotNull Collection<String> collectRTLibraries(String mavenVersion) {
+    Set<String> classPath = new LinkedHashSet<>();
     classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
       classPath.add(PathUtil.getJarPathForClass(Logger.class));
@@ -185,7 +193,10 @@ public class MavenServerCMDState extends CommandLineState {
     classPath.add(PathUtil.getJarPathForClass(Element.class));//JDOM
     classPath.add(PathUtil.getJarPathForClass(TIntHashSet.class));//Trove
 
-    ContainerUtil.addIfNotNull(classPath, PathUtil.getJarPathForClass(Query.class));
+    String element = PathManager.getJarPathForClass(Query.class);
+    if (element != null) {
+      (classPath).add(element);
+    }
     return classPath;
   }
 
@@ -227,5 +238,39 @@ public class MavenServerCMDState extends CommandLineState {
   @TestOnly
   public static void resetThrowExceptionOnNextServerStart() {
     setupThrowMainClass = false;
+  }
+
+  private static class MemoryProperty {
+    static final Pattern MEMORY_PROPERTY_PATTERN = Pattern.compile("^(-Xmx|-Xms)(\\d+)([kK]|[mM]|[gG])?$");
+    final String type;
+    final long valueBytes;
+    final MemoryUnit unit;
+
+    MemoryProperty(@NotNull String type, @NotNull String value, @Nullable String unit) {
+      this.type = type;
+      this.unit = unit != null ? MemoryUnit.valueOf(unit.toUpperCase()) : MemoryUnit.B;
+      this.valueBytes = Long.parseLong(value) * this.unit.ratio;
+    }
+
+    MemoryProperty updateValue(long valueBytes) {
+      return new MemoryProperty(type, String.valueOf(valueBytes), null);
+    }
+
+    @Override
+    public String toString() {
+      return toString(unit);
+    }
+
+    public String toString(MemoryUnit unit) {
+      return type + valueBytes / unit.ratio + unit.name().toLowerCase();
+    }
+
+    private enum MemoryUnit {
+      B(1), K(B.ratio * 1024), M(K.ratio * 1024), G(M.ratio * 1024);
+      final int ratio;
+      MemoryUnit(int ratio) {
+        this.ratio = ratio;
+      }
+    }
   }
 }

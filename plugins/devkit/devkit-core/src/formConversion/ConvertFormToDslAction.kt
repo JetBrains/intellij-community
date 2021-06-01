@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.formConversion
 
 import com.intellij.codeInsight.hint.HintManager
@@ -27,11 +27,8 @@ import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UastVisibility
 import org.jetbrains.uast.toUElement
 import java.util.*
-import kotlin.collections.LinkedHashSet
 
-/**
- * @author yole
- */
+
 class ConvertFormToDslAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val editor = e.getRequiredData(CommonDataKeys.EDITOR)

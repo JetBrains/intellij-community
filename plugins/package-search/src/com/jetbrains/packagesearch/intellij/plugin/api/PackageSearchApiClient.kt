@@ -1,13 +1,14 @@
 package com.jetbrains.packagesearch.intellij.plugin.api
 
-import com.google.gson.Gson
+import com.jetbrains.packagesearch.api.v2.ApiPackagesResponse
+import com.jetbrains.packagesearch.api.v2.ApiRepositoriesResponse
+import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.api.http.ApiResult
-import com.jetbrains.packagesearch.intellij.plugin.api.http.requestJsonObject
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2PackagesWithRepos
-import com.jetbrains.packagesearch.intellij.plugin.api.model.V2Repositories
-import com.jetbrains.packagesearch.intellij.plugin.gson.EnumWithDeserializationFallbackAdapterFactory
+import com.jetbrains.packagesearch.intellij.plugin.api.http.requestString
+import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.json.Json
 import org.apache.commons.httpclient.util.URIUtil
 
 internal object ServerURLs {
@@ -25,7 +26,7 @@ private val contentType by lazy {
     }
 }
 
-private val emptyStandardV2PackagesWithRepos = StandardV2PackagesWithRepos(
+private val emptyStandardV2PackagesWithRepos: ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion> = ApiPackagesResponse(
     packages = emptyList(),
     repositories = emptyList()
 )
@@ -42,19 +43,18 @@ internal class PackageSearchApiClient(
     private val maxRequestResultsCount = 25
     private val maxMavenCoordinatesParts = 3
 
-    private val gson = Gson().newBuilder()
-        // https://youtrack.jetbrains.com/issue/PKGS-547
-        // Ensures enum values in our model are not null if a default value is available
-        // (works around cases like https://discuss.kotlinlang.org/t/json-enum-deserialization-breakes-kotlin-null-safety/11670)
-        .registerTypeAdapterFactory(EnumWithDeserializationFallbackAdapterFactory())
-        .create()
+    private val serializer = Json {
+        ignoreUnknownKeys = true
+        encodeDefaults = false
+    }
 
-    fun packagesByQuery(
+    @Suppress("BlockingMethodInNonBlockingContext")
+    suspend fun packagesByQuery(
         searchQuery: String,
         onlyStable: Boolean = false,
         onlyMpp: Boolean = false,
         repositoryIds: List<String>
-    ): ApiResult<StandardV2PackagesWithRepos> {
+    ): ApiResult<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> {
         if (searchQuery.isEmpty()) {
             return ApiResult.Success(emptyStandardV2PackagesWithRepos)
         }
@@ -75,11 +75,11 @@ internal class PackageSearchApiClient(
             }
         }
 
-        return requestJsonObject(requestUrl, contentType.standard, timeoutInSeconds, headers)
-            .mapSuccess { gson.fromJson(it, StandardV2PackagesWithRepos::class.java) }
+        return requestString(requestUrl, contentType.standard, timeoutInSeconds, headers)
+            .mapSuccess { serializer.decodeFromString(it) }
     }
 
-    fun packagesByRange(range: List<String>): ApiResult<StandardV2PackagesWithRepos> {
+    suspend fun packagesByRange(range: List<String>): ApiResult<ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> {
         if (range.isEmpty()) {
             return ApiResult.Success(emptyStandardV2PackagesWithRepos)
         }
@@ -93,13 +93,13 @@ internal class PackageSearchApiClient(
         val joinedRange = range.joinToString(",") { URIUtil.encodeQuery(it) }
         val requestUrl = "$baseUrl/package?range=$joinedRange"
 
-        return requestJsonObject(requestUrl, contentType.standard, timeoutInSeconds, headers)
-            .mapSuccess { gson.fromJson(it, StandardV2PackagesWithRepos::class.java) }
+        return requestString(requestUrl, contentType.standard, timeoutInSeconds, headers)
+            .mapSuccess { serializer.decodeFromString(it) }
     }
 
     private fun <T : Any> argumentError(message: String) = ApiResult.Failure<T>(IllegalArgumentException(message))
 
-    fun repositories(): ApiResult<V2Repositories> =
-        requestJsonObject("$baseUrl/repositories", contentType.standard, timeoutInSeconds, headers)
-            .mapSuccess { gson.fromJson(it, V2Repositories::class.java) }
+    suspend fun repositories(): ApiResult<ApiRepositoriesResponse> =
+        requestString("$baseUrl/repositories", contentType.standard, timeoutInSeconds, headers)
+            .mapSuccess { serializer.decodeFromString(it) }
 }

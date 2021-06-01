@@ -1,7 +1,17 @@
 <html>
 <body>
-Reports <b>Serializable</b> classes whose <b>serialVersionUID</b> field
-is not declared <b>private static final long</b>.
+Reports <code>Serializable</code> classes whose <code>serialVersionUID</code> field
+is not declared <code>private static final long</code>.
+<p>Example: </p>
+<pre>
+  class SampleClazz implements Serializable {
+    private long serialVersionUID = 1; // field of a Serializable class is not declared 'private static final long'
+
+    public SampleClazz() {
+        System.out.println(serialVersionUID);
+    }
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 

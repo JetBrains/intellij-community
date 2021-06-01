@@ -5,12 +5,13 @@ import com.google.common.collect.HashBiMap
 import com.intellij.workspaceModel.storage.ExternalEntityMapping
 import com.intellij.workspaceModel.storage.MutableExternalEntityMapping
 import com.intellij.workspaceModel.storage.WorkspaceEntity
+import com.intellij.workspaceModel.storage.impl.*
 import com.intellij.workspaceModel.storage.impl.AbstractEntityStorage
 import com.intellij.workspaceModel.storage.impl.EntityId
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.NotThisEntityId
+import com.intellij.workspaceModel.storage.impl.ThisEntityId
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityStorageBuilderImpl
 import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
-import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 internal open class ExternalEntityMappingImpl<T> internal constructor(internal open val index: BidirectionalMap<EntityId, T>)
@@ -28,8 +29,7 @@ internal open class ExternalEntityMappingImpl<T> internal constructor(internal o
     return index[entity.id]
   }
 
-  @TestOnly
-  fun size(): Int = index.size
+  override fun size(): Int = index.size
 
   internal fun setTypedEntityStorage(storage: AbstractEntityStorage) {
     entityStorage = storage
@@ -101,7 +101,7 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
   }
 
   fun applyChanges(other: MutableExternalEntityMappingImpl<*>,
-                   replaceMap: HashBiMap<EntityId, EntityId>,
+                   replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>,
                    target: WorkspaceEntityStorageBuilderImpl) {
     val initialData = HashMap<EntityId, T>()
     //todo there will be no need to remember initial data if we merge events like we do in WorkspaceBuilderChangeLog
@@ -129,14 +129,14 @@ internal class MutableExternalEntityMappingImpl<T> private constructor(
     }
   }
 
-  private fun getTargetId(replaceMap: HashBiMap<EntityId, EntityId>, target: WorkspaceEntityStorageBuilderImpl, id: EntityId): EntityId? {
-    val possibleTargetId = replaceMap[id]
-    if (possibleTargetId != null) return possibleTargetId
+  private fun getTargetId(replaceMap: HashBiMap<NotThisEntityId, ThisEntityId>, target: WorkspaceEntityStorageBuilderImpl, id: EntityId): EntityId? {
+    val possibleTargetId = replaceMap[id.notThis()]
+    if (possibleTargetId != null) return possibleTargetId.id
 
     if (target.entityDataById(id) == null) return null
 
     // It's possible that before addDiff there was a gup in this particular id. If it's so, replaceMap should not have a mapping to it
-    val sourceId = replaceMap.inverse()[id]
+    val sourceId = replaceMap.inverse()[id.asThis()]
     return if (sourceId != null) null else id
   }
 
@@ -182,4 +182,5 @@ internal object EmptyExternalEntityMapping : ExternalEntityMapping<Any> {
   override fun getEntities(data: Any): List<WorkspaceEntity> = emptyList()
   override fun getDataByEntity(entity: WorkspaceEntity): Any? = null
   override fun forEach(action: (key: WorkspaceEntity, value: Any) -> Unit) {}
+  override fun size(): Int = 0
 }

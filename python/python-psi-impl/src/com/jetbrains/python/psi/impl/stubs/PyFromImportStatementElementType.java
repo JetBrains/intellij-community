@@ -18,9 +18,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-/**
- * @author yole
- */
+
 public class PyFromImportStatementElementType extends PyStubElementType<PyFromImportStatementStub, PyFromImportStatement> {
   public PyFromImportStatementElementType() {
     this("FROM_IMPORT_STATEMENT");

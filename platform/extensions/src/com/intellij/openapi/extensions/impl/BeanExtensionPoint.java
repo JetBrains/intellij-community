@@ -2,10 +2,8 @@
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.extensions.LoadingOrder;
+import com.intellij.openapi.extensions.ExtensionDescriptor;
 import com.intellij.openapi.extensions.PluginDescriptor;
-import com.intellij.openapi.util.JDOMUtil;
-import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,8 +14,9 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> implement
   public BeanExtensionPoint(@NotNull String name,
                             @NotNull String className,
                             @NotNull PluginDescriptor pluginDescriptor,
+                            @NotNull ComponentManager componentManager,
                             boolean dynamic) {
-    super(name, className, pluginDescriptor, null, dynamic);
+    super(name, className, pluginDescriptor, componentManager, null, dynamic);
   }
 
   @Override
@@ -27,31 +26,23 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> implement
   }
 
   @Override
-  public @NotNull ExtensionPointImpl<T> cloneFor(@NotNull ComponentManager manager) {
-    BeanExtensionPoint<T> result = new BeanExtensionPoint<>(getName(), getClassName(), getPluginDescriptor(), isDynamic());
-    result.setComponentManager(manager);
-    return result;
-  }
-
-  @Override
-  protected @NotNull ExtensionComponentAdapter createAdapter(@NotNull Element extensionElement,
-                                                             @NotNull PluginDescriptor pluginDescriptor,
-                                                             @NotNull ComponentManager componentManager) {
-    String orderId = extensionElement.getAttributeValue("id");
-    LoadingOrder order = LoadingOrder.readOrder(extensionElement.getAttributeValue("order"));
-    Element effectiveElement = JDOMUtil.isEmpty(extensionElement) ? null : extensionElement;
+  @NotNull ExtensionComponentAdapter createAdapter(@NotNull ExtensionDescriptor descriptor,
+                                                   @NotNull PluginDescriptor pluginDescriptor,
+                                                   @NotNull ComponentManager componentManager) {
     if (componentManager.isInjectionForExtensionSupported()) {
-      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement, this);
+      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, descriptor.orderId,
+                                                                       descriptor.order,
+                                                                       descriptor.element, this);
     }
     else {
-      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, orderId, order, effectiveElement, this);
+      return new XmlExtensionAdapter(getClassName(), pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, this);
     }
   }
 
   @Override
   void unregisterExtensions(@NotNull ComponentManager componentManager,
                             @NotNull PluginDescriptor pluginDescriptor,
-                            @NotNull List<Element> elements,
+                            @NotNull List<ExtensionDescriptor> elements,
                             @NotNull List<Runnable> priorityListenerCallbacks,
                             @NotNull List<Runnable> listenerCallbacks) {
     unregisterExtensions(adapter -> {

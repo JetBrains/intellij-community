@@ -2,48 +2,41 @@ _collections_abc.AsyncGenerator.ag_await
 _collections_abc.AsyncGenerator.ag_code
 _collections_abc.AsyncGenerator.ag_frame
 _collections_abc.AsyncGenerator.ag_running
-asyncio.Future.__init__
+asyncio.Future.__init__  # Usually initialized from c object
 asyncio.exceptions  # Added in Python 3.8
 asyncio.format_helpers  # Added in Python 3.7
-asyncio.futures.Future.__init__
+asyncio.futures.Future.__init__  # Usually initialized from c object
 asyncio.futures._TracebackLogger.__init__
-asyncio.runners
+asyncio.runners  # Added in Python 3.7
 asyncio.staggered  # Added in Python 3.8
 asyncio.threads  # Added in Python 3.9
 asyncio.trsock  # Added in Python 3.8
 builtins.str.maketrans
 cmath.log
-codecs.StreamRecoder.seek
 collections.AsyncGenerator.ag_await
 collections.AsyncGenerator.ag_code
 collections.AsyncGenerator.ag_frame
 collections.AsyncGenerator.ag_running
+collections.Callable
 collections.UserString.maketrans
 contextlib._GeneratorContextManager.__init__
-copy.PyStringMap
-ctypes.CDLL.__init__
-email.message.MIMEPart.as_string
 enum.Enum._generate_next_value_
 fractions.Fraction.__new__  # overload is too complicated for stubtest to resolve
 hmac.HMAC.__init__
-importlib.metadata
-importlib.resources
+importlib.metadata  # Added in 3.8
+importlib.resources  # Added in 3.7
 io.StringIO.readline
 ipaddress._BaseNetwork.__init__
-itertools.accumulate
 json.loads
 mmap.ACCESS_DEFAULT
 multiprocessing.shared_memory
-nntplib._NNTPBase.starttls
 os.utime
 plistlib.Dict.__init__
-pyexpat.XMLParserType.ExternalEntityParserCreate
+pyexpat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
 random.Random.randrange  # missing undocumented arg _int
 random.randrange  # missing undocumented arg _int
-secrets.SystemRandom.getstate
-smtplib.SMTP.sendmail
+sched.Event.__doc__  # __slots__ is overridden
 sre_compile.dis
-ssl.SSLSocket.__init__
 typing.AsyncGenerator.ag_await
 typing.AsyncGenerator.ag_code
 typing.AsyncGenerator.ag_frame
@@ -67,19 +60,22 @@ typing.NamedTuple._replace
 typing.Sequence.index
 typing.runtime_checkable
 unittest.async_case  # Added in Python 3.8
-urllib.parse.parse_qs
-urllib.parse.parse_qsl
 uuid.UUID.int
-webbrowser.Opera.raise_opts
 xml.etree.ElementTree.TreeBuilder.start  # Discrepancy between Python and C modules, fixed in bpo-39495
 xml.etree.cElementTree.TreeBuilder.start  # bpo-39495
-xml.parsers.expat.XMLParserType.ExternalEntityParserCreate
+xml.parsers.expat.XMLParserType.ExternalEntityParserCreate  # C signature is wrong - function gets only positional args
 # These enums derive from (int, IntEnum) or (str, Enum). See comment in py3_common.txt
-enum.IntFlag.__new__
-re.RegexFlag.__new__
-socket.AddressInfo.__new__
-socket.MsgFlag.__new__
-ssl.Options.__new__
-ssl.VerifyFlags.__new__
-ssl.VerifyMode.__new__
 tkinter.EventType.__new__
+
+builtins.memoryview.__iter__  # C type that implements __getitem__
+builtins.memoryview.cast  # inspect.signature is incorrect about shape being kw-only
+collections.Coroutine.cr_await
+collections.Coroutine.cr_code
+collections.Coroutine.cr_frame
+collections.Coroutine.cr_running
+collections.Generator.gi_code
+collections.Generator.gi_frame
+collections.Generator.gi_running
+collections.Generator.gi_yieldfrom
+collections.Mapping.get  # Adding None to the Union messed up mypy
+collections.Sequence.index  # Supporting None in end is not mandatory

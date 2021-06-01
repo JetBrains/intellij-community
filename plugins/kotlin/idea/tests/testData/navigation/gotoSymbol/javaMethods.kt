@@ -4,6 +4,6 @@ fun test() {
 
 // SEARCH_TEXT: flushBuffer
 // CHECK_BOX
-// REF: (in java.io.BufferedOutputStream).flushBuffer()
-// REF: (in java.io.BufferedWriter).flushBuffer()
-// REF: (in java.io.OutputStreamWriter).flushBuffer()
+// REF: of java.io.BufferedOutputStream.flushBuffer()
+// REF: of java.io.BufferedWriter.flushBuffer()
+// REF: of java.io.OutputStreamWriter.flushBuffer()

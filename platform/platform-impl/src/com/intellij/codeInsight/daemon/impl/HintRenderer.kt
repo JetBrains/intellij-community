@@ -3,6 +3,7 @@ package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.codeInsight.hints.HintWidthAdjustment
 import com.intellij.ide.ui.AntialiasingType
+import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorCustomElementRenderer
@@ -196,10 +197,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
         val editorContext = FontInfo.getFontRenderContext(editor.contentComponent)
         return FontRenderContext(editorContext.transform,
                                  AntialiasingType.getKeyForCurrentScope(false),
-                                 if (editor is EditorImpl)
-                                   editor.myFractionalMetricsHintValue
-                                 else
-                                   RenderingHints.VALUE_FRACTIONALMETRICS_OFF)
+                                 UISettings.editorFractionalMetricsHint)
       }
     }
 

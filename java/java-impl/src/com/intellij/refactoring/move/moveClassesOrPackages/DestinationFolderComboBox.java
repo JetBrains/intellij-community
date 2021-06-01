@@ -3,6 +3,7 @@ package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.ide.util.DirectoryChooser;
 import com.intellij.java.JavaBundle;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.module.Module;
@@ -215,7 +216,7 @@ public abstract class DestinationFolderComboBox extends ComboboxWithBrowseButton
                                 final VirtualFile oldSelection,
                                 final boolean forceIncludeAll) {
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(() -> setComboboxModelInternal(initialTargetDirectorySourceRoot, oldSelection, forceIncludeAll), 300);
+    myAlarm.addRequest(() -> setComboboxModelInternal(initialTargetDirectorySourceRoot, oldSelection, forceIncludeAll), 300, ModalityState.stateForComponent(this));
   }
 
   private void setComboboxModelInternal(final VirtualFile initialTargetDirectorySourceRoot,

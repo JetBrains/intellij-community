@@ -4,7 +4,7 @@ class Test {
   }
 
   static void baz(FooBar annotation) {
-    if (<warning descr="Condition 'annotation.x() == null' is always 'false'">annotation.x() == null</warning>) {
+    if (annotation.x() == null) {
       System.out.println("null");
     }
   }

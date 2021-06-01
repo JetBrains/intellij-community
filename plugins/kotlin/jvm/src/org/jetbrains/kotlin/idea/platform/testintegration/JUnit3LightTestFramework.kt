@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.platform.testintegration
 
 import com.intellij.execution.junit.JUnitUtil
@@ -48,7 +49,6 @@ class JUnit3LightTestFramework: AbstractLightTestFramework() {
     private fun KtNamedFunction.isTearDownMethod(): Boolean = name == "tearDown"
 
     override fun isAUnitTestMethod(namedDeclaration: KtNamedFunction): Boolean? {
-        if (!namedDeclaration.containingKtFile.hasThisFramework()) return false
         if (namedDeclaration.isSetUpMethod() || namedDeclaration.isTearDownMethod()) return null
         return (namedDeclaration.name?.startsWith("test") == true &&
                 namedDeclaration.getParentOfType<KtClassOrObject>(true)?.let {

@@ -9,9 +9,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public abstract class LibraryContributingFacet<T extends FacetConfiguration> extends Facet<T> {
   @NonNls public static final String PYTHON_FACET_LIBRARY_NAME_SUFFIX = " interpreter library";
 

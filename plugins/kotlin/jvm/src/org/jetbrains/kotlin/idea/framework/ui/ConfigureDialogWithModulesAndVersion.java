@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.framework.ui;
 
@@ -170,17 +156,17 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         public static Collection<String> loadVersions(String minimumVersion) throws Exception {
         List<String> versions = new ArrayList<>();
 
-        String bundledRuntimeVersion = KotlinRuntimeLibraryUtilKt.bundledRuntimeVersion();
-        RepositoryDescription repositoryDescription = ConfigureKotlinInProjectUtilsKt.getRepositoryForVersion(bundledRuntimeVersion);
+        String kotlinCompilerVersionShort = KotlinRuntimeLibraryUtilKt.kotlinCompilerVersionShort();
+        RepositoryDescription repositoryDescription = ConfigureKotlinInProjectUtilsKt.getRepositoryForVersion(kotlinCompilerVersionShort);
         if (repositoryDescription != null && repositoryDescription.getBintrayUrl() != null) {
-            HttpURLConnection eapConnection = HttpConfigurable.getInstance().openHttpConnection(repositoryDescription.getBintrayUrl() + bundledRuntimeVersion);
+            HttpURLConnection eapConnection = HttpConfigurable.getInstance().openHttpConnection(repositoryDescription.getBintrayUrl() + kotlinCompilerVersionShort);
             try {
                 int timeout = (int) TimeUnit.SECONDS.toMillis(30);
                 eapConnection.setConnectTimeout(timeout);
                 eapConnection.setReadTimeout(timeout);
 
                 if (eapConnection.getResponseCode() == 200) {
-                    versions.add(bundledRuntimeVersion);
+                    versions.add(kotlinCompilerVersionShort);
                 }
             }
             finally {
@@ -218,9 +204,9 @@ public class ConfigureDialogWithModulesAndVersion extends DialogWrapper {
         Collections.sort(versions, VersionComparatorUtil.COMPARATOR.reversed());
 
         // Handle the case when the new version has just been released and the Maven search index hasn't been updated yet
-        if (!VersioningKt.isEap(bundledRuntimeVersion) && !KotlinPluginUtil.isSnapshotVersion() &&
-            !bundledRuntimeVersion.contains("dev") && !versions.contains(bundledRuntimeVersion)) {
-            versions.add(0, bundledRuntimeVersion);
+        if (!VersioningKt.isEap(kotlinCompilerVersionShort) && !KotlinPluginUtil.isSnapshotVersion() &&
+            !kotlinCompilerVersionShort.contains("dev") && !versions.contains(kotlinCompilerVersionShort)) {
+            versions.add(0, kotlinCompilerVersionShort);
         }
 
         return versions;

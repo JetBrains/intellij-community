@@ -94,12 +94,6 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
   }
 
   @Override
-  public @NotNull RelativeRectangle getAcceptAreaFallback() {
-    JRootPane root = mySplitters.getRootPane();
-    return root != null ? new RelativeRectangle(root) : new RelativeRectangle(mySplitters);
-  }
-
-  @Override
   public @NotNull ContentResponse getContentResponse(@NotNull DockableContent content, RelativePoint point) {
     JBTabs tabs = getTabsAt(content, point);
     return tabs != null && !tabs.getPresentation().isHideTabs() ? ContentResponse.ACCEPT_MOVE : ContentResponse.DENY;
@@ -160,8 +154,9 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
 
     Boolean dropInBetweenPinnedTabs = null;
     boolean dropInPinnedRow = false;
+    int index;
     if (myCurrentOver != null) {
-      int index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
+      index = ((JBTabsEx)myCurrentOver).getDropInfoIndex();
       if (index >= 0 && index <= myCurrentOver.getTabCount()) {
         TabInfo tabInfo = index == myCurrentOver.getTabCount() ? null : myCurrentOver.getTabAt(index);
         TabInfo previousInfo = index > 0 ? myCurrentOver.getTabAt(index - 1) : null;
@@ -183,7 +178,6 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
             && bounds.y < dropPoint.y && bounds.getMaxY() > dropPoint.y;
         }
       }
-      file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
       Integer dragStartIndex = file.getUserData(EditorWindow.DRAG_START_INDEX_KEY);
       boolean isDroppedToOriginalPlace = dragStartIndex != null && dragStartIndex == index && sameWindow;
       if (!isDroppedToOriginalPlace) {
@@ -195,8 +189,14 @@ public final class DockableEditorTabbedContainer implements DockContainer.Persis
         dropInBetweenPinnedTabs = true;
       }
     }
-    recordDragStats(dropIntoNewlyCreatedWindow? -1  : CENTER, sameWindow);
-    ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
+    else {
+      index = -1;
+    }
+    recordDragStats(dropIntoNewlyCreatedWindow ? -1 : CENTER, sameWindow);
+    FileEditorOpenOptions openOptions = new FileEditorOpenOptions()
+      .withIndex(index)
+      .withRequestFocus();
+    ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, openOptions);
     window.setFilePinned(file, Objects.requireNonNullElseGet(dropInBetweenPinnedTabs, dockableEditor::isPinned));
   }
 

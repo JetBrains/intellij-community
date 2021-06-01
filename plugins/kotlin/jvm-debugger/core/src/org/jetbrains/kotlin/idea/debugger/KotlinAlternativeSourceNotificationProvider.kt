@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger
 
@@ -23,7 +20,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotifications
-import com.intellij.ui.components.JBList
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil
 import org.jetbrains.kotlin.idea.stubindex.PackageIndexUtil.findFilesWithExactPackage
@@ -93,16 +89,10 @@ class KotlinAlternativeSourceNotificationProvider(private val myProject: Project
         private class ComboBoxFileElement(val ktFile: KtFile) {
             private val label: String by lazy(LazyThreadSafetyMode.NONE) {
                 val factory = ModuleRendererFactory.findInstance(ktFile)
-                val moduleRenderer = factory.moduleRenderer
-                moduleRenderer.getListCellRendererComponent(ourDummyList, ktFile, 1, false, false)
-                moduleRenderer.text ?: ""
+                factory.getModuleTextWithIcon(ktFile)?.text ?: ""
             }
 
             override fun toString(): String = label
-
-            companion object {
-                private val ourDummyList = JBList<KtFile>()
-            }
         }
 
         init {

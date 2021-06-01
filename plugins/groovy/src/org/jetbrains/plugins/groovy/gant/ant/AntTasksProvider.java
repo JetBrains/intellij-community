@@ -146,7 +146,8 @@ public final class AntTasksProvider {
 
     @NotNull
     Map<String, Class<?>> getAntObjects() {
-      return ProgressIndicatorUtils.awaitWithCheckCanceled(myFuture);
+      Map<String, Class<?>> result = ProgressIndicatorUtils.awaitWithCheckCanceled(myFuture);
+      return result == null ? Collections.emptyMap() : result;
     }
   }
 }

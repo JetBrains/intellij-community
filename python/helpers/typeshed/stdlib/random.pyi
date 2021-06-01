@@ -1,7 +1,7 @@
 import _random
 import sys
 from collections.abc import Callable, Iterable, MutableSequence, Sequence, Set
-from typing import Any, Optional, Tuple, TypeVar, Union
+from typing import Any, NoReturn, Optional, Tuple, TypeVar, Union
 
 _T = TypeVar("_T")
 
@@ -45,7 +45,9 @@ class Random(_random.Random):
     def weibullvariate(self, alpha: float, beta: float) -> float: ...
 
 # SystemRandom is not implemented for all OS's; good on Windows & Linux
-class SystemRandom(Random): ...
+class SystemRandom(Random):
+    def getstate(self, *args: Any, **kwds: Any) -> NoReturn: ...
+    def setstate(self, *args: Any, **kwds: Any) -> NoReturn: ...
 
 # ----- random function stubs -----
 def seed(a: Any = ..., version: int = ...) -> None: ...

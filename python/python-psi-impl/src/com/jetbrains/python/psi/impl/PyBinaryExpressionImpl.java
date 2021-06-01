@@ -26,9 +26,7 @@ import java.util.Map;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 
-/**
- * @author yole
- */
+
 public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExpression {
 
   public PyBinaryExpressionImpl(ASTNode astNode) {

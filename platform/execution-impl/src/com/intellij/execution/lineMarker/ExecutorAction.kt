@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NonNls
 
 
 /**
- * @author Dmitry Avdeev
+ * @param order corresponding sorting happens here: [com.intellij.execution.actions.BaseRunConfigurationAction.getOrderedConfiguration]
  */
 @Suppress("ComponentNotRegistered")
 class ExecutorAction private constructor(val origin: AnAction,
@@ -22,7 +22,7 @@ class ExecutorAction private constructor(val origin: AnAction,
     copyFrom(origin)
   }
 
-  override fun isUpdateInBackground() = (origin as? UpdateInBackground)?.isUpdateInBackground == true
+  override fun isUpdateInBackground() = UpdateInBackground.isUpdateInBackground(origin)
 
   companion object {
     @JvmStatic
@@ -72,7 +72,7 @@ class ExecutorAction private constructor(val origin: AnAction,
     }
 
     private fun wrapContext(dataContext: DataContext, order : Int): DataContext {
-      return MyDataContext(dataContext, order)
+      return if (order == 0) dataContext else MyDataContext(dataContext, order)
     }
 
     @JvmStatic

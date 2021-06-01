@@ -1,19 +1,17 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.stubindex
 
 import com.intellij.psi.stubs.IndexSink
+import com.intellij.psi.stubs.NamedStub
+import com.intellij.psi.tree.TokenSet
+import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.stubs.KotlinCallableStubBase
-import org.jetbrains.kotlin.psi.stubs.KotlinModifierListStub
-import org.jetbrains.kotlin.psi.stubs.KotlinStubWithFqName
-import org.jetbrains.kotlin.psi.stubs.KotlinTypeAliasStub
+import org.jetbrains.kotlin.psi.stubs.*
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.util.aliasImportMap
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun <TDeclaration : KtCallableDeclaration> indexTopLevelExtension(stub: KotlinCallableStubBase<TDeclaration>, sink: IndexSink) {
     KotlinTopLevelExtensionsByReceiverTypeIndex.INSTANCE.indexExtension(stub, sink)
@@ -116,6 +114,59 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
 
     if (modifierListStub.hasModifier(KtTokens.OPEN_KEYWORD) || modifierListStub.hasModifier(KtTokens.ABSTRACT_KEYWORD)) {
         sink.occurrence(KotlinOverridableInternalMembersShortNameIndex.Instance.key, name)
+    }
+}
+
+private val CONSTANT_EXPRESSIONS_TYPES = TokenSet.create(
+    KtStubElementTypes.NULL,
+    KtStubElementTypes.BOOLEAN_CONSTANT,
+    KtStubElementTypes.FLOAT_CONSTANT,
+    KtStubElementTypes.CHARACTER_CONSTANT,
+    KtStubElementTypes.INTEGER_CONSTANT,
+    KtStubElementTypes.REFERENCE_EXPRESSION,
+    KtStubElementTypes.DOT_QUALIFIED_EXPRESSION,
+    KtStubElementTypes.STRING_TEMPLATE
+)
+
+private fun KtValueArgument.argumentExpression(): KtExpression? {
+    stub?.let {
+        val constantExpressions = it.getChildrenByType(CONSTANT_EXPRESSIONS_TYPES, KtExpression.EMPTY_ARRAY)
+        return if (constantExpressions.isNotEmpty()) {
+            constantExpressions[0]
+        } else null
+    }
+
+    var cur: com.intellij.psi.PsiElement? = firstChild
+    while (cur != null) {
+        cur.safeAs<KtExpression>()?.let { return it }
+        cur = cur.nextSibling
+    }
+    return null
+}
+
+// TODO: it has to be dropped as soon as JvmFileClassUtil.getLiteralStringFromAnnotation becomes public in compiler
+private fun JvmFileClassUtil.getLiteralStringFromAnnotation(annotation: KtAnnotationEntry): String? {
+    val argumentExpression = annotation.valueArguments.firstOrNull()?.let {
+        if (it is KtValueArgument) it.argumentExpression() else it.getArgumentExpression()
+    } ?: return null
+    val stringTemplate = argumentExpression as? KtStringTemplateExpression ?: return null
+    val singleEntry = stringTemplate.entries.singleOrNull() as? KtLiteralStringTemplateEntry ?: return null
+    return singleEntry.text
+}
+
+fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {
+    if (stub.getShortName() != JvmFileClassUtil.JVM_NAME_SHORT) return
+
+    val jvmName = JvmFileClassUtil.getLiteralStringFromAnnotation(stub.psi) ?: return
+    val annotatedElementName = when (val grandParentStub = stub.parentStub.parentStub) {
+        is KotlinFileStub -> grandParentStub.psi.name
+        is NamedStub -> grandParentStub.getName() ?: ""
+        is KotlinPropertyAccessorStub -> grandParentStub.parentStub.safeAs<KotlinPropertyStub>()?.name ?: ""
+        else -> return
+    }
+
+    if (annotatedElementName != jvmName) {
+        sink.occurrence(KotlinJvmNameAnnotationIndex.INSTANCE.key, jvmName)
     }
 }
 

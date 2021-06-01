@@ -6,4 +6,3 @@ pluginManagement {
 
 rootProject.name = "my-app"
 
-enableFeaturePreview("GRADLE_METADATA")

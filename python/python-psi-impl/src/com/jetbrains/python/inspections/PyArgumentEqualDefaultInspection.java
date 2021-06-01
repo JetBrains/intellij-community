@@ -43,11 +43,6 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
     return new Visitor(holder, session);
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   private static class Visitor extends PyInspectionVisitor {
     Visitor(@Nullable ProblemsHolder holder, @NotNull LocalInspectionToolSession session) {
       super(holder, session);

@@ -9,20 +9,22 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 
 public class CompositeInputFilter implements InputFilter {
   private static final Logger LOG = Logger.getInstance(CompositeInputFilter.class);
 
-  private final List<InputFilterWrapper> myFilters = new ArrayList<>();
+  private final @NotNull InputFilterWrapper @NotNull [] myFilters;
   private final DumbService myDumbService;
 
-  public CompositeInputFilter(@NotNull Project project) {
+  public CompositeInputFilter(@NotNull Project project, @NotNull Collection<? extends InputFilter> allFilters) {
     myDumbService = DumbService.getInstance(project);
+    myFilters = ContainerUtil.map2Array(allFilters, new InputFilterWrapper[0], filter -> new InputFilterWrapper(filter));
   }
 
   @Override
@@ -72,10 +74,5 @@ public class CompositeInputFilter implements InputFilter {
       }
       return null;
     }
-  }
-
-  public void addFilter(@NotNull final InputFilter filter) {
-    InputFilterWrapper wrapper = new InputFilterWrapper(filter);
-    myFilters.add(wrapper);
   }
 }

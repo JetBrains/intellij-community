@@ -23,7 +23,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -104,8 +103,7 @@ public class DefaultJavaProgramRunner implements JvmPatchableProgramRunner<Runne
     ExecutionManager executionManager = ExecutionManager.getInstance(environment.getProject());
     RunProfile runProfile = environment.getRunProfile();
     if (runProfile instanceof TargetEnvironmentAwareRunProfile &&
-        currentState instanceof TargetEnvironmentAwareRunProfileState &&
-        Experiments.getInstance().isFeatureEnabled("run.targets")) {
+        currentState instanceof TargetEnvironmentAwareRunProfileState) {
       executionManager.startRunProfileWithPromise(environment, currentState, (ignored) -> {
         return doExecuteAsync((TargetEnvironmentAwareRunProfileState)currentState, environment);
       });

@@ -31,6 +31,7 @@ public interface FormattingService {
     FORMAT_FRAGMENTS
   }
 
+  @NotNull
   Set<Feature> getFeatures();
 
   boolean canFormat(@NotNull PsiFile file);
@@ -41,7 +42,7 @@ public interface FormattingService {
   @NotNull
   PsiElement formatElement(@NotNull PsiElement element, @NotNull TextRange range, boolean canChangeWhiteSpaceOnly);
 
-  void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly);
+  void formatRanges(@NotNull PsiFile file, FormattingRangesInfo rangesInfo, boolean canChangeWhiteSpaceOnly, boolean quickFormat);
 
   /**
    * @return A class of the service which should be run prior to this FormattingService (default is {@code null})

@@ -10,9 +10,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.ui.ColorUtil;
+import com.intellij.ui.Gray;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SVGLoader;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
@@ -21,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
@@ -142,6 +145,8 @@ public final class UITheme {
       return theme;
     }
 
+    initializeNamedColors(theme);
+
     theme.patcher = new IconPathPatcher() {
       @Nullable
       @Override
@@ -229,12 +234,30 @@ public final class UITheme {
     return theme;
   }
 
+  private static void initializeNamedColors(UITheme theme) {
+    Map<String, Object> map = theme.colors;
+    if (map == null) return;
+
+    Set<String> namedColors = map.keySet();
+    for (String key : namedColors) {
+      Object value = map.get(key);
+      if (value instanceof String && !((String)value).startsWith("#")) {
+        map.put(key, ObjectUtils.notNull(map.get(map.get(key)), Gray.TRANSPARENT));
+      }
+    }
+  }
+
   private static String toColorString(@NotNull String key, boolean darkTheme) {
     if (darkTheme && colorPalette.get(key + ".Dark") != null) {
       key += ".Dark";
     }
     String color = colorPalette.get(key);
     return color == null ? key.toLowerCase(Locale.ENGLISH) : color.toLowerCase(Locale.ENGLISH);
+  }
+
+  @TestOnly
+  public static Map<String, String> getColorPalette() {
+    return Collections.unmodifiableMap(colorPalette);
   }
 
   private static final @NonNls Map<String, String> colorPalette;
@@ -397,12 +420,13 @@ public final class UITheme {
                                             Map<String, Object> map,
                                             String key,
                                             UIDefaults defaults) {
-    String osKey = SystemInfo.isWindows ? OS_WINDOWS_KEY :
-                   SystemInfo.isMac ? OS_MACOS_KEY :
-                   SystemInfo.isLinux ? OS_LINUX_KEY : null;
+    String osKey = SystemInfoRt.isWindows ? OS_WINDOWS_KEY :
+                   SystemInfoRt.isMac ? OS_MACOS_KEY :
+                   SystemInfoRt.isLinux ? OS_LINUX_KEY : null;
     if (osKey != null && map.containsKey(osKey)) {
       apply(theme, key, map.get(osKey), defaults);
-    } else if (map.containsKey(OS_DEFAULT_KEY)) {
+    }
+    else if (map.containsKey(OS_DEFAULT_KEY)) {
       apply(theme, key, map.get(OS_DEFAULT_KEY), defaults);
     }
   }
@@ -436,6 +460,13 @@ public final class UITheme {
         return Boolean.TRUE;
       case "false":
         return Boolean.FALSE;
+    }
+
+    if (value.endsWith(".png") || value.endsWith(".svg")) {
+      Icon icon = IconLoader.findIcon(value, classLoader);
+      if (icon != null) {
+        return icon;
+      }
     }
 
     if (key.endsWith("Insets") || key.endsWith("padding")) {

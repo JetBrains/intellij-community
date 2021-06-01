@@ -4,17 +4,24 @@ package com.intellij.workspaceModel.ide.impl.jps.serialization
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
-import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
-import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
+import com.intellij.workspaceModel.ide.JpsImportedEntitySource
+import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryNameGenerator
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
+import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
+import com.intellij.workspaceModel.storage.impl.WorkspaceEntityData
+import com.intellij.workspaceModel.storage.impl.references.MutableOneToOneChild
+import com.intellij.workspaceModel.storage.impl.references.OneToOneChild
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.JDomSerializationUtil
+import org.jetbrains.jps.model.serialization.SerializationConstants
 import org.jetbrains.jps.model.serialization.artifact.ArtifactPropertiesState
 import org.jetbrains.jps.model.serialization.artifact.ArtifactState
 import org.jetbrains.jps.util.JpsPathUtil
@@ -34,14 +41,82 @@ internal class JpsArtifactsDirectorySerializerFactory(override val directoryUrl:
   override fun getDefaultFileName(entity: ArtifactEntity): String {
     return entity.name
   }
+
+  override fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation) {
+    /// XXX In fact, we suppose that all packaging element have a connection to the corresponding artifact.
+    // However, technically, it's possible to create a packaging element without artifact or connection to another packaging element.
+    // Here we could check that the amount of "processed" packaging elements equals to the amount of packaging elements in store,
+    //   but unfortunately [WorkspaceModel.entities] function doesn't work with abstract entities at the moment.
+    builder.entities(ArtifactEntity::class.java).forEach {
+      // Convert artifact to the new source
+      val artifactSource = JpsEntitySourceFactory.createJpsEntitySourceForArtifact(configLocation)
+      builder.changeSource(it, artifactSource)
+
+      // Convert it's packaging elements
+      it.rootElement.forThisAndFullTree {
+        builder.changeSource(it, artifactSource)
+      }
+    }
+
+    // Convert properties
+    builder.entities(ArtifactPropertiesEntity::class.java).forEach {
+      builder.changeSource(it, it.artifact.entitySource)
+    }
+  }
+
+  private fun PackagingElementEntity.forThisAndFullTree(action: (PackagingElementEntity) -> Unit) {
+    action(this)
+    if (this is CompositePackagingElementEntity) {
+      this.children.forEach {
+        if (it is CompositePackagingElementEntity) {
+          it.forThisAndFullTree(action)
+        }
+        else {
+          action(it)
+        }
+      }
+    }
+  }
 }
 
 private const val ARTIFACT_MANAGER_COMPONENT_NAME = "ArtifactManager"
+
+internal class JpsArtifactsExternalFileSerializer(private val externalFile: JpsFileEntitySource.ExactFile,
+                                                  private val internalArtifactsDirUrl: VirtualFileUrl, virtualFileManager: VirtualFileUrlManager)
+  : JpsArtifactEntitiesSerializer(externalFile.file, externalFile, false, virtualFileManager), JpsFileEntityTypeSerializer<ArtifactEntity> {
+  override val isExternalStorage: Boolean
+    get() = true
+
+  override val entityFilter: (ArtifactEntity) -> Boolean
+    get() = { (it.entitySource as? JpsImportedEntitySource)?.storedExternally == true }
+
+  override val additionalEntityTypes: List<Class<out WorkspaceEntity>>
+    get() = listOf(ArtifactsOrderEntity::class.java)
+
+  override fun createEntitySource(artifactTag: Element): EntitySource? {
+    val externalSystemId = artifactTag.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_ATTRIBUTE) ?: return null
+    val internalEntitySource = JpsFileEntitySource.FileInDirectory(internalArtifactsDirUrl, externalFile.projectLocation)
+    return JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
+  }
+
+  override fun getExternalSystemId(artifactEntity: ArtifactEntity): String? {
+    val source = artifactEntity.entitySource
+    return (source as? JpsImportedEntitySource)?.externalSystemId
+  }
+
+  override fun deleteObsoleteFile(fileUrl: String, writer: JpsFileContentWriter) {
+    writer.saveComponent(fileUrl, ARTIFACT_MANAGER_COMPONENT_NAME, null)
+  }
+}
 
 internal class JpsArtifactsFileSerializer(fileUrl: VirtualFileUrl, entitySource: JpsFileEntitySource, virtualFileManager: VirtualFileUrlManager)
   : JpsArtifactEntitiesSerializer(fileUrl, entitySource, true, virtualFileManager), JpsFileEntityTypeSerializer<ArtifactEntity> {
   override val isExternalStorage: Boolean
     get() = false
+
+  override val entityFilter: (ArtifactEntity) -> Boolean
+    get() = { (it.entitySource as? JpsImportedEntitySource)?.storedExternally != true }
+
   override val additionalEntityTypes: List<Class<out WorkspaceEntity>>
     get() = listOf(ArtifactsOrderEntity::class.java)
 
@@ -74,6 +149,9 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
                                                   override val internalEntitySource: JpsFileEntitySource,
                                                   private val preserveOrder: Boolean,
                                                   private val virtualFileManager: VirtualFileUrlManager) : JpsFileEntitiesSerializer<ArtifactEntity> {
+  open val isExternalStorage: Boolean
+    get() = false
+
   override val mainEntityClass: Class<ArtifactEntity>
     get() = ArtifactEntity::class.java
 
@@ -84,16 +162,23 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     val artifactListElement = reader.loadComponent(fileUrl.url, ARTIFACT_MANAGER_COMPONENT_NAME)
     if (artifactListElement == null) return
 
-    val source = internalEntitySource
     val orderOfItems = ArrayList<String>()
-    artifactListElement.getChildren("artifact").forEach {
-      val state = XmlSerializer.deserialize(it, ArtifactState::class.java)
-      val outputUrl = virtualFileManager.fromPath(state.outputPath)
-      val rootElement = loadPackagingElement(state.rootElement, source, builder)
+    artifactListElement.getChildren("artifact").forEach { actifactElement ->
+      val entitySource = createEntitySource(actifactElement) ?: return@forEach
+      val state = XmlSerializer.deserialize(actifactElement, ArtifactState::class.java)
+      val outputUrl = state.outputPath?.let { path -> if (path.isNotEmpty()) virtualFileManager.fromPath(path) else null }
+      val rootElement = loadPackagingElement(state.rootElement, entitySource, builder)
       val artifactEntity = builder.addArtifactEntity(state.name, state.artifactType, state.isBuildOnMake, outputUrl,
-                                                     rootElement as CompositePackagingElementEntity, source)
+                                                     rootElement as CompositePackagingElementEntity, entitySource)
       for (propertiesState in state.propertiesList) {
-        builder.addArtifactPropertiesEntity(artifactEntity, propertiesState.id, JDOMUtil.write(propertiesState.options), source)
+        builder.addArtifactPropertiesEntity(artifactEntity, propertiesState.id, JDOMUtil.write(propertiesState.options), entitySource)
+      }
+      val externalSystemId = actifactElement.getAttributeValue(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
+      if (externalSystemId != null && !isExternalStorage) {
+        builder.addEntity(ModifiableArtifactExternalSystemIdEntity::class.java, entitySource) {
+          this.externalSystemId = externalSystemId
+          artifact = artifactEntity
+        }
       }
       orderOfItems += state.name
     }
@@ -105,11 +190,18 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
         }
       }
       else {
-        builder.addEntity(ModifiableArtifactsOrderEntity::class.java, source) {
+        builder.addEntity(ModifiableArtifactsOrderEntity::class.java, internalEntitySource) {
           orderOfArtifacts = orderOfItems
         }
       }
     }
+
+  }
+
+  protected open fun createEntitySource(artifactTag: Element): EntitySource? = internalEntitySource
+
+  protected open fun getExternalSystemId(artifactEntity: ArtifactEntity): String? {
+    return artifactEntity.externalSystemId?.externalSystemId
   }
 
   private fun loadPackagingElement(element: Element,
@@ -118,7 +210,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     fun loadElementChildren() = element.children.mapTo(ArrayList()) { loadPackagingElement(it, source, builder) }
     fun getAttribute(name: String) = element.getAttributeValue(name)!!
     fun getOptionalAttribute(name: String) = element.getAttributeValue(name)
-    fun getPathAttribute(name: String) = virtualFileManager.fromPath(element.getAttributeValue(name)!!)
+    fun getPathAttribute(name: String) = element.getAttributeValue(name)!!.let { virtualFileManager.fromPath(it) }
     return when (val typeId = getAttribute("id")) {
       "root" -> builder.addArtifactRootElementEntity(loadElementChildren(), source)
       "directory" -> builder.addDirectoryPackagingElementEntity(getAttribute("name"), loadElementChildren(), source)
@@ -126,21 +218,30 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       "dir-copy" -> builder.addDirectoryCopyPackagingElementEntity(getPathAttribute("path"), source)
       "file-copy" -> builder.addFileCopyPackagingElementEntity(getPathAttribute("path"), getOptionalAttribute("output-file-name"), source)
       "extracted-dir" -> builder.addExtractedDirectoryPackagingElementEntity(getPathAttribute("path"), getAttribute("path-in-jar"), source)
-      "artifact" -> builder.addArtifactOutputPackagingElementEntity(ArtifactId(getAttribute("artifact-name")), source)
-      "module-output" -> builder.addModuleOutputPackagingElementEntity(ModuleId(getAttribute("name")), source)
-      "module-test-output" -> builder.addModuleTestOutputPackagingElementEntity(ModuleId(getAttribute("name")), source)
-      "module-source" -> builder.addModuleSourcePackagingElementEntity(ModuleId(getAttribute("name")), source)
+      "artifact" -> builder.addArtifactOutputPackagingElementEntity(getOptionalAttribute("artifact-name")?.let { ArtifactId(it) }, source)
+      "module-output" -> builder.addModuleOutputPackagingElementEntity(getOptionalAttribute("name")?.let { ModuleId(it) }, source)
+      "module-test-output" -> builder.addModuleTestOutputPackagingElementEntity(getOptionalAttribute("name")?.let { ModuleId(it) }, source)
+      "module-source" -> builder.addModuleSourcePackagingElementEntity(getOptionalAttribute("name")?.let { ModuleId(it) }, source)
       "library" -> {
-        val moduleName = getOptionalAttribute("module-name")
-        val level = getAttribute("level")
+        val level = getOptionalAttribute("level")
         val name = getOptionalAttribute("name")
-        val parentId = when {
-          moduleName != null -> LibraryTableId.ModuleLibraryTableId(ModuleId(moduleName))
-          else -> levelToLibraryTableId(level)
+        if (level != null && name != null) {
+          val moduleName = getOptionalAttribute("module-name")
+          val parentId = when {
+            moduleName != null -> LibraryTableId.ModuleLibraryTableId(ModuleId(moduleName))
+            else -> LibraryNameGenerator.getLibraryTableId(level)
+          }
+          builder.addLibraryFilesPackagingElementEntity(LibraryId(name, parentId), source)
         }
-        builder.addLibraryFilesPackagingElementEntity(LibraryId(name!!, parentId), source)
+        else {
+          builder.addLibraryFilesPackagingElementEntity(null, source)
+        }
       }
-      else -> builder.addCustomPackagingElementEntity(typeId, JDOMUtil.write(element), source)
+      else -> {
+        val cloned = element.clone()
+        cloned.removeContent()
+        builder.addCustomPackagingElementEntity(typeId, JDOMUtil.write(cloned), loadElementChildren(), source)
+      }
     }
   }
 
@@ -172,7 +273,7 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
     artifactState.name = artifact.name
     artifactState.artifactType = artifact.artifactType
     artifactState.isBuildOnMake = artifact.includeInProjectBuild
-    artifactState.outputPath = JpsPathUtil.urlToPath(artifact.outputUrl.url)
+    artifactState.outputPath = JpsPathUtil.urlToPath(artifact.outputUrl?.url)
     val customProperties = artifact.customProperties.filter { it.entitySource == artifact.entitySource }
     artifactState.propertiesList = customProperties.mapTo(ArrayList()) {
       ArtifactPropertiesState().apply {
@@ -181,6 +282,13 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       }
     }
     artifactState.rootElement = savePackagingElement(artifact.rootElement)
+    val externalSystemId = getExternalSystemId(artifact)
+    if (externalSystemId != null) {
+      if (isExternalStorage)
+        artifactState.externalSystemId = externalSystemId
+      else
+        artifactState.externalSystemIdInInternalStorage = externalSystemId
+    }
     return XmlSerializer.serialize(artifactState, SkipDefaultsSerializationFilter())
   }
 
@@ -214,42 +322,51 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
       }
       is DirectoryCopyPackagingElementEntity -> {
         setId("dir-copy")
-        setPathAttribute("path", element.directory)
+        setPathAttribute("path", element.filePath)
       }
       is FileCopyPackagingElementEntity -> {
         setId("file-copy")
-        setPathAttribute("path", element.file)
+        setPathAttribute("path", element.filePath)
         element.renamedOutputFileName?.let { setAttribute("output-file-name", it) }
       }
       is ExtractedDirectoryPackagingElementEntity -> {
         setId("extracted-dir")
-        setPathAttribute("path", element.archive)
+        setPathAttribute("path", element.filePath)
         setAttribute("path-in-jar", element.pathInArchive)
       }
       is ArtifactOutputPackagingElementEntity -> {
         setId("artifact")
-        setAttribute("artifact-name", element.artifact.name)
+        element.artifact?.let { setAttribute("artifact-name", it.name) }
       }
       is ModuleOutputPackagingElementEntity -> {
         setId("module-output")
-        setAttribute("name", element.module.name)
+        element.module?.let { setAttribute("name", it.name) }
       }
       is ModuleTestOutputPackagingElementEntity -> {
         setId("module-test-output")
-        setAttribute("name", element.module.name)
+        element.module?.let { setAttribute("name", it.name) }
       }
       is ModuleSourcePackagingElementEntity -> {
         setId("module-source")
-        setAttribute("name", element.module.name)
+        element.module?.let { setAttribute("name", it.name) }
       }
       is LibraryFilesPackagingElementEntity -> {
         setId("library")
-        val tableId = element.library.tableId
-        setAttribute("level", tableId.level)
-        setAttribute("name", element.library.name)
-        if (tableId is LibraryTableId.ModuleLibraryTableId) {
-          setAttribute("module-name", tableId.moduleId.name)
+        val library = element.library
+        if (library != null) {
+          val tableId = library.tableId
+          setAttribute("level", tableId.level)
+          setAttribute("name", library.name)
+          if (tableId is LibraryTableId.ModuleLibraryTableId) {
+            setAttribute("module-name", tableId.moduleId.name)
+          }
         }
+      }
+      is CustomPackagingElementEntity -> {
+        setId(element.typeId)
+        val customElement = JDOMUtil.load(element.propertiesXmlTag)
+        customElement.attributes.forEach { attribute -> setAttribute(attribute.name, attribute.value) }
+        saveElementChildren(element)
       }
     }
     return tag
@@ -257,3 +374,28 @@ internal open class JpsArtifactEntitiesSerializer(override val fileUrl: VirtualF
 
   override fun toString(): String = "${javaClass.simpleName.substringAfterLast('.')}($fileUrl)"
 }
+
+/**
+ * This property indicates that external-system-id attribute should be stored in artifact configuration file to avoid unnecessary modifications
+ */
+@Suppress("unused")
+internal class ArtifactExternalSystemIdEntityData : WorkspaceEntityData<ArtifactExternalSystemIdEntity>() {
+  lateinit var externalSystemId: String
+
+  override fun createEntity(snapshot: WorkspaceEntityStorage): ArtifactExternalSystemIdEntity {
+    return ArtifactExternalSystemIdEntity(externalSystemId).also { addMetaData(it, snapshot) }
+  }
+}
+
+internal class ArtifactExternalSystemIdEntity(
+  val externalSystemId: String
+) : WorkspaceEntityBase() {
+  val artifact: ArtifactEntity by OneToOneChild.NotNull(ArtifactEntity::class.java, true)
+}
+
+internal class ModifiableArtifactExternalSystemIdEntity : ModifiableWorkspaceEntityBase<ArtifactExternalSystemIdEntity>() {
+  var externalSystemId: String by EntityDataDelegation()
+  var artifact: ArtifactEntity by MutableOneToOneChild.NotNull(ArtifactExternalSystemIdEntity::class.java, ArtifactEntity::class.java, true)
+}
+
+private val ArtifactEntity.externalSystemId get() = referrers(ArtifactExternalSystemIdEntity::artifact).firstOrNull()

@@ -946,7 +946,7 @@
     },
     {
       "key": "ToolTip.Actions.background",
-      "description": "Actions in editor tooltips for inspection errors. Registry key \"ide.tooltip.show.with.actions\" should be on."
+      "description": "Actions in editor tooltips for inspection errors."
     },
     {
       "key": "ToolTip.Actions.infoForeground",
@@ -1204,6 +1204,41 @@
       "key": "StateWidget.activeBackground",
       "description": "Background of the state widget when at least one of the registered processes is active",
       "since": "2021.1"
+    },
+    {
+      "key": "DragAndDrop.borderColor",
+      "description": "Drop position highlighting (line/rectangle) for drag-n-drop in trees and lists",
+      "since": "2021.2"
+    },
+    {
+      "key": "Label.successForeground",
+      "description": "Foreground for successful state/text",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.shortcutBackground",
+      "description": "Background under shortcuts in the interactive IDE lessons",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.stepNumberForeground",
+      "description": "Foreground for task numbers in lessons",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Tooltip.background",
+      "description": "Background for tooltips used in lessons",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Tooltip.foreground",
+      "description": "Foreground for tooltips text used in lessons",
+      "since": "2021.2"
+    },
+    {
+      "key": "Lesson.Tooltip.stepNumberForeground",
+      "description": "Foreground for task numbers in lesson tooltips",
+      "since": "2021.2"
     }
   ]
 }

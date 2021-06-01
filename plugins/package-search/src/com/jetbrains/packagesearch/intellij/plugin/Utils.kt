@@ -2,9 +2,6 @@ package com.jetbrains.packagesearch.intellij.plugin
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
-import com.jetbrains.packagesearch.intellij.plugin.api.model.PlatformTarget
-import com.jetbrains.packagesearch.intellij.plugin.api.model.PlatformType
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Platform
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import org.apache.commons.lang3.StringUtils
 

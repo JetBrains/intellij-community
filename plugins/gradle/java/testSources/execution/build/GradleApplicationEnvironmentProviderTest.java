@@ -96,6 +96,67 @@ public class GradleApplicationEnvironmentProviderTest extends GradleSettingsImpo
     }
   }
 
+  @Test
+  public void testJavaModuleRunConfiguration() throws Exception {
+    PlatformTestUtil.getOrCreateProjectBaseDir(myProject);
+    @Language("Java")
+    String appClass = "package my;\n" +
+                      "import java.io.BufferedReader;\n" +
+                      "import java.io.IOException;\n" +
+                      "import java.io.InputStream;\n" +
+                      "import java.io.InputStreamReader;\n" +
+                      "import java.nio.charset.StandardCharsets;\n" +
+                      "\n" +
+                      "\n" +
+                      "public class App {\n" +
+                      "    public static void main(String[] args) throws IOException {\n" +
+                      "      String fileContent = new App().readFile();\n" +
+                      "      System.out.println(\"File Content: \" + fileContent" +
+                      ");\n" +
+                      "    }\n" +
+                      "    \n" +
+                      "    public String readFile() throws IOException {\n" +
+                      "      try (InputStream is =\n" +
+                      "             getClass().getClassLoader().getResourceAsStream(\"file.txt\")) {\n" +
+                      "  if (is == null) return null;\n" +
+                      "        BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8));\n" +
+                      "        return bufferedReader.readLine();\n" +
+                      "      }\n" +
+                      "    }\n" +
+                      "}\n";
+    createProjectSubFile("src/main/java/my/App.java", appClass);
+    @Language("Java")
+    final String module = "module my {\n" +
+                           " exports my;\n" +
+                           "}";
+    createProjectSubFile("src/main/java/module-info.java", module);
+    createProjectSubFile("src/main/resources/file.txt", "content\n");
+
+    createSettingsFile("rootProject.name = 'moduleName'");
+    importProject(
+      createBuildScriptBuilder()
+        .withJavaPlugin()
+        .withIdeaPlugin()
+        .withGradleIdeaExtPlugin()
+        .addImport("org.jetbrains.gradle.ext.*")
+        .addPostfix(
+          "idea {",
+          "  project.settings {",
+          "    runConfigurations {",
+          "       MyApp(Application) {",
+          "           mainClass = 'my.App'",
+          "           moduleName = 'moduleName.main'",
+          "       }",
+          "    }",
+          "  }",
+          "}")
+        .generate()
+    );
+
+    RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(myProject).findConfigurationByName("MyApp");
+    assertAppRunOutput(configurationSettings, "File Content: content");
+  }
+
   private void assertAppRunOutput(RunnerAndConfigurationSettings configurationSettings, String... checks) {
     String output = runAppAndGetOutput(configurationSettings);
     for (String check : checks) {

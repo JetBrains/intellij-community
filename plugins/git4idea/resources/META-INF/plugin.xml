@@ -283,9 +283,9 @@
     <action id="Git.Stage.Add" class="git4idea.index.actions.GitAddAction" use-shortcut-of="ChangesView.AddUnversioned"/>
     <action id="Git.Stage.Reset" class="git4idea.index.actions.GitResetAction" use-shortcut-of="ChangesView.Revert"/>
     <action id="Git.Stage.Revert" class="git4idea.index.actions.GitRevertAction" use-shortcut-of="ChangesView.Revert"/>
-    <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitAcceptTheirsAction"/>
-    <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitAcceptYoursAction"/>
-    <action id="Git.Stage.Merge" class="git4idea.index.actions.GitMergeConflictAction"/>
+    <action id="Git.Stage.AcceptTheirs" class="git4idea.index.actions.GitStageAcceptTheirsAction"/>
+    <action id="Git.Stage.AcceptYours" class="git4idea.index.actions.GitStageAcceptYoursAction"/>
+    <action id="Git.Stage.Merge" class="git4idea.index.actions.GitStageMergeConflictAction"/>
     <action id="Git.Stage.ThreeSideDiff" class="git4idea.index.actions.GitStageThreeSideDiffAction"/>
     <action id="Git.Stage.ToggleIgnored" class="git4idea.index.actions.GitToggleIgnoredFilesAction"/>
     <action id="Git.Stage.Add.All" class="git4idea.index.actions.GitStageAllAction"/>
@@ -296,6 +296,15 @@
     <action id="Git.Stage.Compare.Staged.Local" class="git4idea.index.actions.GitStageCompareStagedWithLocalAction"/>
     <action id="Git.Stage.Compare.Staged.Head" class="git4idea.index.actions.GitStageCompareStagedWithHeadAction"/>
     <action id="Git.Stage.Compare.Three.Versions" class="git4idea.index.actions.GitStageCompareThreeVersionsAction"/>
+
+    <group id="Git.ChangesView.Conflicts">
+      <action id="Git.ChangesView.Merge" class="git4idea.merge.GitMergeConflictAction"/>
+      <action id="Git.ChangesView.AcceptTheirs" class="git4idea.merge.GitAcceptTheirsAction"/>
+      <action id="Git.ChangesView.AcceptYours" class="git4idea.merge.GitAcceptYoursAction"/>
+      <separator/>
+
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="first"/>
+    </group>
 
     <action id="Git.Stash.Silently" class="git4idea.index.actions.GitStashSilentlyAction" icon="AllIcons.Vcs.ShelveSilent"/>
 
@@ -446,8 +455,6 @@
                  description="Show dedicated toolwindow for git merge conflicts"/>
     <registryKey key="git.update.project.info.as.log" defaultValue="true"
                  description="If enabled, Update Project for Git is followed by the list of commits, instead of the list of updated files."/>
-    <registryKey key="git.enable.stage" defaultValue="false"
-                 description="Obsolete property, replaced by Settings | Version Control | Git | Enable staging area"/>
     <registryKey key="git.enable.stage.line.status.tracker" defaultValue="true"
                  description="Show staged and unstaged changes in gutter markers." restartRequired="true"/>
     <registryKey key="git.shelve.load.base.in.batches" defaultValue="1000"
@@ -589,6 +596,7 @@
                         preloaderClassName="git4idea.index.GitStageContentPreloader"
                         displayNameSupplierClassName="git4idea.index.GitStageDisplayNameSupplier"
                         isInCommitToolWindow="true"/>
+    <vcs.changes.changesViewNodeAction implementation="git4idea.merge.GitChangesViewNodeAction"/>
     <projectService serviceImplementation="git4idea.index.ui.GitStageUiSettingsImpl"/>
 
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>

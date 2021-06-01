@@ -9,22 +9,88 @@ import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.intellij.build.tasks.reorderJar
 import java.io.File
-import java.nio.file.DirectoryStream
-import java.nio.file.Files
-import java.nio.file.NoSuchFileException
-import java.nio.file.Path
+import java.nio.file.*
+import java.util.*
 import java.util.concurrent.Executor
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-data class BuildItem(val dir: Path, val layout: PluginLayout)
+private val TOUCH_OPTIONS = EnumSet.of(StandardOpenOption.CREATE, StandardOpenOption.WRITE)
+
+data class BuildItem(val dir: Path, val layout: PluginLayout) {
+  val moduleNames = HashSet<String>()
+
+  fun markAsBuilt(outDir: Path) {
+    for (moduleName in moduleNames) {
+      try {
+        Files.newByteChannel(outDir.resolve(moduleName).resolve(UNMODIFIED_MARK_FILE_NAME), TOUCH_OPTIONS)
+      }
+      catch (e: NoSuchFileException) {
+      }
+    }
+  }
+}
 
 class PluginBuilder(private val builder: DistributionJARsBuilder,
                     val buildContext: BuildContext,
                     private val outDir: Path) {
   private val dirtyPlugins = HashSet<BuildItem>()
+
+  fun initialBuild(@Suppress("SameParameterValue") parallelCount: Int, plugins: List<BuildItem>) {
+    val executor: Executor = if (parallelCount == 1) {
+      Executor(Runnable::run)
+    }
+    else {
+      Executors.newWorkStealingPool(parallelCount)
+    }
+    val errorRef = AtomicReference<Throwable>()
+
+    var sharedLayoutBuilder: LayoutBuilder? = null
+    for (plugin in plugins) {
+      if (errorRef.get() != null) {
+        break
+      }
+
+      val buildContextForPlugin = if (parallelCount == 1) buildContext
+      else buildContext.forkForParallelTask("Build ${plugin.layout.mainModule}")
+      executor.execute(Runnable {
+        if (errorRef.get() != null) {
+          return@Runnable
+        }
+
+        try {
+          val layoutBuilder: LayoutBuilder
+          if (parallelCount == 1) {
+            if (sharedLayoutBuilder == null) {
+              sharedLayoutBuilder = LayoutBuilder(buildContext, false)
+            }
+            layoutBuilder = sharedLayoutBuilder!!
+          }
+          else {
+            layoutBuilder = LayoutBuilder(buildContextForPlugin, false)
+          }
+          buildPlugin(plugin, buildContextForPlugin, builder, layoutBuilder)
+          plugin.markAsBuilt(outDir)
+        }
+        catch (e: Throwable) {
+          if (errorRef.compareAndSet(null, e)) {
+            throw e
+          }
+        }
+      })
+    }
+
+    if (executor is ExecutorService) {
+      executor.shutdown()
+      executor.awaitTermination(5, TimeUnit.MINUTES)
+    }
+
+    errorRef.get()?.let {
+      throw it
+    }
+  }
 
   @Synchronized
   fun addDirtyPluginDir(item: BuildItem, reason: Any) {
@@ -55,6 +121,7 @@ class PluginBuilder(private val builder: DistributionJARsBuilder,
       try {
         clearDirContent(plugin.dir)
         buildPlugin(plugin, buildContext, builder, layoutBuilder)
+        plugin.markAsBuilt(outDir)
       }
       catch (e: Throwable) {
         // put back (that's ok to add already processed plugins - doesn't matter, no need to complicate)
@@ -65,61 +132,6 @@ class PluginBuilder(private val builder: DistributionJARsBuilder,
       }
     }
     return "Plugins ${dirtyPlugins.joinToString { it.dir.fileName.toString() }} were updated"
-  }
-}
-
-fun buildPlugins(@Suppress("SameParameterValue") parallelCount: Int,
-                 buildContext: BuildContext,
-                 plugins: List<BuildItem>,
-                 builder: DistributionJARsBuilder) {
-  val executor: Executor = if (parallelCount == 1) {
-    Executor(Runnable::run)
-  }
-  else {
-    Executors.newWorkStealingPool(parallelCount)
-  }
-  val errorRef = AtomicReference<Throwable>()
-
-  var sharedLayoutBuilder: LayoutBuilder? = null
-  for (plugin in plugins) {
-    if (errorRef.get() != null) {
-      break
-    }
-
-    val buildContextForPlugin = if (parallelCount == 1) buildContext else buildContext.forkForParallelTask("Build ${plugin.layout.mainModule}")
-    executor.execute(Runnable {
-      if (errorRef.get() != null) {
-        return@Runnable
-      }
-
-      try {
-        val layoutBuilder: LayoutBuilder
-        if (parallelCount == 1) {
-          if (sharedLayoutBuilder == null) {
-            sharedLayoutBuilder = LayoutBuilder(buildContext, false)
-          }
-          layoutBuilder = sharedLayoutBuilder!!
-        }
-        else {
-          layoutBuilder = LayoutBuilder(buildContextForPlugin, false)
-        }
-        buildPlugin(plugin, buildContextForPlugin, builder, layoutBuilder)
-      }
-      catch (e: Throwable) {
-        if (errorRef.compareAndSet(null, e)) {
-          throw e
-        }
-      }
-    })
-  }
-
-  if (executor is ExecutorService) {
-    executor.shutdown()
-    executor.awaitTermination(5, TimeUnit.MINUTES)
-  }
-
-  errorRef.get()?.let {
-    throw it
   }
 }
 
@@ -141,6 +153,7 @@ private fun buildPlugin(plugin: BuildItem,
 
   val layoutSpec = layoutBuilder.createLayoutSpec(ProjectStructureMapping(), true)
   builder.processLayout(layoutBuilder, plugin.layout, plugin.dir, layoutSpec, plugin.layout.moduleJars, generatedResources)
+
   val stream: DirectoryStream<Path>
   try {
     stream = Files.newDirectoryStream(plugin.dir.resolve("lib"))

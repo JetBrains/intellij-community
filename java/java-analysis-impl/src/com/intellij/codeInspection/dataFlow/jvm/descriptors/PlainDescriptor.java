@@ -13,6 +13,7 @@ import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.VariableDescriptor;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -62,7 +63,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
 
   @NotNull
   @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (myVariable.hasModifierProperty(PsiModifier.VOLATILE)) {
       PsiType type = getType(ObjectUtils.tryCast(qualifier, DfaVariableValue.class));
       return factory.fromDfType(DfTypes.typedObject(type, DfaPsiUtil.getElementNullability(type, myVariable)));
@@ -71,7 +72,7 @@ public final class PlainDescriptor extends PsiVarDescriptor {
         (myVariable instanceof PsiField && myVariable.hasModifierProperty(PsiModifier.STATIC))) {
       return factory.getVarFactory().createVariableValue(this);
     }
-    return super.createValue(factory, qualifier, forAccessor);
+    return super.createValue(factory, qualifier);
   }
 
   @Override
@@ -94,39 +95,58 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   }
 
   @Override
-  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var,
-                                        @NotNull DfaVariableValue value,
-                                        @Nullable PsiElement context) {
-    PsiField field = ObjectUtils.tryCast(var, PsiField.class);
+  @NotNull DfaNullability calcCanBeNull(@NotNull DfaVariableValue value, @Nullable PsiElement context) {
+    PsiField field = ObjectUtils.tryCast(myVariable, PsiField.class);
     if (field != null && hasInitializationHacks(field)) {
       return DfaNullability.FLUSHED;
     }
 
+    DfaVariableValue qualifier = value.getQualifier();
     if (field != null && context != null) {
-      PsiMethod method = ObjectUtils.tryCast(context.getParent(), PsiMethod.class);
-      if (method != null && !method.isConstructor() && isEffectivelyUnqualified(value) && isPossiblyNonInitialized(field, method)) {
-        return DfaNullability.NULLABLE;
-      }
-    }
-
-    PsiType type = getType(value.getQualifier());
-    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, var);
-    if (nullability != Nullability.UNKNOWN) {
-      return DfaNullability.fromNullability(nullability);
-    }
-
-    if (var instanceof PsiParameter && var.getParent() instanceof PsiForeachStatement) {
-      PsiExpression iteratedValue = ((PsiForeachStatement)var.getParent()).getIteratedValue();
-      if (iteratedValue != null) {
-        PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
-        if (itemType != null) {
-          return DfaNullability.fromNullability(DfaPsiUtil.getElementNullability(itemType, var));
+      PsiMember member = ObjectUtils.tryCast(context.getParent(), PsiMember.class);
+      if (member != null) {
+        PsiClass methodClass = member.getContainingClass();
+        if (methodClass != null && methodClass.equals(field.getContainingClass())) {
+          PsiMethod method = ObjectUtils.tryCast(member, PsiMethod.class);
+          VariableDescriptor qualifierDescriptor = qualifier == null ? null : qualifier.getDescriptor();
+          if (qualifierDescriptor instanceof ThisDescriptor && ((ThisDescriptor)qualifierDescriptor).getPsiElement().equals(methodClass)) {
+            if (member instanceof PsiClassInitializer) {
+              return DfaNullability.UNKNOWN;
+            }
+            if (method != null) {
+              if (!method.isConstructor() && isPossiblyNonInitialized(field, method)) {
+                return DfaNullability.NULLABLE;
+              }
+              else if (method.isConstructor()) {
+                return DfaNullability.UNKNOWN;
+              }
+            }
+          }
+          if (method != null && field.hasModifierProperty(PsiModifier.STATIC) && isPossiblyNonInitialized(field, method)) {
+            return DfaNullability.NULLABLE;
+          }
         }
       }
     }
 
-    if (var instanceof PsiField && FieldChecker.getChecker(context).canTrustFieldInitializer((PsiField)var)) {
-      return DfaNullability.fromNullability(NullabilityUtil.getNullabilityFromFieldInitializers((PsiField)var).second);
+    PsiType type = getType(qualifier);
+    Nullability nullability = DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, myVariable);
+    if (nullability != Nullability.UNKNOWN) {
+      return DfaNullability.fromNullability(nullability);
+    }
+
+    if (myVariable instanceof PsiParameter && myVariable.getParent() instanceof PsiForeachStatement) {
+      PsiExpression iteratedValue = ((PsiForeachStatement)myVariable.getParent()).getIteratedValue();
+      if (iteratedValue != null) {
+        PsiType itemType = JavaGenericsUtil.getCollectionItemType(iteratedValue);
+        if (itemType != null) {
+          return DfaNullability.fromNullability(DfaPsiUtil.getElementNullability(itemType, myVariable));
+        }
+      }
+    }
+
+    if (field != null && FieldChecker.getChecker(context).canTrustFieldInitializer(field)) {
+      return DfaNullability.fromNullability(NullabilityUtil.getNullabilityFromFieldInitializers(field).second);
     }
     return DfaNullability.UNKNOWN;
   }
@@ -202,17 +222,12 @@ public final class PlainDescriptor extends PsiVarDescriptor {
     return Integer.MAX_VALUE; // accessed after initialization or at unknown moment
   }
 
-  private static boolean isEffectivelyUnqualified(DfaVariableValue variableValue) {
-    return variableValue.getQualifier() == null ||
-           variableValue.getQualifier().getDescriptor() instanceof ThisDescriptor;
-  }
-
   /**
    * @param var variable to check
    * @return true if variable is known to be initialized in a weird way and actual initializer should be taken into account.
-   * Currentyl, reports fields declared inside java.lang.System class (System.out, System.in, System.err)
+   * Currently, reports fields declared inside java.lang.System class (System.out, System.in, System.err)
    */
-  private static boolean hasInitializationHacks(@NotNull PsiVariable var) {
+  public static boolean hasInitializationHacks(@NotNull PsiVariable var) {
     if (!(var instanceof PsiField)) return false;
     PsiClass containingClass = ((PsiField)var).getContainingClass();
     return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());

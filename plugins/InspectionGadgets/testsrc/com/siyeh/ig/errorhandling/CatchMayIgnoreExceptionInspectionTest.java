@@ -91,7 +91,7 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                     "    try {\n" +
                     "      System.out.println(\"hello\");\n" +
                     "    }\n" +
-                    "    /*Some important exceptions might be ignored in a 'catch' block*/catch/**/(Exception ex) {\n" +
+                    "    /*Unexpected VM exception like 'java.lang.NullPointerException' might be ignored in a 'catch' block*/catch/**/(Exception ex) {\n" +
                     "      if(ex instanceof ClassCastException) {\n" +
                     "        // report invalid cast\n" +
                     "        ex.printStackTrace();\n" +
@@ -105,7 +105,7 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                     "    try {\n" +
                     "      System.out.println(\"hello\");\n" +
                     "    }\n" +
-                    "    /*Some important exceptions might be ignored in a 'catch' block*/catch/**/(Exception ex) {\n" +
+                    "    /*Unexpected VM exception like 'java.lang.NullPointerException' might be ignored in a 'catch' block*/catch/**/(Exception ex) {\n" +
                     "      if(ex.getCause() instanceof ClassCastException) {\n" +
                     "        // report invalid cast\n" +
                     "        ex.printStackTrace();\n" +
@@ -119,7 +119,7 @@ public class CatchMayIgnoreExceptionInspectionTest extends LightJavaInspectionTe
                     "    try {\n" +
                     "      System.out.println(\"hello\");\n" +
                     "    }\n" +
-                    "    /*Some important exceptions might be ignored in a 'catch' block*/catch/**/(Exception ex) {\n" +
+                    "    /*Unexpected VM exception like 'java.lang.NullPointerException' might be ignored in a 'catch' block*/catch/**/(Exception ex) {\n" +
                     "      if(\"foo\".equals(ex.getMessage())) {\n" +
                     "        // report some exception ignoring others\n" +
                     "        ex.printStackTrace();\n" +

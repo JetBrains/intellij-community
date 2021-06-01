@@ -15,10 +15,12 @@
  */
 package com.intellij.ide.hierarchy.call;
 
+import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMemberReference;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NotNull;
@@ -31,28 +33,28 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
   public boolean process(@NotNull PsiReference reference, @NotNull JavaCallHierarchyData data) {
     PsiClass originalClass = data.getOriginalClass();
     PsiMethod method = data.getMethod();
-    Set<PsiMethod> methodsToFind = data.getMethodsToFind();
+    Set<? extends PsiMethod> methodsToFind = data.getMethodsToFind();
     PsiMethod methodToFind = data.getMethodToFind();
     PsiClassType originalType = data.getOriginalType();
-    Map<PsiMember, NodeDescriptor> methodToDescriptorMap = data.getResultMap();
+    Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = data.getResultMap();
     Project myProject = data.getProject();
 
     if (reference instanceof PsiReferenceExpression) {
-      final PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
+      PsiExpression qualifier = ((PsiReferenceExpression)reference).getQualifierExpression();
       if (qualifier instanceof PsiSuperExpression) { // filter super.foo() call inside foo() and similar cases (bug 8411)
-        final PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
+        PsiClass superClass = PsiUtil.resolveClassInType(qualifier.getType());
         if (superClass == null || originalClass.isInheritor(superClass, true)) {
           return false;
         }
       }
       if (qualifier != null && !methodToFind.hasModifierProperty(PsiModifier.STATIC)) {
-        final PsiType qualifierType = qualifier.getType();
+        PsiType qualifierType = qualifier.getType();
         if (qualifierType instanceof PsiClassType &&
             !TypeConversionUtil.isAssignable(qualifierType, originalType) &&
             methodToFind != method) {
-          final PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
+          PsiClass psiClass = ((PsiClassType)qualifierType).resolve();
           if (psiClass != null) {
-            final PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
+            PsiMethod callee = psiClass.findMethodBySignature(methodToFind, true);
             if (callee != null && !methodsToFind.contains(callee)) {
               // skip sibling methods
               return false;
@@ -66,7 +68,7 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
         return true;
       }
 
-      final PsiElement parent = ((PsiElement)reference).getParent();
+      PsiElement parent = ((PsiElement)reference).getParent();
       if (parent instanceof PsiNewExpression) {
         if (((PsiNewExpression)parent).getClassReference() != reference) {
           return false;
@@ -82,8 +84,8 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
       }
     }
 
-    final PsiElement element = reference.getElement();
-    final PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
+    PsiElement element = reference.getElement();
+    PsiMember key = CallHierarchyNodeDescriptor.getEnclosingElement(element);
     CallHierarchyNodeDescriptor parentDescriptor = (CallHierarchyNodeDescriptor) data.getNodeDescriptor();
     if (isRecursiveNode(method, parentDescriptor)) return false;
 
@@ -101,17 +103,21 @@ public class JavaCallReferenceProcessor implements CallReferenceProcessor {
     return false;
   }
 
-  private static boolean isRecursiveNode(@NotNull PsiMethod method, @NotNull CallHierarchyNodeDescriptor parentDescriptor) {
+  private static PsiMember getEnclosingElement(PsiElement element) {
+    return PsiTreeUtil.getNonStrictParentOfType(element, PsiField.class, PsiMethod.class, PsiClass.class);
+  }
+
+  static boolean isRecursiveNode(@NotNull PsiMethod method, @NotNull HierarchyNodeDescriptor parentDescriptor) {
     // detect recursion
     // the current call-site calls *method*
     // Thus, we already have a node that represents *method*
     // Check whether we have any other node along the parent-chain that represents that same method
 
-    NodeDescriptor ancestorDescriptor = parentDescriptor;
+    NodeDescriptor<?> ancestorDescriptor = parentDescriptor;
     // Start check on grandparent
     while ((ancestorDescriptor = ancestorDescriptor.getParentDescriptor()) != null) {
-      if (ancestorDescriptor instanceof CallHierarchyNodeDescriptor) {
-        PsiMember ancestorCallSite = ((CallHierarchyNodeDescriptor)ancestorDescriptor).getEnclosingElement();
+      if (ancestorDescriptor instanceof HierarchyNodeDescriptor) {
+        PsiMember ancestorCallSite = getEnclosingElement(((HierarchyNodeDescriptor)ancestorDescriptor).getPsiElement());
         if (ancestorCallSite == method) {
           // We have at least two occurrences in the parent chain of method already
           // Don't search any deeper

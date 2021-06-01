@@ -16,6 +16,7 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.psi.*;
+import com.intellij.util.ThreeState;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -63,10 +64,13 @@ public class InstanceofIncompatibleInterfaceInspection extends BaseInspection {
       if (operandClass == null || operandClass.isInterface()) {
         return;
       }
-      if (InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly())) {
-        return;
+      ThreeState hasMutualSubclass = InheritanceUtil.existsMutualSubclass(operandClass, castClass, isOnTheFly());
+      if (hasMutualSubclass == ThreeState.NO) {
+        registerError(castTypeElement);
       }
-      registerError(castTypeElement);
+      else if (hasMutualSubclass == ThreeState.UNSURE) {
+        registerPossibleProblem(castTypeElement);
+      }
     }
   }
 }

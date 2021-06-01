@@ -47,7 +47,7 @@ internal class GitCreateBranchOperation(
         markSuccessful(repository)
       }
       else {
-        fatalError(GitBundle.message("create.branch.operation.could.not.create.new.branch", branchName), result.errorOutputAsJoinedString)
+        fatalError(GitBundle.message("create.branch.operation.could.not.create.new.branch", branchName), result)
         fatalErrorHappened = true
       }
     }

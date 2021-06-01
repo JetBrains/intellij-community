@@ -3,6 +3,7 @@ package com.intellij.ide.actionMacro;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.openapi.editor.actionSystem.TypedAction;
@@ -274,10 +275,12 @@ public final class ActionMacro {
     @Override
     public void playBack(DataContext context) {
       Editor editor = CommonDataKeys.EDITOR.getData(context);
-      EditorActionManager.getInstance();
-      final TypedAction typedAction = TypedAction.getInstance();
-      for (final char aChar : myText.toCharArray()) {
-        typedAction.actionPerformed(editor, aChar, context);
+      if (editor != null) {
+        EditorActionManager.getInstance();
+        final TypedAction typedAction = TypedAction.getInstance();
+        for (final char aChar : myText.toCharArray()) {
+          typedAction.actionPerformed(editor, aChar, context);
+        }
       }
     }
 
@@ -361,11 +364,10 @@ public final class ActionMacro {
       if (action == null) return;
       Presentation presentation = action.getTemplatePresentation().clone();
       AnActionEvent event = new AnActionEvent(null, context, "MACRO_PLAYBACK", presentation, ActionManager.getInstance(), 0);
-      action.beforeActionPerformedUpdate(event);
-      if (!presentation.isEnabled()) {
+      if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
         return;
       }
-      action.actionPerformed(event);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
 
     @Override

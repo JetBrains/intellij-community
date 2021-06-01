@@ -10,10 +10,12 @@ import org.hamcrest.BaseMatcher
 import org.hamcrest.Description
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.SourceOptionQuickFix
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.UpdateSourceLevelQuickFix
+import org.junit.Test
 
 class MavenQuickFixTests : MavenBuildToolLogTestUtils() {
 
 
+  @Test
   fun testQuickFixSourceLevel() {
       testCase(*fromFile("org/jetbrains/maven/buildlogs/source-5-error-log.log"))
         .withSkippedOutput()

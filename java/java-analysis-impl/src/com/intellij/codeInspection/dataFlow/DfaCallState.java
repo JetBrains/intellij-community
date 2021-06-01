@@ -1,15 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import org.jetbrains.annotations.NotNull;
 
-final class DfaCallState {
+public final class DfaCallState {
   @NotNull final DfaMemoryState myMemoryState;
   @NotNull final DfaCallArguments myCallArguments;
   @NotNull final DfaValue myReturnValue;
 
-  DfaCallState(@NotNull DfaMemoryState state,
+  public DfaCallState(@NotNull DfaMemoryState state,
                @NotNull DfaCallArguments arguments,
                @NotNull DfaValue returnValue) {
     myMemoryState = state;
@@ -17,15 +18,27 @@ final class DfaCallState {
     myReturnValue = returnValue;
   }
 
-  @NotNull DfaCallState withMemoryState(@NotNull DfaMemoryState state) {
+  public @NotNull DfaMemoryState getMemoryState() {
+    return myMemoryState;
+  }
+
+  public @NotNull DfaCallArguments getCallArguments() {
+    return myCallArguments;
+  }
+
+  public @NotNull DfaValue getReturnValue() {
+    return myReturnValue;
+  }
+
+  public @NotNull DfaCallState withMemoryState(@NotNull DfaMemoryState state) {
     return new DfaCallState(state, myCallArguments, myReturnValue);
   }
 
-  @NotNull DfaCallState withArguments(@NotNull DfaCallArguments arguments) {
+  public @NotNull DfaCallState withArguments(@NotNull DfaCallArguments arguments) {
     return new DfaCallState(myMemoryState, arguments, myReturnValue);
   }
 
-  @NotNull DfaCallState withReturnValue(@NotNull DfaValue returnValue) {
+  public @NotNull DfaCallState withReturnValue(@NotNull DfaValue returnValue) {
     return new DfaCallState(myMemoryState, myCallArguments, returnValue);
   }
 

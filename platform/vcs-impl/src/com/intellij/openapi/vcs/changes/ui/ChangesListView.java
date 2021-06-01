@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.DnDAware;
@@ -14,9 +14,11 @@ import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcs.commit.EditedCommitNode;
 import com.intellij.vcsUtil.VcsUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import one.util.streamex.StreamEx;
@@ -40,7 +42,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
+public class ChangesListView extends HoverChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
   @NonNls public static final DataKey<Iterable<FilePath>> UNVERSIONED_FILE_PATHS_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
@@ -73,6 +75,12 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     if (subtreeRootObject instanceof LocalChangeList) return !((LocalChangeList)subtreeRootObject).getChanges().isEmpty();
     if (subtreeRootObject == UNVERSIONED_FILES_TAG) return true;
     return false;
+  }
+
+  @Nullable
+  @Override
+  public HoverIcon getHoverIcon(@NotNull ChangesBrowserNode<?> node) {
+    return null;
   }
 
   @Override
@@ -380,14 +388,26 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
+    return getAllChangesUnder(change, ChangesBrowserChangeListNode.class);
+  }
+
+  @Nullable
+  public List<Change> getAllChangesFromSameAmendNode(@NotNull Change change) {
+    return getAllChangesUnder(change, EditedCommitNode.class);
+  }
+
+  @Nullable
+  public List<Change> getAllChangesUnder(@NotNull Change change, Class<? extends ChangesBrowserNode<?>> @NotNull ... nodeClasses) {
     DefaultMutableTreeNode node = findNodeInTree(change);
+    boolean changeListNodeRequested = ArrayUtil.contains(ChangesBrowserChangeListNode.class, nodeClasses);
+
     while (node != null) {
-      if (node instanceof ChangesBrowserChangeListNode) {
-        return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
+      if (ArrayUtil.contains(node.getClass(), nodeClasses)) {
+        return ((ChangesBrowserNode<?>)node).getAllChangesUnder();
       }
       if (node == getRoot()) {
-        if (Registry.is("vcs.skip.single.default.changelist") ||
-            !ChangeListManager.getInstance(myProject).areChangeListsEnabled()) {
+        if (changeListNodeRequested && (Registry.is("vcs.skip.single.default.changelist") ||
+                                        !ChangeListManager.getInstance(myProject).areChangeListsEnabled())) {
           return getRoot().getAllChangesUnder();
         }
       }
@@ -411,7 +431,7 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
 
   @Override
   public void installPopupHandler(@NotNull ActionGroup group) {
-    PopupHandler.installPopupHandler(this, group, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(this, group, ActionPlaces.CHANGES_VIEW_POPUP);
   }
 
   @Override

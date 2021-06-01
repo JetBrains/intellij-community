@@ -6,8 +6,8 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
+import com.intellij.ide.impl.dataRules.FileEditorRule;
 import com.intellij.ide.impl.dataRules.GetDataRule;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -37,7 +37,7 @@ import static com.intellij.ide.impl.DataManagerImpl.validateEditor;
 /**
  * @author gregsh
  */
-class PreCachedDataContext implements DataContext, UserDataHolder {
+class PreCachedDataContext implements DataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier {
 
   private static int ourPrevMapEventCount;
   private static final Map<Component, Map<String, Object>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
@@ -79,19 +79,30 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
 
   private PreCachedDataContext(@NotNull Map<String, Object> cachedData,
                                @NotNull AtomicReference<KeyFMap> userData,
-                               @NotNull Consumer<? super String> missedKeys) {
+                               @Nullable Consumer<? super String> missedKeys) {
     myCachedData = cachedData;
     myUserData = userData;
     myMissedKeysIfFrozen = missedKeys;
   }
 
-  @NotNull
-  PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
-    return new PreCachedDataContext(myCachedData, myUserData, missedKeys == null ? s -> {} : missedKeys);
+  final @NotNull PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
+    Consumer<? super String> missedKeysNotNull = missedKeys == null ? s -> { } : missedKeys;
+    return this instanceof InjectedDataContext
+           ? new InjectedDataContext(myCachedData, myUserData, missedKeysNotNull)
+           : new PreCachedDataContext(myCachedData, myUserData, missedKeysNotNull);
   }
 
   @Override
-  public Object getData(@NotNull String dataId) {
+  public final @NotNull DataContext getInjectedDataContext() {
+    return this instanceof InjectedDataContext ? this : new InjectedDataContext(myCachedData, myUserData, myMissedKeysIfFrozen);
+  }
+  
+  boolean isFrozenDataContext() {
+    return myMissedKeysIfFrozen != null;
+  }
+
+  @Override
+  public @Nullable Object getData(@NotNull String dataId) {
     ProgressManager.checkCanceled();
     Object answer = myCachedData.get(dataId);
     if (answer != null && answer != NullResult.Initial) {
@@ -101,12 +112,8 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
       // allow slow data providers and rules to re-calc the value
     }
     else if (answer == null) {
-      if (dataId == AnActionEvent.uninjectedId(dataId)) {
-        return null; // a newly created data key => no data provider => no value
-      }
-      else if (!(myCachedData.get(InjectedDataKeys.EDITOR.getName()) instanceof EditorWindow)) {
-        return null; // no injected editor => no other injected values => no value
-      }
+      // a newly created data key => no data provider => no value
+      return null;
     }
 
     if (myMissedKeysIfFrozen != null) {
@@ -125,6 +132,11 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     return answer;
   }
 
+  @Nullable Object getRawDataIfCached(@NotNull String dataId) {
+    Object data = myCachedData.get(dataId);
+    return data == NullResult.Initial || data == NullResult.Final ? null : data;
+  }
+
   static {
     for (KeyedLazyInstance<GetDataRule> instance : GetDataRule.EP_NAME.getExtensionList()) {
       DataKey.create(instance.getKey()); // initialize data keys with rules
@@ -141,10 +153,6 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     cachedData.put(PlatformDataKeys.IS_MODAL_CONTEXT.getName(), IdeKeyEventDispatcher.isModalContext(component));
     cachedData.put(PlatformDataKeys.SLOW_DATA_PROVIDERS.getName(), slowProviders);
 
-    // Ignore injected data keys, injections are slow, and slow parts must be in slow providers.
-    // But make `injectedId(EDITOR)` known for `getData` and `ActionUpdater.ensureSlowDataKeysPreCached`.
-    cachedData.put(InjectedDataKeys.EDITOR.getName(), NullResult.Initial);
-
     DataKey<?>[] keys = DataKey.allKeys();
     BitSet computed = new BitSet(keys.length);
     for (Component c = component; c != null; c = c.getParent()) {
@@ -159,7 +167,7 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
         }
         boolean alreadyComputed = computed.get(i);
         Object data = !alreadyComputed || key == PlatformDataKeys.SLOW_DATA_PROVIDERS ?
-                      dataManager.getDataFromProvider(dataProvider, key.getName(), null, null) : null;
+                      dataManager.getDataFromProvider(dataProvider, key.getName(), null, getFastDataRule(key)) : null;
         if (data instanceof Editor) data = validateEditor((Editor)data, component);
         if (data == null) continue;
 
@@ -191,9 +199,17 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     }
   }
 
+  private static final GetDataRule ourFileEditorRule = new FileEditorRule();
+
+  private static @Nullable GetDataRule getFastDataRule(@NotNull DataKey<?> key) {
+    return key == PlatformDataKeys.FILE_EDITOR ? ourFileEditorRule : null;
+  }
+
   @Override
   public String toString() {
-    return "component=" + getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    return (this instanceof InjectedDataContext ? "injected:" : "") +
+           (myMissedKeysIfFrozen != null ? "frozen:" : "") +
+           "component=" + getData(PlatformDataKeys.CONTEXT_COMPONENT);
   }
 
   @Override
@@ -212,7 +228,28 @@ class PreCachedDataContext implements DataContext, UserDataHolder {
     }
   }
 
+  /**
+   * {@link #myCachedData} contains
+   * - {@code null} for data keys for which the corresponding {@link #getData(String)} was never called (E.g. for {@link DataKey}s created dynamically during other {@link #getData(String)} execution);
+   * - {@link NullResult#Initial} for data keys which returned {@code null} from the corresponding {@link #getData(String)} during {@link #PreCachedDataContext(Component)} execution;
+   * - {@link NullResult#Final} for data keys which returned {@code null} from both {@link #getData(String)} invocations: in constructor and after all data rules execution
+   */
   private enum NullResult {
     Initial, Final
+  }
+
+  private static class InjectedDataContext extends PreCachedDataContext {
+    InjectedDataContext(@NotNull Map<String, Object> cachedData,
+                        @NotNull AtomicReference<KeyFMap> userData,
+                        @Nullable Consumer<? super String> missedKeys) {
+      super(cachedData, userData, missedKeys);
+    }
+
+    @Override
+    public @Nullable Object getData(@NotNull String dataId) {
+      String injectedId = InjectedDataKeys.injectedId(dataId);
+      Object injected = injectedId != null ? super.getData(injectedId) : null;
+      return injected != null ? injected : super.getData(dataId);
+    }
   }
 }

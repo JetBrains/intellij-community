@@ -1,9 +1,7 @@
 <html>
 <body>
-<p>
-  Reports any methods which override methods in a superclass but do not have the
-  <code>@java.lang.Override</code> annotation.
-</p>
+Reports any methods which override methods in a superclass but do not have the
+<code>@java.lang.Override</code> annotation.
 <p>
   Having annotation is good for readability because it shows intent. Also in this
   case compiler emits error when signature of the overridden method doesn't match
@@ -23,7 +21,8 @@
   </li>
   <li>
     Use the second checkbox below to have this inspection ignore overriding methods
-    in anonymous classes.
+    in anonymous classes. It might be useful for you if you want anonymous classes
+    to be as short as possible.
   </li>
 </ul>
 <p>This inspection only reports if the language level of the project or module is 5 or higher</p>

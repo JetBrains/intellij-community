@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
@@ -17,16 +14,18 @@ import com.intellij.psi.search.NonClasspathDirectoriesScope.compose
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.classpathEntryToVfs
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager.Companion.toVfsRoots
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptCacheDependencies.Companion.scriptCacheDependencies
-import org.jetbrains.kotlin.idea.core.util.*
+import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
+import org.jetbrains.kotlin.idea.core.util.readObject
+import org.jetbrains.kotlin.idea.core.util.writeObject
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
 import java.io.DataInputStream
 import java.io.DataOutputStream
-import java.io.File
 import java.io.Serializable
 import java.lang.ref.Reference
 import java.lang.ref.SoftReference
+import kotlin.io.path.Path
 
 class ScriptClassRootsCache(
     private val scripts: Map<String, LightScriptInfo>,
@@ -103,12 +102,12 @@ class ScriptClassRootsCache(
     init {
         allDependenciesClassFiles = mutableSetOf<VirtualFile>().also { result ->
             result.addAll(sdks.nonIndexedClassRoots)
-            classes.mapNotNullTo(result) { classpathEntryToVfs(File(it)) }
+            classes.mapNotNullTo(result) { classpathEntryToVfs(Path(it)) }
         }
 
         allDependenciesSources = mutableSetOf<VirtualFile>().also { result ->
             result.addAll(sdks.nonIndexedSourceRoots)
-            sources.mapNotNullTo(result) { classpathEntryToVfs(File(it)) }
+            sources.mapNotNullTo(result) { classpathEntryToVfs(Path(it)) }
         }
     }
 
@@ -268,7 +267,7 @@ internal class ScriptCacheDependencies(
 
 }
 
-class ScriptCacheDependenciesFileInvalidator: CachesInvalidator() {
+class ScriptCacheDependenciesFileInvalidator : CachesInvalidator() {
     override fun invalidateCaches() {
         ProjectManager.getInstance().openProjects.forEach {
             ScriptCacheDependencies(ScriptClassRootsCache.EMPTY).save(it)
@@ -277,7 +276,7 @@ class ScriptCacheDependenciesFileInvalidator: CachesInvalidator() {
 }
 
 @Service
-internal class ScriptCacheDependenciesFile: AbstractFileAttributePropertyService<ScriptCacheDependencies>(
+internal class ScriptCacheDependenciesFile : AbstractFileAttributePropertyService<ScriptCacheDependencies>(
     name = "kotlin-script-cache-dependencies",
     version = 1,
     read = DataInputStream::readObject,

@@ -2,10 +2,12 @@
 package org.jetbrains.jps.indices.impl;
 
 import com.intellij.openapi.fileTypes.impl.FileTypeAssocTable;
+import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.containers.FileCollectionFactory;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.indices.ModuleExcludeIndex;
 import org.jetbrains.jps.model.JpsExcludePattern;
 import org.jetbrains.jps.model.JpsModel;
@@ -18,6 +20,7 @@ import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.*;
 
 /**
@@ -205,5 +208,12 @@ public final class ModuleExcludeIndexImpl implements ModuleExcludeIndex {
   @Override
   public Collection<File> getModuleExcludes(JpsModule module) {
     return myModuleToExcludesMap.get(module);
+  }
+
+  @Override
+  public @NotNull FileFilter getModuleFileFilterHonorExclusionPatterns(@NotNull JpsModule module) {
+    List<File> contentRoots = myModuleToContentMap.get(module);
+    if (contentRoots == null || contentRoots.isEmpty() || myExcludeFromContentRootTables.isEmpty()) return FileFilters.EVERYTHING;
+    return file -> determineFileLocation(file, contentRoots, Collections.emptyList()) == FileLocation.IN_CONTENT;
   }
 }

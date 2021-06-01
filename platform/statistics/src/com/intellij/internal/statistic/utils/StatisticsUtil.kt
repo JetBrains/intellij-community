@@ -31,6 +31,13 @@ object StatisticsUtil {
   fun getNextPowerOfTwo(value: Int): Int = if (value <= 1) 1 else Integer.highestOneBit(value - 1) shl 1
 
   /**
+   * Anonymizes sensitive project properties by rounding it to the next power of two
+   * See `com.intellij.internal.statistic.collectors.fus.fileTypes.FileTypeUsagesCollector`
+   */
+  @JvmStatic
+  fun getNextPowerOfTwo(value: Long): Long = if (value <= 1) 1 else java.lang.Long.highestOneBit(value - 1) shl 1
+
+  /**
    * Anonymizes value by finding upper bound in provided bounds.
    * Allows more fine tuning then `com.intellij.internal.statistic.utils.StatisticsUtil#getNextPowerOfTwo`
    * but requires manual maintaining.
@@ -85,5 +92,17 @@ object StatisticsUtil {
     val ks = if (k > 0) "${k}K" else ""
     val rs = if (r > 0) "${r}" else ""
     return ms + ks + rs
+  }
+
+  /**
+   * If multiple events with duration will happen one after another, we won't merge them if they have different duration,
+   * e.g. EditorRight happens in big batches
+   */
+  fun roundDuration(durationMs: Long): Long {
+    if (durationMs >= 100 || durationMs < 0) {
+      // negative durations shouldn't happen but if they are we want to see it
+      return (durationMs / 100) * 100
+    }
+    return if (durationMs >= 50) 50 else 0
   }
 }

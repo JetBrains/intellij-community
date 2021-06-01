@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -17,6 +14,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.psi.PsiElement
+import com.intellij.util.io.exists
 import org.jetbrains.annotations.Contract
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.ApiVersion
@@ -37,7 +35,8 @@ import org.jetbrains.kotlin.idea.util.projectStructure.sdk
 import org.jetbrains.kotlin.idea.versions.LibraryJarDescriptor
 import org.jetbrains.kotlin.idea.versions.findAllUsedLibraries
 import org.jetbrains.kotlin.idea.versions.findKotlinRuntimeLibrary
-import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.*
 
 abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinProjectConfigurator {
     protected abstract val libraryName: String
@@ -168,7 +167,7 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
 
             val runtimeState = forceJarState ?: getJarState(
                 project,
-                File(dirToCopyJar, descriptor.jarName),
+                Path(dirToCopyJar, descriptor.jarName),
                 descriptor.orderRootType, useBundled
             )
 
@@ -190,17 +189,18 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
         val jarFile = if (jarState == FileState.DO_NOT_COPY)
             libraryJarDescriptor.getPathInPlugin()
         else
-            File(dirToCopyJarTo, libraryJarDescriptor.jarName)
+            Path(dirToCopyJarTo, libraryJarDescriptor.jarName)
 
         if (jarState == FileState.COPY) {
             copyFileToDir(libraryJarDescriptor.getPathInPlugin(), dirToCopyJarTo, collector)
         }
 
-        val jarVFile = LocalFileSystem.getInstance().findFileByIoFile(jarFile)
+        val jarVFile = LocalFileSystem.getInstance().findFileByNioFile(jarFile)
         if (jarVFile == null) {
             collector.addMessage(KotlinJvmBundle.message("can.t.find.library.jar.file.0", jarFile))
             return
         }
+
         val jarRoot = JarFileSystem.getInstance().getJarRootForLocalFile(jarVFile)
         if (jarRoot == null) {
             collector.addMessage(KotlinJvmBundle.message("couldn.t.configure.library.jar.file.0.may.be.corrupted", jarVFile))
@@ -220,13 +220,14 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
     }
 
     @Contract("!null, _, _ -> !null")
-    fun copyFileToDir(file: File?, toDir: String, collector: NotificationMessageCollector): File? {
-        if (file == null) return null
+    fun copyFileToDir(path: Path?, toDir: String, collector: NotificationMessageCollector): Path? {
+        if (path == null) return null
 
-        val copy = FileUIUtils.copyWithOverwriteDialog(messageForOverrideDialog, toDir, file)
+        val copy = FileUIUtils.copyWithOverwriteDialog(messageForOverrideDialog, toDir, path)
         if (copy != null) {
-            collector.addMessage(KotlinJvmBundle.message("0.was.copied.to.1", file.name, toDir))
+            collector.addMessage(KotlinJvmBundle.message("0.was.copied.to.1", path.name, toDir))
         }
+
         return copy
     }
 
@@ -285,21 +286,17 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
 
     protected abstract val libraryMatcher: (Library, Project) -> Boolean
 
-    fun getKotlinLibrary(module: Module): Library? {
-        return findKotlinRuntimeLibrary(module, this::isKotlinLibrary)
-    }
+    fun getKotlinLibrary(module: Module): Library? = findKotlinRuntimeLibrary(module, this::isKotlinLibrary)
 
     private fun isKotlinLibrary(library: Library, project: Project) = library.name == libraryName || libraryMatcher(library, project)
 
     protected fun needToChooseJarPath(project: Project): Boolean {
         val defaultPath = getDefaultPathToJarFile(project)
-        return !isProjectLibraryPresent(project) &&
-                !File(defaultPath, getLibraryJarDescriptors(null).first().jarName).exists()
+        return !isProjectLibraryPresent(project) && Path(defaultPath, getLibraryJarDescriptors(null).first().jarName).notExists()
     }
 
-    open fun getDefaultPathToJarFile(project: Project): String {
-        return FileUIUtils.createRelativePath(project, project.baseDir, DEFAULT_LIBRARY_DIR)
-    }
+    open fun getDefaultPathToJarFile(project: Project): String =
+        FileUIUtils.createRelativePath(project, project.baseDir, DEFAULT_LIBRARY_DIR)
 
     enum class FileState {
         EXISTS,
@@ -309,7 +306,7 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
 
     protected fun getJarState(
         project: Project,
-        targetFile: File,
+        targetFile: Path,
         jarType: OrderRootType,
         useBundled: Boolean
     ): FileState = when {
@@ -440,20 +437,19 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
             val runtimeJar = LibraryJarDescriptor.RUNTIME_JAR.findExistingJar(lib) ?: continue
 
             val model = lib.modifiableModel
-            val libFilesDir = VfsUtilCore.virtualToIoFile(runtimeJar).parent
-
+            val libFilesDir = VfsUtil.getLocalFile(runtimeJar).toNioPath().parent
             for (libraryJarDescriptor in libraryJarDescriptors) {
                 if (libraryJarDescriptor.findExistingJar(lib) != null) continue
 
                 val libFile = libraryJarDescriptor.getPathInPlugin()
-                if (!libFile.exists()) continue
+                if (libFile.notExists()) continue
 
-                val libIoFile = File(libFilesDir, libraryJarDescriptor.jarName)
+                val libIoFile = libFilesDir.resolve(libraryJarDescriptor.jarName)
                 if (libIoFile.exists()) {
-                    model.addRoot(VfsUtil.getUrlForLibraryRoot(libIoFile), libraryJarDescriptor.orderRootType)
+                    model.addRoot(VfsUtil.getUrlForLibraryRoot(libIoFile.toFile()), libraryJarDescriptor.orderRootType)
                 } else {
-                    val copied = copyFileToDir(libFile, libFilesDir, collector)!!
-                    model.addRoot(VfsUtil.getUrlForLibraryRoot(copied), libraryJarDescriptor.orderRootType)
+                    val copied = copyFileToDir(libFile, libFilesDir.pathString, collector)!!
+                    model.addRoot(VfsUtil.getUrlForLibraryRoot(copied.toFile()), libraryJarDescriptor.orderRootType)
                 }
             }
 
@@ -474,15 +470,16 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
         }
 
         fun getPathFromLibraryUrls(libraryFiles: Array<String>): String? {
-            if (libraryFiles.size < 1) return null
+            if (libraryFiles.isEmpty()) return null
 
-            val pathToJarInLib = VfsUtilCore.urlToPath(libraryFiles[0])
+            val pathToJarInLib = VfsUtilCore.urlToPath(libraryFiles.first())
             val parentDir = VfsUtil.getParentDir(VfsUtil.getParentDir(pathToJarInLib)) ?: return null
 
-            val parentDirFile = File(parentDir)
-            if (!parentDirFile.exists() && !parentDirFile.mkdirs()) {
-                return null
+            val parentDirFile = Path(parentDir)
+            if (parentDirFile.notExists()) {
+                parentDirFile.createDirectories().takeIf(Path::exists) ?: return null
             }
+
             return parentDir
         }
 
@@ -496,11 +493,7 @@ abstract class KotlinWithLibraryConfigurator protected constructor() : KotlinPro
             return null
         }
 
-        private fun getDependencyScope(module: Module): DependencyScope {
-            if (hasKotlinFilesOnlyInTests(module)) {
-                return DependencyScope.TEST
-            }
-            return DependencyScope.COMPILE
-        }
+        private fun getDependencyScope(module: Module): DependencyScope =
+            if (hasKotlinFilesOnlyInTests(module)) DependencyScope.TEST else DependencyScope.COMPILE
     }
 }

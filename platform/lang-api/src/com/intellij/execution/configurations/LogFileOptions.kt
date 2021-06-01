@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations
 
 import com.intellij.openapi.components.BaseState
@@ -6,7 +6,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.util.SmartList
-import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Tag
@@ -80,8 +79,7 @@ class LogFileOptions : BaseState {
     }
 
     if (isShowAll) {
-      val result = SmartHashSet<String>()
-      result.ensureCapacity(files.size)
+      val result = HashSet<String>(files.size)
       files.mapTo(result) { it.path }
       return result
     }

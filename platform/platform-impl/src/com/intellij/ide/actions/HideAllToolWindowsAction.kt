@@ -61,6 +61,7 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
         if (window == null || !window.owner.isFloating) {
           if (getIDsToHide(it).isNotEmpty()) {
             isEnabled = true
+            putClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY, false)
             text = IdeBundle.message("action.hide.all.windows")
             return
           }
@@ -68,6 +69,7 @@ internal class HideAllToolWindowsAction : DumbAwareAction() {
           if (it.layoutToRestoreLater != null) {
             isEnabled = true
             text = IdeBundle.message("action.restore.windows")
+            putClientProperty(MaximizeEditorInSplitAction.CURRENT_STATE_IS_MAXIMIZED_KEY, true)
             return
           }
         }

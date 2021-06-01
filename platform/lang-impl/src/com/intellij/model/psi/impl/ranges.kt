@@ -60,7 +60,7 @@ private class RangeOverlapException(
 ) : IllegalArgumentException("Overlapping ranges: $range1 and $range2")
 
 private fun <T> buildDiagnostic(items: Collection<T>, itemRange: (T) -> TextRange): String {
-  return items.joinToString(separator = "\n") { item ->
-    "${itemRange(item)} : ${(item as? Any)?.javaClass} : ${item}"
+  return items.joinToString(separator = "") { item ->
+    "\n${itemRange(item)} : $item"
   }
 }

@@ -32,10 +32,6 @@ abstract class BaseLayout {
   /** set of keys in {@link #moduleJars} which are set explicitly, not automatically derived from modules names */
   final Set<String> explicitlySetJarPaths = new LinkedHashSet<>()
 
-  String localizableResourcesJarName(String moduleName) {
-    return localizableResourcesJars.get(moduleName)
-  }
-
   static String convertModuleNameToFileName(String moduleName) {
     StringUtil.trimStart(moduleName, "intellij.").replace('.', '-')
   }

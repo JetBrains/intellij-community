@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.core.script.configuration.cache
 
@@ -11,7 +8,9 @@ import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoader
 import org.jetbrains.kotlin.idea.core.script.configuration.loader.ScriptConfigurationLoadingContext
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
-import org.jetbrains.kotlin.idea.core.util.*
+import org.jetbrains.kotlin.idea.core.util.AbstractFileAttributePropertyService
+import org.jetbrains.kotlin.idea.core.util.readObject
+import org.jetbrains.kotlin.idea.core.util.writeObject
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
@@ -20,6 +19,8 @@ import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrap
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.io.Serializable
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
 import kotlin.script.experimental.api.*
 import kotlin.script.experimental.host.withDefaultsFrom
 import kotlin.script.experimental.jvm.impl.toClassPathOrEmpty
@@ -74,19 +75,18 @@ internal class ScriptConfigurationFileAttributeCache(
         return configurationSnapshot
     }
 
-    private fun areDependenciesValid(file: VirtualFile, configuration: ScriptCompilationConfiguration): Boolean {
-        val classpath = configuration.get(ScriptCompilationConfiguration.dependencies).toClassPathOrEmpty()
-        return classpath.all {
-            if (it.exists()) {
+    private fun areDependenciesValid(file: VirtualFile, configuration: ScriptCompilationConfiguration): Boolean =
+        configuration[ScriptCompilationConfiguration.dependencies].toClassPathOrEmpty().all {
+            val path = it.toPath()
+            if (path.exists()) {
                 true
             } else {
                 scriptingDebugLog(file) {
-                    "classpath root saved to file attribute doesn't exist: ${it.path}"
+                    "classpath root saved to file attribute doesn't exist: ${path.pathString}"
                 }
                 false
             }
         }
-    }
 
     fun save(file: VirtualFile, value: ScriptConfigurationSnapshot?) {
         ScriptConfigurationSnapshotFile[project, file] = value?.let {
@@ -106,7 +106,7 @@ class ScriptConfigurationSnapshotForFS(
 ) : Serializable
 
 @Service
-class ScriptConfigurationSnapshotFile: AbstractFileAttributePropertyService<ScriptConfigurationSnapshotForFS>(
+class ScriptConfigurationSnapshotFile : AbstractFileAttributePropertyService<ScriptConfigurationSnapshotForFS>(
     name = "kotlin-script-dependencies",
     version = 5,
     read = DataInputStream::readObject,

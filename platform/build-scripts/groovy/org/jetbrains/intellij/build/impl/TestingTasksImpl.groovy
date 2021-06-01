@@ -289,7 +289,7 @@ class TestingTasksImpl extends TestingTasks {
     if (isRunningInBatchMode()) {
       context.messages.info("Running tests from ${mainModule} matched by '${options.batchTestIncludes}' pattern.")
     } else {
-      context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"}")
+      context.messages.info("Starting ${testGroups != null ? "test from groups '${testGroups}'" : "all tests"} from classpath of module '$mainModule'")
     }
     if (options.customJrePath != null) {
       context.messages.info("JVM: $options.customJrePath")

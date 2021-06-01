@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.sh.formatter;
 
 import com.intellij.execution.ExecutionException;
@@ -16,7 +16,6 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -29,10 +28,14 @@ import com.intellij.sh.settings.ShSettings;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 
 import static com.intellij.sh.ShBundle.message;
 import static com.intellij.sh.ShLanguage.NOTIFICATION_GROUP_ID;
@@ -41,9 +44,7 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
   private static final Logger LOG = Logger.getInstance(ShExternalFormatter.class);
   @NonNls private static final List<String> KNOWN_SHELLS = Arrays.asList("bash", "posix", "mksh");
 
-  private static final Key<String> SHELL_INTERPRETER_KEY = Key.create("shell.formatter.interpreter");
-
-  private final static Set<Feature> FEATURES = EnumSet.noneOf(Feature.class);
+  private static final Set<Feature> FEATURES = EnumSet.noneOf(Feature.class);
 
   @Override
   public boolean canFormat(@NotNull PsiFile file) {
@@ -51,7 +52,7 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
   }
 
   @Override
-  public Set<Feature> getFeatures() {
+  public @NotNull Set<Feature> getFeatures() {
     return FEATURES;
   }
 
@@ -61,7 +62,13 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
   }
 
   @Override
-  protected boolean prepare(@NotNull FormattingContext formattingContext) {
+  protected @NotNull String getName() {
+    return message("sh.shell.script");
+  }
+
+  @Override
+  protected @Nullable FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest request) {
+    FormattingContext formattingContext = request.getContext();
     Project project = formattingContext.getProject();
     String shFmtExecutable = ShSettings.getShfmtPath();
     if (!ShShfmtFormatterUtil.isValidPath(shFmtExecutable)) {
@@ -87,32 +94,25 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
         }));
         Notifications.Bus.notify(notification, project);
       }
-      return false;
+      return null;
     }
     ShShfmtFormatterUtil.checkShfmtForUpdate(project);
-    formattingContext.putUserData(
-      SHELL_INTERPRETER_KEY,
-      ShShebangParserUtil.getInterpreter((ShFile)formattingContext.getContainingFile(), KNOWN_SHELLS, "bash"));
-    return true;
-  }
+    String interpreter = ShShebangParserUtil.getInterpreter((ShFile)formattingContext.getContainingFile(), KNOWN_SHELLS, "bash");
 
-  @Override
-  protected void asyncFormat(@NotNull AsyncFormattingRequest request) {
-    VirtualFile file = request.getContext().getVirtualFile();
-    if (file == null || !file.exists()) return;
+    VirtualFile file = formattingContext.getVirtualFile();
+    if (file == null || !file.exists()) return null;
 
-    CodeStyleSettings settings = request.getContext().getCodeStyleSettings();
+    CodeStyleSettings settings = formattingContext.getCodeStyleSettings();
     ShCodeStyleSettings shSettings = settings.getCustomSettings(ShCodeStyleSettings.class);
-    String shFmtExecutable = ShSettings.getShfmtPath();
-    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(shFmtExecutable)) return;
+    if (ShSettings.I_DO_MIND_SUPPLIER.get().equals(shFmtExecutable)) return null;
 
     String filePath = file.getPath();
     String realPath = FileUtil.toSystemDependentName(filePath);
-    if (!new File(realPath).exists()) return;
+    if (!new File(realPath).exists()) return null;
 
     @NonNls
     List<String> params = new SmartList<>();
-    params.add("-ln=" + Objects.requireNonNull(request.getContext().getUserData(SHELL_INTERPRETER_KEY)));
+    params.add("-ln=" + interpreter);
     if (!settings.useTabCharacter(file.getFileType())) {
       int tabSize = settings.getIndentSize(file.getFileType());
       params.add("-i=" + tabSize);
@@ -141,37 +141,39 @@ public class ShExternalFormatter extends AsyncDocumentFormattingService {
         .withParameters(params);
 
       OSProcessHandler handler = new OSProcessHandler(commandLine.withCharset(StandardCharsets.UTF_8));
-      runCancellable(
-        request,
-        new AsyncFormattingRequest.CancellableRunnable() {
-
-          @Override
-          public void run() {
-            handler.addProcessListener(new CapturingProcessAdapter() {
-              @Override
-              public void processTerminated(@NotNull ProcessEvent event) {
-                int exitCode = event.getExitCode();
-                if (exitCode == 0) {
-                  request.onTextReady(getOutput().getStdout());
-                }
-                else {
-                  request.onError(message("sh.shell.script"), getOutput().getStderr());
-                }
+      return new FormattingTask() {
+        @Override
+        public void run() {
+          handler.addProcessListener(new CapturingProcessAdapter() {
+            @Override
+            public void processTerminated(@NotNull ProcessEvent event) {
+              int exitCode = event.getExitCode();
+              if (exitCode == 0) {
+                request.onTextReady(getOutput().getStdout());
               }
-            });
-            handler.startNotify();
-          }
-
-          @Override
-          public boolean cancel() {
-            handler.destroyProcess();
-            return true;
-          }
+              else {
+                request.onError(message("sh.shell.script"), getOutput().getStderr());
+              }
+            }
+          });
+          handler.startNotify();
         }
-      );
+
+        @Override
+        public boolean cancel() {
+          handler.destroyProcess();
+          return true;
+        }
+
+        @Override
+        public boolean isRunUnderProgress() {
+          return true;
+        }
+      };
     }
     catch (ExecutionException e) {
       request.onError(message("sh.shell.script"), e.getMessage());
+      return null;
     }
   }
 

@@ -56,6 +56,8 @@ class StatisticsUtilTest : LightPlatformTestCase() {
     testPowerOfTwo(2, 2)
     testPowerOfTwo(3, 4)
     testPowerOfTwo(5, 8)
+    testPowerOfTwo(8, 8)
+    testPowerOfTwo(9, 16)
   }
 
   private fun testPowerOfTwo(value: Int, expected: Int) {
@@ -122,6 +124,23 @@ class StatisticsUtilTest : LightPlatformTestCase() {
     TestCase.assertEquals("00062910", getCurrentHourInUTC(getCalendarByDate(1999, Calendar.JUNE, 29, 10)))
   }
 
+  @Test
+  fun `test rounding duration`() {
+    for (i in 0..49) assertRoundedValue(i, 0L)
+    for (i in 50..99) assertRoundedValue(i, 50L)
+
+    for (i in 100..199 step 3) assertRoundedValue(i, 100L)
+    for (i in 300..399 step 7) assertRoundedValue(i, 300L)
+    for (i in 25200..25299 step 9) assertRoundedValue(i, 25200L)
+  }
+
+  @Test
+  fun `test rounding negative duration`() {
+    for (i in -1 downTo -99 step 3) assertRoundedValue(i, 0L)
+    for (i in -100 downTo -199 step 7) assertRoundedValue(i, -100L)
+    for (i in -2345100 downTo -2345199 step 7) assertRoundedValue(i, -2345100L)
+  }
+
   private fun getCalendarByDate(year: Int, month: Int, day: Int, hour: Int, zone: ZoneOffset = ZoneOffset.UTC): Calendar {
     val calendar = Calendar.getInstance(TimeZone.getTimeZone(zone), Locale.ENGLISH)
     calendar.set(year, month, day, hour, 15)
@@ -151,5 +170,10 @@ class StatisticsUtilTest : LightPlatformTestCase() {
 
   private fun getCountingUsage(key: String, value: Int, steps: List<Int>) : MetricEvent {
     return newMetric(key, StatisticsUtil.getCountingStepName(value, steps))
+  }
+
+  private fun assertRoundedValue(raw: Int, expected: Long) {
+    val rounded = StatisticsUtil.roundDuration(raw.toLong())
+    assertEquals("Failed rounding for '$raw'", expected, rounded)
   }
 }

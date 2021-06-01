@@ -22,9 +22,7 @@ import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class CreateClassQuickFix implements LocalQuickFix {
   private final String myClassName;
   private final SmartPsiElementPointer<PsiElement> myAnchor;

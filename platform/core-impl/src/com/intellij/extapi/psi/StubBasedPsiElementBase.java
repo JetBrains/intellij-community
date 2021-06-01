@@ -139,7 +139,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
     StubTree stubTree = file.getStubTree();
     final String stubString = stubTree != null ? ((PsiFileStubImpl<?>)stubTree.getRoot()).printTree() : null;
     final String astString = RecursionManager.doPreventingRecursion("failedToBindStubToAst", true,
-                                                                    () -> DebugUtil.treeToString(fileElement, true));
+                                                                    () -> DebugUtil.treeToString(fileElement, false));
 
     @NonNls final String message = "Failed to bind stub to AST for element " + getClass() + " in " +
                                    (vFile == null ? "<unknown file>" : vFile.getPath()) +
@@ -382,7 +382,7 @@ public class StubBasedPsiElementBase<T extends StubElement> extends ASTDelegateP
   public <S extends StubElement<?>, Psi extends PsiElement> Psi getRequiredStubOrPsiChild(@NotNull IStubElementType<S, Psi> elementType) {
     Psi result = getStubOrPsiChild(elementType);
     if (result == null) {
-      throw new AssertionError("Missing required child of type " + elementType + "; tree: " + DebugUtil.psiToString(this, false));
+      throw new AssertionError("Missing required child of type " + elementType + "; tree: " + DebugUtil.psiToString(this, true));
     }
     return result;
   }

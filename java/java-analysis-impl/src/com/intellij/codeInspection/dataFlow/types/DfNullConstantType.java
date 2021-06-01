@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.TypeConstraint;
 import com.intellij.codeInspection.dataFlow.TypeConstraints;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -43,7 +44,16 @@ public class DfNullConstantType extends DfConstantType<Object> implements DfRefe
     if (other.isSuperType(this)) return other;
     if (!(other instanceof DfReferenceType)) return TOP;
     DfReferenceType type = (DfReferenceType)other;
-    return new DfGenericObjectType(Set.of(), type.getConstraint(), DfaNullability.NULL.unite(type.getNullability()),
+    Set<Object> notValues = type instanceof DfGenericObjectType ? ((DfGenericObjectType)type).getRawNotValues() : Set.of();
+    return new DfGenericObjectType(notValues, type.getConstraint(), DfaNullability.NULL.unite(type.getNullability()),
                                    type.getMutability(), null, BOTTOM, false);
+  }
+
+  @Override
+  public @Nullable DfType tryJoinExactly(@NotNull DfType other) {
+    if (isMergeable(other)) return this;
+    if (other.isMergeable(this)) return other;
+    if (other instanceof DfGenericObjectType) return other.tryJoinExactly(this);
+    return null;
   }
 }

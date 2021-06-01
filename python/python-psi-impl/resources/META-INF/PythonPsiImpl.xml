@@ -49,6 +49,13 @@
                              implementationClass="com.jetbrains.python.psi.impl.PyKeywordArgumentManipulator"/>
     <lang.parserDefinition language="Python" implementationClass="com.jetbrains.python.PythonParserDefinition"/>
 
+    <!-- PyFunctionTypeAnnotation -->
+    <lang.parserDefinition language="PyFunctionTypeComment"
+                           implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>
+
+    <lang.parserDefinition language="PyTypeHint"
+                           implementationClass="com.jetbrains.python.codeInsight.typeHints.PyTypeHintParserDefinition"/>
+
     <moduleService serviceInterface="com.jetbrains.python.psi.resolve.PythonPathCache"
                    serviceImplementation="com.jetbrains.python.psi.resolve.PythonModulePathCache"/>
 
@@ -70,8 +77,9 @@
 
     <!-- PyDocstring -->
     <languageInjector implementation="com.jetbrains.python.documentation.doctest.PyDocstringLanguageInjector"/>
-    <lang.parserDefinition language="PyDocstring" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringParserDefinition"/>
+    <lang.parserDefinition language="Doctest" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringParserDefinition"/>
     <highlightErrorFilter implementation="com.jetbrains.python.documentation.doctest.PyDocstringErrorFilter"/>
+    <lang.formatter language="Doctest" implementationClass="com.jetbrains.python.documentation.doctest.PyDocstringFormattingModelBuilder"/>
 
 
     <lang.parserDefinition language="PythonStub" implementationClass="com.jetbrains.python.pyi.PyiParserDefinition"/>
@@ -163,7 +171,6 @@
     <localInspection language="Python" shortName="PyExceptionInheritInspection" suppressId="PyExceptionInherit" bundle="messages.PyPsiBundle" key="INSP.NAME.exception.not.inherit" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyExceptionInheritInspection"/>
     <localInspection language="Python" shortName="PyUnboundLocalVariableInspection" suppressId="PyUnboundLocalVariable" bundle="messages.PyPsiBundle" key="INSP.NAME.unbound" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyUnboundLocalVariableInspection"/>
     <localInspection language="Python" shortName="PyStatementEffectInspection" suppressId="PyStatementEffect" bundle="messages.PyPsiBundle" key="INSP.NAME.statement.effect" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyStatementEffectInspection"/>
-    <localInspection language="Python" shortName="PyStringExceptionInspection" suppressId="PyStringException" bundle="messages.PyPsiBundle" key="INSP.NAME.raising.string.exception" groupKey="INSP.GROUP.python" enabledByDefault="true" level="ERROR" implementationClass="com.jetbrains.python.inspections.PyStringExceptionInspection"/>
     <localInspection language="Python" shortName="PySuperArgumentsInspection" suppressId="PySuperArguments" bundle="messages.PyPsiBundle" key="INSP.NAME.wrong.super.arguments" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PySuperArgumentsInspection"/>
     <localInspection language="Python" shortName="PyNonAsciiCharInspection" suppressId="PyNonAsciiChar" bundle="messages.PyPsiBundle" key="INSP.NAME.non.ascii" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyNonAsciiCharInspection"/>
     <localInspection language="Python" shortName="PyTupleItemAssignmentInspection" suppressId="PyTupleItemAssignment" bundle="messages.PyPsiBundle" key="INSP.NAME.tuple.item.assignment" groupKey="INSP.GROUP.python" enabledByDefault="true" level="WARNING" implementationClass="com.jetbrains.python.inspections.PyTupleItemAssignmentInspection"/>

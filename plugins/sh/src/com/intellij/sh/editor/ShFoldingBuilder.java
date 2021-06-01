@@ -62,7 +62,7 @@ public class ShFoldingBuilder extends CustomFoldingBuilder {
                                   @NotNull Document document) {
     Set<PsiElement> handledComments = new HashSet<>();
     psiElements.forEach(element -> {
-      if (element instanceof PsiComment && !handledComments.contains(element)) {
+      if (element instanceof PsiComment && ((PsiComment)element).getTokenType() != ShTypes.SHEBANG && !handledComments.contains(element)) {
         PsiElement lastComment = element;
         PsiElement currentElement = element;
         handledComments.add(element);

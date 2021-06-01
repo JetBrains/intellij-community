@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -10,7 +7,7 @@ import com.intellij.debugger.jdi.StackFrameProxyImpl
 import com.intellij.execution.process.ProcessOutputTypes
 import org.jetbrains.kotlin.idea.debugger.coroutine.data.CoroutineStackFrameItem
 import org.jetbrains.kotlin.idea.debugger.coroutine.util.CoroutineFrameBuilder
-import org.jetbrains.kotlin.idea.debugger.coroutine.util.isPreFlight
+import org.jetbrains.kotlin.idea.debugger.coroutine.util.getSuspendExitMode
 import org.jetbrains.kotlin.idea.debugger.test.preference.DebuggerPreferences
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -40,7 +37,7 @@ abstract class AbstractAsyncStackTraceTest : KotlinDescriptorTestCaseWithSteppin
     }
 
     private fun SuspendContextImpl.printAsyncStackTrace(frameProxy: StackFrameProxyImpl) {
-        val sem = frameProxy.location().isPreFlight()
+        val sem = frameProxy.location().getSuspendExitMode()
         val coroutineInfoData =
             if (sem.isCoroutineFound())
                 CoroutineFrameBuilder.lookupContinuation(this, frameProxy, sem)?.coroutineInfoData

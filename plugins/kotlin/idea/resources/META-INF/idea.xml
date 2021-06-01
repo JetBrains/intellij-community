@@ -73,6 +73,8 @@
                               forClass="org.jetbrains.kotlin.psi.KtParameter"/>
     <itemPresentationProvider implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
                               forClass="org.jetbrains.kotlin.psi.KtTypeAlias"/>
+    <itemPresentationProvider implementationClass="org.jetbrains.kotlin.idea.presentation.KtJvmNameAnnotationPresenter"
+                              forClass="org.jetbrains.kotlin.psi.KtAnnotationEntry"/>
 
     <enterHandlerDelegate implementation="org.jetbrains.kotlin.idea.editor.KotlinEnterHandler"
                           id="KotlinEnterHandler" order="before EnterBetweenBracesHandler, before xmlEnter"/>
@@ -110,5 +112,9 @@
         id="kotlinFilePathReferenceContributor"
         language="kotlin"
         implementation="org.jetbrains.kotlin.idea.references.KotlinFilePathReferenceContributor"/>
+
+    <newProjectWizard implementation="org.jetbrains.kotlin.tools.projectWizard.KotlinNewProjectWizard"/>
+    <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.GradleKotlinBuildSystemType"/>
+    <newProjectWizard.buildSystem.kotlin implementation="org.jetbrains.kotlin.tools.projectWizard.MavenKotlinBuildSystemType"/>
   </extensions>
 </idea-plugin>

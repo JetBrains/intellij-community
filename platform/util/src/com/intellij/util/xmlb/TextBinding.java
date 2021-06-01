@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.serialization.ClassUtil;
 import com.intellij.serialization.MutableAccessor;
+import com.intellij.util.XmlElement;
 import org.jdom.Element;
 import org.jdom.Text;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +30,22 @@ final class TextBinding implements NestedBinding {
   }
 
   @Override
+  public boolean isBoundTo(@NotNull Element element) {
+    return false;
+  }
+
+  @Override
+  public boolean isBoundTo(@NotNull XmlElement element) {
+    return false;
+  }
+
+  @Override
   public Object deserializeUnsafe(Object context, @NotNull Element element) {
+    return context;
+  }
+
+  @Override
+  public Object deserializeUnsafe(Object context, @NotNull XmlElement element) {
     return context;
   }
 

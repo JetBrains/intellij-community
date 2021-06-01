@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.LocalQuickFix
@@ -58,12 +58,14 @@ class UnclearPrecedenceOfBinaryExpressionInspection : AbstractKotlinInspection()
                 current.dfs().any { doNeedToPutParentheses(it, reportEvenObviousCases = true) } -> ProblemHighlightType.INFORMATION
                 else -> return
             }
-            holder.registerProblem(
-                current.expression,
-                KotlinBundle.message("unclear.precedence.of.binary.expression.inspection"),
-                highlightType,
-                AddParenthesesFix(putParenthesesInObviousCases = reportEvenObviousCases || highlightType == ProblemHighlightType.INFORMATION)
-            )
+            if (holder.isOnTheFly || highlightType !== ProblemHighlightType.INFORMATION) {
+                holder.registerProblem(
+                    current.expression,
+                    KotlinBundle.message("unclear.precedence.of.binary.expression.inspection"),
+                    highlightType,
+                    AddParenthesesFix(putParenthesesInObviousCases = reportEvenObviousCases || highlightType == ProblemHighlightType.INFORMATION)
+                )
+            }
         }
     }
 

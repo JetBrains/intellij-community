@@ -75,7 +75,7 @@ public final class EditorTestUtil {
     return first != 0 ? first : Comparing.compare(o1.second, o2.second);
   };
 
-  public static void performTypingAction(Editor editor, char c) {
+  public static void performTypingAction(@NotNull Editor editor, char c) {
     if (c == BACKSPACE_FAKE_CHAR) {
       executeAction(editor, IdeActions.ACTION_EDITOR_BACKSPACE);
     }
@@ -107,15 +107,12 @@ public final class EditorTestUtil {
 
   public static void executeAction(@NotNull Editor editor, boolean assertActionIsEnabled, @NotNull AnAction action) {
     AnActionEvent event = AnActionEvent.createFromAnAction(action, null, "", createEditorContext(editor));
-    action.beforeActionPerformedUpdate(event);
-    if (!event.getPresentation().isEnabled()) {
-      assertFalse("Action " + action + " is disabled", assertActionIsEnabled);
-      return;
+    if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+      ActionUtil.performActionDumbAwareWithCallbacks(action, event);
     }
-    ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
-    actionManager.fireBeforeActionPerformed(action, event.getDataContext(), event);
-    ActionUtil.performAction(action, event);
-    actionManager.fireAfterActionPerformed(action, event.getDataContext(), event);
+    else if (assertActionIsEnabled) {
+      fail("Action " + action + " is disabled");
+    }
   }
 
   @NotNull

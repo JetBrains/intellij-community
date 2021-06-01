@@ -1,6 +1,14 @@
 import java.util.*;
 
 class LessThanRelations {
+  void testNE(int a, int b) {
+    if (a != b) {
+      if (<warning descr="Condition 'a == b' is always 'false'">a == b</warning>) {}
+      if (a > b) {}
+      if (a < b) {}
+    }
+  }
+  
   void test(int a, int b, int c, int d) {
     if ((a >= c && b <= d) ||
         (b >= c && a <= d)) {
@@ -17,10 +25,10 @@ class LessThanRelations {
 
   void foo1(long f1, long f2, long t1, long t2) {
     if (t1 < f2 || f1 > f2) return;
-    if (f1 <= f2 && t1 >= t2) return;
-    if (f1 > f2 && t1 < t2) return;
-    if (f1 <= f2) return;
-    if (t1 >= t2) return; // TODO: must be always true
+    if (<warning descr="Condition 'f1 <= f2' is always 'true'">f1 <= f2</warning> && t1 >= t2) return;
+    if (<warning descr="Condition 'f1 > f2 && t1 < t2' is always 'false'"><warning descr="Condition 'f1 > f2' is always 'false'">f1 > f2</warning> && t1 < t2</warning>) return;
+    if (<warning descr="Condition 'f1 <= f2' is always 'true'">f1 <= f2</warning>) return;
+    if (t1 >= t2) return;
   }
 
   void foo2(long f1, long f2, long t1, long t2) {
@@ -32,9 +40,9 @@ class LessThanRelations {
 
   void foo3(long f1, long f2, long t1, long t2) {
     if (t1 < f2 || f1 > f2) return;
-    if (f1 > f2 && t1 < t2) return;
-    if (f1 <= f2) return;
-    if (t1 >= t2) return; // TODO: must be always true
+    if (<warning descr="Condition 'f1 > f2 && t1 < t2' is always 'false'"><warning descr="Condition 'f1 > f2' is always 'false'">f1 > f2</warning> && t1 < t2</warning>) return;
+    if (<warning descr="Condition 'f1 <= f2' is always 'true'">f1 <= f2</warning>) return;
+    if (t1 >= t2) return;
   }
 
   void foo4(long f1, long f2, long t1, long t2) {
@@ -121,7 +129,7 @@ final class Range {
       if (from <= myFrom) {
         return new Range(to + 1, myTo);
       }
-      if (to >= myTo) {
+      if (<warning descr="Condition 'to >= myTo' is always 'true'">to >= myTo</warning>) {
         return new Range(myFrom, from - 1);
       }
       throw new RuntimeException("Impossible: " + this + ":" + other);

@@ -238,10 +238,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myInstallButton
       .addActionListener(e -> myPluginModel.installOrUpdatePlugin(this, myPlugin, null, ModalityState.stateForComponent(myInstallButton)));
 
-    myGearButton = SelectionBasedPluginModelAction.createGearButton(
-      this::createEnableDisableAction,
-      () -> createUninstallAction()
-    );
+    myGearButton = SelectionBasedPluginModelAction.createGearButton(this::createEnableDisableAction,
+                                                                    this::createUninstallAction);
     myGearButton.setOpaque(false);
     myNameAndButtons.addButtonComponent(myGearButton);
 

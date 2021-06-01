@@ -109,13 +109,6 @@ public final class StdFileTypes extends FileTypes {
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static volatile FileType IDEA_MODULE = FileTypeManager.getInstance().getStdFileType("IDEA_MODULE");
 
-  /**
-   * @deprecated use {@link com.intellij.openapi.vcs.changes.patch.PatchFileType#INSTANCE} instead.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static volatile FileType PATCH = FileTypeManager.getInstance().getStdFileType("PATCH");
-
 
   public static class StdFileTypesUpdater implements FileTypeListener {
     @Override
@@ -138,7 +131,6 @@ public final class StdFileTypes extends FileTypes {
           case "IDEA_WORKSPACE": IDEA_WORKSPACE = addedFileType; break;
           case "IDEA_PROJECT": IDEA_PROJECT = addedFileType; break;
           case "IDEA_MODULE": IDEA_MODULE = addedFileType; break;
-          case "PATCH": PATCH = addedFileType; break;
         }
       }
 
@@ -160,7 +152,8 @@ public final class StdFileTypes extends FileTypes {
           case "IDEA_WORKSPACE": IDEA_WORKSPACE = PLAIN_TEXT; break;
           case "IDEA_PROJECT": IDEA_PROJECT = PLAIN_TEXT; break;
           case "IDEA_MODULE": IDEA_MODULE = PLAIN_TEXT; break;
-          case "PATCH": PATCH = PLAIN_TEXT; break;
+          case "PATCH":
+            break;
         }
       }
     }

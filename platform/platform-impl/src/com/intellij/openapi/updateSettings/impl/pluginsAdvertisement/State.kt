@@ -4,8 +4,8 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.advertiser.KnownExtensionsService
 import com.intellij.ide.plugins.advertiser.PluginData
+import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
@@ -83,7 +83,7 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
         return emptySet()
       }
 
-      val pluginIdsFromMarketplace = MarketplaceRequests.Instance
+      val pluginIdsFromMarketplace = MarketplaceRequests
         .getLastCompatiblePluginUpdate(dataSet.mapSmartSet { it.pluginId })
         .map { it.pluginId }
         .toSet()
@@ -143,7 +143,7 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
       return false
     }
 
-    val knownExtensions = KnownExtensionsService.instance.extensions
+    val knownExtensions = PluginFeatureCacheService.instance.extensions
     if (knownExtensions == null) {
       LOG.debug("No known extensions loaded")
       return false
@@ -202,7 +202,7 @@ internal class PluginAdvertiserExtensionsStateService : SimplePersistentStateCom
         return it
       }
 
-      val knownExtensions = KnownExtensionsService.instance.extensions
+      val knownExtensions = PluginFeatureCacheService.instance.extensions
       if (knownExtensions == null) {
         LOG.debug("No known extensions loaded")
         return null

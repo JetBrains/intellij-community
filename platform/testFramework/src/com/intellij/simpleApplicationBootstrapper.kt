@@ -59,10 +59,10 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
   try {
     // 40 seconds - tests maybe executed on cloud agents where IO speed is a very slow
     plugins = loadedPluginFuture.get(40, TimeUnit.SECONDS)
-    app.registerComponents(plugins, app, null)
+    app.registerComponents(plugins, app, null, null)
     initConfigurationStore(app)
     RegistryKeyBean.addKeysFromPlugins()
-    Registry.getInstance().markAsLoaded()
+    Registry.markAsLoaded()
     val preloadServiceFuture = preloadServices(plugins, app, activityPrefix = "")
     app.loadComponents(null)
 

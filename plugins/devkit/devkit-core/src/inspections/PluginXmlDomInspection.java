@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -11,7 +11,6 @@ import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.codeInspection.util.IntentionFamilyName;
 import com.intellij.diagnostic.ITNReporter;
-import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -275,14 +274,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   private static void annotateModuleDescriptor(ContentDescriptor.ModuleDescriptor descriptor, DomElementAnnotationHolder holder) {
     final IdeaPlugin ideaPlugin = descriptor.getName().getValue();
     if (ideaPlugin == null) return;
-
-    final String moduleDescriptorPackage = ideaPlugin.getPackage().getStringValue();
-    final String descriptorPackage = descriptor.getPackage().getStringValue();
-    if (!Comparing.strEqual(moduleDescriptorPackage, descriptorPackage)) {
-      holder.createProblem(descriptor.getPackage(),
-                           DevKitBundle.message("inspections.plugin.xml.module.descriptor.package.does.not.match",
-                                                descriptorPackage, moduleDescriptorPackage, descriptor.getName().getStringValue()));
-    }
   }
 
   private static boolean isIdeaProjectOrJetBrains(DomElement element) {
@@ -783,13 +774,12 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   private static void highlightUntilBuild(IdeaVersion ideaVersion, DomElementAnnotationHolder holder) {
     String untilBuild = ideaVersion.getUntilBuild().getStringValue();
     if (untilBuild != null && isStarSupported(ideaVersion.getSinceBuild().getStringValue())) {
-      Matcher matcher = IdeaPluginDescriptorImpl.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
+      Matcher matcher = PluginManager.EXPLICIT_BIG_NUMBER_PATTERN.matcher(untilBuild);
       if (matcher.matches()) {
         holder.createProblem(
           ideaVersion.getUntilBuild(),
           DevKitBundle.message("inspections.plugin.xml.until.build.use.asterisk.instead.of.big.number", matcher.group(2)),
-          new CorrectUntilBuildAttributeFix(
-            IdeaPluginDescriptorImpl.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
+          new CorrectUntilBuildAttributeFix(PluginManager.convertExplicitBigNumberInUntilBuildToStar(untilBuild)));
       }
       if (untilBuild.matches("\\d+")) {
         int branch = Integer.parseInt(untilBuild);
@@ -866,7 +856,7 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
         IdeaPlugin plugin = extension.getParentOfType(IdeaPlugin.class, true);
         if (plugin != null) {
           Vendor vendor = plugin.getVendor();
-          if (DomUtil.hasXml(vendor) && PluginManager.getInstance().isDevelopedByJetBrains(vendor.getValue())) {
+          if (DomUtil.hasXml(vendor) && PluginManagerCore.isDevelopedByJetBrains(vendor.getValue())) {
             highlightRedundant(extension,
                                DevKitBundle.message("inspections.plugin.xml.no.need.to.specify.itnReporter"),
                                ProblemHighlightType.LIKE_UNUSED_SYMBOL, holder);

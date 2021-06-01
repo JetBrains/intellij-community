@@ -56,8 +56,10 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -120,6 +122,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -136,15 +139,19 @@ public final class BuildManager implements Disposable {
   private static final String COMPILER_PROCESS_JDK_PROPERTY = "compiler.process.jdk";
   public static final String SYSTEM_ROOT = "compile-server";
   public static final String TEMP_DIR_NAME = "_temp_";
+  private static final String[] INHERITED_IDE_VM_OPTIONS = {
+    "user.language", "user.country", "user.region", PathManager.PROPERTY_PATHS_SELECTOR, "idea.case.sensitive.fs", "java.net.preferIPv4Stack"
+  };
+
   // do not make static in order not to access application on class load
   private final boolean IS_UNIT_TEST_MODE;
   private static final String IWS_EXTENSION = ".iws";
   private static final String IPR_EXTENSION = ".ipr";
   private static final String IDEA_PROJECT_DIR_PATTERN = "/.idea/";
   private static final Function<String, Boolean> PATH_FILTER =
-    SystemInfo.isFileSystemCaseSensitive ?
+    SystemInfoRt.isFileSystemCaseSensitive ?
     s -> !(s.contains(IDEA_PROJECT_DIR_PATTERN) || s.endsWith(IWS_EXTENSION) || s.endsWith(IPR_EXTENSION)) :
-    s -> !(StringUtil.endsWithIgnoreCase(s, IWS_EXTENSION) || StringUtil.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
+    s -> !(Strings.endsWithIgnoreCase(s, IWS_EXTENSION) || Strings.endsWithIgnoreCase(s, IPR_EXTENSION) || StringUtil.containsIgnoreCase(s, IDEA_PROJECT_DIR_PATTERN));
 
   private final String myFallbackSdkHome;
   private final String myFallbackSdkVersion;
@@ -153,11 +160,9 @@ public final class BuildManager implements Disposable {
   private final Map<String, RequestFuture<?>> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds = Collections.synchronizedMap(new HashMap<>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager(this);
-  private final Executor myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
-    "BuildManager RequestProcessor Pool");
+  private final Executor myRequestsProcessor = AppExecutorUtil.createBoundedApplicationPoolExecutor("BuildManager RequestProcessor Pool", 1);
   private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
-  private final Executor myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
-    "BuildManager Auto-Make Trigger");
+  private final Executor myAutomakeTrigger = AppExecutorUtil.createBoundedApplicationPoolExecutor("BuildManager Auto-Make Trigger", 1);
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<>());
   private final AtomicInteger mySuspendBackgroundTasksCounter = new AtomicInteger(0);
   private boolean myGeneratePortableCachesEnabled = false;
@@ -447,7 +452,7 @@ public final class BuildManager implements Disposable {
         home = parent;
       }
     }
-    return FileUtil.toSystemIndependentName(home);
+    return FileUtilRt.toSystemIndependentName(home);
   }
 
   @NotNull
@@ -748,7 +753,7 @@ public final class BuildManager implements Disposable {
     if (comp instanceof IdeFrame) {
       project = ((IdeFrame)comp).getProject();
     }
-    
+
     return isValidProject(project)? project : null;
   }
 
@@ -1017,9 +1022,7 @@ public final class BuildManager implements Disposable {
                 runCommand(() -> {
                   if (!myPreloadedBuilds.containsKey(projectPath)) {
                     try {
-                      final Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> preloadResult =
-                        launchPreloadedBuildProcess(project, projectTaskQueue);
-                      myPreloadedBuilds.put(projectPath, preloadResult);
+                      myPreloadedBuilds.put(projectPath, launchPreloadedBuildProcess(project, projectTaskQueue));
                     }
                     catch (Throwable e) {
                       LOG.info("Error pre-loading build process for project " + projectPath, e);
@@ -1114,35 +1117,58 @@ public final class BuildManager implements Disposable {
   }
 
   private static @NotNull Pair<Sdk, JavaSdkVersion> getRuntimeSdk(@NotNull Project project, int oldestPossibleVersion) {
-    final Set<Sdk> candidates = new LinkedHashSet<>();
-    final Sdk defaultSdk = ProjectRootManager.getInstance(project).getProjectSdk();
-    if (defaultSdk != null && defaultSdk.getSdkType() instanceof JavaSdkType) {
-      candidates.add(defaultSdk);
+    final Map<Sdk, Integer> candidates = new HashMap<>();
+    Consumer<Sdk> addSdk = sdk -> {
+      if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
+        final Integer count = candidates.putIfAbsent(sdk, 1);
+        if (count != null) {
+          candidates.put(sdk, count + 1);
+        }
+      }
+    };
+
+    addSdk.accept(ProjectRootManager.getInstance(project).getProjectSdk());
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      addSdk.accept(ModuleRootManager.getInstance(module).getSdk());
     }
 
-    for (Module module : ModuleManager.getInstance(project).getModules()) {
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      if (sdk != null && sdk.getSdkType() instanceof JavaSdkType) {
-        candidates.add(sdk);
+    final JavaSdk javaSdkType = JavaSdk.getInstance();
+
+    final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+    if (configuration.getJavacCompiler().equals(configuration.getDefaultCompiler()) && JavacConfiguration.getOptions(project, JavacConfiguration.class).PREFER_TARGET_JDK_COMPILER) {
+      // for javac, if compiler from associated SDK instead of cross-compilation is preferred, use a different policy:
+      // select the most frequently used jdk from the sdks that are associated with the project, but not older than <oldestPossibleVersion>
+      // this policy attempts to compile as much modules as possible without spawning a separate javac process
+
+      final List<Pair<Sdk, JavaSdkVersion>> sortedSdks = candidates.entrySet().stream()
+        .sorted(Map.Entry.<Sdk, Integer>comparingByValue().reversed())
+        .map(entry -> Pair.create(entry.getKey(), JavaVersion.tryParse(entry.getKey().getVersionString())))
+        .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
+        .map(p -> Pair.create(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
+        .filter(p -> p.second != null)
+        .collect(Collectors.toList());
+
+      if (!sortedSdks.isEmpty()) {
+        // first try to find most used JDK of version 9 and newer => JRT FS support will be needed
+        final Pair<Sdk, JavaSdkVersion> sdk9_plus = ContainerUtil.find(sortedSdks, p -> p.second.isAtLeast(JavaSdkVersion.JDK_1_9));
+        return sdk9_plus != null? sdk9_plus : sortedSdks.iterator().next(); // get the most used
       }
     }
 
-    // now select the latest version from the sdks that are used in the project, but not older than the internal sdk version
-    final JavaSdk javaSdkType = JavaSdk.getInstance();
-    return candidates.stream()
-      .map(sdk -> new Pair<>(sdk, JavaVersion.tryParse(sdk.getVersionString())))
+    // now select the latest version from the sdks that are used in the project, but not older than <oldestPossibleVersion>
+    return candidates.keySet().stream()
+      .map(sdk -> Pair.create(sdk, JavaVersion.tryParse(sdk.getVersionString())))
       .filter(p -> p.second != null && p.second.isAtLeast(oldestPossibleVersion))
       .max(Pair.comparingBySecond())
-      .map(p -> new Pair<>(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
+      .map(p -> Pair.create(p.first, JavaSdkVersion.fromJavaVersion(p.second)))
+      .filter(p -> p.second != null)
       .orElseGet(() -> {
         Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-        return new Pair<>(internalJdk, javaSdkType.getVersion(internalJdk));
+        return Pair.create(internalJdk, javaSdkType.getVersion(internalJdk));
       });
   }
 
   private Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>> launchPreloadedBuildProcess(final Project project, ExecutorService projectTaskQueue) {
-    WSLDistribution wslDistribution = findWSLDistributionForBuild(project);
-    ensureListening(wslDistribution != null ? wslDistribution.getHostIpAddress() : InetAddress.getLoopbackAddress());
 
     // launching build process from projectTaskQueue ensures that no other build process for this project is currently running
     return projectTaskQueue.submit(() -> {
@@ -1177,25 +1203,24 @@ public final class BuildManager implements Disposable {
     return WslPath.getDistributionByWindowsUncPath(projectJdkType.getVMExecutablePath(projectJdk));
   }
 
-  private OSProcessHandler launchBuildProcess(@NotNull Project project, @NotNull UUID sessionId, boolean requestProjectPreload,
-                                              @Nullable ProgressIndicator progressIndicator) throws ExecutionException {
+  private OSProcessHandler launchBuildProcess(@NotNull Project project, @NotNull UUID sessionId, boolean requestProjectPreload, @Nullable ProgressIndicator progressIndicator) throws ExecutionException {
     String compilerPath = null;
     final String vmExecutablePath;
     JavaSdkVersion sdkVersion = null;
 
     final String forcedCompiledJdkHome = Registry.stringValue(COMPILER_PROCESS_JDK_PROPERTY);
 
-    if (StringUtil.isEmptyOrSpaces(forcedCompiledJdkHome)) {
+    if (Strings.isEmptyOrSpaces(forcedCompiledJdkHome)) {
       // choosing sdk with which the build process should be run
       final Pair<Sdk, JavaSdkVersion> pair = getBuildProcessRuntimeSdk(project);
       final Sdk projectJdk = pair.first;
       sdkVersion = pair.second;
 
-      final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
       final JavaSdkType projectJdkType = (JavaSdkType)projectJdk.getSdkType();
 
       // validate tools.jar presence for jdk8 and older
       if (!JavaSdkUtil.isJdkAtLeast(projectJdk, JavaSdkVersion.JDK_1_9)) {
+        final Sdk internalJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
         if (FileUtil.pathsEqual(projectJdk.getHomePath(), internalJdk.getHomePath())) {
           // important: because internal JDK can be either JDK or JRE,
           // this is the most universal way to obtain tools.jar path in this particular case
@@ -1289,7 +1314,6 @@ public final class BuildManager implements Disposable {
     if (IS_UNIT_TEST_MODE) {
       cmdLine.addParameter("-Dtest.mode=true");
     }
-    cmdLine.addParameter("-Djdt.compiler.useSingleThread=true"); // always run eclipse compiler in single-threaded mode
 
     if (requestProjectPreload) {
       cmdLine.addPathParameter("-Dpreload.project.path=", FileUtil.toCanonicalPath(getProjectPath(project)));
@@ -1300,14 +1324,9 @@ public final class BuildManager implements Disposable {
       cmdLine.addPathParameter("-D" + GlobalOptions.EXTERNAL_PROJECT_CONFIG + "=", ProjectUtil.getExternalConfigurationDir(project));
     }
 
-    final String shouldGenerateIndex = System.getProperty(GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION);
-    if (shouldGenerateIndex != null) {
-      cmdLine.addParameter("-D"+ GlobalOptions.GENERATE_CLASSPATH_INDEX_OPTION +"=" + shouldGenerateIndex);
-    }
     cmdLine.addParameter("-D" + GlobalOptions.COMPILE_PARALLEL_OPTION + "=" + projectConfig.isParallelCompilationEnabled());
     if (projectConfig.isParallelCompilationEnabled()) {
-      final boolean allowParallelAutomake = Registry.is("compiler.automake.allow.parallel", true);
-      if (!allowParallelAutomake) {
+      if (!Registry.is("compiler.automake.allow.parallel", true)) {
         cmdLine.addParameter("-D" + GlobalOptions.ALLOW_PARALLEL_AUTOMAKE_OPTION + "=false");
       }
     }
@@ -1317,12 +1336,10 @@ public final class BuildManager implements Disposable {
       cmdLine.addParameter("-D" + GlobalOptions.REPORT_BUILD_STATISTICS + "=true");
     }
 
-    if (Boolean.TRUE.equals(Boolean.valueOf(System.getProperty("java.net.preferIPv4Stack", "false")))) {
-      cmdLine.addParameter("-Djava.net.preferIPv4Stack=true");
-    }
-
-    // this will make netty initialization faster on some systems
-    cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" + ThreadLocalRandom.getInitialSeedUniquifier());
+    // third party libraries tweaks
+    cmdLine.addParameter("-Djdt.compiler.useSingleThread=true"); // always run eclipse compiler in single-threaded mode
+    cmdLine.addParameter("-Daether.connector.resumeDownloads=false"); // always re-download maven libraries if partially downloaded
+    cmdLine.addParameter("-Dio.netty.initialSeedUniquifier=" + ThreadLocalRandom.getInitialSeedUniquifier()); // this will make netty initialization faster on some systems
 
     for (String option : userAdditionalOptionsList) {
       cmdLine.addParameter(option);
@@ -1342,7 +1359,19 @@ public final class BuildManager implements Disposable {
           throw new IOException("Performance Plugin is missing or disabled");
         }
         yourKitProfilerService.copyYKLibraries(hostWorkingDirectory);
-        cmdLine.addParameter("-agentpath:" + cmdLine.getYjpAgentPath(yourKitProfilerService) + "=disablealloc,delay=10000,sessionname=ExternalBuild");
+        String buildSnapshotPath = System.getProperty("build.snapshots.path");
+        String parameters;
+        if (buildSnapshotPath != null) {
+          parameters = "-agentpath:" +
+                       cmdLine.getYjpAgentPath(yourKitProfilerService) +
+                       "=disablealloc,delay=10000,sessionname=ExternalBuild,dir=" +
+                       buildSnapshotPath;
+        }
+        else {
+          parameters =
+            "-agentpath:" + cmdLine.getYjpAgentPath(yourKitProfilerService) + "=disablealloc,delay=10000,sessionname=ExternalBuild";
+        }
+        cmdLine.addParameter(parameters);
         showSnapshotNotificationAfterFinish(project);
       }
       catch (IOException e) {
@@ -1378,8 +1407,7 @@ public final class BuildManager implements Disposable {
     // javac's VM should use the same default locale that IDEA uses in order for javac to print messages in 'correct' language
     cmdLine.setCharset(mySystemCharset);
     cmdLine.addParameter("-D" + CharsetToolkit.FILE_ENCODING_PROPERTY + "=" + mySystemCharset.name());
-    String[] propertiesToPass = {"user.language", "user.country", "user.region", PathManager.PROPERTY_PATHS_SELECTOR, "idea.case.sensitive.fs"};
-    for (String name : propertiesToPass) {
+    for (String name : INHERITED_IDE_VM_OPTIONS) {
       final String value = System.getProperty(name);
       if (value != null) {
         cmdLine.addParameter("-D" + name + "=" + value);

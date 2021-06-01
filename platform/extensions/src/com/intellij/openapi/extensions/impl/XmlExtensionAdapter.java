@@ -7,15 +7,15 @@ import com.intellij.openapi.extensions.LoadingOrder;
 import com.intellij.openapi.extensions.PluginAware;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.util.XmlElement;
 import com.intellij.util.xmlb.XmlSerializer;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
 class XmlExtensionAdapter extends ExtensionComponentAdapter {
-  private @Nullable Element extensionElement;
+  private @Nullable XmlElement extensionElement;
 
   private static final Object NOT_APPLICABLE = new Object();
 
@@ -26,7 +26,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                       @NotNull PluginDescriptor pluginDescriptor,
                       @Nullable String orderId,
                       @NotNull LoadingOrder order,
-                      @Nullable Element extensionElement,
+                      @Nullable XmlElement extensionElement,
                       @NotNull ImplementationClassResolver implementationClassResolver) {
     super(implementationClassName, pluginDescriptor, orderId, order, implementationClassResolver);
 
@@ -68,7 +68,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
           ((PluginAware)instance).setPluginDescriptor(pluginDescriptor);
         }
 
-        Element element = extensionElement;
+        XmlElement element = extensionElement;
         if (element != null) {
           XmlSerializer.getBeanBinding(instance.getClass()).deserializeInto(instance, element);
           extensionElement = null;
@@ -78,6 +78,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
       }
       catch (ExtensionNotApplicableException e) {
         extensionInstance = NOT_APPLICABLE;
+        extensionElement = null;
         return null;
       }
       catch (ProcessCanceledException e) {
@@ -102,7 +103,7 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
                                       @NotNull PluginDescriptor pluginDescriptor,
                                       @Nullable String orderId,
                                       @NotNull LoadingOrder order,
-                                      @Nullable Element extensionElement,
+                                      @Nullable XmlElement extensionElement,
                                       @NotNull ImplementationClassResolver implementationClassResolver) {
       super(implementationClassName, pluginDescriptor, orderId, order, extensionElement, implementationClassResolver);
     }

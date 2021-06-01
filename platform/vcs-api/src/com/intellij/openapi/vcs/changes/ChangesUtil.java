@@ -385,4 +385,17 @@ public final class ChangesUtil {
       return content.getBytes(revision.getFile().getCharset());
     }
   }
+
+  public static boolean hasMeaningfulChangelists(@NotNull Project project) {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(project);
+    if (!changeListManager.areChangeListsEnabled()) return false;
+
+    if (VcsApplicationSettings.getInstance().CREATE_CHANGELISTS_AUTOMATICALLY) return true;
+
+    List<LocalChangeList> changeLists = changeListManager.getChangeLists();
+    if (changeLists.size() != 1) return true;
+    if (!changeLists.get(0).isBlank()) return true;
+
+    return false;
+  }
 }

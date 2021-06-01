@@ -4,6 +4,7 @@ package org.intellij.plugins.markdown.settings.pandoc
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.options.BoundConfigurable
 import com.intellij.openapi.options.SearchableConfigurable
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -19,6 +20,7 @@ class PandocSettingsConfigurable :
   BoundConfigurable(MarkdownBundle.message("markdown.settings.pandoc.name")),
   SearchableConfigurable {
 
+  private lateinit var imagesFromFilePath: TextFieldWithBrowseButton
   private lateinit var pandocPath: TextFieldWithBrowseButton
   private lateinit var pandocVersionField: JLabel
   private lateinit var downloadLink: JComponent
@@ -49,23 +51,37 @@ class PandocSettingsConfigurable :
         cell.component(downloadLink)
       }
     }
+    row {
+      cell {
+        label(MarkdownBundle.message("markdown.settings.pandoc.resource.path.label"))
+      }
+    }
+    row {
+      cell {
+        imagesFromFilePath = createResourcesPathField()
+      }
+    }
   }
 
-  override fun getId(): String = "Settings.Pandoc"
+  override fun getId(): String = ID
 
   override fun apply() {
     pandocAppSettings.apply {
       state.myPathToPandoc = pandocPath.textField.text
+      state.myPathToImages = imagesFromFilePath.textField.text
     }
   }
 
   override fun isModified(): Boolean {
-    val savedPath = pandocAppSettings.state.myPathToPandoc
-    if (savedPath == null) {
-      return notAutodetectedTextAvailable()
+    val pandocSavedPath = pandocAppSettings.state.myPathToPandoc
+    val resSavedPath = pandocAppSettings.state.myPathToImages
+    val isImagePathModified = if (resSavedPath != null) isModified(imagesFromFilePath.textField, resSavedPath) else false
+
+    if (pandocSavedPath == null) {
+      return notAutodetectedTextAvailable() && isImagePathModified
     }
 
-    return isModified(pandocPath.textField, savedPath)
+    return isModified(pandocPath.textField, pandocSavedPath) || isImagePathModified
   }
 
   private fun notAutodetectedTextAvailable() =
@@ -73,6 +89,7 @@ class PandocSettingsConfigurable :
 
   override fun reset() {
     pandocPath.textField.text = pandocAppSettings.state.myPathToPandoc
+    imagesFromFilePath.textField.text = pandocAppSettings.state.myPathToImages
   }
 
   private fun testButtonActionEvent() {
@@ -99,8 +116,7 @@ class PandocSettingsConfigurable :
   }
 
   private fun getPandocVersion(isExecExist: Boolean, executable: String): String? {
-    val projectList = ProjectManager.getInstance().openProjects
-    val project = if (projectList.isNotEmpty()) projectList.first() else null
+    val project = getProject()
 
     return when {
       project == null -> null
@@ -128,4 +144,26 @@ class PandocSettingsConfigurable :
   }.applyToComponent {
     isVisible = false
   }.component
+
+  private fun Cell.createResourcesPathField(): TextFieldWithBrowseButton = textFieldWithBrowseButton().applyToComponent {
+    val savedPath = pandocAppSettings.state.myPathToImages
+    if (savedPath == null) {
+      val project = getProject()
+      if (project != null && project.basePath !== null) {
+        pandocAppSettings.state.myPathToImages = "${project.basePath!!}/import-resources"
+        textField.text = pandocAppSettings.state.myPathToImages
+      }
+    }else {
+      textField.text = savedPath
+    }
+  }.component
+
+  private fun getProject(): Project? {
+    val projectList = ProjectManager.getInstance().openProjects
+    return if (projectList.isNotEmpty()) projectList.first() else null
+  }
+
+  companion object {
+    const val ID = "Settings.Pandoc"
+  }
 }

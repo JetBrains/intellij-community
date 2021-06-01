@@ -1,13 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.formatting.service;
 
+import com.intellij.CodeStyleBundle;
 import com.intellij.formatting.FormattingContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
@@ -18,27 +22,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Extend this class if there is a long lasting formatting operation which may block EDT. The actual formatting code is placed then
- * in {@link #asyncFormat(AsyncFormattingRequest)} method which may be slow. A cancellable operation in {@code asyncFormat} method must be
- * placed into {@link #runCancellable(AsyncFormattingRequest, AsyncFormattingRequest.CancellableRunnable)} method, for example:
- * <pre><code>
- *   void asyncFormat(AsyncFormattingRequest request) {
- *     ...
- *     runCancellable(request, new CancellableRunnable() {
- *       ...
- *       boolean cancel() {
- *         // Cancellation code
- *       }
- *     }
- *   }
- * </code></pre>
+ * in {@link FormattingTask#run()} method which may be slow.
+ * <p>
  * If another {@code formatDocument()} call is made for the same document, the previous request is cancelled. On success, if
  * {@code cancel()} returns {@code true}, another request replaces the previous one. Otherwise the newer request is rejected.
  * <p>
- * Before the actual formatting starts, {@link #prepare(FormattingContext)} method is called. It should be fast enough not to block EDT.
- * If it succeeds (returns {@code true}), {@link #asyncFormat(AsyncFormattingRequest)} method is invoked.
+ * Before the actual formatting starts, {@link #createFormattingTask(AsyncFormattingRequest)} method is called. It should be fast enough not to
+ * block EDT. If it succeeds (doesn't return null), further formatting is started using the created runnable on a separate thread.
  */
 @ApiStatus.Experimental
 public abstract class AsyncDocumentFormattingService extends AbstractDocumentFormattingService {
@@ -46,11 +42,15 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
   private final List<AsyncFormattingRequest> myPendingRequests = Collections.synchronizedList(new ArrayList<>());
 
+  protected static final int DEFAULT_TIMEOUT = 30; // seconds
+  private static final int RETRY_PERIOD = 1000; // milliseconds
+
   @Override
   public final synchronized void formatDocument(@NotNull Document document,
                                                 @NotNull List<TextRange> formattingRanges,
                                                 @NotNull FormattingContext formattingContext,
-                                                boolean canChangeWhiteSpaceOnly) {
+                                                boolean canChangeWhiteSpaceOnly,
+                                                boolean quickFormat) {
     AsyncFormattingRequest currRequest = findPendingRequest(document);
     if (currRequest != null) {
       if (!((FormattingRequestImpl)currRequest).cancel()) {
@@ -58,14 +58,23 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
         return;
       }
     }
-    if (prepare(formattingContext)) {
-      AsyncFormattingRequest formattingRequest = new FormattingRequestImpl(formattingContext, document, formattingRanges,
-                                                                           canChangeWhiteSpaceOnly);
+    FormattingRequestImpl formattingRequest = new FormattingRequestImpl(formattingContext, document, formattingRanges,
+                                                                         canChangeWhiteSpaceOnly, quickFormat);
+    FormattingTask formattingTask = createFormattingTask(formattingRequest);
+    if (formattingTask != null) {
+      formattingRequest.setTask(formattingTask);
       if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        runAsyncFormat(formattingRequest);
+        runAsyncFormat(formattingRequest, null);
       }
       else {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> runAsyncFormat(formattingRequest));
+        if (formattingTask.isRunUnderProgress()) {
+          new FormattingProgressTask(formattingRequest)
+            .setCancelText(CodeStyleBundle.message("async.formatting.service.cancel", getName()))
+            .queue();
+        }
+        else {
+          ApplicationManager.getApplication().executeOnPooledThread(() -> runAsyncFormat(formattingRequest, null));
+        }
       }
     }
   }
@@ -77,10 +86,10 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
   }
 
-  private void runAsyncFormat(@NotNull AsyncFormattingRequest formattingRequest) {
+  private void runAsyncFormat(@NotNull FormattingRequestImpl formattingRequest, @Nullable ProgressIndicator indicator) {
     myPendingRequests.add(formattingRequest);
     try {
-      asyncFormat(formattingRequest);
+      formattingRequest.runTask(indicator);
     }
     finally {
       myPendingRequests.remove(formattingRequest);
@@ -88,77 +97,39 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   }
 
   /**
-   * Called before the actual formatting starts. Any specific data can be put to {@link FormattingContext}'s user data. The same
-   * {@code FormattingContext} is passed then to {@link #asyncFormat(AsyncFormattingRequest)}.
+   * Called before the actual formatting starts.
    *
-   * @param formattingContext The formatting context to use and store specific data.
-   * @return {@code true} if successful and formatting can proceed, {@code false} otherwise. The latter may be a result, for example,
-   * of misconfiguration.
+   * @param formattingRequest The formatting request to create the formatting task for.
+   * @return {@link FormattingTask} if successful and formatting can proceed, {@code null} otherwise. The latter may be a result, for
+   * example, of misconfiguration.
    */
-  protected abstract boolean prepare(@NotNull FormattingContext formattingContext);
-
-  /**
-   * Format a document using the {@link AsyncFormattingRequest}.
-   * <p>
-   * {@code asyncFormat()} method is run asynchronously on a pooled thread. The method may be slow and perform I/O operations and/or
-   * run system processes. It is a responsibility of an implementor to handle timeouts if necessary.
-   * <p>
-   * Call {@link AsyncFormattingRequest#getDocumentText()} to get a document text. Use {@link AsyncFormattingRequest#getContext()} for
-   * more context information. Return result via {@link AsyncFormattingRequest#onTextReady(String)} or call
-   * {@link AsyncFormattingRequest#onError(String, String)}. In case of an error, a notification will be shown to an end user.
-   * <p>
-   * For example:
-   * <pre><code>
-   *   void asyncFormat(AsyncFormattingRequest request) {
-   *     ...
-   *     if (error) {
-   *       request.onError(title, message);
-   *       return;
-   *     }
-   *     request.onTextReady(formattedText);
-   *   }
-   * </code></pre>
-   *
-   * @param request The formatting request to process.
-   */
-  protected abstract void asyncFormat(@NotNull AsyncFormattingRequest request);
-
-  /**
-   * Merge changes if the document has changed since {@code asyncFormat()} was called. The default implementation does nothing and
-   * rejects the updated text.
-   *
-   * @param document The current document.
-   * @param updatedText The updated text to merge into the documents.
-   */
-  @SuppressWarnings("unused")
-  protected void mergeChanges(@NotNull Document document, @NotNull String updatedText) {}
-
-  /**
-   * Run a long-lasting cancellable runnable.
-   *
-   * @param currentRequest The current request passed to {@link #asyncFormat(AsyncFormattingRequest)} as a parameter.
-   * @param runnable The cancellable runnable.
-   */
-  protected final void runCancellable(@NotNull AsyncFormattingRequest currentRequest,
-                                      @NotNull AsyncFormattingRequest.CancellableRunnable runnable) {
-    FormattingRequestImpl request = (FormattingRequestImpl)currentRequest;
-    if (request.myCancellableRunnable != null) {
-      LOG.error("Another CancellableRunnable is currently active, can't run two of them simultaneously.");
-    }
-    try {
-      request.setCancellableRunnable(runnable);
-      runnable.run();
-    }
-    finally {
-      request.setCancellableRunnable(null);
-    }
-  }
-
+  protected abstract @Nullable FormattingTask createFormattingTask(@NotNull AsyncFormattingRequest formattingRequest);
 
   /**
    * @return A notification group ID to use when error messages are shown to an end user.
    */
   protected abstract @NotNull String getNotificationGroupId();
+
+  /**
+   * @return A name which can be used in UI, for example, in notification messages.
+   */
+  protected abstract @NotNull @NlsSafe String getName();
+
+  /**
+   * @return A number of seconds to wait for the service to respond (call either {@code onTextReady()} or {@code onError()}).
+   */
+  protected int getTimeout() {
+    return DEFAULT_TIMEOUT;
+  }
+
+  private enum FormattingRequestState {
+    NOT_STARTED,
+    RUNNING,
+    CANCELLING,
+    CANCELLED,
+    COMPLETED,
+    EXPIRED
+  }
 
   private class FormattingRequestImpl implements AsyncFormattingRequest {
     private final Document          myDocument;
@@ -166,18 +137,24 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     private final long              myInitialModificationStamp;
     private final FormattingContext myContext;
     private final boolean           myCanChangeWhitespaceOnly;
+    private final boolean           myQuickFormat;
+    private final Semaphore         myTaskSemaphore = new Semaphore(1);
 
-    private volatile @Nullable CancellableRunnable myCancellableRunnable;
+    private volatile @Nullable FormattingTask myTask;
+
+    private final AtomicReference<FormattingRequestState> myStateRef = new AtomicReference<>(FormattingRequestState.NOT_STARTED);
 
     private FormattingRequestImpl(@NotNull FormattingContext formattingContext,
                                   @NotNull Document document,
                                   @NotNull List<TextRange> ranges,
-                                  boolean canChangeWhitespaceOnly) {
+                                  boolean canChangeWhitespaceOnly,
+                                  boolean quickFormat) {
       myContext = formattingContext;
       myDocument = document;
       myRanges = ranges;
       myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
       myInitialModificationStamp = document.getModificationStamp();
+      myQuickFormat = quickFormat;
     }
 
     @Override
@@ -186,9 +163,13 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
     }
 
     private boolean cancel() {
-      CancellableRunnable runnable = myCancellableRunnable;
-      if (runnable != null) {
-        return runnable.cancel();
+      FormattingTask formattingTask = myTask;
+      if (formattingTask != null && myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.CANCELLING)) {
+        if (formattingTask.cancel()) {
+          myStateRef.set(FormattingRequestState.CANCELLED);
+          myTaskSemaphore.release();
+          return true;
+        }
       }
       return false;
     }
@@ -212,34 +193,113 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
       return myContext;
     }
 
-    private void setCancellableRunnable(@Nullable CancellableRunnable cancellableRunnable) {
-      myCancellableRunnable = cancellableRunnable;
+    private void setTask(@Nullable FormattingTask formattingTask) {
+      myTask = formattingTask;
+    }
+
+    private void runTask(@Nullable ProgressIndicator indicator) {
+      FormattingTask task = myTask;
+      if (task != null && myStateRef.compareAndSet(FormattingRequestState.NOT_STARTED, FormattingRequestState.RUNNING)) {
+        try {
+          myTaskSemaphore.acquire();
+          task.run();
+          long waitTime = 0;
+          while (waitTime < getTimeout() * 1000L) {
+            if (myTaskSemaphore.tryAcquire(RETRY_PERIOD, TimeUnit.MILLISECONDS)) {
+              myTaskSemaphore.release();
+              break;
+            }
+            if (indicator != null) indicator.checkCanceled();
+            waitTime += RETRY_PERIOD;
+          }
+          if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
+            FormattingNotificationService.getInstance(myContext.getProject()).reportError(
+              getNotificationGroupId(), getName(),
+              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Integer.toString(getTimeout())));
+          }
+        }
+        catch (InterruptedException ie) {
+          LOG.warn("Interrupted formatting thread.");
+        }
+      }
+    }
+
+    @Override
+    public boolean isQuickFormat() {
+      return myQuickFormat;
     }
 
     @Override
     public void onTextReady(@NotNull final String updatedText) {
-      ApplicationManager.getApplication().invokeLater(() ->{
-        CommandProcessor.getInstance().runUndoTransparentAction(() -> {
-          try {
-            WriteAction.run((ThrowableRunnable<Throwable>)() -> {
-              if (myDocument.getModificationStamp() > myInitialModificationStamp) {
-                mergeChanges(myDocument, updatedText);
-              }
-              else {
-                myDocument.setText(updatedText);
-              }
-            });
-          }
-          catch (Throwable throwable) {
-            LOG.error(throwable);
-          }
+      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myTaskSemaphore.release();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          CommandProcessor.getInstance().runUndoTransparentAction(() -> {
+            try {
+              WriteAction.run((ThrowableRunnable<Throwable>)() -> {
+                if (myDocument.getModificationStamp() > myInitialModificationStamp) {
+                  for (DocumentMerger merger : DocumentMerger.EP_NAME.getExtensionList()) {
+                    if (merger.updateDocument(myDocument, updatedText)) break;
+                  }
+                }
+                else {
+                  myDocument.setText(updatedText);
+                }
+              });
+            }
+            catch (Throwable throwable) {
+              LOG.error(throwable);
+            }
+          });
         });
-      });
+      }
     }
 
     @Override
     public void onError(@NotNull @NlsContexts.NotificationTitle String title, @NotNull @NlsContexts.NotificationContent String message) {
-      FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
+      if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.COMPLETED)) {
+        myTaskSemaphore.release();
+        FormattingNotificationService.getInstance(myContext.getProject()).reportError(getNotificationGroupId(), title, message);
+      }
+    }
+  }
+
+
+  protected interface FormattingTask extends Runnable {
+    /**
+     * Cancel the current runnable.
+     * @return {@code true} if the runnable has been successfully cancelled, {@code false} otherwise.
+     */
+    boolean cancel();
+
+    /**
+     * @return True if the task must be run under progress (a progress indicator is created automatically). Otherwise the task is
+     * responsible of visualizing the progress by itself, it is just started on a background thread.
+     */
+    default boolean isRunUnderProgress() {
+      return false;
+    }
+  }
+
+  private class FormattingProgressTask extends Task.Backgroundable {
+    private final FormattingRequestImpl myRequest;
+
+    private FormattingProgressTask(@NotNull FormattingRequestImpl request) {
+      super(request.getContext().getProject(), CodeStyleBundle.message("async.formatting.service.running", getName()), true);
+      myRequest = request;
+    }
+
+    @Override
+    public void run(@NotNull ProgressIndicator indicator) {
+      indicator.setIndeterminate(false);
+      indicator.setFraction(0.0);
+      runAsyncFormat(myRequest, indicator);
+      indicator.setFraction(1.0);
+    }
+
+    @Override
+    public void onCancel() {
+      myRequest.cancel();
     }
   }
 }

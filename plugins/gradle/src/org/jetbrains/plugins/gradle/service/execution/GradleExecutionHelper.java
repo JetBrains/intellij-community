@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.gradle.service.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.target.TargetEnvironmentConfiguration;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -42,6 +43,7 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -53,6 +55,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static org.jetbrains.plugins.gradle.GradleConnectorService.withGradleConnection;
+import static org.jetbrains.plugins.gradle.service.execution.LocalGradleExecutionAware.LOCAL_TARGET_TYPE_ID;
 
 /**
  * @author Denis Zhdanov
@@ -198,8 +201,6 @@ public class GradleExecutionHelper {
             final File jarFile = new File(wrapperFilesLocation, fileName + ".jar");
             final File scriptFile = new File(wrapperFilesLocation, "gradlew");
             final File pathToProperties = new File(wrapperFilesLocation, "path.tmp");
-
-            Runtime.getRuntime().addShutdownHook(new Thread(() -> FileUtil.delete(wrapperFilesLocation), "GradleExecutionHelper cleanup"));
 
             StringJoiner lines = new StringJoiner(System.lineSeparator());
             lines.add("");
@@ -435,6 +436,20 @@ public class GradleExecutionHelper {
       }
       return;
     }
+
+    TargetEnvironmentConfigurationProvider environmentConfigurationProvider =
+      ExternalSystemExecutionAware.Companion.getEnvironmentConfigurationProvider(settings);
+    TargetEnvironmentConfiguration environmentConfiguration =
+      environmentConfigurationProvider != null ? environmentConfigurationProvider.getEnvironmentConfiguration() : null;
+    if (environmentConfiguration != null && !LOCAL_TARGET_TYPE_ID.equals(environmentConfiguration.getTypeId())) {
+      if (settings.isPassParentEnvs()) {
+        LOG.warn("Host system environment variables will not be passed for the target run.");
+        listener.onTaskOutput(taskId, GradleBundle.message("gradle.target.execution.pass.parent.envs.warning") + "\n", false);
+      }
+      operation.setEnvironmentVariables(settings.getEnv());
+      return;
+    }
+
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.withEnvironment(settings.getEnv());
     commandLine.withParentEnvironmentType(

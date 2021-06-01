@@ -2,6 +2,8 @@
 <idea-plugin>
   <resource-bundle>messages.PyBundle</resource-bundle>
 
+  <depends optional="true" config-file="pycharm-onboarding.xml">training</depends>
+
   <projectListeners>
     <listener class="com.jetbrains.python.PyModuleListener" topic="com.intellij.openapi.project.ModuleListener"/>
   </projectListeners>
@@ -27,8 +29,6 @@
                          bundle="messages.PyBundle"
                          key="configurable.PyDependenciesConfigurable.display.name"
                          provider="com.jetbrains.python.configuration.PyDependenciesConfigurableProvider"/>
-
-    <filetype.prebuiltStubsProvider filetype="Python" implementationClass="com.jetbrains.python.psi.impl.stubs.PyPrebuiltStubsProvider"/>
 
     <statusBarWidgetFactory id="pythonInterpreterWidget"
                             implementation="com.jetbrains.python.configuration.PySdkStatusBarWidgetFactory"
@@ -78,8 +78,6 @@
     <ignoredFileProvider implementation="com.jetbrains.python.sdk.configuration.PyTemporarilyIgnoredFileProvider"/>
 
     <statistics.counterUsagesCollector implementationClass="com.jetbrains.python.sdk.configuration.PySdkConfigurationCollector"/>
-
-    <startPagePromoter id="PyOnboardingTourPromoter" implementation="com.jetbrains.python.PyOnboardingTourPromoter"/>
   </extensions>
 
   <extensions defaultExtensionNs="Pythonid">

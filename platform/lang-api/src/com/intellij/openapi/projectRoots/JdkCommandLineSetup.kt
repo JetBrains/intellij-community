@@ -7,6 +7,7 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.CompositeParameterTargetedValue
 import com.intellij.execution.configurations.GeneralCommandLine.ParentEnvironmentType
+import com.intellij.execution.configurations.ParameterTargetValuePart
 import com.intellij.execution.configurations.ParametersList
 import com.intellij.execution.configurations.SimpleJavaParameters
 import com.intellij.execution.target.LanguageRuntimeType.VolumeDescriptor
@@ -31,12 +32,12 @@ import com.intellij.openapi.vfs.encoding.EncodingManager
 import com.intellij.util.PathUtil
 import com.intellij.util.PathsList
 import com.intellij.util.SystemProperties
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.isDirectory
 import com.intellij.util.lang.UrlClassLoader
 import gnu.trove.THashMap
-import io.netty.bootstrap.com.intellij.execution.configurations.ParameterTargetValuePart
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -172,8 +173,15 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   private fun provideEnvironment(environment: TargetEnvironment,
                                  targetProgressIndicator: TargetProgressIndicator) {
     environmentPromise.setResult(environment to targetProgressIndicator)
-    for (upload in uploads) {
-      upload.volume.upload(upload.relativePath, targetProgressIndicator)
+    if (environment is TargetEnvironment.BatchUploader) {
+      environment.runBatchUpload(uploads = ContainerUtil.map(uploads) {
+        Pair(it.volume, it.relativePath)
+      }, targetProgressIndicator = targetProgressIndicator)
+    }
+    else {
+      for (upload in uploads) {
+        upload.volume.upload(upload.relativePath, targetProgressIndicator)
+      }
     }
     for (promise in dependingOnEnvironmentPromise) {
       promise.blockingGet(0)  // Just rethrows errors.
@@ -217,7 +225,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
 
   @Throws(CantRunException::class)
   private fun setupEnvironment(javaParameters: SimpleJavaParameters) {
-    javaParameters.env.forEach { key: String, value: String? -> commandLine.addEnvironmentVariable(key, value) }
+    javaParameters.env.forEach { (key: String, value: String?) -> commandLine.addEnvironmentVariable(key, value) }
 
     if (request is LocalTargetEnvironmentRequest) {
       val type = if (javaParameters.isPassParentEnvs) ParentEnvironmentType.CONSOLE else ParentEnvironmentType.NONE
@@ -294,6 +302,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
             TargetValue.fixed(part.localValue)
           is ParameterTargetValuePart.Path ->
             requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, part.pathToUpload, null)
+          is ParameterTargetValuePart.PathSeparator ->
+            TargetValue.fixed(platform.pathSeparator.toString())
           is ParameterTargetValuePart.PromiseValue ->
             TargetValue.create(part.localValue, part.targetValue)
           else ->
@@ -310,7 +320,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
                                cs: Charset) {
 
     try {
-      val argFile = ArgFile(dynamicVMOptions, dynamicParameters, cs, platform)
+      val argFile = ArgFile(dynamicVMOptions, cs, platform)
       commandLine.addFileToDeleteOnTermination(argFile.file)
 
       val classPath = javaParameters.classPath
@@ -345,7 +355,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
-      argFile.scheduleWriteFileWhenReady(javaParameters, vmParameters) {
+      argFile.scheduleWriteFileWhenReady(vmParameters) {
         rememberFileContentAfterUpload(argFile.file, argFileParameter)
       }
 
@@ -465,8 +475,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       val classpath: MutableSet<TargetValue<String>> = LinkedHashSet()
       classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, PathUtil.getJarPathForClass(commandLineWrapper)))
       // If kotlin agent starts it needs kotlin-stdlib in the classpath.
-      javaParameters.classPath.rootDirs.forEach {
-        it.getUserData(JdkUtil.AGENT_RUNTIME_CLASSPATH)?.let {
+      javaParameters.classPath.rootDirs.forEach { rootDir ->
+        rootDir.getUserData(JdkUtil.AGENT_RUNTIME_CLASSPATH)?.let {
           classpath.add(requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, it))
         }
       }
@@ -553,8 +563,8 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       appendVmParameter(it)
     }
     val targetDependentParameters = javaParameters.targetDependentParameters
-    targetDependentParameters.asTargetParameters().forEach {
-      val value = it.apply(request)
+    targetDependentParameters.asTargetParameters().forEach { javaParameterFunction ->
+      val value = javaParameterFunction.apply(request)
       value.resolvePaths(
         uploadPathsResolver = { path ->
           path.beforeUploadOrDownloadResolved(path.localPath)
@@ -579,14 +589,16 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       return
     }
 
-    if (vmParameter.startsWith("-agentpath:")) {
-      appendVmAgentParameter(vmParameter, "-agentpath:")
-    }
-    else if (vmParameter.startsWith("-javaagent:")) {
-      appendVmAgentParameter(vmParameter, "-javaagent:")
-    }
-    else {
-      commandLine.addParameter(vmParameter)
+    when {
+      vmParameter.startsWith("-agentpath:") -> {
+        appendVmAgentParameter(vmParameter, "-agentpath:")
+      }
+      vmParameter.startsWith("-javaagent:") -> {
+        appendVmAgentParameter(vmParameter, "-javaagent:")
+      }
+      else -> {
+        commandLine.addParameter(vmParameter)
+      }
     }
   }
 
@@ -715,7 +727,6 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   }
 
   private class ArgFile @Throws(IOException::class) constructor(private val dynamicVMOptions: Boolean,
-                                                                private val dynamicParameters: Boolean,
                                                                 private val charset: Charset,
                                                                 private val platform: Platform) {
 
@@ -735,12 +746,10 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       registerPromise(promisedValue)
     }
 
-    fun scheduleWriteFileWhenReady(javaParameters: SimpleJavaParameters,
-                                   vmParameters: ParametersList,
-                                   rememberContent: () -> Unit) {
+    fun scheduleWriteFileWhenReady(vmParameters: ParametersList, rememberContent: () -> Unit) {
       myAllPromises.collectResults().onSuccess {
         try {
-          writeArgFileNow(javaParameters, vmParameters)
+          writeArgFileNow(vmParameters)
           rememberContent.invoke()
         }
         catch (e: IOException) {
@@ -756,7 +765,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
     }
 
     @Throws(IOException::class, ExecutionException::class, TimeoutException::class)
-    private fun writeArgFileNow(javaParameters: SimpleJavaParameters, vmParameters: ParametersList) {
+    private fun writeArgFileNow(vmParameters: ParametersList) {
       val fileArgs: MutableList<String?> = ArrayList()
       if (dynamicVMOptions) {
         fileArgs.addAll(vmParameters.list)

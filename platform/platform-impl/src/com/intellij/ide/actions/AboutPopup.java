@@ -139,6 +139,28 @@ public final class AboutPopup {
     catch (Exception ignore) { }
   }
 
+  static @Nullable String loadThirdPartyLibraries() {
+    final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
+    if (thirdPartyLibrariesFile.isFile()) {
+      try {
+        return FileUtil.loadFile(thirdPartyLibrariesFile);
+      }
+      catch (IOException e) {
+        LOG.warn(e);
+      }
+    }
+    return null;
+  }
+
+  static @NotNull @Nls String getCopyrightText() {
+    ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
+    // Copyright message should not be translated
+    @NlsSafe
+    String copyrightText = String.format(Locale.ROOT,
+                                         "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
+    return copyrightText;
+  }
+
   private static final class InfoSurface extends JPanel {
     private static final ExtensionPointName<AboutPopupDescriptionProvider> EP_NAME = new ExtensionPointName<>("com.intellij.aboutPopupDescriptionProvider");
 
@@ -314,20 +336,6 @@ public final class AboutPopup {
         }
       });
     }
-
-    private static @Nullable String loadThirdPartyLibraries() {
-      final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
-      if (thirdPartyLibrariesFile.isFile()) {
-        try {
-          return FileUtil.loadFile(thirdPartyLibrariesFile);
-        }
-        catch (IOException e) {
-          LOG.warn(e);
-        }
-      }
-      return null;
-    }
-
     private static Rectangle getCopyIconArea() {
       return new Rectangle(getCopyIconCoord(), JBUI.size(16));
     }
@@ -344,9 +352,13 @@ public final class AboutPopup {
       GraphicsConfig config = new GraphicsConfig(g);
       UISettings.setupAntialiasing(g);
 
-      Font labelFont = JBFont.label();
+      Font labelFont;
       if (SystemInfo.isWindows) {
         labelFont = JBUI.Fonts.create("Segoe UI", 14);
+      } else if (SystemInfo.isMac) {
+        labelFont = JBUI.Fonts.create("Helvetica Neue", 13);
+      } else {
+        labelFont = JBUI.Fonts.create("Arial", 14);
       }
 
       int startFontSize = 14;
@@ -383,11 +395,12 @@ public final class AboutPopup {
         color = new Color((int)copyrightForeground, copyrightForeground > 0xffffff);
       }
       g2.setColor(color);
-      if (SystemInfo.isMac) {
-        g2.setFont(JBUI.Fonts.miniFont());
-      }
-      else {
-        g2.setFont(JBUI.Fonts.create("Segoe UI", 10));
+      if (SystemInfo.isWindows) {
+        g.setFont(JBUI.Fonts.create("Segoe UI", 10));
+      } else if (SystemInfo.isMac) {
+        g.setFont(JBUI.Fonts.create("Helvetica Neue", 10));
+      } else {
+        g.setFont(JBUI.Fonts.create("Arial", 10));
       }
 
       JBPoint copyrightCoord = getCopyrightCoord();
@@ -407,15 +420,6 @@ public final class AboutPopup {
         AllIcons.General.CopyHovered.paintIcon(this, g, coord.x, coord.y);
         config.restore();
       }
-    }
-
-    private static @NotNull @Nls String getCopyrightText() {
-      ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-      // Copyright message should not be translated
-      @NlsSafe
-      String copyrightText = String.format(Locale.ROOT,
-        "Copyright © %s–%d %s", appInfo.getCopyrightStart(), Calendar.getInstance(Locale.US).get(Calendar.YEAR), appInfo.getCompanyName());
-      return copyrightText;
     }
 
     private @NotNull TextRenderer createTextRenderer(Graphics2D g) {
@@ -644,7 +648,7 @@ public final class AboutPopup {
     return rgba == -1 ? Color.BLACK : new Color((int)rgba, rgba > 0xffffff);
   }
 
-  private static @NotNull String getExtraInfo() {
+  static @NotNull String getExtraInfo() {
     String extraInfo = SystemInfo.getOsNameAndVersion() + "\n";
 
     for (AboutPopupDescriptionProvider aboutInfoProvider : InfoSurface.EP_NAME.getExtensions()) {
@@ -772,7 +776,7 @@ public final class AboutPopup {
         viewer.setText(resultHtmlText);
 
         StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
-        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, \"Helvetica Neue\", Helvetica, Arial, sans-serif;}");
         styleSheet.addRule("body {margin-top:0;padding-top:0;}");
         styleSheet.addRule("body {font-size:" + JBUIScale.scaleFontSize((float)14) + "pt;}");
 
@@ -804,7 +808,9 @@ public final class AboutPopup {
       }
     };
 
-    ourPopup.cancel();
+    if (ourPopup != null) {
+      ourPopup.cancel();
+    }
     dialog.setTitle(IdeBundle.message("dialog.title.third.party.software",
                                       ApplicationNamesInfo.getInstance().getFullProductName(),
                                       ApplicationInfo.getInstance().getFullVersion()));

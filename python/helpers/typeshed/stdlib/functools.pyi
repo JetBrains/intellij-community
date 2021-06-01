@@ -1,5 +1,5 @@
 import sys
-from _typeshed import SupportsLessThan
+from _typeshed import SupportsItems, SupportsLessThan
 from typing import (
     Any,
     Callable,
@@ -11,6 +11,8 @@ from typing import (
     NamedTuple,
     Optional,
     Sequence,
+    Set,
+    Sized,
     Tuple,
     Type,
     TypeVar,
@@ -25,6 +27,7 @@ _AnyCallable = Callable[..., Any]
 
 _T = TypeVar("_T")
 _S = TypeVar("_S")
+
 @overload
 def reduce(function: Callable[[_T, _S], _T], sequence: Iterable[_S], initial: _T) -> _T: ...
 @overload
@@ -130,3 +133,14 @@ if sys.version_info >= (3, 8):
 
 if sys.version_info >= (3, 9):
     def cache(__user_function: Callable[..., _T]) -> _lru_cache_wrapper[_T]: ...
+
+def _make_key(
+    args: Tuple[Hashable, ...],
+    kwds: SupportsItems[Any, Any],
+    typed: bool,
+    kwd_mark: Tuple[object, ...] = ...,
+    fasttypes: Set[type] = ...,
+    tuple: type = ...,
+    type: Any = ...,
+    len: Callable[[Sized], int] = ...,
+) -> Hashable: ...

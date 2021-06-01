@@ -269,6 +269,7 @@
 
     <group>
       <action id="CreateLibraryFromFile" class="com.intellij.ide.projectView.actions.MarkLibraryRootAction"/>
+      <action id="ExtractModuleFromPackage" class="com.intellij.ide.projectView.actions.ExtractModuleFromPackageAction" internal="true"/>
       <action id="ImportModuleFromImlFile" class="com.intellij.ide.projectView.actions.ImportModuleFromImlFileAction"/>
       <add-to-group group-id="ProjectViewPopupMenuSettingsGroup" relative-to-action="MarkRootGroup" anchor="after"/>
     </group>
@@ -614,10 +615,6 @@
       <separator/>
       <add-to-group group-id="MethodHierarchyPopupMenu" anchor="first"/>
     </group>
-
-    <action id="StartupWizard" class="com.intellij.ide.startupWizard.StartupWizardAction" internal="true">
-      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="ExportImportGroup"/>
-    </action>
 
     <group id="Debugger.FramePanelPopup">
       <reference ref="Debugger.AdjustArrayRange"/>

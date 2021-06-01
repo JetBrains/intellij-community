@@ -49,6 +49,7 @@
     <listener class="com.intellij.debugger.impl.DebuggerManagerImpl$DebuggerRunContentWithExecutorListener" topic="com.intellij.execution.ui.RunContentWithExecutorListener"/>
     <listener class="com.intellij.debugger.impl.HotSwapManager$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
     <listener class="com.intellij.debugger.ui.HotSwapUIImpl$HotSwapDebuggerManagerListener" topic="com.intellij.debugger.impl.DebuggerManagerListener"/>
+    <listener class="com.intellij.packaging.impl.artifacts.ArtifactVirtualFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
   </projectListeners>
 
   <extensionPoints>
@@ -266,6 +267,9 @@
     <!-- See com.intellij.codeInspection.javaDoc.JavaDocLocalInspection -->
     <extensionPoint qualifiedName="com.intellij.javaDocNotNecessary" interface="com.intellij.openapi.util.Condition" dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.starter.moduleImporter" interface="com.intellij.ide.starters.StarterModuleImporter" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.starter.modulePreprocessor" interface="com.intellij.ide.starters.StarterModulePreprocessor" dynamic="true"/>
+    <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.java" interface="com.intellij.ide.projectWizard.generators.JavaBuildSystemType" dynamic="true"/>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -341,7 +345,6 @@
     <projectService serviceImplementation="com.intellij.jarRepository.RemoteRepositoriesConfiguration"/>
     <projectService serviceImplementation="com.intellij.jarRepository.services.MavenRepositoryServicesManager"/>
     <projectService serviceImplementation="com.intellij.psi.util.ProjectIconsAccessor"/>
-    <projectService serviceImplementation="com.intellij.testIntegration.TestFailedLineManager"/>
     <projectService serviceImplementation="com.intellij.codeInsight.JavaProjectCodeInsightSettings"/>
     <projectService serviceImplementation="com.intellij.javadoc.JavadocGenerationManager"/>
     <projectService serviceInterface="com.intellij.codeInspection.ex.EntryPointsManager"
@@ -372,6 +375,7 @@
                     serviceImplementation="com.intellij.codeInsight.ExternalAnnotationsManagerImpl"/>
     <projectService serviceInterface="com.intellij.openapi.roots.CompilerProjectExtension"
                     serviceImplementation="com.intellij.openapi.roots.impl.CompilerProjectExtensionImpl"/>
+    <registryKey key="java.additional.external.annotations.root.url" defaultValue="" description="URL of a zip file or a directory containing additional external annotations which will be applied to all modules and libraries"/>
 
     <renameHandler implementation="com.intellij.ide.projectView.impl.RenameModuleHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.RenameModuleAndDirectoryHandler"/>
@@ -431,6 +435,7 @@
     <statistics.counterUsagesCollector groupId="java.extract.method" version="2"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.extractMethod.newImpl.inplace.InplaceExtractMethodCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.debugger.actions.JavaDebuggerActionsCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.editorActions.smartEnter.JavaSmartEnterProcessor$FixerUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.debugger.settings.DebuggerSettingsStatisticsCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.refactoring.JavaRefactoringUsageCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.codeInspection.deadCode.EntryPointsUsageCollector"/>
@@ -503,6 +508,9 @@
                     key="rmi.compiler.description" bundle="messages.JavaCompilerBundle"/>
     </projectConfigurable>
 
+    <advancedSetting id="compiler.automake.allow.when.app.running" groupKey="advanced.settings.group.compiler" default="false"
+                     bundle="messages.JavaBundle"/>
+
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.AttachSourcesNotificationProvider"/>
     <editorNotificationProvider implementation="com.intellij.codeInsight.daemon.impl.LibrarySourceNotificationProvider"/>
 
@@ -568,7 +576,7 @@
     <externalSystem.beforeRunTaskImporter implementation="com.intellij.openapi.externalSystem.service.project.settings.BuildArtifactsTaskImporter"/>
     <externalSystemConfigurationHandler implementation="com.intellij.openapi.externalSystem.service.project.settings.ArtifactsImporter"/>
     <externalSystem.moduleDataServiceExtension implementation="com.intellij.openapi.externalSystem.service.project.ModuleDataServiceJavaExtension"/>
-    <externalSystem.runConfigurationExtension implementation="com.intellij.execution.ExternalSystemRunConfigurationJavaExtension"/>
+    <externalSystem.runConfigurationEx implementation="com.intellij.execution.ExternalSystemRunConfigurationJavaExtension"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkProvider"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.execution.ExternalSystemJavaSdkProvider"
                         overrides="true"/>
@@ -988,13 +996,13 @@
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaMethodProcessor" id="javamethod"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaVariableProcessor" id="javaVariable"/>
     <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameJavaModuleProcessor"/>
-    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor"/>
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameAliasingPomTargetProcessor" id="aliasingPom"/>
     <findUsagesHandlerFactory implementation="com.intellij.find.findUsages.JavaFindUsagesHandlerFactory" id="java" order="last, before default"/>
     <updateAddedFileProcessor implementation="com.intellij.psi.impl.file.JavaUpdateAddedFileProcessor"/>
     <rename.inplace.resolveSnapshotProvider language="JAVA" implementationClass="com.intellij.refactoring.rename.inplace.JavaResolveSnapshotProvider"/>
     <renameHandler implementation="com.intellij.refactoring.rename.DirectoryAsPackageRenameHandler"/>
     <renameHandler implementation="com.intellij.refactoring.rename.RenameWrongRefHandler"/>
-    <gotoTargetRendererProvider implementation="com.intellij.codeInsight.navigation.JavaGotoTargetRendererProvider"/>
+    <gotoTargetPresentationProvider implementation="com.intellij.codeInsight.navigation.JavaGotoTargetPresentationProvider"/>
     <typeDeclarationProvider implementation="com.intellij.codeInsight.navigation.actions.JavaTypeDeclarationProvider"/>
     <navbar implementation="com.intellij.ide.navigationToolbar.JavaNavBarExtension"/>
     <gotoDeclarationHandler implementation="com.intellij.codeInsight.navigation.actions.GotoBreakContinueHandler"/>
@@ -1305,11 +1313,6 @@
     <java.error.fix errorCode="lambda.variable.must.be.final" implementationClass="com.intellij.codeInsight.daemon.impl.quickfix.VariableAccessFromInnerClassJava10Fix"/>
     <stripTrailingSpacesFilterFactory implementation="com.intellij.codeEditor.JavaStripTrailingSpacesFilterFactory"/>
 
-    <localInspection groupPath="Java" language="JAVA" shortName="TestFailedLine"
-                     enabledByDefault="true" level="WARNING"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues"
-                     implementationClass="com.intellij.execution.testframework.TestFailedLineInspection"
-                     key="inspection.test.failed.line.display.name" bundle="messages.JavaBundle"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      implementationClass="com.intellij.codeInspection.MoveFieldAssignmentToInitializerInspection"
@@ -1394,6 +1397,12 @@
                      bundle="messages.JavaBundle"
                      key="inspection.redundant.file.creation.display.name"
                      implementationClass="com.intellij.codeInspection.RedundantFileCreationInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ScheduledThreadPoolExecutorWithZeroCoreThreads"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.probable.bugs" enabledByDefault="true" level="WARNING"
+                     bundle="messages.JavaBundle"
+                     key="scheduled.thread.pool.executor.with.zero.core.threads.display.name"
+                     implementationClass="com.intellij.codeInspection.ScheduledThreadPoolExecutorWithZeroCoreThreadsInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SlowAbstractSetRemoveAll"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
@@ -1640,10 +1649,6 @@
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.DefaultAnnotationParamInspection" />
-    <localInspection groupPath="Java" language="JAVA" shortName="ConvertToBasicLatin" bundle="messages.JavaBundle" key="inspection.convert.to.basic.latin"
-                     groupKey="group.names.i18n" groupBundle="messages.InspectionsBundle"
-                     enabledByDefault="true" level="INFORMATION"
-                     implementationClass="com.intellij.codeInspection.ConvertToBasicLatinInspection" />
     <localInspection groupPath="Java" language="JAVA" shortName="SillyAssignment" bundle="messages.JavaBundle" key="inspection.variable.assigned.to.itself.display.name"
                      groupKey="group.names.declaration.redundancy" groupBundle="messages.InspectionsBundle"
                      enabledByDefault="true" level="WARNING"
@@ -2142,7 +2147,14 @@
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
 
     <newProjectWizard implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
-    <newProjectWizard implementation="com.intellij.ide.projectWizard.generators.KotlinNewProjectWizard"/>
+    <newProjectWizard.buildSystem.java implementation="com.intellij.ide.projectWizard.generators.GradleJavaBuildSystemType"/>
+    <newProjectWizard.buildSystem.java implementation="com.intellij.ide.projectWizard.generators.MavenJavaBuildSystemType"/>
+
+    <registryKey key="starters.dependency.update.host"
+                 defaultValue="https://frameworks.jetbrains.com"
+                 description="The host is used to download dependency config updates for framework starters"/>
+
+    <dependencyCollector kind="java" implementation="com.intellij.ide.JavaDependencyCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

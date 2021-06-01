@@ -37,7 +37,7 @@ public class EditorTracker implements Disposable {
   private final Map<Window, List<Editor>> myWindowToEditorsMap = new HashMap<>();
   private final Map<Window, WindowAdapter> myWindowToWindowFocusListenerMap = new HashMap<>();
   private final Map<Editor, Window> myEditorToWindowMap = new HashMap<>();
-  private List<Editor> myActiveEditors = Collections.emptyList(); // accessed in EDT only
+  private List<? extends Editor> myActiveEditors = Collections.emptyList(); // accessed in EDT only
 
   private Window myActiveWindow;
   private final Map<Editor, Runnable> myExecuteOnEditorRelease = new HashMap<>();
@@ -167,8 +167,7 @@ public class EditorTracker implements Disposable {
     return (frameHelper != null && frameHelper.getProject() != myProject) ? null : window;
   }
 
-  @NotNull
-  public List<Editor> getActiveEditors() {
+  public @NotNull List<? extends Editor> getActiveEditors() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     return myActiveEditors;
   }
@@ -186,7 +185,7 @@ public class EditorTracker implements Disposable {
     else {
       List<Editor> editors = new SmartList<>();
       for (Editor editor : list) {
-        if (editor.getContentComponent().isShowing()) {
+        if (editor.getContentComponent().isShowing() && !editor.isDisposed()) {
           editors.add(editor);
         }
       }
@@ -194,7 +193,7 @@ public class EditorTracker implements Disposable {
     }
   }
 
-  public void setActiveEditors(@NotNull List<Editor> editors) {
+  public void setActiveEditors(@NotNull List<? extends Editor> editors) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (editors.equals(myActiveEditors)) {
       return;

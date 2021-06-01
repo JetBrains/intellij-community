@@ -35,11 +35,12 @@ internal class SampleEntityData : WorkspaceEntityData<SampleEntity>() {
   var booleanProperty: Boolean = false
   lateinit var stringProperty: String
   lateinit var stringListProperty: List<String>
+  lateinit var stringSetProperty: Set<String>
   lateinit var fileProperty: VirtualFileUrl
   lateinit var myData: MyConcreteImpl
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): SampleEntity {
-    return SampleEntity(booleanProperty, stringProperty, stringListProperty, fileProperty, myData).also { addMetaData(it, snapshot) }
+    return SampleEntity(booleanProperty, stringProperty, stringListProperty, stringSetProperty, fileProperty, myData).also { addMetaData(it, snapshot) }
   }
 }
 
@@ -47,6 +48,7 @@ internal class SampleEntity(
   val booleanProperty: Boolean,
   val stringProperty: String,
   val stringListProperty: List<String>,
+  val stringSetProperty: Set<String>,
   val fileProperty: VirtualFileUrl,
   val myData: MyConcreteImpl,
 ) : WorkspaceEntityBase()
@@ -55,6 +57,7 @@ internal class ModifiableSampleEntity : ModifiableWorkspaceEntityBase<SampleEnti
   var booleanProperty: Boolean by EntityDataDelegation()
   var stringProperty: String by EntityDataDelegation()
   var stringListProperty: List<String> by EntityDataDelegation()
+  var stringSetProperty: Set<String> by EntityDataDelegation()
   var fileProperty: VirtualFileUrl by EntityDataDelegation()
   var myData: MyConcreteImpl by EntityDataDelegation()
 }
@@ -79,6 +82,7 @@ internal fun WorkspaceEntityStorageDiffBuilder.addSampleEntity(stringProperty: S
                                                                source: EntitySource = SampleEntitySource("test"),
                                                                booleanProperty: Boolean = false,
                                                                stringListProperty: MutableList<String> = ArrayList(),
+                                                               stringSetProperty: MutableSet<String> = LinkedHashSet(),
                                                                virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManagerImpl(),
                                                                fileProperty: VirtualFileUrl = virtualFileManager.fromUrl("file:///tmp"),
                                                                info: String = ""
@@ -87,6 +91,7 @@ internal fun WorkspaceEntityStorageDiffBuilder.addSampleEntity(stringProperty: S
     this.booleanProperty = booleanProperty
     this.stringProperty = stringProperty
     this.stringListProperty = stringListProperty
+    this.stringSetProperty = stringSetProperty
     this.fileProperty = fileProperty
     this.myData = MyConcreteImpl(MyContainer(info))
   }

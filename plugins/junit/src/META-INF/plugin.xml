@@ -97,6 +97,8 @@
 
     <runDashboardCustomizer implementation="com.intellij.execution.junit.JUnitRunDashboardCustomizer"
                             order="before commonJavaCustomizer"/>
+
+    <dependencySupport kind="java" coordinate="junit:junit" displayName="JUnit"/>
   </extensions>
 
   <extensionPoints>

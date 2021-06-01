@@ -24,11 +24,11 @@ import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.Nullable;
 
 
-public class AssignableFromFilter implements ElementFilter{
+public class AssignableFromFilter implements ElementFilter {
   private PsiType myType;
   private String myClassName;
 
-  public AssignableFromFilter(PsiType type){
+  public AssignableFromFilter(PsiType type) {
     myType = type;
   }
 
@@ -37,30 +37,27 @@ public class AssignableFromFilter implements ElementFilter{
   }
 
   @Override
-  public boolean isClassAcceptable(Class hintClass){
+  public boolean isClassAcceptable(Class hintClass) {
     return true;
   }
 
   @Override
-  public boolean isAcceptable(Object element, PsiElement context){
+  public boolean isAcceptable(Object element, PsiElement context) {
     PsiType type = myType;
-    if(type == null) {
+    if (type == null) {
       JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(context.getProject());
       final PsiClass aClass = psiFacade.findClass(myClassName, context.getResolveScope());
       if (aClass != null) {
         type = psiFacade.getElementFactory().createType(aClass, PsiSubstitutor.EMPTY);
       }
-      else {
-        type = null;
-      }
     }
-    if(type == null) return false;
-    if(element == null) return false;
-    if (element instanceof PsiType) return type.isAssignableFrom((PsiType) element);
-    
+    if (type == null) return false;
+    if (element == null) return false;
+    if (element instanceof PsiType) return type.isAssignableFrom((PsiType)element);
+
     PsiSubstitutor substitutor = null;
-    
-    if(element instanceof CandidateInfo){
+
+    if (element instanceof CandidateInfo) {
       final CandidateInfo info = (CandidateInfo)element;
       substitutor = info.getSubstitutor();
       element = info.getElement();
@@ -79,7 +76,7 @@ public class AssignableFromFilter implements ElementFilter{
       return false;
     }
 
-    if(substitutor != null) {
+    if (substitutor != null) {
       typeByElement = substitutor.substitute(typeByElement);
     }
 
@@ -110,13 +107,24 @@ public class AssignableFromFilter implements ElementFilter{
     return true;
   }
 
-  private static boolean isReturnTypeInferrable(PsiMethod method, PsiElement place, PsiType expectedType, @Nullable PsiSubstitutor substitutor) {
+  private static boolean isReturnTypeInferrable(PsiMethod method,
+                                                PsiElement place,
+                                                PsiType expectedType,
+                                                @Nullable PsiSubstitutor substitutor) {
     final PsiResolveHelper helper = JavaPsiFacade.getInstance(method.getProject()).getResolveHelper();
-    for (final PsiTypeParameter parameter : method.getTypeParameters()) {
-      PsiType returnType = method.getReturnType();
-      if (substitutor != null) {
-        returnType = substitutor.substitute(returnType);
+    PsiTypeParameter[] typeParameters = method.getTypeParameters();
+    if (typeParameters.length == 0) return false;
+    PsiType returnType = method.getReturnType();
+    if (substitutor != null) {
+      returnType = substitutor.substitute(returnType);
+    }
+    if (returnType instanceof PsiClassType) {
+      PsiClass target = ((PsiClassType)returnType).resolve();
+      if (!(target instanceof PsiTypeParameter) && !expectedType.isAssignableFrom(((PsiClassType)returnType).rawType())) {
+        return false;
       }
+    }
+    for (final PsiTypeParameter parameter : typeParameters) {
       final PsiType substitutionForParameter = helper.getSubstitutionForTypeParameter(parameter,
                                                                                       returnType,
                                                                                       expectedType,
@@ -146,7 +154,7 @@ public class AssignableFromFilter implements ElementFilter{
     return intersection instanceof PsiIntersectionType && ((PsiIntersectionType)intersection).getConflictingConjunctsMessage() != null;
   }
 
-  public String toString(){
+  public String toString() {
     return "assignable-from(" + (myType != null ? myType : myClassName) + ")";
   }
 }

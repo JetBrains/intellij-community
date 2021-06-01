@@ -18,7 +18,6 @@ import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
@@ -42,17 +41,17 @@ import training.learn.LessonsBundle
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.ui.LearningUiUtil
-import training.util.KeymapUtil
 import training.util.learningToolWindow
 import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
+import java.awt.Window
+import java.awt.event.InputEvent
 import java.awt.event.KeyEvent
 import java.lang.reflect.Modifier
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import javax.swing.JList
-import javax.swing.JWindow
 import javax.swing.KeyStroke
 
 object LessonUtil {
@@ -183,19 +182,21 @@ object LessonUtil {
    * Use constants from [java.awt.event.KeyEvent] as keyCode.
    * For example: rawKeyStroke(KeyEvent.VK_SHIFT)
    */
-  fun rawKeyStroke(keyCode: Int): String {
-    val keyStroke = KeymapUtil.getKeyStrokeText(KeyStroke.getKeyStroke(keyCode, 0))
-    return "<raw_action>$keyStroke</raw_action>"
-  }
+  fun rawKeyStroke(keyCode: Int): String = rawKeyStroke(KeyStroke.getKeyStroke(keyCode, 0))
 
   fun rawKeyStroke(keyStroke: KeyStroke): String {
-    return "<raw_action>${KeymapUtil.getKeyStrokeText(keyStroke)}</raw_action>"
+    return " <raw_shortcut>$keyStroke</raw_shortcut> "
   }
 
   fun rawEnter(): String = rawKeyStroke(KeyEvent.VK_ENTER)
 
   fun rawCtrlEnter(): String {
-    return "<raw_action>${if (SystemInfo.isMacOSMojave) "\u2318\u23CE" else "Ctrl + Enter"}</raw_action>"
+    return if (SystemInfo.isMac) {
+      rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.META_DOWN_MASK))
+    }
+    else {
+      rawKeyStroke(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.CTRL_DOWN_MASK))
+    }
   }
 
   fun checkToolbarIsShowing(ui: ActionButton): Boolean   {
@@ -216,7 +217,7 @@ object LessonUtil {
     }
   }
 
-  fun adjustPopupPosition(project: Project, popupWindow: JWindow): Boolean {
+  fun adjustPopupPosition(project: Project, popupWindow: Window): Boolean {
     val learningToolWindow = learningToolWindow(project) ?: return false
     val learningComponent = learningToolWindow.component
     val learningRectangle = Rectangle(learningComponent.locationOnScreen, learningToolWindow.component.size)
@@ -263,6 +264,15 @@ fun LessonContext.firstLessonCompletedMessage() {
   text(LessonsBundle.message("goto.action.propose.to.go.next.new.ui", LessonUtil.rawEnter()))
 }
 
+fun TaskContext.proceedLink() {
+  val gotIt = CompletableFuture<Boolean>()
+  runtimeText {
+    removeAfterDone = true
+    LessonsBundle.message("proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
+  }
+  addStep(gotIt)
+}
+
 fun TaskContext.checkToolWindowState(toolWindowId: String, isShowing: Boolean) {
   addFutureStep {
     subscribeForMessageBus(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
@@ -276,7 +286,7 @@ fun TaskContext.checkToolWindowState(toolWindowId: String, isShowing: Boolean) {
   }
 }
 
-fun <L> TaskRuntimeContext.subscribeForMessageBus(topic: Topic<L>, handler: L) {
+fun <L: Any> TaskRuntimeContext.subscribeForMessageBus(topic: Topic<L>, handler: L) {
   project.messageBus.connect(taskDisposable).subscribe(topic, handler)
 }
 
@@ -312,12 +322,6 @@ fun TaskRuntimeContext.closeAllFindTabs() {
   while (usageViewManager.selectedContent.also { selectedContent = it } != null) {
     usageViewManager.closeContent(selectedContent!!)
   }
-}
-
-fun TaskContext.gotItStep(position: Balloon.Position, width: Int, @Nls text: String) {
-  val gotIt = CompletableFuture<Boolean>()
-  text(text, LearningBalloonConfig(position, width, false) { gotIt.complete(true) })
-  addStep(gotIt)
 }
 
 fun String.dropMnemonic(): String {

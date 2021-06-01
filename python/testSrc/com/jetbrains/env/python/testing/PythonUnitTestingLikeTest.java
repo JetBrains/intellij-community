@@ -26,7 +26,7 @@ import com.jetbrains.env.ut.PyUnitTestProcessRunner;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.testing.PyUnitTestConfiguration;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
+import com.jetbrains.python.testing.PyUnitTestFactory;
 import org.hamcrest.Matchers;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -334,7 +334,7 @@ public abstract class PythonUnitTestingLikeTest<T extends PyScriptTestProcessRun
   @Test
   public void testMultipleCases() {
     runPythonTest(
-      new CreateConfigurationMultipleCasesTask<>(PythonTestConfigurationsModel.getPythonsUnittestName(),
+      new CreateConfigurationMultipleCasesTask<>(new PyUnitTestFactory().getName(),
                                                  PyUnitTestConfiguration.class) {
         @Override
         protected boolean configurationShouldBeProducedForElement(@NotNull final PsiElement element) {

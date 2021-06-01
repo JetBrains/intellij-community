@@ -13,7 +13,6 @@ import com.intellij.ide.ui.ScreenAreaConsumer;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -631,7 +630,7 @@ public final class BalloonImpl implements Balloon, IdeTooltip.Ui, ScreenAreaCons
     if (ApplicationManager.getApplication() != null) {
       ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(AnActionListener.TOPIC, new AnActionListener() {
         @Override
-        public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+        public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
           if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
             hide();
           }

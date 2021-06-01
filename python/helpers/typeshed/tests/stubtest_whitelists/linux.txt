@@ -1,15 +1,13 @@
 _posixsubprocess.cloexec_pipe
-builtins.WindowsError
-curses.COLORS
-curses.COLOR_PAIRS
-curses.COLS
-curses.LINES
-distutils.command.bdist_msi
-grp.getgrgid
-grp.struct_group._asdict
-grp.struct_group._make
-grp.struct_group._replace
-ntpath.realpath
+_?curses.ACS_.* # ACS codes are initialized only after initscr call.
+curses.COLORS  # Initialized after start_color
+curses.COLOR_PAIRS  # Initialized after start_color
+curses.COLS  # Initialized only after initscr call.
+curses.LINES  # Initialized only after initscr call.
+distutils.command.bdist_msi  # msi is only available on windows
+grp.struct_group._asdict  # PyStructSequence
+grp.struct_group._make  # PyStructSequence
+grp.struct_group._replace  # PyStructSequence
 os.EX_NOTFOUND
 os.SF_MNOWAIT
 os.SF_NODISKIO
@@ -17,17 +15,15 @@ os.SF_SYNC
 os.chflags
 os.lchflags
 os.lchmod
-os.listxattr
 os.plock
 posix.EX_NOTFOUND
 select.EPOLL_RDHUP
-socket.socketpair
-spwd.getspnam
-spwd.struct_spwd._asdict
-spwd.struct_spwd._make
-spwd.struct_spwd._replace
-time.CLOCK_HIGHRES
-urllib.request.proxy_bypass
+selectors.KqueueSelector
+signal.SIGEMT
+signal.SIGINFO
+spwd.struct_spwd._asdict  # PyStructSequence
+spwd.struct_spwd._make  # PyStructSequence
+spwd.struct_spwd._replace  # PyStructSequence
 
 # ==========
 # Whitelist entries that cannot or should not be fixed
@@ -43,7 +39,7 @@ msvcrt
 winreg
 winsound
 
-# NamedTuple like, but not actually NamedTuples
+# NamedTuple like, but not actually NamedTuples (PyStructSequence)
 posix.[a-z]+_(param|result)._(asdict|make|replace)
 
 # Platform differences that cannot be captured by the type system

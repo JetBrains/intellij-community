@@ -87,7 +87,7 @@ public class GenerateAction extends DumbAwareAction implements UpdateInBackgroun
     return copy;
   }
 
-  private static class GenerateWrappingGroup extends ActionGroup {
+  private static class GenerateWrappingGroup extends ActionGroup implements UpdateInBackground {
 
     private final AnAction myAction;
     private final AnAction myEditTemplateAction;
@@ -97,6 +97,11 @@ public class GenerateAction extends DumbAwareAction implements UpdateInBackgroun
       myEditTemplateAction = editTemplateAction;
       copyFrom(action);
       setPopup(true);
+    }
+
+    @Override
+    public boolean isUpdateInBackground() {
+      return UpdateInBackground.isUpdateInBackground(myAction);
     }
 
     @Override

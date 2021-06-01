@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.test
 
@@ -38,6 +35,8 @@ import org.jetbrains.kotlin.idea.debugger.test.util.render
 import org.jetbrains.kotlin.idea.test.ConfigLibraryUtil
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.test.KotlinBaseTest
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase() {
@@ -236,6 +235,9 @@ abstract class KotlinDescriptorTestCaseWithStepping : KotlinDescriptorTestCase()
             stackFrame.callback()
         }
     }
+
+    protected fun countBreakpointsNumber(file: KotlinBaseTest.TestFile) =
+        InTextDirectivesUtils.findLinesWithPrefixesRemoved(file.content, "//Breakpoint!").size
 
     protected fun SuspendContextImpl.invokeInManagerThread(callback: () -> Unit) {
         assert(debugProcess.isAttached)

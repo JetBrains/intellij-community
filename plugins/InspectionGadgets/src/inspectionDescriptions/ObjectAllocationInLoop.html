@@ -7,11 +7,36 @@ and performance issues.
   The inspection reports the following constructs:
 </p>
 <ul>
-  <li>Explicit allocations via <b>new</b> operator</li>
+  <li>Explicit allocations via <code>new</code> operator</li>
   <li>Methods known to return new object</li>
   <li>Instance-bound method references</li>
-  <li>Lambdas that capture variables or <b>this</b> reference</li>
+  <li>Lambdas that capture variables or <code>this</code> reference</li>
 </ul>
+<p><b>Example:</b></p>
+<pre><code>
+  // Explicit allocation
+  for (Status status : Status.values()) {
+    declarationsMap.put(status, new ArrayList&lt;&gt;());
+  }
+
+  // Lambda captures variable
+  String message = "Engine running.";
+  for (Engine engine : engines) {
+      if (!isRunning(engine)) {
+          logger.warn(() -> {
+              return String.format(message);
+          });
+      }
+  }
+
+  // Instance-bound method reference
+  for(Node node : nodes) {
+    descriptor = node.getDescription();
+    descriptor.ifPresent(dynamicTestExecutor::execute);
+  }
+
+</code>
+</pre>
 <!-- tooltip end -->
 </body>
 </html>

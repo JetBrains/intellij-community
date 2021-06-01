@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.icons.AllIcons;
@@ -11,8 +11,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Shows the popup of all tabs when single row editor tab layout is used and all tabs don't fit on the screen.
- *
- * @author yole
  */
 public class TabListAction extends DumbAwareAction {
   @Override

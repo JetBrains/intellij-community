@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -113,10 +114,10 @@ public abstract class UsefulTestCase extends TestCase {
   public static final String TEMP_DIR_MARKER = "unitTest_";
   public static final boolean OVERWRITE_TESTDATA = Boolean.getBoolean("idea.tests.overwrite.data");
 
-  private static final String ORIGINAL_TEMP_DIR = FileUtil.getTempDirectory();
+  private static final String ORIGINAL_TEMP_DIR = FileUtilRt.getTempDirectory();
 
-  private static final Object2LongMap<String> TOTAL_SETUP_COST_MILLIS=new Object2LongOpenHashMap<>();
-  private static final Object2LongMap<String> TOTAL_TEARDOWN_COST_MILLIS=new Object2LongOpenHashMap<>();
+  private static final Object2LongMap<String> TOTAL_SETUP_COST_MILLIS = new Object2LongOpenHashMap<>();
+  private static final Object2LongMap<String> TOTAL_TEARDOWN_COST_MILLIS = new Object2LongOpenHashMap<>();
 
   protected static final Logger LOG = Logger.getInstance(UsefulTestCase.class);
 
@@ -1111,7 +1112,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     catch (Throwable e) {
       Throwable cause = e;
-      while (cause instanceof LoggedErrorProcessor.TestLoggerAssertionError && cause.getCause() != null) {
+      while (cause instanceof TestLogger.TestLoggerAssertionError && cause.getCause() != null) {
         cause = cause.getCause();
       }
 
@@ -1153,7 +1154,7 @@ public abstract class UsefulTestCase extends TestCase {
     }
     catch (Throwable e) {
       Throwable cause = e;
-      while (cause instanceof LoggedErrorProcessor.TestLoggerAssertionError && cause.getCause() != null) {
+      while (cause instanceof TestLogger.TestLoggerAssertionError && cause.getCause() != null) {
         cause = cause.getCause();
       }
 

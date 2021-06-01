@@ -208,7 +208,7 @@ class HeapDumpSnapshotRunnable(
             val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(
               DiagnosticBundle.message("heap.dump.analysis.notification.title"),
               DiagnosticBundle.message("heap.dump.snapshot.created", hprofPath.toString(), productName),
-              NotificationType.INFORMATION, null)
+              NotificationType.INFORMATION)
             if (ApplicationManager.getApplication().isInternal) {
               notification.addAction(NotificationAction.createSimpleExpiring(RevealFileAction.getActionName()) {
                 RevealFileAction.openFile(hprofPath.toFile())
@@ -224,7 +224,7 @@ class HeapDumpSnapshotRunnable(
           val notification = HeapDumpAnalysisNotificationGroup.GROUP.createNotification(
             DiagnosticBundle.message("heap.dump.analysis.notification.title"),
             DiagnosticBundle.message("heap.dump.snapshot.created.no.analysis", hprofPath.toString()),
-            NotificationType.INFORMATION, null)
+            NotificationType.INFORMATION)
           notification.addAction(NotificationAction.createSimpleExpiring(RevealFileAction.getActionName()) {
             RevealFileAction.openFile(hprofPath.toFile())
           })

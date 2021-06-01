@@ -63,7 +63,7 @@ public final class ModifierKeyDoubleClickHandler {
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         if (myIsRunningAction) {
           return;
         }
@@ -263,7 +263,6 @@ public final class ModifierKeyDoubleClickHandler {
           return false;
         }
         ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
-        ActionsCollectorImpl.recordCustomActionInvoked(actionEvent.getProject(), "DoubleShortcut", event, action.getClass());
         return true;
       }
       finally {

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -84,11 +81,10 @@ abstract class AbstractScriptConfigurationInsertImportOnPasteTest : AbstractScri
         val managerEx = ActionManagerEx.getInstanceEx()
         val action = managerEx.getAction(actionId)
         val event = AnActionEvent(null, dataContext, ActionPlaces.UNKNOWN, Presentation(), managerEx, 0)
-        action.beforeActionPerformedUpdate(event)
-        if (!event.presentation.isEnabled) {
+        if (!ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
             return false
         }
-        ActionUtil.performActionDumbAwareWithCallbacks(action, event, dataContext)
+        ActionUtil.performActionDumbAwareWithCallbacks(action, event)
         return true
     }
 

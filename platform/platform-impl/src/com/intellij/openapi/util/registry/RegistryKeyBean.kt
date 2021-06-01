@@ -11,6 +11,7 @@ import com.intellij.openapi.extensions.RequiredElement
 import com.intellij.openapi.extensions.impl.ExtensionsAreaImpl
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.xmlb.annotations.Attribute
+import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -18,18 +19,16 @@ import org.jetbrains.annotations.NonNls
 /**
  * Registers custom key for [Registry].
  */
-class RegistryKeyBean {
+@Property(style = Property.Style.ATTRIBUTE)
+class RegistryKeyBean private constructor() {
   companion object {
     // Since the XML parser removes all the '\n' chars joining indented lines together,
     // we can't really tell whether multiple whitespaces actually refer to indentation spaces or just regular ones.
     @NonNls
-    @JvmStatic
     private val CONSECUTIVE_SPACES_REGEX = """\s{2,}""".toRegex()
 
-    @JvmStatic
     private val pendingRemovalKeys = HashSet<String>()
 
-    @JvmStatic
     @ApiStatus.Internal
     fun addKeysFromPlugins() {
       val point = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
@@ -75,7 +74,6 @@ class RegistryKeyBean {
       })
     }
 
-    @JvmStatic
     private fun createRegistryKeyDescriptor(extension: RegistryKeyBean, pluginDescriptor: PluginDescriptor): RegistryKeyDescriptor {
       val pluginId = pluginDescriptor.pluginId.idString
       return RegistryKeyDescriptor(extension.key,
@@ -85,23 +83,19 @@ class RegistryKeyBean {
     }
   }
 
-  @JvmField
-  @Attribute("key")
   @RequiredElement
-  val key = ""
+  @Attribute("key")
+  @JvmField var key = ""
 
-  @JvmField
-  @Attribute("description")
   @RequiredElement
   @Nls(capitalization = Nls.Capitalization.Sentence)
-  val description = ""
+  @Attribute("description")
+  @JvmField var description = ""
 
-  @JvmField
-  @Attribute("defaultValue")
   @RequiredElement(allowEmpty = true)
-  val defaultValue = ""
+  @Attribute("defaultValue")
+  @JvmField var defaultValue = ""
 
-  @JvmField
   @Attribute("restartRequired")
-  val restartRequired = false
+  @JvmField var restartRequired = false
 }

@@ -23,9 +23,7 @@ import com.intellij.openapi.editor.actionSystem.EditorActionManager;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PropertiesJoinLinesTest extends LightPlatformCodeInsightTestCase {
 
   @NotNull

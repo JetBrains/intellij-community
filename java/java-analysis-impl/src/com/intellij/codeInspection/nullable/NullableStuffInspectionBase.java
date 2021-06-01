@@ -7,7 +7,7 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.AddTypeAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
 import com.intellij.codeInspection.util.InspectionMessage;
 import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -947,21 +947,22 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
               && AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull)) {
             PsiIdentifier identifier = method.getNameIdentifier();//load tree
             NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(method);
-            LOG.assertTrue(info != null);
-            PsiAnnotation annotation = info.getAnnotation();
-            final String[] annotationsToRemove = ArrayUtilRt.toStringArray(nullableManager.getNullables());
+            if (info != null) {
+              PsiAnnotation annotation = info.getAnnotation();
+              final String[] annotationsToRemove = ArrayUtilRt.toStringArray(nullableManager.getNullables());
 
-            LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull)
-                                ? new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove)
-                                : superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
+              LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull)
+                                  ? new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove)
+                                  : superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
 
-            PsiElement psiElement = annotation;
-            if (!annotation.isPhysical()) {
-              psiElement = identifier;
-              if (psiElement == null) continue;
+              PsiElement psiElement = annotation;
+              if (!annotation.isPhysical() || !PsiTreeUtil.isAncestor(method, annotation, true)) {
+                psiElement = identifier;
+                if (psiElement == null) continue;
+              }
+              reportProblem(holder, psiElement, fix, "nullable.stuff.problems.overridden.methods.are.not.annotated");
+              methodQuickFixSuggested = true;
             }
-            reportProblem(holder, psiElement, fix, "nullable.stuff.problems.overridden.methods.are.not.annotated");
-            methodQuickFixSuggested = true;
           }
           if (hasAnnotatedParameter) {
             PsiParameter[] psiParameters = overriding.getParameterList().getParameters();

@@ -1,11 +1,11 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.terminal;
 
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
@@ -67,7 +67,7 @@ public class TerminalEscapeKeyListener {
     if (toolWindow == null) {
       return false;
     }
-    if (JBTerminalWidget.isTerminalToolWindow(toolWindow) && !Registry.is("terminal.escape.moves.focus.to.editor")) {
+    if (JBTerminalWidget.isTerminalToolWindow(toolWindow) && !AdvancedSettings.getBoolean("terminal.escape.moves.focus.to.editor")) {
       return false; // For example, vi key bindings configured in terminal
     }
     return true;

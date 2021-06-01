@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.refactoring.ui;
 
@@ -20,10 +20,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -45,18 +42,18 @@ public class ConflictsDialog extends DialogWrapper{
   private final boolean myCanShowConflictsInView;
   @NlsContexts.Command private String myCommandName;
 
-  public ConflictsDialog(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflictDescriptions) {
+  public ConflictsDialog(@NotNull Project project, @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflictDescriptions) {
     this(project, conflictDescriptions, null, true, true);
   }
 
   public ConflictsDialog(@NotNull Project project,
-                         @NotNull MultiMap<PsiElement, String> conflictDescriptions,
+                         @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflictDescriptions,
                          @Nullable Runnable doRefactoringRunnable) {
     this(project, conflictDescriptions, doRefactoringRunnable, true, true);
   }
 
   public ConflictsDialog(@NotNull Project project,
-                         @NotNull MultiMap<PsiElement, String> conflictDescriptions,
+                         @NotNull MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflictDescriptions,
                          @Nullable Runnable doRefactoringRunnable,
                          boolean alwaysShowOkButton,
                          boolean canShowConflictsInView) {
@@ -78,6 +75,7 @@ public class ConflictsDialog extends DialogWrapper{
    * @deprecated use other CTORs
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public ConflictsDialog(Project project, String... conflictDescriptions) {
     super(project, true);
     myProject = project;

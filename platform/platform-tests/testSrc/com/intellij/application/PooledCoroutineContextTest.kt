@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application
 
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -6,7 +6,6 @@ import com.intellij.testFramework.LoggedErrorProcessor
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import kotlinx.coroutines.*
-import org.apache.log4j.Logger
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
@@ -47,8 +46,9 @@ class PooledCoroutineContextTest : UsefulTestCase() {
     val savedInstance = LoggedErrorProcessor.getInstance()
     val synchronizedLoggedErrors = Collections.synchronizedList(loggedErrors)
     LoggedErrorProcessor.setNewInstance(object : LoggedErrorProcessor() {
-      override fun processError(message: String, t: Throwable, details: Array<String>, logger: Logger) {
+      override fun processError(category: String, message: String?, t: Throwable?, details: Array<out String>): Boolean {
         synchronizedLoggedErrors.add(t)
+        return false
       }
     })
     return try {

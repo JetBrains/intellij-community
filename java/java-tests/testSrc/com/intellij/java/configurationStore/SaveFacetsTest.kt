@@ -66,7 +66,6 @@ class SaveFacetsTest {
 
   @Test
   fun `facet in module with custom storage`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     class SampleCustomModuleSource(override val internalSource: JpsFileEntitySource) : EntitySource, CustomModuleEntitySource
     val moduleDir = projectModel.baseProjectDir.virtualFileRoot.toVirtualFileUrl(VirtualFileUrlManager.getInstance(projectModel.project))
     val source = SampleCustomModuleSource(JpsFileEntitySource.FileInDirectory(moduleDir, getJpsProjectConfigLocation(projectModel.project)!!))

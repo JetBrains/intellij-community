@@ -13,19 +13,19 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 
 public final class CompoundRuntimeException extends RuntimeException {
-  private final List<? extends Throwable> myExceptions;
+  private final List<? extends Throwable> exceptions;
 
   public CompoundRuntimeException(@NotNull List<? extends Throwable> throwables) {
-    myExceptions = throwables;
+    exceptions = throwables;
   }
 
   @Override
   public synchronized Throwable getCause() {
-    return myExceptions.isEmpty() ? null : myExceptions.get(0);
+    return exceptions.isEmpty() ? null : exceptions.get(0);
   }
 
   public List<Throwable> getExceptions() {
-    return new ArrayList<>(myExceptions);
+    return new ArrayList<>(exceptions);
   }
 
   @Override
@@ -60,8 +60,8 @@ public final class CompoundRuntimeException extends RuntimeException {
   }
 
   private @NotNull CharSequence processAll(@NotNull Function<? super Throwable, String> exceptionProcessor, @Nullable Consumer<? super String> stringProcessor) {
-    if (myExceptions.size() == 1) {
-      Throwable throwable = myExceptions.get(0);
+    if (exceptions.size() == 1) {
+      Throwable throwable = exceptions.get(0);
       String s = exceptionProcessor.apply(throwable);
       if (stringProcessor != null) {
         stringProcessor.accept(s);
@@ -70,16 +70,16 @@ public final class CompoundRuntimeException extends RuntimeException {
     }
 
     StringBuilder sb = new StringBuilder();
-    String line = "CompositeException (" + myExceptions.size() + " nested):\n------------------------------\n";
+    String line = "CompositeException (" + exceptions.size() + " nested):\n------------------------------\n";
     if (stringProcessor != null) {
       stringProcessor.accept(line);
     }
+
     sb.append(line);
+    for (int i = 0; i < exceptions.size(); i++) {
+      Throwable exception = exceptions.get(i);
 
-    for (int i = 0; i < myExceptions.size(); i++) {
-      Throwable exception = myExceptions.get(i);
-
-      line = "[" + i + "]: ";
+      line = "[" + (i + 1) + "]: ";
       if (stringProcessor != null) {
         stringProcessor.accept(line);
       }
@@ -103,7 +103,6 @@ public final class CompoundRuntimeException extends RuntimeException {
       stringProcessor.accept(line);
     }
     sb.append(line);
-
     return sb;
   }
 

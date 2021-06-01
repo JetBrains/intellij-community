@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.execution;
 import com.intellij.build.BuildProgressListener;
 import com.intellij.build.BuildViewManager;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
+import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
@@ -22,10 +23,11 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
+import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationExtensionManager;
+import com.intellij.openapi.externalSystem.service.execution.configuration.ExternalSystemRunConfigurationFragmentedEditor;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
@@ -35,6 +37,7 @@ import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -54,10 +57,12 @@ import javax.swing.*;
 import java.io.File;
 import java.io.InputStream;
 import java.util.Collections;
+import java.util.Map;
 
-public class ExternalSystemRunConfiguration extends LocatableConfigurationBase implements SearchScopeProvidingRunProfile {
-  static final ExtensionPointName<ExternalSystemRunConfigurationExtension> EP_NAME
-    = ExtensionPointName.create("com.intellij.externalSystem.runConfigurationExtension");
+public class ExternalSystemRunConfiguration
+  extends LocatableConfigurationBase
+  implements SearchScopeProvidingRunProfile,
+             CommonProgramRunConfigurationParameters {
 
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");
@@ -132,7 +137,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
         isReattachDebugProcess = Boolean.valueOf(reattachProcess.getText());
       }
     }
-    EP_NAME.forEachExtensionSafe(extension -> extension.readExternal(this, element));
+    ExternalSystemRunConfigurationExtensionManager.readExternal(this, element);
   }
 
   @Override
@@ -160,7 +165,7 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
     reattachProcess.setText(String.valueOf(isReattachDebugProcess));
     element.addContent(reattachProcess);
 
-    EP_NAME.forEachExtensionSafe(extension -> extension.writeExternal(this, element));
+    ExternalSystemRunConfigurationExtensionManager.writeExternal(this, element);
   }
 
   @NotNull
@@ -171,10 +176,14 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
   @NotNull
   @Override
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
+    if (Registry.is("ide.new.run.config", true)) {
+      return new ExternalSystemRunConfigurationFragmentedEditor(this);
+    }
+
     SettingsEditorGroup<ExternalSystemRunConfiguration> group = new SettingsEditorGroup<>();
     group.addEditor(ExecutionBundle.message("run.configuration.configuration.tab.title"),
                     new ExternalSystemRunConfigurationEditor(getProject(), mySettings.getExternalSystemId()));
-    EP_NAME.forEachExtensionSafe(extension -> extension.appendEditors(this, group));
+    ExternalSystemRunConfigurationExtensionManager.appendEditors(this, group);
     group.addEditor(ExecutionBundle.message("logs.tab.title"), new LogConfigurationPanel<>());
     return group;
   }
@@ -208,6 +217,74 @@ public class ExternalSystemRunConfiguration extends LocatableConfigurationBase i
       }
     }
     return scope;
+  }
+
+  public @NotNull ProjectSystemId getExternalSystemId() {
+    return mySettings.getExternalSystemId();
+  }
+
+  public void setExternalProjectPath(@Nullable String path) {
+    mySettings.setExternalProjectPath(path);
+  }
+
+  public @Nullable String getExternalProjectPath() {
+    return mySettings.getExternalProjectPath();
+  }
+
+  public void setTasksAndArguments(@NotNull String tasksAndArguments) {
+    mySettings.setTasksAndArguments(tasksAndArguments);
+  }
+
+  public @NotNull String getTasksAndArguments() {
+    return mySettings.getTasksAndArguments();
+  }
+
+  @Override
+  public void setProgramParameters(@Nullable String value) {
+    mySettings.setScriptParameters(value);
+  }
+
+  @Override
+  public @Nullable String getProgramParameters() {
+    return mySettings.getScriptParameters();
+  }
+
+  @Override
+  public void setWorkingDirectory(@Nullable String value) {
+    mySettings.setExternalProjectPath(value);
+  }
+
+  @Override
+  public @Nullable String getWorkingDirectory() {
+    return mySettings.getExternalProjectPath();
+  }
+
+  @Override
+  public void setEnvs(@NotNull Map<String, String> envs) {
+    mySettings.setEnv(envs);
+  }
+
+  @Override
+  public @NotNull Map<String, String> getEnvs() {
+    return mySettings.getEnv();
+  }
+
+  @Override
+  public void setPassParentEnvs(boolean passParentEnvs) {
+    mySettings.setPassParentEnvs(passParentEnvs);
+  }
+
+  @Override
+  public boolean isPassParentEnvs() {
+    return mySettings.isPassParentEnvs();
+  }
+
+  public @Nullable String getVmOptions() {
+    return mySettings.getVmOptions();
+  }
+
+  public void setVmOptions(@Nullable String vmOptions) {
+    mySettings.setVmOptions(vmOptions);
   }
 
   static void foldGreetingOrFarewell(@Nullable ExecutionConsole consoleView, String text, boolean isGreeting) {

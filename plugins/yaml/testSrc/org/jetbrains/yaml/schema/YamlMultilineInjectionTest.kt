@@ -3,15 +3,18 @@ package org.jetbrains.yaml.schema
 
 import com.intellij.codeInsight.intention.impl.QuickEditAction
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.psi.ElementManipulators
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.util.parents
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.InjectionTestFixture
+import com.intellij.testFramework.fixtures.injectionForHost
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.Predicate
 import com.jetbrains.jsonSchema.JsonSchemaHighlightingTestBase.registerJsonSchema
 import junit.framework.TestCase
 import org.jetbrains.yaml.psi.YAMLScalar
+import org.jetbrains.yaml.psi.impl.YAMLScalarImpl
 
 class YamlMultilineInjectionTest : BasePlatformTestCase() {
 
@@ -43,7 +46,21 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     """.trimIndent())
 
     myInjectionFixture.assertInjectedLangAtCaret("XML")
-    assertInjectedAndLiteralValue("<html> <body>boo</body> </html>")
+    assertInjectedAndLiteralValue("<html>\n<body>boo</body>\n</html>")
+  }
+  
+  fun testBashCommentInjection() {
+    myFixture.configureByText("test.yaml", """
+      # language=bash
+      commands:
+        - sudo rm -rf /
+        - df -h
+    """.trimIndent())
+
+    myInjectionFixture.assertInjected(
+      injectionForHost("sudo rm -rf /").hasLanguage("Shell Script"),
+      injectionForHost("df -h").hasLanguage("Shell Script"),
+    )
   }
 
 
@@ -59,8 +76,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     assertInjectedAndLiteralValue("""
       |<html>
       |     <body>boo</body>
-      |</html>
-      |""".trimMargin())
+      |</html>""".trimMargin())
   }
 
   fun testBlockInjection() {
@@ -78,6 +94,35 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |</html>""".trimMargin())
 
   }
+
+  fun testEmptyLineDeleted() {
+    myFixture.configureByText("test.yaml", """
+      long:
+        long:
+          nest:
+            #language=XML
+            abc: |
+              <html>
+              <caret>
+              </html>
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    myFixture.performEditorAction(IdeActions.ACTION_EDITOR_BACKSPACE)
+    PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
+    myInjectionFixture.assertInjectedContent("<html>\n</html>")
+    myFixture.checkResult("""
+      long:
+        long:
+          nest:
+            #language=XML
+            abc: |
+              <html>
+            
+              </html>
+    """.trimIndent())
+  }
+
 
   fun testYamlToYamlInjection() {
     myFixture.configureByText("test.yaml", """
@@ -112,8 +157,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  root:
       |  
       |  """.trimMargin())
-    myInjectionFixture.assertInjectedContent("root:\n")
-    myFixture.type("  ")
+    myInjectionFixture.assertInjectedContent("root:\n\n")
     PsiDocumentManager.getInstance(project).commitDocument(myFixture.getDocument(myFixture.file))
     myFixture.type("abc:")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
@@ -123,17 +167,17 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |  abc:
       |  
       |  """.trimMargin())
-    myInjectionFixture.assertInjectedContent("root:\n  abc:\n")
-    myFixture.type("   ")
+    myInjectionFixture.assertInjectedContent("root:\nabc:\n\n")
+    myFixture.type("def:")
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     myFixture.checkResult("""
       |myyaml: |
       |  root:
       |  abc:
-      |     
-      |     
+      |  def:
+      |  
       |  """.trimMargin())
-    myInjectionFixture.assertInjectedContent("root:\n  abc:\n     \n     ")
+    myInjectionFixture.assertInjectedContent("root:\nabc:\ndef:\n\n")
   }
 
   fun testBlockInjectionKeep() {
@@ -150,7 +194,6 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |<html>
       |<body>hello world</body>
       |</html>
-      |
       |""".trimMargin())
   }
   
@@ -168,7 +211,8 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     TestCase.assertEquals("""
       |<html>
       |<body>hello world</body>
-      |</html>""".trimMargin(), fe.file.text)
+      |</html>
+      |""".trimMargin(), fe.file.text)
     fe.performEditorAction(IdeActions.ACTION_EDITOR_MOVE_LINE_END)
     fe.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
     PsiDocumentManager.getInstance(project).commitAllDocuments()
@@ -176,6 +220,7 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
       |<html>
       |<body>hello world</body>
       |</html>
+      |
       |""".trimMargin(), fe.file.text)
     myFixture.checkResult("""
         X: |-
@@ -319,11 +364,72 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
     myFixture.checkResult("""
         X: |
           <html></html>
-        
+          
+        Y: 12
+    """.trimIndent())
+  }
+
+  fun testSplitHtmlFromEmpty() {
+    myFixture.configureByText("test.yaml", """
+        X: |
+          <html><caret></html>
+          
+        Y: 12
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val quickEditHandler = QuickEditAction().invokeImpl(project,
+                                                        myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
+    val fe = myInjectionFixture.openInFragmentEditor(quickEditHandler)
+    fe.editor.caretModel.moveToOffset("<html>".length)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_ENTER)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assertEquals("fragment editor should be", "<html>\n    \n</html>\n", fe.file.text)
+    myFixture.checkResult("""
+        X: |
+          <html>
+              
+          </html>
+          
+        Y: 12
+    """.trimIndent())
+  }
+
+  fun testIndentInFE() {
+    myFixture.configureByText("test.yaml", """
+        X: |
+          <html>
+            <body>hello world</body>
+          </html<caret>>
+          
+        Y: 12
+    """.trimIndent())
+
+    myInjectionFixture.assertInjectedLangAtCaret("XML")
+    val quickEditHandler = QuickEditAction().invokeImpl(project,
+                                                        myInjectionFixture.topLevelEditor, myInjectionFixture.topLevelFile)
+    val fe = myInjectionFixture.openInFragmentEditor(quickEditHandler)
+    fe.performEditorAction(IdeActions.ACTION_SELECT_ALL)
+    fe.performEditorAction(IdeActions.ACTION_EDITOR_INDENT_SELECTION)
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    TestCase.assertTrue("editor should survive adding enter to the end", quickEditHandler.isValid)
+    assertEquals("fragment editor should be", """
+      |    <html>
+      |      <body>hello world</body>
+      |    </html>
+      |
+    """.trimMargin(), fe.file.text)
+    myFixture.checkResult("""
+        X: |
+              <html>
+                <body>hello world</body>
+              </html>
+          
         Y: 12
     """.trimIndent())
   }
   
+
   private fun assertInjectedAndLiteralValue(expectedText: String) {
     assertEquals("fragment editor should be", expectedText, myInjectionFixture.openInFragmentEditor().file.text)
     assertEquals("literal text should be", expectedText, literalTextAtTheCaret)
@@ -332,8 +438,9 @@ class YamlMultilineInjectionTest : BasePlatformTestCase() {
   val literalTextAtTheCaret: String
     get() {
       val elementAt = myInjectionFixture.topLevelFile.findElementAt(myInjectionFixture.topLevelCaretPosition)
-      return elementAt?.parents(true)?.mapNotNull { it.castSafelyTo<YAMLScalar>() }?.firstOrNull()?.textValue ?: 
-      throw AssertionError("no literal element at the caret position, only $elementAt were found")
+      return elementAt?.parents(true)?.mapNotNull { it.castSafelyTo<YAMLScalarImpl>() }?.firstOrNull()
+               ?.let { psi -> psi.contentRanges.joinToString("") { it.subSequence(psi.text) } }
+             ?: throw AssertionError("no literal element at the caret position, only $elementAt were found")
     }
 
 }

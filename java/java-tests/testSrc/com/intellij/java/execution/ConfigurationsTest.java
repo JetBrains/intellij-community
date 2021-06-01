@@ -22,6 +22,7 @@ import com.intellij.execution.testframework.SearchForTestsTask;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -199,7 +200,7 @@ public class ConfigurationsTest extends BaseConfigurationTestCase {
     context.put(LangDataKeys.PSI_ELEMENT_ARRAY, new PsiElement[] {psiDirectory});
     context.put(CommonDataKeys.PROJECT, myProject);
     context.put(LangDataKeys.MODULE, module1);
-    assertFalse(new AllInPackageConfigurationProducer().isConfigurationFromContext(allInProjectConfiguration, ConfigurationContext.getFromContext(context)));
+    assertFalse(new AllInPackageConfigurationProducer().isConfigurationFromContext(allInProjectConfiguration, ConfigurationContext.getFromContext(context, ActionPlaces.UNKNOWN)));
   }
 
   public void testRunningAllInDirectory() throws IOException, ExecutionException {

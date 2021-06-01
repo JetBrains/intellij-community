@@ -45,7 +45,7 @@ public final class ConsoleViewUtil {
 
   private static final Key<Boolean> REPLACE_ACTION_ENABLED = Key.create("REPLACE_ACTION_ENABLED");
 
-  public static @NotNull EditorEx setupConsoleEditor(Project project, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
+  public static @NotNull EditorEx setupConsoleEditor(@Nullable Project project, boolean foldingOutlineShown, boolean lineMarkerAreaShown) {
     EditorFactory editorFactory = EditorFactory.getInstance();
     Document document = ((EditorFactoryImpl)editorFactory).createDocument(true);
     UndoUtil.disableUndoFor(document);
@@ -260,19 +260,16 @@ public final class ConsoleViewUtil {
     if (inputFilters.isEmpty()) {
       return (text, contentType) -> null;
     }
-    CompositeInputFilter compositeInputFilter = new CompositeInputFilter(project);
+    List<InputFilter> allFilters = new ArrayList<>();
     for (ConsoleInputFilterProvider eachProvider : inputFilters) {
       List<InputFilter> filters;
       if (eachProvider instanceof ConsoleDependentInputFilterProvider) {
-        filters = ((ConsoleDependentInputFilterProvider)eachProvider).getDefaultFilters(consoleView, project, searchScope);
+        allFilters.addAll(((ConsoleDependentInputFilterProvider)eachProvider).getDefaultFilters(consoleView, project, searchScope));
       }
       else {
-        filters = Arrays.asList(eachProvider.getDefaultFilters(project));
-      }
-      for (InputFilter filter : filters) {
-        compositeInputFilter.addFilter(filter);
+        allFilters.addAll(Arrays.asList(eachProvider.getDefaultFilters(project)));
       }
     }
-    return compositeInputFilter;
+    return new CompositeInputFilter(project, allFilters);
   }
 }

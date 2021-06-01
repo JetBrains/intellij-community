@@ -1,17 +1,21 @@
 <html>
 <body>
-This inspection reports <b>if</b> statements which can be simplified to single statements. For example:
-<br /><br />
-
-<pre>
-<b>if</b> (foo()) {
-   <b>return true</b>
-} <b>else</b> {
-   <b>return false</b>
+<p>Reports <code>if</code> statements which can be simplified to a single statement.</p>
+<p><b>Example:</b></p>
+<pre><code>
+fun test() {
+    if (foo()) {
+       return true
+    } else {
+       return false
+    }
 }
-</pre>
-
-<p>can be simplified to <b>return foo()</b>.</p>
-
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+fun test() {
+    return foo()
+}
+</code></pre>
 </body>
 </html>

@@ -1,11 +1,7 @@
-/*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.kotlin.internal
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiSubstitutor
@@ -20,7 +16,7 @@ import org.jetbrains.uast.kotlin.resolveToDeclaration
 
 
 internal fun getReferenceVariants(ktElement: KtExpression, nameHint: String): Sequence<PsiElement> =
-    ServiceManager.getService(ktElement.project, KotlinUastResolveProviderService::class.java)
+    ktElement.project.getService(KotlinUastResolveProviderService::class.java)!!
         .getReferenceVariants(ktElement, nameHint)
         .mapNotNull { resolveToDeclaration(ktElement, it) }
 

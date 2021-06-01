@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.refactoring.safeDelete;
 
@@ -1123,6 +1120,19 @@ public abstract class SafeDeleteTestGenerated extends AbstractSafeDeleteTest {
         @TestMetadata("safeUsagesExt2.kt")
         public void testSafeUsagesExt2() throws Exception {
             runTest("testData/refactoring/safeDelete/deleteValueParameter/kotlinValueParameterWithJava/safeUsagesExt2.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin")
+    public static class JavaParameterWithKotlin extends AbstractSafeDeleteTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doJavaParameterTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("hierarchyWithoutConflict.java")
+        public void testHierarchyWithoutConflict() throws Exception {
+            runTest("testData/refactoring/safeDelete/deleteValueParameter/javaParameterWithKotlin/hierarchyWithoutConflict.java");
         }
     }
 }

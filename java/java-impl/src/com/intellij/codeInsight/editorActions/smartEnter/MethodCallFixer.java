@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
+import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeType;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.TextRange;
@@ -69,7 +70,7 @@ public class MethodCallFixer implements Fixer {
       if (args.length > 0 && !DumbService.isDumb(argList.getProject())) {
         int caretArg = getCaretArgIndex(caret, argListRange, args);
 
-        LongRangeSet innerCounts = getPossibleParameterCounts(innermostCall).intersect(LongRangeSet.range(caretArg, args.length));
+        LongRangeSet innerCounts = getPossibleParameterCounts(innermostCall).meet(LongRangeSet.range(caretArg, args.length));
         if (!innerCounts.isEmpty()) {
           innerCounts = tryFilterByOuterCall(innermostCall, args, innerCounts);
           int minArg = (int)innerCounts.min();
@@ -127,8 +128,9 @@ public class MethodCallFixer implements Fixer {
           LongRangeSet outerCounts = getPossibleParameterCounts(outerCall);
           if (!outerCounts.isEmpty()) {
             LongRangeSet allowedByOuter =
-              LongRangeSet.point(args.length).minus(outerCounts.minus(LongRangeSet.point(outerArgs.length), false), false);
-            LongRangeSet innerCountsFiltered = innerCounts.intersect(allowedByOuter);
+              LongRangeSet.point(args.length).minus(
+                outerCounts.minus(LongRangeSet.point(outerArgs.length), LongRangeType.INT32), LongRangeType.INT32);
+            LongRangeSet innerCountsFiltered = innerCounts.meet(allowedByOuter);
             if (!innerCountsFiltered.isEmpty()) {
               return innerCountsFiltered;
             }
@@ -145,7 +147,7 @@ public class MethodCallFixer implements Fixer {
       PsiMethod element = ObjectUtils.tryCast(candidate.getElement(), PsiMethod.class);
       if (element != null) {
         int count = element.getParameterList().getParametersCount();
-        counts = counts.unite(element.isVarArgs() ? LongRangeSet.range(count - 1, Integer.MAX_VALUE) : LongRangeSet.point(count));
+        counts = counts.join(element.isVarArgs() ? LongRangeSet.range(count - 1, Integer.MAX_VALUE) : LongRangeSet.point(count));
       }
     }
     return counts;

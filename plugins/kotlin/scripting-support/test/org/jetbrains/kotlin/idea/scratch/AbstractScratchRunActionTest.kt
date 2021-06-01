@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch
 
@@ -10,13 +7,18 @@ import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.*
+import com.intellij.testFramework.FileEditorManagerTestCase
+import com.intellij.testFramework.MapDataContext
+import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.TestActionEvent
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -32,15 +34,15 @@ import org.jetbrains.kotlin.idea.scratch.ui.KtScratchFileEditorWithPreview
 import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition.Companion.STD_SCRIPT_SUFFIX
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
+import org.jetbrains.kotlin.test.KotlinCompilerStandalone
 import org.jetbrains.kotlin.test.KotlinTestUtils.*
+import org.jetbrains.kotlin.test.TestMetadataUtil
 import org.junit.Assert
 import java.io.File
-import org.jetbrains.kotlin.idea.test.runAll
-import org.jetbrains.kotlin.test.KotlinCompilerStandalone
-import org.jetbrains.kotlin.test.TestMetadataUtil
 import java.util.concurrent.TimeUnit
 
 abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
@@ -203,7 +205,7 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
         val scratchFileEditor = getScratchEditorForSelectedFile(myManager, myFixture.file.virtualFile)
             ?: error("Couldn't find scratch panel")
 
-        val previewEditor = scratchFileEditor.getPreviewEditor()
+        val previewEditor = scratchFileEditor.previewEditor as TextEditor
         return getFoldingData(previewEditor.editor, withCollapseStatus = false)
     }
 
@@ -259,9 +261,9 @@ abstract class AbstractScratchRunActionTest : FileEditorManagerTestCase() {
 
     protected fun launchAction(action: AnAction) {
         val e = getActionEvent(myFixture.file.virtualFile, action)
-        action.beforeActionPerformedUpdate(e)
+        Assert.assertTrue(ActionUtil.lastUpdateAndCheckDumb(action, e, true))
         Assert.assertTrue(e.presentation.isEnabled && e.presentation.isVisible)
-        action.actionPerformed(e)
+        ActionUtil.performActionDumbAwareWithCallbacks(action, e);
     }
 
     protected fun waitUntilScratchFinishes(shouldStopRepl: Boolean = true) {

@@ -50,7 +50,7 @@ abstract class FileIndexBase implements FileIndex {
             }
             return SKIP_CHILDREN;
           }
-          if (info.isIgnored()) {
+          if (info.isIgnored() || info instanceof NonProjectDirectoryInfo && !((NonProjectDirectoryInfo)info).hasContentEntriesBeneath()) {
             // it's certain nothing can be found under ignored directory
             return SKIP_CHILDREN;
           }

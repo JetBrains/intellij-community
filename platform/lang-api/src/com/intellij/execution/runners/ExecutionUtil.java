@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runners;
 
 import com.intellij.execution.*;
@@ -10,8 +10,8 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -31,6 +31,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +40,7 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
+import java.util.function.Function;
 
 import static com.intellij.openapi.projectRoots.JdkUtil.PROPERTY_DYNAMIC_CLASSPATH;
 
@@ -103,17 +105,28 @@ public final class ExecutionUtil {
                                           @Nullable @DialogMessage String description,
                                           @Nullable HyperlinkListener listener) {
     String title = ExecutionBundle.message("error.running.configuration.message", taskName);
+    handleExecutionError(project, toolWindowId, e, title, description, descr -> title + ":<br>" + descr, listener);
+  }
+
+  public static void handleExecutionError(@NotNull Project project,
+                                          @NotNull String toolWindowId,
+                                          @NotNull Throwable e,
+                                          @Nls String title,
+                                          @Nullable @DialogMessage String description,
+                                          @NotNull Function<? super @DialogMessage String, @DialogMessage String> fullMessageSupplier,
+                                          @Nullable HyperlinkListener listener) {
 
     if (StringUtil.isEmptyOrSpaces(description)) {
       LOG.warn("Execution error without description", e);
       description = ExecutionBundle.message("dialog.message.unknown.error");
     }
 
-    String fullMessage = title + ":<br>" + description;
+    String fullMessage = fullMessageSupplier.apply(description);
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       LOG.error(fullMessage, e);
-    } else {
+    }
+    else {
       LOG.info(fullMessage, e);
     }
 
@@ -137,13 +150,16 @@ public final class ExecutionUtil {
         Messages.showErrorDialog(project, UIUtil.toHtml(_description), title);
       }
 
-      NotificationListener notificationListener = _listener == null ? null : (notification, event) -> {
-        if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-          notification.expire();
-          _listener.hyperlinkUpdate(event);
-        }
-      };
-      ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR, notificationListener).notify(project);
+      Notification notification = ourNotificationGroup.createNotification(title, _description, NotificationType.ERROR);
+      if (_listener != null) {
+        notification.setListener((_notification, event) -> {
+          if (event.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
+            _notification.expire();
+            _listener.hyperlinkUpdate(event);
+          }
+        });
+      }
+      notification.notify(project);
     });
   }
 

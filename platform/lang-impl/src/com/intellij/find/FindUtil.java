@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.find;
 
@@ -8,8 +8,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.find.replaceInProject.ReplaceInProjectManager;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -1017,23 +1015,5 @@ public final class FindUtil {
   private static int getCaretPosition(FindResult findResult, int caretShiftFromSelectionStart) {
     return caretShiftFromSelectionStart < 0
            ? findResult.getEndOffset() : Math.min(findResult.getStartOffset() + caretShiftFromSelectionStart, findResult.getEndOffset());
-  }
-
-  public static void triggerUsedOptionsStats(@Nullable Project project,
-                                             @NotNull String type,
-                                             @NotNull FindModel model) {
-    FeatureUsageData data = new FeatureUsageData().
-      addData("type", type).
-      addData("case_sensitive", model.isCaseSensitive()).
-      addData("whole_words_only", model.isWholeWordsOnly()).
-      addData("regular_expressions", model.isRegularExpressions()).
-      addData("with_file_filter", model.getFileFilter() != null).
-      addData("context", model.getSearchContext().name());
-    FUCounterUsageLogger.getInstance().logEvent(project, "find", "search.session.started", data);
-  }
-
-  public static void triggerRegexHelpClicked(@Nullable String type) {
-    FeatureUsageData data = new FeatureUsageData().addData("type", StringUtil.notNullize(type, "Unknown"));
-    FUCounterUsageLogger.getInstance().logEvent("find", "regexp.help.clicked", data);
   }
 }

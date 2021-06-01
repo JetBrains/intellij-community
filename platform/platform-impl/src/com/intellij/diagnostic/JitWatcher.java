@@ -75,23 +75,23 @@ final class JitWatcher {
       String action = IdeBundle.message(app.isRestartCapable() ? "ide.restart.action" : "ide.shutdown.action");
       String title = IdeBundle.message("notification.title.jit.compiler.disabled");
       String content = IdeBundle.message("notification.content.jit.compiler.disabled");
-      NotificationListener listener = new NotificationListener.Adapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-          if ("help".equals(e.getDescription())) {
-            HelpManager.getInstance().invokeHelp("Tuning_product_");
+      new Notification("PerformanceWatcher", title, content, NotificationType.ERROR)
+        .setListener(new NotificationListener.Adapter() {
+          @Override
+          protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
+            if ("help".equals(e.getDescription())) {
+              HelpManager.getInstance().invokeHelp("Tuning_product_");
+            }
           }
-        }
-      };
-      Notification notification = new Notification("PerformanceWatcher", title, content, NotificationType.ERROR, listener).
-        addAction(new NotificationAction(action) {
+        })
+        .addAction(new NotificationAction(action) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
             notification.expire();
             app.restart(true);
           }
-        });
-      notification.notify(null);
+        })
+        .notify(null);
     }
   }
 

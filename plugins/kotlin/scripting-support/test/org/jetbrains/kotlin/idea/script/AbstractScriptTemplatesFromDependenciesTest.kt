@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.script
 
@@ -10,8 +7,7 @@ import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.guessProjectDir
-import com.intellij.openapi.roots.*
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,6 +16,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.HeavyPlatformTestCase
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.util.io.ZipUtil
+import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionContributor
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
@@ -32,6 +29,7 @@ import org.jetbrains.kotlin.test.util.projectLibrary
 import org.junit.runner.RunWith
 import java.io.File
 import java.io.FileOutputStream
+import java.nio.file.Path
 import java.util.zip.ZipOutputStream
 
 @RunWith(JUnit3RunnerWithInners::class)
@@ -110,11 +108,8 @@ abstract class AbstractScriptTemplatesFromDependenciesTest : HeavyPlatformTestCa
         assertOrderedEquals("Template names are different", names.sorted(), expected.sorted())
     }
 
-    private fun checkTemplateClasspath(fileText: String, classpath: Collection<File>) {
-        val actual = classpath.map {
-            FileUtil.toSystemIndependentName(it.path).removeTestDirPrefix()
-        }
-
+    private fun checkTemplateClasspath(fileText: String, classpath: Collection<Path>) {
+        val actual = classpath.map { it.systemIndependentPath.removeTestDirPrefix() }
         val expected = InTextDirectivesUtils.findListWithPrefixes(fileText, "// CLASSPATH:")
 
         assertOrderedEquals("Roots are different", actual.sorted(), expected.sorted())

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
@@ -42,7 +42,7 @@ public abstract class ContractValue {
   abstract DfaValue makeDfaValue(DfaValueFactory factory, DfaCallArguments arguments);
 
   @NotNull
-  DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
+  public DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
     return DfaCondition.getUnknown();
   }
 
@@ -312,7 +312,7 @@ public abstract class ContractValue {
 
     @Override
     public String getPresentationText(PsiMethod method) {
-      return myQualifier.getPresentationText(method) + "." + myField + (myField == JvmSpecialField.ARRAY_LENGTH ? "" : "()");
+      return myQualifier.getPresentationText(method) + "." + myField + (myField == SpecialField.ARRAY_LENGTH ? "" : "()");
     }
 
     @Override
@@ -410,7 +410,7 @@ public abstract class ContractValue {
 
     @NotNull
     @Override
-    DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
+    public DfaCondition makeCondition(DfaValueFactory factory, DfaCallArguments arguments) {
       DfaValue left = myLeft.makeDfaValue(factory, arguments);
       DfaValue right = myRight.makeDfaValue(factory, arguments);
       if (left.getDfType() instanceof DfPrimitiveType) {

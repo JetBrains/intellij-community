@@ -41,7 +41,6 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -63,7 +62,6 @@ public class EditorSearchSession implements SearchSession,
                                             SelectionListener,
                                             SearchResults.SearchResultsListener,
                                             SearchReplaceComponent.Listener {
-  private static final String FIND_TYPE = "FindInFile";
   public static final DataKey<EditorSearchSession> SESSION_KEY = DataKey.create("EditorSearchSession");
   public static final Logger SELECTION_UPDATE_LOGGER = Logger.getInstance("com.intellij.find.selection");
 
@@ -195,7 +193,7 @@ public class EditorSearchSession implements SearchSession,
 
     myEditor.getSelectionModel().addSelectionListener(this, myDisposable);
 
-    FindUtil.triggerUsedOptionsStats(project, FIND_TYPE, findModel);
+    FindUsagesCollector.triggerUsedOptionsStats(project, FindUsagesCollector.FIND_IN_FILE, findModel);
   }
 
   @NotNull
@@ -213,16 +211,6 @@ public class EditorSearchSession implements SearchSession,
       new ToggleSelectionOnlyAction(),
       new ShowFilterPopupGroup()
     };
-  }
-
-  /**
-   * @deprecated Won't be used anymore
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.3")
-  @Deprecated
-  @NotNull
-  protected AnAction[] createSecondarySearchActions() {
-    return AnAction.EMPTY_ARRAY;
   }
 
   private void saveInitialSelection() {

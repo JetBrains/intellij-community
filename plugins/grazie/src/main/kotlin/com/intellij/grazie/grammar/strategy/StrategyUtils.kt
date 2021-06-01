@@ -1,4 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("DEPRECATION")
+
 package com.intellij.grazie.grammar.strategy
 
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy.TextDomain
@@ -16,7 +18,7 @@ object StrategyUtils {
   private val EMPTY_LINKED_SET = LinkedSet<Nothing>()
 
   @Suppress("UNCHECKED_CAST")
-  internal fun <T> emptyLinkedSet(): LinkedSet<T> = EMPTY_LINKED_SET as LinkedSet<T>
+  fun <T> emptyLinkedSet(): LinkedSet<T> = EMPTY_LINKED_SET as LinkedSet<T>
 
   /**
    * Get extension point of [strategy]
@@ -27,7 +29,7 @@ object StrategyUtils {
     return LanguageGrammarChecking.getExtensionPointByStrategy(strategy) ?: error("Strategy is not registered")
   }
 
-  internal fun getTextDomainOrDefault(strategy: GrammarCheckingStrategy, root: PsiElement, default: TextDomain): TextDomain {
+  fun getTextDomainOrDefault(strategy: GrammarCheckingStrategy, root: PsiElement, default: TextDomain): TextDomain {
     val extension = getStrategyExtensionPoint(strategy)
     if (extension.language != root.language.id) return default
 
@@ -37,40 +39,6 @@ object StrategyUtils {
       parser.commentTokens.contains(root.elementType) -> TextDomain.COMMENTS
       else -> default
     }
-  }
-
-  /**
-   * Delete leading and trailing quotes with spaces
-   *
-   * @return deleted leading offset
-   */
-  internal fun trimLeadingQuotesAndSpaces(str: StringBuilder): Int = with(str) {
-    var offset = quotesOffset(this)
-
-    setLength(length - offset) // remove closing quotes and whitespaces
-    while (isNotEmpty() && get(length - 1).isWhitespace()) deleteCharAt(length - 1)
-
-    while (offset < length && get(offset).isWhitespace()) offset++
-    repeat(offset) { deleteCharAt(0) } // remove opening quotes and whitespace
-
-    return offset
-  }
-
-  /**
-   * Convert double spaces into one after removing absorb/stealth elements
-   *
-   * @param position position in StringBuilder
-   * @return true if deleted
-   */
-  internal fun deleteRedundantSpace(str: StringBuilder, position: Int): Boolean = with(str) {
-    if (position in 1 until length) {
-      if (get(position - 1) == ' ' && (Text.isPunctuation(get(position)) || get(position) == ' ')) {
-        deleteCharAt(position - 1)
-        return true
-      }
-    }
-
-    return false
   }
 
   /**
@@ -113,6 +81,7 @@ object StrategyUtils {
    * @param types possible types of siblings
    * @return sequence of siblings with whitespace tokens
    */
+  @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, types: Set<IElementType>) =
     getNotSoDistantSiblingsOfTypes(strategy, element) { type -> type in types }
 
@@ -124,6 +93,7 @@ object StrategyUtils {
    * @param checkType predicate to check if type is accepted
    * @return sequence of siblings with whitespace tokens
    */
+  @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSiblingsOfTypes(strategy: GrammarCheckingStrategy, element: PsiElement, checkType: (IElementType?) -> Boolean) =
     getNotSoDistantSimilarSiblings(strategy, element) { sibling -> checkType(sibling.elementType) }
 
@@ -135,6 +105,7 @@ object StrategyUtils {
    * @param checkSibling predicate to check if sibling is accepted
    * @return sequence of siblings with whitespace tokens
    */
+  @Deprecated("Use com.intellij.grazie.utils.getNotSoDistantSimilarSiblings")
   fun getNotSoDistantSimilarSiblings(strategy: GrammarCheckingStrategy, element: PsiElement, checkSibling: (PsiElement?) -> Boolean) =
     sequence {
     fun PsiElement.process(checkSibling: (PsiElement?) -> Boolean, next: Boolean) = sequence<PsiElement> {
@@ -166,7 +137,7 @@ object StrategyUtils {
     yieldAll(element.process(checkSibling, true))
   }
 
-  private fun quotesOffset(str: CharSequence): Int {
+  internal fun quotesOffset(str: CharSequence): Int {
     var index = 0
     while (index < str.length / 2) {
       if (str[index] != str[str.length - index - 1] || !Text.isQuote(str[index])) {

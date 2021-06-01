@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.application.options.CodeStyle;
@@ -10,9 +10,12 @@ import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.DfaNullability;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
+import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.redundantCast.RemoveRedundantCastUtil;
 import com.intellij.ide.DataManager;
@@ -443,7 +446,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     if (returnedExpressions.isEmpty()) return true;
 
     final var dfaRunner = new StandardDataFlowRunner(myProject);
-    final var returnChecker = new DfaInterceptor<PsiExpression>() {
+    final var returnChecker = new JavaDfaListener() {
       @Override
       public void beforeValueReturn(@NotNull DfaValue value,
                                     @Nullable PsiExpression expression,
@@ -451,14 +454,15 @@ public class ExtractMethodProcessor implements MatchProvider {
                                     @NotNull DfaMemoryState state) {
         if (context == myCodeFragmentMember && expression != null &&
             returnedExpressions.stream().anyMatch(ret -> PsiTreeUtil.isAncestor(ret, expression, false))) {
-          boolean result = nullsExpected ? state.isNull(value) : state.isNotNull(value);
+          DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
+          boolean result = nullability == (nullsExpected ? DfaNullability.NULL : DfaNullability.NOT_NULL);
           if (!result) {
             dfaRunner.cancel();
           }
         }
       }
     };
-    return dfaRunner.analyzeMethod(body, new JavaDfaInstructionVisitor(returnChecker)) == RunnerResult.OK;
+    return dfaRunner.analyzeMethod(body, returnChecker) == RunnerResult.OK;
   }
 
   protected boolean insertNotNullCheckIfPossible() {
@@ -479,22 +483,21 @@ public class ExtractMethodProcessor implements MatchProvider {
   private static Nullability inferNullability(@NotNull PsiCodeBlock block, @NotNull PsiExpression expr) {
     final var dfaRunner = new StandardDataFlowRunner(block.getProject());
 
-    var interceptor = new DfaInterceptor<PsiExpression>() {
+    var interceptor = new JavaDfaListener() {
       DfaNullability myNullability = DfaNullability.NOT_NULL;
       boolean myVisited = false;
 
       @Override
       public void beforeExpressionPush(@NotNull DfaValue value,
                                        @NotNull PsiExpression expression,
-                                       @Nullable TextRange range,
                                        @NotNull DfaMemoryState state) {
-        if (expression == expr && range == null) {
+        if (expression == expr) {
           myVisited = true;
           myNullability = myNullability.unite(DfaNullability.fromDfType(state.getDfType(value)));
         }
       }
     };
-    final RunnerResult rc = dfaRunner.analyzeMethod(block, new JavaDfaInstructionVisitor(interceptor));
+    final RunnerResult rc = dfaRunner.analyzeMethod(block, interceptor);
     return rc == RunnerResult.OK && interceptor.myVisited ? DfaNullability.toNullability(interceptor.myNullability) : Nullability.UNKNOWN;
   }
 
@@ -656,7 +659,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
 
       @Override
-      protected void checkMethodConflicts(MultiMap<PsiElement, String> conflicts) {
+      protected void checkMethodConflicts(MultiMap<PsiElement, @NlsContexts.DialogMessage String> conflicts) {
         super.checkMethodConflicts(conflicts);
         final VariableData[] parameters = getChosenParameters();
         final Map<String, PsiLocalVariable> vars = new HashMap<>();

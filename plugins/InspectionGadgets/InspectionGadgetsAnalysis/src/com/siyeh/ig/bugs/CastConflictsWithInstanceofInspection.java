@@ -34,9 +34,10 @@ public class CastConflictsWithInstanceofInspection extends BaseInspection {
   @Override
   @NotNull
   public String buildErrorString(Object... infos) {
-    final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)infos[0];
+    final String castExpressionType = ((PsiTypeElement)infos[1]).getText();
+    final String instanceofType = ((PsiTypeElement)infos[2]).getText();
     return InspectionGadgetsBundle.message(
-      "cast.conflicts.with.instanceof.problem.descriptor",  referenceExpression.getText());
+      "cast.conflicts.with.instanceof.problem.descriptor",  castExpressionType, instanceofType);
   }
 
   @Override

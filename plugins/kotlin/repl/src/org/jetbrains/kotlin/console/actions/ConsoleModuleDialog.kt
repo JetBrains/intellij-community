@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.console.actions
 
@@ -9,6 +6,9 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import org.jetbrains.kotlin.KotlinIdeaReplBundle
@@ -33,7 +33,7 @@ class ConsoleModuleDialog(private val project: Project) {
             dataContext,
             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
             true,
-            ActionPlaces.UNKNOWN
+            ActionPlaces.EDITOR_POPUP,
         )
 
         modulePopup.showCenteredInCurrentWindow(project)
@@ -49,7 +49,11 @@ class ConsoleModuleDialog(private val project: Project) {
     }
 
     private fun runConsole(module: Module) {
-        KotlinConsoleKeeper.getInstance(project).run(module)
+        ProgressManager.getInstance().run(object : Task.Backgroundable(project, KotlinIdeaReplBundle.message("progress.starting.repl")) {
+            override fun run(indicator: ProgressIndicator) {
+                KotlinConsoleKeeper.getInstance(project).run(module)
+            }
+        })
     }
 
     private fun createRunAction(module: Module) = object : AnAction(module.name) {

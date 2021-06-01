@@ -6,6 +6,7 @@ import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.ScopeToolState;
+import com.intellij.ide.scratch.ScratchesNamedScope;
 import com.intellij.internal.statistic.beans.MetricEvent;
 import com.intellij.internal.statistic.eventLog.EventLogGroup;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
@@ -17,11 +18,15 @@ import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesColle
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.lang.Language;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileEditor.impl.OpenFilesScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
+import com.intellij.psi.search.scope.*;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Attribute;
@@ -34,11 +39,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Predicate;
 
-public class InspectionsUsagesCollector extends ProjectUsagesCollector {
+public final class InspectionsUsagesCollector extends ProjectUsagesCollector {
   private static final Predicate<ScopeToolState> ENABLED = state -> !state.getTool().isEnabledByDefault() && state.isEnabled();
   private static final Predicate<ScopeToolState> DISABLED = state -> state.getTool().isEnabledByDefault() && !state.isEnabled();
 
+  private static final List<String> ALLOWED_SCOPES = List.of(
+    "custom",
+    CustomScopesProviderEx.getAllScope().getScopeId(),
+    ProjectFilesScope.INSTANCE.getScopeId(),
+    NonProjectFilesScope.NAME,
+    ProjectProductionScope.INSTANCE.getScopeId(),
+    TestsScope.NAME,
+    OpenFilesScope.INSTANCE.getScopeId(),
+    GeneratedFilesScope.INSTANCE.getScopeId(),
+    ScratchesNamedScope.ID
+  );
+  private static final List<String> ALLOWED_SEVERITIES = ContainerUtil.concat(List.of("custom", "TYPO"), ContainerUtil.map(HighlightSeverity.DEFAULT_SEVERITIES, severity -> severity.getName()));
+
   private static final StringEventField INSPECTION_ID_FIELD = EventFields.StringValidatedByCustomRule("inspection_id", "tool");
+  private static final StringEventField SCOPE_FIELD = EventFields.String("scope", ALLOWED_SCOPES);
+  private static final StringEventField SEVERITY_FIELD = EventFields.String("severity", ALLOWED_SEVERITIES);
   private static final BooleanEventField ENABLED_FIELD = EventFields.Boolean("enabled");
   private static final BooleanEventField INSPECTION_ENABLED_FIELD = EventFields.Boolean("inspection_enabled");
   private static final PrimitiveEventField<Object> OPTION_VALUE_FIELD = new PrimitiveEventField<>() {
@@ -67,7 +87,7 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
     new StringEventField.ValidatedByAllowedValues("option_type", Arrays.asList("boolean", "integer"));
   private static final StringEventField OPTION_NAME_FIELD = EventFields.StringValidatedByCustomRule("option_name", "plugin_info");
 
-  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 6);
+  private static final EventLogGroup GROUP = new EventLogGroup("inspections", 11);
 
   private static final VarargEventId NOT_DEFAULT_STATE =
     GROUP.registerVarargEvent("not.default.state",
@@ -91,6 +111,12 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
                         EventFields.Boolean("project_level"),
                         EventFields.Boolean("default"),
                         EventFields.Boolean("locked"));
+  private static final VarargEventId NOT_DEFAULT_SCOPE_AND_SEVERITY =
+    GROUP.registerVarargEvent("not.default.scope.and.severity",
+                              INSPECTION_ID_FIELD,
+                              SCOPE_FIELD,
+                              SEVERITY_FIELD,
+                              EventFields.PluginInfo);
 
   @Override
   public EventLogGroup getGroup() {
@@ -111,6 +137,8 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
     for (ScopeToolState state : tools) {
       InspectionToolWrapper<?, ?> tool = state.getTool();
       PluginInfo pluginInfo = getInfo(tool);
+
+      // not.default.state
       if (ENABLED.test(state)) {
         result.add(create(tool, pluginInfo, true));
       }
@@ -118,7 +146,12 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
         result.add(create(tool, pluginInfo, false));
       }
 
+      // setting.non.default.state
       result.addAll(getChangedSettingsEvents(tool, pluginInfo, state.isEnabled()));
+
+      // not.default.scope.and.severity
+      final MetricEvent scopeAndSeverityEvent = getChangedScopeAndSeverityEvent(state, pluginInfo);
+      if (scopeAndSeverityEvent != null) result.add(scopeAndSeverityEvent);
     }
     return result;
   }
@@ -218,20 +251,44 @@ public class InspectionsUsagesCollector extends ProjectUsagesCollector {
         return Collections.emptyMap();
       }
 
-      return ContainerUtil.map2MapNotNull(options, option -> {
+      Map<String, Attribute> set = new HashMap<>(options.size());
+      for (Content option : options) {
         if (option instanceof Element) {
-          Attribute nameAttr = ((Element)option).getAttribute("name");
-          Attribute valueAttr = ((Element)option).getAttribute("value");
+          Element el = (Element)option;
+          Attribute nameAttr = el.getAttribute("name");
+          Attribute valueAttr = el.getAttribute("value");
           if (nameAttr != null && valueAttr != null) {
-            return Pair.create(nameAttr.getValue(), valueAttr);
+            set.put(nameAttr.getValue(), valueAttr);
           }
         }
-        return null;
-      });
+      }
+      return set;
     }
     catch (Exception e) {
       return Collections.emptyMap();
     }
+  }
+
+  @Nullable
+  private static MetricEvent getChangedScopeAndSeverityEvent(ScopeToolState tool, PluginInfo info) {
+    if (!isSafeToReport(info)) {
+      return null;
+    }
+
+    if (!(tool.getScopeName().equals(CustomScopesProviderEx.getAllScope().getScopeId()) &&
+          tool.getLevel().getSeverity().getName().equals(tool.getTool().getDefaultLevel().getSeverity().getName()))) {
+      final String scopeId = tool.getScopeName();
+      final String severity = tool.getLevel().getName();
+
+      return NOT_DEFAULT_SCOPE_AND_SEVERITY.metric(
+        INSPECTION_ID_FIELD.with(isSafeToReport(info) ? tool.getTool().getID() : "third.party"),
+        SCOPE_FIELD.with(ALLOWED_SCOPES.contains(scopeId) ? scopeId : "custom"),
+        SEVERITY_FIELD.with(ALLOWED_SEVERITIES.contains(severity) ? severity : "custom"),
+        EventFields.PluginInfo.with(info)
+      );
+    }
+
+    return null;
   }
 
   public static class InspectionToolValidator extends CustomValidationRule {

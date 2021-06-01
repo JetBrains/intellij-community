@@ -55,11 +55,6 @@ open class SegmentedBarActionComponent(val place: String = ActionPlaces.NEW_TOOL
   }
 
   protected var actionGroup: ActionGroup? = null
-    set(value) {
-      if (field == value) return
-      field = value
-      ActionToolbarImpl.updateAllToolbarsImmediately()
-    }
 
   private val buttonLook = object : ActionButtonLook() {
     override fun paintBorder(g: Graphics, c: JComponent, state: Int) {

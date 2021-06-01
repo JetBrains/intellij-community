@@ -15,13 +15,13 @@ import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModuleSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
@@ -30,6 +30,7 @@ import kotlinx.coroutines.withContext
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.util.concurrent.CancellationException
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.DefaultTreeModel
 import javax.swing.tree.TreeModel
@@ -39,13 +40,12 @@ import javax.swing.tree.TreeSelectionModel
 
 internal class ModulesTree(
     private val targetModuleSetter: TargetModuleSetter
-) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider, Disposable {
+) : Tree(DefaultMutableTreeNode(TargetModules.None)), DataProvider, CopyProvider, Disposable, CoroutineScope {
 
     private var latestTargetModules: TargetModules? = null
     private var ignoreTargetModulesChanges = false
 
-    private val mainScope = CoroutineScope(SupervisorJob() + AppUIExecutor.onUiThread().coroutineDispatchingContext()) +
-         CoroutineName("ModulesTree")
+    override val coroutineContext = SupervisorJob() + CoroutineName("ModulesTree")
 
     init {
         setCellRenderer(ModulesTreeItemRenderer())
@@ -54,7 +54,7 @@ internal class ModulesTree(
         showsRootHandles = true
         emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.modulesTree.empty")
 
-        @Suppress("MagicNumber") // Gotta love Swing APIs
+        @Suppress("MagicNumber") // Swing dimension constants
         border = scaledEmptyBorder(left = 8)
 
         addTreeSelectionListener { event ->
@@ -77,9 +77,9 @@ internal class ModulesTree(
         setTargetModules(TargetModules.None, traceInfo = TraceInfo.EMPTY)
     }
 
-    fun display(projectModules: List<ModuleModel>, targetModules: TargetModules, traceInfo: TraceInfo) = mainScope.launch(Dispatchers.Default) {
+    fun display(projectModules: List<ModuleModel>, targetModules: TargetModules, traceInfo: TraceInfo) = launch {
         logDebug(traceInfo, "ModulesTree#display()") { "Got ${projectModules.size} modules" }
-        launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) { setPaintBusy(true) }
+        launch(Dispatchers.AppUI) { setPaintBusy(true) }
 
         val (treeModel, pendingSelectionPath) = if (projectModules.isEmpty()) {
             logDebug(traceInfo, "ModulesTree#display()") { "No modules to display, setting target to None" }
@@ -91,7 +91,7 @@ internal class ModulesTree(
 
         val modelChanged = !areTreesIdentical(model.root as DefaultMutableTreeNode, treeModel.root as DefaultMutableTreeNode)
 
-        launch(AppUIExecutor.onUiThread().coroutineDispatchingContext()) {
+        withContext(Dispatchers.AppUI) {
             logDebug(traceInfo, "ModulesTree#display()") { "Tree populated. Found selection path: '$pendingSelectionPath'" }
             if (modelChanged) {
                 logDebug(traceInfo, "ModulesTree#display()") { "Tree changes detected, yay" }
@@ -210,6 +210,6 @@ internal class ModulesTree(
 
     override fun dispose() {
         logDebug("ModulesTree#dispose()") { "Disposing ModulesTree..." }
-        mainScope.cancel("Disposing")
+        coroutineContext.cancel(CancellationException("Disposing"))
     }
 }

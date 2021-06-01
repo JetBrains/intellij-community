@@ -1,22 +1,8 @@
-/*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.core.script
 
-import com.intellij.openapi.components.ServiceManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -33,7 +19,13 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
+import java.nio.file.Path
+import kotlin.io.path.isDirectory
+import kotlin.io.path.isRegularFile
+import kotlin.io.path.notExists
+import kotlin.io.path.pathString
 import kotlin.script.experimental.api.asSuccess
 import kotlin.script.experimental.api.makeFailureResult
 
@@ -111,39 +103,37 @@ interface ScriptConfigurationManager {
     fun getAllScriptDependenciesSources(): Collection<VirtualFile>
 
     companion object {
-        fun getServiceIfCreated(project: Project): ScriptConfigurationManager? =
-            ServiceManager.getServiceIfCreated(project, ScriptConfigurationManager::class.java)
+        fun getServiceIfCreated(project: Project): ScriptConfigurationManager? = project.serviceIfCreated()
 
         @JvmStatic
-        fun getInstance(project: Project): ScriptConfigurationManager =
-            ServiceManager.getService(project, ScriptConfigurationManager::class.java)
+        fun getInstance(project: Project): ScriptConfigurationManager = project.service()
 
-        fun toVfsRoots(roots: Iterable<File>): List<VirtualFile> {
-            return roots.mapNotNull { classpathEntryToVfs(it) }
-        }
+        @JvmStatic
+        fun compositeScriptConfigurationManager(project: Project) =
+            getInstance(project).cast<CompositeScriptConfigurationManager>()
 
-        fun classpathEntryToVfs(file: File): VirtualFile? {
-            val res = when {
-                !file.exists() -> null
-                file.isDirectory -> StandardFileSystems.local()?.findFileByPath(file.canonicalPath)
-                file.isFile -> StandardFileSystems.jar()?.findFileByPath(file.canonicalPath + URLUtil.JAR_SEPARATOR)
-                else -> null
-            }
-            // TODO: report this somewhere, but do not throw: assert(res != null, { "Invalid classpath entry '$this': exists: ${exists()}, is directory: $isDirectory, is file: $isFile" })
-            return res
+        fun toVfsRoots(roots: Iterable<File>): List<VirtualFile> = roots.mapNotNull { classpathEntryToVfs(it.toPath()) }
+
+        // TODO: report this somewhere, but do not throw: assert(res != null, { "Invalid classpath entry '$this': exists: ${exists()}, is directory: $isDirectory, is file: $isFile" })
+        fun classpathEntryToVfs(path: Path): VirtualFile? = when {
+            path.notExists() -> null
+            path.isDirectory() -> StandardFileSystems.local()?.findFileByPath(path.pathString)
+            path.isRegularFile() -> StandardFileSystems.jar()?.findFileByPath(path.pathString + URLUtil.JAR_SEPARATOR)
+            else -> null
         }
 
         @TestOnly
         fun updateScriptDependenciesSynchronously(file: PsiFile) {
             // TODO: review the usages of this method
-            (getInstance(file.project) as CompositeScriptConfigurationManager).default
-                .updateScriptDependenciesSynchronously(file)
+            defaultScriptingSupport(file.project).updateScriptDependenciesSynchronously(file)
         }
+
+        private fun defaultScriptingSupport(project: Project) =
+            compositeScriptConfigurationManager(project).default
 
         @TestOnly
         fun clearCaches(project: Project) {
-            (getInstance(project) as CompositeScriptConfigurationManager).default
-                .updateScriptDefinitionsReferences()
+            defaultScriptingSupport(project).updateScriptDefinitionsReferences()
         }
 
         fun clearManualConfigurationLoadingIfNeeded(file: VirtualFile) {

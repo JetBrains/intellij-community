@@ -35,6 +35,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.ConstructionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,6 +87,14 @@ public class IterateOverIterableIntention implements IntentionAction {
     }
     PsiExpression expression = getIterableExpression(editor, file);
     if (expression == null) return false;
+    if (ConstructionUtils.isEmptyCollectionInitializer(expression)) {
+      // Empty collection: iterating doesn't make much sense
+      return false;
+    }
+    if (expression instanceof PsiNewExpression && ((PsiNewExpression)expression).getArrayDimensions().length > 0) {
+      // new array without initializers: all elements are 0/null/false, so iterating doesn't make much sense
+      return false;
+    }
     myText = JavaBundle.message("intention.name.iterate.over", Objects.requireNonNull(expression.getType()).getPresentableText());
     return true;
   }

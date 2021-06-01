@@ -18,12 +18,12 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.facet.*;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenImportingTestCase;
+import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class FacetImporterTestCase<FACET_TYPE extends Facet> extends MavenImportingTestCase {
+public abstract class FacetImporterTestCase<FACET_TYPE extends Facet> extends MavenMultiVersionImportingTestCase {
   protected abstract FacetTypeId<FACET_TYPE> getFacetTypeId();
 
   protected void doAssertSourceRoots(List<String> actualRoots, String... roots) {

@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -17,6 +18,7 @@ import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -179,6 +181,10 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
     mySearchActionsToolbar.setForceShowFirstComponent(true);
     JPanel searchPair = new NonOpaquePanel(new BorderLayout());
     searchPair.add(mySearchActionsToolbar, BorderLayout.CENTER);
+    if (ExperimentalUI.isNewEditorTabs()) {
+      mySearchActionsToolbar.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+      searchPair.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    }
 
     myReplaceActionsToolbar = createReplaceToolbar1(replaceToolbar1Actions);
     myReplaceActionsToolbar.setBorder(JBUI.Borders.empty());
@@ -215,7 +221,13 @@ public final class SearchReplaceComponent extends EditorHeaderComponent implemen
       }
       mySplitter.setFirstComponent(leftPanel);
       mySplitter.setSecondComponent(rightPanel);
-      mySplitter.setOpaque(false);
+      if (ExperimentalUI.isNewEditorTabs()) {
+        mySearchActionsToolbar.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        mySplitter.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+        mySplitter.setOpaque(true);
+      } else {
+        mySplitter.setOpaque(false);
+      }
       mySplitter.getDivider().setOpaque(false);
       add(mySplitter, BorderLayout.CENTER);
 

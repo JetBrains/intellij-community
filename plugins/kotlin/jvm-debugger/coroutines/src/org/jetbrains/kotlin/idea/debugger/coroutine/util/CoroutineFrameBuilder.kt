@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.util
 
@@ -124,7 +121,7 @@ class CoroutineFrameBuilder {
             suspendContext: SuspendContextImpl
         ): CoroutinePreflightFrame? {
             return suspendContext.invokeInManagerThread {
-                val sem = frame.location().isPreFlight()
+                val sem = frame.location().getSuspendExitMode()
                 val preflightStackFrame = if (sem.isCoroutineFound()) {
                     lookupContinuation(suspendContext, frame, sem)
                 } else
@@ -174,7 +171,7 @@ class CoroutineFrameBuilder {
         private fun lookForTheFollowingFrame(theFollowingFrames: List<StackFrameProxyImpl>): StackFrameProxyImpl? {
             for (i in 0 until min(PRE_FETCH_FRAME_COUNT, theFollowingFrames.size)) { // pre-scan PRE_FETCH_FRAME_COUNT frames
                 val nextFrame = theFollowingFrames[i]
-                if (nextFrame.location().isPreFlight() == SuspendExitMode.SUSPEND_METHOD) {
+                if (nextFrame.location().getSuspendExitMode() != SuspendExitMode.NONE) {
                     return nextFrame
                 }
             }

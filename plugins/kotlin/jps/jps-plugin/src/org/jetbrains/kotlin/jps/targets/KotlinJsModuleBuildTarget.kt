@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.jps.targets
 
@@ -39,6 +36,9 @@ import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils.JS_EXT
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils.META_JS_SUFFIX
 import java.io.File
 import java.net.URI
+import kotlin.io.path.absolute
+import kotlin.io.path.exists
+import kotlin.io.path.pathString
 
 private const val JS_BUILD_META_INFO_FILE_NAME = "js-build-meta-info.txt"
 
@@ -200,9 +200,9 @@ class KotlinJsModuleBuildTarget(kotlinContext: KotlinCompileContext, jpsModuleBu
             dependencyBuildTarget is KotlinJsModuleBuildTarget &&
             dependencyBuildTarget.sources.isNotEmpty()
         ) {
-            val metaFile = dependencyBuildTarget.outputMetaFile
+            val metaFile = dependencyBuildTarget.outputMetaFile.toPath()
             if (metaFile.exists()) {
-                result.add(metaFile.absolutePath)
+                result.add(metaFile.absolute().pathString)
             }
         }
     }

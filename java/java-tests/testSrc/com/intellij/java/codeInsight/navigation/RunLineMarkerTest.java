@@ -20,12 +20,16 @@ import com.intellij.codeInsight.daemon.GutterIconDescriptor;
 import com.intellij.codeInsight.daemon.GutterMark;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.TestStateStorage;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.actions.RunConfigurationProducer;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.application.ApplicationConfigurationProducer;
+import com.intellij.execution.impl.RunManagerImpl;
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
+import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.lineMarker.RunLineMarkerContributor;
 import com.intellij.execution.lineMarker.RunLineMarkerProvider;
 import com.intellij.execution.testframework.sm.runner.states.TestStateInfo;
@@ -45,6 +49,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Date;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -52,6 +57,16 @@ import java.util.Set;
  * @author Dmitry Avdeev
  */
 public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
+  private final Set<RunnerAndConfigurationSettings> myTempSettings = new HashSet<>();
+  @Override
+  protected void tearDown() throws Exception {
+    RunManager runManager = RunManager.getInstance(getProject());
+    for (RunnerAndConfigurationSettings setting : myTempSettings) {
+      runManager.removeConfiguration(setting);
+    }
+    super.tearDown();
+  }
+
   public void testRunLineMarker() {
     myFixture.configureByText("MainTest.java", "public class MainTest {\n" +
                                                "    public static void <caret>foo(String[] args) {\n" +
@@ -76,6 +91,32 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
   }
 
   public void testTestClassWithMain() {
+    doTestClassWithMain(null);
+  }
+
+  public void testTestClassWithMainTestConfigurationExists() {
+    doTestClassWithMain(() -> {
+      RunManager manager = RunManager.getInstance(getProject());
+      JUnitConfiguration test = new JUnitConfiguration("MainTest", getProject());
+      test.beClassConfiguration(myFixture.findClass("MainTest"));
+      RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager, test);
+      manager.addConfiguration(settings);
+      myTempSettings.add(settings);
+    });
+  }
+  
+  public void testTestClassWithMainMainConfigurationExists() {
+    doTestClassWithMain(() -> {
+      RunManager manager = RunManager.getInstance(getProject());
+      ApplicationConfiguration test = new ApplicationConfiguration("MainTest.main()", getProject());
+      test.setMainClass(myFixture.findClass("MainTest"));
+      RunnerAndConfigurationSettingsImpl settings = new RunnerAndConfigurationSettingsImpl((RunManagerImpl)manager, test);
+      manager.addConfiguration(settings);
+      myTempSettings.add(settings);
+    });
+  }
+
+  private void doTestClassWithMain(Runnable setupExisting) {
     myFixture.addClass("package junit.framework; public class TestCase {}");
     myFixture.configureByText("MainTest.java", "public class <caret>MainTest extends junit.framework.TestCase {\n" +
                                                "    public static void main(String[] args) {\n" +
@@ -83,6 +124,9 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
                                                "    public void testFoo() {\n" +
                                                "    }\n" +
                                                "}");
+    if (setupExisting != null) {
+      setupExisting.run();
+    }
     List<GutterMark> marks = myFixture.findGuttersAtCaret();
     assertEquals(1, marks.size());
     GutterIconRenderer mark = (GutterIconRenderer)marks.get(0);
@@ -98,12 +142,12 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     assertEquals(list.toString(), 2, list.size());
     list.get(0).update(event);
     assertEquals("Run 'MainTest.main()'", event.getPresentation().getText());
-    // when testEditConfigurationAction is run before, there exists "main" configuration, none - otherwise 
-    // assertNotNull(ConfigurationContext.getFromContext(event.getDataContext()).findExisting());
     list.get(1).update(event);
     assertEquals("Run 'MainTest'", event.getPresentation().getText());
     myFixture.testAction(list.get(1));
-    assertEquals("MainTest", RunManager.getInstance(getProject()).getSelectedConfiguration().getName());
+    RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(getProject()).getSelectedConfiguration();
+    myTempSettings.add(selectedConfiguration);
+    assertEquals("MainTest", selectedConfiguration.getName());
   }
 
   public void testAbstractTestClassMethods() {
@@ -218,6 +262,7 @@ public class RunLineMarkerTest extends LightJavaCodeInsightFixtureTestCase {
     TestActionEvent event = new TestActionEvent();
     action.update(event);
     assertTrue(event.getPresentation().getText().startsWith(message));
+    ContainerUtil.addIfNotNull(myTempSettings, RunManager.getInstance(getProject()).getSelectedConfiguration());
   }
 
   public void testActionNameFromPreferredProducer() {

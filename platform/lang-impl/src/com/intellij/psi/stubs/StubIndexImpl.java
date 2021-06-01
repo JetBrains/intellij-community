@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
@@ -38,6 +39,7 @@ import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -51,13 +53,12 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.function.IntPredicate;
 
 public final class StubIndexImpl extends StubIndexEx {
-  private static final AtomicReference<Boolean> ourForcedClean = new AtomicReference<>(null);
   static final Logger LOG = Logger.getInstance(StubIndexImpl.class);
 
   private static final class AsyncState {
@@ -72,6 +73,8 @@ public final class StubIndexImpl extends StubIndexEx {
 
   private final StubProcessingHelper myStubProcessingHelper = new StubProcessingHelper();
   private final IndexAccessValidator myAccessValidator = new IndexAccessValidator();
+
+  private final AtomicBoolean myForcedClean = new AtomicBoolean();
   private volatile CompletableFuture<AsyncState> myStateFuture;
   private volatile AsyncState myState;
   private volatile boolean myInitialized;
@@ -83,13 +86,6 @@ public final class StubIndexImpl extends StubIndexEx {
         ID.unloadId(extension.getKey());
       }
     }, null);
-  }
-
-  static @Nullable StubIndexImpl getInstanceOrInvalidate() {
-    if (ourForcedClean.compareAndSet(null, Boolean.TRUE)) {
-      return null;
-    }
-    return (StubIndexImpl)getInstance();
   }
 
   private AsyncState getAsyncState() {
@@ -483,6 +479,17 @@ public final class StubIndexImpl extends StubIndexEx {
     };
   }
 
+  @Override
+  public @NotNull <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                            @NotNull Key dataKey,
+                                                            @NotNull Project project,
+                                                            @NotNull GlobalSearchScope scope) {
+    IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
+    CompactVirtualFileSet fileSet = new CompactVirtualFileSet(result == null ? IntSets.emptySet() : result);
+    fileSet.freeze();
+    return fileSet;
+  }
+
   private @Nullable <Key> IntSet getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,
                                                   @NotNull Key dataKey,
                                                   final @NotNull Project project,
@@ -596,7 +603,7 @@ public final class StubIndexImpl extends StubIndexEx {
 
   void clearAllIndices() {
     if (!myInitialized) {
-      LOG.error("stub index cleaning called when index is not yet initialized");
+      myForcedClean.set(true);
       return;
     }
     for (UpdatableIndex<?, ?, ?> index : getAsyncState().myIndices.values()) {
@@ -736,7 +743,7 @@ public final class StubIndexImpl extends StubIndexEx {
         extensionsIterator = Collections.emptyIterator();
       }
 
-      boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
+      boolean forceClean = Boolean.TRUE == myForcedClean.getAndSet(false);
       List<ThrowableRunnable<?>> tasks = new ArrayList<>();
       while (extensionsIterator.hasNext()) {
         StubIndexExtension<?, ?> extension = extensionsIterator.next();

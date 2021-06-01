@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.quickfix;
 
@@ -1785,6 +1782,24 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
             public void testFinalJavaUpperBound() throws Exception {
                 runTest("testData/quickfix/modifiers/addOpenToClassDeclaration/finalJavaUpperBound.before.Main.kt");
             }
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/moveToSealedParent")
+    public static class MoveToSealedParent extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("nestedDeclarationToSealed.test")
+        public void testNestedDeclarationToSealed() throws Exception {
+            runTest("testData/quickfix/moveToSealedParent/nestedDeclarationToSealed.test");
+        }
+
+        @TestMetadata("topLevelDeclarationToSealed.test")
+        public void testTopLevelDeclarationToSealed() throws Exception {
+            runTest("testData/quickfix/moveToSealedParent/topLevelDeclarationToSealed.test");
         }
     }
 

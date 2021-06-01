@@ -63,7 +63,18 @@ public final class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider
   interface FrameDecorator {
     boolean isInFullScreen();
 
+    default void frameInit() {
+    }
+
     default void frameShow() {
+    }
+  }
+
+  @Override
+  public void addNotify() {
+    super.addNotify();
+    if (myFrameDecorator != null) {
+      myFrameDecorator.frameInit();
     }
   }
 

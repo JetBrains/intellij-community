@@ -15,12 +15,14 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.RootConfigurationAccessorForWorkspaceModel
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import org.junit.*
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 
 @Suppress("UsePropertyAccessSyntax")
 class ModuleLevelLibrariesInRootModelTest {
@@ -281,6 +283,24 @@ class ModuleLevelLibrariesInRootModelTest {
   }
 
   @Test
+  fun `delete and add module with the same name and module libraries inside`() {
+    addLibrary("a")
+    addLibrary("b")
+
+    val builder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
+    val moduleModel = (projectModel.moduleManager as ModuleManagerComponentBridge).getModifiableModel(builder)
+    moduleModel.disposeModule(module)
+    val newModule = projectModel.createModule("module", moduleModel)
+    val rootModel = ModuleRootManagerEx.getInstanceEx(newModule).getModifiableModelForMultiCommit(RootAccessorWithWorkspaceModel(builder))
+    rootModel.moduleLibraryTable.createLibrary("a")
+    runWriteActionAndWait { ModifiableModelCommitter.multiCommit(listOf(rootModel), moduleModel) }
+
+    assertThat(projectModel.moduleManager.modules).containsExactly(newModule)
+    val libraryEntry = dropModuleSourceEntry(ModuleRootManager.getInstance(projectModel.moduleManager.modules.single()), 1).single()
+    assertThat((libraryEntry as LibraryOrderEntry).library!!.name).isEqualTo("a")
+  }
+
+  @Test
   fun `two libraries with the same name`() {
     val root1 = projectModel.baseProjectDir.newVirtualDirectory("lib1")
     val root2 = projectModel.baseProjectDir.newVirtualDirectory("lib2")
@@ -322,16 +342,20 @@ class ModuleLevelLibrariesInRootModelTest {
 
   @Test
   fun `commit module libraries via multi-commit`() {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    doTestMultiCommitForModuleLevelLibrary(DependencyScope.TEST)
+  }
 
-    class RootAccessorWithWorkspaceModel(override val actualDiffBuilder: WorkspaceEntityStorageBuilder?)
-      : RootConfigurationAccessor(), RootConfigurationAccessorForWorkspaceModel
+  @Test
+  fun `multi-commit without changes in module-level libraries`() {
+    doTestMultiCommitForModuleLevelLibrary(DependencyScope.COMPILE)
+  }
 
+  private fun doTestMultiCommitForModuleLevelLibrary(newScope: DependencyScope) {
     addLibrary("a")
     val builder = WorkspaceEntityStorageBuilder.from(WorkspaceModel.getInstance(projectModel.project).entityStorage.current)
     val moduleModel = (projectModel.moduleManager as ModuleManagerComponentBridge).getModifiableModel(builder)
     val rootModel = ModuleRootManagerEx.getInstanceEx(module).getModifiableModelForMultiCommit(RootAccessorWithWorkspaceModel(builder))
-    getSingleLibraryOrderEntry(rootModel).scope = DependencyScope.TEST
+    getSingleLibraryOrderEntry(rootModel).scope = newScope
     runWriteActionAndWait { ModifiableModelCommitter.multiCommit(listOf(rootModel), moduleModel) }
 
     //this emulates behavior of Project Structure dialog: after changes are applied, it immediately recreates modifiable model to show 'Dependencies' panel
@@ -340,7 +364,7 @@ class ModuleLevelLibrariesInRootModelTest {
 
     val libraryEntry = getSingleLibraryOrderEntry(ModuleRootManager.getInstance(module))
     assertThat(libraryEntry.library!!.name).isEqualTo("a")
-    assertThat(libraryEntry.scope).isEqualTo(DependencyScope.TEST)
+    assertThat(libraryEntry.scope).isEqualTo(newScope)
     assertThat(libraryEntry.library!!.getFiles(OrderRootType.CLASSES)).isEmpty()
   }
 
@@ -349,4 +373,7 @@ class ModuleLevelLibrariesInRootModelTest {
     model.addRoot(root, OrderRootType.CLASSES)
     model.commit()
   }
+
+  class RootAccessorWithWorkspaceModel(override val actualDiffBuilder: WorkspaceEntityStorageBuilder?)
+    : RootConfigurationAccessor(), RootConfigurationAccessorForWorkspaceModel
 }

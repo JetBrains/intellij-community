@@ -30,6 +30,16 @@ public class AddSingleStaticImportActionTest extends JavaCodeInsightFixtureTestC
     doTest("Add import for 'foo.Class1.Inner2'");
   }
 
+  public void testDisabledInsideParameterizedQualifierReference() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    assertNull(myFixture.getAvailableIntention("Add import for 'foo.Outer.Inner'"));
+  }
+
+  public void testDisabledInsideParameterizedQualifierReferenceDeep() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+    assertNull(myFixture.getAvailableIntention("Add import for 'foo.Outer.Inner.Inner1'"));
+  }
+
   public void testWrongCandidateAfterImport() {
     myFixture.addClass("package foo; class Empty {}"); //to ensure package is in the project
     doTest("Add static import for 'foo.Test.X.test'");

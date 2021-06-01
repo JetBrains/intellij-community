@@ -16,9 +16,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Modifier;
 
-/**
- * @author yole
- */
+
 public abstract class PlatformLiteFixture extends UsefulTestCase {
   protected MockProjectEx myProject;
 

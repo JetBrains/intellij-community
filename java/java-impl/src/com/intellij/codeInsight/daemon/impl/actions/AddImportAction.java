@@ -21,6 +21,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.psi.PsiClass;
@@ -29,8 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.statistics.JavaStatisticsManager;
 import com.intellij.psi.statistics.StatisticsManager;
-import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.popup.list.PopupListElementRenderer;
+import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -65,7 +65,7 @@ public class AddImportAction implements QuestionAction {
   public boolean execute() {
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
 
-    if (!myReference.getElement().isValid()){
+    if (!myReference.getElement().isValid()) {
       return false;
     }
 
@@ -131,30 +131,28 @@ public class AddImportAction implements QuestionAction {
           return aValue.getIcon(0);
         }
       };
-    JBPopup popup = new ListPopupImpl(myProject, step) {
-      @Override
-      protected ListCellRenderer getListElementRenderer() {
-        PopupListElementRenderer baseRenderer = (PopupListElementRenderer)super.getListElementRenderer();
-        ListCellRenderer<Object> psiRenderer = new DefaultPsiElementCellRenderer();
-        return (list, value, index, isSelected, cellHasFocus) -> {
-          baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          JPanel panel = new JPanel(new BorderLayout()) {
-            private final AccessibleContext myAccessibleContext = baseRenderer.getAccessibleContext();
+    JBPopup popup = JBPopupFactory.getInstance().createListPopup(myProject, step, (superRenderer) -> {
+      GroupedItemsListRenderer baseRenderer = (GroupedItemsListRenderer)superRenderer;
+      ListCellRenderer<Object> psiRenderer = new DefaultPsiElementCellRenderer();
+      return (list, value, index, isSelected, cellHasFocus) -> {
+        baseRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        JPanel panel = new JPanel(new BorderLayout()) {
+          private final AccessibleContext myAccessibleContext = baseRenderer.getAccessibleContext();
 
-            @Override
-            public AccessibleContext getAccessibleContext() {
-              if (myAccessibleContext == null) {
-                return super.getAccessibleContext();
-              }
-              return myAccessibleContext;
+          @Override
+          public AccessibleContext getAccessibleContext() {
+            if (myAccessibleContext == null) {
+              return super.getAccessibleContext();
             }
-          };
-          panel.add(baseRenderer.getNextStepLabel(), BorderLayout.EAST);
-          panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
-          return panel;
+            return myAccessibleContext;
+          }
         };
-      }
-    };
+        panel.add(baseRenderer.getNextStepLabel(), BorderLayout.EAST);
+        panel.add(psiRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus));
+        return panel;
+      };
+    });
+
     NavigationUtil.hidePopupIfDumbModeStarts(popup, myProject);
     popup.showInBestPositionFor(myEditor);
   }

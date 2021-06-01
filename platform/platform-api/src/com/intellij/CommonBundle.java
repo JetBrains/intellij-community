@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij;
 
 import com.intellij.ide.IdeDeprecatedMessagesBundle;
@@ -10,9 +10,7 @@ import org.jetbrains.annotations.*;
 import java.util.ResourceBundle;
 import java.util.function.Supplier;
 
-/**
- * @author yole
- */
+
 @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
 public final class CommonBundle extends DynamicBundle {
   private static final String BUNDLE = "messages.CommonBundle";

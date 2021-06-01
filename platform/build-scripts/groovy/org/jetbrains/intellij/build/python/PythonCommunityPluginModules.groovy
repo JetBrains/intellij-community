@@ -18,6 +18,7 @@ class PythonCommunityPluginModules {
     "intellij.python.copyright",
     "intellij.python.terminal",
     "intellij.python.grazie",
+    "intellij.python.markdown",
     "intellij.python.reStructuredText",
     "intellij.python.sdk",
     "intellij.python.featuresTrainer",
@@ -41,11 +42,10 @@ class PythonCommunityPluginModules {
       directoryName = name
       mainJarName = "${name}.jar"
       modules.each { module ->
-        withModule(module, mainJarName, null)
+        withModule(module, mainJarName)
       }
       withModule(mainModuleName, mainJarName)
       withGeneratedResources(new HelpersGenerator(), "helpers")
-      doNotCreateSeparateJarForLocalizableResources()
       withProjectLibrary("libthrift")  // Required for "Python Console" in intellij.python.community.impl module
       body.delegate = delegate
       body()

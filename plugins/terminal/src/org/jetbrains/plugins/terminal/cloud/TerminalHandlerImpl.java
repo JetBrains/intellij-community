@@ -33,7 +33,7 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
     CloudTerminalRunner terminalRunner =
       new CloudTerminalRunner(project, presentableName, process, handlerBoundLater, deferTerminalSessionUntilFirstShown);
 
-    myTerminalWidget = terminalRunner.createTerminalWidget(project, null);
+    myTerminalWidget = terminalRunner.createTerminalWidget(project, (String)null);
     myTerminalPanel = myTerminalWidget.getTerminalPanel();
     myCopyActionKeyListener = new MyCopyActionKeyListener();
   }

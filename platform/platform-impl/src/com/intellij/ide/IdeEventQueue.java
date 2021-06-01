@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.impl.ActionManagerImpl;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -101,6 +102,7 @@ public final class IdeEventQueue extends EventQueue {
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
   private final IdeMouseEventDispatcher myMouseEventDispatcher = new IdeMouseEventDispatcher();
   private final IdePopupManager myPopupManager = new IdePopupManager();
+  private long myPopupTriggerTime = -1;
 
   /**
    * Counter of processed events. It is used to assert that data context lives only inside single
@@ -223,7 +225,7 @@ public final class IdeEventQueue extends EventQueue {
       myPostEventListeners.addListener(IdeEventQueue::skipMoveResizeEvents);
     }
 
-    if (SystemProperties.getBooleanProperty("custom.kfm.typeahead.handler", true)) {
+    if (SystemProperties.getBooleanProperty("custom.kfm.typeahead.handler", false)) {
       ((IdeKeyboardFocusManager)KeyboardFocusManager.getCurrentKeyboardFocusManager()).setTypeaheadHandler(ke -> {
         if (myKeyEventDispatcher.dispatchKeyEvent(ke)) {
           ke.consume();
@@ -633,6 +635,10 @@ public final class IdeEventQueue extends EventQueue {
       ExceptionUtil.rethrow(t);
     }
 
+    if (t instanceof ControlFlowException && Boolean.getBoolean("report.control.flow.exceptions.in.edt")) {
+      // 'bare' ControlFlowException-s are not reported
+      t = new RuntimeException(t);
+    }
     StartupAbortedException.processException(t);
   }
 
@@ -893,6 +899,9 @@ public final class IdeEventQueue extends EventQueue {
       maybeReady();
       KeyEvent ke = e instanceof KeyEvent ? (KeyEvent)e : null;
       boolean consumed = ke == null || ke.isConsumed();
+      if (e instanceof MouseEvent && (((MouseEvent)e).isPopupTrigger() || e.getID() == MouseEvent.MOUSE_PRESSED)) {
+        myPopupTriggerTime = System.currentTimeMillis();
+      }
       super.dispatchEvent(e);
       // collect mnemonics statistics only if key event was processed above
       if (!consumed && ke.isConsumed() && KeyEvent.KEY_PRESSED == ke.getID()) {
@@ -922,6 +931,11 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   @ApiStatus.Internal
+  public long getPopupTriggerTime() {
+    return myPopupTriggerTime;
+  }
+
+  @ApiStatus.Internal
   public void flushQueue() {
     if (!EventQueue.isDispatchThread()) {
       throw new IllegalStateException("Must be called from EDT but got: " + Thread.currentThread());
@@ -939,6 +953,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Future<?> exitCondition, @NotNull Predicate<? super AWTEvent> isCancelEvent) {
+    assert EventQueue.isDispatchThread();
     if (LOG.isDebugEnabled()) {
       LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
     }
@@ -948,6 +963,9 @@ public final class IdeEventQueue extends EventQueue {
         boolean consumed = consumeUnrelatedEvent(modalComponent, event);
         if (!consumed) {
           dispatchEvent(event);
+        }
+        if (isCancelEvent.test(event)) {
+          break;
         }
       }
       catch (Throwable e) {
@@ -1029,6 +1047,11 @@ public final class IdeEventQueue extends EventQueue {
   @NotNull
   public IdeKeyEventDispatcher getKeyEventDispatcher() {
     return myKeyEventDispatcher;
+  }
+
+  @NotNull
+  public IdeMouseEventDispatcher getMouseEventDispatcher() {
+    return myMouseEventDispatcher;
   }
 
   /**

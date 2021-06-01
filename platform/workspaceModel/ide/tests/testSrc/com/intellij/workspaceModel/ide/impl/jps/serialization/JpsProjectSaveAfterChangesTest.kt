@@ -7,6 +7,7 @@ import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsProjectConfigLocation
 import com.intellij.workspaceModel.ide.impl.IdeVirtualFileUrlManagerImpl
+import com.intellij.workspaceModel.ide.impl.JpsEntitySourceFactory
 import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -38,7 +39,7 @@ class JpsProjectSaveAfterChangesTest {
         url = configLocation.baseDirectoryUrl.append("util/src2")
       }
       builder.modifyEntity(ModifiableModuleCustomImlDataEntity::class.java, utilModule.customImlData!!) {
-        rootManagerTagCustomData = """<component LANGUAGE_LEVEL="JDK_1_7">
+        rootManagerTagCustomData = """<component>
   <annotation-paths>
     <root url="${configLocation.baseDirectoryUrlString}/lib/anno2" />
   </annotation-paths>
@@ -75,8 +76,8 @@ class JpsProjectSaveAfterChangesTest {
   fun `add library`() {
     checkSaveProjectAfterChange("directoryBased/addLibrary", "fileBased/addLibrary") { builder, configLocation ->
       val root = LibraryRoot(virtualFileManager.fromUrl("jar://${JpsPathUtil.urlToPath(configLocation.baseDirectoryUrlString)}/lib/junit2.jar!/"),
-                             LibraryRootTypeId.COMPILED)
-      val source = JpsProjectEntitiesLoader.createJpsEntitySourceForProjectLibrary(configLocation)
+        LibraryRootTypeId.COMPILED)
+      val source = JpsEntitySourceFactory.createJpsEntitySourceForProjectLibrary(configLocation)
       builder.addLibraryEntity("junit2", LibraryTableId.ProjectLibraryTableId, listOf(root), emptyList(), source)
     }
   }
@@ -95,7 +96,7 @@ class JpsProjectSaveAfterChangesTest {
       val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, configLocation.baseDirectoryUrl.append("new"),
                                                          false, "java-source", source)
       builder.addJavaSourceRootEntity(sourceRootEntity, false, "")
-      builder.addJavaModuleSettingsEntity(true, true, null, null, module, source)
+      builder.addJavaModuleSettingsEntity(true, true, null, null, null, module, source)
     }
   }
 

@@ -17,7 +17,7 @@ final class ScrollSettings {
     if (component == null || !component.isShowing()) return false;
 
     Application application = getApplication();
-    if (application == null || application.isUnitTestMode()) return false;
+    if (application == null) return false;
     if (PowerSaveMode.isEnabled()) return false;
     if (RemoteDesktopService.isRemoteSession()) return false;
 

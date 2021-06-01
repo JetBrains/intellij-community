@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.AttachSourcesProvider;
@@ -13,7 +13,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.psi.PsiFile;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
@@ -24,10 +23,7 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectBundle;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class MavenAttachSourcesProvider implements AttachSourcesProvider {
   @Override
@@ -98,7 +94,7 @@ public class MavenAttachSourcesProvider implements AttachSourcesProvider {
   }
 
   private static Collection<MavenArtifact> findArtifacts(Collection<MavenProject> mavenProjects, List<LibraryOrderEntry> orderEntries) {
-    Collection<MavenArtifact> artifacts = new THashSet<>();
+    Collection<MavenArtifact> artifacts = new HashSet<>();
     for (MavenProject each : mavenProjects) {
       for (LibraryOrderEntry entry : orderEntries) {
         final MavenArtifact artifact = MavenRootModelAdapter.findArtifact(each, entry.getLibrary());

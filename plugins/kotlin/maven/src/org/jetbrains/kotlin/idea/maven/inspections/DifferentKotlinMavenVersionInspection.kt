@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.maven.inspections
 
@@ -16,11 +13,11 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.inspections.PluginVersionDependentInspection
 import org.jetbrains.kotlin.idea.maven.KotlinMavenBundle
 import org.jetbrains.kotlin.idea.maven.PomFile
-import org.jetbrains.kotlin.idea.versions.bundledRuntimeVersion
+import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 
 class DifferentKotlinMavenVersionInspection : DomElementsInspection<MavenDomProjectModel>(MavenDomProjectModel::class.java),
     PluginVersionDependentInspection {
-    private val idePluginVersion by lazy { bundledRuntimeVersion() }
+    private val idePluginVersion by lazy { kotlinCompilerVersionShort() }
 
     override var testVersionMessage: String? = null
         @TestOnly set

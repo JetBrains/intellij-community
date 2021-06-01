@@ -9,7 +9,7 @@ object. This is probably a programming error, and some variant of the <code>awai
   }
 }</code></pre>
 <p>
-The good code would look like this:
+Good code would look like this:
 <pre><code>void acquire(Condition released) throws InterruptedException {
   while (acquired) {
     released.await();

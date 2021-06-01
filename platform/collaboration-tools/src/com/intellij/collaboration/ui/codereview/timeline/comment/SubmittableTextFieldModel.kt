@@ -8,13 +8,28 @@ import com.intellij.openapi.project.Project
 interface SubmittableTextFieldModel {
   val project: Project?
 
+  /**
+   * Don't change document's properties use [content] instead
+   */
   val document: Document
 
-  val isBusy: Boolean
+  val content: SubmittableTextFieldModelContent
 
-  val error: Throwable?
+  var isBusy: Boolean
+
+  var error: Throwable?
 
   fun submit()
 
   fun addStateListener(listener: SimpleEventListener)
+}
+
+interface SubmittableTextFieldModelContent {
+  var text: String
+
+  var isReadOnly: Boolean
+
+  var isAcceptSlashR: Boolean
+
+  fun clear()
 }

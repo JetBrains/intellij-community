@@ -40,6 +40,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.roots.*;
+import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,17 +157,10 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     invokeConcurrentlyIfPossible(tasks);
   }
 
-  @Override
   public void initializeProperties() {
     FilePropertyPusher.EP_NAME.forEachExtensionSafe(pusher -> {
       pusher.initExtra(myProject);
     });
-  }
-
-  @Override
-  public void pushAllPropertiesNow() {
-    performPushTasks();
-    doPushAll(FilePropertyPusher.EP_NAME.getExtensionList());
   }
 
   public static void applyScannersToFile(@NotNull VirtualFile fileOrDir, List<IndexableFileScanner.IndexableFileVisitor> sessions) {
@@ -219,7 +213,7 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       public void performInDumbMode(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.setText(IndexingBundle.message("progress.indexing.scanning"));
-        performPushTasks();
+        performDelayedPushTasks();
       }
     };
     myProject.getMessageBus().connect(task).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
@@ -231,9 +225,11 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     DumbService.getInstance(myProject).queueTask(task);
   }
 
-  private void performPushTasks() {
+  public void performDelayedPushTasks() {
     boolean hadTasks = false;
     while (true) {
+      ProgressManager.checkCanceled(); // give a chance to suspend indexing
+
       Runnable task = myTasks.poll();
       if (task == null) {
         break;
@@ -297,15 +293,22 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
 
   private void doPushAll(@NotNull List<? extends FilePropertyPusher<?>> pushers) {
     scanProject(myProject, moduleFileSet -> {
-      final Object[] moduleValues = new Object[pushers.size()];
-      for (int i = 0; i < moduleValues.length; i++) {
-        moduleValues[i] = pushers.get(i).getImmediateValue(moduleFileSet.getOrigin().getModule());
-      }
+      final Object[] moduleValues = getModuleImmediateValues(pushers, moduleFileSet.getOrigin());
       return fileOrDir -> {
         applyPushersToFile(fileOrDir, pushers, moduleValues);
         return ContentIteratorEx.Status.CONTINUE;
       };
     });
+  }
+
+  public static Object @NotNull [] getModuleImmediateValues(@NotNull List<? extends FilePropertyPusher<?>> pushers,
+                                                            @NotNull ModuleRootOrigin origin) {
+    final Object[] moduleValues;
+    moduleValues = new Object[pushers.size()];
+    for (int i = 0; i < moduleValues.length; i++) {
+      moduleValues[i] = pushers.get(i).getImmediateValue(origin.getModule());
+    }
+    return moduleValues;
   }
 
   public static void scanProject(@NotNull Project project, @NotNull Function<? super ModuleIndexableFilesIterator, ? extends ContentIteratorEx> iteratorProducer) {
@@ -363,16 +366,15 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
     }
   }
 
-  private void applyPushersToFile(final VirtualFile fileOrDir,
-                                  @NotNull List<? extends FilePropertyPusher<?>> pushers,
-                                  final Object[] moduleValues) {
+  public void applyPushersToFile(final VirtualFile fileOrDir,
+                                 @NotNull List<? extends FilePropertyPusher<?>> pushers,
+                                 final Object[] moduleValues) {
     if (pushers.isEmpty()) return;
     if (fileOrDir.isDirectory()) {
       fileOrDir.getChildren(); // outside read action to avoid freezes
     }
 
-    ApplicationManager.getApplication().runReadAction(() -> {
-      ProgressManager.checkCanceled();
+    ReadAction.run(() -> {
       if (!fileOrDir.isValid() || !(fileOrDir instanceof VirtualFileWithId)) return;
       doApplyPushersToFile(fileOrDir, pushers, moduleValues);
     });

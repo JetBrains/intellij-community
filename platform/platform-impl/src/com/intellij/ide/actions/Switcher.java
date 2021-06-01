@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.DataManager;
@@ -159,7 +159,10 @@ public final class Switcher extends BaseSwitcherAction {
 
       SwitcherListRenderer renderer = new SwitcherListRenderer(this);
       List<SwitcherToolWindow> windows = renderer.getToolWindows();
-      updateMnemonics(windows);
+      boolean showMnemonics = mySpeedSearch == null || is("ide.recent.files.tool.window.mnemonics");
+      if (showMnemonics || is("ide.recent.files.tool.window.sort.by.mnemonics")) {
+        updateMnemonics(windows, showMnemonics);
+      }
       // register custom actions as soon as possible to block overridden actions
       registerAction(this::navigate, "ENTER");
       registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
@@ -215,7 +218,7 @@ public final class Switcher extends BaseSwitcherAction {
       if (pinned && !windows.isEmpty()) {
         twModel.add(new SwitcherRecentLocations(this));
       }
-      if (mySpeedSearch != null && !is("ide.recent.files.tool.window.mnemonics")) {
+      if (!showMnemonics) {
         windows.forEach(window -> window.setMnemonic(null));
       }
 
@@ -481,7 +484,7 @@ public final class Switcher extends BaseSwitcherAction {
       return result;
     }
 
-    private void updateMnemonics(@NotNull List<SwitcherToolWindow> windows) {
+    private void updateMnemonics(@NotNull List<SwitcherToolWindow> windows, boolean showMnemonics) {
       final Map<String, SwitcherToolWindow> keymap = new HashMap<>(windows.size());
       keymap.put(onKeyRelease.getForbiddenMnemonic(), null);
       addForbiddenMnemonics(keymap, "SwitcherForward");
@@ -497,6 +500,7 @@ public final class Switcher extends BaseSwitcherAction {
           otherTW.add(window);
         }
       }
+      if (!showMnemonics && !is("ide.recent.files.tool.window.sort.by.automatic.mnemonics")) return;
       int i = 0;
       for (SwitcherToolWindow window : otherTW) {
         if (addSmartShortcut(window, keymap)) {

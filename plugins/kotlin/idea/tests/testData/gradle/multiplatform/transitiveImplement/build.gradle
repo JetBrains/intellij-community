@@ -45,9 +45,8 @@ project('project3') {
     }
 
     dependencies {
-        compile project(':project2')
-        customCompile project(':project2')
-        testCompile(project(':project2').sourceSets.test.output)
+        implementation project(':project2')
+        customImplementation project(':project2')
+        testImplementation(project(':project2').sourceSets.test.output)
     }
 }
-        

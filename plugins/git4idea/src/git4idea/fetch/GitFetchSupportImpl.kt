@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.fetch
 
 import com.intellij.dvcs.MultiMessage
@@ -296,7 +296,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
     private fun doShowNotification(failureTitle: @Nls String? = null) {
       val type = if (!isFailed) NotificationType.INFORMATION else NotificationType.ERROR
       val message = buildMessage(failureTitle)
-      val notification = STANDARD_NOTIFICATION.createNotification("", message, type, null)
+      val notification = STANDARD_NOTIFICATION.createNotification(message, type)
       vcsNotifier.notify(notification)
     }
 

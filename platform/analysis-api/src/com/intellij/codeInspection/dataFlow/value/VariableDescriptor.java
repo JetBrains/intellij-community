@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.value;
 
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
@@ -44,18 +45,6 @@ public interface VariableDescriptor {
    */
   @NotNull
   default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
-    return createValue(factory, qualifier, false);
-  }
-
-  /**
-   * Returns a value which describes the field qualified by given qualifier and described by this descriptor
-   * @param factory factory to use
-   * @param qualifier qualifier to use
-   * @param forAccessor whether the value is created for accessor result
-   * @return a field value
-   */
-  @NotNull
-  default DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
     if (qualifier instanceof DfaVariableValue) {
       return factory.getVarFactory().createVariableValue(this, (DfaVariableValue)qualifier);
     }
@@ -91,5 +80,23 @@ public interface VariableDescriptor {
   default DfType getInitialDfType(@NotNull DfaVariableValue thisValue,
                                   @Nullable PsiElement context) {
     return getDfType(thisValue.getQualifier());
+  }
+
+  /**
+   * @return false if variable described by this descriptor may be not equal to itself when applying the {@link RelationType#EQ}.
+   * This could be possible if variable is backed by a pure method that always returns a new object. 
+   * @param type variable type
+   */
+  default boolean alwaysEqualsToItself(@NotNull DfType type) {
+    return true;
+  }
+
+  /**
+   * @param state memory state (must not be modified)
+   * @param value value of the variable described by this descriptor
+   * @return a constraint on the qualified implied by a given value 
+   */
+  default @NotNull DfType getQualifierConstraintFromValue(@NotNull DfaMemoryState state, @NotNull DfaValue value) {
+    return DfType.TOP;
   }
 }

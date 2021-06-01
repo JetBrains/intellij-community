@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection;
 
 import com.intellij.internal.statistic.config.EventLogConfigParserException;
@@ -16,6 +16,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Supplier;
 
 public abstract class SettingsConnectionService {
@@ -49,10 +51,10 @@ public abstract class SettingsConnectionService {
     return settings != null ? settings.getEndpoint(attribute) : null;
   }
 
-  @Nullable
-  public String getOptionValue(@NotNull String attribute) {
+  @NotNull
+  public Map<String, String> getOptions() {
     EventLogExternalSendSettings settings = getExternalSettings();
-    return settings != null ? settings.getOption(attribute) : null;
+    return settings != null ? settings.getOptions() : Collections.emptyMap();
   }
 
   @Nullable

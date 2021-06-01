@@ -25,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.testing.VFSTestFrameworkListener;
 import org.jetbrains.annotations.NotNull;
 
 public class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurable {
@@ -50,14 +49,5 @@ public class PyActiveSdkModuleConfigurable extends ModuleAwareProjectConfigurabl
   @Override
   public void apply() throws ConfigurationException {
     super.apply();
-
-    // TODO[catherine] proper per-module caching of framework installed state
-    for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-      final Sdk sdk = ModuleRootManager.getInstance(module).getSdk();
-      if (sdk != null) {
-        ApplicationManager.getApplication().executeOnPooledThread(() -> VFSTestFrameworkListener.getInstance().updateAllTestFrameworks(sdk));
-        break;
-      }
-    }
   }
 }

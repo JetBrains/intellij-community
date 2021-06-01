@@ -40,9 +40,10 @@ Supports Maven and Gradle projects.
 
     <extensions defaultExtensionNs="com.intellij">
         <codeInsight.unresolvedReferenceQuickFixProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.JavaPackageSearchQuickFixProvider"/>
+                implementation="com.jetbrains.packagesearch.intellij.plugin.intentions.JavaPackageSearchUnresolvedReferenceQuickFixProvider"/>
 
-        <httpRequestHandler implementation="com.jetbrains.packagesearch.intellij.plugin.rest.PackageSearchRestService"/>
+        <!-- TODO Re-enable when working on IDEA-267638 -->
+        <!--<httpRequestHandler implementation="com.jetbrains.packagesearch.intellij.plugin.rest.PackageSearchRestService"/>-->
 
         <search.optionContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchSearchableOptionContributor"/>

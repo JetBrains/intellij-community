@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions.smartEnter;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventId1;
+import com.intellij.internal.statistic.eventLog.events.StringEventField;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,6 +27,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +43,37 @@ import static com.intellij.patterns.PsiJavaPatterns.psiElement;
 public class JavaSmartEnterProcessor extends SmartEnterProcessor {
   private static final Logger LOG = Logger.getInstance(JavaSmartEnterProcessor.class);
 
-  private static final Fixer[] ourFixers;
+  private static final List<Fixer> ourFixers =
+    List.of(new LiteralFixer(),
+            new MethodCallFixer(),
+            new IfConditionFixer(),
+            new ForStatementFixer(),
+            new TernaryColonFixer(),
+            new WhileConditionFixer(),
+            new CatchDeclarationFixer(),
+            new SwitchExpressionFixer(),
+            new SwitchLabelColonFixer(),
+            new DoWhileConditionFixer(),
+            new BlockBraceFixer(),
+            new MissingIfBranchesFixer(),
+            new MissingWhileBodyFixer(),
+            new MissingTryBodyFixer(),
+            new MissingSwitchBodyFixer(),
+            new MissingCatchBodyFixer(),
+            new MissingSynchronizedBodyFixer(),
+            new MissingForBodyFixer(),
+            new MissingForeachBodyFixer(),
+            new ParameterListFixer(),
+            new MissingCommaFixer(),
+            new MissingMethodBodyFixer(),
+            new MissingClassBodyFixer(),
+            new MissingReturnExpressionFixer(),
+            new MissingThrowExpressionFixer(),
+            new ParenthesizedFixer(),
+            new SemicolonFixer(),
+            new MissingArrayInitializerBraceFixer(),
+            new MissingArrayConstructorBracketFixer(),
+            new EnumFieldFixer());
   private static final EnterProcessor[] ourEnterProcessors = {
     new CommentBreakerEnterProcessor(),
     new AfterSemicolonEnterProcessor(),
@@ -68,40 +89,6 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
       }
     }
   };
-
-  static {
-    final List<Fixer> fixers = new ArrayList<>();
-    fixers.add(new LiteralFixer());
-    fixers.add(new MethodCallFixer());
-    fixers.add(new IfConditionFixer());
-    fixers.add(new ForStatementFixer());
-    fixers.add(new TernaryColonFixer());
-    fixers.add(new WhileConditionFixer());
-    fixers.add(new CatchDeclarationFixer());
-    fixers.add(new SwitchExpressionFixer());
-    fixers.add(new SwitchLabelColonFixer());
-    fixers.add(new DoWhileConditionFixer());
-    fixers.add(new BlockBraceFixer());
-    fixers.add(new MissingIfBranchesFixer());
-    fixers.add(new MissingWhileBodyFixer());
-    fixers.add(new MissingTryBodyFixer());
-    fixers.add(new MissingSwitchBodyFixer());
-    fixers.add(new MissingCatchBodyFixer());
-    fixers.add(new MissingSynchronizedBodyFixer());
-    fixers.add(new MissingForBodyFixer());
-    fixers.add(new MissingForeachBodyFixer());
-    fixers.add(new ParameterListFixer());
-    fixers.add(new MissingMethodBodyFixer());
-    fixers.add(new MissingClassBodyFixer());
-    fixers.add(new MissingReturnExpressionFixer());
-    fixers.add(new MissingThrowExpressionFixer());
-    fixers.add(new ParenthesizedFixer());
-    fixers.add(new SemicolonFixer());
-    fixers.add(new MissingArrayInitializerBraceFixer());
-    fixers.add(new MissingArrayConstructorBracketFixer());
-    fixers.add(new EnumFieldFixer());
-    ourFixers = fixers.toArray(new Fixer[0]);
-  }
 
   private int myFirstErrorOffset = Integer.MAX_VALUE;
   private boolean mySkipEnter;
@@ -169,11 +156,18 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
 
       for (PsiElement psiElement : queue) {
         for (Fixer fixer : ourFixers) {
+          Document document = editor.getDocument();
+          int offset = myFirstErrorOffset;
+          long stamp = document.getModificationStamp();
           fixer.apply(editor, this, psiElement);
-          if (LookupManager.getInstance(file.getProject()).getActiveLookup() != null) {
+          Project project = file.getProject();
+          if (document.getModificationStamp() != stamp || offset != myFirstErrorOffset) {
+            FixerUsageCollector.log(project, fixer);
+          }
+          if (LookupManager.getInstance(project).getActiveLookup() != null) {
             return;
           }
-          if (isUncommited(file.getProject()) || !psiElement.isValid()) {
+          if (isUncommited(project) || !psiElement.isValid()) {
             moveCaretInsideBracesIfAny(editor, file);
             process(editor, file, attempt + 1, afterCompletion);
             return;
@@ -374,4 +368,19 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     return editor.getDocument().getModificationStamp() != timestamp.longValue();
   }
 
+  private static final class FixerUsageCollector extends CounterUsagesCollector {
+    private static final EventLogGroup GROUP = new EventLogGroup("java.smart.enter.fixer", 1);
+    private static final EventId1<String> USED = GROUP.registerEvent("fixer_used", new StringEventField.ValidatedByAllowedValues(
+      "fixer_used",
+      ContainerUtil.map(ourFixers, f -> f.getClass().getSimpleName())));
+
+    @Override
+    public EventLogGroup getGroup() {
+      return GROUP;
+    }
+    
+    static void log(Project project, Fixer fixer) {
+      USED.log(project, fixer.getClass().getSimpleName());
+    }
+  }
 }

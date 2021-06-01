@@ -52,7 +52,7 @@ public final class Main {
   private static final String PLATFORM_PREFIX_PROPERTY = "idea.platform.prefix";
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
-    "rdserver-headless", "thinClient-headless", "installPlugins");
+    "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions");
   private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
@@ -78,10 +78,6 @@ public final class Main {
     }
 
     setFlags(args);
-
-    if (!isHeadless() && !checkGraphics()) {
-      System.exit(NO_GRAPHICS);
-    }
 
     try {
       bootstrap(args, startupTimings);
@@ -193,16 +189,6 @@ public final class Main {
 
     String firstArg = args[0];
     return HEADLESS_COMMANDS.contains(firstArg) || firstArg.length() < 20 && firstArg.endsWith("inspect"); //NON-NLS
-  }
-
-  private static boolean checkGraphics() {
-    if (GraphicsEnvironment.isHeadless()) {
-      showMessage(BootstrapBundle.message("bootstrap.error.title.startup.error"),
-                  BootstrapBundle.message("bootstrap.error.message.no.graphics.environment"),
-                  true);
-      return false;
-    }
-    return true;
   }
 
   public static void showMessage(@Nls(capitalization = Nls.Capitalization.Title) String title, Throwable t) {

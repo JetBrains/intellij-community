@@ -7,9 +7,7 @@ import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyTryExceptStatementImpl extends PyPartitionedElementImpl implements PyTryExceptStatement {
   private static final TokenSet EXCEPT_BLOCKS = TokenSet.create(PyElementTypes.EXCEPT_PART);
 

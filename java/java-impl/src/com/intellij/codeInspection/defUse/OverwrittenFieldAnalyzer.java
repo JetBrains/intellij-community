@@ -1,9 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.defUse;
 
-import com.intellij.codeInspection.dataFlow.lang.ir.BaseVariableAnalyzer;
-import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow;
-import com.intellij.codeInspection.dataFlow.lang.ir.inst.*;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaEndOfInstanceInitializerAnchor;
+import com.intellij.codeInspection.dataFlow.java.anchor.JavaExpressionAnchor;
+import com.intellij.codeInspection.dataFlow.java.inst.AssignInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.JvmPushInstruction;
+import com.intellij.codeInspection.dataFlow.java.inst.MethodCallInstruction;
+import com.intellij.codeInspection.dataFlow.lang.DfaAnchor;
+import com.intellij.codeInspection.dataFlow.lang.ir.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
@@ -27,13 +31,14 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
 
   @NotNull
   private StreamEx<DfaVariableValue> getReadVariables(Instruction instruction) {
-    if (instruction instanceof PushInstruction && !((PushInstruction)instruction).isReferenceWrite()) {
+    if (instruction instanceof JvmPushInstruction && !((JvmPushInstruction)instruction).isReferenceWrite()) {
       DfaValue value = ((PushInstruction)instruction).getValue();
       if (value instanceof DfaVariableValue) {
         return StreamEx.of((DfaVariableValue)value);
       }
     }
-    else if (instruction instanceof EndOfInitializerInstruction) {
+    else if (instruction instanceof PushValueInstruction &&
+             ((PushValueInstruction)instruction).getDfaAnchor() instanceof JavaEndOfInstanceInitializerAnchor) {
       return StreamEx.of(myFactory.getValues()).select(DfaVariableValue.class)
         .filter(var -> var.getPsiVariable() instanceof PsiMember);
     }
@@ -43,13 +48,11 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
   @Override
   protected boolean isInterestingInstruction(Instruction instruction) {
     if (instruction == myInstructions[0]) return true;
+    if (!instruction.isLinear()) return true;
 
     if (instruction instanceof AssignInstruction && ((AssignInstruction)instruction).getAssignedValue() instanceof DfaVariableValue ||
         instruction instanceof MethodCallInstruction ||
         instruction instanceof FinishElementInstruction ||
-        instruction instanceof GotoInstruction ||
-        instruction instanceof ConditionalGotoInstruction ||
-        instruction instanceof ControlTransferInstruction ||
         instruction instanceof FlushFieldsInstruction) {
       return true;
     }
@@ -105,7 +108,8 @@ final class OverwrittenFieldAnalyzer extends BaseVariableAnalyzer {
       boolean qualifierPush = false;
       if (instruction instanceof PushInstruction) {
         // Avoid forgetting about qualifier.field on qualifier.field = x;
-        PsiExpression expression = ((PushInstruction)instruction).getExpression();
+        DfaAnchor anchor = ((PushInstruction)instruction).getDfaAnchor();
+        PsiExpression expression = anchor instanceof JavaExpressionAnchor ? ((JavaExpressionAnchor)anchor).getExpression() : null;
         if (expression != null && PsiUtil.skipParenthesizedExprUp(expression).getParent() instanceof PsiReferenceExpression
             && ExpressionUtils.getCallForQualifier(expression) == null) {
           qualifierPush = true;

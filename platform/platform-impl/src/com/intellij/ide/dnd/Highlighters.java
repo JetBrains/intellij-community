@@ -186,12 +186,14 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     }
   }
 
+  private static final JBColor HIGHLIGHTER_COLOR = JBColor.namedColor("DragAndDrop.borderColor", JBColor.RED);
+
   private static class FilledRectangleHighlighter extends AbstractComponentHighlighter {
     FilledRectangleHighlighter() {
       super();
       setOpaque(true);
-      setBorder(BorderFactory.createLineBorder(JBColor.RED));
-      setBackground(JBColor.RED);
+      setBorder(BorderFactory.createLineBorder(HIGHLIGHTER_COLOR));
+      setBackground(HIGHLIGHTER_COLOR);
     }
 
     @Override
@@ -209,7 +211,7 @@ public class Highlighters implements DnDEvent.DropTargetHighlightingType {
     RectangleHighlighter() {
       super();
       setOpaque(false);
-      setBorder(BorderFactory.createLineBorder(JBColor.RED));
+      setBorder(BorderFactory.createLineBorder(HIGHLIGHTER_COLOR));
     }
 
     @Override

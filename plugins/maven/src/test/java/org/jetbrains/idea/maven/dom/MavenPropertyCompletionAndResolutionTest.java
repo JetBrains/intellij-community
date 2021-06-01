@@ -19,6 +19,7 @@ import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.utils.Path;
 import org.jetbrains.idea.maven.vfs.MavenPropertiesVirtualFileSystem;
+import org.junit.Test;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -34,6 +35,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
                   "<version>1</version>");
   }
 
+  @Test
   public void testResolutionToProject() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -44,6 +46,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  @Test 
   public void testResolutionToProjectAt() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -54,6 +57,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  @Test 
   public void testCorrectlyCalculatingTextRangeWithLeadingWhitespaces() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -64,6 +68,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  @Test 
   public void testBuiltInBasedirProperty() throws Exception {
     createProjectPom("<groupId>test</groupId" +
                      "<artifactId>project</artifactId>" +
@@ -91,6 +96,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, baseDir);
   }
 
+  @Test 
   public void testResolutionWithSeveralProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -109,6 +115,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  @Test 
   public void testResolvingFromPropertiesSection() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -121,6 +128,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  @Test 
   public void testResolvingFromPropertiesSectionAt() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -133,6 +141,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  @Test 
   public void testResolutionToUnknownProjectProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -143,6 +152,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertUnresolved(myProjectPom);
   }
 
+  @Test 
   public void testResolutionToAbsentProjectProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -153,6 +163,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.name"));
   }
 
+  @Test 
   public void testResolutionToAbsentPomProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -163,6 +174,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.name"));
   }
 
+  @Test 
   public void testResolutionToAbsentUnclassifiedProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -173,6 +185,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.name"));
   }
 
+  @Test 
   public void testResolutionToPomProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -183,6 +196,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  @Test 
   public void testResolutionToUnclassifiedProperty() throws Exception {
     createProjectPom("<groupId>test</groupId" +
                      "<artifactId>project</artifactId>" +
@@ -193,6 +207,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.version"));
   }
 
+  @Test 
   public void testResolutionToDerivedCoordinatesFromProjectParent() throws Exception {
     createProjectPom("<artifactId>project</artifactId>" +
 
@@ -207,6 +222,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.parent.version"));
   }
 
+  @Test 
   public void testResolutionToProjectParent() throws Exception {
     createProjectPom("<groupId>test</groupId" +
                      "<artifactId>project</artifactId>" +
@@ -223,6 +239,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag("project.parent.version"));
   }
 
+  @Test 
   public void testResolutionToInheritedModelPropertiesForManagedParent() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
@@ -263,6 +280,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(child, findTag(myProjectPom, "project.build.directory"));
   }
 
+  @Test 
   public void testResolutionToInheritedModelPropertiesForRelativeParent() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -289,6 +307,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(parent, "project.build.directory"));
   }
 
+  @Test 
   public void testResolutionToInheritedPropertiesForNonManagedParent() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -315,6 +334,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(parent, "project.properties.foo"));
   }
 
+  @Test 
   public void testResolutionToInheritedSuperPomProjectProperty() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -327,6 +347,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(effectiveSuperPom, "project.build.finalName"));
   }
 
+  @Test 
   public void testHandleResolutionRecursion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -356,6 +377,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.name"));
   }
 
+  @Test 
   public void testResolutionFromProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -370,6 +392,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.properties.foo"));
   }
 
+  @Test 
   public void testResolutionWithProfiles() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -397,6 +420,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
   }
 
+  @Test 
   public void testResolutionToPropertyDefinedWithinProfiles() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -428,6 +452,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
   }
 
+  @Test 
   public void testResolutionToPropertyDefinedOutsideProfiles() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -450,6 +475,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.properties.foo"));
   }
 
+  @Test 
   public void testResolutionWithDefaultProfiles() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -480,6 +506,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
   }
 
+  @Test 
   public void testResolutionWithTriggeredProfiles() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -510,6 +537,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[1].properties.foo"));
   }
 
+  @Test 
   public void testResolvingToProfilesBeforeModelsProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -535,6 +563,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.profiles[0].properties.foo"));
   }
 
+  @Test 
   public void testResolvingPropertiesInSettingsXml() throws Exception {
     VirtualFile profiles = updateSettingsXml("<profiles>" +
                                              "  <profile>" +
@@ -562,6 +591,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(profiles, "settings.profiles[1].properties.foo", MavenDomSettingsModel.class));
   }
 
+  @Test 
   public void testResolvingSettingsModelProperties() throws Exception {
     VirtualFile profiles = updateSettingsXml("<localRepository>" + getRepositoryPath() + "</localRepository>");
 
@@ -574,6 +604,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(profiles, "settings.localRepository", MavenDomSettingsModel.class));
   }
 
+  @Test 
   public void testCompletionPropertyInsideSettingsXml() throws Exception {
     VirtualFile profiles = updateSettingsXml("<profiles>" +
                                                  "  <profile>" +
@@ -595,6 +626,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assert !strings.contains("xxx");
   }
 
+  @Test 
   public void testResolvePropertyInsideSettingsXml() throws Exception {
     VirtualFile profiles = updateSettingsXml("<profiles>" +
                                                  "  <profile>" +
@@ -612,6 +644,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertEquals("foo", ((XmlTag)elementAtCaret).getName());
   }
 
+  @Test 
   public void testResolvingAbsentSettingsModelProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -622,6 +655,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(myProjectPom, "project.name"));
   }
 
+  @Test 
   public void testResolvingUnknownSettingsModelProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -632,6 +666,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertUnresolved(myProjectPom);
   }
 
+  @Test 
   public void testResolvingPropertiesInProfilesXml() throws Exception {
     VirtualFile profiles = createProfilesXml("<profile>" +
                                              "  <id>one</id>" +
@@ -657,6 +692,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(profiles, "profilesXml.profiles[1].properties.foo", MavenDomProfilesModel.class));
   }
 
+  @Test 
   public void testResolvingPropertiesInOldStyleProfilesXml() throws Exception {
     VirtualFile profiles = createProfilesXmlOldStyle("<profile>" +
                                                      "  <id>one</id>" +
@@ -682,6 +718,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, findTag(profiles, "profiles[1].properties.foo", MavenDomProfiles.class));
   }
 
+  @Test 
   public void testResolvingInheritedProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -709,6 +746,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
   }
 
 
+  @Test 
   public void testImportDependencyChainedProperty() throws IOException {
     MavenCustomRepositoryHelper helper = new MavenCustomRepositoryHelper(myDir, "local1");
     setRepositoryPath(helper.getTestDataPath("local1"));
@@ -755,6 +793,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertEquals("42", dependency.getVersion().getStringValue());
   }
 
+  @Test 
   public void testSystemProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -765,6 +804,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, MavenPropertiesVirtualFileSystem.getInstance().findSystemProperty(myProject, "user.home").getPsiElement());
   }
 
+  @Test 
   public void testEnvProperties() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -775,6 +815,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertResolved(myProjectPom, MavenPropertiesVirtualFileSystem.getInstance().findEnvProperty(myProject, getEnvVar()).getPsiElement());
   }
 
+  @Test 
   public void testUpperCaseEnvPropertiesOnWindows() {
     if (!SystemInfo.isWindows) return;
 
@@ -791,6 +832,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertEquals(System.getenv("Path").replaceAll("[^A-Za-z]", ""), ((IProperty)resolved).getValue().replaceAll("[^A-Za-z]", ""));
   }
 
+  @Test 
   public void testCaseInsencitiveOnWindows() throws Exception {
     if (!SystemInfo.isWindows) return;
 
@@ -803,6 +845,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertUnresolved(myProjectPom);
   }
 
+  @Test 
   public void testNotUpperCaseEnvPropertiesOnWindows() throws Exception {
     if (!SystemInfo.isWindows) return;
 
@@ -815,6 +858,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertUnresolved(myProjectPom);
   }
 
+  @Test 
   public void testHighlightUnresolvedProperties() {
     createProjectPom("<groupId>test</groupId>\n" +
                      "<artifactId>child</artifactId>\n" +
@@ -844,6 +888,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     checkHighlighting();
   }
 
+  @Test 
   public void testCompletion() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -937,6 +982,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertContain(variants, "user.home", "env." + getEnvVar());
   }
 
+  @Test 
   public void testDoNotIncludeCollectionPropertiesInCompletion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -945,6 +991,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsDoNotInclude(myProjectPom, "project.dependencies", "env.\\=C\\:", "idea.config.path");
   }
 
+  @Test 
   public void testCompletingAfterOpenBrace() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -954,6 +1001,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsInclude(myProjectPom, "project.groupId", "groupId");
   }
 
+  @Test 
   public void testCompletingAfterOpenBraceInOpenTag() {
     if (ignore()) return;
 
@@ -965,6 +1013,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertCompletionVariantsInclude(myProjectPom, "project.groupId", "groupId");
   }
 
+  @Test 
   public void testCompletingAfterOpenBraceAndSomeText() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -976,6 +1025,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertDoNotContain(variants, "groupId");
   }
 
+  @Test 
   public void testCompletingAfterOpenBraceAndSomeTextWithDot() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -987,6 +1037,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     assertDoNotContain(variants, "project.name");
   }
 
+  @Test 
   public void testDoNotCompleteAfterNonWordCharacter() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

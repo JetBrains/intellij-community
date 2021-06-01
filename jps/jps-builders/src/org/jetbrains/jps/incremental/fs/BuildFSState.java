@@ -1,13 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.incremental.fs;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.FastUtilHashingStrategies;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.IOUtil;
-import gnu.trove.TObjectLongHashMap;
+import it.unimi.dsi.fastutil.objects.Object2LongOpenCustomHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.ModuleChunk;
@@ -37,7 +37,8 @@ public final class BuildFSState {
   // alternatively, when false, after first scan will rely on external notifications about changes
   private final boolean myAlwaysScanFS;
   private final Set<BuildTarget<?>> myInitialScanPerformed = Collections.synchronizedSet(new HashSet<>());
-  private final TObjectLongHashMap<File> myRegistrationStamps = new TObjectLongHashMap<>(FileUtil.FILE_HASHING_STRATEGY);
+  @SuppressWarnings("SSBasedInspection")
+  private final Object2LongOpenCustomHashMap<File> myRegistrationStamps = new Object2LongOpenCustomHashMap<>(FastUtilHashingStrategies.FILE_HASH_STRATEGY);
   private final Map<BuildTarget<?>, FilesDelta> myDeltas = Collections.synchronizedMap(new HashMap<>());
 
   public BuildFSState(boolean alwaysScanFS) {
@@ -94,7 +95,7 @@ public final class BuildFSState {
 
   public long getEventRegistrationStamp(File file) {
     synchronized (myRegistrationStamps) {
-      return myRegistrationStamps.get(file);
+      return myRegistrationStamps.getLong(file);
     }
   }
 

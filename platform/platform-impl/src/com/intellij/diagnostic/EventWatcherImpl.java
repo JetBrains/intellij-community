@@ -55,7 +55,6 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
   private final ConcurrentMap<Class<? extends AWTEvent>, ConcurrentLinkedQueue<InvocationDescription>> myEventsByClass =
     new ConcurrentHashMap<>();
   private final @NotNull ConcurrentMap<Long, Class<?>> myRunnablesOrCallablesInProgress = new ConcurrentHashMap<>();
-  private final @NotNull ConcurrentMap<String, LockAcquirementDescription> myAcquirements = new ConcurrentHashMap<>();
 
   @NotNull
   private final ScheduledExecutorService myExecutor = AppExecutorUtil.createBoundedScheduledExecutorService(
@@ -151,14 +150,6 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
   }
 
   @Override
-  public void lockAcquired(@NotNull String invokedClassFqn, @NotNull LockKind lockKind) {
-    myAcquirements.compute(
-      invokedClassFqn,
-      (fqn, description) -> LockAcquirementDescription.computeNext(fqn, description, lockKind)
-    );
-  }
-
-  @Override
   public void dispose() {
     Disposer.dispose(myWriter);
 
@@ -177,7 +168,6 @@ public final class EventWatcherImpl implements EventWatcher, Disposable {
       myDurationsByFqn.values(),
       myWrappers.values()
     );
-    publisher.locksAcquired(myAcquirements.values());
   }
 
   private static @Nullable Field findCallableOrRunnableField(@NotNull Class<?> rootClass) {

@@ -1,19 +1,4 @@
-/*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.highlighter.markers
 
 import com.intellij.codeInsight.daemon.DaemonBundle
@@ -32,7 +17,6 @@ import com.intellij.psi.search.PsiElementProcessorAdapter
 import com.intellij.psi.search.searches.ClassInheritorsSearch
 import com.intellij.psi.search.searches.FunctionalExpressionSearch
 import com.intellij.util.CommonProcessors
-import gnu.trove.THashSet
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isTraitFakeOverride
@@ -74,7 +58,7 @@ internal fun <T> getOverriddenDeclarations(mappingToJava: MutableMap<PsiElement,
 
 // Module-specific version of MarkerType.getSubclassedClassTooltip
 fun getSubclassedClassTooltip(klass: PsiClass): String? {
-    val processor = PsiElementProcessor.CollectElementsWithLimit(5, THashSet<PsiClass>())
+    val processor = PsiElementProcessor.CollectElementsWithLimit(5, HashSet<PsiClass>())
     ClassInheritorsSearch.search(klass).forEach(PsiElementProcessorAdapter(processor))
 
     if (processor.isOverflow) {
@@ -83,7 +67,7 @@ fun getSubclassedClassTooltip(klass: PsiClass): String? {
 
     val subclasses = processor.toArray(PsiClass.EMPTY_ARRAY)
     if (subclasses.isEmpty()) {
-        val functionalImplementations = PsiElementProcessor.CollectElementsWithLimit(2, THashSet<PsiFunctionalExpression>())
+        val functionalImplementations = PsiElementProcessor.CollectElementsWithLimit(2, HashSet<PsiFunctionalExpression>())
         FunctionalExpressionSearch.search(klass).forEach(PsiElementProcessorAdapter(functionalImplementations))
         return if (functionalImplementations.collection.isNotEmpty())
             KotlinBundle.message("highlighter.text.has.functional.implementations")
@@ -153,7 +137,7 @@ fun buildNavigateToOverriddenMethodPopup(e: MouseEvent?, element: PsiElement?): 
         return null
     }
 
-    val processor = PsiElementProcessor.CollectElementsWithLimit(2, THashSet<PsiMethod>())
+    val processor = PsiElementProcessor.CollectElementsWithLimit(2, HashSet<PsiMethod>())
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(
             {
                 method.forEachOverridingMethod {

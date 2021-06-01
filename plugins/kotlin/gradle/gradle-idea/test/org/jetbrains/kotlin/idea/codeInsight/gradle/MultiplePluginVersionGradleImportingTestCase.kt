@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /**
  * This TestCase implements possibility to test import with different versions of gradle and different
@@ -91,12 +88,13 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         fun data(): Collection<Array<Any>> {
             return listOf(
                 arrayOf("4.9", "1.3.30"),
-                arrayOf("4.9", "1.3.72"),
                 arrayOf("5.6.4", "1.3.72"),
                 arrayOf("6.7.1", "1.4.0"),
-                arrayOf("6.8.2", "1.4.31"),
-                arrayOf("6.8.2", "1.5.0-RC"),
-                arrayOf("6.8.2", "master")
+                arrayOf("6.8.2", "1.4.32"),
+                arrayOf("6.8.2", "1.5.0"),
+                arrayOf("7.0", "1.5.0"),
+                arrayOf("6.8.2", "master"),
+                arrayOf("7.0", "master")
             )
         }
     }
@@ -106,9 +104,12 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             "mavenCentral()",
             "mavenLocal()",
             "google()",
-            "jcenter()",
             "gradlePluginPortal()"
         )
+
+        if (!gradleVersionMatches("7.0+")) {
+            repositories.add("jcenter()")
+        }
 
         fun addCustomRepository(url: String) {
             repositories += if (useKts) "maven(\"$url\")" else "maven { url '$url' }"

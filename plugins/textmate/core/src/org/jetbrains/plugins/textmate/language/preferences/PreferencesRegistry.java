@@ -6,6 +6,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.Constants;
 import org.jetbrains.plugins.textmate.language.PreferencesReadUtil;
 import org.jetbrains.plugins.textmate.language.TextMateScopeComparator;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 import org.jetbrains.plugins.textmate.plist.Plist;
 
 import java.util.Collection;
@@ -61,11 +62,11 @@ public final class PreferencesRegistry {
   }
 
   public boolean isPossibleLeftHighlightingBrace(char c) {
-    return myLeftHighlightingBraces.contains(c) || myLeftSmartTypingBraces.contains(c);
+    return myLeftHighlightingBraces.contains(c) || (c != ' ' && myLeftSmartTypingBraces.contains(c));
   }
 
   public boolean isPossibleRightHighlightingBrace(char c) {
-    return myRightHighlightingBraces.contains(c) || myRightSmartTypingBraces.contains(c);
+    return myRightHighlightingBraces.contains(c) || (c != ' ' && myRightSmartTypingBraces.contains(c));
   }
 
   public boolean isPossibleLeftSmartTypingBrace(char c) {
@@ -79,13 +80,13 @@ public final class PreferencesRegistry {
   /**
    * Returns preferences by scope selector.
    *
-   * @param scopeSelector selector of current context.
+   * @param scope selector of current context.
    * @return preferences from table for given scope sorted by descending weigh
    * of rule selector relative to scope selector.
    */
   @NotNull
-  public List<Preferences> getPreferences(@NotNull CharSequence scopeSelector) {
-    return new TextMateScopeComparator<>(scopeSelector, Preferences::getScopeSelector).sortAndFilter(myPreferences);
+  public List<Preferences> getPreferences(@NotNull TextMateScope scope) {
+    return new TextMateScopeComparator<>(scope, Preferences::getScopeSelector).sortAndFilter(myPreferences);
   }
 
   public void clear() {

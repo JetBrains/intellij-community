@@ -237,7 +237,8 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     roots.add(myJdkHome);
     roots.addAll(collectRootsInside(myJdkHome));
     roots.add(PathManager.getConfigPath());
-
+    String gradleHomeEnv = System.getenv("GRADLE_USER_HOME");
+    if (gradleHomeEnv != null) roots.add(gradleHomeEnv);
     String javaHome = Environment.getVariable("JAVA_HOME");
     if (javaHome != null) roots.add(javaHome);
 

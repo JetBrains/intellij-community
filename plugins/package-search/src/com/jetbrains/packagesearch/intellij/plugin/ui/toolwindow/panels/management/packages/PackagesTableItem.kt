@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.ide.CopyPasteManager
+import com.intellij.pom.Navigatable
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
@@ -50,17 +51,17 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
             appendLine()
             append("  ")
             append(PackageSearchBundle.message("packagesearch.package.copyableInfo.githubStats"))
-            if (gitHub.stars != null) {
+            gitHub.stars?.let { ghStars ->
                 append(" ")
-                append(PackageSearchBundle.message("packagesearch.package.copyableInfo.githubStats.stars", gitHub.stars))
+                append(PackageSearchBundle.message("packagesearch.package.copyableInfo.githubStats.stars", ghStars))
             }
-            if (gitHub.forks != null) {
+            gitHub.forks?.let { ghForks ->
                 append(" ")
-                append(PackageSearchBundle.message("packagesearch.package.copyableInfo.githubStats.forks", gitHub.forks))
+                append(PackageSearchBundle.message("packagesearch.package.copyableInfo.githubStats.forks", ghForks))
             }
         }
 
-        packageModel.remoteInfo?.stackOverflowTags?.tags?.let { tags ->
+        packageModel.remoteInfo?.stackOverflow?.tags?.let { tags ->
             if (tags.any()) {
                 appendLine()
                 append("  ${PackageSearchBundle.message("packagesearch.package.copyableInfo.stackOverflowTags")} ")
@@ -95,7 +96,8 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
                     val usageInfo = packageModel.usageInfo.find { it.projectModule == projectModule }
                         ?: return null
 
-                    arrayOf(usageInfo.projectModule.getNavigatableDependency(packageModel.groupId, packageModel.artifactId, usageInfo.version))
+                    usageInfo.projectModule.getNavigatableDependency(packageModel.groupId, packageModel.artifactId, usageInfo.version)
+                        ?.let { arrayOf(it) } ?: emptyArray<Navigatable>()
                 }
                 else -> getData(dataId)
             }

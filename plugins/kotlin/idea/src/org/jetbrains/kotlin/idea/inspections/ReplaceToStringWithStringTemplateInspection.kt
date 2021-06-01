@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -29,9 +26,8 @@ class ReplaceToStringWithStringTemplateInspection : AbstractApplicabilityBasedIn
         if (blockStringTemplateEntry?.canDropBraces() == true) blockStringTemplateEntry.dropBraces()
     }
 
-    override fun inspectionText(element: KtDotQualifiedExpression) = KotlinBundle.message(
-        "call.of.tostring.could.be.replaced.with.string.template"
-    )
+    override fun inspectionText(element: KtDotQualifiedExpression) =
+        KotlinBundle.message("inspection.replace.to.string.with.string.template.display.name")
 
     override val defaultFixText get() = KotlinBundle.message("replace.tostring.with.string.template")
 }

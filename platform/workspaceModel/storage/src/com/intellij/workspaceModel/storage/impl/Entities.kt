@@ -3,10 +3,11 @@ package com.intellij.workspaceModel.storage.impl
 
 import com.intellij.util.ReflectionUtil
 import com.intellij.workspaceModel.storage.*
+import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableModuleEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleDependencyItem
 import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty
-import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
 
 
@@ -118,8 +119,10 @@ abstract class WorkspaceEntityBase : ReferableWorkspaceEntity, Any() {
       ConnectionId.ConnectionType.ONE_TO_MANY -> snapshot.extractOneToManyChildren(connectionId, id)
       ConnectionId.ConnectionType.ONE_TO_ONE -> snapshot.extractOneToOneChild<R>(connectionId, id)?.let { sequenceOf(it) }
                                                 ?: emptySequence()
-      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id)
-      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChildren(connectionId, id)
+      ConnectionId.ConnectionType.ONE_TO_ABSTRACT_MANY -> snapshot.extractOneToAbstractManyChildren(connectionId, id.asParent())
+      ConnectionId.ConnectionType.ABSTRACT_ONE_TO_ONE -> snapshot.extractAbstractOneToOneChild<R>(connectionId, id.asParent())?.let {
+        sequenceOf(it)
+      } ?: emptySequence()
     }
   }
 
@@ -190,6 +193,12 @@ abstract class WorkspaceEntityData<E : WorkspaceEntity> : Cloneable {
     (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
   }
 
+  fun addMetaData(res: E, snapshot: WorkspaceEntityStorage, classId: Int) {
+    (res as WorkspaceEntityBase).entitySource = entitySource
+    (res as WorkspaceEntityBase).id = EntityId(id, classId)
+    (res as WorkspaceEntityBase).snapshot = snapshot as AbstractEntityStorage
+  }
+
   internal fun wrapAsModifiable(diff: WorkspaceEntityStorageBuilderImpl): ModifiableWorkspaceEntity<E> {
     val returnClass = ClassConversion.entityDataToModifiableEntity(this::class)
     val res = returnClass.java.newInstance()
@@ -256,7 +265,9 @@ fun WorkspaceEntityData<*>.persistentId(snapshot: WorkspaceEntityStorage): Persi
 
 class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteProperty<A, B> {
   override fun getValue(thisRef: A, property: KProperty<*>): B {
-    return ((thisRef.original::class.memberProperties.first { it.name == property.name }) as KProperty1<Any, *>).get(thisRef.original) as B
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    return field.get(thisRef.original) as B
   }
 
   override fun setValue(thisRef: A, property: KProperty<*>, value: B) {
@@ -264,6 +275,24 @@ class EntityDataDelegation<A : ModifiableWorkspaceEntityBase<*>, B> : ReadWriteP
       throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
     }
     val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    field.set(thisRef.original, value)
+  }
+}
+
+class ModuleDependencyEntityDataDelegation : ReadWriteProperty<ModifiableModuleEntity, List<ModuleDependencyItem>> {
+  override fun getValue(thisRef: ModifiableModuleEntity, property: KProperty<*>): List<ModuleDependencyItem> {
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    field.isAccessible = true
+    return field.get(thisRef.original) as List<ModuleDependencyItem>
+  }
+
+  override fun setValue(thisRef: ModifiableModuleEntity, property: KProperty<*>, value: List<ModuleDependencyItem>) {
+    if (!thisRef.modifiable.get()) {
+      throw IllegalStateException("Modifications are allowed inside 'addEntity' and 'modifyEntity' methods only!")
+    }
+    val field = thisRef.original.javaClass.getDeclaredField(property.name)
+    thisRef.dependencyChanged = true
     field.isAccessible = true
     field.set(thisRef.original, value)
   }

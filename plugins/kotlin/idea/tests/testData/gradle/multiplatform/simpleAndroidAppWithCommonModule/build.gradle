@@ -42,7 +42,6 @@ project('app') {
     }
 
     dependencies {
-        compile project(":jvm")
+        implementation project(":jvm")
     }
 }
-        

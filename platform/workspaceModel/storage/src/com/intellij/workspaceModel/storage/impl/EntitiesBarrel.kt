@@ -9,6 +9,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityWithPersistentId
 internal open class ImmutableEntitiesBarrel internal constructor(
   override val entityFamilies: List<ImmutableEntityFamily<out WorkspaceEntity>?>
 ) : EntitiesBarrel() {
+  constructor(): this(emptyList())
   companion object {
     val EMPTY = ImmutableEntitiesBarrel(emptyList())
   }

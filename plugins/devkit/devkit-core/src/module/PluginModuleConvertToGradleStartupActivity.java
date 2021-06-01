@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.module;
 
 import com.intellij.icons.AllIcons;
@@ -65,17 +65,14 @@ final class PluginModuleConvertToGradleStartupActivity implements StartupActivit
     }
     if (!isSimpleSingleModulePlugin(project, devkitModules)) return;
 
-    UIUtil.invokeLaterIfNeeded(() -> NOTIFICATION_GROUP.createNotification(DevKitBundle.message("convert.devkit.to.gradle.notification"),
-                                                                           null,
-                                                                           DevKitBundle
-                                                                             .message("convert.devkit.to.gradle.notification.content"),
-                                                                           NotificationType.INFORMATION)
-      .addAction(NotificationAction.createSimpleExpiring(DevKitBundle.message("convert.devkit.to.gradle.notification.link.title"), () ->
-        BrowserUtil.browse("https://plugins.jetbrains.com/docs/intellij/gradle-prerequisites.html?from=DevkitConvertToGradleNotification" +
-                           "#adding-gradle-support-to-an-existing-devkit-based-intellij-platform-plugin")))
-      .addAction(
-        NotificationAction.createSimpleExpiring(DevKitBundle.message("convert.devkit.to.gradle.notification.do.not.show.again"), () ->
-          propertiesComponent.setValue(DO_NOT_SHOW_AGAIN_SETTING, true)))
+    UIUtil.invokeLaterIfNeeded(() -> NOTIFICATION_GROUP
+      .createNotification(DevKitBundle.message("convert.devkit.to.gradle.notification"), DevKitBundle
+                                                                             .message("convert.devkit.to.gradle.notification.content"), NotificationType.INFORMATION)
+      .addAction(NotificationAction.createSimpleExpiring(
+        DevKitBundle.message("convert.devkit.to.gradle.notification.link.title"),
+        () -> BrowserUtil.browse("https://plugins.jetbrains.com/docs/intellij/gradle-prerequisites.html?from=DevkitConvertToGradleNotification" +
+                                 "#adding-gradle-support-to-an-existing-devkit-based-intellij-platform-plugin")))
+      .addAction(NotificationAction.createSimpleExpiring(DevKitBundle.message("convert.devkit.to.gradle.notification.do.not.show.again"), () -> propertiesComponent.setValue(DO_NOT_SHOW_AGAIN_SETTING, true)))
       .setIcon(AllIcons.Nodes.Plugin)
       .notify(project));
   }

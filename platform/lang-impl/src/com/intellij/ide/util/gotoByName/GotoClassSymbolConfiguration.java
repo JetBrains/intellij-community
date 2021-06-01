@@ -6,9 +6,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 
-/**
- * @author yole
- */
+
 @State(name = "GotoClassSymbolConfiguration", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class GotoClassSymbolConfiguration extends ChooseByNameFilterConfiguration<LanguageRef> {
   public static GotoClassSymbolConfiguration getInstance(Project project) {

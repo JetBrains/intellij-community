@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectLongHashMap;
+import org.jetbrains.jps.FreezeDetector;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetIndex;
 import org.jetbrains.jps.builders.BuildTargetType;
@@ -15,6 +16,7 @@ import org.jetbrains.jps.incremental.FSOperations;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.BuildDataManager;
 import org.jetbrains.jps.incremental.storage.BuildTargetsState;
+import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -48,7 +50,7 @@ public class BuildProgress {
   private final TObjectIntHashMap<BuildTargetType<?>> myTotalTargets = new TObjectIntHashMap<>();
   private final TObjectLongHashMap<BuildTargetType<?>> myTotalBuildTimeForFullyRebuiltTargets = new TObjectLongHashMap<>();
   private final TObjectIntHashMap<BuildTargetType<?>> myNumberOfFullyRebuiltTargets = new TObjectIntHashMap<>();
-
+  private final FreezeDetector myFreezeDetector;
 
   public BuildProgress(BuildDataManager dataManager, BuildTargetIndex targetIndex, List<BuildTargetChunk> allChunks, Predicate<? super BuildTargetChunk> isAffected) {
     myDataManager = dataManager;
@@ -81,6 +83,7 @@ public class BuildProgress {
       expectedTotalTime += myExpectedBuildTimeForTarget.get(targetType) * totalAffectedTargets.get(targetType);
     }
     myExpectedTotalTime = Math.max(expectedTotalTime, 1);
+    myFreezeDetector = new FreezeDetector(SharedThreadPool.getInstance());
     if (LOG.isDebugEnabled()) {
       LOG.debug("expected total time is " + myExpectedTotalTime);
       for (BuildTargetType<?> type : targetTypes) {
@@ -132,7 +135,7 @@ public class BuildProgress {
         increment(myNumberOfFinishedTargets, targetType);
         myExpectedTimeForFinishedTargets += myExpectedBuildTimeForTarget.get(targetType);
 
-        long elapsedTime = System.currentTimeMillis() - context.getCompilationStartStamp(target);
+        long elapsedTime = myFreezeDetector.getAdjustedDuration(context.getCompilationStartStamp(target), System.currentTimeMillis());
         myAbsoluteBuildTime += elapsedTime;
         
         if (successful && FSOperations.isMarkedDirty(context, target)) {
@@ -148,6 +151,7 @@ public class BuildProgress {
   }
 
   public void updateExpectedAverageTime() {
+    myFreezeDetector.stop();
     if (LOG.isDebugEnabled()) {
       LOG.debug("update expected build time for " + myTotalBuildTimeForFullyRebuiltTargets.size() + " target types");
     }

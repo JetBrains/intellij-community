@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.Pair
@@ -55,7 +55,11 @@ abstract class BuildContext implements CompilationContext {
 
   abstract void patchInspectScript(@NotNull Path path)
 
-  abstract String getAdditionalJvmArguments()
+  /**
+   * Unlike VM options produced by {@link org.jetbrains.intellij.build.impl.VmOptionsGenerator},
+   * these are hard-coded into launchers and aren't supposed to be changed by a user.
+   */
+  abstract @NotNull List<String> getAdditionalJvmArguments()
 
   abstract void notifyArtifactBuilt(String artifactPath)
 

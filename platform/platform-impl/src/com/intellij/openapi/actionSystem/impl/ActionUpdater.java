@@ -3,7 +3,6 @@ package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.injected.editor.EditorWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
@@ -22,7 +21,6 @@ import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
@@ -115,12 +113,10 @@ final class ActionUpdater {
       group -> callAction(group, Op.canBePerformed, () -> group.canBePerformed(myDataContext)));
     myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> group.getChildren(null), group -> true);
 
-    LOG.assertTrue(myEventTransform == null || ActionPlaces.KEYBOARD_SHORTCUT.equals(myPlace) ||
-                   ActionPlaces.MOUSE_SHORTCUT.equals(myPlace), "beforeActionPerformed requested in '" + myPlace + "'");
+    LOG.assertTrue(myEventTransform == null || ActionPlaces.isShortcutPlace(myPlace),
+                   "beforeActionPerformed requested in '" + myPlace + "'");
 
-    myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) ||
-                        ActionPlaces.KEYBOARD_SHORTCUT.equals(myPlace) ||
-                        ActionPlaces.MOUSE_SHORTCUT.equals(myPlace) ?
+    myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) || ActionPlaces.isShortcutPlace(myPlace) ?
                         0 : Registry.intValue("actionSystem.update.actions.async.test.delay", 0);
   }
 
@@ -164,29 +160,34 @@ final class ActionUpdater {
   }
 
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
-    Computable<T> adjustedCall = () -> {
+    // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
+    boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
+    boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
+    boolean isEDT = EDT.isCurrentThreadEdt();
+    if (isEDT && canAsync && shallAsync && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
+      LOG.error("Calling " + operation + " on EDT on `" + action.getClass().getName() + "` " +
+                (myForceAsync ? "(forceAsync=true)" : "(isUpdateInBackground=true)"));
+    }
+    if (isEDT || canAsync && shallAsync) {
       try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
         return call.get();
       }
-    };
-    // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
-    boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
-    if (canAsync && myForceAsync ||
-        EDT.isCurrentThreadEdt() ||
-        canAsync && action instanceof UpdateInBackground && ((UpdateInBackground)action).isUpdateInBackground()) {
-      return adjustedCall.get();
     }
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     return computeOnEdt(() -> {
-      long start = System.currentTimeMillis();
+      long start = System.nanoTime();
       try {
-        return ProgressManager.getInstance().runProcess(adjustedCall, ProgressWrapper.wrap(progress));
+        return ProgressManager.getInstance().runProcess(() -> {
+          try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
+            return call.get();
+          }
+        }, ProgressWrapper.wrap(progress));
       }
       finally {
-        long elapsed = System.currentTimeMillis() - start;
+        long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
-          LOG.warn("Slow (" + elapsed + "ms) '" + operation + "' on action " + action + " of " + action.getClass() +
+          LOG.warn("Slow (" + elapsed + " ms) '" + operation + "' on action " + action + " of " + action.getClass() +
                    ". Consider speeding it up and/or implementing UpdateInBackground.");
         }
       }
@@ -323,12 +324,6 @@ final class ActionUpdater {
     for (DataKey<?> key : DataKey.allKeys()) {
       myDataContext.getData(key);
     }
-    // pre-cache injected data only if an injected editor is present
-    if (myDataContext.getData(InjectedDataKeys.EDITOR.getName()) instanceof EditorWindow) {
-      for (DataKey<?> key : DataKey.allKeys()) {
-        myDataContext.getData(AnActionEvent.injectedId(key.getName()));
-      }
-    }
     myPreCacheSlowDataKeys = false;
     long time = System.currentTimeMillis() - start;
     if (time > 500) {
@@ -368,7 +363,7 @@ final class ActionUpdater {
       () -> expandGroupChild(child, hideDisabled, strategy),
       1000, ms -> LOG.warn(ms + " ms to expand group child " + ActionManager.getInstance().getId(child))));
     myForceAsync = prevForceAsync;
-    return group.afterExpandGroup(result, asUpdateSession(strategy));
+    return group.postProcessVisibleChildren(result, asUpdateSession(strategy));
   }
 
   private List<AnAction> getGroupChildren(ActionGroup group, UpdateStrategy strategy) {

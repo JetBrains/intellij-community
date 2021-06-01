@@ -2,11 +2,14 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.application.options.RegistryManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
+import org.cef.browser.CefBrowser;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -23,10 +26,11 @@ import java.awt.event.*;
 @SuppressWarnings("NotNullFieldNotInitialized")
 class JBCefOsrComponent extends JPanel {
   private volatile @NotNull JBCefOsrHandler myRenderHandler;
-  private volatile @NotNull JBCefBrowserBase myBrowser;
+  private volatile @NotNull CefBrowser myBrowser;
   private double myScale = 1.0;
 
-  private volatile @NotNull Alarm myAlarm;
+  private @NotNull Alarm myAlarm;
+  private @NotNull Disposable myDisposable;
 
   JBCefOsrComponent() {
     setPreferredSize(JBCefBrowser.DEF_PREF_SIZE);
@@ -45,18 +49,17 @@ class JBCefOsrComponent extends JPanel {
     addFocusListener(new FocusListener() {
       @Override
       public void focusGained(FocusEvent e) {
-        myBrowser.getCefBrowser().setFocus(true);
+        myBrowser.setFocus(true);
       }
       @Override
       public void focusLost(FocusEvent e) {
-        myBrowser.getCefBrowser().setFocus(false);
+        myBrowser.setFocus(false);
       }
     });
   }
 
-  public void setBrowser(@NotNull JBCefBrowserBase browser) {
+  public void setBrowser(@NotNull CefBrowser browser) {
     myBrowser = browser;
-    myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, browser);
   }
 
   public void setRenderHandler(@NotNull JBCefOsrHandler renderHandler) {
@@ -66,9 +69,17 @@ class JBCefOsrComponent extends JPanel {
   @Override
   public void addNotify() {
     super.addNotify();
-    if (!myBrowser.isCefBrowserCreated()) {
-      myBrowser.getCefBrowser().createImmediately();
+    myDisposable = Disposer.newDisposable();
+    myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, myDisposable);
+    if (!JBCefBrowserBase.isCefBrowserCreated(myBrowser)) {
+      myBrowser.createImmediately();
     }
+  }
+
+  @Override
+  public void removeNotify() {
+    super.removeNotify();
+    Disposer.dispose(myDisposable);
   }
 
   @Override
@@ -82,13 +93,13 @@ class JBCefOsrComponent extends JPanel {
   public void reshape(int x, int y, int w, int h) {
     super.reshape(x, y, w, h);
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(() -> myBrowser.getCefBrowser().wasResized((int)Math.ceil(w * myScale), (int)Math.ceil(h * myScale)), 100);
+    myAlarm.addRequest(() -> myBrowser.wasResized((int)Math.ceil(w * myScale), (int)Math.ceil(h * myScale)), 100);
   }
 
   @Override
   protected void processMouseEvent(MouseEvent e) {
     super.processMouseEvent(e);
-    myBrowser.getCefBrowser().sendMouseEvent(e);
+    myBrowser.sendMouseEvent(e);
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
       requestFocusInWindow();
     }
@@ -103,7 +114,7 @@ class JBCefOsrComponent extends JPanel {
     if (SystemInfoRt.isLinux || SystemInfoRt.isMac) {
       val *= -1;
     }
-    myBrowser.getCefBrowser().sendMouseWheelEvent(new MouseWheelEvent(
+    myBrowser.sendMouseWheelEvent(new MouseWheelEvent(
       e.getComponent(),
       e.getID(),
       e.getWhen(),
@@ -123,12 +134,12 @@ class JBCefOsrComponent extends JPanel {
   @Override
   protected void processMouseMotionEvent(MouseEvent e) {
     super.processMouseMotionEvent(e);
-    myBrowser.getCefBrowser().sendMouseEvent(e);
+    myBrowser.sendMouseEvent(e);
   }
 
   @Override
   protected void processKeyEvent(KeyEvent e) {
     super.processKeyEvent(e);
-    myBrowser.getCefBrowser().sendKeyEvent(e);
+    myBrowser.sendKeyEvent(e);
   }
 }

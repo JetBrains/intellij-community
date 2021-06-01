@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.pyqt;
 
 import com.intellij.lang.xml.XMLLanguage;
@@ -27,12 +27,10 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public abstract class QtFileType extends LanguageFileType implements INativeFileType {
   private final String myName;
-  private final String myDisplayName;
+  private final @Nls String myDisplayName;
   private final @Label String myDescription;
   private final String myDefaultExtension;
 

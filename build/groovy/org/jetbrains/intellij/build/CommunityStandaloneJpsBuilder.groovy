@@ -31,6 +31,7 @@ final class CommunityStandaloneJpsBuilder {
           module("intellij.platform.util.text.matching")
           module("intellij.platform.util.collections")
           module("intellij.platform.util.strings")
+          module("intellij.platform.util.xmlDom")
           module("intellij.platform.util.diagnostic")
         }
 
@@ -83,7 +84,7 @@ final class CommunityStandaloneJpsBuilder {
           "JDOM", "jna", "OroMatcher", "Trove4j", "ASM", "NanoXML", "protobuf", "cli-parser", "Log4J", "jgoodies-forms", "Eclipse",
           "netty-codec-http", "lz4-java", "commons-codec", "commons-logging", "http-client", "Slf4j", "Guava", "plexus-utils",
           "jetbrains-annotations-java5", "qdox-java-parser", "gson", "jps-javac-extension", "fastutil-min", "kotlin-stdlib-jdk8",
-          "commons-lang3", "maven-resolver-provider", "netty-buffer"
+          "commons-lang3", "maven-resolver-provider", "netty-buffer", "aalto-xml"
         )) {
           projectLibrary(name)
         }

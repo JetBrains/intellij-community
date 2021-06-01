@@ -1,10 +1,18 @@
 <html>
 <body>
-Reports any to methods declared <b>native</b> while in
-a synchronized block or method. While not necessarily representing a problem, such calls cause
-an expensive context switch, and are best kept out of synchronized contexts, if possible.
-<!-- tooltip end -->
-<p>
+Reports calls to any <code>native</code> method within a <code>synchronized</code> block or method.
+When possible, it's better to keep calls to <code>native</code> methods out of the synchronized context,
+since such calls cause an expensive context switch and may lead to performance issues.
+<p>Example:</p>
+<pre>
+  native void nativeMethod();
 
+  void example(){
+    synchronized (lock){
+      nativeMethod();//warning
+    }
+  }
+</pre>
+<!-- tooltip end -->
 </body>
 </html>

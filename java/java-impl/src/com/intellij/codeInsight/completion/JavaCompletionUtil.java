@@ -815,6 +815,9 @@ public final class JavaCompletionUtil {
   private static boolean insertTail(InsertionContext context, LookupElement item, TailType tailType, boolean hasTail) {
     TailType toInsert = tailType;
     LookupItem<?> lookupItem = item.as(LookupItem.CLASS_CONDITION_KEY);
+    if (toInsert == EqTailType.INSTANCE) {
+      toInsert = TailType.UNKNOWN;
+    }
     if (lookupItem == null || lookupItem.getAttribute(LookupItem.TAIL_TYPE_ATTR) != TailType.UNKNOWN) {
       if (!hasTail && item.getObject() instanceof PsiMethod && PsiType.VOID.equals(((PsiMethod)item.getObject()).getReturnType())) {
         PsiDocumentManager.getInstance(context.getProject()).commitAllDocuments();

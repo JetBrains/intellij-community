@@ -2,8 +2,8 @@
 package com.intellij.ide.codeStyleSettings;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor;
 import com.intellij.formatting.fileSet.FileSetDescriptor;
-import com.intellij.application.options.codeStyle.excludedFiles.PatternDescriptor;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -147,8 +147,8 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
 
   public void testSaveExcludedFiles() throws Exception {
     CodeStyleSettings settings = CodeStyle.createTestSettings();
-    settings.getExcludedFiles().addDescriptor(new PatternDescriptor("*.java"));
-    settings.getExcludedFiles().addDescriptor(new PatternDescriptor("/lib/**/*.min.js"));
+    settings.getExcludedFiles().addDescriptor(new GlobPatternDescriptor("*.java"));
+    settings.getExcludedFiles().addDescriptor(new GlobPatternDescriptor("/lib/**/*.min.js"));
     Element root = createOption("config", "root");
     settings.writeExternal(root);
     root.removeAttribute("version");
@@ -156,8 +156,8 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
       "<option name=\"config\" value=\"root\">\n" +
       "  <option name=\"DO_NOT_FORMAT\">\n" +
       "    <list>\n" +
-      "      <fileSet type=\"pattern\" pattern=\"*.java\" />\n" +
-      "      <fileSet type=\"pattern\" pattern=\"/lib/**/*.min.js\" />\n" +
+      "      <fileSet type=\"globPattern\" pattern=\"*.java\" />\n" +
+      "      <fileSet type=\"globPattern\" pattern=\"/lib/**/*.min.js\" />\n" +
       "    </list>\n" +
       "  </option>\n" +
       "</option>",
@@ -170,8 +170,8 @@ public class CodeStyleConfigurationTest extends CodeStyleTestCase {
       "<option name=\"config\" value=\"root\">\n" +
       "  <option name=\"DO_NOT_FORMAT\">\n" +
       "    <list>\n" +
-      "      <fileSet type=\"pattern\" pattern=\"*.java\" />\n" +
-      "      <fileSet type=\"pattern\" pattern=\"/lib/**/*.min.js\" />\n" +
+      "      <fileSet type=\"globPattern\" pattern=\"*.java\" />\n" +
+      "      <fileSet type=\"globPattern\" pattern=\"/lib/**/*.min.js\" />\n" +
       "    </list>\n" +
       "  </option>\n" +
       "</option>";

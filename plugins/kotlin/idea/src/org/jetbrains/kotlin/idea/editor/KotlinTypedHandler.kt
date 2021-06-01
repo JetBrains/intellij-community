@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.editor
 
 import com.intellij.codeInsight.AutoPopupController
@@ -111,10 +97,7 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
             '.' -> autoPopupMemberLookup(project, editor)
             ':' -> autoPopupCallableReferenceLookup(project, editor)
             '[' -> autoPopupParameterInfo(project, editor)
-            '@' -> {
-                autoPopupLabelLookup(project, editor)
-                autoPopupKDocTag(project, editor)
-            }
+            '@' -> autoPopupAt(project, editor)
         }
 
         return Result.CONTINUE
@@ -245,28 +228,23 @@ class KotlinTypedHandler : TypedHandlerDelegate() {
                 return false
             })
 
-        private fun autoPopupKDocTag(project: Project, editor: Editor): Unit =
-            AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
-                val offset = editor.caretModel.offset
-                val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
-                lastElement.node.elementType === KDocTokens.TEXT
-            }
+        private fun isLabelCompletion(chars: CharSequence, offset: Int): Boolean {
+            return endsWith(chars, offset, "this@")
+                    || endsWith(chars, offset, "return@")
+                    || endsWith(chars, offset, "break@")
+                    || endsWith(chars, offset, "continue@")
+        }
 
-        private fun autoPopupLabelLookup(project: Project, editor: Editor): Unit =
+        private fun autoPopupAt(project: Project, editor: Editor) {
             AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->
                 val offset = editor.caretModel.offset
                 val chars = editor.document.charsSequence
-                if (!endsWith(chars, offset, "this@")
-                    && !endsWith(chars, offset, "return@")
-                    && !endsWith(chars, offset, "break@")
-                    && !endsWith(chars, offset, "continue@")
-                ) {
-                    return@autoPopupMemberLookup false
-                }
+                val lastNodeType = file.findElementAt(offset - 1)?.node?.elementType ?: return@autoPopupMemberLookup false
 
-                val lastElement = file.findElementAt(offset - 1) ?: return@autoPopupMemberLookup false
-                lastElement.node.elementType === KtTokens.AT
+                return@autoPopupMemberLookup lastNodeType == KDocTokens.TEXT
+                        || (isLabelCompletion(chars, offset) && lastNodeType === KtTokens.AT)
             }
+        }
 
         private fun autoPopupCallableReferenceLookup(project: Project, editor: Editor): Unit =
             AutoPopupController.getInstance(project).autoPopupMemberLookup(editor) { file: PsiFile ->

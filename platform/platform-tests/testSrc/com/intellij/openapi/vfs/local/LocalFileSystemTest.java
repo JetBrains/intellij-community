@@ -714,7 +714,7 @@ public class LocalFileSystemTest extends BareTestFixtureTestCase {
     });
 
     try {
-      files.forEach(f -> updateFile(new File(f.getPath()), "+++"));
+      files.forEach(f -> writeToFile(new File(f.getPath()), "+++"));
       ((NewVirtualFile)topDir).markDirtyRecursively();
 
       RefreshSession session = RefreshQueue.getInstance().createSession(false, true, null);

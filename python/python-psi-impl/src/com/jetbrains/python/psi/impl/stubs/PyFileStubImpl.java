@@ -29,9 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.BitSet;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class PyFileStubImpl extends PsiFileStubImpl<PyFile> implements PyFileStub {
   private final List<String> myDunderAll;
   private final BitSet myFutureFeatures; // stores IDs of features

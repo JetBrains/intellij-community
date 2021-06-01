@@ -90,6 +90,8 @@ public class JavaBackwardReferenceIndexBuilder extends ModuleLevelBuilder {
           myCompiledTargets.add(target);
         }
       }
+
+      writer.force();
     }
     return null;
   }

@@ -258,8 +258,8 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
         if (currentTab != null) {
           tabbedPanel.changeTab(currentTab);
         }
-        mySchemesPanel.setSeparatorVisible(false);
       }
+      mySchemesPanel.setSeparatorVisible(false);
       mySettingsPanels.put(name, panel);
       mySettingsPanel.add(scheme.getName(), panel);
     }

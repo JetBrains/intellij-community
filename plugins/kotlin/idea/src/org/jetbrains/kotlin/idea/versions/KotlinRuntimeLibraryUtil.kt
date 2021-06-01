@@ -1,18 +1,4 @@
-/*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.versions
 
@@ -54,7 +40,7 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.JsMetadataVersion
 import org.jetbrains.kotlin.utils.LibraryUtils
 import org.jetbrains.kotlin.utils.PathUtil
-import java.io.File
+import java.nio.file.Path
 
 fun getLibraryRootsWithAbiIncompatibleKotlinClasses(module: Module): Collection<BinaryVersionedFile<JvmMetadataVersion>> {
     return getLibraryRootsWithAbiIncompatibleVersion(module, JvmMetadataVersion.INSTANCE, KotlinJvmMetadataVersionIndex)
@@ -84,18 +70,18 @@ enum class LibraryJarDescriptor(
     val jarName: String,
     val orderRootType: OrderRootType,
     val shouldExist: Boolean,
-    val getPath: (KotlinArtifacts) -> File = { artifacts -> File(artifacts.kotlincLibDirectory, jarName) }
+    val getPath: (KotlinArtifacts) -> Path = { artifacts -> artifacts.kotlincLibDirectory.toPath().resolve(jarName) }
 ) {
-    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_JAR, OrderRootType.CLASSES, true, { it.kotlinStdlib }) {
+    RUNTIME_JAR(PathUtil.KOTLIN_JAVA_STDLIB_JAR, OrderRootType.CLASSES, true, { it.kotlinStdlib.toPath() }) {
         override fun findExistingJar(library: Library): VirtualFile? {
             if (isExternalLibrary(library)) return null
             return JavaRuntimeDetectionUtil.getRuntimeJar(listOf(*library.getFiles(OrderRootType.CLASSES)))
         }
     },
 
-    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_JAR, OrderRootType.CLASSES, false, { it.kotlinReflect }),
-    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_JAR, OrderRootType.CLASSES, true, { it.kotlinScriptRuntime }),
-    TEST_JAR(PathUtil.KOTLIN_TEST_JAR, OrderRootType.CLASSES, false, { it.kotlinTest }),
+    REFLECT_JAR(PathUtil.KOTLIN_JAVA_REFLECT_JAR, OrderRootType.CLASSES, false, { it.kotlinReflect.toPath() }),
+    SCRIPT_RUNTIME_JAR(PathUtil.KOTLIN_JAVA_SCRIPT_RUNTIME_JAR, OrderRootType.CLASSES, true, { it.kotlinScriptRuntime.toPath() }),
+    TEST_JAR(PathUtil.KOTLIN_TEST_JAR, OrderRootType.CLASSES, false, { it.kotlinTest.toPath() }),
 
     @Deprecated("RUNTIME_JDK7_JAR should be used since 1.2")
     RUNTIME_JRE7_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JRE7_JAR, OrderRootType.CLASSES, false),
@@ -113,7 +99,7 @@ enum class LibraryJarDescriptor(
     RUNTIME_JRE8_SOURCES_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JRE8_SRC_JAR, OrderRootType.SOURCES, false),
     RUNTIME_JDK8_SOURCES_JAR(PathUtil.KOTLIN_JAVA_RUNTIME_JDK8_SRC_JAR, OrderRootType.SOURCES, false),
 
-    RUNTIME_SRC_JAR(PathUtil.KOTLIN_JAVA_STDLIB_SRC_JAR, OrderRootType.SOURCES, false, { it.kotlinStdlibSources }) {
+    RUNTIME_SRC_JAR(PathUtil.KOTLIN_JAVA_STDLIB_SRC_JAR, OrderRootType.SOURCES, false, { it.kotlinStdlibSources.toPath() }) {
         override fun findExistingJar(library: Library): VirtualFile? {
             return super.findExistingJar(library) ?: LibraryUtils.getJarFile(
                 library.getFiles(orderRootType).toList(),
@@ -124,8 +110,8 @@ enum class LibraryJarDescriptor(
     REFLECT_SRC_JAR(PathUtil.KOTLIN_REFLECT_SRC_JAR, OrderRootType.SOURCES, false),
     TEST_SRC_JAR(PathUtil.KOTLIN_TEST_SRC_JAR, OrderRootType.SOURCES, false),
 
-    JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, true, { it.kotlinStdlibJs }),
-    JS_STDLIB_SRC_JAR(PathUtil.JS_LIB_SRC_JAR_NAME, OrderRootType.SOURCES, false, { it.kotlinStdlibJsSources });
+    JS_STDLIB_JAR(PathUtil.JS_LIB_JAR_NAME, OrderRootType.CLASSES, true, { it.kotlinStdlibJs.toPath() }),
+    JS_STDLIB_SRC_JAR(PathUtil.JS_LIB_SRC_JAR_NAME, OrderRootType.SOURCES, false, { it.kotlinStdlibJsSources.toPath() });
 
     open fun findExistingJar(library: Library): VirtualFile? {
         if (isExternalLibrary(library)) return null
@@ -137,17 +123,11 @@ enum class LibraryJarDescriptor(
 
 fun bundledRuntimeVersion(): String = KotlinCompilerVersion.VERSION
 
-fun kotlinCompilerVersionForWizard() = KotlinCompilerVersion.VERSION.substringBefore("-release")
-
-fun getLocalJar(kotlinRuntimeJar: VirtualFile?): VirtualFile? {
-    if (kotlinRuntimeJar == null) return null
-
-    val localJarFile = JarFileSystem.getInstance().getVirtualFileForJar(kotlinRuntimeJar)
-    if (localJarFile != null) {
-        return localJarFile
-    }
-    return kotlinRuntimeJar
-}
+/**
+ * Bundled compiler version usually looks like: `1.5.0-release-759`.
+ * `kotlinCompilerVersionShort` would return `1.5.0` in such case
+ */
+fun kotlinCompilerVersionShort() = KotlinCompilerVersion.VERSION.substringBefore("-release")
 
 data class BinaryVersionedFile<out T : BinaryVersion>(val file: VirtualFile, val version: T, val supportedVersion: T)
 

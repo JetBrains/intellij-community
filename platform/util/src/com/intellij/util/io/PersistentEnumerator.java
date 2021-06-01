@@ -25,6 +25,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.concurrent.locks.Lock;
 
 public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Closeable, Forceable {
   @NotNull protected final PersistentEnumeratorBase<Data> myEnumerator;
@@ -89,7 +90,14 @@ public class PersistentEnumerator<Data> implements DataEnumeratorEx<Data>, Close
   }
 
   public final void markDirty() throws IOException {
-    myEnumerator.markDirty(true);
+    Lock lock = myEnumerator.getWriteLock();
+    lock.lock();
+    try {
+      myEnumerator.markDirty(true);
+    }
+    finally {
+      lock.unlock();
+    }
   }
 
   public boolean isCorrupted() {

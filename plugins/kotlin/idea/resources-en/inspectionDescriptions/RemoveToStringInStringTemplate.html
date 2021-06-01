@@ -1,5 +1,14 @@
 <html>
 <body>
-This inspection reports calls to <b>toString()</b> in string templates that can be safely removed.
+Reports calls to <code>toString()</code> in string templates that can be safely removed.
+<p>"Remove 'toString()' call" quick-fix can be used to amend the code.</p>
+<p>Examples:</p>
+<pre><code>
+   fun foo(a: Int, b: Int) = a + b
+
+   fun test(): String {
+      return "Foo: ${foo(0, 4).toString()}" // can be replaced with 'return "Foo: ${foo(0, 4)}"'
+   }
+</code></pre>
 </body>
 </html>

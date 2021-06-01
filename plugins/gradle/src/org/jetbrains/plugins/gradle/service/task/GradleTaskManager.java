@@ -238,6 +238,8 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       enhancementParameters.put(GradleProjectResolverExtension.TEST_LAUNCHER_WILL_BE_USED_KEY,
                                 String.valueOf(testLauncherIsApplicable(taskNames, effectiveSettings)));
 
+      enhancementParameters.put(GradleProjectResolverExtension.GRADLE_VERSION, gradleVersion);
+
 
       resolverExtension.enhanceTaskProcessing(taskNames, initScriptConsumer, enhancementParameters);
     }

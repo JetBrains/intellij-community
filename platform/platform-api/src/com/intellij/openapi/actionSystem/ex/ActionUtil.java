@@ -5,7 +5,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -25,7 +24,6 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.*;
 
@@ -33,11 +31,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;
 import java.awt.event.InputEvent;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
+import java.util.*;
 import java.util.function.Predicate;
 
 public final class ActionUtil {
@@ -219,7 +214,7 @@ public final class ActionUtil {
     return !visibilityMatters || e.getPresentation().isVisible();
   }
 
-  /** @deprecated use {@link #performActionDumbAware(AnAction, AnActionEvent)} */
+  /** @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)} */
   @Deprecated
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e, @NotNull DataContext context) {
     LOG.assertTrue(e.getDataContext() == context, "event context does not match the argument");
@@ -227,31 +222,71 @@ public final class ActionUtil {
   }
 
   public static void performActionDumbAwareWithCallbacks(@NotNull AnAction action, @NotNull AnActionEvent e) {
-    ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-    manager.fireBeforeActionPerformed(action, e.getDataContext(), e);
-    performActionDumbAware(action, e);
-    manager.fireAfterActionPerformed(action, e.getDataContext(), e);
+    performDumbAwareWithCallbacks(action, e, () -> action.actionPerformed(e));
   }
 
-  public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent e) {
-    Project project = e.getProject();
+  public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
+                                                   @NotNull AnActionEvent event,
+                                                   @NotNull Runnable performRunnable) {
+    performDumbAwareWithCallbacks(action, event, performRunnable, true);
+  }
+
+  @ApiStatus.Experimental
+  @ApiStatus.Internal
+  public static void performDumbAwareWithCallbacks(@NotNull AnAction action,
+                                                   @NotNull AnActionEvent event,
+                                                   @NotNull Runnable performRunnable,
+                                                   Boolean checkVisibility) {
+    Project project = event.getProject();
+    IndexNotReadyException indexError = null;
+    ActionManagerEx manager = ActionManagerEx.getInstanceEx();
+    manager.fireBeforeActionPerformed(action, event);
+    Component component = event.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+    if (checkVisibility && component != null && !component.isShowing() &&
+        !ActionPlaces.TOUCHBAR_GENERAL.equals(event.getPlace()) &&
+        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      String id = StringUtil.notNullize(event.getActionManager().getId(action), action.getClass().getName());
+      LOG.warn("Action is not performed because target component is not showing: " +
+               "action=" + id + ", component=" + component.getClass().getName());
+      manager.fireAfterActionPerformed(action, event, AnActionResult.IGNORED);
+      return;
+    }
+    AnActionResult result = null;
+    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
+      performRunnable.run();
+      result = AnActionResult.PERFORMED;
+    }
+    catch (IndexNotReadyException ex) {
+      indexError = ex;
+      result = AnActionResult.failed(ex);
+    }
+    catch (RuntimeException | Error ex) {
+      result = AnActionResult.failed(ex);
+      throw ex;
+    }
+    finally {
+      if (result == null) result = AnActionResult.failed(new Throwable());
+      manager.fireAfterActionPerformed(action, event, result);
+    }
+    if (indexError != null) {
+      LOG.info(indexError);
+      showDumbModeWarning(project, event);
+    }
+  }
+
+  /**
+   * @deprecated use {@link #performActionDumbAwareWithCallbacks(AnAction, AnActionEvent)} or
+   *                 {@link AnAction#actionPerformed(AnActionEvent)} instead
+   */
+  @Deprecated
+  public static void performActionDumbAware(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    Project project = event.getProject();
     try {
-      performAction(action, e);
+      action.actionPerformed(event);
     }
     catch (IndexNotReadyException ex) {
       LOG.info(ex);
-      showDumbModeWarning(project, e);
-    }
-  }
-
-  public static void performAction(@NotNull AnAction action, @NotNull AnActionEvent e) {
-    long startNanoTime = System.nanoTime();
-    try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.ACTION_PERFORM)) {
-      action.actionPerformed(e);
-    }
-    finally {
-      long durationMillis = TimeoutUtil.getDurationMillis(startNanoTime);
-      ActionManagerEx.getInstanceEx().fireFinallyActionPerformed(action, e.getDataContext(), e, durationMillis);
+      showDumbModeWarning(project, event);
     }
   }
 
@@ -317,17 +352,6 @@ public final class ActionUtil {
           component.registerKeyboardAction(action, first, JComponent.WHEN_IN_FOCUSED_WINDOW);
         }
       }
-    }
-  }
-
-  public static void recursiveRegisterShortcutSet(@NotNull ActionGroup group,
-                                                  @NotNull JComponent component,
-                                                  @Nullable Disposable parentDisposable) {
-    for (AnAction action : group.getChildren(null)) {
-      if (action instanceof ActionGroup) {
-        recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
-      }
-      action.registerCustomShortcutSet(component, parentDisposable);
     }
   }
 
@@ -407,15 +431,15 @@ public final class ActionUtil {
     Presentation presentation = action.getTemplatePresentation().clone();
     AnActionEvent event = new AnActionEvent(
       inputEvent, dataContext, place, presentation, ActionManager.getInstance(), 0);
-    performDumbAwareUpdate(false, action, event, true);
-    final ActionManagerEx manager = ActionManagerEx.getInstanceEx();
-    if (event.getPresentation().isEnabled() && event.getPresentation().isVisible()) {
-      manager.fireBeforeActionPerformed(action, dataContext, event);
-      performActionDumbAware(action, event);
-      if (onDone != null) {
-        onDone.run();
+    if (lastUpdateAndCheckDumb(action, event, true)) {
+      try {
+        performActionDumbAwareWithCallbacks(action, event);
       }
-      manager.fireAfterActionPerformed(action, dataContext, event);
+      finally {
+        if (onDone != null) {
+          onDone.run();
+        }
+      }
     }
   }
 

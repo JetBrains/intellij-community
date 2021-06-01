@@ -3,12 +3,11 @@ package com.intellij.refactoring.extractMethod.newImpl
 
 import com.intellij.codeInsight.ExceptionUtil
 import com.intellij.codeInsight.Nullability
-import com.intellij.codeInspection.dataFlow.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.DfaNullability
-import com.intellij.codeInspection.dataFlow.RunnerResult
 import com.intellij.codeInspection.dataFlow.StandardDataFlowRunner
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.value.DfaValue
 import com.intellij.java.refactoring.JavaRefactoringBundle
 import com.intellij.openapi.util.TextRange
@@ -246,21 +245,16 @@ class CodeFragmentAnalyzer(val elements: List<PsiElement>) {
 
       var nullability = DfaNullability.NOT_NULL
 
-      class Interceptor : DfaInterceptor<PsiExpression> {
-        override fun beforeExpressionPush(value: DfaValue, expr: PsiExpression, range: TextRange?, state: DfaMemoryState) {
+      class Listener : JavaDfaListener {
+        override fun beforeExpressionPush(value: DfaValue, expr: PsiExpression, state: DfaMemoryState) {
           if (expr in expressionSet) {
-            val expressionNullability = when {
-              state.isNotNull(value) -> DfaNullability.NOT_NULL
-              state.isNull(value) -> DfaNullability.NULL
-              else -> DfaNullability.fromDfType(state.getDfType(value))
-            }
+            val expressionNullability = DfaNullability.fromDfType(state.getDfType(value))
             nullability = nullability.unite(expressionNullability)
           }
         }
       }
 
-      val visitor = JavaDfaInstructionVisitor(Interceptor())
-      val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, visitor)
+      val runnerState = dfaRunner.analyzeMethod(fragmentToAnalyze, Listener())
       return if (runnerState == RunnerResult.OK) {
         DfaNullability.toNullability(nullability)
       } else {

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.actions;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -203,8 +203,11 @@ public class BuildArtifactAction extends DumbAwareAction {
             indicator.checkCanceled();
             File file = pair.getFirst();
             if (!FileUtil.delete(file)) {
-              Holder.NOTIFICATION_GROUP.createNotification(JavaCompilerBundle.message("cannot.clean.0.artifact", pair.getSecond().getName()),
-                                                           JavaCompilerBundle.message("cannot.delete.0", file.getAbsolutePath()), NotificationType.ERROR, null).notify(myProject);
+              Holder.NOTIFICATION_GROUP
+                .createNotification(JavaCompilerBundle.message("cannot.clean.0.artifact", pair.getSecond().getName()),
+                                    JavaCompilerBundle.message("cannot.delete.0", file.getAbsolutePath()),
+                                    NotificationType.ERROR)
+                .notify(myProject);
             }
             else {
               deleted.add(file);

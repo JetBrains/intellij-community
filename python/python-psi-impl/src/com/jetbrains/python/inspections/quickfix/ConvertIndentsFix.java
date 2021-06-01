@@ -27,9 +27,7 @@ import com.jetbrains.python.PyPsiBundle;
 import com.jetbrains.python.PythonCodeStyleService;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class ConvertIndentsFix implements LocalQuickFix {
   private final boolean myToSpaces;
 

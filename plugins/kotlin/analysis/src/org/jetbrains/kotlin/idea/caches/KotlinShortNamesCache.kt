@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.caches
 
@@ -20,7 +17,6 @@ import com.intellij.util.Processor
 import com.intellij.util.Processors
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.indexing.IdFilter
-import gnu.trove.THashSet
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.defaultImplsChild
 import org.jetbrains.kotlin.asJava.finder.JavaElementFinder
@@ -334,15 +330,15 @@ class KotlinShortNamesCache(private val project: Project) : PsiShortNamesCache()
     }
 
     private class CancelableArrayCollectProcessor<T> : Processor<T> {
-        val troveSet = THashSet<T>()
-        private val processor = Processors.cancelableCollectProcessor<T>(troveSet)
+        private val set = HashSet<T>()
+        private val processor = Processors.cancelableCollectProcessor<T>(set)
 
         override fun process(value: T): Boolean {
             return processor.process(value)
         }
 
-        val size: Int get() = troveSet.size
+        val size: Int get() = set.size
 
-        fun toArray(a: Array<T>): Array<T> = troveSet.toArray(a)
+        fun toArray(a: Array<T>): Array<T> = set.toArray(a)
     }
 }

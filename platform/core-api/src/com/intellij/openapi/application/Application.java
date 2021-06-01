@@ -171,6 +171,12 @@ public interface Application extends ComponentManager {
   void assertWriteAccessAllowed();
 
   /**
+   * Asserts whether the read access is not allowed.
+   */
+  @ApiStatus.Experimental
+  void assertReadAccessNotAllowed();
+
+  /**
    * Asserts whether the method is being called from the event dispatch thread.
    */
   void assertIsDispatchThread();

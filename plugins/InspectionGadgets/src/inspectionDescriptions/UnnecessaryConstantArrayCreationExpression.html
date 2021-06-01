@@ -1,10 +1,10 @@
 <html>
 <body>
-Reports any constant new array expression. Array initializers omit the type declaration because
+Reports constant new array expressions which can be replaced with an array initializer. Array initializers omit the type declaration because
 that is already specified by the declaration of the variable the expression is assigned to.
 <p>Example:</p>
 <pre>
-  int[] foo = new int[]{42};
+  int[] foo = new int[] {42};
 </pre>
 <p>After the quick-fix is applied, the result looks like this:</p>
 <pre>

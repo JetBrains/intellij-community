@@ -33,8 +33,6 @@ public interface Content extends UserDataHolder, ComponentContainer {
   String PROP_TAB_COLOR = "tabColor";
 
   Key<Boolean> TABBED_CONTENT_KEY = Key.create("tabbedContent");
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  @Deprecated Key<String> TAB_GROUP_NAME_KEY = Key.create("tabbedGroupName");
   Key<TabGroupId> TAB_GROUP_ID_KEY = Key.create("tabbedGroupId");
   Key<TabDescriptor> TAB_DESCRIPTOR_KEY = Key.create("tabDescriptor");
   Key<ComponentOrientation> TAB_LABEL_ORIENTATION_KEY = Key.create("tabLabelComponentOrientation");

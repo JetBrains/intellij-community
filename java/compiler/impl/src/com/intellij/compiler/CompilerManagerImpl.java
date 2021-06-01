@@ -180,12 +180,6 @@ public class CompilerManagerImpl extends CompilerManager {
   }
 
   @Override
-  @Deprecated
-  public void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes) {
-    // empty
-  }
-
-  @Override
   public final void removeCompiler(@NotNull Compiler compiler) {
     if (myCompilers.remove(compiler) != null) {
       for (List<CompileTask> tasks : Arrays.asList(myBeforeTasks, myAfterTasks)) {

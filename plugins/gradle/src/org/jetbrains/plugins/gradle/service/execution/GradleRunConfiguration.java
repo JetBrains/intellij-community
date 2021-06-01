@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -92,6 +93,10 @@ public class GradleRunConfiguration extends ExternalSystemRunConfiguration imple
   @NotNull
   @Override
   public SettingsEditor<ExternalSystemRunConfiguration> getConfigurationEditor() {
+    if (Registry.is("ide.new.run.config", true)) {
+      return super.getConfigurationEditor();
+    }
+
     final SettingsEditor<ExternalSystemRunConfiguration> editor = super.getConfigurationEditor();
     if (editor instanceof SettingsEditorGroup) {
       final SettingsEditorGroup group = (SettingsEditorGroup)editor;

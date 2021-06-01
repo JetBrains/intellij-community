@@ -6,7 +6,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Path;
 
 // API and placement of classes are complicated due to java 8 requirement
@@ -20,6 +19,6 @@ public abstract class ZipFilePool {
   public abstract @NotNull Object loadZipFile(@NotNull Path file) throws IOException;
 
   public interface EntryResolver {
-    @Nullable InputStream loadZipEntry(@NotNull String path) throws IOException;
+    byte @Nullable [] loadZipEntry(@NotNull String path) throws IOException;
   }
 }

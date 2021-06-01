@@ -2,6 +2,14 @@ import java.util.*;
 
 class GetClass {
   native void unknown();
+  
+  private Class myCls;
+  
+  void testSimple(Class<? extends Number> cls, Number n) {
+    if (cls.equals(n.getClass())) {}
+    if (cls == n.getClass()) {}
+    if (myCls == n.getClass()) {}
+  }
 
   public static void testIntClass() {
     Class<?> cls = someIntClass();

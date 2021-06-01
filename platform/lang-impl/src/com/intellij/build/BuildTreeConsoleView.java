@@ -54,10 +54,7 @@ import com.intellij.ui.tree.StructureTreeModel;
 import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.EditSourceOnDoubleClickHandler;
-import com.intellij.util.EditSourceOnEnterKeyHandler;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.SystemProperties;
+import com.intellij.util.*;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
@@ -133,7 +130,7 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
                         : new DefaultBuildDescriptor(buildDescriptor);
     myNodeFilters = ContainerUtil.newConcurrentSet();
     myWorkingDir = FileUtil.toSystemIndependentName(buildDescriptor.getWorkingDir());
-    myNavigateToTheFirstErrorLocation = project.getService(BuildWorkspaceConfiguration.class).isShowFirstErrorInEditor();
+    myNavigateToTheFirstErrorLocation = isNavigateToTheFirstErrorLocation(project, buildDescriptor);
 
     myRootNode = new ExecutionNode(myProject, null, true, this::isCorrectThread);
     myBuildProgressRootNode = new ExecutionNode(myProject, myRootNode, true, this::isCorrectThread);
@@ -160,6 +157,17 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     myPanel.add(myThreeComponentsSplitter, BorderLayout.CENTER);
     BuildTreeFilters.install(this);
     myOccurrenceNavigatorSupport = new ProblemOccurrenceNavigatorSupport(myTree);
+  }
+
+  private static boolean isNavigateToTheFirstErrorLocation(@NotNull Project project, @NotNull BuildDescriptor buildDescriptor) {
+    ThreeState isNavigateToError =
+      buildDescriptor instanceof DefaultBuildDescriptor
+      ? ((DefaultBuildDescriptor)buildDescriptor).isNavigateToError()
+      : ThreeState.UNSURE;
+    BuildWorkspaceConfiguration workspaceConfiguration = BuildWorkspaceConfiguration.getInstance(project);
+    return isNavigateToError == ThreeState.UNSURE
+           ? workspaceConfiguration.isShowFirstErrorInEditor()
+           : isNavigateToError.toBoolean();
   }
 
   private boolean isCorrectThread() {
@@ -932,8 +940,8 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
       consoleComponent.setFocusable(true);
       myPanel.add(myView.getComponent(), BorderLayout.CENTER);
       myConsoleToolbarActionGroup = new DefaultActionGroup();
+      myConsoleToolbarActionGroup.copyFromGroup(createDefaultTextConsoleToolbar());
       myToolbar = ActionManager.getInstance().createActionToolbar("BuildConsole", myConsoleToolbarActionGroup, false);
-      showTextConsoleToolbarActions();
       myPanel.add(myToolbar.getComponent(), BorderLayout.EAST);
       tree.addTreeSelectionListener(e -> {
         TreePath path = e.getPath();

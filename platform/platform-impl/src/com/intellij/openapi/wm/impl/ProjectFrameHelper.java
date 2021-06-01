@@ -16,12 +16,12 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFocusTraversalPolicy;
@@ -285,7 +285,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
     isUpdatingTitle = true;
     try {
-      if (Registry.is("ide.show.fileType.icon.in.titleBar")) {
+      if (AdvancedSettings.getBoolean("ide.show.fileType.icon.in.titleBar")) {
         File ioFile = currentFile == null ? null : currentFile.toFile();
         frame.getRootPane().putClientProperty("Window.documentFile", ioFile); // this property requires java.io.File
       }
@@ -395,7 +395,8 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
 
   protected void installDefaultProjectStatusBarWidgets(@NotNull Project project) {
     project.getService(StatusBarWidgetsManager.class).updateAllWidgets();
-    PopupHandler.installPopupHandler(Objects.requireNonNull(getStatusBar()), StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
+    IdeStatusBarImpl statusBar = Objects.requireNonNull(getStatusBar());
+    PopupHandler.installPopupMenu(statusBar, StatusBarWidgetsActionGroup.GROUP_ID, ActionPlaces.STATUS_BAR_PLACE);
   }
 
   @Override

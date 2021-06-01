@@ -110,7 +110,6 @@ public final class VcsLogUiUtil {
     };
     Runnable containingBranchesListener = () -> {
       detailsPanel.branchesChanged();
-      graphTable.repaint(); // we may need to repaint highlighters
     };
     logData.getMiniDetailsGetter().addDetailsLoadedListener(miniDetailsLoadedListener);
     logData.getContainingBranchesGetter().addTaskCompletedListener(containingBranchesListener);

@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfIntType;
@@ -18,7 +19,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import java.util.Objects;
 import java.util.Set;
 
-import static com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField.COLLECTION_SIZE;
+import static com.intellij.codeInspection.dataFlow.jvm.SpecialField.COLLECTION_SIZE;
 import static com.intellij.psi.CommonClassNames.*;
 import static com.intellij.util.ObjectUtils.tryCast;
 import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
@@ -67,7 +68,7 @@ class SideEffectHandlers {
     DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
     if (size != null) {
       DfIntType sizeType = tryCast(state.getDfType(size), DfIntType.class);
-      DfType resultSize = COLLECTION_SIZE.getDefaultValue(false);
+      DfType resultSize = COLLECTION_SIZE.getDefaultValue();
       if (sizeType != null) {
         resultSize = sizeType.eval(DfTypes.intValue(1), LongRangeBinOp.PLUS).meet(DfTypes.intRange(JvmPsiRangeSetUtil.indexRange()));
         if (!list) {
@@ -75,7 +76,7 @@ class SideEffectHandlers {
         }
         if (resultSize == DfType.BOTTOM) {
           // Possible int overflow
-          resultSize = COLLECTION_SIZE.getDefaultValue(false);
+          resultSize = COLLECTION_SIZE.getDefaultValue();
         }
       }
       updateSize(state, size, resultSize);
@@ -86,7 +87,7 @@ class SideEffectHandlers {
     DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
     if (size != null) {
       DfIntType sizeType = tryCast(state.getDfType(size), DfIntType.class);
-      DfType resultSize = COLLECTION_SIZE.getDefaultValue(false);
+      DfType resultSize = COLLECTION_SIZE.getDefaultValue();
       if (sizeType != null) {
         resultSize = sizeType.eval(DfTypes.intRange(LongRangeSet.range(strict ? 1 : 0, 1)), LongRangeBinOp.MINUS)
           .meet(DfTypes.intRange(JvmPsiRangeSetUtil.indexRange()));
@@ -101,7 +102,7 @@ class SideEffectHandlers {
     if (size != null) {
       DfIntType sizeType = tryCast(state.getDfType(size), DfIntType.class);
       DfType argSizeType = tryCast(state.getDfType(argSize), DfIntType.class);
-      DfType resultSize = COLLECTION_SIZE.getDefaultValue(false);
+      DfType resultSize = COLLECTION_SIZE.getDefaultValue();
       if (sizeType != null && argSizeType != null) {
         LongRangeSet totalRange = JvmPsiRangeSetUtil.indexRange();
         if (!list) {
@@ -110,13 +111,13 @@ class SideEffectHandlers {
             // Adding non-empty collection to the set will produce non-empty set
             totalRange = totalRange.without(0);
           }
-          LongRangeSet addedForSet = argSizeRange.fromRelation(RelationType.LE).intersect(JvmPsiRangeSetUtil.indexRange());
+          LongRangeSet addedForSet = argSizeRange.fromRelation(RelationType.LE).meet(JvmPsiRangeSetUtil.indexRange());
           argSizeType = argSizeType.join(DfTypes.intRange(addedForSet));
         }
         resultSize = sizeType.eval(argSizeType, LongRangeBinOp.PLUS).meet(DfTypes.intRange(totalRange));
         if (resultSize == DfType.BOTTOM) {
           // Possible int overflow
-          resultSize = COLLECTION_SIZE.getDefaultValue(false);
+          resultSize = COLLECTION_SIZE.getDefaultValue();
         }
       }
       updateSize(state, size, resultSize);
@@ -127,9 +128,9 @@ class SideEffectHandlers {
     DfaVariableValue size = tryCast(COLLECTION_SIZE.createValue(factory, arguments.myQualifier), DfaVariableValue.class);
     if (size != null) {
       DfIntType sizeType = tryCast(state.getDfType(size), DfIntType.class);
-      DfType resultSize = COLLECTION_SIZE.getDefaultValue(false);
+      DfType resultSize = COLLECTION_SIZE.getDefaultValue();
       if (sizeType != null) {
-        LongRangeSet newSize = sizeType.getRange().fromRelation(RelationType.LE).intersect(JvmPsiRangeSetUtil.indexRange());
+        LongRangeSet newSize = sizeType.getRange().fromRelation(RelationType.LE).meet(JvmPsiRangeSetUtil.indexRange());
         resultSize = sizeType.join(DfTypes.intRange(newSize));
       }
       updateSize(state, size, resultSize);

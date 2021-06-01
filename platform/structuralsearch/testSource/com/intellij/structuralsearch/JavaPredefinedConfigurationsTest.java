@@ -342,6 +342,21 @@ public class JavaPredefinedConfigurationsTest extends PredefinedConfigurationsTe
            "  }" +
            "}",
            "o instanceof String s");
+    doTest(configurationMap.remove(SSRBundle.message("predefined.configuration.local.classes")),
+           "class X {" +
+           "  void x() {" +
+           "    System.out.println();" +
+           "    System.out.println();" +
+           "    class Y {" +
+           "      int i;" +
+           "    }" +
+           "    System.out.println();" +
+           "    System.out.println();" +
+           "  }" +
+           "}",
+           "class Y {" +
+           "      int i;" +
+           "    }");
     //assertTrue((templates.length - configurationMap.size()) + " of " + templates.length +
     //           " existing templates tested. Untested templates: " + configurationMap.keySet(), configurationMap.isEmpty());
   }

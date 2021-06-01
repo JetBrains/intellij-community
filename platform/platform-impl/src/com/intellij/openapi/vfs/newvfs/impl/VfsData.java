@@ -66,15 +66,13 @@ public final class VfsData {
 
   private final Object myDeadMarker = ObjectUtils.sentinel("dead file");
 
-  private final ConcurrentIntObjectMap<Segment> mySegments =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final ConcurrentIntObjectMap<Segment> mySegments = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
   private final ConcurrentBitSet myInvalidatedIds = ConcurrentBitSet.create();
 
   /** guarded by {@link #myDeadMarker} */
   private IntSet myDyingIds = new IntOpenHashSet();
 
-  private final IntObjectMap<VirtualDirectoryImpl> myChangedParents =
-    ConcurrentCollectionFactory.createConcurrentIntObjectMap();
+  private final IntObjectMap<VirtualDirectoryImpl> myChangedParents = ConcurrentCollectionFactory.createConcurrentIntObjectMap();
 
   public VfsData() {
     ApplicationManager.getApplication().addApplicationListener(new ApplicationListener() {
@@ -313,7 +311,7 @@ public final class VfsData {
     /**
      * sorted by {@link VfsData#getNameByFileId(int)}
      * assigned under lock(this) only; never modified in-place
-     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence)
+     * @see VirtualDirectoryImpl#findIndex(int[], CharSequence, boolean)
      */
     volatile int @NotNull [] myChildrenIds = ArrayUtilRt.EMPTY_INT_ARRAY; // guarded by this
     volatile boolean myAllChildrenLoaded;

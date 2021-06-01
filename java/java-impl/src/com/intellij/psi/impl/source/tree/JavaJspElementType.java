@@ -4,9 +4,7 @@ package com.intellij.psi.impl.source.tree;
 import com.intellij.psi.jsp.JspTemplateExpressionType;
 import com.intellij.psi.tree.TokenSet;
 
-/**
- * @author yole
- */
+
 public interface JavaJspElementType {
   TokenSet WHITE_SPACE_BIT_SET = TokenSet.orSet(TokenSet.WHITE_SPACE,
                                                 TokenSet.forAllMatching((e) -> e instanceof JspTemplateExpressionType));

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configuration;
 
 import com.google.common.collect.ImmutableMap;
@@ -7,6 +7,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -20,7 +21,7 @@ import java.util.Objects;
  * Instances of this class are immutable objects, so it can be safely passed across threads.
  */
 public final class EnvironmentVariablesData {
-  public static final EnvironmentVariablesData DEFAULT = new EnvironmentVariablesData(ImmutableMap.of(), true, null);
+  public static final EnvironmentVariablesData DEFAULT = new EnvironmentVariablesData(Collections.emptyMap(), true, null);
 
   private static final String ENVS = "envs";
   private static final String PASS_PARENT_ENVS = "pass-parent-envs";
@@ -28,12 +29,13 @@ public final class EnvironmentVariablesData {
   private static final String NAME = EnvironmentVariablesComponent.NAME;
   private static final String VALUE = EnvironmentVariablesComponent.VALUE;
 
-  private final ImmutableMap<String, String> myEnvs;
+  private final Map<String, String> myEnvs;
   private final String myEnvironmentFile;
   private final boolean myPassParentEnvs;
 
   private EnvironmentVariablesData(@NotNull Map<String, String> envs, boolean passParentEnvs, @Nullable String environmentFile) {
-    myEnvs = ImmutableMap.copyOf(envs);
+    // insertion order must be preserved - Map.copyOf cannot be used here
+    myEnvs = envs.isEmpty() ? Map.of() : Collections.unmodifiableMap(new LinkedHashMap<>(envs));
     myPassParentEnvs = passParentEnvs;
     myEnvironmentFile = environmentFile;
   }
@@ -84,7 +86,7 @@ public final class EnvironmentVariablesData {
     if (envsElement == null) {
       return DEFAULT;
     }
-    Map<String, String> envs = ImmutableMap.of();
+    Map<String, String> envs = Collections.emptyMap();
     String passParentEnvsStr = envsElement.getAttributeValue(PASS_PARENT_ENVS);
     boolean passParentEnvs = passParentEnvsStr == null || Boolean.parseBoolean(passParentEnvsStr);
     for (Element envElement : envsElement.getChildren(ENV)) {
@@ -125,13 +127,11 @@ public final class EnvironmentVariablesData {
    *             (iteration order should be reliable user-specified, like {@link LinkedHashMap} or {@link ImmutableMap})
    * @param passParentEnvs true if system environment should be passed
    */
-  @NotNull
-  public static EnvironmentVariablesData create(@NotNull Map<String, String> envs, boolean passParentEnvs) {
+  public static @NotNull EnvironmentVariablesData create(@NotNull Map<String, String> envs, boolean passParentEnvs) {
     return passParentEnvs && envs.isEmpty() ? DEFAULT : new EnvironmentVariablesData(envs, passParentEnvs, null);
   }
 
-  @NotNull
-  public EnvironmentVariablesData with(@NotNull Map<String, String> envs) {
+  public @NotNull EnvironmentVariablesData with(@NotNull Map<String, String> envs) {
     return new EnvironmentVariablesData(envs, myPassParentEnvs, myEnvironmentFile);
   }
 

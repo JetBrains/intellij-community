@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.cacheBuilder;
 
@@ -11,8 +11,6 @@ import org.jetbrains.annotations.Nullable;
  * The cache builder registry allows to register custom cache builders for file types which
  * are not based on a language. For language file types, the words scanner should be returned
  * from {@link com.intellij.lang.findUsages.FindUsagesProvider#getWordsScanner()}.
- *
- * @author yole
  */
 public abstract class CacheBuilderRegistry {
   public static CacheBuilderRegistry getInstance() {

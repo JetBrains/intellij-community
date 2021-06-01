@@ -90,6 +90,10 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
     new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.static.method"), JavaHighlightingColors.STATIC_METHOD_ATTRIBUTES),
     new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.abstract.method"), JavaHighlightingColors.ABSTRACT_METHOD_ATTRIBUTES),
     new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.inherited.method"), JavaHighlightingColors.INHERITED_METHOD_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.public"), JavaHighlightingColors.PUBLIC_REFERENCE_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.protected"), JavaHighlightingColors.PROTECTED_REFERENCE_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.package.private"), JavaHighlightingColors.PACKAGE_PRIVATE_REFERENCE_ATTRIBUTES),
+    new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.private"), JavaHighlightingColors.PRIVATE_REFERENCE_ATTRIBUTES),
 
     new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.annotation.name"), JavaHighlightingColors.ANNOTATION_NAME_ATTRIBUTES),
     new AttributesDescriptor(JavaBundle.message("options.java.attribute.descriptor.annotation.attribute.name"), JavaHighlightingColors.ANNOTATION_ATTRIBUTE_NAME_ATTRIBUTES)
@@ -135,6 +139,10 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
     ourTags.put("staticallyConstImported", JavaHighlightingColors.STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES);
     ourTags.put("staticallyImported", JavaHighlightingColors.STATIC_FIELD_IMPORTED_ATTRIBUTES);
     ourTags.put("static_imported_method", JavaHighlightingColors.STATIC_METHOD_CALL_IMPORTED_ATTRIBUTES);
+    ourTags.put("public", JavaHighlightingColors.PUBLIC_REFERENCE_ATTRIBUTES);
+    ourTags.put("protected", JavaHighlightingColors.PROTECTED_REFERENCE_ATTRIBUTES);
+    ourTags.put("package_private", JavaHighlightingColors.PACKAGE_PRIVATE_REFERENCE_ATTRIBUTES);
+    ourTags.put("private", JavaHighlightingColors.PRIVATE_REFERENCE_ATTRIBUTES);
   }
 
   @Override
@@ -185,6 +193,8 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
       "  private <unknownType>UnknownType</unknownType> <field>anotherString</field> = \"Another\\nStrin\\g\";\n" +
       "  public static int <static>staticField</static> = 0;\n" +
       "  public final int <instanceFinalField>instanceFinalField</instanceFinalField> = 0;\n" +
+      "  protected final int protectedField = 0;\n" +
+      "  final int packagePrivateField = 0;\n" +
       "\n" +
       "  /**" +
       RainbowHighlighter.generatePaletteExample("\n   * ") + "\n" +
@@ -199,7 +209,8 @@ public class JavaColorSettingsPage implements RainbowColorSettingsPage, Inspecti
       "    int <reassignedLocalVar>reassignedValue</reassignedLocalVar> = this.<warning>staticField</warning> + <param>param2</param> + <param>param3</param>;\n" +
       "    long <localVar>localVar1</localVar>, <localVar>localVar2</localVar>, <localVar>localVar3</localVar>, <localVar>localVar4</localVar>;\n" +
       "    <error>int <localVar>localVar</localVar> = \"IntelliJ\"</error>; // Error, incompatible types\n" +
-      "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<field>anotherString</field> + <inherited_method>toString</inherited_method>() + <localVar>localVar</localVar>);\n" +
+      "    <class>System</class>.<static>out</static>.<methodCall>println</methodCall>(<private><field>anotherString</field></private> + <inherited_method>toString</inherited_method>() + <localVar>localVar</localVar>);\n" +
+      "    int <localVar>sum</localVar> = <protected><field>protectedField</field></protected> + <package_private><field>packagePrivateField</field></package_private> + <public><static>staticField</static></public>;\n" + 
       "    long <localVar>time</localVar> = <static_imported_method><deprecated>parse</deprecated></static_imported_method>(\"1.2.3\"); // Method is deprecated\n" +
       "    new <class>Thread</class>().<for_removal>countStackFrames</for_removal>(); // Method is deprecated and marked for removal\n" +
       "    <reassignedLocalVar>reassignedValue</reassignedLocalVar> ++; \n" +

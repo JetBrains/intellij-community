@@ -611,15 +611,16 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   }
 
   private @NotNull RelativePoint getBestPositionFor(@NotNull Editor editor) {
-    DataContext context = ((EditorEx)editor).getDataContext();
-    Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
-    if (dominantArea != null && !myRequestFocus) {
-      final JLayeredPane layeredPane = editor.getContentComponent().getRootPane().getLayeredPane();
-      return relativePointWithDominantRectangle(layeredPane, dominantArea);
+    if (editor instanceof EditorEx) {
+      DataContext context = ((EditorEx)editor).getDataContext();
+      Rectangle dominantArea = PlatformDataKeys.DOMINANT_HINT_AREA_RECTANGLE.getData(context);
+      if (dominantArea != null && !myRequestFocus) {
+        final JLayeredPane layeredPane = editor.getContentComponent().getRootPane().getLayeredPane();
+        return relativePointWithDominantRectangle(layeredPane, dominantArea);
+      }
     }
-    else {
-      return guessBestPopupLocation(editor);
-    }
+
+    return guessBestPopupLocation(editor);
   }
 
   private @NotNull RelativePoint guessBestPopupLocation(@NotNull Editor editor) {
@@ -658,16 +659,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
       return originalLocation;
     }
     return new Point(preferredBounds.x, adjustedY);
-  }
-
-  /**
-   * @see #addListener
-   * @deprecated use public API instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  protected void addPopupListener(@NotNull JBPopupListener listener) {
-    myListeners.add(listener);
   }
 
   private @NotNull RelativePoint relativePointWithDominantRectangle(@NotNull JLayeredPane layeredPane, @NotNull Rectangle bounds) {
@@ -1506,19 +1497,14 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     myMouseOutCanceller = null;
 
     if (myFinalRunnable != null) {
-      final ActionCallback typeAheadDone = new ActionCallback();
-      IdeFocusManager.getInstance(myProject).typeAheadUntil(typeAheadDone, "Abstract Popup Disposal");
-
       ModalityState modalityState = ModalityState.current();
       Runnable finalRunnable = myFinalRunnable;
 
       getFocusManager().doWhenFocusSettlesDown(() -> {
 
         if (ModalityState.current().equals(modalityState)) {
-          typeAheadDone.setDone();
           ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(finalRunnable);
         } else {
-          typeAheadDone.setRejected();
           LOG.debug("Final runnable of popup is skipped");
         }
         // Otherwise the UI has changed unexpectedly and the action is likely not applicable.

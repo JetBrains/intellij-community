@@ -3,12 +3,17 @@ package com.intellij.scopes;
 
 import com.intellij.ide.util.scopeChooser.ScopeChooserConfigurable;
 import com.intellij.ide.util.scopeChooser.ScopeConfigurable;
+import com.intellij.ide.util.scopeChooser.ScopeEditorPanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.MasterDetailsStateService;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.PatternPackageSet;
 import com.intellij.testFramework.LightJavaCodeInsightTestCase;
+import org.junit.Assert;
+
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
   public void testModified() throws ConfigurationException {
@@ -51,6 +56,26 @@ public class ScopeConfigurableTest extends LightJavaCodeInsightTestCase {
     }
     finally {
       manager.removeAllSets();
+    }
+  }
+
+  public void testCancel() throws InterruptedException {
+    ScopeEditorPanel panel = new ScopeEditorPanel(getProject(), DependencyValidationManager.getInstance(getProject()));
+    try {
+      AtomicBoolean wasNotCanceled = new AtomicBoolean();
+      panel.reset(new PatternPackageSet("java.util.*", PatternPackageSet.SCOPE_LIBRARY, null), () -> wasNotCanceled.set(true));
+      Thread.sleep(2); //ensure that Future was not canceled non started
+      panel.rebuild(false);
+      //Wait for the 'rebuild' task to complete. 
+      //If 'reset' was not canceled by rebuild, 'rebuild' would wait on sync TreeModelBuilder.createTreeModel
+      panel.waitForCompletion();   
+      if (wasNotCanceled.get()) {
+        Assert.fail("Model was not canceled by the consequent request");
+      }
+    }
+    finally {
+      panel.cancelCurrentProgress();
+      Disposer.dispose(panel);
     }
   }
 }

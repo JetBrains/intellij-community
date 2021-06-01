@@ -1,15 +1,14 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.core.script.logger
 import org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage
+import org.jetbrains.kotlin.idea.core.script.logger
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import kotlin.io.path.absolutePathString
+import kotlin.io.path.notExists
 
 class ScriptClassRootsBuilder(
     val project: Project,
@@ -37,18 +36,23 @@ class ScriptClassRootsBuilder(
     ) {
         sdks.addSdk(configuration.javaHome)
 
-        configuration.dependenciesClassPath.forEach {
-            val absolutePath = it.absolutePath
-            if (!it.exists()) {
+        configuration.dependenciesClassPath.forEach { file ->
+            val path = file.toPath()
+            val absolutePath = path.absolutePathString()
+            if (path.notExists()) {
                 logger.warn("configuration dependency classpath $absolutePath does not exist")
             }
+
             classes.add(absolutePath)
         }
-        configuration.dependenciesSources.forEach {
-            val absolutePath = it.absolutePath
-            if (!it.exists()) {
+
+        configuration.dependenciesSources.forEach { file ->
+            val path = file.toPath()
+            val absolutePath = path.absolutePathString()
+            if (path.notExists()) {
                 logger.warn("configuration dependency sources $absolutePath does not exist")
             }
+
             sources.add(absolutePath)
         }
 

@@ -10,6 +10,8 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.textmate.TextMateFileType;
 import org.jetbrains.plugins.textmate.language.preferences.TextMateBracePair;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateElementType;
+import org.jetbrains.plugins.textmate.language.syntax.lexer.TextMateScope;
 
 public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
   @Override
@@ -26,8 +28,8 @@ public class TextMateBackspaceHandler extends BackspaceHandlerDelegate {
         return false;
       }
       final IElementType tokenType = iterator.getTokenType();
-      if (tokenType != null) {
-        String scopeSelector = tokenType.toString();
+      if (tokenType instanceof TextMateElementType) {
+        TextMateScope scopeSelector = ((TextMateElementType)tokenType).getScope();
         final TextMateBracePair pairForChar = TextMateEditorUtils.getSmartTypingPairForLeftChar(c, scopeSelector);
         if (pairForChar != null) {
           final Document document = editor.getDocument();

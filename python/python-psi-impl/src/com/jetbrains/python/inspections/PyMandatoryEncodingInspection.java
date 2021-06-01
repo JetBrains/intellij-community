@@ -39,11 +39,6 @@ import java.awt.event.ActionListener;
  */
 public class PyMandatoryEncodingInspection extends PyInspection {
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return true;
-  }
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder,

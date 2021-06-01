@@ -10,6 +10,7 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
 import com.intellij.openapi.startup.StartupActivity
@@ -17,6 +18,7 @@ import com.intellij.openapi.vcs.AbstractVcs
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsDirectoryMapping
 import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.annotations.NotNull
 
 internal class ModuleVcsDetector(private val project: Project) {
   private val vcsManager by lazy(LazyThreadSafetyMode.NONE) {
@@ -37,6 +39,7 @@ internal class ModuleVcsDetector(private val project: Project) {
       val busConnection = project.messageBus.connect()
       busConnection.subscribe(ProjectTopics.MODULES, listener)
       busConnection.subscribe(ProjectTopics.PROJECT_ROOTS, listener)
+      busConnection.subscribe(AdditionalLibraryRootsListener.TOPIC, listener)
 
       if (vcsDetector.vcsManager.needAutodetectMappings()) {
         vcsDetector.autoDetectVcsMappings(true)
@@ -44,7 +47,7 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
   }
 
-  private inner class MyModulesListener : ModuleRootListener, ModuleListener {
+  private inner class MyModulesListener : ModuleRootListener, ModuleListener, AdditionalLibraryRootsListener {
     private val myMappingsForRemovedModules: MutableList<VcsDirectoryMapping> = mutableListOf()
 
     override fun beforeRootsChange(event: ModuleRootEvent) {
@@ -52,6 +55,10 @@ internal class ModuleVcsDetector(private val project: Project) {
     }
 
     override fun rootsChanged(event: ModuleRootEvent) {
+      onRootsChanged()
+    }
+
+    private fun onRootsChanged() {
       myMappingsForRemovedModules.forEach { mapping -> vcsManager.removeDirectoryMapping(mapping) }
       // the check calculates to true only before user has done any change to mappings, i.e. in case modules are detected/added automatically
       // on start etc (look inside)
@@ -67,6 +74,13 @@ internal class ModuleVcsDetector(private val project: Project) {
 
     override fun beforeModuleRemoved(project: Project, module: Module) {
       myMappingsForRemovedModules.addAll(getMappings(module))
+    }
+
+    override fun libraryRootsChanged(presentableLibraryName: String?,
+                                     oldRoots: MutableCollection<out VirtualFile>,
+                                     newRoots: MutableCollection<out VirtualFile>,
+                                     libraryNameForDebug: @NotNull String) {
+      onRootsChanged()
     }
   }
 

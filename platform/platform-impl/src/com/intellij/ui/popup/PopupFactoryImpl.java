@@ -51,6 +51,7 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class PopupFactoryImpl extends JBPopupFactory {
@@ -138,14 +139,16 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                       final Runnable onNo,
                                       int defaultOptionIndex) {
     final BaseListPopupStep<String> step = new BaseListPopupStep<>(title, yesText, noText) {
+      boolean myRunYes;
       @Override
       public PopupStep onChosen(String selectedValue, final boolean finalChoice) {
-        return doFinalStep(selectedValue.equals(yesText) ? onYes : onNo);
+        myRunYes = selectedValue.equals(yesText);
+        return FINAL_CHOICE;
       }
 
       @Override
       public void canceled() {
-        onNo.run();
+        (myRunYes ? onYes : onNo).run();
       }
 
       @Override
@@ -410,6 +413,18 @@ public class PopupFactoryImpl extends JBPopupFactory {
     ListPopupImpl popup = new ListPopupImpl(step);
     popup.setMaxRowCount(maxRowCount);
     return popup;
+  }
+
+  @Override
+  public @NotNull ListPopup createListPopup(@NotNull Project project,
+                                            @NotNull ListPopupStep step,
+                                            @NotNull Function<ListCellRenderer, ListCellRenderer> cellRendererProducer) {
+    return new ListPopupImpl(project, step) {
+      @Override
+      protected ListCellRenderer<?> getListElementRenderer() {
+        return cellRendererProducer.apply(super.getListElementRenderer());
+      }
+    };
   }
 
   @NotNull

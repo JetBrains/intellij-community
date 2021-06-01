@@ -123,10 +123,10 @@ internal class PackageSearchRestService : RestService() {
             .getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(
                 PackageSearchBundle.message("packagesearch.title"),
-                pkg,
                 PackageSearchBundle.message("packagesearch.restService.readyForInstallation"),
                 NotificationType.INFORMATION
             )
+            .setSubtitle(pkg)
             .notify(project)
 }
 

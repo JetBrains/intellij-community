@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -23,6 +24,7 @@ import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.FocusWatcher;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -36,6 +38,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -568,8 +571,26 @@ public class EditorComposite implements Disposable {
 
     @Override
     public Color getBackground() {
-      Color color = EditorColorsManager.getInstance().getGlobalScheme().getColor(EditorColors.GUTTER_BACKGROUND);
+      EditorColorsScheme globalScheme = EditorColorsManager.getInstance().getGlobalScheme();
+      if (ExperimentalUI.isNewEditorTabs()) {
+        return globalScheme.getDefaultBackground();
+      }
+      Color color = globalScheme.getColor(EditorColors.GUTTER_BACKGROUND);
       return color == null ? EditorColors.GUTTER_BACKGROUND.getDefaultColor() : color;
+    }
+
+    @Override
+    protected void addImpl(Component comp, Object constraints, int index) {
+      super.addImpl(comp, constraints, index);
+      if (comp instanceof JComponent) {
+        List<ActionToolbarImpl> toolbars = UIUtil.findComponentsOfType((JComponent)comp, ActionToolbarImpl.class);
+        for (ActionToolbarImpl toolbar : toolbars) {
+          Color color = toolbar.getBackground();
+          if (JBColor.PanelBackground.equals(color) || color == null) {
+            toolbar.setBackground(new JBColor(() -> EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()));
+          }
+        }
+      }
     }
   }
 
@@ -579,6 +600,9 @@ public class EditorComposite implements Disposable {
       @Override
       public Color getLineColor() {
         EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+        if (ExperimentalUI.isNewEditorTabs()) {
+          return scheme.getDefaultBackground();
+        }
         Color result = scheme.getColor(top ? EditorColors.SEPARATOR_ABOVE_COLOR : EditorColors.SEPARATOR_BELOW_COLOR);
         if (result == null) result = scheme.getColor(EditorColors.TEARLINE_COLOR);
         return result == null ? JBColor.BLACK : result;

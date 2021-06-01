@@ -36,7 +36,7 @@ public class OutputEditor extends ModuleElementsEditor {
   private final AnnotationsEditor myAnnotationsEditor;
   private final List<ModuleElementsEditor> myEditors;
 
-  protected OutputEditor(final ModuleConfigurationState state) {
+  public OutputEditor(final ModuleConfigurationState state) {
     super(state);
     myCompilerOutputEditor = new BuildElementsEditor(state);
     myJavadocEditor = new JavadocEditor(state);

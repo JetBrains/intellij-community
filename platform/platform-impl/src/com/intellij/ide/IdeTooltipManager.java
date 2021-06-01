@@ -6,7 +6,6 @@ import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -100,7 +99,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
 
     app.getMessageBus().connect().subscribe(AnActionListener.TOPIC, new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         hideCurrent(null, action, event);
       }
     });

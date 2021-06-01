@@ -8,12 +8,11 @@ import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Processor
 import com.intellij.util.ThreeState
-import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyEvaluator
 import com.jetbrains.python.psi.stubs.PyDecoratorStubIndex
 import com.jetbrains.python.psi.types.TypeEvalContext
-import com.jetbrains.python.testing.PyTestFrameworkService
+import com.jetbrains.python.testing.PyTestFactory
 import com.jetbrains.python.testing.TestRunnerService
 import com.jetbrains.python.testing.isTestElement
 
@@ -75,8 +74,6 @@ private fun createFixture(decorator: PyDecorator): PyTestFixture? {
   }
 }
 
-private val pyTestName = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
-
 /**
  * Gets list of fixtures suitable for certain function.
  *
@@ -115,6 +112,6 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
 }
 
 internal fun isPyTestEnabled(module: Module) =
-  TestRunnerService.getInstance(module).projectConfiguration == pyTestName
+  TestRunnerService.getInstance(module).projectConfiguration == PyTestFactory.id
 
 

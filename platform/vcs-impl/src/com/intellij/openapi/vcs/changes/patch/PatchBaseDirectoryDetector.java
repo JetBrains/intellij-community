@@ -6,9 +6,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.Collection;
 
-/**
- * @author yole
- */
+
 public abstract class PatchBaseDirectoryDetector {
   public static PatchBaseDirectoryDetector getInstance(Project project) {
     return project.getService(PatchBaseDirectoryDetector.class);

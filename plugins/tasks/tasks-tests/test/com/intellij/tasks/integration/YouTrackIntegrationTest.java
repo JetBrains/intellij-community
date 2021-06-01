@@ -3,7 +3,6 @@ package com.intellij.tasks.integration;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.tasks.*;
 import com.intellij.tasks.impl.RequestFailedException;
@@ -45,7 +44,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testDefaultQueryResults() throws Exception {
-    Task[] results = myRepository.getIssues("", 0, 10, false, new EmptyProgressIndicator());
+    Task[] results = myRepository.getIssues("", 0, 10, false);
     Task assignedOpenBug = ContainerUtil.find(results, task -> task.getId().equals(Issues.ASSIGNED_OPEN_BUG));
     assertNotNull(assignedOpenBug);
 
@@ -60,7 +59,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testCustomQueryResults() throws Exception {
-    Task[] results = myRepository.getIssues("#Task", 0, 10, false, new EmptyProgressIndicator());
+    Task[] results = myRepository.getIssues("#Task", 0, 10, false);
     Task assignedOpenBug = ContainerUtil.find(results, task -> task.getId().equals(Issues.ASSIGNED_OPEN_BUG));
     assertNull(assignedOpenBug);
 
@@ -76,7 +75,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
 
   public void testInvalidQueryDoNotCauseRequestFailedExceptions() throws Exception {
     try {
-      Task[] results = myRepository.getIssues("#Tas", 0, 10, false, new EmptyProgressIndicator());
+      Task[] results = myRepository.getIssues("#Tas", 0, 10, false);
       assertEmpty(results);
     }
     catch (RequestFailedException e) {
@@ -85,8 +84,7 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
   }
 
   public void testDirectIssueIdQuery() throws Exception {
-    Task[] results = myRepository.getIssues("#" + Issues.ASSIGNED_OPEN_BUG, 0, 10,
-                                            false, new EmptyProgressIndicator());
+    Task[] results = myRepository.getIssues("#" + Issues.ASSIGNED_OPEN_BUG, 0, 10, false);
     Task onlyTask = assertOneElement(results);
     assertEquals(Issues.ASSIGNED_OPEN_BUG, onlyTask.getId());
   }
@@ -144,13 +142,13 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
 
   public void testUpdatingIssueState() throws Exception {
     Task task = myRepository.findTask(Issues.FOR_STATE_UPDATING);
-    assertEquals(TaskState.OPEN, task.getState());
-
-    Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
-    CustomTaskState fixedState = ContainerUtil.find(states, s -> s.getPresentableName().equals("Fixed"));
-    assertNotNull(fixedState);
-
     try {
+      assertEquals(TaskState.OPEN, task.getState());
+
+      Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
+      CustomTaskState fixedState = ContainerUtil.find(states, s -> s.getPresentableName().equals("Fixed"));
+      assertNotNull(fixedState);
+
       myRepository.setTaskState(task, fixedState);
 
       task = myRepository.findTask(Issues.FOR_STATE_UPDATING);
@@ -163,13 +161,13 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
 
   public void testWrappingErrors() throws Exception {
     Task task = myRepository.findTask(Issues.FOR_STATE_UPDATING);
-    assertEquals(TaskState.OPEN, task.getState());
-
-    Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
-    CustomTaskState fixedState = ContainerUtil.find(states, s -> s.getPresentableName().equals("Duplicate"));
-    assertNotNull(fixedState);
-
     try {
+      assertEquals(TaskState.OPEN, task.getState());
+
+      Set<CustomTaskState> states = myRepository.getAvailableTaskStates(task);
+      CustomTaskState fixedState = ContainerUtil.find(states, s -> s.getPresentableName().equals("Duplicate"));
+      assertNotNull(fixedState);
+
       myRepository.setTaskState(task, fixedState);
       fail("Setting 'Duplicate' state without an issue ID should fail");
     }
@@ -181,15 +179,15 @@ public class YouTrackIntegrationTest extends TaskManagerTestCase {
   public void testPagination() throws Exception {
     myRepository.setDefaultSearch("project: PGN sort by: created asc");
 
-    Task[] firstPage = myRepository.getIssues(null, 0, 5, false, new EmptyProgressIndicator());
+    Task[] firstPage = myRepository.getIssues(null, 0, 5, false);
     assertSize(5, firstPage);
     assertContainsOrdered(ContainerUtil.map(firstPage, Task::getId), "PGN-1", "PGN-2", "PGN-3", "PGN-4", "PGN-5");
 
-    Task[] secondPage = myRepository.getIssues(null, 5, 5, false, new EmptyProgressIndicator());
+    Task[] secondPage = myRepository.getIssues(null, 5, 5, false);
     assertSize(5, secondPage);
     assertContainsOrdered(ContainerUtil.map(secondPage, Task::getId), "PGN-6", "PGN-7", "PGN-8", "PGN-9", "PGN-10");
 
-    Task[] thirdPage = myRepository.getIssues(null, 10, 5, false, new EmptyProgressIndicator());
+    Task[] thirdPage = myRepository.getIssues(null, 10, 5, false);
     assertSize(2, thirdPage);
     assertContainsOrdered(ContainerUtil.map(thirdPage, Task::getId), "PGN-11", "PGN-12");
   }

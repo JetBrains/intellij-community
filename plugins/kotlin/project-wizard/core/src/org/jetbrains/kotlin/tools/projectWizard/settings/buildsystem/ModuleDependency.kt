@@ -1,30 +1,24 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem
 
 import org.jetbrains.kotlin.tools.projectWizard.core.*
-import org.jetbrains.kotlin.tools.projectWizard.core.asSingletonList
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.BuildSystemIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.DependencyType
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.GradleRootProjectDependencyIR
 import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.ModuleDependencyIR
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleBinaryExpressionIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleByClassTasksCreateIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleConfigureTaskIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
 import org.jetbrains.kotlin.tools.projectWizard.moduleConfigurators.*
-import org.jetbrains.kotlin.tools.projectWizard.mpp.mppSources
 import org.jetbrains.kotlin.tools.projectWizard.plugins.buildSystem.isGradle
-import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModuleSubType
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ModulesToIrConversionData
 import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 import org.jetbrains.kotlin.tools.projectWizard.plugins.projectPath
 import org.jetbrains.kotlin.tools.projectWizard.plugins.templates.TemplatesPlugin
-import org.jetbrains.kotlin.tools.projectWizard.settings.JavaPackage
-import org.jetbrains.kotlin.tools.projectWizard.settings.javaPackage
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplate
 import org.jetbrains.kotlin.tools.projectWizard.templates.FileTemplateDescriptor
-import org.jetbrains.kotlin.tools.projectWizard.templates.asSrcOf
 import java.nio.file.Path
 import kotlin.reflect.KClass
 
@@ -54,7 +48,8 @@ sealed class ModuleDependencyType(
         }.asSingletonList()
     }
 
-    open fun Writer.runArbitraryTask(
+    open fun runArbitraryTask(
+        writer: Writer,
         from: Module,
         to: Module,
         toModulePath: Path,
@@ -81,6 +76,11 @@ sealed class ModuleDependencyType(
         to = MppModuleConfigurator::class
     )
 
+    object AndroidTargetToMPP : ModuleDependencyType(
+        from = AndroidTargetConfiguratorBase::class,
+        to = MppModuleConfigurator::class
+    )
+
     object JVMSinglePlatformToMPP : ModuleDependencyType(
         from = JvmSinglePlatformModuleConfigurator::class,
         to = MppModuleConfigurator::class
@@ -94,25 +94,52 @@ sealed class ModuleDependencyType(
             from !in to.subModules
     }
 
-    object IOSToMppSinglePlatformToMPP : ModuleDependencyType(
+    abstract class IOSSinglePlatformToMPPBase(
+        from: KClass<out IOSSinglePlatformModuleConfiguratorBase>
+    ) : ModuleDependencyType(
+        from,
+        MppModuleConfigurator::class
+    ) {
+        protected fun Writer.updateReference(from: Module, to: Module) = inContextOfModuleConfigurator(from) {
+            IOSSinglePlatformModuleConfigurator.dependentModule.reference.update {
+                IOSSinglePlatformModuleConfiguratorBase.DependentModuleReference(to).asSuccess()
+            }
+        }
+
+        override fun runArbitraryTask(
+            writer: Writer,
+            from: Module,
+            to: Module,
+            toModulePath: Path,
+            data: ModulesToIrConversionData
+        ): TaskResult<Unit> =
+            writer.updateReference(from, to)
+
+        override fun additionalAcceptanceChecker(from: Module, to: Module): Boolean =
+            to.iosTargetSafe() != null
+
+        protected fun Module.iosTargetSafe(): Module? = subModules.firstOrNull { module ->
+            module.configurator.safeAs<NativeTargetConfigurator>()?.isIosTarget == true
+        }
+    }
+
+    object IOSSinglePlatformToMPP : IOSSinglePlatformToMPPBase(IOSSinglePlatformModuleConfiguratorBase::class)
+
+    object IOSWithXcodeSinglePlatformToMPP : IOSSinglePlatformToMPPBase(
         from = IOSSinglePlatformModuleConfigurator::class,
-        to = MppModuleConfigurator::class
     ) {
         override fun createDependencyIrs(from: Module, to: Module, data: ModulesToIrConversionData): List<BuildSystemIR> =
             emptyList()
 
-        override fun Writer.runArbitraryTask(
+        override fun runArbitraryTask(
+            writer: Writer,
             from: Module,
             to: Module,
             toModulePath: Path,
             data: ModulesToIrConversionData
         ): TaskResult<Unit> = compute {
-            inContextOfModuleConfigurator(from) {
-                IOSSinglePlatformModuleConfigurator.dependentModule.reference.update {
-                    IOSSinglePlatformModuleConfigurator.DependentModuleReference(to).asSuccess()
-                }
-            }.ensure()
-            addDummyFileIfNeeded(to, toModulePath).ensure()
+            super.runArbitraryTask(writer, from, to, toModulePath, data).ensure()
+            writer.addDummyFileIfNeeded(to, toModulePath)
         }
 
         private fun Writer.addDummyFileIfNeeded(
@@ -130,13 +157,6 @@ sealed class ModuleDependencyType(
                     )
                 )
             } else UNIT_SUCCESS
-        }
-
-        override fun additionalAcceptanceChecker(from: Module, to: Module): Boolean =
-            to.iosTargetSafe() != null
-
-        private fun Module.iosTargetSafe(): Module? = subModules.firstOrNull { module ->
-            module.configurator.safeAs<NativeTargetConfigurator>()?.isIosTarget == true
         }
 
         @OptIn(ExperimentalStdlibApi::class)
@@ -192,8 +212,10 @@ sealed class ModuleDependencyType(
             JVMSinglePlatformToJVMSinglePlatform,
             JVMSinglePlatformToMPP,
             AndroidSinglePlatformToMPP,
+            AndroidTargetToMPP,
             JVMTargetToMPP,
-            IOSToMppSinglePlatformToMPP
+            IOSWithXcodeSinglePlatformToMPP,
+            IOSSinglePlatformToMPP,
         )
 
         fun getPossibleDependencyType(from: Module, to: Module): ModuleDependencyType? =

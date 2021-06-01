@@ -17,8 +17,9 @@ package com.jetbrains.python.debugger;
 
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
-import com.intellij.execution.configurations.RunConfiguration;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CommonDataKeys;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -38,17 +39,30 @@ public class PyForceStepIntoAction extends ForceStepIntoAction {
         session.forceStepInto();
       }
 
-      @Override
-      public boolean isEnabled(@NotNull XDebugSession session, final DataContext dataContext) {
+      private boolean isPythonConfig(final DataContext dataContext) {
         Project project = CommonDataKeys.PROJECT.getData(dataContext);
+        if (project == null) return false;
         RunnerAndConfigurationSettings settings = RunManager.getInstance(project).getSelectedConfiguration();
         if (settings != null) {
-          RunConfiguration runConfiguration = settings.getConfiguration();
-          if (runConfiguration instanceof AbstractPythonRunConfiguration) {
-            return false;
-          }
+          return settings.getConfiguration() instanceof AbstractPythonRunConfiguration;
+        }
+        return false;
+      }
+
+      @Override
+      public boolean isEnabled(@NotNull XDebugSession session, final DataContext dataContext) {
+        if (isPythonConfig(dataContext)) {
+          return false;
         }
         return super.isEnabled(session, dataContext);
+      }
+
+      @Override
+      public boolean isHidden(@NotNull Project project, AnActionEvent event) {
+        if (isPythonConfig(event.getDataContext())) {
+          return true;
+        }
+        return super.isHidden(project, event);
       }
     };
   }

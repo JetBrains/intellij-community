@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -63,9 +63,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
+
+import static com.intellij.diff.tools.util.base.TextDiffViewerUtil.recursiveRegisterShortcutSet;
 
 public abstract class DiffRequestProcessor implements Disposable {
   private static final Logger LOG = Logger.getInstance(DiffRequestProcessor.class);
@@ -382,8 +383,27 @@ public abstract class DiffRequestProcessor implements Disposable {
 
   @NotNull
   protected List<AnAction> getNavigationActions() {
-    return Arrays.asList(new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(), Separator.getInstance(),
-                         new MyPrevChangeAction(), new MyNextChangeAction());
+    List<AnAction> actions = ContainerUtil.newArrayList(
+      new MyPrevDifferenceAction(), new MyNextDifferenceAction(), new MyOpenInEditorAction(),
+      Separator.getInstance(),
+      new MyPrevChangeAction(), new MyNextChangeAction());
+
+    AnAction goToChangeAction = createGoToChangeAction();
+    if (goToChangeAction != null) {
+      if (DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.DIFF_IN_EDITOR, getContext())) {
+        patchShortcutSet(goToChangeAction, "GotoClass", null);
+      }
+      ContainerUtil.addIfNotNull(actions, goToChangeAction);
+    }
+
+    return actions;
+  }
+
+  /**
+   * @see com.intellij.openapi.vcs.changes.actions.diff.ChangeGoToChangePopupAction
+   */
+  protected @Nullable AnAction createGoToChangeAction() {
+    return null;
   }
 
   //
@@ -506,7 +526,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     ((ActionToolbarImpl)myToolbar).clearPresentationCache();
     myToolbar.updateActionsImmediately();
 
-    ActionUtil.recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
+    recursiveRegisterShortcutSet(myToolbarGroup, myMainPanel, null);
   }
 
   @NotNull

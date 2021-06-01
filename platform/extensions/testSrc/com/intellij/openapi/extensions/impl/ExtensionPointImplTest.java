@@ -38,7 +38,7 @@ public class ExtensionPointImplTest {
   @Test
   public void testCreate() {
     ExtensionPointImpl<Integer> extensionPoint = buildExtensionPoint(Integer.class);
-    assertThat(extensionPoint.getName()).isEqualTo(ExtensionsImplTest.EXTENSION_POINT_NAME_1);
+    assertThat(extensionPoint.getName()).isEqualTo("ext.point.one");
     assertThat(extensionPoint.getClassName()).isEqualTo(Integer.class.getName());
   }
 
@@ -302,8 +302,7 @@ public class ExtensionPointImplTest {
   @Test
   public void keyedExtensionDisposable() {
     BeanExtensionPoint<KeyedLazyInstance<Integer>> extensionPoint =
-      new BeanExtensionPoint<>("foo", KeyedLazyInstance.class.getName(), new DefaultPluginDescriptor("test"), true);
-    extensionPoint.setComponentManager(new MyComponentManager());
+      new BeanExtensionPoint<>("foo", KeyedLazyInstance.class.getName(), new DefaultPluginDescriptor("test"), new MyComponentManager(), true);
     KeyedLazyInstance<Integer> extension = new KeyedLazyInstance<Integer>() {
       @Override
       public String getKey() {
@@ -323,10 +322,8 @@ public class ExtensionPointImplTest {
   }
 
   private static @NotNull <T> ExtensionPointImpl<T> buildExtensionPoint(@NotNull Class<T> aClass) {
-    InterfaceExtensionPoint<T> point = new InterfaceExtensionPoint<>(ExtensionsImplTest.EXTENSION_POINT_NAME_1, aClass.getName(),
-                                                                     new DefaultPluginDescriptor("test"), aClass, false);
-    point.setComponentManager(new MyComponentManager());
-    return point;
+    return new InterfaceExtensionPoint<>("ext.point.one", aClass.getName(), new DefaultPluginDescriptor("test"), new MyComponentManager(),
+                                         aClass, false);
   }
 
   private static MyShootingComponentAdapter newStringAdapter() {

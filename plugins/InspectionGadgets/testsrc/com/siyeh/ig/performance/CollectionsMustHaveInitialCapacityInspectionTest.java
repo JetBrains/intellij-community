@@ -61,6 +61,7 @@ public class CollectionsMustHaveInitialCapacityInspectionTest extends LightJavaI
     doStatementTest("new /*'new java.util.concurrent.ConcurrentHashMap()' without initial capacity*/java.util.concurrent.ConcurrentHashMap/**/();");
   }
 
+  @SuppressWarnings("UseOfObsoleteCollectionType")
   public void testMore() {
     doTest("import java.util.*;" +
            "class X {" +

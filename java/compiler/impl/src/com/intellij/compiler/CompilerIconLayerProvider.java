@@ -15,9 +15,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-/**
- * @author yole
- */
+
 public class CompilerIconLayerProvider implements IconLayerProvider {
   @Override
   public Icon getLayerIcon(@NotNull Iconable element, boolean isLocked) {

@@ -25,6 +25,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,6 +41,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     CompilerConfiguration.getInstance(myProject).addResourceFilePattern("!*.zzz");
   }
 
+  @Test
   public void testBasic() throws Exception {
     createProjectSubFile("src/main/resources/dir/file.properties");
 
@@ -51,6 +53,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/classes/dir/file.properties");
   }
 
+  @Test 
   public void testCustomResources() throws Exception {
     createProjectSubFile("res/dir1/file1.properties");
     createProjectSubFile("testRes/dir2/file2.properties");
@@ -74,6 +77,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/test-classes/dir2/file2.properties");
   }
 
+  @Test 
   public void testCopyWithFilteringIntoReadonlyTarget() throws Exception {
     final VirtualFile f = createProjectSubFile("res/dir1/file.properties", /*"Hello world"*/"Hello ${name}");
     final File srcFile = new File(f.getPath());
@@ -109,6 +113,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/classes/dir1/file.properties", "Hello, world");
   }
 
+  @Test 
   public void testCustomTargetPath() throws Exception {
     createProjectSubFile("res/dir/file.properties");
 
@@ -129,6 +134,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/classes/foo/dir/file.properties");
   }
 
+  @Test 
   public void testResourcesPluginCustomTargetPath() throws Exception {
     createProjectSubFile("res/dir/file.properties");
 
@@ -158,6 +164,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/resourceOutput/foo/dir/file.properties");
   }
 
+  @Test 
   public void testResourcesPluginGoalAbsoluteCustomTargetPath() throws Exception {
     createProjectSubFile("src/test/resources/dir/file.properties");
 
@@ -190,6 +197,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/test-classes/custom/dir/file.properties");
   }
 
+  @Test 
   public void testResourcesPluginGoalRelativeCustomTargetPath() throws Exception {
     createProjectSubFile("src/test/resources/dir/file.properties");
 
@@ -222,6 +230,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/test-classes/custom/dir/file.properties");
   }
 
+  @Test 
   public void testAbsoluteCustomTargetPath() throws Exception {
     createProjectSubFile("res/foo/file.properties");
 
@@ -242,6 +251,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/anotherDir/foo/file.properties");
   }
 
+  @Test 
   public void testMavenSpecifiedPattern() throws Exception {
     createProjectSubFile("res/subdir/a.txt");
     createProjectSubFile("res/b.txt");
@@ -267,6 +277,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/classes/b.txt");
   }
 
+  @Test 
   public void testMavenSpecifiedPatternEndSlash() throws Exception {
     createProjectSubFile("res/subdir/a.txt");
     createProjectSubFile("res/b.txt");
@@ -292,6 +303,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/classes/b.txt");
   }
 
+  @Test 
   public void testIncludesAndExcludes() throws Exception {
     createProjectSubFile("res/dir/file.xxx");
     createProjectSubFile("res/dir/file.yyy");
@@ -328,6 +340,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertNotCopied("target/classes/file.zzz");
   }
 
+  @Test 
   public void testDoNotCopyIgnoredFiles() throws Exception {
     createProjectSubFile("res/CVS/file.properties");
     createProjectSubFile("res/.svn/file.properties");
@@ -355,6 +368,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("target/classes/zzz/file.properties");
   }
 
+  @Test 
   public void testDeletingFilesThatWasCopiedAndThenDeleted() throws Exception {
     final VirtualFile file = createProjectSubFile("res/file.properties");
 
@@ -379,6 +393,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertNotCopied("target/classes/file.properties");
   }
 
+  @Test 
   public void testDeletingFilesThatWasCopiedAndThenExcluded() throws Exception {
     createProjectSubFile("res/file.properties");
 
@@ -417,6 +432,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertNotCopied("target/classes/file.properties");
   }
 
+  @Test 
   public void testDoNotCopyExcludedStandardResources() throws Exception {
 
     CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
@@ -448,6 +464,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertNotCopied("target/classes/file.zzz");
   }
 
+  @Test 
   public void testDoNotDeleteFilesFromOtherModulesOutput() throws Exception {
     createProjectSubFile("m1/resources/file.xxx");
     createProjectSubFile("m2/resources/file.yyy");
@@ -506,6 +523,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertCopied("m2/target/classes/file.yyy");
   }
 
+  @Test 
   public void testDoNotDeleteFilesFromOtherModulesOutputWhenOutputIsTheSame() throws Exception {
     createProjectSubFile("resources/file.xxx");
 
@@ -572,6 +590,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     });
   }
 
+  @Test 
   public void testWebResources() throws Exception {
     if (ignore()) return;
 
@@ -617,6 +636,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
     assertNotCopied("target/classes/file.txt");
   }
 
+  @Test 
   public void testOverridingWebResourceFilters() {
     if (ignore()) return;
 
@@ -661,6 +681,7 @@ public class ResourceCopyingTest extends MavenCompilingTestCase {
                      "</build>");
   }
 
+  @Test 
   public void testCopingNonMavenResources() throws Exception {
     if (ignore()) return;
 

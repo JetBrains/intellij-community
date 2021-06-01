@@ -25,6 +25,7 @@ import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -101,7 +102,6 @@ import static com.intellij.openapi.util.text.HtmlChunk.html;
  * You can create it using one of its static methods and pass title/description/link. This label can also be used in forms.
  * The UI designer will offer to create {@code private void createUIComponents()} method where you can create the label with a static method.</p>
  */
-
 public class HelpTooltip {
   private static final Color INFO_COLOR = JBColor.namedColor("ToolTip.infoForeground", UIUtil.getContextHelpForeground());
 
@@ -130,9 +130,8 @@ public class HelpTooltip {
   private final Alarm popupAlarm = new Alarm();
   private boolean isOverPopup;
   private boolean isMultiline;
-  private int myInitialDelay = Registry.intValue("ide.tooltip.initialReshowDelay");
-  private int myHideDelay = Registry.intValue("ide.tooltip.initialDelay.highlighter");
-  private int myDismissDelay;
+  private int myInitialDelay = -1;
+  private int myHideDelay = -1;
   private String myToolTipText;
   private boolean initialShowScheduled;
 
@@ -227,7 +226,9 @@ public class HelpTooltip {
    * @throws IllegalArgumentException if delay is less than zero
    */
   public HelpTooltip setInitialDelay(int delay) {
-    if (delay < 0) throw new IllegalArgumentException("Negative delay is not allowed");
+    if (delay < 0) {
+      throw new IllegalArgumentException("Negative delay is not allowed");
+    }
 
     myInitialDelay = delay;
     return this;
@@ -240,7 +241,9 @@ public class HelpTooltip {
    * @throws IllegalArgumentException if delay is less than zero
    */
   public HelpTooltip setHideDelay(int delay) {
-    if (delay < 0) throw new IllegalArgumentException("Negative delay is not allowed");
+    if (delay < 0) {
+      throw new IllegalArgumentException("Negative delay is not allowed");
+    }
 
     myHideDelay = delay;
     return this;
@@ -338,7 +341,6 @@ public class HelpTooltip {
   }
 
   private void installImpl(@NotNull JComponent component) {
-    initDismissDelay();
     neverHide = neverHide || UIUtil.isHelpButton(component);
 
     createMouseListeners();
@@ -348,10 +350,6 @@ public class HelpTooltip {
     installMouseListeners(component);
   }
 
-  protected final void initDismissDelay() {
-    myDismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
-  }
-
   protected final void createMouseListeners() {
     myMouseListener = new MouseAdapter() {
       @Override public void mouseEntered(MouseEvent e) {
@@ -359,11 +357,19 @@ public class HelpTooltip {
           myPopup.cancel();
         }
         initialShowScheduled = true;
-        scheduleShow(e, myInitialDelay);
+        int delay = myInitialDelay;
+        if (delay == -1) {
+          delay = Registry.intValue("ide.tooltip.initialReshowDelay", 500);
+        }
+        scheduleShow(e, delay);
       }
 
       @Override public void mouseExited(MouseEvent e) {
-        scheduleHide(link == null, myHideDelay);
+        int delay = myHideDelay;
+        if (delay == -1) {
+          delay = Registry.intValue("ide.tooltip.initialDelay.highlighter", 150);
+        }
+        scheduleHide(link == null, delay);
       }
 
       @Override public void mouseMoved(MouseEvent e) {
@@ -533,6 +539,9 @@ public class HelpTooltip {
 
   private void scheduleShow(MouseEvent e, int delay) {
     popupAlarm.cancelAllRequests();
+
+    if (ScreenReader.isActive()) return; // Disable HelpTooltip in screen reader mode.
+
     popupAlarm.addRequest(() -> {
       initialShowScheduled = false;
       if (masterPopupOpenCondition == null || masterPopupOpenCondition.getAsBoolean()) {
@@ -547,7 +556,8 @@ public class HelpTooltip {
         myPopup = myPopupBuilder.createPopup();
         myPopup.show(new RelativePoint(owner, alignment.getPointFor(owner, myPopupSize, e.getPoint())));
         if (!neverHide) {
-          scheduleHide(true, myDismissDelay);
+          int dismissDelay = Registry.intValue(isMultiline ? "ide.helptooltip.full.dismissDelay" : "ide.helptooltip.regular.dismissDelay");
+          scheduleHide(true, dismissDelay);
         }
       }
     }, delay);
@@ -561,7 +571,7 @@ public class HelpTooltip {
   protected void hidePopup(boolean force) {
     initialShowScheduled = false;
     popupAlarm.cancelAllRequests();
-    
+
     if (myPopup != null && myPopup.isVisible() && (!isOverPopup || force)) {
       myPopup.cancel();
       myPopup = null;

@@ -15,9 +15,6 @@ import com.intellij.util.xmlb.annotations.XMap
   storages = [Storage(StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED)],
 )
 class PluginFeatureService : SimplePersistentStateComponent<PluginFeatureService.State>(State()) {
-
-  private val featureMappingsCollected = mutableSetOf<String>()
-
   @Tag("features")
   class FeaturePluginsList : BaseState() {
 
@@ -65,8 +62,6 @@ class PluginFeatureService : SimplePersistentStateComponent<PluginFeatureService
     idMapping: (T) -> String,
     displayNameMapping: (T) -> String,
   ) {
-    if (!featureMappingsCollected.add(featureType)) return
-
     val pluginsList = state[featureType]
     ep.processWithPluginDescriptor { ext, descriptor ->
       pluginsList[idMapping(ext)] = FeaturePluginData(

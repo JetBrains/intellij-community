@@ -19,7 +19,6 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.indexing.IdFilter;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
@@ -51,7 +50,7 @@ public class PsiShortNamesCacheImpl extends PsiShortNamesCache {
     if (classes.isEmpty()) return PsiClass.EMPTY_ARRAY;
 
     List<PsiClass> result = new ArrayList<>(classes.size());
-    Map<String, List<PsiClass>> uniqueQName2Classes = new THashMap<>(classes.size());
+    Map<String, List<PsiClass>> uniqueQName2Classes = new HashMap<>(classes.size());
     Set<PsiClass> hiddenClassesToRemove = null;
 
     OuterLoop:

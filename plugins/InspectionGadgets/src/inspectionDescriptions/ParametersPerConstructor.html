@@ -1,7 +1,17 @@
 <html>
 <body>
 Reports constructors with too many parameters.
-Constructors with too many parameters can be a good sign that refactoring is necessary, e.g. applying the builder pattern.
+Constructors with too many parameters can be a good sign that refactoring is necessary, e.g. by applying the builder pattern.
+<p>For example:</p>
+<pre>
+  public BankAccount(long accountNumber, String owner, double balance, double interestRate) {
+    // fields initialization
+  }
+</pre>
+<p>
+Such object is hard to instantiate, especially if some parameters are optional. 
+It is better to rewrite such code using the builder pattern.
+</p>
 <!-- tooltip end -->
 <p>
 Use the field below to specify the maximum number of parameters a constructor is allowed to have.

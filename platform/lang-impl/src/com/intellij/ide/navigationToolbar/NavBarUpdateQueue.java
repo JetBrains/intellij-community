@@ -6,7 +6,6 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -252,15 +251,6 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     });
   }
 
-  public void queueTypeAheadDone(final ActionCallback done) {
-    queue(new AfterModelUpdate(ID.TYPE_AHEAD_FINISHED) {
-      @Override
-      protected void after() {
-        done.setDone();
-      }
-    });
-  }
-
   boolean isUpdating() {
     return myModelUpdating.get();
   }
@@ -289,8 +279,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
     SCROLL_TO_VISIBLE(4),
     SHOW_HINT(4),
     REQUEST_FOCUS(4),
-    NAVIGATE_INSIDE(4),
-    TYPE_AHEAD_FINISHED(5);
+    NAVIGATE_INSIDE(4);
 
     private final int myPriority;
 

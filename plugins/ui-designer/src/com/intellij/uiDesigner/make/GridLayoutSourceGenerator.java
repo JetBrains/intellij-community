@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.make;
 
 import com.intellij.uiDesigner.core.GridConstraints;
@@ -12,9 +12,7 @@ import org.jetbrains.annotations.NonNls;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 
-/**
- * @author yole
- */
+
 public final class GridLayoutSourceGenerator extends LayoutSourceGenerator {
   private static final Int2ObjectMap<String> myAnchors = fillMap(GridConstraints.class, "ANCHOR_");
   private static final Int2ObjectMap<String> myFills = fillMap(GridConstraints.class, "FILL_");

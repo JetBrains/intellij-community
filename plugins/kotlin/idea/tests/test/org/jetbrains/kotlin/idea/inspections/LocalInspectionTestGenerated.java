@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections;
 
@@ -4443,6 +4440,134 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/dfa")
+    public static class Dfa extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("andRange.kt")
+        public void testAndRange() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/andRange.kt");
+        }
+
+        @TestMetadata("assignment.kt")
+        public void testAssignment() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/assignment.kt");
+        }
+
+        @TestMetadata("basicForLoop.kt")
+        public void testBasicForLoop() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicForLoop.kt");
+        }
+
+        @TestMetadata("basicRange.kt")
+        public void testBasicRange() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicRange.kt");
+        }
+
+        @TestMetadata("booleanNot.kt")
+        public void testBooleanNot() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/booleanNot.kt");
+        }
+
+        @TestMetadata("boxing.kt")
+        public void testBoxing() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/boxing.kt");
+        }
+
+        @TestMetadata("boxing2.kt")
+        public void testBoxing2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/boxing2.kt");
+        }
+
+        @TestMetadata("boxing3.kt")
+        public void testBoxing3() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/boxing3.kt");
+        }
+
+        @TestMetadata("changeLocalInLambda.kt")
+        public void testChangeLocalInLambda() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/changeLocalInLambda.kt");
+        }
+
+        @TestMetadata("declaration.kt")
+        public void testDeclaration() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/declaration.kt");
+        }
+
+        @TestMetadata("divByZero.kt")
+        public void testDivByZero() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/divByZero.kt");
+        }
+
+        @TestMetadata("doWhileStatement.kt")
+        public void testDoWhileStatement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/doWhileStatement.kt");
+        }
+
+        @TestMetadata("doubleCompareInt.kt")
+        public void testDoubleCompareInt() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/doubleCompareInt.kt");
+        }
+
+        @TestMetadata("doubleCompareInt2.kt")
+        public void testDoubleCompareInt2() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/doubleCompareInt2.kt");
+        }
+
+        @TestMetadata("elvisSimple.kt")
+        public void testElvisSimple() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/elvisSimple.kt");
+        }
+
+        @TestMetadata("orRange.kt")
+        public void testOrRange() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/orRange.kt");
+        }
+
+        @TestMetadata("plusRange.kt")
+        public void testPlusRange() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/plusRange.kt");
+        }
+
+        @TestMetadata("prefixDecrement.kt")
+        public void testPrefixDecrement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/prefixDecrement.kt");
+        }
+
+        @TestMetadata("prefixIncrement.kt")
+        public void testPrefixIncrement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/prefixIncrement.kt");
+        }
+
+        @TestMetadata("returnExpression.kt")
+        public void testReturnExpression() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/returnExpression.kt");
+        }
+
+        @TestMetadata("returnLiteral.kt")
+        public void testReturnLiteral() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/returnLiteral.kt");
+        }
+
+        @TestMetadata("shiftLeft.kt")
+        public void testShiftLeft() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/shiftLeft.kt");
+        }
+
+        @TestMetadata("unaryMinus.kt")
+        public void testUnaryMinus() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/unaryMinus.kt");
+        }
+
+        @TestMetadata("whileStatement.kt")
+        public void testWhileStatement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whileStatement.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/doubleNegation")
     public static class DoubleNegation extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -6573,114 +6698,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses")
-    public static class MoveSuspiciousCallableReferenceIntoParentheses extends AbstractLocalInspectionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("defaultParameter.kt")
-        public void testDefaultParameter() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/defaultParameter.kt");
-        }
-
-        @TestMetadata("expectedFunction.kt")
-        public void testExpectedFunction() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/expectedFunction.kt");
-        }
-
-        @TestMetadata("explicitThisReceiver.kt")
-        public void testExplicitThisReceiver() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/explicitThisReceiver.kt");
-        }
-
-        @TestMetadata("implicitThisReceiver.kt")
-        public void testImplicitThisReceiver() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/implicitThisReceiver.kt");
-        }
-
-        @TestMetadata("invalidFunctionReference.kt")
-        public void testInvalidFunctionReference() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/invalidFunctionReference.kt");
-        }
-
-        @TestMetadata("invalidFunctionReference2.kt")
-        public void testInvalidFunctionReference2() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/invalidFunctionReference2.kt");
-        }
-
-        @TestMetadata("invalidFunctionReference3.kt")
-        public void testInvalidFunctionReference3() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/invalidFunctionReference3.kt");
-        }
-
-        @TestMetadata("invalidFunctionReference4.kt")
-        public void testInvalidFunctionReference4() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/invalidFunctionReference4.kt");
-        }
-
-        @TestMetadata("it.kt")
-        public void testIt() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/it.kt");
-        }
-
-        @TestMetadata("lambdaInsideLambda.kt")
-        public void testLambdaInsideLambda() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/lambdaInsideLambda.kt");
-        }
-
-        @TestMetadata("lambdaInvoke.kt")
-        public void testLambdaInvoke() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/lambdaInvoke.kt");
-        }
-
-        @TestMetadata("lambdaWithArg.kt")
-        public void testLambdaWithArg() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/lambdaWithArg.kt");
-        }
-
-        @TestMetadata("multipleLines.kt")
-        public void testMultipleLines() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/multipleLines.kt");
-        }
-
-        @TestMetadata("noBody.kt")
-        public void testNoBody() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/noBody.kt");
-        }
-
-        @TestMetadata("noneCallableRef.kt")
-        public void testNoneCallableRef() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/noneCallableRef.kt");
-        }
-
-        @TestMetadata("normal.kt")
-        public void testNormal() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/normal.kt");
-        }
-
-        @TestMetadata("parameter.kt")
-        public void testParameter() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/parameter.kt");
-        }
-
-        @TestMetadata("parameter2.kt")
-        public void testParameter2() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/parameter2.kt");
-        }
-
-        @TestMetadata("parameterOuter.kt")
-        public void testParameterOuter() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/parameterOuter.kt");
-        }
-
-        @TestMetadata("variableReceiver.kt")
-        public void testVariableReceiver() throws Exception {
-            runTest("testData/inspectionsLocal/moveSuspiciousCallableReferenceIntoParentheses/variableReceiver.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/moveVariableDeclarationIntoWhen")
     public static class MoveVariableDeclarationIntoWhen extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -7773,6 +7790,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember3.kt");
         }
 
+        @TestMetadata("hasOuterClassCompanionObjectReference.kt")
+        public void testHasOuterClassCompanionObjectReference() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassCompanionObjectReference.kt");
+        }
+
         @TestMetadata("hasOuterClassMemberReference.kt")
         public void testHasOuterClassMemberReference() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReference.kt");
@@ -7808,6 +7830,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceInSuperTypeConstructorCall2.kt");
         }
 
+        @TestMetadata("hasOuterClassObjectReference.kt")
+        public void testHasOuterClassObjectReference() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassObjectReference.kt");
+        }
+
         @TestMetadata("hasOuterClassTypeReference.kt")
         public void testHasOuterClassTypeReference() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassTypeReference.kt");
@@ -7826,6 +7853,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("hasSuperJavaClassMemberReference2.kt")
         public void testHasSuperJavaClassMemberReference2() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasSuperJavaClassMemberReference2.kt");
+        }
+
+        @TestMetadata("inAnonymousObject.kt")
+        public void testInAnonymousObject() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/inAnonymousObject.kt");
         }
 
         @TestMetadata("inInnerClass.kt")
@@ -13473,6 +13505,114 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inspectionsLocal/suspiciousCallableReferenceInLambda")
+    public static class SuspiciousCallableReferenceInLambda extends AbstractLocalInspectionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("defaultParameter.kt")
+        public void testDefaultParameter() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/defaultParameter.kt");
+        }
+
+        @TestMetadata("expectedFunction.kt")
+        public void testExpectedFunction() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/expectedFunction.kt");
+        }
+
+        @TestMetadata("explicitThisReceiver.kt")
+        public void testExplicitThisReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/explicitThisReceiver.kt");
+        }
+
+        @TestMetadata("implicitThisReceiver.kt")
+        public void testImplicitThisReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/implicitThisReceiver.kt");
+        }
+
+        @TestMetadata("invalidFunctionReference.kt")
+        public void testInvalidFunctionReference() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invalidFunctionReference.kt");
+        }
+
+        @TestMetadata("invalidFunctionReference2.kt")
+        public void testInvalidFunctionReference2() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invalidFunctionReference2.kt");
+        }
+
+        @TestMetadata("invalidFunctionReference3.kt")
+        public void testInvalidFunctionReference3() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invalidFunctionReference3.kt");
+        }
+
+        @TestMetadata("invalidFunctionReference4.kt")
+        public void testInvalidFunctionReference4() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/invalidFunctionReference4.kt");
+        }
+
+        @TestMetadata("it.kt")
+        public void testIt() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/it.kt");
+        }
+
+        @TestMetadata("lambdaInsideLambda.kt")
+        public void testLambdaInsideLambda() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/lambdaInsideLambda.kt");
+        }
+
+        @TestMetadata("lambdaInvoke.kt")
+        public void testLambdaInvoke() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/lambdaInvoke.kt");
+        }
+
+        @TestMetadata("lambdaWithArg.kt")
+        public void testLambdaWithArg() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/lambdaWithArg.kt");
+        }
+
+        @TestMetadata("multipleLines.kt")
+        public void testMultipleLines() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/multipleLines.kt");
+        }
+
+        @TestMetadata("noBody.kt")
+        public void testNoBody() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/noBody.kt");
+        }
+
+        @TestMetadata("noneCallableRef.kt")
+        public void testNoneCallableRef() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/noneCallableRef.kt");
+        }
+
+        @TestMetadata("normal.kt")
+        public void testNormal() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/normal.kt");
+        }
+
+        @TestMetadata("parameter.kt")
+        public void testParameter() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/parameter.kt");
+        }
+
+        @TestMetadata("parameter2.kt")
+        public void testParameter2() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/parameter2.kt");
+        }
+
+        @TestMetadata("parameterOuter.kt")
+        public void testParameterOuter() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/parameterOuter.kt");
+        }
+
+        @TestMetadata("variableReceiver.kt")
+        public void testVariableReceiver() throws Exception {
+            runTest("testData/inspectionsLocal/suspiciousCallableReferenceInLambda/variableReceiver.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inspectionsLocal/suspiciousCollectionReassignment")
     public static class SuspiciousCollectionReassignment extends AbstractLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
@@ -13919,9 +14059,44 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryVariable/copyOfVar.kt");
         }
 
+        @TestMetadata("ifElse.kt")
+        public void testIfElse() throws Exception {
+            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse.kt");
+        }
+
+        @TestMetadata("ifElse2.kt")
+        public void testIfElse2() throws Exception {
+            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse2.kt");
+        }
+
+        @TestMetadata("ifElse3.kt")
+        public void testIfElse3() throws Exception {
+            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse3.kt");
+        }
+
+        @TestMetadata("ifElse4.kt")
+        public void testIfElse4() throws Exception {
+            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse4.kt");
+        }
+
+        @TestMetadata("ifElse5.kt")
+        public void testIfElse5() throws Exception {
+            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse5.kt");
+        }
+
         @TestMetadata("it.kt")
         public void testIt() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryVariable/it.kt");
+        }
+
+        @TestMetadata("lambda.kt")
+        public void testLambda() throws Exception {
+            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/lambda.kt");
+        }
+
+        @TestMetadata("lambda2.kt")
+        public void testLambda2() throws Exception {
+            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/lambda2.kt");
         }
 
         @TestMetadata("override.kt")
@@ -13954,9 +14129,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/unnecessaryVariable/topLevelCopy.kt");
         }
 
+        @TestMetadata("try.kt")
+        public void testTry() throws Exception {
+            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/try.kt");
+        }
+
         @TestMetadata("varCopy.kt")
         public void testVarCopy() throws Exception {
             runTest("testData/inspectionsLocal/unnecessaryVariable/varCopy.kt");
+        }
+
+        @TestMetadata("when.kt")
+        public void testWhen() throws Exception {
+            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/when.kt");
         }
 
         @TestMetadata("whenSubject.kt")

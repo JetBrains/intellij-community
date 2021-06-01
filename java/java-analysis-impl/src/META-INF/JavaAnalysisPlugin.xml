@@ -268,6 +268,7 @@
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
+    <workspaceModel.moduleExtensionBridgeFactory implementation="com.intellij.workspaceModel.ide.legacyBridge.impl.java.LanguageLevelModuleExtensionBridge$Companion"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
                      enabledByDefault="true" level="WARNING"

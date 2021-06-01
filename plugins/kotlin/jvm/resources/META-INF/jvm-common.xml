@@ -105,7 +105,6 @@
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.JvmPluginStartupActivity"/>
         <compilableFileTypesProvider implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilableFileTypesProvider" />
         <postStartupActivity implementation="org.jetbrains.kotlin.idea.compiler.KotlinCompilerStartupActivity"/>
-        <postStartupActivity implementation="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider"/>
 
         <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.debugger.KotlinAlternativeSourceNotificationProvider"/>
 
@@ -178,8 +177,12 @@
                    description="Continuation information provider possible values are: DISPATCHED_CONTINUATION, CANCELLABLE_CONTINUATION."
                    defaultValue="DISPATCHED_CONTINUATION"
                    restartRequired="false"/>
-      <registryKey key="kotlin.debugger.enable.class.name.oracle"
+      <registryKey key="kotlin.debugger.enable.class.name.calculator"
                    description="Use heuristic-based name provider instead of utilizing backend for figuring out breakpoint class names."
+                   defaultValue="true"
+                   restartRequired="false"/>
+      <registryKey key="kotlin.debugger.evaluator.enable.reflection.patching"
+                   description="Patch evaluated expression so it uses reflection for calls in order to call private members"
                    defaultValue="true"
                    restartRequired="false"/>
     </extensions>
@@ -224,4 +227,7 @@
                       interface="org.jetbrains.kotlin.idea.platform.testintegration.LightTestFramework" dynamic="true"/>
     </extensionPoints>
     <resource-bundle>messages.KotlinBundle</resource-bundle>
+    <projectListeners>
+        <listener class="org.jetbrains.kotlin.idea.scratch.ScratchFileModuleInfoProvider" topic="org.jetbrains.kotlin.idea.scratch.ScratchFileListener"/>
+    </projectListeners>
 </idea-plugin>

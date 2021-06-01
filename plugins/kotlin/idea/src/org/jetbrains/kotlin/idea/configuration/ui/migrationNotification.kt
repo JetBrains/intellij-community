@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2018 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration.ui
 
@@ -53,19 +50,14 @@ internal fun showMigrationNotification(project: Project, migrationInfo: Migratio
         .createNotification(
             KotlinBundle.message("configuration.migration.title.kotlin.migration"),
             "${KotlinBundle.message("configuration.migration.text.migrations.for.kotlin.code.are.available")}<br/><br/>$detectedChangeMessage",
-            NotificationType.WARNING,
-            null
+            NotificationType.WARNING
         )
-        .also { notification ->
-            notification.addAction(NotificationAction.createSimple(KotlinBundle.message("configuration.migration.text.run.migrations")) {
-                val projectContext = SimpleDataContext.getProjectContext(project)
-                val action = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)
-                Notification.fire(notification, action, projectContext)
-                KotlinMigrationProjectFUSCollector.logRun()
-
-                notification.expire()
-            })
-        }
+        .addAction(NotificationAction.createExpiring(KotlinBundle.message("configuration.migration.text.run.migrations")) { _, notification ->
+            val projectContext = SimpleDataContext.getProjectContext(project)
+            val action = ActionManager.getInstance().getAction(CodeMigrationAction.ACTION_ID)
+            Notification.fire(notification, action, projectContext)
+            KotlinMigrationProjectFUSCollector.logRun()
+        })
         .notify(project)
 }
 

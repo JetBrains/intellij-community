@@ -2,18 +2,20 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.jvm.JvmDfaMemoryStateImpl;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
+import com.intellij.codeInspection.dataFlow.lang.DfaListener;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaWrappedValue;
-import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.DefUseUtil;
@@ -26,7 +28,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import one.util.streamex.StreamEx;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,7 +38,7 @@ import static com.intellij.psi.CommonClassNames.JAVA_UTIL_COLLECTIONS;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
- * @author Gregory.Shrago
+ * Utility methods to support DFA on Java
  */
 public final class DfaUtil {
   public static @NotNull Collection<PsiExpression> getVariableValues(@Nullable PsiVariable variable, @Nullable PsiElement context) {
@@ -121,19 +122,6 @@ public final class DfaUtil {
       assignment);
   }
 
-  /**
-   * @deprecated use {@link NullabilityUtil#getExpressionNullability(PsiExpression, boolean)}
-   * Note that variable parameter is not used at all now.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2020.2")
-  @Deprecated
-  public static @NotNull Nullability checkNullability(final @Nullable PsiVariable variable, final @Nullable PsiElement context) {
-    if (context instanceof PsiExpression) {
-      return NullabilityUtil.getExpressionNullability((PsiExpression)context, true);
-    }
-    return Nullability.UNKNOWN;
-  }
-
   public static @NotNull Collection<PsiExpression> getPossibleInitializationElements(@NotNull PsiElement qualifierExpression) {
     if (qualifierExpression instanceof PsiMethodCallExpression) {
       return Collections.singletonList((PsiMethodCallExpression)qualifierExpression);
@@ -188,7 +176,7 @@ public final class DfaUtil {
 
     final var dfaRunner = new StandardDataFlowRunner(owner.getProject());
 
-    final class BlockNullabilityInterceptor implements DfaInterceptor<PsiExpression> {
+    final class BlockNullabilityListener implements JavaDfaListener {
       boolean hasNulls = false;
       boolean hasNotNulls = false;
       boolean hasUnknowns = false;
@@ -199,11 +187,16 @@ public final class DfaUtil {
                                     @NotNull PsiElement context,
                                     @NotNull DfaMemoryState state) {
         if (context == owner && expression != null) {
-          if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || state.isNotNull(value)) {
+          DfaNullability nullability = DfaNullability.fromDfType(state.getDfType(value));
+          if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || 
+              nullability == DfaNullability.NOT_NULL) {
             hasNotNulls = true;
           }
-          else if (state.isNull(value)) {
+          else if (nullability == DfaNullability.NULL) {
             hasNulls = true;
+          }
+          else if (nullability == DfaNullability.NULLABLE) {
+            hasNulls = hasNotNulls = true;
           }
           else {
             hasUnknowns = true;
@@ -211,8 +204,8 @@ public final class DfaUtil {
         }
       }
     }
-    var interceptor = new BlockNullabilityInterceptor();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, new JavaDfaInstructionVisitor(interceptor));
+    var interceptor = new BlockNullabilityListener();
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, interceptor);
 
     if (rc == RunnerResult.OK) {
       if (interceptor.hasNulls) {
@@ -236,7 +229,7 @@ public final class DfaUtil {
 
   /**
    * Returns a surrounding PSI element which should be analyzed via DFA
-   * (e.g. passed to {@link StandardDataFlowRunner#analyzeMethodRecursively(PsiElement, InstructionVisitor)}) to cover
+   * (e.g. passed to {@link StandardDataFlowRunner#analyzeMethodRecursively(PsiElement, DfaListener)}) to cover
    * given expression.
    *
    * @param expression expression to cover
@@ -274,7 +267,7 @@ public final class DfaUtil {
   public static DfaValue boxUnbox(DfaValue value, @NotNull DfType type) {
     if (TypeConstraint.fromDfType(type).isPrimitiveWrapper()) {
       if (value.getDfType() instanceof DfPrimitiveType) {
-        return value.getFactory().getWrapperFactory().createWrapper(type.meet(DfTypes.NOT_NULL_OBJECT), JvmSpecialField.UNBOX, value);
+        return value.getFactory().getWrapperFactory().createWrapper(type.meet(DfTypes.NOT_NULL_OBJECT), SpecialField.UNBOX, value);
       }
     }
     if (type instanceof DfPrimitiveType) {
@@ -286,7 +279,7 @@ public final class DfaUtil {
         }
       }
       if (value instanceof DfaWrappedValue || TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
-        return JvmSpecialField.UNBOX.createValue(value.getFactory(), value);
+        return SpecialField.UNBOX.createValue(value.getFactory(), value);
       }
       if (value.getDfType() instanceof DfReferenceType) {
         return value.getFactory().fromDfType(type);
@@ -328,11 +321,6 @@ public final class DfaUtil {
            JAVA_UTIL_COLLECTIONS.equals(field.getContainingClass().getQualifiedName());
   }
 
-  public static boolean isNaN(Object value) {
-    return value instanceof Double && ((Double)value).isNaN() ||
-           value instanceof Float && ((Float)value).isNaN();
-  }
-
   /**
    * @param poset input poset (mutable)
    * @param predicate non-strict partial order over the input poset
@@ -351,5 +339,37 @@ public final class DfaUtil {
       }
     }
     return poset;
+  }
+
+  public static @NotNull DfaMemoryState createStateWithEnabledAssertions(@NotNull DfaValueFactory factory) {
+    final DfaMemoryState initialState = new JvmDfaMemoryStateImpl(factory);
+    DfaVariableValue assertionStatus = AssertionDisabledDescriptor.getAssertionsDisabledVar(factory);
+    if (assertionStatus != null) {
+      initialState.applyCondition(assertionStatus.eq(DfTypes.FALSE));
+    }
+    return initialState;
+  }
+
+  /**
+   * Return the DfType of the value, automatically unboxing it (in terms of Java boxing), if necessary
+   * 
+   * @param state memory state
+   * @param value value to get the type of; if value is a primitive wrapper, it will be unboxed before fetching the DfType
+   * @return the DfType of the value within this memory state
+   */
+  public static @NotNull DfType getUnboxedDfType(DfaMemoryState state, @NotNull DfaValue value) {
+    if (value instanceof DfaWrappedValue && ((DfaWrappedValue)value).getSpecialField() == SpecialField.UNBOX) {
+      return state.getDfType(((DfaWrappedValue)value).getWrappedValue());
+    }
+    if (value instanceof DfaVariableValue && TypeConstraint.fromDfType(value.getDfType()).isPrimitiveWrapper()) {
+      return state.getDfType(SpecialField.UNBOX.createValue(value.getFactory(), value));
+    }
+    if (value instanceof DfaTypeValue) {
+      DfReferenceType refType = tryCast(value.getDfType(), DfReferenceType.class);
+      if (refType != null && refType.getSpecialField() == SpecialField.UNBOX) {
+        return refType.getSpecialFieldType();
+      }
+    }
+    return state.getDfType(value);
   }
 }

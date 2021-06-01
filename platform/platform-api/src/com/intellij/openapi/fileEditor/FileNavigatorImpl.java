@@ -13,11 +13,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.IdeFocusManager;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.List;
 
 import static com.intellij.openapi.fileEditor.OpenFileDescriptor.unfoldCurrentLine;
@@ -85,21 +82,9 @@ public class FileNavigatorImpl implements FileNavigator {
     for (FileEditor editor : editors) {
       if (editor instanceof TextEditor) {
         Editor e = ((TextEditor)editor).getEditor();
-        fileEditorManager.runWhenLoaded(e, () -> {
-          unfoldCurrentLine(e);
-          if (focusEditor) {
-            IdeFocusManager.getInstance(descriptor.getProject()).requestFocus(e.getContentComponent(), true);
-            Window ancestor = SwingUtilities.getWindowAncestor(e.getContentComponent());
-            if (ancestor != null) {
-              ancestor.toFront();
-            }
-          }
-        });
+        fileEditorManager.runWhenLoaded(e, () -> unfoldCurrentLine(e));
       }
     }
     return !editors.isEmpty();
   }
-
-
-
 }

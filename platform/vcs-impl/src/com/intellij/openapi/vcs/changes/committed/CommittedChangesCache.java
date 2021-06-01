@@ -41,9 +41,7 @@ import java.util.concurrent.TimeUnit;
 import static com.intellij.util.MessageBusUtil.invokeLaterIfNeededOnSyncPublisher;
 import static com.intellij.util.containers.ContainerUtil.unmodifiableOrEmptyList;
 
-/**
- * @author yole
- */
+
 @Service
 @State(
   name = "CommittedChangesCache",

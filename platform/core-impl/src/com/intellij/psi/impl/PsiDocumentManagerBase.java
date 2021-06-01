@@ -1126,7 +1126,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   }
 
   public void reparseFileFromText(@NotNull PsiFileImpl file) {
-    if (isCommitInProgress() || isFullReparseInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
+    if (isCommitInProgress()) throw new IllegalStateException("Re-entrant commit is not allowed");
 
     FileElement node = file.calcTreeElement();
     CharSequence text = node.getChars();

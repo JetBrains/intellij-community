@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -146,11 +146,20 @@ class StateMap private constructor(private val names: Array<String>, private val
       return null
     }
 
-    val prev = states.getAndUpdate(index) { state ->
-      when {
-        archive && state is Element -> archiveState(state).toByteArray()
-        !archive && state is ByteArray -> unarchiveState(state)
-        else -> state
+    val prev = if (archive) {
+      states.getAndUpdate(index) { state ->
+        when (state) {
+          is Element -> archiveState(state).toByteArray()
+          else -> state
+        }
+      }
+    }
+    else {
+      states.updateAndGet(index) { state ->
+        when (state) {
+          is ByteArray -> unarchiveState(state)
+          else -> state
+        }
       }
     }
     return prev as? Element

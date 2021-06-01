@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.inspections
 
@@ -15,7 +12,6 @@ import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.UsefulTestCase
-import gnu.trove.THashMap
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
@@ -24,7 +20,7 @@ import org.junit.runner.RunWith
 class InspectionDescriptionTest : LightPlatformTestCase() {
 
     fun testDescriptionsAndShortNames() {
-        val shortNames = THashMap<String, InspectionToolWrapper<InspectionProfileEntry, InspectionEP>>()
+        val shortNames = HashMap<String, InspectionToolWrapper<InspectionProfileEntry, InspectionEP>>()
 
         val inspectionTools = loadKotlinInspections()
         val errors = StringBuilder()
@@ -67,7 +63,7 @@ class InspectionDescriptionTest : LightPlatformTestCase() {
     }
 
     fun testExtensionPoints() {
-        val shortNames = THashMap<String, LocalInspectionEP>()
+        val shortNames = HashMap<String, LocalInspectionEP>()
 
         @Suppress("DEPRECATION")
         val inspectionEPs = Extensions.getExtensions(LocalInspectionEP.LOCAL_INSPECTION)

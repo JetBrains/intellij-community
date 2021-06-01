@@ -1,19 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -27,16 +12,19 @@ import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.IdeActions;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.ElementDescriptionUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.PsiElementProcessor;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -46,7 +34,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Function;
 
 public class GotoImplementationHandler extends GotoTargetHandler {
   @Override
@@ -187,16 +174,12 @@ public class GotoImplementationHandler extends GotoTargetHandler {
     private final GotoData myGotoData;
     private final PsiReference myReference;
 
-    // due to javac bug: java.lang.ClassFormatError: Illegal field name "com.intellij.codeInsight.navigation.GotoImplementationHandler$this" in class com/intellij/codeInsight/navigation/GotoImplementationHandler$ImplementationsUpdaterTask
-    @SuppressWarnings("Convert2Lambda")
     ImplementationsUpdaterTask(@NotNull GotoData gotoData, @NotNull Editor editor, int offset, final PsiReference reference) {
-      super(gotoData.source.getProject(), ImplementationSearcher.getSearchingForImplementations(),
-            createComparatorWrapper(Comparator.comparing(new Function<PsiElement, Comparable>() {
-                @Override
-                public Comparable apply(PsiElement e1) {
-                  return getRenderer(e1, gotoData).getComparingObject(e1);
-                }
-              })));
+      super(
+        gotoData.source.getProject(),
+        ImplementationSearcher.getSearchingForImplementations(),
+        createImplementationComparator(gotoData)
+      );
       myEditor = editor;
       myOffset = offset;
       myGotoData = gotoData;
@@ -230,5 +213,22 @@ public class GotoImplementationHandler extends GotoTargetHandler {
       String name = ElementDescriptionUtil.getElementDescription(myGotoData.source, UsageViewShortNameLocation.INSTANCE);
       return getChooserTitle(myGotoData.source, name, size, isFinished());
     }
+  }
+
+  private static @NotNull Comparator<PsiElement> createImplementationComparator(@NotNull GotoData gotoData) {
+    Comparator<PsiElement> projectContentComparator = projectElementsFirst(gotoData.source.getProject());
+    Comparator<PsiElement> presentationComparator = Comparator.comparing(element -> gotoData.getComparingObject(element));
+    Comparator<PsiElement> positionComparator = PsiUtilCore::compareElementsByPosition;
+    Comparator<PsiElement> result = projectContentComparator.thenComparing(presentationComparator).thenComparing(positionComparator);
+    return wrapIntoReadAction(result);
+  }
+
+  public static @NotNull Comparator<PsiElement> projectElementsFirst(@NotNull Project project) {
+    FileIndexFacade index = FileIndexFacade.getInstance(project);
+    return Comparator.comparing((PsiElement element) -> index.isInContent(element.getContainingFile().getVirtualFile())).reversed();
+  }
+
+  private static <T> @NotNull Comparator<T> wrapIntoReadAction(@NotNull Comparator<T> base) {
+    return (e1, e2) -> ReadAction.compute(() -> base.compare(e1, e2));
   }
 }

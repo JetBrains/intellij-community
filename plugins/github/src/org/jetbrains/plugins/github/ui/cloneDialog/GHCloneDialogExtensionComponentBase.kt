@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.ui.cloneDialog
 
+import com.intellij.collaboration.auth.AccountsListener
+import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.dvcs.repo.ClonePathProvider
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
@@ -51,8 +53,6 @@ import org.jetbrains.plugins.github.api.data.request.Affiliation
 import org.jetbrains.plugins.github.api.data.request.GithubRequestPagination
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.authentication.accounts.AccountRemovedListener
-import org.jetbrains.plugins.github.authentication.accounts.AccountTokenChangedListener
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider
 import org.jetbrains.plugins.github.exceptions.GithubMissingTokenException
@@ -74,8 +74,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   private val accountInformationProvider: GithubAccountInformationProvider,
   private val avatarLoader: CachingGHUserAvatarLoader
 ) : VcsCloneDialogExtensionComponent(),
-    AccountRemovedListener,
-    AccountTokenChangedListener {
+    AccountsListener<GithubAccount> {
 
   private val LOG = GithubUtil.LOG
 
@@ -157,8 +156,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       row {
         cell(isFullWidth = true) {
           searchField.textEditor(pushX, growX)
-          JSeparator(JSeparator.VERTICAL)(growY).withLargeLeftGap()
-          accountsPanel().withLargeLeftGap()
+          JSeparator(JSeparator.VERTICAL)(growY)
+          accountsPanel()
         }
       }
       row {
@@ -186,12 +185,15 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     }
   }
 
-  override fun accountRemoved(removedAccount: GithubAccount) {
-    removeAccount(removedAccount)
-    dialogStateListener.onListItemChanged()
+  override fun onAccountListChanged(old: Collection<GithubAccount>, new: Collection<GithubAccount>) {
+    val removed = old - new
+    if (removed.isNotEmpty()) {
+      removeAccounts(removed)
+      dialogStateListener.onListItemChanged()
+    }
   }
 
-  override fun tokenChanged(account: GithubAccount) {
+  override fun onAccountCredentialsChanged(account: GithubAccount) {
     if (repositoriesByAccount[account] != null) return
 
     dialogStateListener.onListItemChanged()
@@ -240,13 +242,15 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     }
   }
 
-  private fun removeAccount(account: GithubAccount) {
-    repositoriesByAccount.remove(account)
-    accountComponents.remove(account).let {
-      accountsPanel.remove(it)
-      accountsPanel.revalidate()
-      accountsPanel.repaint()
+  private fun removeAccounts(accounts: Collection<GithubAccount>) {
+    for (account in accounts) {
+      repositoriesByAccount.remove(account)
+      accountComponents.remove(account).let {
+        accountsPanel.remove(it)
+      }
     }
+    accountsPanel.revalidate()
+    accountsPanel.repaint()
     refillRepositories()
     if (getAccounts().isEmpty()) switchToLogin(null)
   }
@@ -293,7 +297,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
                                                                          pagination = GithubRequestPagination.DEFAULT)
         val pageItemsConsumer: (List<GithubRepo>) -> Unit = {
           runInEdt {
-            repositoriesByAccount.getOrPut(account, { UpdateOrderLinkedHashSet() }).addAll(it)
+            repositoriesByAccount.getOrPut(account) { UpdateOrderLinkedHashSet() }.addAll(it)
             refillRepositories()
           }
         }
@@ -475,7 +479,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
       }
       else {
         if (account != authenticationManager.getDefaultAccount(project)) {
-          accountActions += Action(GithubBundle.message("accounts.set.default"),
+          accountActions += Action(CollaborationToolsBundle.message("accounts.set.default"),
                                    { authenticationManager.setDefaultAccount(project, account) })
         }
         accountActions += Action(GithubBundle.message("open.on.github.action"), { BrowserUtil.browse(user.htmlUrl) },

@@ -7,9 +7,9 @@ import com.intellij.openapi.roots.impl.DirectoryIndexExcludePolicy
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.SourceRootEntity
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 
@@ -67,8 +67,14 @@ internal class ContentEntryBridge(internal val model: ModuleRootModelBridge,
   override fun getSourceFolders(rootTypes: Set<JpsModuleSourceRootType<*>>): List<SourceFolder> = sourceFolders.filter { it.rootType in rootTypes }
   override fun getSourceFolderFiles() = sourceFolders.mapNotNull { it.file }.toTypedArray()
 
-  override fun <P : JpsElement?> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder = throwReadonly()
-  override fun <P : JpsElement?> addSourceFolder(url: String, type: JpsModuleSourceRootType<P>, properties: P): SourceFolder = throwReadonly()
+  override fun <P : JpsElement?> addSourceFolder(file: VirtualFile,
+                                                 type: JpsModuleSourceRootType<P>,
+                                                 properties: P): SourceFolder = throwReadonly()
+
+  override fun <P : JpsElement?> addSourceFolder(url: String,
+                                                 type: JpsModuleSourceRootType<P>,
+                                                 properties: P): SourceFolder = throwReadonly()
+
   override fun addSourceFolder(file: VirtualFile, isTestSource: Boolean) = throwReadonly()
   override fun addSourceFolder(file: VirtualFile, isTestSource: Boolean, packagePrefix: String): SourceFolder = throwReadonly()
   override fun <P : JpsElement?> addSourceFolder(file: VirtualFile, type: JpsModuleSourceRootType<P>) = throwReadonly()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom.refactorings.introduce;
 
 import com.intellij.openapi.project.Project;
@@ -16,7 +16,6 @@ import com.intellij.util.StringLenComparator;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
 import com.intellij.util.xml.DomUtil;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
@@ -30,6 +29,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 
 public class IntroducePropertyDialog extends DialogWrapper {
@@ -96,7 +96,7 @@ public class IntroducePropertyDialog extends DialogWrapper {
   }
 
   private String[] getSuggestions(int level) {
-    Collection<String> result = new THashSet<>();
+    Collection<String> result = new HashSet<>();
 
     String value = mySelectedString.trim();
     boolean addUnqualifiedForm = true;

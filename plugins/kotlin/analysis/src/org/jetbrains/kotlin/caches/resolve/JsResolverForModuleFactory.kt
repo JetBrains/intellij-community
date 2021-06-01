@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.caches.resolve
 
@@ -27,7 +24,8 @@ import org.jetbrains.kotlin.resolve.lazy.declarations.DeclarationProviderFactory
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
 import org.jetbrains.kotlin.serialization.js.createKotlinJavascriptPackageFragmentProvider
 import org.jetbrains.kotlin.utils.KotlinJavascriptMetadataUtils
-import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 private val LOG = Logger.getInstance(JsResolverForModuleFactory::class.java)
 
@@ -84,7 +82,7 @@ internal fun <M : ModuleInfo> createPackageFragmentProvider(
             JsPlatforms.defaultJsPlatform.idePlatformKind.resolution.createKlibPackageFragmentProvider(
                 moduleInfo,
                 moduleContext.storageManager,
-                container.get<LanguageVersionSettings>(),
+                container.get(),
                 moduleDescriptor
             )
         )
@@ -92,7 +90,7 @@ internal fun <M : ModuleInfo> createPackageFragmentProvider(
     is LibraryModuleInfo -> {
         moduleInfo.getLibraryRoots()
             .flatMap {
-                if (File(it).exists()) {
+                if (Path(it).exists()) {
                     KotlinJavascriptMetadataUtils.loadMetadata(it)
                 } else {
                     // TODO can/should we warn a user about a problem in a library root? If so how?

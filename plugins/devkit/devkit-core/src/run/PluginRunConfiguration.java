@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.run;
 
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
@@ -24,6 +24,7 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.xml.XmlFile;
@@ -45,7 +46,6 @@ import java.io.IOException;
 import java.util.List;
 
 import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
-import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
   private static final String NAME = "name";
@@ -158,7 +158,7 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
 
         if (!fromIdeaProject) {
           String bootPath = "/lib/boot.jar";
-          String bootJarPath = ideaJdkHome + toSystemDependentName(bootPath);
+          String bootJarPath = ideaJdkHome + FileUtil.toSystemDependentName(bootPath);
           if (new File(bootJarPath).exists()) {
             //there is no need to add boot.jar in modern IDE builds (181.*)
             vm.add("-Xbootclasspath/a:" + bootJarPath);
@@ -178,14 +178,12 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
         }
 
         if (SystemInfo.isMac) {
-          vm.defineProperty("idea.smooth.progress", "false");
           vm.defineProperty("apple.laf.useScreenMenuBar", "true");
           vm.defineProperty("apple.awt.fileDialogForDirectories", "true");
         }
 
         if (SystemInfo.isXWindow) {
-          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) // NON-NLS
-          {
+          if (VM_PARAMETERS == null || !VM_PARAMETERS.contains("-Dsun.awt.disablegrab")) {
             vm.defineProperty("sun.awt.disablegrab", "true"); // See http://devnet.jetbrains.net/docs/DOC-1142
           }
         }
@@ -212,9 +210,8 @@ public class PluginRunConfiguration extends RunConfigurationBase<Element> implem
           }
         }
         else {
-          for (String path : List.of("log4j.jar", "jdom.jar", "trove4j.jar", "openapi.jar", "util.jar", "bootstrap.jar",
-                                     "idea_rt.jar", "idea.jar")) {
-            params.getClassPath().add(ideaJdkHome + toSystemDependentName("/lib/" + path));
+          for (String path : List.of("openapi.jar", "util.jar", "bootstrap.jar", "idea_rt.jar", "idea.jar")) {
+            params.getClassPath().add(ideaJdkHome + FileUtil.toSystemDependentName("/lib/" + path));
           }
         }
         params.getClassPath().addFirst(((JavaSdkType)usedIdeaJdk.getSdkType()).getToolsPath(usedIdeaJdk));

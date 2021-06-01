@@ -15,20 +15,15 @@
  */
 
 import org.apache.tools.ant.taskdefs.condition.Os
-import org.gradle.util.GFileUtils
 import javax.inject.Inject
 
 repositories {
   maven { url 'https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/' }
-  maven { url 'https://cache-redirector.jetbrains.com/kotlin.bintray.com/kotlin-plugin/' }
-  maven { url 'https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-eap' }
-  maven { url 'https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-bootstrap' }
 }
 
 configurations {
   androidLayoutlib
   androidSdk
-  kotlinDeps
 }
 
 def osFamily = 'linux'
@@ -38,43 +33,12 @@ if (Os.isFamily(Os.FAMILY_WINDOWS)){
   osFamily = 'darwin'
 }
 
-// infer kotlin_version from kotlin-plugin (e.g. "1.4.10" in "203-1.4.10-release-IJ2965:Ideadev")
-def kotlinVersionLen = kotlinCompilerBuild.indexOf("-release")
-if (kotlinVersionLen == -1) {
-  kotlinVersionLen = kotlinCompilerBuild.indexOf("-IJ")
-}
-
-ext.kotlin_version = kotlinCompilerBuild.substring(
-  4, // number of chars in "203-" string (or "202-" string or any other platform identifier with dash string)
-  kotlinVersionLen
-)
-ext.android_sdk_version = "${osFamily}.4.0.0.0"
-ext.android_layoutlib_version = "27.1.1.1"
+ext.android_sdk_version = "${osFamily}.4.2.0.0"
+ext.android_layoutlib_version = "27.2.0.1"
 
 dependencies {
   androidLayoutlib "org.jetbrains.intellij.deps.android.tools.base:layoutlib-resources:${android_layoutlib_version}"
   androidSdk "org.jetbrains.intellij.deps.android:android-sdk:${android_sdk_version}:@tar.gz"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-android-extensions-runtime:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-annotation-processing-gradle:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-build-common:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-compiler-runner:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-daemon-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-api:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-gradle-plugin-model:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-reflect:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-script-runtime:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-common:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-compiler-impl-embeddable:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-scripting-jvm:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-common:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk7:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-test:${kotlin_version}"
-  kotlinDeps "org.jetbrains.kotlin:kotlin-test-common:${kotlin_version}"
 }
 
 task syncAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androidLayoutlib], type: SyncAndroidSdkTask) {
@@ -104,19 +68,14 @@ task syncAndroidSdk(dependsOn: [configurations.androidSdk, configurations.androi
   }
 }
 
-// TODO introduce Kotlin plugin source dependency
-task setupAndroidPluginRuntimeForIdea(dependsOn: setupKotlinCompiler)
-
-// TODO introduce Kotlin plugin source dependency
-task syncKotlinPluginForAndroid(dependsOn: [setupKotlinCompiler, syncAndroidSdk], type: Sync) {
-  from "$buildDir/kotlin"
-  into "$buildDir/android-sdk/prebuilts/tools/common/kotlin-plugin"
+task setupAndroidPluginRuntimeForIdea {
+  // nothing to do
 }
 
 /**
  * This is entry point: invoke this task to setup android sdk and all the artifacts required to run android-plugin unit tests
  */
-task setupAndroidSdk(dependsOn: [syncAndroidSdk, syncKotlinPluginForAndroid])
+task setupAndroidSdk(dependsOn: [syncAndroidSdk])
 
 class CopyData implements Serializable {
   String from

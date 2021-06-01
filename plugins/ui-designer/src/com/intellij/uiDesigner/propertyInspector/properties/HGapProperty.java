@@ -7,11 +7,6 @@ import com.intellij.uiDesigner.radComponents.RadContainer;
 
 import java.awt.*;
 
-/**
- * @author Anton Katilin
- * @author Vladimir Kondratyev
- * @author yole
- */
 public final class HGapProperty extends AbstractIntProperty<RadContainer> {
   public static HGapProperty getInstance(Project project) {
     return project.getService(HGapProperty.class);

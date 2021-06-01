@@ -211,7 +211,7 @@ public class PackagingModifiableModelImpl implements PackagingModifiableModel {
 
     @Nullable
     @Override
-    public Artifact getModifiableCopy(Artifact artifact) {
+    public Artifact getModifiableCopy(@NotNull Artifact artifact) {
       return null;
     }
 

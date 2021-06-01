@@ -27,7 +27,7 @@ public abstract class TypedAction {
   private static final ExtensionPointName<EditorTypedHandlerBean> RAW_EP_NAME = new ExtensionPointName<>("com.intellij.rawEditorTypedHandler");
 
   private TypedActionHandler myRawHandler;
-  private TypedActionHandler myHandler;
+  private @NotNull TypedActionHandler myHandler;
   private boolean myHandlersLoaded;
 
   public static TypedAction getInstance() {
@@ -131,6 +131,7 @@ public abstract class TypedAction {
    *
    * @return the current typing handler.
    */
+  @NotNull
   public TypedActionHandler getHandler() {
     ensureHandlersLoaded();
     return myHandler;
@@ -145,7 +146,8 @@ public abstract class TypedAction {
    * @deprecated Use &lt;typedHandler&gt; extension point for registering typing handlers
    */
   @Deprecated
-  public TypedActionHandler setupHandler(TypedActionHandler handler) {
+  @NotNull
+  public TypedActionHandler setupHandler(@NotNull TypedActionHandler handler) {
     ensureHandlersLoaded();
     TypedActionHandler tmp = myHandler;
     myHandler = handler;
@@ -192,8 +194,7 @@ public abstract class TypedAction {
     }
   }
 
-  public final void actionPerformed(@Nullable final Editor editor, final char charTyped, @NotNull DataContext dataContext) {
-    if (editor == null) return;
+  public final void actionPerformed(@NotNull final Editor editor, final char charTyped, @NotNull DataContext dataContext) {
     Project project = CommonDataKeys.PROJECT.getData(dataContext);
     SlowOperations.allowSlowOperations(() -> FreezeLogger.getInstance().runUnderPerformanceMonitor(
       project, () -> myRawHandler.execute(editor, charTyped, dataContext)

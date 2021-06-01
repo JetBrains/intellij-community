@@ -99,11 +99,6 @@ public class PyCompatibilityInspection extends PyInspection {
     return (PyCompatibilityInspection)inspectionProfile.getUnwrappedTool(toolName, element);
   }
 
-  @Override
-  public boolean isEnabledByDefault() {
-    return false;
-  }
-
   private List<LanguageLevel> updateVersionsToProcess() {
     List<LanguageLevel> result = new ArrayList<>();
 

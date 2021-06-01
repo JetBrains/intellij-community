@@ -5,7 +5,6 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.remoteServer.agent.util.log.TerminalListener.TtyResizeHandler;
 import com.intellij.terminal.JBTerminalWidget;
 import com.jediterm.terminal.ProcessTtyConnector;
@@ -39,9 +38,7 @@ public class CloudTerminalRunner extends AbstractTerminalRunner<CloudTerminalPro
     this(project, pipeName, process, null, false);
   }
 
-  @NotNull
-  @Override
-  public JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable VirtualFile currentWorkingDirectory) {
+  public @NotNull JBTerminalWidget createTerminalWidget(@NotNull Disposable parent, @Nullable String currentWorkingDirectory) {
     return super.createTerminalWidget(parent, currentWorkingDirectory, myDeferSessionUntilFirstShown);
   }
 

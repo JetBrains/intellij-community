@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.daemon.impl.GutterIntentionAction;
@@ -367,6 +367,8 @@ public final class CachedIntentions {
         return 3;
       case LOW:
         return -3;
+      case ERROR_FIX_LESS_IMPORTANT_THAN_INSPECTION_FIX:
+        return IntentionGroup.INSPECTION.getPriority() - IntentionGroup.ERROR.getPriority() - 1;
       default:
         return 0;
     }

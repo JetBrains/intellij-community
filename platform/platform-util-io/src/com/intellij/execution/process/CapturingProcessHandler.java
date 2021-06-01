@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionException;
@@ -14,15 +14,13 @@ import java.nio.charset.Charset;
 
 /**
  * Utility class for running an external process and capturing its standard output and error streams.
- *
- * @author yole
  */
 public class CapturingProcessHandler extends OSProcessHandler {
   private final CapturingProcessRunner myProcessRunner;
 
   public CapturingProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
     super(commandLine);
-    myProcessRunner = new CapturingProcessRunner(this, processOutput -> createProcessAdapter(processOutput));
+    myProcessRunner = new CapturingProcessRunner(this);
   }
 
   /** @deprecated Use {@link #CapturingProcessHandler(Process, Charset, String)} instead */
@@ -38,7 +36,7 @@ public class CapturingProcessHandler extends OSProcessHandler {
    */
   public CapturingProcessHandler(@NotNull Process process, @Nullable Charset charset, /*@NotNull*/ String commandLine) {
     super(process, commandLine, charset);
-    myProcessRunner = new CapturingProcessRunner(this, processOutput -> createProcessAdapter(processOutput));
+    myProcessRunner = new CapturingProcessRunner(this);
   }
 
   protected CapturingProcessAdapter createProcessAdapter(ProcessOutput processOutput) {

@@ -26,8 +26,10 @@ import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
+import org.junit.Test;
 
 public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
+  @Test
   public void testBasic() throws Exception {
     createProjectSubDir("res");
 
@@ -50,6 +52,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, findTag("project.version"));
   }
 
+  @Test
   public void testTestResourceProperties() throws Exception {
     createProjectSubDir("res");
 
@@ -72,6 +75,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, findTag("project.version"));
   }
 
+  @Test
   public void testBasicAt() throws Exception {
     createProjectSubDir("res");
 
@@ -94,6 +98,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, findTag("project.version"));
   }
 
+  @Test
   public void testCorrectlyCalculatingBaseDir() throws Exception {
     createProjectSubDir("res");
 
@@ -117,6 +122,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, baseDir);
   }
 
+  @Test
   public void testResolvingToNonManagedParentProperties() throws Exception {
     createProjectSubDir("res");
 
@@ -158,6 +164,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, findTag(parent, "project.properties.parentProp"));
   }
 
+  @Test
   public void testResolvingToProfileProperties() throws Exception {
     createProjectSubDir("res");
 
@@ -191,6 +198,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertResolved(f, findTag(myProjectPom, "project.profiles[0].properties.profileProp", MavenDomProjectModel.class));
   }
 
+  @Test
   public void testDoNotResolveOutsideResources() throws Exception {
     createProjectSubDir("res");
 
@@ -212,6 +220,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertNoReferences(f, MavenPropertyPsiReference.class);
   }
 
+  @Test
   public void testDoNotResolveNonFilteredResources() throws Exception {
     createProjectSubDir("res");
 
@@ -233,6 +242,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertNoReferences(f, MavenPropertyPsiReference.class);
   }
 
+  @Test
   public void testUsingFilters() throws Exception {
     VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
 
@@ -263,6 +273,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     return property != null ? property.getPsiElement() : null;
   }
 
+  @Test
   public void testCompletionFromFilters() throws Exception {
     createProjectSubFile("filters/filter1.properties", "xxx=1");
     createProjectSubFile("filters/filter2.properties", "yyy=1");
@@ -291,6 +302,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertCompletionVariantsInclude(f, "xxx", "yyy");
   }
 
+  @Test
   public void testSearchingFromFilters() throws Exception {
     createProjectSubFile("filters/filter.properties", "xxx=1");
 
@@ -318,6 +330,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertSearchResultsInclude(filter, MavenDomUtil.findPropertyValue(myProject, f, "foo"), MavenDomUtil.findPropertyValue(myProject, f, "foo2"));
   }
 
+  @Test
   public void testCompletionAfterOpenBrace() throws Exception {
     createProjectSubDir("res");
 
@@ -340,6 +353,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertCompletionVariantsInclude(f, "project.version");
   }
 
+  @Test
   public void testCompletionAfterOpenBraceInTheBeginningOfFile() throws Exception {
     createProjectSubDir("res");
 
@@ -362,6 +376,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertCompletionVariantsInclude(f, "project.version");
   }
 
+  @Test
   public void testCompletionAfterOpenBraceInTheBeginningOfPropertiesFile() throws Exception {
     if (ignore()) return;
 
@@ -386,6 +401,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertCompletionVariantsInclude(f, "project.version");
   }
 
+  @Test
   public void testCompletionInEmptyFile() throws Exception {
     createProjectSubDir("res");
 
@@ -408,6 +424,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertCompletionVariantsDoNotInclude(f, "project.version");
   }
 
+  @Test
   public void testRenaming() throws Exception {
     createProjectSubDir("res");
 
@@ -456,6 +473,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertEquals("foo=abc${bar}abc", findPsiFile(f).getText());
   }
 
+  @Test
   public void testRenamingFilteredProperty() throws Exception {
     VirtualFile filter = createProjectSubFile("filters/filter.properties", "xxx=1");
     createProjectSubDir("res");
@@ -486,6 +504,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertEquals("bar=1", findPsiFile(filter).getText());
   }
 
+  @Test
   public void testCustomDelimiters() throws Exception {
     createProjectSubDir("res");
 
@@ -526,6 +545,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertTrue(ref.isSoft());
   }
 
+  @Test
   public void testDontUseDefaultDelimiter1() throws Exception {
     createProjectSubDir("res");
 
@@ -562,6 +582,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     assertNotNull(resolveReference(f, "pom.baseUri"));
   }
 
+  @Test
   public void testDoNotAddReferenceToDelimiterDefinition() {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
@@ -606,6 +627,7 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
     checkHighlighting();
   }
 
+  @Test
   public void testReferencesInXml() throws Exception {
     createProjectSubDir("res");
 

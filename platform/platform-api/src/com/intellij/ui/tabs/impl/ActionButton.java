@@ -128,7 +128,7 @@ class ActionButton extends IconButton implements ActionListener {
 
   private @NotNull AnActionEvent createAnEvent(InputEvent inputEvent, int modifiers) {
     Presentation presentation = myAction.getTemplatePresentation().clone();
-    DataContext context = DataManager.getInstance().getDataContext(myTabInfo.getComponent());
+    DataContext context = DataManager.getInstance().getDataContext(myButton);
     return new AnActionEvent(inputEvent, context, myPlace != null ? myPlace : ActionPlaces.UNKNOWN, presentation,
                              ActionManager.getInstance(), modifiers);
   }

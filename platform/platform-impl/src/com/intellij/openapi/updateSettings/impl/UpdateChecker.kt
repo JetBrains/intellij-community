@@ -414,15 +414,15 @@ object UpdateChecker {
                                                buildNumber: BuildNumber?,
                                                state: InstalledPluginsState,
                                                indicator: ProgressIndicator?) {
-    val requests = MarketplaceRequests.Instance
-    val marketplacePluginIds = requests.getMarketplacePlugins(indicator)
+    val marketplacePluginIds = MarketplaceRequests.Instance.getMarketplacePlugins(indicator)
     val idsToUpdate = updateable.keys.filter { it in marketplacePluginIds }.toSet()
-    val updates = requests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
+    val updates = MarketplaceRequests.getLastCompatiblePluginUpdate(idsToUpdate, buildNumber)
     updateable.forEach { (id, descriptor) ->
       val lastUpdate = updates.find { it.pluginId == id.idString }
       if (lastUpdate != null &&
-          (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor, buildNumber) > 0)) {
-        runCatching { requests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
+          (descriptor == null || PluginDownloader.compareVersionsSkipBrokenAndIncompatible(lastUpdate.version, descriptor,
+                                                                                           buildNumber) > 0)) {
+        runCatching { MarketplaceRequests.loadPluginDescriptor(id.idString, lastUpdate, indicator) }
           .onFailure { if (it !is HttpRequests.HttpStatusException || it.statusCode != HttpURLConnection.HTTP_NOT_FOUND) throw it }
           .onSuccess { prepareDownloader(state, it, buildNumber, toUpdate, toUpdateDisabled, indicator, null) }
       }
@@ -655,8 +655,9 @@ object UpdateChecker {
                                @NlsContexts.NotificationContent message: String,
                                vararg actions: NotificationAction) {
     val type = if (kind == NotificationKind.PLATFORM) NotificationType.IDE_UPDATE else NotificationType.INFORMATION
-    val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), type, null, displayId)
-    notification.collapseActionsDirection = Notification.CollapseActionsDirection.KEEP_LEFTMOST
+    val notification = getNotificationGroup().createNotification(title, XmlStringUtil.wrapInHtml(message), type)
+      .setDisplayId(displayId)
+      .setCollapseDirection(Notification.CollapseActionsDirection.KEEP_LEFTMOST)
     notification.whenExpired { ourShownNotifications.remove(kind, notification) }
     actions.forEach { notification.addAction(it) }
     notification.notify(project)

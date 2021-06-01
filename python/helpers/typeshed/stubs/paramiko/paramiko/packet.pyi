@@ -7,10 +7,10 @@ from cryptography.hazmat.primitives.ciphers import Cipher
 from paramiko.compress import ZlibCompressor, ZlibDecompressor
 from paramiko.message import Message
 
-if sys.version_info < (3, 0):
-    from hashlib import _hash as _Hash
-else:
+if sys.version_info >= (3, 0):
     from hashlib import _Hash
+else:
+    from hashlib import _hash as _Hash
 
 def compute_hmac(key: bytes, message: bytes, digest_class: _Hash) -> bytes: ...
 

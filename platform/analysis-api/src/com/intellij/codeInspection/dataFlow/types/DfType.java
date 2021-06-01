@@ -1,12 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.types;
 
+import com.intellij.codeInspection.dataFlow.value.DerivedVariableDescriptor;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
@@ -28,6 +30,9 @@ public interface DfType {
     public @NotNull DfType join(@NotNull DfType other) {
       return this;
     }
+
+    @Override
+    public @NotNull DfType tryJoinExactly(@NotNull DfType other) { return this; }
 
     @Override
     public @NotNull DfType meet(@NotNull DfType other) {
@@ -69,6 +74,9 @@ public interface DfType {
     }
 
     @Override
+    public @NotNull DfType tryJoinExactly(@NotNull DfType other) { return other; }
+
+    @Override
     public @NotNull DfType meet(@NotNull DfType other) {
       return this;
     }
@@ -102,6 +110,9 @@ public interface DfType {
     public @NotNull DfType join(@NotNull DfType other) {
       return other == this ? this : TOP;
     }
+
+    @Override
+    public @Nullable DfType tryJoinExactly(@NotNull DfType other) { return other == this ? this : other == NOT_FAIL ? TOP : null; }
 
     @Override
     public @NotNull DfType meet(@NotNull DfType other) {
@@ -140,6 +151,9 @@ public interface DfType {
     }
 
     @Override
+    public @NotNull DfType tryJoinExactly(@NotNull DfType other) { return join(other); }
+
+    @Override
     public @NotNull DfType meet(@NotNull DfType other) {
       return other == FAIL ? BOTTOM : this;
     }
@@ -165,6 +179,32 @@ public interface DfType {
   boolean isSuperType(@NotNull DfType other);
 
   /**
+   * @return true if this type contains only local objects (not leaked from the current context to unknown places)
+   * In particular, this means that the values of these types are never {@linkplain #mayAlias(DfType) aliased} 
+   * to any other values.
+   */
+  default boolean isLocal() {
+    return false;
+  }
+
+  /**
+   * @param otherType other type
+   * @return true if values qualified by this value might be affected by values qualified by otherType.
+   * For example, if both this and otherType are pointer types that may refer to the same memory location.
+   */
+  default boolean mayAlias(DfType otherType) {
+    return false;
+  }
+
+  /**
+   * @return true if values immediately qualified by this type, never change, 
+   * as long as qualifier never changes.
+   */
+  default boolean isImmutableQualifier() {
+    return false;
+  }
+
+  /**
    * @param constant
    * @return true given constant value may be contained by this supertype
    */
@@ -172,6 +212,18 @@ public interface DfType {
     return isSuperType(constant);
   }
 
+  /**
+   * Checks whether processing the other type is not necessary to get the same analysis result if some value
+   * has either this or other state at the same code location. {@code a.isMergeable(b)} implies 
+   * {@code a.isSuperType(b)}. In most cases, these methods are equivalent but the difference may appear in
+   * processing non-strict properties like nullability. E.g. (nullability == unknown) is supertype of
+   * (nullability == null) but it's not mergeable, as skipping (nullability == null) processing will remove
+   * "Possible NPE" warning.
+   * 
+   * @param other other type
+   * @return true if processing the other type is not necessary to get the same analysis result if some value
+   * has either this or other state at the same code location.
+   */
   default boolean isMergeable(@NotNull DfType other) {
     return isSuperType(other);
   }
@@ -185,6 +237,13 @@ public interface DfType {
   DfType join(@NotNull DfType other);
 
   /**
+   * Return the type that contains all values from this type and from other type and no other values.
+   * @param other type to join
+   * @return the result of the join operation; null if exact join cannot be represented
+   */
+  @Nullable DfType tryJoinExactly(@NotNull DfType other);
+
+  /**
    * Returns the least specific type that contains all values that belong both to this type and to other type.
    * @param other type to meet
    * @return the result of the meet operation.
@@ -195,6 +254,28 @@ public interface DfType {
   @NotNull
   default DfType fromRelation(@NotNull RelationType relationType) {
     return relationType == RelationType.EQ ? this : TOP;
+  }
+
+  /**
+   * @return true if equivalence relation on this type is not standard. That is,
+   * for constant values belonging to this type, {@code a.meetRelation(EQ, b) != a.equals(b)}
+   */
+  default boolean hasNonStandardEquivalence() {
+    return false;
+  }
+  
+  /**
+   * Narrows this value to the set of values that satisfies given relation
+   * 
+   * @param relationType relation applied
+   * @param other other operand (e.g., for {@code a < b} relation, this object is {@code a},
+   *              other is {@code b} and relationType is {@code <}.
+   * @return narrowed type containing only values that satisfy the relation 
+   * (may contain some more values if the exact type cannot be represented).
+   * For any {@code meetRelation} arguments, {@code this.isSuperType(this.meetRelation(...))} is true.
+   */
+  default @NotNull DfType meetRelation(@NotNull RelationType relationType, @NotNull DfType other) {
+    return meet(other.fromRelation(relationType));
   }
 
   /**
@@ -228,6 +309,67 @@ public interface DfType {
    */
   default <C> @Nullable C getConstantOfType(@NotNull Class<C> clazz) {
     return null;
+  }
+
+  /**
+   * Correct the inherent variable type when concrete variable state is flushed
+   * due to unknown code execution. This could be useful to handle non-strict 
+   * properties like nullability (e.g. if unstable nullable variable was checked for null,
+   * then unknown code was executed, then the variable should not probably reset to nullable)
+   * 
+   * @param typeBeforeFlush type the variable had before flush
+   * @return corrected inherent variable type; return this if no correction is necessary.
+   */
+  default DfType correctTypeOnFlush(DfType typeBeforeFlush) {
+    return this;
+  }
+
+  /**
+   * Correct the variable type that is passed from outer context to the closure 
+   * (e.g. drop the locality flag).
+   * 
+   * @return corrected variable type; return this if no correction is necessary.
+   */
+  default DfType correctForClosure() {
+    return this;
+  }
+
+  /**
+   * Correct the type after applying the relation depending on whether the relation was applied successfully.
+   * May be necessary to handle weird relation semantics, like with NaN in some languages.
+   * 
+   * @param relation relation applied
+   * @param result if true then the relation was applied successfully. E.g., for {@code a > b},
+   *               result is true for {@code a > b} state and false for {@code a < b} and for {@code a == b} states.
+   * @return corrected type; return this if no correction is necessary
+   */
+  default @NotNull DfType correctForRelationResult(@NotNull RelationType relation, boolean result) {
+    return this;
+  }
+
+  /**
+   * @return basic type for this type. Some types could represent several derived variables. For example,
+   * the type "string of length 3" could be decomposed to basic type "string" and derived variable "length"
+   * with value "3".
+   */
+  default @NotNull DfType getBasicType() {
+    return this;
+  }
+
+  /**
+   * @return list of possible derived variables that could be recorded inside this type.
+   * E.g. the type "string of length 3" records the derived variable "string length" inside.
+   */
+  default @NotNull List<@NotNull DerivedVariableDescriptor> getDerivedVariables() {
+    return List.of();
+  }
+
+  /**
+   * @param derivedDescriptor descriptor returned from {@link #getDerivedVariables()}
+   * @return value for derived variable, if known
+   */
+  default @NotNull DfType getDerivedValue(@NotNull DerivedVariableDescriptor derivedDescriptor) {
+    return TOP;
   }
 
   /**

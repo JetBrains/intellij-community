@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -36,10 +37,7 @@ import com.intellij.ui.tabs.impl.tabsLayout.TabsLayout;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutCallback;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutInfo;
 import com.intellij.ui.tabs.impl.tabsLayout.TabsLayoutSettingsManager;
-import com.intellij.util.Alarm;
-import com.intellij.util.Function;
-import com.intellij.util.MathUtil;
-import com.intellij.util.Producer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.ui.*;
@@ -227,15 +225,6 @@ public class JBTabsImpl extends JComponent
 
   private JBTabsImpl(@NotNull Project project, @NotNull Disposable parent) {
     this(project, IdeFocusManager.getInstance(project), parent);
-  }
-
-  /**
-   * @deprecated Do not pass ActionManager.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public JBTabsImpl(@Nullable Project project, @SuppressWarnings("unused") @NotNull ActionManager actionManager, IdeFocusManager focusManager, @NotNull Disposable parent) {
-    this(project, focusManager, parent);
   }
 
   public JBTabsImpl(@Nullable Project project, @Nullable IdeFocusManager focusManager, @NotNull Disposable parentDisposable) {
@@ -2287,7 +2276,7 @@ public class JBTabsImpl extends JComponent
 
   private void processRemove(final TabInfo info, boolean forcedNow) {
     TabLabel tabLabel = myInfo2Label.get(info);
-    remove(tabLabel);
+    ObjectUtils.consumeIfNotNull(tabLabel, label -> remove(label));
     remove(myInfo2Toolbar.get(info));
 
     JComponent tabComponent = info.getComponent();
@@ -2826,7 +2815,7 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public boolean isSingleRow() {
-    return mySingleRow;
+    return mySingleRow || ExperimentalUI.isNewEditorTabs();
   }
 
   public boolean isSideComponentVertical() {

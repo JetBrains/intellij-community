@@ -6,8 +6,10 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -248,6 +250,6 @@ public class LocalFileSystemImpl extends LocalFileSystemBase implements Disposab
       return VfsUtilCore.isAncestorOrSelf(symlinkTargetParent, parent);
     }
     // parent == null means name is root
-    return FileUtil.PATH_CHAR_SEQUENCE_HASHING_STRATEGY.equals(name, symlinkTarget);
+    return StringUtilRt.equal(name, symlinkTarget, SystemInfoRt.isFileSystemCaseSensitive);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
 import com.intellij.jarRepository.services.bintray.BintrayModel;
@@ -17,8 +17,6 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentEnumeratorBase;
 import com.intellij.util.io.PersistentHashMap;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,7 +39,7 @@ import static com.intellij.openapi.util.text.StringUtil.join;
 import static com.intellij.openapi.util.text.StringUtil.split;
 import static com.intellij.util.containers.ContainerUtil.notNullize;
 
-public class MavenIndex implements MavenSearchIndex {
+public final class MavenIndex implements MavenSearchIndex {
   private static final String CURRENT_VERSION = "5";
 
   protected static final String INDEX_INFO_FILE = "index.properties";
@@ -239,9 +237,10 @@ public class MavenIndex implements MavenSearchIndex {
   }
 
   @Override
-  public synchronized void close(boolean releaseIndexContext) {
+  public void close(boolean releaseIndexContext) {
+    IndexData data = myData;
     try {
-      if (myData != null) myData.close(releaseIndexContext);
+      if (data != null) data.close(releaseIndexContext);
     }
     catch (MavenIndexException e) {
       MavenLog.LOG.warn(e);
@@ -443,9 +442,9 @@ public class MavenIndex implements MavenSearchIndex {
 
   private void doUpdateIndexData(IndexData data,
                                  MavenProgressIndicator progress) throws IOException, MavenServerIndexerException {
-    final Map<String, Set<String>> groupToArtifactMap = new THashMap<>();
-    final Map<String, Set<String>> groupWithArtifactToVersionMap = new THashMap<>();
-    final Map<String, Set<String>> archetypeIdToDescriptionMap = new THashMap<>();
+    final Map<String, Set<String>> groupToArtifactMap = new HashMap<>();
+    final Map<String, Set<String>> groupWithArtifactToVersionMap = new HashMap<>();
+    final Map<String, Set<String>> archetypeIdToDescriptionMap = new HashMap<>();
 
     progress.pushState();
     progress.setIndeterminate(true);
@@ -489,7 +488,7 @@ public class MavenIndex implements MavenSearchIndex {
   }
 
   private static <T> Set<T> getOrCreate(Map<String, Set<T>> map, String key) {
-    return map.computeIfAbsent(key, k -> new THashSet<>());
+    return map.computeIfAbsent(key, k -> new HashSet<>());
   }
 
   private static <T> void persist(Map<String, T> map, PersistentHashMap<String, T> persistentMap) throws IOException {
@@ -547,7 +546,7 @@ public class MavenIndex implements MavenSearchIndex {
 
   private static void addToCache(PersistentHashMap<String, Set<String>> cache, String key, String value) throws IOException {
     Set<String> values = cache.get(key);
-    if (values == null) values = new THashSet<>();
+    if (values == null) values = new HashSet<>();
     values.add(value);
     cache.put(key, values);
   }
@@ -610,7 +609,7 @@ public class MavenIndex implements MavenSearchIndex {
 
   public synchronized Set<MavenArchetype> getArchetypes() {
     return doIndexTask(() -> {
-      Set<MavenArchetype> archetypes = new THashSet<>();
+      Set<MavenArchetype> archetypes = new HashSet<>();
       for (String ga : myData.archetypeIdToDescriptionMap.getAllKeysWithExistingMapping()) {
         List<String> gaParts = split(ga, ":");
 
@@ -671,9 +670,9 @@ public class MavenIndex implements MavenSearchIndex {
     final PersistentHashMap<String, Set<String>> groupWithArtifactToVersionMap;
     final PersistentHashMap<String, Set<String>> archetypeIdToDescriptionMap;
 
-    final Map<String, Boolean> hasGroupCache = new THashMap<>();
-    final Map<String, Boolean> hasArtifactCache = new THashMap<>();
-    final Map<String, Boolean> hasVersionCache = new THashMap<>();
+    final Map<String, Boolean> hasGroupCache = new HashMap<>();
+    final Map<String, Boolean> hasArtifactCache = new HashMap<>();
+    final Map<String, Boolean> hasVersionCache = new HashMap<>();
 
     private final int indexId;
 
@@ -757,10 +756,12 @@ public class MavenIndex implements MavenSearchIndex {
     @Override
     public Set<String> read(@NotNull DataInput s) throws IOException {
       int count = s.readInt();
-      Set<String> result = new THashSet<>(count);
-      while (count-- > 0) {
-        result.add(s.readUTF());
-      }
+      Set<String> result = new HashSet<>(count);
+      try {
+        while (count-- > 0) {
+          result.add(s.readUTF());
+        }
+      } catch (EOFException ignore){}
       return result;
     }
   }

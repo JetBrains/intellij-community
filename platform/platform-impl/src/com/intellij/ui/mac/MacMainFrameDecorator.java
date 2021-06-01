@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
-import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -184,7 +183,6 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
 
     if (rootPane != null && Registry.is("ide.mac.transparentTitleBarAppearance")) {
       IdeGlassPane glassPane = (IdeGlassPane)myFrame.getRootPane().getGlassPane();
-      Disposable disposable = Disposer.newDisposable();
       glassPane.addMousePreprocessor(new MouseAdapter() {
         @Override
         public void mouseClicked(MouseEvent e) {
@@ -193,8 +191,13 @@ public final class MacMainFrameDecorator extends IdeFrameDecorator {
           }
           super.mouseClicked(e);
         }
-      }, disposable);
+      }, parentDisposable);
     }
+  }
+
+  @Override
+  public void frameInit() {
+    myTabsHandler.frameInit();
   }
 
   @Override

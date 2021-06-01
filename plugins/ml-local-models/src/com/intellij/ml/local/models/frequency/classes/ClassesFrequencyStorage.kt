@@ -2,6 +2,7 @@ package com.intellij.ml.local.models.frequency.classes
 
 import com.intellij.ml.local.models.api.LocalModelStorage
 import com.intellij.ml.local.util.StorageUtil
+import com.intellij.ml.local.util.StorageUtil.getOrLogError
 import com.intellij.ml.local.util.StorageUtil.isEmpty
 import com.intellij.util.Processor
 import com.intellij.util.io.EnumeratorStringDescriptor
@@ -67,7 +68,7 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
     }
   }
 
-  fun get(className: String): Int? = persistentStorage.get(className)
+  fun get(className: String): Int? = persistentStorage.getOrLogError(className)
 
   private fun toMemoryStorage() {
     memoryStorage.clear()
@@ -75,7 +76,7 @@ class ClassesFrequencyStorage internal constructor(private val storageDirectory:
     totalClassesUsages = 0
     val sortedClasses = sortedSetOf<Pair<String, Int>>(compareBy({ it.second }, { it.first }))
     persistentStorage.processKeys(Processor {
-      val count = persistentStorage.get(it) ?: return@Processor true
+      val count = persistentStorage.getOrLogError(it) ?: return@Processor true
       totalClasses++
       totalClassesUsages += count
       if (totalClasses > MAX_CLASSES_IN_MEMORY) {

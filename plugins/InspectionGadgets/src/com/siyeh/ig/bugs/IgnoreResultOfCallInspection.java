@@ -1,7 +1,20 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+/*
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.siyeh.ig.bugs;
 
-import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.ContractReturnValue;
 import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
@@ -10,17 +23,14 @@ import com.intellij.codeInspection.ui.ListTable;
 import com.intellij.codeInspection.ui.ListWrappingTableModel;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.java.JavaBundle;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.CheckBox;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -36,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 
 public class IgnoreResultOfCallInspection extends BaseInspection {
@@ -47,6 +56,8 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   private static final CallMapper<String> KNOWN_EXCEPTIONAL_SIDE_EFFECTS = new CallMapper<String>()
     .register(CallMatcher.staticCall("java.util.regex.Pattern", "compile"), "java.util.regex.PatternSyntaxException")
     .register(CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_SHORT, "parseShort", "valueOf"),
+      CallMatcher.staticCall(CommonClassNames.JAVA_LANG_BYTE, "parseByte", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_INTEGER, "parseInt", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_LONG, "parseLong", "valueOf"),
       CallMatcher.staticCall(CommonClassNames.JAVA_LANG_DOUBLE, "parseDouble", "valueOf"),
@@ -62,8 +73,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       CallMatcher.staticCall("org.mockito.Mockito", "verify"),
       CallMatcher.instanceCall("org.jmock.Expectations", "allowing", "ignoring", "never", "one", "oneOf", "with")
         .parameterTypes("T"));
-  private static final Set<String> IGNORE_ANNOTATIONS = Set.of(
-    "org.assertj.core.util.CanIgnoreReturnValue", "com.google.errorprone.annotations.CanIgnoreReturnValue");
   private static final Set<String> CHECK_ANNOTATIONS = Set.of(
     "javax.annotation.CheckReturnValue", "org.assertj.core.util.CheckReturnValue", "com.google.errorprone.annotations.CheckReturnValue");
   protected final MethodMatcher myMethodMatcher;
@@ -204,41 +213,38 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       if (aClass == null) return false;
       if (errorContainer != null && PsiUtilCore.hasErrorElementChild(errorContainer)) return false;
       if (call instanceof PsiMethodCallExpression) {
-        PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
+        final PsiMethodCallExpression previousCall = MethodCallUtils.getQualifierMethodCall((PsiMethodCallExpression)call);
         if (MOCK_LIBS_EXCLUDED_QUALIFIER_CALLS.test(previousCall)) return false;
       }
       if (PropertyUtil.isSimpleGetter(method)) {
-        return !isIgnored(method, null);
+        return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
       if (method instanceof PsiCompiledElement) {
-        PsiMethod sourceMethod = ObjectUtils.tryCast(method.getNavigationElement(), PsiMethod.class);
+        final PsiMethod sourceMethod = ObjectUtils.tryCast(method.getNavigationElement(), PsiMethod.class);
         if (sourceMethod != null && PropertyUtil.isSimpleGetter(sourceMethod)) {
-          return !isIgnored(method, null);
+          return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
         }
       }
       if (m_reportAllNonLibraryCalls && !LibraryUtil.classIsInLibrary(aClass)) {
-        return !isIgnored(method, null);
+        return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
-
-      if (isKnownExceptionalSideEffectCaught(call)) return false;
-
+      if (isKnownExceptionalSideEffectCaught(call)) {
+        return false;
+      }
       if (isPureMethod(method, call)) {
-        return !isIgnored(method, null);
+        return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, null);
       }
 
-      PsiAnnotation annotation = findAnnotationInTree(method, null, CHECK_ANNOTATIONS);
-      if (annotation == null) {
-        annotation = getAnnotationByShortNameCheckReturnValue(method);
-      }
-
+      final PsiAnnotation annotation = findCheckReturnValueAnnotation(method);
       if (!myMethodMatcher.matches(method) && annotation == null) return false;
       if (isHardcodedException(call)) return false;
-      return !isIgnored(method, annotation);
+      PsiElement stop = annotation == null ? null : (PsiElement)annotation.getOwner();
+      return !MethodUtils.hasCanIgnoreReturnValueAnnotation(method, stop);
     }
 
-    private boolean isIgnored(@NotNull PsiMethod method, @Nullable PsiAnnotation annotation) {
-      final PsiElement owner = annotation == null ? null : (PsiElement)annotation.getOwner();
-      return findAnnotationInTree(method, owner, IGNORE_ANNOTATIONS) != null;
+    private PsiAnnotation findCheckReturnValueAnnotation(PsiMethod method) {
+      final PsiAnnotation annotation = MethodUtils.findAnnotationInTree(method, null, CHECK_ANNOTATIONS);
+      return annotation == null ? getAnnotationByShortNameCheckReturnValue(method) : annotation;
     }
 
     private PsiAnnotation getAnnotationByShortNameCheckReturnValue(PsiMethod method) {
@@ -315,51 +321,6 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
       else if (call instanceof PsiMethodReferenceExpression){
         registerError(ObjectUtils.notNull(((PsiMethodReferenceExpression)call).getReferenceNameElement(), call), aClass);
       }
-    }
-
-    @Nullable
-    private PsiAnnotation findAnnotationInTree(PsiElement element, @Nullable PsiElement stop, @NotNull Set<String> fqAnnotationNames) {
-      while (element != null) {
-        if (element == stop) {
-          return null;
-        }
-        if (element instanceof PsiModifierListOwner) {
-          final PsiModifierListOwner modifierListOwner = (PsiModifierListOwner)element;
-          final PsiAnnotation annotation =
-            AnnotationUtil.findAnnotationInHierarchy(modifierListOwner, fqAnnotationNames);
-          if (annotation != null) {
-            return annotation;
-          }
-        }
-
-        if (element instanceof PsiClassOwner) {
-          final PsiClassOwner classOwner = (PsiClassOwner)element;
-          final String packageName = classOwner.getPackageName();
-          final PsiPackage aPackage = JavaPsiFacade.getInstance(element.getProject()).findPackage(packageName);
-          if (aPackage == null) {
-            return null;
-          }
-          PsiAnnotation annotation = AnnotationUtil.findAnnotation(aPackage, fqAnnotationNames);
-          if(annotation != null) {
-            // Check that annotation actually belongs to the same library/source root
-            // which could be important in case of split-packages
-            VirtualFile annotationFile = PsiUtilCore.getVirtualFile(annotation);
-            VirtualFile currentFile = classOwner.getVirtualFile();
-            if(annotationFile != null && currentFile != null) {
-              ProjectFileIndex projectFileIndex = ProjectFileIndex.getInstance(element.getProject());
-              VirtualFile annotationClassRoot = projectFileIndex.getClassRootForFile(annotationFile);
-              VirtualFile currentClassRoot = projectFileIndex.getClassRootForFile(currentFile);
-              if (!Objects.equals(annotationClassRoot, currentClassRoot)) {
-                return null;
-              }
-            }
-          }
-          return annotation;
-        }
-
-        element = element.getContext();
-      }
-      return null;
     }
   }
 }

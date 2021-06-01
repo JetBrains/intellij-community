@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.evaluate
 
@@ -12,6 +9,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
+import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils.BLOCK_CODE_FRAGMENT
 import org.jetbrains.kotlin.idea.debugger.getContextElement
 import org.jetbrains.kotlin.psi.KtCodeFragment
 import org.jetbrains.kotlin.psi.KtElement
@@ -39,7 +37,9 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
     configureByFile(File(filePath).name)
 
     val elementAt = file?.findElementAt(caretOffset)
-    val file = createCodeFragment(filePath, elementAt!!)
+
+    val isBlock = InTextDirectivesUtils.isDirectiveDefined(file.text, BLOCK_CODE_FRAGMENT)
+    val file = createCodeFragment(filePath, elementAt!!, isBlock)
 
     val typeStr = InTextDirectivesUtils.findStringWithPrefixes(getFile().text, "// ${ExpectedCompletionUtils.RUNTIME_TYPE} ")
     file.putCopyableUserData(KtCodeFragment.RUNTIME_TYPE_EVALUATOR) {
@@ -60,12 +60,14 @@ internal fun JavaCodeInsightTestFixture.configureByCodeFragment(filePath: String
     configureFromExistingVirtualFile(file.virtualFile!!)
 }
 
-internal fun createCodeFragment(filePath: String, contextElement: PsiElement): KtCodeFragment {
+internal fun createCodeFragment(filePath: String, contextElement: PsiElement, isBlock: Boolean): KtCodeFragment {
     val fileForFragment = File("$filePath.fragment")
     val codeFragmentText = FileUtil.loadFile(fileForFragment, true).trim()
     val psiFactory = KtPsiFactory(contextElement.project)
-    if (fileForFragment.readLines().size == 1) {
-        return psiFactory.createExpressionCodeFragment(codeFragmentText, getContextElement(contextElement))
+
+    return if (isBlock) {
+        psiFactory.createBlockCodeFragment(codeFragmentText, getContextElement(contextElement))
+    } else {
+        psiFactory.createExpressionCodeFragment(codeFragmentText, getContextElement(contextElement))
     }
-    return psiFactory.createBlockCodeFragment(codeFragmentText, getContextElement(contextElement))
 }

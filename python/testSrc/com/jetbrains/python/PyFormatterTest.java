@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.formatting.WrapType;
@@ -14,9 +14,7 @@ import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStatement;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyFormatterTest extends PyTestCase {
   @NotNull
   private PyCodeStyleSettings getPythonCodeStyleSettings() {
@@ -1073,6 +1071,16 @@ public class PyFormatterTest extends PyTestCase {
 
   // PY-23475
   public void testModuleLevelDunderWithImports() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testIndentOfCaseClausesInsideMatchStatement() {
+    doTest();
+  }
+
+  // PY-48009
+  public void testIndentOfCommentsInsideMatchStatement() {
     doTest();
   }
 }

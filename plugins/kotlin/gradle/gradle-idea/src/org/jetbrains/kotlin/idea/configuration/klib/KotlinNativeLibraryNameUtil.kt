@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration.klib
 
@@ -16,26 +13,6 @@ object KotlinNativeLibraryNameUtil {
     internal const val GRADLE_LIBRARY_PREFIX = "Gradle: "
 
     private val IDE_LIBRARY_NAME_REGEX = Regex("^$KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE([^\\s]+) - ([^\\s]+)( \\[([\\w ,()*]+)])?$")
-
-    // Builds the name of Kotlin/Native library that is a part of Kotlin/Native distribution
-    // as it will be displayed in IDE UI.
-    fun buildIDELibraryName(
-        kotlinVersion: String,
-        libraryName: String,
-        platforms: Collection<String>,
-        starredPlatform: String? = null
-    ): String {
-        val platformNamePart = if (platforms.isNotEmpty())
-            buildString {
-                append(" [")
-                platforms.sorted().joinTo(this) { if (it == starredPlatform) "$it(*)" else it }
-                append("]")
-            }
-        else
-            ""
-
-        return "$KOTLIN_NATIVE_LIBRARY_PREFIX_PLUS_SPACE$kotlinVersion - $libraryName$platformNamePart"
-    }
 
     // N.B. Returns null if this is not IDE name of Kotlin/Native library.
     fun parseIDELibraryName(ideLibraryName: String): Triple<String, String, String?>? {

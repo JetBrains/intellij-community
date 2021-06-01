@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,8 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.util.ConcurrencyUtil;
-import gnu.trove.THashMap;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -63,7 +61,7 @@ public final class MavenArtifactDownloader {
     myProject = project;
     myProjectsTree = projectsTree;
     myMavenProjects = mavenProjects;
-    myArtifacts = artifacts == null ? null : new THashSet<>(artifacts);
+    myArtifacts = artifacts == null ? null : new HashSet<>(artifacts);
     myEmbedder = embedder;
     myProgress = p;
   }
@@ -99,9 +97,9 @@ public final class MavenArtifactDownloader {
   }
 
   private Map<MavenId, DownloadData> collectArtifactsToDownload(List<MavenExtraArtifactType> types) {
-    Map<MavenId, DownloadData> result = new THashMap<>();
+    Map<MavenId, DownloadData> result = new HashMap<>();
 
-    THashSet<String> dependencyTypesFromSettings = new THashSet<>();
+    Set<String> dependencyTypesFromSettings = new HashSet<>();
 
     if (!ReadAction.compute(()->{
 
@@ -255,11 +253,11 @@ public final class MavenArtifactDownloader {
   }
 
   public static class DownloadResult {
-    public final Set<MavenId> resolvedSources = new THashSet<>();
-    public final Set<MavenId> resolvedDocs = new THashSet<>();
+    public final Set<MavenId> resolvedSources = new HashSet<>();
+    public final Set<MavenId> resolvedDocs = new HashSet<>();
 
-    public final Set<MavenId> unresolvedSources = new THashSet<>();
-    public final Set<MavenId> unresolvedDocs = new THashSet<>();
+    public final Set<MavenId> unresolvedSources = new HashSet<>();
+    public final Set<MavenId> unresolvedDocs = new HashSet<>();
   }
 
   @TestOnly

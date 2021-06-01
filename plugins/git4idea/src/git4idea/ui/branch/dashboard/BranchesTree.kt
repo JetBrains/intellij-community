@@ -10,7 +10,6 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.dnd.TransferableList
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.util.treeView.TreeState
-import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.*
 import com.intellij.openapi.project.Project
@@ -27,7 +26,6 @@ import com.intellij.ui.speedSearch.SpeedSearchSupply
 import com.intellij.util.EditSourceOnDoubleClickHandler.isToggleEvent
 import com.intellij.util.PlatformIcons
 import com.intellij.util.ThreeState
-import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import com.intellij.vcs.branch.BranchData
@@ -235,7 +233,7 @@ internal class FilteringBranchesTree(project: Project,
                                      rootNode: BranchTreeNode = BranchTreeNode(BranchNodeDescriptor(NodeType.ROOT)))
   : FilteringTree<BranchTreeNode, BranchNodeDescriptor>(project, component, rootNode) {
 
-  private val expandedPaths = SmartHashSet<TreePath>()
+  private val expandedPaths = HashSet<TreePath>()
 
   private val localBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.LOCAL_ROOT))
   private val remoteBranchesNode = BranchTreeNode(BranchNodeDescriptor(NodeType.REMOTE_ROOT))
@@ -265,7 +263,7 @@ internal class FilteringBranchesTree(project: Project,
 
   init {
     runInEdt {
-      PopupHandler.installPopupHandler(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup", ActionManager.getInstance())
+      PopupHandler.installPopupMenu(component, BranchesTreeActionGroup(project, this), "BranchesTreePopup")
       setupTreeExpansionListener()
       project.service<BranchesTreeStateHolder>().setTree(this)
     }

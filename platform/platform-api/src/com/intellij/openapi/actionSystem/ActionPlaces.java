@@ -40,6 +40,7 @@ public abstract class ActionPlaces {
   public static final String TOOLWINDOW_CONTENT = "ToolwindowContent";
   public static final String EDITOR_INSPECTIONS_TOOLBAR = "EditorInspectionsToolbar";
   public static final String LEARN_TOOLWINDOW = "LearnToolwindow";
+  public static final String TOOLWINDOW_GRADLE = "Gradle tool window";
 
   public static final String PROJECT_VIEW_POPUP = "ProjectViewPopup";
   public static final String PROJECT_VIEW_TOOLBAR = "ProjectViewToolbar";
@@ -68,6 +69,7 @@ public abstract class ActionPlaces {
   public static final String DEBUGGER_TOOLBAR = "DebuggerToolbar";
   public static final String USAGE_VIEW_POPUP = "UsageViewPopup";
   public static final String USAGE_VIEW_TOOLBAR = "UsageViewToolbar";
+  public static final String SHOW_USAGES_POPUP_TOOLBAR = "ShowUsagesPopupToolbar";
   public static final String STRUCTURE_VIEW_POPUP = "StructureViewPopup";
   public static final String STRUCTURE_VIEW_TOOLBAR = "StructureViewToolbar";
   public static final String NAVIGATION_BAR_POPUP = "NavBar";
@@ -101,6 +103,10 @@ public abstract class ActionPlaces {
   public static final String GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP = "GuiDesigner.PropertyInspectorPopup";
 
   public static final String RUN_CONFIGURATIONS_COMBOBOX = "RunConfigurationsCombobox";
+  public static final String RUN_CONFIGURATION_EDITOR = "RunConfigurationEditor";
+
+  public static final String RUN_ANYTHING_POPUP = "RunAnythingPopup";
+
   public static final String CREATE_EJB_POPUP = "CreateEjbPopup";
   public static final String WELCOME_SCREEN = "WelcomeScreen";
 
@@ -163,15 +169,18 @@ public abstract class ActionPlaces {
   public static final String RIDER_UNIT_TESTS_QUICKLIST = "UnitTests.QuickList";
 
   public static boolean isMainMenuOrActionSearch(String place) {
-    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) ||
-           KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
+    return MAIN_MENU.equals(place) || ACTION_SEARCH.equals(place) || isShortcutPlace(place);
+  }
+
+  public static boolean isShortcutPlace(String place) {
+    return KEYBOARD_SHORTCUT.equals(place) || MOUSE_SHORTCUT.equals(place) || FORCE_TOUCH.equals(place);
   }
 
   private static final Set<String> ourCommonPlaces = ContainerUtil.newHashSet(
     UNKNOWN, KEYBOARD_SHORTCUT, MOUSE_SHORTCUT, FORCE_TOUCH,
     TOOLBAR, MAIN_MENU, MAIN_TOOLBAR, EDITOR_TOOLBAR, TABS_MORE_TOOLBAR, EDITOR_TAB, COMMANDER_TOOLBAR, CONTEXT_TOOLBAR, TOOLWINDOW_TITLE,
     LEARN_TOOLWINDOW, PROJECT_VIEW_TOOLBAR, STATUS_BAR_PLACE, ACTION_SEARCH, TESTTREE_VIEW_TOOLBAR, TYPE_HIERARCHY_VIEW_TOOLBAR,
-    METHOD_HIERARCHY_VIEW_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, RUNNER_TOOLBAR, DEBUGGER_TOOLBAR, USAGE_VIEW_TOOLBAR,
+    METHOD_HIERARCHY_VIEW_TOOLBAR, CALL_HIERARCHY_VIEW_TOOLBAR, RUNNER_TOOLBAR, DEBUGGER_TOOLBAR, USAGE_VIEW_TOOLBAR,SHOW_USAGES_POPUP_TOOLBAR,
     STRUCTURE_VIEW_TOOLBAR, NAVIGATION_BAR_TOOLBAR, STATE_WIDGET_ACTION_BAR, NEW_TOOLBAR, TODO_VIEW_TOOLBAR, COMPILER_MESSAGES_TOOLBAR,
     ANT_MESSAGES_TOOLBAR, ANT_EXPLORER_TOOLBAR, CODE_INSPECTION, JAVADOC_TOOLBAR, JAVADOC_INPLACE_SETTINGS,
     FILEHISTORY_VIEW_TOOLBAR, RUN_CONFIGURATIONS_COMBOBOX, WELCOME_SCREEN, CHANGES_VIEW_TOOLBAR, DATABASE_VIEW_TOOLBAR,
@@ -181,7 +190,7 @@ public abstract class ActionPlaces {
     TEXT_EDITOR_WITH_PREVIEW, NOTIFICATION, FILE_STRUCTURE_POPUP,
     RIDER_UNIT_TESTS_LEFT_TOOLBAR, RIDER_UNIT_TESTS_TOP_TOOLBAR, RIDER_UNIT_TESTS_SESSION_POPUP, RIDER_UNIT_TESTS_EXPLORER_POPUP,
     RIDER_UNIT_TESTS_PROGRESSBAR_POPUP, RIDER_UNIT_TESTS_QUICKLIST,
-    QUICK_SWITCH_SCHEME_POPUP
+    QUICK_SWITCH_SCHEME_POPUP, RUN_CONFIGURATION_EDITOR, TOOLWINDOW_GRADLE
   );
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
@@ -190,11 +199,12 @@ public abstract class ActionPlaces {
     METHOD_HIERARCHY_VIEW_POPUP, CALL_HIERARCHY_VIEW_POPUP, J2EE_ATTRIBUTES_VIEW_POPUP, J2EE_VIEW_POPUP, USAGE_VIEW_POPUP,
     STRUCTURE_VIEW_POPUP, TODO_VIEW_POPUP, COMPILER_MESSAGES_POPUP, ANT_MESSAGES_POPUP, ANT_EXPLORER_POPUP, UPDATE_POPUP,
     FILEVIEW_POPUP, CHECKOUT_POPUP, LVCS_DIRECTORY_HISTORY_POPUP, GUI_DESIGNER_EDITOR_POPUP, GUI_DESIGNER_COMPONENT_TREE_POPUP,
-    GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, TOOLWINDOW_POPUP,
+    GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, TOOLWINDOW_POPUP, WELCOME_SCREEN,
     ACTION_PLACE_QUICK_LIST_POPUP_ACTION, ACTION_PLACE_QUICK_LIST_POPUP_ACTION, REFACTORING_QUICKLIST,
     CREATE_EJB_POPUP, CHANGES_VIEW_POPUP, DATABASE_VIEW_POPUP, REMOTE_HOST_VIEW_POPUP, REMOTE_HOST_DIALOG_POPUP, TFS_TREE_POPUP,
     ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION, PHING_EXPLORER_POPUP, NAVIGATION_BAR_POPUP, JS_BUILD_TOOL_POPUP,
-    V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP
+    V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP, SERVICES_POPUP, EDITOR_GUTTER_POPUP,
+    RUN_ANYTHING_POPUP, NEW_TOOLBAR
   );
 
   private static final String POPUP_PREFIX = "popup@";
@@ -205,10 +215,6 @@ public abstract class ActionPlaces {
 
   public static boolean isCommonPlace(@NotNull String place) {
     return ourPopupPlaces.contains(place) || ourCommonPlaces.contains(place);
-  }
-
-  public static boolean isMainMenuOrShortcut(@NotNull String place) {
-    return MAIN_MENU.equals(place) || KEYBOARD_SHORTCUT.equals(place);
   }
 
   public static @NotNull String getActionGroupPopupPlace(@Nullable String actionId) {
@@ -225,6 +231,6 @@ public abstract class ActionPlaces {
    */
   @ApiStatus.Internal
   public static boolean isMacSystemMenuAction(@NotNull AnActionEvent e) {
-    return SystemInfo.isMacSystemMenu && isMainMenuOrShortcut(e.getPlace());
+    return SystemInfo.isMacSystemMenu && (MAIN_MENU.equals(e.getPlace()) || KEYBOARD_SHORTCUT.equals(e.getPlace()));
   }
 }

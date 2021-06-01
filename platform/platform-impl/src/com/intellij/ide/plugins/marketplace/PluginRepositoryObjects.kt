@@ -9,6 +9,7 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.newui.Tags
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.text.StringUtil.unquoteString
+import java.util.*
 
 /**
  * Object from Search Service for getting compatible updates for IDE.
@@ -81,7 +82,7 @@ internal class MarketplaceSearchPluginData(
   val rating: Double = 0.0,
   val name: String = "",
   val cdate: Long? = null,
-  val vendor: String = "",
+  val organization: String = "",
   @get:JsonProperty("updateId")
   val externalUpdateId: String? = null,
   @get:JsonProperty("id")
@@ -91,9 +92,9 @@ internal class MarketplaceSearchPluginData(
   fun toPluginNode(): PluginNode {
     val pluginNode = PluginNode(PluginId.getId(id))
     pluginNode.name = name
-    pluginNode.rating = String.format("%.2f", rating)
+    pluginNode.rating = "%.2f".format(Locale.US, rating)
     pluginNode.downloads = downloads
-    pluginNode.vendor = vendor
+    pluginNode.organization = organization
     pluginNode.externalPluginId = externalPluginId
     pluginNode.externalUpdateId = externalUpdateId
     if (cdate != null) pluginNode.date = cdate

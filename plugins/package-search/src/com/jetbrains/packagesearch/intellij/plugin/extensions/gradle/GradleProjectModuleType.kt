@@ -2,8 +2,6 @@ package com.jetbrains.packagesearch.intellij.plugin.extensions.gradle
 
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.api.model.MppModuleType
-import com.jetbrains.packagesearch.intellij.plugin.api.model.StandardV2Package
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleType
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleTypeTerm
 import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.packageSearchGradleConfigurationForProject
@@ -25,5 +23,4 @@ internal object GradleProjectModuleType : ProjectModuleType {
         packageSearchGradleConfigurationForProject(project).determineDefaultGradleScope()
 
     override fun scopes(project: Project): List<String> = packageSearchGradleConfigurationForProject(project).getGradleScopes()
-
 }

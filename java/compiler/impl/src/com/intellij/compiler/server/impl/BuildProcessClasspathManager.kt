@@ -204,6 +204,9 @@ class BuildProcessClasspathManager(parentDisposable: Disposable) {
 
     //todo[nik] this is a temporary compatibility fix; we should update plugin layout so JAR names correspond to module names instead.
     private val OLD_TO_NEW_MODULE_NAME = mapOf(
+      "kotlin-jps-plugin" to "kotlin.jps-plugin",
+      "kotlin-jps-common" to "kotlin.jps-common",
+      "kotlin-common" to "kotlin.common",
       "android-jps-plugin" to "intellij.android.jpsBuildPlugin.jps",
       "android-jps-model" to "intellij.android.jps.model",
       "build-common" to "intellij.android.buildCommon",

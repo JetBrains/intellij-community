@@ -2,14 +2,17 @@
 <body>
 Reports methods whose return values are never used when called.
 The return type of such methods can be made <code>void</code>.
-Quick-fix updates method signature and removes <code>return</code> statements from inside the method.
+Methods annotated with Error Prone's or AssertJ's <code>@CanIgnoreReturnValue</code> annotation will not be reported.
+The quick-fix updates the method signature and removes <code>return</code> statements from inside the method.
 <p><b>Example:</b></p>
 <pre>
-  protected String myToUpperCase(String s) { // reported if visibility setting is 'Protected' or higher
+  // reported if visibility setting is Protected or Public
+  protected String myToUpperCase(String s) {
     return s.toUpperCase();
   }
 
-  public String setStr(String str) {  // simple setter, reporting depends on setting
+  // simple setter, reporting depends on setting
+  public String setStr(String str) {
     myStr = str;
     return myStr;
   }
@@ -22,7 +25,8 @@ Quick-fix updates method signature and removes <code>return</code> statements fr
 <p>After the quickfix is applied to both methods the result looks like:</p>
 <pre>
     protected void myToUpperCase(String s) {
-      // 'return' removed completely as 's.toUpperCase()' has no side effect
+      // 'return' removed completely
+      // as 's.toUpperCase()' has no side effect
     }
 
     public void setStr(String str) {

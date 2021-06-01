@@ -197,7 +197,8 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
   @Nullable
   @Override
   public ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
-    final List<Module> modulesToBeMarkedDirty = getModulesToBeMarkedDirtyBefore(events);
+    if (myService.getProject().isDisposed()) return null;
+    List<Module> modulesToBeMarkedDirty = getModulesToBeMarkedDirtyBefore(events);
 
     return new ChangeApplier() {
       @Override

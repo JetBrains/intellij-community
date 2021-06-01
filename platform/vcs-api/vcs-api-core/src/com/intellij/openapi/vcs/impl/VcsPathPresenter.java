@@ -7,9 +7,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
 public abstract class VcsPathPresenter {
   public static VcsPathPresenter getInstance(Project project) {
     return project.getService(VcsPathPresenter.class);

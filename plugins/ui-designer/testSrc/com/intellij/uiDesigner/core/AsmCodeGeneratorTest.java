@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.uiDesigner.core;
 
 import com.intellij.DynamicBundle;
@@ -13,6 +13,8 @@ import com.intellij.openapi.components.BaseState;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.rt.execution.application.AppMainV2;
+import com.intellij.testFramework.UsefulTestCaseKt;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.ui.components.JBTabbedPane;
@@ -23,6 +25,7 @@ import com.intellij.uiDesigner.compiler.Utils;
 import com.intellij.uiDesigner.lw.CompiledClassPropertiesProvider;
 import com.intellij.uiDesigner.lw.LwRootContainer;
 import com.intellij.util.*;
+import com.intellij.util.containers.FList;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.UIUtilities;
 import com.sun.tools.javac.Main;
@@ -53,9 +56,7 @@ import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * @author yole
- */
+
 public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   private MyNestedFormLoader myNestedFormLoader;
   private MyClassFinder myClassFinder;
@@ -85,8 +86,7 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, SystemInfo.class);
     appendPath(cp, ApplicationManager.class);
     appendPath(cp, DynamicBundle.class);
-    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/UIBundle.properties"));
-    appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/messages/RuntimeBundle.properties"));
+    appendPath(cp, AppMainV2.class); // intellij.java.rt
     appendPath(cp, PathManager.getResourceRoot(this.getClass(), "/com/intellij/uiDesigner/core/TestProperties.properties"));
     appendPath(cp, GridLayoutManager.class); // intellij.java.guiForms.rt
     appendPath(cp, DataProvider.class);
@@ -94,6 +94,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     appendPath(cp, KDeclarationContainer.class);
     appendPath(cp, NotNullProducer.class);  // intellij.platform.util
     appendPath(cp, Strings.class);  // intellij.platform.util.strings
+    appendPath(cp, FList.class);  // intellij.platform.util.collections
+    appendPath(cp, XmlDomReader.class);  // intellij.platform.util.xmlDom
     appendPath(cp, StartUpMeasurer.class);  // intellij.platform.util.diagnostic
     appendPath(cp, NotNullFunction.class);  // intellij.platform.util.rt
     appendPath(cp, SimpleTextAttributes.class);
@@ -275,10 +277,6 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
     return findMethod(parent, methodName, params);
   }
 
-  private static void setInternal(boolean value) {
-    System.getProperties().setProperty("idea.is.internal", Boolean.toString(value));
-  }
-
   public void testCardLayout() throws Exception {
     JComponent rootComponent = getInstrumentedRootComponent("TestCardLayout.form", "BindingTest");
     assertTrue(rootComponent.getLayout() instanceof CardLayout);
@@ -366,9 +364,8 @@ public class AsmCodeGeneratorTest extends JpsBuildTestCase {
   }
 
   public void testTitledBorderInternal() throws Exception {
-    setInternal(true);
+    UsefulTestCaseKt.setInternalForTest(this);
     JPanel panel = (JPanel) getInstrumentedRootComponent("TestTitledBorder.form", "BindingTest");
-    setInternal(false);
 
     assertTrue(panel.getBorder() instanceof TitledBorder);
     TitledBorder border = (TitledBorder) panel.getBorder();

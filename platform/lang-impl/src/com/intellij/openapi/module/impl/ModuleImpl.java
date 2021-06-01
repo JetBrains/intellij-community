@@ -72,14 +72,15 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project, @Nullable VirtualFilePointer virtualFilePointer) {
     this(name, project);
-    VirtualFilePointerManager.getInstance();
+
     myImlFilePointer = virtualFilePointer;
   }
 
   @ApiStatus.Internal
   public ModuleImpl(@NotNull String name, @NotNull Project project) {
     super((ComponentManagerImpl)project);
-    registerServiceInstance(Module.class, this, ComponentManagerImpl.getFakeCorePluginDescriptor());
+
+    registerServiceInstance(Module.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
     myProject = project;
     myModuleScopeProvider = new ModuleScopeProviderImpl(this);
     myName = name;
@@ -89,11 +90,11 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   public void init(@Nullable Runnable beforeComponentCreation) {
     // do not measure (activityNamePrefix method not overridden by this class)
     // because there are a lot of modules and no need to measure each one
-    registerComponents(PluginManagerCore.getLoadedPlugins(null), ApplicationManager.getApplication(), null);
+    registerComponents(PluginManagerCore.getLoadedPlugins(null), ApplicationManager.getApplication(), null, null);
     if (!isPersistent()) {
       registerService(IComponentStore.class,
                       NonPersistentModuleStore.class,
-                      ComponentManagerImpl.getFakeCorePluginDescriptor(),
+                      ComponentManagerImpl.fakeCorePluginDescriptor,
                       true, ServiceDescriptor.PreloadMode.FALSE);
     }
     if (beforeComponentCreation != null) {
@@ -187,7 +188,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   @NotNull
   @Override
   protected ContainerDescriptor getContainerDescriptor(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    return pluginDescriptor.getModule();
+    return pluginDescriptor.moduleContainerDescriptor;
   }
 
   @Override

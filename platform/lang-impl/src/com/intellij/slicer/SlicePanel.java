@@ -3,6 +3,7 @@ package com.intellij.slicer;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.RefreshAction;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -313,6 +314,9 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
       List<Navigatable> navigatables = getNavigatables();
       return navigatables.isEmpty() ? null : navigatables.toArray(Navigatable.EMPTY_NAVIGATABLE_ARRAY);
     }
+    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+      return new DefaultTreeExpander(myTree);
+    }
     return null;
   }
 
@@ -361,6 +365,10 @@ public abstract class SlicePanel extends JPanel implements DataProvider, Disposa
       });
     }
 
+    ActionManager actionManager = ActionManager.getInstance();
+    actionGroup.add(actionManager.getAction(IdeActions.ACTION_EXPAND_ALL));
+    actionGroup.add(actionManager.getAction(IdeActions.ACTION_COLLAPSE_ALL));
+    actionGroup.addSeparator();
     myProvider.registerExtraPanelActions(actionGroup, myBuilder);
     actionGroup.add(CommonActionsManager.getInstance().createExportToTextFileAction(new SliceToTextFileExporter(myBuilder, UsageViewSettings.getInstance())));
 

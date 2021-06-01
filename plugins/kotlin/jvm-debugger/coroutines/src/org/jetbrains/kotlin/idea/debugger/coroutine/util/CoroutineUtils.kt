@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.debugger.coroutine.util
 
@@ -36,7 +33,7 @@ fun Method.isSuspendLambda() =
 fun Method.hasContinuationParameter() =
     signature().contains("Lkotlin/coroutines/Continuation;)")
 
-fun Location.isPreFlight(): SuspendExitMode {
+fun Location.getSuspendExitMode(): SuspendExitMode {
     val method = safeMethod() ?: return SuspendExitMode.NONE
     if (method.isSuspendLambda())
         return SuspendExitMode.SUSPEND_LAMBDA

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.run
 
@@ -27,6 +24,7 @@ import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.options.SettingsEditorGroup
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
 import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.DependencyScope
@@ -36,26 +34,32 @@ import com.intellij.openapi.util.WriteExternalException
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFileManager
-import com.intellij.psi.*
+import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaModule
+import com.intellij.psi.PsiPackage
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScopes
 import com.intellij.refactoring.listeners.RefactoringElementAdapter
 import com.intellij.refactoring.listeners.RefactoringElementListener
 import com.intellij.util.PathUtil
 import org.jdom.Element
-import org.jetbrains.kotlin.asJava.classes.KtLightClassForSourceDeclaration
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinJvmBundle.message
 import org.jetbrains.kotlin.idea.MainFunctionDetector
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getEntryPointContainer
 import org.jetbrains.kotlin.idea.run.KotlinRunConfigurationProducer.Companion.getStartClassFqName
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.psi.KtDeclarationContainer
-import org.jetbrains.kotlin.psi.KtNamedFunction
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.idea.stubindex.KotlinFileFacadeFqNameIndex
+import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
+import org.jetbrains.kotlin.idea.util.application.runReadActionInSmartMode
+import org.jetbrains.kotlin.load.kotlin.PackagePartClassUtils.getFilePartShortName
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.collectDescendantsOfType
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRunConfigurationModule, factory: ConfigurationFactory?) :
     JavaRunConfigurationBase(name, runConfigurationModule, factory!!),
@@ -165,6 +169,12 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         options.alternativeJrePath = path
     }
 
+    fun findMainClassFile(): KtFile? {
+        val module = configurationModule?.module ?: return null
+        val mainClassName = options.mainClassName?.takeIf { !StringUtil.isEmpty(it) } ?: return null
+        return findMainClassFile(module, mainClassName)
+    }
+
     @Throws(RuntimeConfigurationException::class)
     override fun checkConfiguration() {
         JavaParametersUtil.checkAlternativeJRE(this)
@@ -172,24 +182,14 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         checkConfigurationIsValid(this)
         val module = configurationModule!!.module
             ?: throw RuntimeConfigurationError(message("run.configuration.error.no.module"))
-        val mainClassName = options.mainClassName
-        if (StringUtil.isEmpty(mainClassName)) {
+        val mainClassName = options.mainClassName?.takeIf { !StringUtil.isEmpty(it) } ?:
             throw RuntimeConfigurationError(message("run.configuration.error.no.main.class"))
-        }
-        val psiClass = JavaExecutionUtil.findMainClass(module, mainClassName)
-        if (psiClass == null) {
-            val moduleName = configurationModule!!.moduleName
+        val mainFile = findMainClassFile(module, mainClassName) ?:
             throw RuntimeConfigurationWarning(
-                message("run.configuration.error.class.not.found", mainClassName!!, moduleName)
+                message("run.configuration.error.class.not.found", mainClassName, configurationModule!!.moduleName)
             )
-        }
-        if (findMainFun(psiClass) == null) {
-            throw RuntimeConfigurationWarning(
-                message(
-                    "run.configuration.error.class.no.main.method",
-                    mainClassName!!
-                )
-            )
+        if (!mainFile.hasMainFun()) {
+            throw RuntimeConfigurationWarning(message("run.configuration.error.class.no.main.method", mainClassName))
         }
     }
 
@@ -199,13 +199,10 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     override fun getRefactoringElementListener(element: PsiElement): RefactoringElementListener? {
-        val fqNameBeingRenamed: String?
-        fqNameBeingRenamed = if (element is KtDeclarationContainer) {
-            getStartClassFqName((element as KtDeclarationContainer))
-        } else if (element is PsiPackage) {
-            element.qualifiedName
-        } else {
-            null
+        val fqNameBeingRenamed: String? = when (element) {
+          is KtDeclarationContainer -> getStartClassFqName(element as KtDeclarationContainer)
+            is PsiPackage -> element.qualifiedName
+            else -> null
         }
         val mainClassName = options.mainClassName
         if (mainClassName == null ||
@@ -314,13 +311,10 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
         private fun getClasspathType(configurationModule: RunConfigurationModule?): Int {
             val module = configurationModule!!.module ?: throw CantRunException.noModuleConfigured(configurationModule.moduleName)
             val runClass = myConfiguration.runClass
-                ?: throw CantRunException(String.format("Run class should be defined for configuration '%s'", myConfiguration.name))
-            val psiClass = JavaExecutionUtil.findMainClass(module, runClass) ?: throw CantRunException.classNotFound(runClass, module)
-            val mainFun = findMainFun(psiClass)
-                ?: throw CantRunException(noFunctionFoundMessage(psiClass))
-            var classModule = ModuleUtilCore.findModuleForPsiElement(mainFun)
-            if (classModule == null) classModule = module
-            val virtualFileForMainFun = mainFun.containingFile.virtualFile ?: throw CantRunException(noFunctionFoundMessage(psiClass))
+                ?: throw CantRunException(message("run.configuration.error.run.class.should.be.defined", myConfiguration.name))
+            val findMainClassFile = findMainClassFile(module, runClass) ?: throw CantRunException.classNotFound(runClass, module)
+            val classModule = ModuleUtilCore.findModuleForPsiElement(findMainClassFile) ?: module
+            val virtualFileForMainFun = findMainClassFile.virtualFile ?: throw CantRunException(noFunctionFoundMessage(findMainClassFile))
             val fileIndex = ModuleRootManager.getInstance(classModule).fileIndex
             if (fileIndex.isInSourceContent(virtualFileForMainFun)) {
                 return if (fileIndex.isInTestSourceContentKotlinAware(virtualFileForMainFun)) {
@@ -338,11 +332,10 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
             return JavaParameters.JDK_AND_CLASSES
         }
 
-        private fun noFunctionFoundMessage(psiClass: PsiClass): String {
-            val classFqName = FqName(psiClass.qualifiedName!!)
-            return if (psiClass is KtLightClassForSourceDeclaration) {
-                message("run.configuration.error.main.not.found", classFqName)
-            } else message("run.configuration.error.main.not.found.top.level", classFqName.parent())
+        @Nls
+        private fun noFunctionFoundMessage(ktFile: KtFile): String {
+            val packageFqName = ktFile.packageFqName
+            return message("run.configuration.error.main.not.found.top.level", packageFqName.asString())
         }
 
         companion object {
@@ -363,24 +356,137 @@ open class KotlinRunConfiguration(name: String?, runConfigurationModule: JavaRun
     }
 
     companion object {
-        private fun getMainFunCandidates(psiClass: PsiClass): Collection<KtNamedFunction> {
-            return psiClass.allMethods.map { method: PsiMethod ->
-                if (method !is KtLightMethod) return@map null
-                if (method.getName() != "main") return@map null
-                val declaration =
-                    method.kotlinOrigin
-                if (declaration is KtNamedFunction) declaration else null
-            }.filterNotNull()
+
+        private fun KtNamedFunction.isAMainCandidate(): Boolean {
+            if (isLocal) return false
+
+            val jvmName = annotationEntries.filter {
+                it.shortName?.asString() == "JvmName"
+            }.mapNotNull {
+                it.valueArguments.singleOrNull()?.getArgumentExpression()
+                    .safeAs<KtStringTemplateExpression>()?.entries?.singleOrNull()
+            }.singleOrNull()?.text
+
+            if (!(name == "main" && jvmName == null || jvmName == "main")) return false
+
+            // method annotated with @JvmName("main") could be a candidate as well
+            val valueParameter = valueParameters.singleOrNull()
+            val valueParameterType = valueParameter?.typeReference?.typeElement?.safeAs<KtUserType>()
+            val argsIsStringArray =
+                // `vararg String` has same semantic for main function as Array<String>
+                (valueParameter?.isVarArg == true && valueParameterType?.referencedName == "String") ||
+                        // Array<String>
+                        valueParameter?.typeReference?.typeElement?.run {
+                            // to handle `Array` or `Array?`
+                            safeAs<KtUserType>() ?: safeAs<KtNullableType>()?.innerType.safeAs<KtUserType>()
+                        }?.run {
+                            referencedName == "Array" &&
+                                    typeArgumentList?.arguments?.singleOrNull()?.run {
+                                        typeReference?.typeElement?.safeAs<KtUserType>()?.referencedName == "String" &&
+                                                // <String> / <out String>
+                                                projectionKind.run { this == KtProjectionKind.NONE || this == KtProjectionKind.OUT }
+                                    } ?: false
+                        } ?: false
+
+            val topLevel = isTopLevel
+            return topLevel && (
+                    // top level could be parameterless
+                    name == "main" && jvmName == null && (valueParameters.isEmpty() || argsIsStringArray) ||
+                            // but if it has @JvmName("main") it has to have Array<String> parameter
+                            (jvmName == "main" && argsIsStringArray)
+                    ) ||
+                    !topLevel &&
+                    // nested main method has to have Array<String> parameter
+                    argsIsStringArray &&
+                    // has to have @JvmStatic annotation
+                    annotationEntries.any { it.shortName?.asString() == "JvmStatic" } &&
+                    (getParentOfType<KtObjectDeclaration>(false) != null)
         }
 
-        private fun findMainFun(psiClass: PsiClass): KtNamedFunction? {
-            for (function in getMainFunCandidates(psiClass)) {
-                val bindingContext = function.analyze(BodyResolveMode.FULL)
-                val mainFunctionDetector = MainFunctionDetector(bindingContext, function.languageVersionSettings)
-                if (mainFunctionDetector.isMain(function)) return function
+        private fun KtDeclarationContainer.getMainFunCandidates(): Collection<KtNamedFunction> =
+            declarations.filterIsInstance<KtNamedFunction>().filter { it.isAMainCandidate() }
+
+        private fun KtElement.findMainFunCandidates(): Collection<KtNamedFunction> =
+            collectDescendantsOfType<KtNamedFunction>().filter { it.isAMainCandidate() }
+
+        fun findMainClassFile(
+            module: Module,
+            mainClassName: String,
+            shouldUseSlowResolve: Boolean = module.project.shouldUseSlowResolve()
+        ): KtFile? {
+            val project = module.project.takeUnless { it.isDefault } ?: return null
+            val scope = module.getModuleRuntimeScope(true)
+            val shortName = StringUtil.getShortName(mainClassName)
+            val psiFacade = JavaPsiFacade.getInstance(project)
+
+            fun findPackageNameHeuristically(base: String): String {
+                val packageName = StringUtil.getPackageName(base)
+                if (packageName.isEmpty()) return packageName
+                return packageName.takeIf { psiFacade.findPackage(it) != null } ?: findPackageNameHeuristically(packageName)
             }
-            return null
+
+            val packageName = findPackageNameHeuristically(mainClassName)
+            val dotNotationFqName = if (mainClassName.contains('$')) {
+                StringUtil.getQualifiedName(StringUtil.getPackageName(mainClassName), shortName.replace('$', '.'))
+            } else {
+                mainClassName
+            }
+
+            // heuristically here means that it follows some common sense:
+            // classes of package a.b.c are located in folder `a/b/c`
+            fun findMainClassFileHeuristically(): Collection<KtFile> {
+                val className = if (packageName.isEmpty()) dotNotationFqName else dotNotationFqName.substring(packageName.length + 1)
+                return psiFacade.findPackage(packageName)?.let { pkg ->
+                    pkg.getFiles(scope).filterIsInstance<KtFile>().filter { ktFile ->
+                        // for top level functions
+                        getFilePartShortName(ktFile.virtualFile.name) == shortName ||
+                                run {
+                                    // or within a nested class-or-object
+                                    var parent: KtDeclarationContainer? = ktFile
+
+                                    className.split('.').forEach { name ->
+                                        parent = parent?.declarations
+                                            ?.filterIsInstance<KtClassOrObject>()
+                                            ?.firstOrNull { it.name == name } ?: return@run false
+                                    }
+                                    parent?.getMainFunCandidates()?.isNotEmpty() ?: false
+                                }
+                    }
+                } ?: emptyList()
+            }
+
+            fun findFiles(fqName: String) =
+                if (shouldUseSlowResolve) {
+                    findMainClassFileHeuristically()
+                } else {
+                    project.runReadActionInSmartMode {
+                        KotlinFileFacadeFqNameIndex.INSTANCE.get(fqName, project, scope).takeIf { it.isNotEmpty() }
+                            ?: KotlinFullClassNameIndex.getInstance().get(fqName, project, scope)
+                                .flatMap { it.findMainFunCandidates() }
+                                .map { it.containingKtFile }
+                    }
+                }
+
+            return findFiles(dotNotationFqName).firstOrNull { it.hasMainFun(shouldUseSlowResolve) }
         }
+
+        private fun Project.shouldUseSlowResolve(): Boolean =
+            takeUnless { it.isDefault }?.let { DumbService.getInstance(this).isDumb } ?: false
+
+        private fun KtFile.hasMainFun(
+            shouldUseSlowResolve: Boolean = project.shouldUseSlowResolve()
+        ): Boolean {
+            val mainFunCandidates = findMainFunCandidates()
+            if (shouldUseSlowResolve && mainFunCandidates.size == 1) {
+                return true
+            }
+            val versionSettings = this.languageVersionSettings
+            return mainFunCandidates.any {
+                MainFunctionDetector(versionSettings) { f -> f.resolveToDescriptorIfAny() }
+                    .isMain(it)
+            }
+        }
+
     }
 
 }

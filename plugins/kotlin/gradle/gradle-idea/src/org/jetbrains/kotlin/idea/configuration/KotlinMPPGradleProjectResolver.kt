@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.configuration
 
@@ -105,7 +102,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 nativeDebugAdvertised = true
                 suggestNativeDebug(resolverCtx.projectPath)
             }
-            if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde()) {
+            if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde() &&
+                !PlatformUtils.isAppCode()) {
                 notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(resolverCtx.projectPath)
                 resolverCtx.report(MessageEvent.Kind.WARNING, ResolveModulesPerSourceSetInMppBuildIssue())
             }
@@ -583,7 +581,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 get() = compilation.nativeExtensions?.konanTarget
 
             val dependencyNames: Map<String, ExternalDependency> by lazy {
-                substitutedDependencies.associateBy { it.name.removeSuffixIfPresent(" [$konanTarget]") }
+                substitutedDependencies.associateBy { it.name.removeSuffixIfPresent(" | $konanTarget") }
             }
         }
 

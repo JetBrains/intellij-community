@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.google.common.collect.ImmutableMap;
@@ -20,7 +20,6 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.text.VersionComparatorUtil;
-import gnu.trove.THashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,6 +30,7 @@ import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -197,7 +197,7 @@ public final class MavenModuleImporter {
   }
 
   private void configDependencies() {
-    THashSet<String> dependencyTypesFromSettings = new THashSet<>();
+    Set<String> dependencyTypesFromSettings = new HashSet<>();
 
     if (!ReadAction.compute(()->{
       if (myModule.getProject().isDisposed()) return false;

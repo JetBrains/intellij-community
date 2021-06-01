@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.facet
 
@@ -19,7 +16,7 @@ import org.jetbrains.kotlin.platform.orDefault
 
 interface KotlinVersionInfoProvider {
     companion object {
-        val EP_NAME: ExtensionPointName<KotlinVersionInfoProvider> = ExtensionPointName.create("org.jetbrains.kotlin.versionInfoProvider")
+        val EP_NAME: ExtensionPointName<KotlinVersionInfoProvider> = ExtensionPointName("org.jetbrains.kotlin.versionInfoProvider")
     }
 
     fun getCompilerVersion(module: Module): String?
@@ -34,10 +31,11 @@ fun getRuntimeLibraryVersions(
     module: Module,
     rootModel: ModuleRootModel?,
     platformKind: IdePlatformKind<*>
-): Collection<String> = KotlinVersionInfoProvider.EP_NAME
-    .extensions
-    .map { it.getLibraryVersions(module, platformKind, rootModel) }
-    .firstOrNull { it.isNotEmpty() } ?: emptyList()
+): Collection<String> {
+    return KotlinVersionInfoProvider.EP_NAME.extensionList.asSequence()
+        .map { it.getLibraryVersions(module, platformKind, rootModel) }
+        .firstOrNull { it.isNotEmpty() } ?: emptyList()
+}
 
 fun getLibraryLanguageLevel(
     module: Module,

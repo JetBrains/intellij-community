@@ -3,17 +3,16 @@ package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.library.JpsLibrary
 
 @CompileStatic
-class PlatformModules {
+final class PlatformModules {
   /**
    * List of modules which are included into lib/platform-api.jar in all IntelliJ based IDEs.
    */
-  static List<String> PLATFORM_API_MODULES = [
+  static List<String> PLATFORM_API_MODULES = List.of(
     "intellij.platform.analysis",
     "intellij.platform.builtInServer",
     "intellij.platform.core",
@@ -28,6 +27,7 @@ class PlatformModules {
     "intellij.platform.lvcs",
     "intellij.platform.ide",
     "intellij.platform.projectModel",
+    "intellij.platform.remote.core",
     "intellij.platform.remoteServers.agent.rt",
     "intellij.platform.remoteServers",
     "intellij.platform.tasks",
@@ -42,12 +42,12 @@ class PlatformModules {
     "intellij.xml.psi",
     "intellij.xml.structureView",
     "intellij.platform.concurrency",
-  ]
+  )
 
   /**
    * List of modules which are included into lib/platform-impl.jar in all IntelliJ based IDEs.
    */
-  static List<String> PLATFORM_IMPLEMENTATION_MODULES = [
+  static List<String> PLATFORM_IMPLEMENTATION_MODULES = List.of(
     "intellij.platform.analysis.impl",
     "intellij.platform.builtInServer.impl",
     "intellij.platform.core.impl",
@@ -87,8 +87,10 @@ class PlatformModules {
     "intellij.platform.credentialStore",
     "intellij.platform.rd.community",
     "intellij.platform.ml.impl"
-  ]
+  )
+
   private static final String PLATFORM_JAR = "platform-impl.jar"
+  private static final String UTIL_JAR = "util.jar"
 
   @CompileDynamic
   static PlatformLayout createPlatformLayout(ProductModulesLayout productLayout,
@@ -108,20 +110,20 @@ class PlatformModules {
       }
 
       productLayout.additionalPlatformJars.entrySet().each {
-        def jarName = it.key
+        String jarName = it.key
         it.value.each {
           addModule(it, jarName)
         }
       }
-      PLATFORM_API_MODULES.each {
-        addModule(it, "platform-api.jar")
-      }
 
+      for (String module in PLATFORM_API_MODULES) {
+        addModule(module, "platform-api.jar")
+      }
       for (String module in PLATFORM_IMPLEMENTATION_MODULES) {
         addModule(module, PLATFORM_JAR)
       }
-      productLayout.productApiModules.each {
-        addModule(it, "openapi.jar")
+      for (String module in productLayout.productApiModules) {
+        addModule(module, "openapi.jar")
       }
 
       for (String module in productLayout.productImplementationModules) {
@@ -135,18 +137,19 @@ class PlatformModules {
         layout.moduleExcludes.putValues(it.key, it.value)
       }
 
-      addModule("intellij.platform.util", "util.jar")
-      addModule("intellij.platform.util.rt", "util.jar")
-      addModule("intellij.platform.util.zip", "util.jar")
-      addModule("intellij.platform.util.classLoader", "util.jar")
-      addModule("intellij.platform.util.text.matching", "util.jar")
-      addModule("intellij.platform.util.collections", "util.jar")
-      addModule("intellij.platform.util.strings", "util.jar")
-      addModule("intellij.platform.util.diagnostic", "util.jar")
-      addModule("intellij.platform.util.ui", "util.jar")
-      addModule("intellij.platform.util.ex", "util.jar")
-      addModule("intellij.platform.ide.util.io", "util.jar")
-      addModule("intellij.platform.extensions", "util.jar")
+      addModule("intellij.platform.util", UTIL_JAR)
+      addModule("intellij.platform.util.rt", UTIL_JAR)
+      addModule("intellij.platform.util.zip", UTIL_JAR)
+      addModule("intellij.platform.util.classLoader", UTIL_JAR)
+      addModule("intellij.platform.util.text.matching", UTIL_JAR)
+      addModule("intellij.platform.util.collections", UTIL_JAR)
+      addModule("intellij.platform.util.strings", UTIL_JAR)
+      addModule("intellij.platform.util.xmlDom", UTIL_JAR)
+      addModule("intellij.platform.util.diagnostic", UTIL_JAR)
+      addModule("intellij.platform.util.ui", UTIL_JAR)
+      addModule("intellij.platform.util.ex", UTIL_JAR)
+      addModule("intellij.platform.ide.util.io", UTIL_JAR)
+      addModule("intellij.platform.extensions", UTIL_JAR)
 
       withoutModuleLibrary("intellij.platform.credentialStore", "dbus-java")
       addModule("intellij.platform.statistics", "stats.jar")
@@ -192,23 +195,34 @@ class PlatformModules {
         addModule("intellij.platform.coverage")
       }
 
-      additionalProjectLevelLibraries.each {
-        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(it.name) && !layout.excludedProjectLibraries.contains(it.name)) {
-          withProjectLibrary(it.name)
+      for (String libraryName in productLayout.projectLibrariesToUnpackIntoMainJar) {
+        withProjectLibraryUnpackedIntoJar(libraryName, productLayout.mainJarName)
+      }
+
+      layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
+        "JDOM",
+        "Trove4j",
+        "aalto-xml",
+        "netty-buffer",
+        "netty-codec-http",
+        "netty-handler-proxy",
+        "Log4J",
+        "fastutil-min",
+      ))
+
+      for (JpsLibrary library in additionalProjectLevelLibraries) {
+        if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(library.name) &&
+            !layout.projectLibrariesToUnpack.values().contains(library.name) &&
+            !layout.excludedProjectLibraries.contains(library.name)) {
+          withProjectLibrary(library.name)
         }
       }
-      productLayout.projectLibrariesToUnpackIntoMainJar.each {
-        withProjectLibraryUnpackedIntoJar(it, productLayout.mainJarName)
-      }
+
       withProjectLibrariesFromIncludedModules(buildContext)
 
-      for (def toRemoveVersion : getLibsToRemoveVersion()) {
+      for (String toRemoveVersion : List.of("jna", "jetbrains-annotations-java5")) {
         removeVersionFromProjectLibraryJarNames(toRemoveVersion)
       }
     }
-  }
-
-  private static @NotNull Set<String> getLibsToRemoveVersion() {
-    return Set.of("Trove4j", "Log4J", "jna", "jetbrains-annotations-java5", "JDOM")
   }
 }

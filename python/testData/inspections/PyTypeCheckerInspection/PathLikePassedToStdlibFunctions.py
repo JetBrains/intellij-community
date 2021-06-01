@@ -4,7 +4,7 @@ from pathlib import Path, PurePath
 
 # os.PathLike
 class A:
-    def __fspath__(self):
+    def __fspath__(self) -> str:
         pass
 
 a = A()
@@ -30,8 +30,8 @@ b = B()
 open(<warning descr="Expected type 'Union[str, bytes, PathLike[str], PathLike[bytes], int]', got 'B' instead">b</warning>)
 
 os.fspath(<warning descr="Unexpected type(s):(B)Possible type(s):(PathLike[Union[Union[str, bytes], Any]])(bytes)(str)">b</warning>)
-os.fsencode(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)
-os.fsdecode(<warning descr="Expected type 'Union[str, bytes, PathLike]', got 'B' instead">b</warning>)
+os.fsencode(<warning descr="Expected type 'Union[str, bytes, PathLike[str], PathLike[bytes]]', got 'B' instead">b</warning>)
+os.fsdecode(<warning descr="Expected type 'Union[str, bytes, PathLike[str], PathLike[bytes]]', got 'B' instead">b</warning>)
 
 Path(<warning descr="Expected type 'Union[str, PathLike[str]]', got 'B' instead">b</warning>)
 PurePath(<warning descr="Expected type 'Union[str, PathLike[str]]', got 'B' instead">b</warning>)

@@ -33,7 +33,7 @@ import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl
 import com.intellij.workspaceModel.ide.impl.WorkspaceModelInitialTestContent
 import com.intellij.workspaceModel.storage.*
-import com.intellij.workspaceModel.storage.impl.ConsistencyCheckingMode
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
@@ -49,7 +49,6 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
   private lateinit var fileContentReader: JpsFileContentReaderWithCache
   private val serializers = AtomicReference<JpsProjectSerializers?>()
   private val sourcesToSave = Collections.synchronizedSet(HashSet<EntitySource>())
-  private val consistencyCheckingMode = ConsistencyCheckingMode.defaultIde()
   private var activity: Activity? = null
   private var childActivity: Activity? = null
 
@@ -188,7 +187,7 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     childActivity = activity?.startChild("serializers creation")
     val serializers = prepareSerializers()
     registerListener()
-    val builder = WorkspaceEntityStorageBuilder.create(consistencyCheckingMode)
+    val builder = WorkspaceEntityStorageBuilder.create()
     childActivity = childActivity?.endAndStart("unloaded modules loading")
 
     if (!WorkspaceModelInitialTestContent.hasInitialContent) {
@@ -197,7 +196,8 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
       (WorkspaceModel.getInstance(project) as? WorkspaceModelImpl)?.printInfoAboutTracedEntity(builder, "JPS files")
       childActivity = childActivity?.endAndStart("project model changes saving (in queue)")
       return builder.toStorage() to sourcesToUpdate
-    } else {
+    }
+    else {
       childActivity?.end()
       childActivity = null
       activity?.end()
@@ -246,17 +246,22 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     val existingSerializers = this.serializers.get()
     if (existingSerializers != null) return existingSerializers
 
+    val serializers = createSerializers()
+    this.serializers.set(serializers)
+    return serializers
+  }
+
+  private fun createSerializers(): JpsProjectSerializers {
     val configLocation: JpsProjectConfigLocation = getJpsProjectConfigLocation(project)!!
     fileContentReader = (project.stateStore as ProjectStoreWithJpsContentReader).createContentReader()
     val externalStoragePath = project.getExternalConfigurationDir()
     //TODO:: Get rid of dependency on ExternalStorageConfigurationManager in order to use in build process
     val externalStorageConfigurationManager = ExternalStorageConfigurationManager.getInstance(project)
     val fileInDirectorySourceNames = FileInDirectorySourceNames.from(WorkspaceModel.getInstance(project).entityStorage.current)
-    val serializers = JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath, false,
-                                                                        virtualFileManager, externalStorageConfigurationManager, fileInDirectorySourceNames)
-
-    this.serializers.set(serializers)
-    return serializers
+    return JpsProjectEntitiesLoader.createProjectSerializers(configLocation, fileContentReader, externalStoragePath,
+                                                             WorkspaceModel.enabledForArtifacts,
+                                                             virtualFileManager,
+                                                             externalStorageConfigurationManager, fileInDirectorySourceNames)
   }
 
   fun saveChangedProjectEntities(writer: JpsFileContentWriter) {
@@ -274,6 +279,19 @@ class JpsProjectModelSynchronizer(private val project: Project) : Disposable {
     }
     LOG.debugValues("Saving affected entities", affectedSources)
     data.saveEntities(storage, affectedSources, writer)
+  }
+
+  fun convertToDirectoryBasedFormat() {
+    val newSerializers = createSerializers()
+    WorkspaceModel.getInstance(project).updateProjectModel {
+      newSerializers.changeEntitySourcesToDirectoryBasedFormat(it)
+    }
+    val moduleSources = WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).map { it.entitySource }
+    synchronized(sourcesToSave) {
+      //to trigger save for modules.xml
+      sourcesToSave.addAll(moduleSources)
+    }
+    serializers.set(newSerializers)
   }
 
   @TestOnly

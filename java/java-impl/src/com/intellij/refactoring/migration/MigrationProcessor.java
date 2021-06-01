@@ -154,7 +154,7 @@ public class MigrationProcessor extends BaseRefactoringProcessor {
         MigrationMapEntry entry = myMigrationMap.getEntryAt(i);
         String newName = entry.getNewName();
         PsiElement element = entry.getType() == MigrationMapEntry.PACKAGE ? MigrationUtil.findOrCreatePackage(myProject, psiMigration, newName)
-                                                                          : MigrationUtil.findOrCreateClass(myProject, psiMigration, newName);
+                                                                          : MigrationUtil.findOrCreateClass(myProject, psiMigration, newName)[0];
         MigrationUtil.doMigration(element, newName, usages, myRefsToShorten);
         if (!sameShortNames && Comparing.strEqual(StringUtil.getShortName(entry.getOldName()), StringUtil.getShortName(entry.getNewName()))) {
           sameShortNames = true;

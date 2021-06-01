@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.CancellablePromise;
@@ -220,7 +219,6 @@ class ActionGroupTouchBar extends TouchBar {
     }
 
     int separatorCounter = 0;
-    final List<TBItemButton.Updater> toUpdate = new ArrayList<>();
     for (AnAction action: actions) {
       // 1. create separator
       // NOTE: we don't add separator into Main (or Principal) groups
@@ -311,28 +309,9 @@ class ActionGroupTouchBar extends TouchBar {
       if (butt.myActionStats != null)
         butt.myActionStats.updateViewNs += System.nanoTime() - startNs;
 
-      // 6. collect updaters
-      final @Nullable TBItemButton.Updater updater = butt.getNativePeerUpdater();
-      if (updater != null) {
-        toUpdate.add(updater);
-      }
+      // 6. All visual data (img/text/flags) is set now, schedule async update for native peers (and collect buttons with updates)
+      butt.updateLater(false);
     } // foreach action
-
-    //
-    // All visual data of buttons (img/text/flags) is set now, schedule async update for native peers
-    //
-    final Runnable updateAllNativePeers = () -> {
-      toUpdate.forEach(item -> item.prepareUpdateData());
-
-      synchronized (this) {
-        if (!myUpdateTimer.isRunning() || getNativePeer().equals(ID.NIL)) {
-          return; // was hidden or released
-        }
-        toUpdate.forEach(item -> item.updateNativePeer());
-      }
-    };
-    final @NotNull Application app = ApplicationManager.getApplication();
-    myLastUpdateNativePeers = app.executeOnPooledThread(() -> app.runReadAction(updateAllNativePeers));
 
     //
     // update visible items of native peer
@@ -369,10 +348,6 @@ class ActionGroupTouchBar extends TouchBar {
 
   private void _applyPresentationChanges(List<AnAction> actions) {
     final long startNs = System.nanoTime();
-
-    if (myLastUpdateNativePeers != null && !myLastUpdateNativePeers.isDone()) {
-      myLastUpdateNativePeers.cancel(false);
-    }
 
     if (actions == null) {
       return;

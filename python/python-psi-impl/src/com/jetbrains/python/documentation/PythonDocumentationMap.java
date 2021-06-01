@@ -24,9 +24,7 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * @author yole
- */
+
 @State(name = "PythonDocumentationMap", storages = @Storage("other.xml"))
 public class PythonDocumentationMap implements PersistentStateComponent<PythonDocumentationMap.State> {
   private static final ImmutableMap<String, String> DEFAULT_ENTRIES = ImmutableMap.<String, String>builder()
@@ -98,7 +96,7 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
   }
 
   public Map<String, String> getEntries() {
-    return ImmutableMap.copyOf(myState.getEntries());
+    return Map.copyOf(myState.getEntries());
   }
 
   public void setEntries(Map<String, String> entries) {

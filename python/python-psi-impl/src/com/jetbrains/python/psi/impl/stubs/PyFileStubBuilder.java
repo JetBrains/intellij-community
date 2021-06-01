@@ -25,9 +25,7 @@ import com.jetbrains.python.psi.PyIfStatement;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author yole
- */
+
 public class PyFileStubBuilder extends DefaultStubBuilder {
   @NotNull
   @Override

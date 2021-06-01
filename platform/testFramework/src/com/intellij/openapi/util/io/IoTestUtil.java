@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -11,6 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.PathUtil;
 import com.intellij.util.io.SuperUserStatus;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.jar.JarFile;
@@ -57,7 +59,7 @@ public final class IoTestUtil {
     return filterParts(Charset.forName(forEncoding).newEncoder()::canEncode);
   }
 
-  private static String filterParts(Predicate<? super String> predicate) {
+  private static String filterParts(@NotNull Predicate<? super String> predicate) {
     return StringUtil.nullize(Stream.of(UNICODE_PARTS).filter(predicate).collect(Collectors.joining("_")));
   }
 
@@ -68,7 +70,8 @@ public final class IoTestUtil {
     return dir;
   }
 
-  private static File expandWindowsPath(File file) {
+  @NotNull
+  private static File expandWindowsPath(@NotNull File file) {
     if (SystemInfo.isWindows && file.getPath().indexOf('~') > 0) {
       try {
         return file.getCanonicalFile();
@@ -96,8 +99,9 @@ public final class IoTestUtil {
     }
   }
 
-  private static File createSymLink(String target, String link, @Nullable Boolean shouldExist) {
-    File linkFile = getFullLinkPath(link), targetFile = new File(target);
+  private static @NotNull File createSymLink(String target, String link, @Nullable Boolean shouldExist) {
+    File linkFile = getFullLinkPath(link);
+    File targetFile = new File(target);
     try {
       if (symLinkMode == Boolean.TRUE) {
         Files.createSymbolicLink(linkFile.toPath(), targetFile.toPath());
@@ -154,6 +158,11 @@ public final class IoTestUtil {
     assumeTrue("'wsl.exe' not found in %Path%", WSLDistribution.findWslExe() != null);
   }
 
+  public static @NotNull Path createWslTempDir(@NotNull String wsl, @NotNull String testName) throws IOException {
+    return Files.createTempDirectory(Paths.get("\\\\wsl$\\" + wsl + "\\tmp"),
+                                     UsefulTestCase.TEMP_DIR_MARKER + testName + "_");
+  }
+
   @NotNull
   public static File createJunction(@NotNull String target, @NotNull String junction) {
     assertTrue(SystemInfo.isWindows);
@@ -199,7 +208,7 @@ public final class IoTestUtil {
     throw new RuntimeException("No free roots");
   }
 
-  private static File getFullLinkPath(String link) {
+  private static @NotNull File getFullLinkPath(@NotNull String link) {
     File linkFile = new File(link);
     if (!linkFile.isAbsolute()) {
       linkFile = new File(getTempDirectory(), link);
@@ -347,7 +356,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static void delete(File... files) {
+  public static void delete(File @NotNull ... files) {
     for (File file : files) {
       if (file != null) {
         FileUtil.delete(file);
@@ -355,7 +364,7 @@ public final class IoTestUtil {
     }
   }
 
-  public static void updateFile(@NotNull File file, String content) {
+  public static void writeToFile(@NotNull File file, @NotNull String content) {
     try {
       FileUtil.writeToFile(file, content);
     }
@@ -375,8 +384,7 @@ public final class IoTestUtil {
             return Boolean.TRUE;
           }
           catch (IOException e) {
-            //noinspection RedundantSuppression,SSBasedInspection
-            Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(e);
+            Logger.getInstance(IoTestUtil.class).debug(e);
             runCommand("cmd", "/C", "mklink", link.toString(), target.getFileName().toString());
             return Boolean.FALSE;
           }
@@ -390,8 +398,7 @@ public final class IoTestUtil {
       }
     }
     catch (Throwable t) {
-      //noinspection RedundantSuppression,SSBasedInspection
-      Logger.getInstance("#com.intellij.openapi.util.io.IoTestUtil").debug(t);
+      Logger.getInstance(IoTestUtil.class).debug(t);
       return null;
     }
   }
@@ -443,7 +450,9 @@ public final class IoTestUtil {
     String changeOut = runCommand("fsutil", "file", "setCaseSensitiveInfo", dir.getPath(), caseSensitive ? "enable" : "disable");
     String out = runCommand("fsutil", "file", "queryCaseSensitiveInfo", dir.getPath());
     if (!out.endsWith(caseSensitive ? "enabled." : "disabled.")) {
-      throw new IOException("Can't setCaseSensitivity("+dir+", "+caseSensitive+"). 'fsutil.exe setCaseSensitiveInfo' output:"+changeOut+"; 'fsutil.exe getCaseSensitiveInfo' output:"+out);
+      throw new IOException("Can't setCaseSensitivity(" + dir + ", " + caseSensitive + ")." +
+                            " 'fsutil.exe setCaseSensitiveInfo' output:" + changeOut + ";" +
+                            " 'fsutil.exe getCaseSensitiveInfo' output:" + out);
     }
   }
 }

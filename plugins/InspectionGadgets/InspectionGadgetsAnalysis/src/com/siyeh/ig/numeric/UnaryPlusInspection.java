@@ -149,8 +149,7 @@ public final class UnaryPlusInspection extends LocalInspectionTool {
 
     @Override
     public @NotNull String getName() {
-      return myIncrement ? InspectionGadgetsBundle.message("unary.increment.quickfix", myRefName) :
-             InspectionGadgetsBundle.message("unnecessary.unary.minus.decrement.quickfix", myRefName);
+      return InspectionGadgetsBundle.message("convert.double.unary.quickfix", myIncrement ? "++" : "--", myRefName);
     }
 
     @Override

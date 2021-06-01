@@ -12,6 +12,7 @@ class EditorConfigEmptySectionInspection : LocalInspectionTool() {
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : EditorConfigVisitor() {
     override fun visitHeader(header: EditorConfigHeader) {
       if (header.section.optionList.isNotEmpty()) return
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.section.emptiness.message"]
       holder.registerProblem(header, message, EditorConfigRemoveSectionQuickFix())
     }

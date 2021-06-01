@@ -15,13 +15,18 @@ enum KotlinPluginKind {
   IJ_CE("KotlinPluginCommunity", "kotlin.plugin.version"),
   MI("MobilePlugin",
      "kotlin.plugin.version",
-     "kotlin-ultimate.mobile-native",
-     "mobile-ide/mobile-native/resources",
+     "intellij.mobile.ide",
+     "mobile-ide/resources",
      [
-       Couple.of("artifacts/kotlin-android-extensions", "kotlin-android-extensions"),
        Couple.of("artifacts/kotlin-ocswift", "kotlin-ocswift"),
        Couple.of("artifacts/MobilePlugin", "Mobile")
      ]),
+  AC_KMM(
+    "AppCodeKMMPlugin",
+    "kotlin.plugin.version",
+    "kotlin-ultimate.appcode-kmm",
+    "CIDR-appcode/appcode-kmm/resources"
+  ),
   AC("AppCodeKotlinPlugin",
      "kotlin.plugin.version",
      "kotlin-ultimate.appcode-native",
@@ -56,7 +61,7 @@ enum KotlinPluginKind {
 
   KotlinPluginKind(String name, String versionPropertyName) {
     this(name + ".zip", "kotlin.idea", "community/plugins/kotlin/resources-descriptors",
-         [Couple.of("${name}_zip/${name}.zip", "kotlin-plugin-${getVersionFromProperty(versionPropertyName)}.zip")],
+         [Couple.of("${name}_zip/${name}.zip" as String, "kotlin-plugin-${getVersionFromProperty(versionPropertyName)}.zip" as String)],
          versionPropertyName
     )
   }
@@ -86,10 +91,10 @@ enum KotlinPluginKind {
   }
 
   private static String version(CompilationContext context, String rawBuildNumber) {
-    def parts = rawBuildNumber.split('\\.')
-    assert parts.size() == 2
-    def intellijMajorVersion = parts[0]
-    def buildNumber = parts[1]
+    def index = rawBuildNumber.indexOf('.')
+    assert index > 0
+    def intellijMajorVersion = rawBuildNumber.substring(0, index)
+    def buildNumber = rawBuildNumber.substring(++index)
     def kotlinVersion = context.project.libraryCollection.libraries
                           .find { it.name.startsWith("kotlinc.") && it.type instanceof JpsRepositoryLibraryType }
                           ?.asTyped(JpsRepositoryLibraryType.INSTANCE)

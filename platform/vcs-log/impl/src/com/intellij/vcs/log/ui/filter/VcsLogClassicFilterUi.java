@@ -360,7 +360,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
       return VcsLogFilterObject.fromCommits(ContainerUtil.mapNotNull(values, s -> {
         Matcher matcher = pattern.matcher(s);
         if (!matcher.matches()) {
-          if (s.length() == VcsLogUtil.FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(s).matches()) {
+          if (VcsLogUtil.isFullHash(s)) {
             CommitId commitId = findCommitId(HashImpl.build(s));
             if (commitId != null) return commitId;
           }
@@ -454,7 +454,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUiEx {
         if (twoDots > 0 && twoDots == s.lastIndexOf("..")) {
           ranges.add(s);
         }
-        else if (s.length() == VcsLogUtil.FULL_HASH_LENGTH && VcsLogUtil.HASH_REGEX.matcher(s).matches()) {
+        else if (VcsLogUtil.isFullHash(s)) {
           hashes.add(s);
         }
         else {

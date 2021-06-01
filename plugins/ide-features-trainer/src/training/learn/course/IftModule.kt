@@ -7,7 +7,7 @@ import training.lang.LangSupport
 
 abstract class IftModule(@Nls val name: String,
                          @Nls val description: String,
-                         val primaryLanguage: LangSupport,
+                         val primaryLanguage: LangSupport?,
                          /** It is lessons default type */
                          val moduleType: LessonType,
                          initLessons: () -> List<KLesson>) {
@@ -16,6 +16,7 @@ abstract class IftModule(@Nls val name: String,
 
   init {
     for (lesson in lessons) {
+      @Suppress("LeakingThis")
       lesson.module = this
     }
   }

@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
-import com.intellij.openapi.util.SystemInfoRt
-import com.intellij.openapi.vfs.CharsetToolkit
+import com.intellij.openapi.util.io.NioFiles
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -12,34 +11,14 @@ import java.nio.channels.Channels
 import java.nio.charset.Charset
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributes
-import java.nio.file.attribute.DosFileAttributeView
 import java.nio.file.attribute.FileTime
 import java.util.function.Predicate
 import kotlin.math.min
 
 fun Path.exists(): Boolean = Files.exists(this)
 
-fun Path.createDirectories(): Path {
-  // symlink or existing regular file - Java SDK do this check, but with as `isDirectory(dir, LinkOption.NOFOLLOW_LINKS)`, i.e. links are not checked
-  if (!Files.isDirectory(this)) {
-    try {
-      doCreateDirectories(toAbsolutePath())
-    }
-    catch (ignored: FileAlreadyExistsException) {
-      // toAbsolutePath can return resolved path or file exists now
-    }
-  }
-  return this
-}
-
-private fun doCreateDirectories(path: Path) {
-  path.parent?.let {
-    if (!Files.isDirectory(it)) {
-      doCreateDirectories(it)
-    }
-  }
-  Files.createDirectory(path)
-}
+fun Path.createDirectories(): Path =
+  NioFiles.createDirectories(this)
 
 /**
  * Opposite to Java, parent directories will be created
@@ -61,9 +40,6 @@ fun Path.safeOutputStream(): OutputStream {
 @Throws(IOException::class)
 fun Path.inputStream(): InputStream = Files.newInputStream(this)
 
-@Throws(IOException::class)
-fun Path.inputStreamSkippingBom() = CharsetToolkit.inputStreamSkippingBOM(inputStream().buffered())
-
 fun Path.inputStreamIfExists(): InputStream? {
   try {
     return inputStream()
@@ -83,75 +59,11 @@ fun Path.createSymbolicLink(target: Path): Path {
 }
 
 @JvmOverloads
-fun Path.delete(recursively: Boolean = true) {
-  if (recursively) {
-    doDelete(this)
+fun Path.delete(recursively: Boolean = true) =
+  when {
+    recursively -> NioFiles.deleteRecursively(this)
+    else -> Files.delete(this)
   }
-  else {
-    Files.delete(this)
-  }
-}
-
-private fun doDelete(file: Path) {
-  val attributes = try {
-    Files.readAttributes(file, BasicFileAttributes::class.java, LinkOption.NOFOLLOW_LINKS)
-  }
-  catch (e: NoSuchFileException) {
-    return
-  }
-
-  if (!attributes.isDirectory) {
-    deleteFile(file)
-    return
-  }
-
-  Files.walkFileTree(file, object : SimpleFileVisitor<Path>() {
-    override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
-      deleteFile(file)
-      return FileVisitResult.CONTINUE
-    }
-
-    override fun postVisitDirectory(dir: Path, exception: IOException?): FileVisitResult {
-      if (exception != null) {
-        throw exception
-      }
-
-      Files.deleteIfExists(dir)
-      return FileVisitResult.CONTINUE
-    }
-  })
-}
-
-private fun deleteFile(file: Path) {
-  // repeated delete is required for bad OS like Windows
-  val maxAttemptCount = 10
-  var attemptCount = 0
-  while (true) {
-    try {
-      Files.deleteIfExists(file)
-      return
-    }
-    catch (e: IOException) {
-      if (++attemptCount == maxAttemptCount) {
-        throw e
-      }
-
-      if (SystemInfoRt.isWindows && e is AccessDeniedException) {
-        val view = Files.getFileAttributeView(file, DosFileAttributeView::class.java)
-        if (view != null && view.readAttributes().isReadOnly) {
-          view.setReadOnly(false)
-        }
-      }
-
-      try {
-        Thread.sleep(10)
-      }
-      catch (ignored: InterruptedException) {
-        throw e
-      }
-    }
-  }
-}
 
 fun Path.deleteWithParentsIfEmpty(root: Path, isFile: Boolean = true): Boolean {
   var parent = if (isFile) this.parent else null

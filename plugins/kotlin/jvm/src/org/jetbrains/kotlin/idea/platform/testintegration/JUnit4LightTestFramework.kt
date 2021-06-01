@@ -1,9 +1,11 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.platform.testintegration
 
 import com.intellij.execution.junit.JUnitUtil
 import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class JUnit4LightTestFramework: AbstractLightTestFramework() {
 
@@ -41,10 +43,16 @@ class JUnit4LightTestFramework: AbstractLightTestFramework() {
 
     private fun isJUnit4TestClass(ktClassOrObject: KtClassOrObject): Boolean? {
         getTopmostClass(ktClassOrObject)?.let { topLevelClass ->
-            topLevelClass.annotationEntries.find { it.isFqName(JUnitUtil.RUN_WITH) }?.let { return true }
+            topLevelClass.annotationEntries.find { it.isFqName(JUnitUtil.RUN_WITH) }?.let { return false }
         }
-        return ktClassOrObject.declarations.filterIsInstance<KtNamedFunction>().filterNot { isNotACandidateFastCheck(it) }
+        return ktClassOrObject.declarations
+            .filterIsInstance<KtNamedFunction>()
+            .filterNot { isNotACandidateFastCheck(it) }
             .any { isJUnit4TestMethod(it) }.takeIf { it }
+            ?: false.takeUnless {
+            ktClassOrObject.superTypeListEntries.filterIsInstance<KtSuperTypeCallEntry>()
+                .singleOrNull()?.typeReference?.typeElement?.safeAs<KtUserType>()?.referencedName == "Any"
+        }
     }
 
     private fun KtAnnotated.isAnnotated(fqName: String): Boolean = annotationEntries.any {

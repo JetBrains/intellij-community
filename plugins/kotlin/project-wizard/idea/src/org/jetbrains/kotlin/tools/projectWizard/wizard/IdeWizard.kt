@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard
 
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel
@@ -42,10 +43,13 @@ class IdeWizard(
         WizardLoggingSession::class to WizardLoggingSession.createWithRandomId(),
     )
 
-    val jpsData = JpsData(
-        JavaRuntimeLibraryDescription(null),
-        LibrariesContainerFactory.createContainer(null as Project?),
-    )
+    val jpsData by lazy {
+        val libraryDescription = JavaRuntimeLibraryDescription(null)
+        val librariesContainer = LibrariesContainerFactory.createContainer(null as Project?)
+        val libraryOptionsPanel = LibraryOptionsPanel(libraryDescription, "", FrameworkLibraryVersionFilter.ALL, librariesContainer, false)
+        JpsData(libraryDescription, librariesContainer, libraryOptionsPanel)
+    }
+
     var jdk: Sdk? = null
 
     var projectPath by setting(StructurePlugin.projectPath.reference)
@@ -74,13 +78,7 @@ class IdeWizard(
     data class JpsData(
         val libraryDescription: JavaRuntimeLibraryDescription,
         val librariesContainer: LibrariesContainer,
-        val libraryOptionsPanel: LibraryOptionsPanel = LibraryOptionsPanel(
-            libraryDescription,
-            "",
-            FrameworkLibraryVersionFilter.ALL,
-            librariesContainer,
-            false
-        )
+        val libraryOptionsPanel: LibraryOptionsPanel,
     )
 }
 

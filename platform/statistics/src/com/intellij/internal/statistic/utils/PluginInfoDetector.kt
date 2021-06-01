@@ -2,7 +2,6 @@
 package com.intellij.internal.statistic.utils
 
 import com.intellij.ide.plugins.PluginInfoProvider
-import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -71,7 +70,7 @@ fun getPluginInfoByDescriptor(plugin: PluginDescriptor): PluginInfo {
 
   val id = plugin.pluginId.idString
   val version = plugin.version
-  if (PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
+  if (PluginManagerCore.isDevelopedByJetBrains(plugin)) {
     val pluginType = when {
       plugin.isBundled -> PluginType.JB_BUNDLED
       PluginManagerCore.isUpdatedBundledPlugin(plugin) -> PluginType.JB_UPDATED_BUNDLED
@@ -158,6 +157,8 @@ fun findPluginTypeByValue(value: String): PluginType? {
   return null
 }
 
+private const val tbePluginId = "org.jetbrains.toolbox-enterprise-client"
+
 data class PluginInfo(val type: PluginType, val id: String?, val version: String?) {
   /**
    * @return true if code is from IntelliJ platform or JB plugin.
@@ -168,6 +169,9 @@ data class PluginInfo(val type: PluginType, val id: String?, val version: String
    * @return true if code is from IntelliJ platform, JB plugin or plugin from JB plugin repository.
    */
   fun isSafeToReport() = type.isSafeToReport()
+
+  fun isAllowedToInjectIntoFUS(): Boolean = isDevelopedByJetBrains() && id == tbePluginId ||
+                                            (PluginManagerCore.isUnitTestMode && type == PluginType.PLATFORM)
 }
 
 val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null, null)
@@ -189,7 +193,7 @@ private val pluginIdsFromOfficialJbPluginRepo: Supplier<Set<PluginId>> = Timeout
  */
 private fun isSafeToReportFrom(descriptor: PluginDescriptor): Boolean {
   return when {
-    PluginManager.getInstance().isDevelopedByJetBrains(descriptor) -> true
+    PluginManagerCore.isDevelopedByJetBrains(descriptor) -> true
     descriptor.isBundled -> false // bundled, but not from JetBrains, so, some custom unknown plugin
     else -> descriptor.pluginId?.let { isPluginFromOfficialJbPluginRepo(it) } ?: false
     // only plugins installed from some repository (not bundled and not provided via classpath in development IDE instance - they are also considered bundled) would be reported

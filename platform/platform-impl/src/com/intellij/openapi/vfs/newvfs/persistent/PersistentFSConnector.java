@@ -125,7 +125,7 @@ final class PersistentFSConnector {
 
       int version = getVersion(records, attributes, contents);
       if (version != expectedVersion) {
-        throw new IOException("FS repository version mismatch: actual=" + version + " expected=" + FSRecords.VERSION);
+        throw new IOException("FS repository version mismatch: actual=" + version + " expected=" + FSRecords.getVersion());
       }
 
       if (records.getConnectionStatus() != PersistentFSHeaders.SAFELY_CLOSED_MAGIC) {
@@ -196,7 +196,7 @@ final class PersistentFSConnector {
     }
   }
 
-  private static IntList scanFreeRecords(PersistentFSRecordsStorage records) {
+  private static IntList scanFreeRecords(PersistentFSRecordsStorage records) throws IOException {
     final IntList freeRecords = new IntArrayList();
     final int fileLength = (int)records.length();
     LOG.assertTrue(fileLength % PersistentFSRecordsStorage.RECORD_SIZE == 0, "invalid file size: " + fileLength);
@@ -212,7 +212,7 @@ final class PersistentFSConnector {
 
   private static int getVersion(PersistentFSRecordsStorage records,
                                 Storage attributes,
-                                RefCountingContentStorage contents) {
+                                RefCountingContentStorage contents) throws IOException {
     final int recordsVersion = records.getVersion();
     if (attributes.getVersion() != recordsVersion || contents.getVersion() != recordsVersion) return -1;
 
@@ -222,7 +222,7 @@ final class PersistentFSConnector {
   private static void setCurrentVersion(PersistentFSRecordsStorage records,
                                         Storage attributes,
                                         RefCountingContentStorage contents,
-                                        int version) {
+                                        int version) throws IOException {
     records.setVersion(version);
     attributes.setVersion(version);
     contents.setVersion(version);

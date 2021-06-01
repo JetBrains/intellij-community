@@ -3,8 +3,10 @@ package org.jetbrains.plugins.github.api.data.pullrequest
 
 import com.fasterxml.jackson.annotation.JsonSubTypes
 import com.fasterxml.jackson.annotation.JsonTypeInfo
+import com.intellij.collaboration.api.dto.GraphQLFragment
 import org.jetbrains.plugins.github.api.data.GHUser
 
+@GraphQLFragment("/graphql/fragment/pullRequestReviewerInfo.graphql")
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, include = JsonTypeInfo.As.PROPERTY, property = "__typename", visible = false)
 @JsonSubTypes(
   JsonSubTypes.Type(name = "User", value = GHUser::class),

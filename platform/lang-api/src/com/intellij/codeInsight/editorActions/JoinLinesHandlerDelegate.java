@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.openapi.editor.Document;
@@ -8,8 +8,6 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * Allows to customize <em>Edit|Join Lines</em>.
- *
- * @author yole
  */
 public interface JoinLinesHandlerDelegate {
   ExtensionPointName<JoinLinesHandlerDelegate> EP_NAME = ExtensionPointName.create("com.intellij.joinLinesHandler");

@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsException;
@@ -110,7 +111,7 @@ public final class TextPatchBuilder {
     }
 
     // skip empty patch
-    if (hunks.isEmpty() && beforeRevision.getPath().getPath().equals(afterRevision.getPath().getPath())) return null;
+    if (hunks.isEmpty() && beforeRevision.getPath().equals(afterRevision.getPath())) return null;
 
     return patch;
   }
@@ -351,20 +352,32 @@ public final class TextPatchBuilder {
   private void setPatchHeading(@NotNull FilePatch result,
                                @NotNull AirContentRevision beforeRevision,
                                @NotNull AirContentRevision afterRevision) {
-    result.setBeforeName(myBasePath.relativize(beforeRevision.getPath().getPath()).toString().replace(File.separatorChar, '/'));
+    result.setBeforeName(getRelativePath(myBasePath, beforeRevision.getPath()));
     result.setBeforeVersionId(getRevisionName(beforeRevision));
 
-    result.setAfterName(myBasePath.relativize(afterRevision.getPath().getPath()).toString().replace(File.separatorChar, '/'));
+    result.setAfterName(getRelativePath(myBasePath, afterRevision.getPath()));
     result.setAfterVersionId(getRevisionName(afterRevision));
   }
 
-  @NotNull
+  public static @NotNull String getRelativePath(@NotNull Path basePath, @NotNull FilePath filePath) {
+    Path path = filePath.getIOFile().toPath();
+    if (!path.isAbsolute()) return filePath.getPath();
+    return basePath.relativize(path).toString().replace(File.separatorChar, '/');
+  }
+
+  @Nullable
   private static String getRevisionName(@NotNull AirContentRevision revision) {
     String revisionName = revision.getRevisionNumber();
     if (!StringUtil.isEmptyOrSpaces(revisionName)) {
       return MessageFormat.format(REVISION_NAME_TEMPLATE, revisionName);
     }
-    return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(revision.getPath().lastModified()));
+
+    Long lastModified = revision.getLastModifiedTimestamp();
+    if (lastModified != null) {
+      return MessageFormat.format(DATE_NAME_TEMPLATE, Long.toString(lastModified));
+    }
+
+    return null;
   }
 
   @NotNull

@@ -14,7 +14,7 @@ import javax.swing.table.TableCellRenderer
 internal class VersionColumn(
     private val versionSetter: (packageModel: PackageModel, newVersion: PackageVersion) -> Unit
 ) : ColumnInfo<PackagesTableItem<*>, VersionViewModel<*>>(
-    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.version")
+    PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.versions")
 ) {
 
     private val cellRenderer = PackageVersionTableCellRenderer()
@@ -27,7 +27,8 @@ internal class VersionColumn(
 
     override fun getEditor(item: PackagesTableItem<*>): TableCellEditor = cellEditor
 
-    override fun isCellEditable(item: PackagesTableItem<*>?) = true
+    override fun isCellEditable(item: PackagesTableItem<*>?) =
+        item?.packageModel?.getAvailableVersions(onlyStable)?.isNotEmpty() ?: false
 
     fun updateData(onlyStable: Boolean, targetModules: TargetModules) {
         this.onlyStable = onlyStable
@@ -47,7 +48,7 @@ internal class VersionColumn(
                     item.packageModel.usageInfo
                         .filter { usageInfo -> modules.any { usageInfo.projectModule == it.projectModule } }
                         .map { it.version }
-                        .max()
+                        .maxOrNull()
                         ?: throw IllegalStateException(
                             "Unable to find usage for supposedly installed package ${item.packageModel.identifier} " +
                                 "(modules: ${modules.modules.joinToString { it.projectModule.name }})"

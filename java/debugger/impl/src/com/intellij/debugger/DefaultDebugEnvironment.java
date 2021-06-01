@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.debugger.impl.AlternativeJreClassFinder;
@@ -10,18 +10,13 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.KeyWithDefaultValue;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.DelegatingGlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopes;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-
-import java.util.Comparator;
 
 public class DefaultDebugEnvironment implements DebugEnvironment {
   private final GlobalSearchScope mySearchScope;
@@ -53,22 +48,8 @@ public class DefaultDebugEnvironment implements DebugEnvironment {
 
   private static GlobalSearchScope createSearchScope(@NotNull Project project, @Nullable RunProfile runProfile) {
     GlobalSearchScope scope = GlobalSearchScopes.executionScope(project, runProfile);
-    if (scope.equals(GlobalSearchScope.allScope(project))) {
-      // prefer sources over class files
-      return new DelegatingGlobalSearchScope(scope) {
-        final ProjectFileIndex myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-        final Comparator<VirtualFile> myScopeComparator =
-          Comparator.comparing(myProjectFileIndex::isInSourceContent)
-            .thenComparing(myProjectFileIndex::isInLibrarySource)
-            .thenComparing(super::compare);
-
-        @Override
-        public int compare(@NotNull VirtualFile file1, @NotNull VirtualFile file2) {
-          return myScopeComparator.compare(file1, file2);
-        }
-      };
-    }
-    return scope;
+    // prefer sources over class files
+    return new DebuggerGlobalSearchScope(scope, project);
   }
 
   @Override

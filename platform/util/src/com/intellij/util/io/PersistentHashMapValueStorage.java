@@ -16,7 +16,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.*;
 import java.nio.ByteBuffer;
-import java.nio.channels.FileChannel;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -24,8 +23,6 @@ import java.nio.file.StandardOpenOption;
 import java.util.Comparator;
 import java.util.List;
 import java.util.PriorityQueue;
-
-import static com.intellij.util.io.FileChannelUtil.unInterruptible;
 
 public final class PersistentHashMapValueStorage {
   @Nullable
@@ -720,7 +717,7 @@ public final class PersistentHashMapValueStorage {
     }
   }
 
-  void switchToCompactionMode() {
+  void switchToCompactionMode() throws IOException {
     ourReadersCache.remove(myPath);
     ourFileChannelCache.remove(myPath);
 
@@ -802,15 +799,10 @@ public final class PersistentHashMapValueStorage {
   }
 
   private static final class FileReader implements RAReader {
-    private final FileChannel myFile;
+    private final UnInterruptibleFileChannel myFile;
 
-    private FileReader(Path file) {
-      try {
-        myFile = unInterruptible(FileChannel.open(file, StandardOpenOption.READ));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+    private FileReader(Path file) throws IOException {
+      myFile = new UnInterruptibleFileChannel(file, StandardOpenOption.READ);
     }
 
     @Override

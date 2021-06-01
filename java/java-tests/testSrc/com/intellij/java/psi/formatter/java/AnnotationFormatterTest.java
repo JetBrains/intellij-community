@@ -19,7 +19,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 
@@ -345,7 +344,27 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
 
-  public void testSCR2072() {
+  public void testIdea161875() {
+    getCustomJavaSettings().ALIGN_MULTILINE_ANNOTATION_PARAMETERS = true;
+    doTextTest(
+      "public class Test {\n" +
+      "    @SuppressWarnings({\n" +
+      "   \"unchecked\",\n" +
+      "    \"rawtypes\"\n" +
+      "    })\n" +
+      "    void foo() {\n" +
+      "    }\n" +
+      "}",
+
+      "public class Test {\n" +
+      "    @SuppressWarnings({\n" +
+      "            \"unchecked\",\n" +
+      "            \"rawtypes\"\n" +
+      "    })\n" +
+      "    void foo() {\n" +
+      "    }\n" +
+      "}"
+    );
   }
 
 

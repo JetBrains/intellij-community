@@ -363,7 +363,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     super(project);
     AnActionListener actionListener = new AnActionListener() {
       @Override
-      public void beforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+      public void beforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event) {
         JBPopup hint = getDocInfoHint();
         if (hint != null &&
             LookupManager.getActiveLookup(myEditor) == null && // let the lookup manage all the actions
@@ -495,6 +495,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                               PsiElement original,
                               boolean requestFocus,
                               @Nullable Runnable closeCallback) {
+    showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
+  }
+
+  public void showJavaDocInfo(@NotNull Editor editor,
+                              @NotNull PsiElement element,
+                              PsiElement original,
+                              boolean requestFocus,
+                              @Nullable Runnable closeCallback) {
+    myEditor = editor;
     showJavaDocInfo(element, original, requestFocus, closeCallback, null, true);
   }
 

@@ -324,7 +324,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private JPanel createToolbarPanel() {
     DefaultActionGroup group = new DefaultActionGroup();
-    final JComponent toolbar = ActionManager.getInstance().createActionToolbar("KeymapEdit", group, true).getComponent();
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("KeymapEdit", group, true);
+    toolbar.setTargetComponent(myActionsTree.getTree());
     final CommonActionsManager commonActionsManager = CommonActionsManager.getInstance();
     final TreeExpander treeExpander = createTreeExpander(myActionsTree);
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
@@ -356,6 +357,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
     group = new DefaultActionGroup();
     ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("Keymap", group, true);
+    actionToolbar.setTargetComponent(myActionsTree.getTree());
     actionToolbar.setReservePlaceAutoPopupIcon(false);
     final JComponent searchToolbar = actionToolbar.getComponent();
     final Alarm alarm = new Alarm();
@@ -388,7 +390,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(new ClearFilteringAction());
 
     JPanel panel = new JPanel(new GridLayout(1, 2));
-    panel.add(toolbar);
+    panel.add(toolbar.getComponent());
     panel.add(new BorderLayoutPanel().addToCenter(myFilterComponent).addToRight(searchToolbar));
     return panel;
   }
@@ -459,7 +461,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
             keyDesc += ", " + KeymapUtil.getKeystrokeText(ksc.getSecondKeyStroke());
           final int result = Messages.showYesNoCancelDialog(
             parent,
-            IdeBundle.message("message.action.shortcut.0.is.already.assigned.to.system.action.1.do.you.want.to.remove.this.shortcut", keyDesc, kscs.get(ksc)),
+            IdeBundle.message("message.action.remove.system.assigned.shortcut", keyDesc, kscs.get(ksc)),
             KeyMapBundle.message("conflict.shortcut.dialog.title"),
             KeyMapBundle.message("conflict.shortcut.dialog.remove.button"),
             KeyMapBundle.message("conflict.shortcut.dialog.leave.button"),
@@ -688,6 +690,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       final boolean prevVal = myShowFnInitial;
       myShowFnInitial = myCheckbox.isSelected();
       NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
+      TouchbarSupport.enable(!myShowFnInitial);
 
       if (myShowFnInitial != NSDefaults.isShowFnKeysEnabled(appId)) {
         NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial, true); // try again with extra checks
@@ -701,6 +704,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           // System.out.println("can't restart touchbar-server, roll back settings");
           myShowFnInitial = prevVal;
           NSDefaults.setShowFnKeysEnabled(appId, myShowFnInitial);
+          TouchbarSupport.enable(!myShowFnInitial);
 
           if (!myDisposed) {
             // System.out.println("ui wasn't disposed, invoke roll back of checkbox state");

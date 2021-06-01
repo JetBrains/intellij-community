@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ide.BrowserUtil;
@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.paint.EffectPainter;
 import com.intellij.ui.scale.JBUIScale;
@@ -471,7 +470,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       SimpleTextAttributes attributes = fragment.attributes;
       boolean isSmaller = attributes.isSmaller();
       if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
-        font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
+        font = deriveFont(font, attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
       }
       wasSmaller = isSmaller;
 
@@ -604,7 +603,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         SimpleTextAttributes attributes = fragment.attributes;
         boolean isSmaller = attributes.isSmaller();
         if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
-          font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
+          font = deriveFont(font, attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
         }
         wasSmaller = isSmaller;
 
@@ -825,7 +824,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
         Font font = g.getFont();
         boolean isSmaller = attributes.isSmaller();
         if (font.getStyle() != attributes.getFontStyle() || isSmaller != wasSmaller) { // derive font only if it is necessary
-          font = font.deriveFont(attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
+          font = deriveFont(font, attributes.getFontStyle(), isSmaller ? UIUtil.getFontSize(UIUtil.FontSize.SMALL) : baseSize);
         }
         wasSmaller = isSmaller;
 
@@ -1158,7 +1157,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
 
   @Override
   public String getToolTipText(MouseEvent event) {
-    if (myIcon instanceof IconWithToolTip && findFragmentAt(event.getX()) == FRAGMENT_ICON && Registry.is("ide.icon.tooltips")) {
+    if (myIcon instanceof IconWithToolTip && findFragmentAt(event.getX()) == FRAGMENT_ICON) {
       String iconToolTip = ((IconWithToolTip)myIcon).getToolTip(false);
       if (iconToolTip != null) {
         return StringUtil.capitalize(iconToolTip);
@@ -1173,6 +1172,15 @@ public class SimpleColoredComponent extends JComponent implements Accessible, Co
       accessibleContext = new AccessibleSimpleColoredComponent();
     }
     return accessibleContext;
+  }
+
+  private static Font deriveFont(Font originalFont, int style, float size) {
+    Font derivedFont = originalFont.deriveFont(style, size);
+    if (Font.DIALOG.equals(derivedFont.getFamily()) && !Font.DIALOG.equals(originalFont.getFamily())) {
+      // workaround for JBR-3423
+      return originalFont.deriveFont(size);
+    }
+    return derivedFont;
   }
 
   protected class AccessibleSimpleColoredComponent extends JComponent.AccessibleJComponent {

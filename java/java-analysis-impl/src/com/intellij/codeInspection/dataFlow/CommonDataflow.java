@@ -1,14 +1,19 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.java.JavaDfaInstructionVisitor;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
+import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult;
+import com.intellij.codeInspection.dataFlow.java.JavaDfaListener;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
 import com.intellij.codeInspection.dataFlow.jvm.descriptors.AssertionDisabledDescriptor;
-import com.intellij.codeInspection.dataFlow.lang.DfaInterceptor;
+import com.intellij.codeInspection.dataFlow.jvm.problems.ContractFailureProblem;
+import com.intellij.codeInspection.dataFlow.lang.UnsatisfiedConditionProblem;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
-import com.intellij.codeInspection.dataFlow.types.*;
+import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
+import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.*;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
@@ -44,11 +49,11 @@ public final class CommonDataflow {
     void addValue(DfaMemoryState memState, DfaValue value) {
       if (myPossibleValues == null) return;
       DfType dfType = memState.getDfType(value);
-      if (!(dfType instanceof DfConstantType)) {
+      Object newValue = dfType.getConstantOfType(Object.class);
+      if (newValue == null && !dfType.equals(DfTypes.NULL)) {
         myPossibleValues = null;
         return;
       }
-      Object newValue = ((DfConstantType<?>)dfType).getValue();
       if (myPossibleValues.contains(newValue)) return;
       if (myPossibleValues.isEmpty()) {
         myPossibleValues = Collections.singleton(newValue);
@@ -63,7 +68,7 @@ public final class CommonDataflow {
       if (myDfType == DfType.TOP) return;
       DfType newType = memState.getDfType(value);
       if (value instanceof DfaVariableValue) {
-        SpecialField field = JvmSpecialField.fromQualifier(value);
+        DerivedVariableDescriptor field = SpecialField.fromQualifier(value);
         if (field != null && newType instanceof DfReferenceType) {
           DfaValue specialField = field.createValue(value.getFactory(), value);
           DfType withSpecialField = field.asDfType(memState.getDfType(specialField));
@@ -72,7 +77,7 @@ public final class CommonDataflow {
         }
       }
       if (value instanceof DfaWrappedValue) {
-        SpecialField field = ((DfaWrappedValue)value).getSpecialField();
+        DerivedVariableDescriptor field = ((DfaWrappedValue)value).getSpecialField();
         DfaVariableValue var = ((DfaWrappedValue)value).getWrappedValue();
         newType = newType.meet(field.asDfType(memState.getDfType(var)));
       }
@@ -211,9 +216,9 @@ public final class CommonDataflow {
   @NotNull
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return new DataflowResult(RunnerResult.NOT_APPLICABLE);
-    StandardDataFlowRunner runner = new StandardDataFlowRunner(block.getProject(), block, ThreeState.UNSURE);
-    var interceptor = new CommonDataflowInterceptor();
-    RunnerResult result = runner.analyzeMethodRecursively(block, new JavaDfaInstructionVisitor(interceptor));
+    StandardDataFlowRunner runner = new StandardDataFlowRunner(block.getProject(), ThreeState.UNSURE);
+    var interceptor = new CommonDataflowListener();
+    RunnerResult result = runner.analyzeMethodRecursively(block, interceptor);
     if (result != RunnerResult.OK) return new DataflowResult(result);
     if (!(block instanceof PsiClass)) return interceptor.myResult;
     DataflowResult dfr = interceptor.myResult.copy();
@@ -228,7 +233,7 @@ public final class CommonDataflow {
       } else {
         initialStates = StreamEx.of(states).map(DfaMemoryState::createCopy).toList();
       }
-      if(runner.analyzeBlockRecursively(body, initialStates, new JavaDfaInstructionVisitor(interceptor)) == RunnerResult.OK) {
+      if(runner.analyzeBlockRecursively(body, initialStates, interceptor) == RunnerResult.OK) {
         dfr = interceptor.myResult.copy();
       } else {
         interceptor.myResult = dfr;
@@ -328,25 +333,29 @@ public final class CommonDataflow {
     return getDfType(expressionToAnalyze).getConstantOfType(Object.class);
   }
 
-  private static class CommonDataflowInterceptor implements DfaInterceptor<PsiExpression> {
+  private static class CommonDataflowListener implements JavaDfaListener {
     private DataflowResult myResult = new DataflowResult(RunnerResult.OK);
     private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
 
     @Override
-    public void beforeInitializerEnd(boolean isStatic, @NotNull DfaMemoryState state) {
-      if (!isStatic) {
-        myEndOfInitializerStates.add(state.createCopy());
-      }
+    public void beforeInstanceInitializerEnd(@NotNull DfaMemoryState state) {
+      myEndOfInitializerStates.add(state.createCopy());
     }
 
     @Override
     public void beforeExpressionPush(@NotNull DfaValue value,
                                      @NotNull PsiExpression expression,
-                                     @Nullable TextRange range,
                                      @NotNull DfaMemoryState state) {
-      if (range == null) {
-        // Do not track instructions which cover part of expression
-        myResult.add(expression, state, value);
+      myResult.add(expression, state, value);
+    }
+
+    @Override
+    public void onCondition(@NotNull UnsatisfiedConditionProblem problem,
+                            @NotNull DfaValue value,
+                            @NotNull ThreeState failed,
+                            @NotNull DfaMemoryState state) {
+      if (problem instanceof ContractFailureProblem && failed != ThreeState.NO) {
+        myResult.add(((ContractFailureProblem)problem).getAnchor(), state, value.getFactory().fromDfType(DfType.FAIL));
       }
     }
   }

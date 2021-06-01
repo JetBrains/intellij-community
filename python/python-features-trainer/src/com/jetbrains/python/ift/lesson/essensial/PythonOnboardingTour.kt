@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.actions.ToggleCaseAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
@@ -59,6 +58,7 @@ import training.learn.course.LessonProperties
 import training.learn.lesson.LessonManager
 import training.learn.lesson.general.run.clearBreakpoints
 import training.learn.lesson.general.run.toggleBreakpointTask
+import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
 import training.util.invokeActionForFocusContext
@@ -67,7 +67,6 @@ import java.awt.Component
 import java.awt.Point
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
-import java.util.concurrent.CompletableFuture
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JTree
@@ -104,7 +103,7 @@ class PythonOnboardingTour :
     prepareRuntimeTask {
       configurations().forEach { runManager().removeConfiguration(it) }
 
-      val root = ProjectRootManager.getInstance(project).contentRoots[0]
+      val root = ProjectUtils.getProjectRoot(project)
       if (root.findChild(demoFileName) == null) invokeLater {
         runWriteAction {
           root.createChildData(this, demoFileName)
@@ -316,15 +315,6 @@ class PythonOnboardingTour :
     }
   }
 
-  private fun TaskContext.proceedLink() {
-    val gotIt = CompletableFuture<Boolean>()
-    runtimeText {
-      removeAfterDone = true
-      PythonLessonsBundle.message("python.onboarding.proceed.to.the.next.step", LearningUiManager.addCallback { gotIt.complete(true) })
-    }
-    addStep(gotIt)
-  }
-
   private fun LessonContext.openLearnToolwindow() {
     task {
       triggerByUiComponentAndHighlight(usePulsation = true) { stripe: StripeButton ->
@@ -391,7 +381,7 @@ class PythonOnboardingTour :
     }
 
     task {
-      text(PythonLessonsBundle.message("python.onboarding.balloon.open.file", code(demoFileName)),
+      text(PythonLessonsBundle.message("python.onboarding.balloon.open.file", strong(demoFileName)),
            LearningBalloonConfig(Balloon.Position.atRight, duplicateMessage = true, width = 0))
       stateCheck l@{
         if (FileEditorManager.getInstance(project).selectedTextEditor == null) return@l false

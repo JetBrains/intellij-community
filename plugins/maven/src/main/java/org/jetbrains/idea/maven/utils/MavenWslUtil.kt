@@ -267,22 +267,22 @@ internal object MavenWslUtil : MavenUtil() {
       }
     }
     if (projectWslDistr != null && jdkWslDistr == null) {
-      Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("wsl.windows.jdk.used.for.wsl"),
-                                            MavenProjectBundle.message("wsl.windows.jdk.used.for.wsl.descr", OPEN_STR, FIX_STR),
-                                            NotificationType.WARNING,
-                                            listener), project)
+      Notification(MAVEN_NOTIFICATION_GROUP,
+                   MavenProjectBundle.message("wsl.windows.jdk.used.for.wsl"),
+                   MavenProjectBundle.message("wsl.windows.jdk.used.for.wsl.descr", OPEN_STR, FIX_STR),
+                   NotificationType.WARNING).setListener(listener).notify(project)
     }
     else if (projectWslDistr == null && jdkWslDistr != null) {
-      Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("wsl.wsl.jdk.used.for.windows"),
-                                            MavenProjectBundle.message("wsl.wsl.jdk.used.for.windows.descr", OPEN_STR, FIX_STR),
-                                            NotificationType.WARNING,
-                                            listener), project)
+      Notification(MAVEN_NOTIFICATION_GROUP,
+                   MavenProjectBundle.message("wsl.wsl.jdk.used.for.windows"),
+                   MavenProjectBundle.message("wsl.wsl.jdk.used.for.windows.descr", OPEN_STR, FIX_STR),
+                   NotificationType.WARNING).setListener(listener).notify(project)
     }
     else if (projectWslDistr != null && jdkWslDistr != null) {
-      Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("wsl.different.wsl.jdk.used"),
-                                            MavenProjectBundle.message("wsl.different.wsl.jdk.used.descr", OPEN_STR, FIX_STR),
-                                            NotificationType.WARNING,
-                                            listener), project)
+      Notification(MAVEN_NOTIFICATION_GROUP,
+                   MavenProjectBundle.message("wsl.different.wsl.jdk.used"),
+                   MavenProjectBundle.message("wsl.different.wsl.jdk.used.descr", OPEN_STR, FIX_STR),
+                   NotificationType.WARNING).setListener(listener).notify(project)
     }
   }
 
@@ -322,9 +322,10 @@ internal object MavenWslUtil : MavenUtil() {
         }
         val model = JdkListDownloader.getInstance().downloadModelForJdkInstaller(indicator, jdkPredicate)
         if (model.isEmpty()) {
-          Notifications.Bus.notify(Notification(MAVEN_NOTIFICATION_GROUP, MavenProjectBundle.message("maven.wsl.jdk.fix.failed"),
-                                                MavenProjectBundle.message("maven.wsl.jdk.fix.failed.descr"),
-                                                NotificationType.ERROR, listener), project)
+          Notification(MAVEN_NOTIFICATION_GROUP,
+                       MavenProjectBundle.message("maven.wsl.jdk.fix.failed"),
+                       MavenProjectBundle.message("maven.wsl.jdk.fix.failed.descr"),
+                       NotificationType.ERROR).setListener(listener).notify(project)
 
         }
         else {

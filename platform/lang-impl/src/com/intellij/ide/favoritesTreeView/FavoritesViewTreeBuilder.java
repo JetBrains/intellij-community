@@ -12,6 +12,7 @@ import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.ActionCallback;
@@ -81,6 +82,7 @@ public final class FavoritesViewTreeBuilder extends BaseProjectTreeBuilder {
         queueUpdate(true);
       }
     });
+    bus.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> queueUpdate(true));
     PsiManager.getInstance(myProject).addPsiTreeChangeListener(psiTreeChangeListener, this);
     FileStatusListener fileStatusListener = new MyFileStatusListener();
     FileStatusManager.getInstance(myProject).addFileStatusListener(fileStatusListener, this);

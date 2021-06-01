@@ -130,7 +130,6 @@ class EclipseLibrariesModificationsTest {
   }
 
   private fun doTestCreate(classRoots: Array<String>, sourceRoots: Array<String>) {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val testRoot = eclipseTestDataRoot / "modification" / testName.methodName.removePrefix("test").decapitalize()
     val commonRoot = eclipseTestDataRoot / "common" / "testModuleWithClasspathStorage"
     fun addLibrary(project: Project) {
@@ -147,7 +146,6 @@ class EclipseLibrariesModificationsTest {
 
 
   private fun doTestExisting(classRoots: Array<String>, sourceRoots: Array<String>, javadocs: Array<String>) {
-    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
     val testRoot = eclipseTestDataRoot / "modification" / testName.methodName.removePrefix("test").decapitalize()
     val commonRoot = eclipseTestDataRoot / "common" / "testModuleWithClasspathStorage"
     fun addLibrary(project: Project) {

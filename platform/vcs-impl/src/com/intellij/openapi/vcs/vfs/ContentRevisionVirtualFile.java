@@ -1,20 +1,21 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.vcs.vfs;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.history.ShortVcsRevisionNumber;
+import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
-/**
- * @author yole
- */
+
 public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   @NotNull private final ContentRevision myContentRevision;
 
@@ -80,5 +81,15 @@ public final class ContentRevisionVirtualFile extends AbstractVcsVirtualFile {
   @NotNull
   public ContentRevision getContentRevision() {
     return myContentRevision;
+  }
+
+  @Nls
+  @Override
+  protected @NotNull String getPresentableName(@Nls @NotNull String baseName) {
+    VcsRevisionNumber number = getContentRevision().getRevisionNumber();
+    if (number instanceof ShortVcsRevisionNumber) {
+      return baseName + " (" + ((ShortVcsRevisionNumber) number).toShortString() + ")";
+    }
+    return super.getPresentableName(baseName);
   }
 }

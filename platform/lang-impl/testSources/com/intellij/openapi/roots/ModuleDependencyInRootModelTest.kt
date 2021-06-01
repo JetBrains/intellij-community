@@ -110,6 +110,35 @@ class ModuleDependencyInRootModelTest {
   }
 
   @Test
+  fun `remove module dependency if there are several equal entries`() {
+    val dep1Module = projectModel.createModule("dep1")
+    val dep2Module = projectModel.createModule("dep2")
+    run {
+      val model = createModifiableModel(mainModule)
+      model.addModuleOrderEntry(dep1Module)
+      model.addModuleOrderEntry(dep2Module)
+      model.addModuleOrderEntry(dep1Module)
+      model.addModuleOrderEntry(dep2Module)
+      model.addModuleOrderEntry(dep1Module)
+      commitModifiableRootModel(model)
+    }
+
+    run {
+      val model = createModifiableModel(mainModule)
+      val orderEntries = model.orderEntries
+      assertThat((orderEntries[1] as ModuleOrderEntry).module).isEqualTo(dep1Module)
+      assertThat((orderEntries[5] as ModuleOrderEntry).module).isEqualTo(dep1Module)
+      model.removeOrderEntry(orderEntries[1])
+      model.removeOrderEntry(orderEntries[5])
+      val committed = commitModifiableRootModel(model)
+      val (entry1, entry2, entry3) = dropModuleSourceEntry(committed, 3)
+      assertThat((entry1 as ModuleOrderEntry).module).isEqualTo(dep2Module)
+      assertThat((entry2 as ModuleOrderEntry).module).isEqualTo(dep1Module)
+      assertThat((entry3 as ModuleOrderEntry).module).isEqualTo(dep2Module)
+    }
+  }
+
+  @Test
   fun `remove referenced module`() {
     val depModule = projectModel.createModule("dep")
     run {
@@ -221,25 +250,6 @@ class ModuleDependencyInRootModelTest {
     val committedEntry2 = dropModuleSourceEntry(committed, 1).single() as ModuleOrderEntry
     assertThat(committedEntry2.module).isEqualTo(a)
     assertThat(committedEntry2.moduleName).isEqualTo("b")
-  }
-
-  @Test
-  fun `rename module before committing root model`() {
-    //this test doesn't work under the new project model because we didn't update references to module in created modifiable root models;
-    // however it seems that such scenarios don't happen in production: module may be renamed after creating ModifiableRootModel only
-    // in Project Structure dialog, but it commits all ModifiableRootModel together.
-    ProjectModelRule.ignoreTestUnderWorkspaceModel()
-    val a = projectModel.createModule("a")
-    val model = createModifiableModel(mainModule)
-    model.addModuleOrderEntry(a)
-    projectModel.renameModule(a, "b")
-    val moduleEntry = dropModuleSourceEntry(model, 1).single() as ModuleOrderEntry
-    assertThat(moduleEntry.module).isEqualTo(a)
-    assertThat(moduleEntry.moduleName).isEqualTo("b")
-    val committed = commitModifiableRootModel(model)
-    val committedEntry = dropModuleSourceEntry(committed, 1).single() as ModuleOrderEntry
-    assertThat(committedEntry.module).isEqualTo(a)
-    assertThat(committedEntry.moduleName).isEqualTo("b")
   }
 
   @Test

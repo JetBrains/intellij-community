@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.tools.projectWizard.wizard.ui.firstStep
 
 import com.intellij.icons.AllIcons
@@ -109,7 +110,7 @@ class ProjectSettingsComponent(ideWizard: IdeWizard) : DynamicComponent(ideWizar
         if (!locationWasUpdatedByHand) {
             val location = read { StructurePlugin.projectPath.settingValue }
             if (location.parent != null) modify {
-                StructurePlugin.projectPath.reference.setValue(location.parent.resolve(StructurePlugin.name.settingValue))
+                StructurePlugin.projectPath.reference.setValue(location.resolveSibling(StructurePlugin.name.settingValue))
                 locationWasUpdatedByHand = false
             }
         }

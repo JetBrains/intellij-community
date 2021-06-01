@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.BrowserUtil;
@@ -208,7 +208,7 @@ public final class PluginManagerMain {
 
       String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
       if (!Strings.isEmptyOrSpaces(size)) {
-        sb.append("<h4>Size</h4>").append(PluginManagerColumnInfo.getFormattedSize(size));
+        sb.append("<h4>Size</h4>").append(getFormattedSize(size));
       }
     }
 
@@ -218,6 +218,13 @@ public final class PluginManagerMain {
 
   private static String composeHref(String vendorUrl) {
     return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFFIX;
+  }
+
+  private static String getFormattedSize(String size) {
+    if (size.equals("-1")) {
+      return IdeBundle.message("plugin.info.unknown");
+    }
+    return StringUtil.formatFileSize(Long.parseLong(size));
   }
 
   public static class MyHyperlinkListener implements HyperlinkListener {
@@ -370,18 +377,19 @@ public final class PluginManagerMain {
     ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
     String action = IdeBundle.message("ide.restart.required.notification", app.isRestartCapable() ? 1 : 0);
-    Notification notification = UpdateChecker.getNotificationGroup()
-      .createNotification(title, "", NotificationType.INFORMATION, null, "plugins.updated.suggest.restart");
-    notification.addAction(new NotificationAction(action) {
-      @Override
-      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-        if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
-          notification.expire();
-          ApplicationManagerEx.getApplicationEx().restart(true);
+    UpdateChecker.getNotificationGroup()
+      .createNotification(title, NotificationType.INFORMATION)
+      .setDisplayId("plugins.updated.suggest.restart")
+      .addAction(new NotificationAction(action) {
+        @Override
+        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+          if (PluginManagerConfigurable.showRestartDialog() == Messages.YES) {
+            notification.expire();
+            ApplicationManagerEx.getApplicationEx().restart(true);
+          }
         }
-      }
-    });
-    notification.notify(project);
+      })
+      .notify(project);
   }
 
   public static boolean checkThirdPartyPluginsAllowed(Iterable<? extends IdeaPluginDescriptor> descriptors) {
@@ -392,9 +400,8 @@ public final class PluginManagerMain {
       return true;
     }
 
-    PluginManager pluginManager = PluginManager.getInstance();
     for (IdeaPluginDescriptor descriptor : descriptors) {
-      if (!pluginManager.isDevelopedByJetBrains(descriptor)) {
+      if (!PluginManagerCore.isDevelopedByJetBrains(descriptor)) {
         String title = IdeBundle.message("third.party.plugins.privacy.note.title");
         String message = IdeBundle.message("third.party.plugins.privacy.note.message");
         String yesText = IdeBundle.message("third.party.plugins.privacy.note.yes");

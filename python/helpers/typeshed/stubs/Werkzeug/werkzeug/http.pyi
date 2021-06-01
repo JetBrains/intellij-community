@@ -32,14 +32,14 @@ from .datastructures import (
     WWWAuthenticate,
 )
 
-if sys.version_info < (3,):
-    _Str = TypeVar("_Str", str, unicode)
-    _ToBytes = Union[bytes, bytearray, buffer, unicode]
-    _ETagData = Union[str, unicode, bytearray, buffer, memoryview]
-else:
+if sys.version_info >= (3, 0):
     _Str = str
     _ToBytes = Union[bytes, bytearray, memoryview, str]
     _ETagData = Union[bytes, bytearray, memoryview]
+else:
+    _Str = TypeVar("_Str", str, unicode)
+    _ToBytes = Union[bytes, bytearray, buffer, unicode]
+    _ETagData = Union[str, unicode, bytearray, buffer, memoryview]
 
 _T = TypeVar("_T")
 _U = TypeVar("_U")

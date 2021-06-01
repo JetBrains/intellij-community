@@ -5,4 +5,3 @@ pluginManagement {
 }
 rootProject.name = 'jvm-on-mpp'
 include ':mpp-mod-a', ':jvm-mod'
-enableFeaturePreview('GRADLE_METADATA')

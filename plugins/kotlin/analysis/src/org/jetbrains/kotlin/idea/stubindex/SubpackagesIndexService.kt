@@ -1,17 +1,14 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.stubindex
 
-import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.util.containers.MultiMap
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
+import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import java.util.*
@@ -77,7 +74,7 @@ class SubpackagesIndexService(private val project: Project) {
 
     companion object {
         fun getInstance(project: Project): SubpackagesIndex {
-            return ServiceManager.getService(project, SubpackagesIndexService::class.java)!!.cachedValue.value!!
+            return project.getServiceSafe<SubpackagesIndexService>().cachedValue.value!!
         }
     }
 }

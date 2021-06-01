@@ -16,12 +16,14 @@
 package org.jetbrains.idea.maven.dom;
 
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
+import org.junit.Test;
 
 /**
  * @author Sergey Evdokimov
  */
 public class MavenSpellcheckerTest extends MavenDomTestCase {
 
+  @Test
   public void testSpell() {
     myFixture.enableInspections(SpellCheckingInspection.class);
 

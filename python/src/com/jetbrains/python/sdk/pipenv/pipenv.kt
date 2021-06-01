@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.sdk.pipenv
 
 import com.google.gson.Gson
@@ -17,6 +17,7 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationGroup
 import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.editor.Document
@@ -354,23 +355,17 @@ class PipEnvPipFileWatcher : EditorFactoryListener {
       else -> PyBundle.message("python.sdk.pipenv.pip.file.lock.out.of.date")
     }
     val content = PyBundle.message("python.sdk.pipenv.pip.file.notification.content")
-    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title = title, content = content,
-                                                                  listener = NotificationListener { notification, event ->
-                                                                    notification.expire()
-                                                                    module.putUserData(notificationActive, null)
-                                                                    FileDocumentManager.getInstance().saveAllDocuments()
-                                                                    when (event.description) {
-                                                                      "#lock" ->
-                                                                        runPipEnvInBackground(module, listOf("lock"),
-                                                                                              PyBundle.message(
-                                                                                                "python.sdk.pipenv.pip.file.notification.locking",
-                                                                                                PIP_FILE))
-                                                                      "#update" ->
-                                                                        runPipEnvInBackground(module, listOf("update", "--dev"),
-                                                                                              PyBundle.message(
-                                                                                                "python.sdk.pipenv.pip.file.notification.updating"))
-                                                                    }
-                                                                  })
+    val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, content, NotificationType.INFORMATION)
+      .setListener(NotificationListener { notification, event ->
+        notification.expire()
+        module.putUserData(notificationActive, null)
+        FileDocumentManager.getInstance().saveAllDocuments()
+        when (event.description) {
+          "#lock" -> runPipEnvInBackground(module, listOf("lock"), PyBundle.message("python.sdk.pipenv.pip.file.notification.locking"))
+          "#update" -> runPipEnvInBackground(module, listOf("update", "--dev"), PyBundle.message(
+                                    "python.sdk.pipenv.pip.file.notification.updating"))
+        }
+      })
     module.putUserData(notificationActive, true)
     notification.whenExpired {
       module.putUserData(notificationActive, null)

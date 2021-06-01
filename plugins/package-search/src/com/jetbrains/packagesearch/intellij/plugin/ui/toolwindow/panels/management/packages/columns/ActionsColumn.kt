@@ -4,6 +4,7 @@ import com.intellij.util.ui.ColumnInfo
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageOperationType
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
@@ -66,12 +67,12 @@ internal class ActionsColumn(
         when (item) {
             is PackagesTableItem.InstalledPackage -> {
                 val packageModel = item.packageModel
-                val targetVersion = item.selectedPackageModel.selectedVersion
+                val currentVersion = item.selectedPackageModel.selectedVersion
 
-                if (packageModel.canBeUpgraded(targetVersion, onlyStable)) {
-                    PackageOperationType.UPGRADE
-                } else {
-                    null
+                when {
+                  currentVersion is PackageVersion.Missing -> PackageOperationType.SET
+                  packageModel.canBeUpgraded(currentVersion, onlyStable) -> PackageOperationType.UPGRADE
+                  else -> null
                 }
             }
             is PackagesTableItem.InstallablePackage -> PackageOperationType.INSTALL
@@ -91,7 +92,7 @@ internal class ActionsColumn(
         )
 
         return when (operationType) {
-            PackageOperationType.UPGRADE -> {
+            PackageOperationType.UPGRADE, PackageOperationType.SET -> {
                 operationFactory.createChangePackageVersionOperations(
                     packageModel = packageModel as PackageModel.Installed,
                     newVersion = targetVersion,
@@ -108,7 +109,6 @@ internal class ActionsColumn(
                     repoToInstall = repoToInstall
                 )
             }
-            else -> throw IllegalArgumentException("The actions column can only handle INSTALL and UPGRADE operations.")
         }
     }
 

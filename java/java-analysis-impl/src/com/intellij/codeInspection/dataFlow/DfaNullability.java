@@ -2,6 +2,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
 import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
 import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
@@ -117,6 +118,7 @@ public enum DfaNullability {
 
   @NotNull
   public static DfaNullability fromDfType(@NotNull DfType type) {
-    return type instanceof DfReferenceType ? ((DfReferenceType)type).getNullability() : UNKNOWN;
+    return type == DfType.FAIL || type instanceof DfPrimitiveType ? NOT_NULL : 
+           type instanceof DfReferenceType ? ((DfReferenceType)type).getNullability() : UNKNOWN;
   }
 }

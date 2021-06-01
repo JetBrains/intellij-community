@@ -496,7 +496,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     myDetailsLabel.setText(DiagnosticBundle.message("error.list.message.info", date, count));
 
     ErrorReportSubmitter submitter = cluster.submitter;
-    if (submitter == null && plugin != null && !PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
+    if (submitter == null && plugin != null && !PluginManagerCore.isDevelopedByJetBrains(plugin)) {
       myForeignPluginWarningLabel.setVisible(true);
       String vendor = plugin.getVendor();
       String vendorUrl = plugin.getVendorUrl();
@@ -541,8 +541,9 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
       myAttachmentsList.clear();
       myAttachmentsList.addItem(STACKTRACE_ATTACHMENT, true);
+      boolean internal = ApplicationManager.getApplication().isInternal();
       for (Attachment attachment : message.getAllAttachments()) {
-        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded());
+        myAttachmentsList.addItem(attachment.getName(), attachment.isIncluded() || internal);
       }
       myAttachmentsList.setSelectedIndex(0);
 
@@ -771,6 +772,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
 
     @Override
     public void actionPerformed(ActionEvent e) {
+      IdeErrorDialogUsageCollector.logClearAll();
       myMessagePool.clearErrors();
       doCancelAction();
     }
@@ -943,7 +945,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       }
     }
 
-    if (plugin == null || PluginManager.getInstance().isDevelopedByJetBrains(plugin)) {
+    if (plugin == null || PluginManagerCore.isDevelopedByJetBrains(plugin)) {
       for (ErrorReportSubmitter reporter : reporters) {
         PluginDescriptor descriptor = reporter.getPluginDescriptor();
         if (descriptor == null || PluginManagerCore.CORE_ID.equals(descriptor.getPluginId())) {
@@ -1035,6 +1037,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     @Override
     public void actionPerformed(ActionEvent e) {
       if (isEnabled()) {
+        IdeErrorDialogUsageCollector.logReport();
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.DEFAULT.name());
         boolean closeDialog = myMessageClusters.size() == 1;
         boolean reportingStarted = reportMessage(selectedCluster(), closeDialog);
@@ -1057,6 +1060,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     @Override
     public void actionPerformed(ActionEvent e) {
       if (isEnabled()) {
+        IdeErrorDialogUsageCollector.logReportAll();
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_ALL.name());
         boolean reportingStarted = reportAll();
         if (reportingStarted) {
@@ -1075,6 +1079,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     @Override
     public void actionPerformed(ActionEvent e) {
       if (isEnabled()) {
+        IdeErrorDialogUsageCollector.logReportAndClearAll();
         PropertiesComponent.getInstance().setValue(LAST_OK_ACTION, ReportAction.REPORT_AND_CLEAR_ALL.name());
         boolean reportingStarted = reportAll();
         if (reportingStarted) {

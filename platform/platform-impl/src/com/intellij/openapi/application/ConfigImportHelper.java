@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.PluginDownloader;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
@@ -44,10 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
 import java.nio.file.attribute.DosFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.time.Instant;
@@ -403,10 +401,10 @@ public final class ConfigImportHelper {
   }
 
   static class ConfigDirsSearchResult {
-    private final @NotNull List<? extends Pair<Path, FileTime>> directories;
+    private final List<Pair<Path, FileTime>> directories;
     private final boolean fromSameProduct;
 
-    ConfigDirsSearchResult(@NotNull List<? extends Pair<Path, FileTime>> directories, boolean fromSameProduct) {
+    private ConfigDirsSearchResult(List<Pair<Path, FileTime>> directories, boolean fromSameProduct) {
       this.directories = directories;
       this.fromSameProduct = fromSameProduct;
     }
@@ -421,6 +419,14 @@ public final class ConfigImportHelper {
 
     @NotNull Pair<Path, FileTime> getFirstItem() {
       return directories.get(0);
+    }
+
+    @NotNull @NlsSafe String getNameAndVersion(@NotNull Path config) {
+      return getNameWithVersion(config);
+    }
+
+    @NotNull List<Path> findRelatedDirectories(@NotNull Path config, boolean forAutoClean) {
+      return getRelatedDirectories(config, forAutoClean);
     }
   }
 
@@ -505,7 +511,7 @@ public final class ConfigImportHelper {
         catch (IOException ignore) { }
       }
 
-      lastModified.add(Pair.create(candidate, max != null ? max : FileTime.fromMillis(0)));
+      lastModified.add(pair(candidate, max != null ? max : FileTime.fromMillis(0)));
     }
 
     lastModified.sort((o1, o2) -> {
@@ -515,6 +521,7 @@ public final class ConfigImportHelper {
       }
       return diff;
     });
+
     return new ConfigDirsSearchResult(lastModified, exact);
   }
 
@@ -794,11 +801,12 @@ public final class ConfigImportHelper {
       List<IdeaPluginDescriptorImpl> pluginsToMigrate = new ArrayList<>();
       List<IdeaPluginDescriptorImpl> incompatiblePlugins = new ArrayList<>();
       List<PluginId> pendingUpdates = collectPendingPluginUpdates(actionCommands, options);
-      PluginManagerCore.getDescriptorsToMigrate(oldPluginsDir,
-                                                options.compatibleBuildNumber,
-                                                options.bundledPluginPath,
-                                                options.brokenPluginVersions,
-                                                pluginsToMigrate, incompatiblePlugins);
+      PluginDescriptorLoader.getDescriptorsToMigrate(oldPluginsDir,
+                                                     options.compatibleBuildNumber,
+                                                     options.bundledPluginPath,
+                                                     options.brokenPluginVersions,
+                                                     pluginsToMigrate,
+                                                     incompatiblePlugins);
 
       migratePlugins(newPluginsDir, pluginsToMigrate, pendingUpdates, log);
 
@@ -1023,8 +1031,54 @@ public final class ConfigImportHelper {
                             : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM;
   }
 
+  private static String defaultLogsPath(String selector) {
+    return newOrUnknown(selector) ? PathManager.getDefaultLogPathFor(selector) :
+           SystemInfo.isMac ? SystemProperties.getUserHome() + "/Library/Logs/" + selector
+                            : SystemProperties.getUserHome() + "/." + selector + '/' + SYSTEM + "/logs";
+  }
+
   private static boolean newOrUnknown(String selector) {
     Matcher m = SELECTOR_PATTERN.matcher(selector);
     return !m.matches() || "2020.1".compareTo(m.group(2)) <= 0;
+  }
+
+  private static List<Path> getRelatedDirectories(Path config, boolean forAutoClean) {
+    String selector = getNameWithVersion(config);
+    FileSystem fs = config.getFileSystem();
+    Path system = fs.getPath(defaultSystemPath(selector));
+
+    if (!forAutoClean) {
+      Path commonParent = config.getParent();
+      if (commonParent.equals(system.getParent())) {
+        List<Path> files = NioFiles.list(commonParent);
+        if (files.size() == 1 || files.size() == 2 && files.containsAll(List.of(config, system))) {
+          return List.of(commonParent);
+        }
+      }
+    }
+
+    List<Path> result = new ArrayList<>();
+
+    if (!forAutoClean) {
+      result.add(config);
+    }
+
+    if (Files.exists(system)) {
+      result.add(system);
+    }
+
+    if (!forAutoClean) {
+      Path plugins = fs.getPath(defaultPluginsPath(selector));
+      if (!plugins.startsWith(config) && Files.exists(plugins)) {
+        result.add(plugins);
+      }
+    }
+
+    Path logs = fs.getPath(defaultLogsPath(selector));
+    if (!logs.startsWith(system) && Files.exists(logs)) {
+      result.add(logs);
+    }
+
+    return result;
   }
 }

@@ -1,19 +1,24 @@
 <html>
 <body>
-Reports any Channel which is not safely closed in a <b>finally</b> block.
-Such resources may be inadvertently leaked
-if an exception is thrown before the resource is closed. Channel resources reported
+Reports any <code>Channel</code> resource which is not safely closed. <code>Channel</code> resources reported
 by this inspection include any instances created by calling
-getChannel() on a file or socket resource.
+<code>getChannel()</code> on a file or socket resource.
+<p>By default, inspection assumes that the resources can be closed by any method with a <code>close</code> or <code>cleanup</code> in the name.</p>
+<p>Example:</p>
+<pre>
+  void send(Socket socket) throws IOException {
+    SocketChannel channel = socket.getChannel(); //warning
+    channel.write(ByteBuffer.wrap("message".getBytes()));
+  }
+</pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to specify if a Channel is allowed to be opened <i>inside</i> a <b>try</b>
-block. This style is less desirable because it is more verbose than opening a Channel
-<i>in front of</i> a <b>try</b> block.
+Use the first checkbox below to specify if a <code>Channel</code> is allowed to be opened inside a <code>try</code>
+block. This style is less desirable because it is more verbose than opening a <code>Channel</code>
+in front of a <code>try</code> block.
+</p>
 <p>
-Use the second checkbox below to specify that the inspection should not warn if a Channel instance is passed as a method call argument.
-If enabled the inspection assumes the Channel is closed in the called method.
-Method calls inside a <b>finally</b> block with <i>close</i> in the name and a Channel argument will not ignored.
-<p>
+Use the second checkbox below to specify that the resource can be closed by any method call with the resource passed as argument.
+</p>
 </body>
 </html>

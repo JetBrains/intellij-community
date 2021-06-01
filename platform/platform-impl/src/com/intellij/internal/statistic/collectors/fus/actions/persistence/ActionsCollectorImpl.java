@@ -3,40 +3,45 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.internal.statistic.eventLog.*;
-import com.intellij.internal.statistic.eventLog.events.EventFields;
-import com.intellij.internal.statistic.eventLog.events.EventPair;
-import com.intellij.internal.statistic.eventLog.events.FusInputEvent;
-import com.intellij.internal.statistic.eventLog.events.VarargEventId;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.events.*;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.internal.statistic.utils.StatisticsUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.FusAwareAction;
+import com.intellij.openapi.actionSystem.impl.Utils;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.TimeoutUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
+import java.lang.ref.WeakReference;
 import java.util.*;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class ActionsCollectorImpl extends ActionsCollector {
   public static final String DEFAULT_ID = "third.party";
 
-  private static final ActionsBuiltInWhitelist ourWhitelist = ActionsBuiltInWhitelist.getInstance();
+  private static final ActionsBuiltInAllowedlist ourAllowedList = ActionsBuiltInAllowedlist.getInstance();
+  private static final Map<AnActionEvent, Stats> ourStats = ContainerUtil.createWeakMap();
 
   @Override
   public void record(@Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
     recordCustomActionInvoked(null, actionId, event, context);
   }
 
-  public static void recordCustomActionInvoked(@Nullable Project project, @Nullable String actionId, @Nullable InputEvent event, @NotNull Class context) {
-    String recorded = StringUtil.isNotEmpty(actionId) && ourWhitelist.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
+  /** @noinspection unused*/
+  public static void recordCustomActionInvoked(@Nullable Project project, @Nullable String actionId, @Nullable InputEvent event, @NotNull Class<?> context) {
+    String recorded = StringUtil.isNotEmpty(actionId) && ourAllowedList.isCustomAllowedAction(actionId) ? actionId : DEFAULT_ID;
     ActionsEventLogGroup.CUSTOM_ACTION_INVOKED.log(project, recorded, new FusInputEvent(event, null));
   }
 
@@ -65,11 +70,11 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
     if (event != null) {
       if (action instanceof ToggleAction) {
-        data.add(ActionsEventLogGroup.TOGGLE_ACTION.with(!((ToggleAction)action).isSelected(event)));
+        data.add(ActionsEventLogGroup.TOGGLE_ACTION.with(((ToggleAction)action).isSelected(event)));
       }
       data.addAll(actionEventData(event));
     }
-    if (project != null) {
+    if (project != null && !project.isDisposed()) {
       data.add(ActionsEventLogGroup.DUMB.with(DumbService.isDumb(project)));
     }
     if (customData != null) {
@@ -82,8 +87,10 @@ public class ActionsCollectorImpl extends ActionsCollector {
   public static @NotNull List<@NotNull EventPair<?>> actionEventData(@NotNull AnActionEvent event) {
     List<EventPair<?>> data = new ArrayList<>();
     data.add(EventFields.InputEvent.with(FusInputEvent.from(event)));
-    data.add(EventFields.ActionPlace.with(event.getPlace()));
-    data.add(ActionsEventLogGroup.CONTEXT_MENU.with(event.isFromContextMenu()));
+
+    String place = event.getPlace();
+    data.add(EventFields.ActionPlace.with(place));
+    data.add(ActionsEventLogGroup.CONTEXT_MENU.with(ActionPlaces.isPopupPlace(place)));
     return data;
   }
 
@@ -136,25 +143,173 @@ public class ActionsCollectorImpl extends ActionsCollector {
       return action.getClass().getName();
     }
     if (actionId == null) {
-      actionId = ourWhitelist.getDynamicActionId(action);
+      actionId = ourAllowedList.getDynamicActionId(action);
     }
     return actionId != null ? actionId : action.getClass().getName();
   }
 
   public static boolean canReportActionId(@NotNull String actionId) {
-    return ourWhitelist.isWhitelistedActionId(actionId);
+    return ourAllowedList.isAllowedActionId(actionId);
   }
 
   @Override
   public void onActionConfiguredByActionId(@NotNull AnAction action, @NotNull String actionId) {
-    ourWhitelist.registerDynamicActionId(action, actionId);
+    ourAllowedList.registerDynamicActionId(action, actionId);
   }
 
+  /** @noinspection unused*/
   public static void onActionLoadedFromXml(@NotNull AnAction action, @NotNull String actionId, @Nullable IdeaPluginDescriptor plugin) {
-    ourWhitelist.addActionLoadedFromXml(actionId, plugin);
+    ourAllowedList.addActionLoadedFromXml(actionId, plugin);
   }
 
   public static void onActionsLoadedFromKeymapXml(@NotNull Keymap keymap, @NotNull Set<String> actionIds) {
-    ourWhitelist.addActionsLoadedFromKeymapXml(keymap, actionIds);
+    ourAllowedList.addActionsLoadedFromKeymapXml(keymap, actionIds);
+  }
+
+  /** @noinspection unused*/
+  public static void onBeforeActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event) {
+    Project project = event.getProject();
+    DataContext context = getCachedDataContext(event);
+    Stats stats = new Stats(project, getFileLanguage(context), getInjectedOrFileLanguage(project, context));
+    ourStats.put(event, stats);
+  }
+
+  public static void onAfterActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result) {
+    Stats stats = ourStats.remove(event);
+    long durationMillis = stats != null ? TimeoutUtil.getDurationMillis(stats.start) : -1;
+
+    List<EventPair<?>> data = new ArrayList<>();
+    if (stats != null) {
+      data.add(ActionsEventLogGroup.START_TIME.with(stats.startMs));
+      if (stats.isDumb != null) {
+        data.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb));
+      }
+    }
+
+    ObjectEventData reportedResult = toReportedResult(result);
+    data.add(ActionsEventLogGroup.RESULT.with(reportedResult));
+
+    Project project = stats != null ? stats.projectRef.get() : null;
+    Language contextBefore = stats != null ? stats.fileLanguage : null;
+    Language injectedContextBefore = stats != null ? stats.injectedFileLanguage : null;
+    addLanguageContextFields(project, event, contextBefore, injectedContextBefore, data);
+    if (action instanceof FusAwareAction) {
+      List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
+      data.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
+    }
+
+    data.add(EventFields.DurationMs.with(StatisticsUtil.INSTANCE.roundDuration(durationMillis)));
+    recordActionInvoked(project, action, event, data);
+  }
+
+  @NotNull
+  private static ObjectEventData toReportedResult(@NotNull AnActionResult result) {
+    if (result.isPerformed()) {
+      return new ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("performed"));
+    }
+
+    if (result == AnActionResult.IGNORED) {
+      return new ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("ignored"));
+    }
+
+    Throwable error = result.getFailureCause();
+    if (error != null) {
+      return new ObjectEventData(
+        ActionsEventLogGroup.RESULT_TYPE.with("failed"),
+        ActionsEventLogGroup.ERROR.with(error.getClass())
+      );
+    }
+    return new ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("unknown"));
+  }
+
+  private static void addLanguageContextFields(@Nullable Project project,
+                                               @NotNull AnActionEvent event,
+                                               @Nullable Language contextBefore,
+                                               @Nullable Language injectedContextBefore,
+                                               @NotNull List<EventPair<?>> data) {
+    DataContext dataContext = getCachedDataContext(event);
+    Language language = getFileLanguage(dataContext);
+    data.add(EventFields.CurrentFile.with(language != null ? language : contextBefore));
+
+    Language injectedLanguage = getInjectedOrFileLanguage(project, dataContext);
+    data.add(EventFields.Language.with(injectedLanguage != null ? injectedLanguage : injectedContextBefore));
+  }
+
+  /**
+   * Computing fields from data context might be slow and cause freezes.
+   * To avoid it, we report only those fields which were already computed
+   * in {@link AnAction#update} or {@link AnAction#actionPerformed(AnActionEvent)}
+   */
+  private static @NotNull DataContext getCachedDataContext(@NotNull AnActionEvent event) {
+    return dataId -> Utils.getRawDataIfCached(event.getDataContext(), dataId);
+  }
+
+  /**
+   * Returns language from {@link InjectedDataKeys#EDITOR}, {@link InjectedDataKeys#PSI_FILE}
+   * or {@link CommonDataKeys#PSI_FILE} if there's no information about injected fragment
+   */
+  private static @Nullable Language getInjectedOrFileLanguage(@Nullable Project project, @NotNull DataContext dataContext) {
+    Language injected = getInjectedLanguage(dataContext, project);
+    return injected != null ? injected : getFileLanguage(dataContext);
+  }
+
+  @Nullable
+  private static Language getInjectedLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
+    PsiFile file = InjectedDataKeys.PSI_FILE.getData(dataContext);
+    if (file != null) {
+      return file.getLanguage();
+    }
+
+    if (project != null) {
+      Editor editor = InjectedDataKeys.EDITOR.getData(dataContext);
+      if (editor != null && !project.isDisposed()) {
+        PsiFile injectedFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+        if (injectedFile != null) {
+          return injectedFile.getLanguage();
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Returns language from {@link CommonDataKeys#PSI_FILE}
+   */
+  private static @Nullable Language getFileLanguage(@NotNull DataContext dataContext) {
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
+    return file != null ? file.getLanguage() : null;
+  }
+
+  private static final class Stats {
+    /**
+     * Action start time in milliseconds, used to report "start_time" field
+     */
+    final long startMs = System.currentTimeMillis();
+
+    /**
+     * Action start time in nanoseconds, used to report "duration_ms" field
+     * We can't use ms to measure duration because it depends on local system time and, therefore, can go backwards
+     */
+    final long start = System.nanoTime();
+
+    WeakReference<Project> projectRef;
+    final Boolean isDumb;
+
+    /**
+     * Language from {@link CommonDataKeys#PSI_FILE}
+     */
+    Language fileLanguage;
+
+    /**
+     * Language from {@link InjectedDataKeys#EDITOR}, {@link InjectedDataKeys#PSI_FILE} or {@link CommonDataKeys#PSI_FILE}
+     */
+    Language injectedFileLanguage;
+
+    private Stats(@Nullable Project project, @Nullable Language fileLanguage, @Nullable Language injectedFileLanguage) {
+      this.projectRef = new WeakReference<>(project);
+      this.isDumb = project != null && !project.isDisposed() ? DumbService.isDumb(project) : null;
+      this.fileLanguage = fileLanguage;
+      this.injectedFileLanguage = injectedFileLanguage;
+    }
   }
 }

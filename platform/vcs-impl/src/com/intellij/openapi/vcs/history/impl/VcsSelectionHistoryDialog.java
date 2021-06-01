@@ -194,8 +194,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       }
     });
 
-    ActionGroup popupActions = (ActionGroup)ActionManager.getInstance().getAction("VcsSelectionHistoryDialog.Popup");
-    PopupHandler.installPopupHandler(myList, popupActions, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myList, "VcsSelectionHistoryDialog.Popup", ActionPlaces.UPDATE_POPUP);
 
     setTitle(title);
     setComponent(mySplitter);

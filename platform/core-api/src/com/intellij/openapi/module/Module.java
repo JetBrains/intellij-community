@@ -170,12 +170,23 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @NotNull
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 
+  /**
+   * This method isn't supposed to be used from plugins. If you really need to determine type of a module, use
+   * {@link com.intellij.openapi.module.ModuleType#get(Module) ModuleType.get}. However it would be better to make your functionality work regaradless
+   * of type of the module, see {@link com.intellij.openapi.module.ModuleType ModuleType}'s javadoc for details.
+   */
+  @ApiStatus.Internal
   @Nullable @NonNls
   default String getModuleTypeName() {
     //noinspection deprecation
     return getOptionValue(ELEMENT_TYPE);
   }
 
+  /**
+   * This method isn't supposed to be used from plugins, module type should be passed as a parameter to {@link com.intellij.openapi.module.ModuleManager#newModule}
+   * when module is created.
+   */
+  @ApiStatus.Internal
   default void setModuleType(@NotNull @NonNls String name) {
     //noinspection deprecation
     setOption(ELEMENT_TYPE, name);

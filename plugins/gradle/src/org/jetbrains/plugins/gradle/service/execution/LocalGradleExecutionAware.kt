@@ -147,7 +147,7 @@ class LocalGradleExecutionAware : GradleExecutionAware {
 
   private fun localEnvironment(): TargetEnvironmentConfiguration? =
     if (Registry.`is`("gradle.tooling.use.external.process", false))
-      object : TargetEnvironmentConfiguration("local") {
+      object : TargetEnvironmentConfiguration(LOCAL_TARGET_TYPE_ID) {
         override var projectRootOnTarget: String = ""
       }
     else null
@@ -273,5 +273,6 @@ class LocalGradleExecutionAware : GradleExecutionAware {
 
   companion object {
     private val log = logger<LocalGradleExecutionAware>()
+    const val LOCAL_TARGET_TYPE_ID = "local"
   }
 }

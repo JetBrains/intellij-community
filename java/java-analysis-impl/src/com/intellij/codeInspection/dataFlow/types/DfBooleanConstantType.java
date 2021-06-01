@@ -4,7 +4,7 @@ package com.intellij.codeInspection.dataFlow.types;
 import com.intellij.psi.PsiPrimitiveType;
 import org.jetbrains.annotations.NotNull;
 
-final class DfBooleanConstantType extends DfConstantType<Boolean> implements DfBooleanType {
+public final class DfBooleanConstantType extends DfConstantType<Boolean> implements DfBooleanType {
   DfBooleanConstantType(boolean value) {
     super(value);
   }
@@ -15,6 +15,11 @@ final class DfBooleanConstantType extends DfConstantType<Boolean> implements DfB
     if (other.equals(this)) return this;
     if (other instanceof DfBooleanType) return DfTypes.BOOLEAN;
     return DfType.TOP;
+  }
+
+  @Override
+  public @NotNull DfType tryJoinExactly(@NotNull DfType other) {
+    return join(other);
   }
 
   @NotNull

@@ -1,9 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.indices.IndicesBundle;
@@ -21,7 +20,7 @@ public final class MavenArtifactUtil {
   public static final String[] DEFAULT_GROUPS = new String[]{"org.apache.maven.plugins", "org.codehaus.mojo"};
   public static final String MAVEN_PLUGIN_DESCRIPTOR = "META-INF/maven/plugin.xml";
 
-  private static final Map<File, MavenPluginInfo> ourPluginInfoCache = Collections.synchronizedMap(new THashMap<>());
+  private static final Map<File, MavenPluginInfo> ourPluginInfoCache = Collections.synchronizedMap(new HashMap<>());
 
   @Nullable
   public static MavenPluginInfo readPluginInfo(File localRepository, MavenId mavenId) {

@@ -371,7 +371,7 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
 
   fun testCorrectedType() {
     addFile("module-info.java", "module M { requires M6; requires lib.named; }")
-    
+
     addFile("module-info.java", "module M6 {  requires lib.named; exports pkg;}", M6)
     addFile("pkg/A.java", "package pkg; public class A {public static void foo(java.util.function.Supplier<pkg.lib1.LC1> f){}}", M6)
     highlight("pkg/Usage.java","import pkg.lib1.LC1; class Usage { {pkg.A.foo(LC1::new);} }")
@@ -493,8 +493,9 @@ class ModuleHighlightingTest : LightJava9ModulesCodeInsightFixtureTestCase() {
   private fun fixes(path: String, text: String, fixes: Array<String>) {
     myFixture.configureFromExistingVirtualFile(addFile(path, text))
     val available = myFixture.availableIntentions
-      .map { IntentionActionDelegate.unwrap(it)::class.java.simpleName }
-      .filter { it != "GutterIntentionAction" && it != "PackageSearchQuickFix" }
+      .map { IntentionActionDelegate.unwrap(it)::class.java }
+      .filter { it.name.startsWith("com.intellij.codeInsight.") }
+      .map { it.simpleName }
     assertThat(available).containsExactlyInAnyOrder(*fixes)
   }
   //</editor-fold>

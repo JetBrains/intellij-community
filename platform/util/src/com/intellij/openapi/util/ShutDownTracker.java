@@ -5,12 +5,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.TimeUnit;
 
 public final class ShutDownTracker implements Runnable {
   private final List<Thread> myThreads = Collections.synchronizedList(new ArrayList<>());
-  private final java.util.Stack<Runnable> myShutdownTasks = new Stack<>(); // guarded by myShutdownTasks
+  private final ConcurrentLinkedDeque<Runnable> myShutdownTasks = new ConcurrentLinkedDeque<>();
   private final Thread myThread;
 
   private ShutDownTracker() {
@@ -35,12 +38,9 @@ public final class ShutDownTracker implements Runnable {
   public void run() {
     ensureStopperThreadsFinished();
 
-    Runnable task;
-    while (!myShutdownTasks.isEmpty()) {
-      synchronized (myShutdownTasks) {
-        if (myShutdownTasks.isEmpty()) break;
-        task = myShutdownTasks.pop();
-      }
+    while (true) {
+      Runnable task = myShutdownTasks.pollLast();
+      if (task == null) break;
       // task can change myShutdownTasks
       try {
         task.run();
@@ -124,7 +124,7 @@ public final class ShutDownTracker implements Runnable {
   }
 
   public void registerShutdownTask(@NotNull Runnable task) {
-    myShutdownTasks.add(task);
+    myShutdownTasks.addLast(task);
   }
 
   public void unregisterShutdownTask(@NotNull Runnable task) {

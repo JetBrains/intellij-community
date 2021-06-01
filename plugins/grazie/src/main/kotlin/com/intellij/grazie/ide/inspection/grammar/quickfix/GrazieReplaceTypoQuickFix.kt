@@ -6,25 +6,27 @@ import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
 import com.intellij.codeInsight.intention.choice.ChoiceVariantIntentionAction
 import com.intellij.codeInsight.intention.choice.DefaultIntentionActionWithChoice
-import com.intellij.codeInsight.intention.impl.config.LazyEditor
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
 import com.intellij.grazie.GrazieBundle
-import com.intellij.grazie.grammar.Typo
 import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
-import com.intellij.refactoring.suggested.startOffset
+import com.intellij.psi.SmartPsiFileRange
 
-class GrazieReplaceTypoQuickFix(private val typo: Typo) : DefaultIntentionActionWithChoice {
-
-  private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title), HighPriorityAction
+internal class GrazieReplaceTypoQuickFix(
+  @NlsSafe private val message: String, private val fixes: List<String>,
+  private val underlineRange: SmartPsiFileRange, private val replacementRange: SmartPsiFileRange
+  )
+  : DefaultIntentionActionWithChoice {
+  private class ReplaceTypoTitleAction(@IntentionFamilyName family: String, @IntentionName title: String) : ChoiceTitleIntentionAction(family, title),
+    HighPriorityAction
 
   override fun getTitle(): ChoiceTitleIntentionAction {
-    return ReplaceTypoTitleAction(msg("grazie.grammar.quickfix.replace.typo.text", typo.info.shortMessage), typo.info.shortMessage)
+    return ReplaceTypoTitleAction(GrazieBundle.message("grazie.grammar.quickfix.replace.typo.text", message), message)
   }
 
   private inner class ChangeToVariantAction(
@@ -33,37 +35,35 @@ class GrazieReplaceTypoQuickFix(private val typo: Typo) : DefaultIntentionAction
     @NlsSafe private val suggestion: String
   )
     : ChoiceVariantIntentionAction(), HighPriorityAction {
-    override fun getName(): String = suggestion
+    override fun getName(): String = suggestion.takeIf { it.isNotEmpty() } ?: msg("grazie.grammar.quickfix.remove.typo.tooltip")
 
-    override fun getTooltipText(): String = GrazieBundle.message("grazie.grammar.quickfix.replace.typo.tooltip", suggestion)
+    override fun getTooltipText(): String = if (suggestion.isNotEmpty()) {
+      msg("grazie.grammar.quickfix.replace.typo.tooltip", suggestion)
+    } else {
+      msg("grazie.grammar.quickfix.remove.typo.tooltip")
+    }
 
     override fun getFamilyName(): String = family
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean = typo.location.element != null
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile): Boolean = replacementRange.range != null
 
-    override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
-      return this
-    }
+    override fun getFileModifierForPreview(target: PsiFile): FileModifier = this
 
     override fun applyFix(project: Project, file: PsiFile, editor: Editor?) {
-      val myEditor = editor ?: LazyEditor(file)
+      val replacementRange = this@GrazieReplaceTypoQuickFix.replacementRange.range ?: return
+      val document = file.viewProvider.document ?: return
 
-      val element = typo.location.element ?: return
-      val range = TextRange.create(typo.location.errorRange.start, typo.location.errorRange.endInclusive + 1).shiftRight(element.startOffset)
+      underlineRange.range?.let { document.invalidateHighlighter(project, TextRange.create(it)) }
 
-
-      val text = myEditor.document.getText(range)
-      if (text != typo.location.errorText) return
-
-      myEditor.document.replaceString(range.startOffset, range.endOffset, suggestion)
+      document.replaceString(replacementRange.startOffset, replacementRange.endOffset, suggestion)
     }
 
     override fun startInWriteAction(): Boolean = true
   }
 
   override fun getVariants(): List<ChoiceVariantIntentionAction> {
-    return typo.fixes.withIndex().map { (index, suggestion) ->
-      ChangeToVariantAction(index, msg("grazie.grammar.quickfix.replace.typo.text", typo.info.shortMessage), suggestion)
+    return fixes.withIndex().map { (index, suggestion) ->
+      ChangeToVariantAction(index, msg("grazie.grammar.quickfix.replace.typo.text", message), suggestion)
     }
   }
 }

@@ -189,7 +189,7 @@ public class FilterPanel implements FilterTable {
       final DataContext context = DataManager.getInstance().getDataContext(component);
       final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.title"), group, context,
                                                                                   JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, false,
-                                                                                  "StructuralSearchFilterPanel");
+                                                                                  ActionPlaces.getPopupPlace("StructuralSearchFilterPanel"));
       popup.show(point);
     }
     else {

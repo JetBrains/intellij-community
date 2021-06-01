@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.projectImport.ProjectOpenedCallback
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import java.util.function.Consumer
 import java.util.function.Predicate
 
 data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
@@ -25,7 +26,7 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                             */
                            val showWelcomeScreen: Boolean = true,
                            @set:Deprecated(message = "Pass to constructor", level = DeprecationLevel.ERROR)
-                           @set:ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
+                           @set:ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
                            var callback: ProjectOpenedCallback? = null,
                            internal val frameManager: Any? = null,
                            val line: Int = -1,
@@ -48,6 +49,9 @@ data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                            internal val preparedToOpen: ((Module) -> Unit)? = null) {
   @ApiStatus.Internal
   fun withBeforeOpenCallback(callback: Predicate<Project>) = copy(beforeOpen = { callback.test(it) })
+
+  @ApiStatus.Internal
+  fun withPreparedToOpenCallback(callback: Consumer<Module>) = copy(preparedToOpen = { callback.accept(it) })
 
   @ApiStatus.Internal
   fun withProjectName(value: String?) = copy(projectName = value)

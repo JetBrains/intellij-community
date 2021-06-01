@@ -111,7 +111,16 @@ public class PluginUpdateDialog extends DialogWrapper {
 
     MultiSelectionEventHandler eventHandler = new MultiSelectionEventHandler();
 
-    myPluginsPanel = new PluginsGroupComponent(new PluginListLayout(), eventHandler, descriptor -> createListComponent(descriptor));
+    myPluginsPanel = new PluginsGroupComponent(eventHandler) {
+      @Override
+      protected @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor descriptor) {
+        //noinspection unchecked
+        ListPluginComponent component = new ListPluginComponent(myPluginModel, descriptor, LinkListener.NULL, true);
+        component.setOnlyUpdateMode();
+        component.getChooseUpdateButton().addActionListener(e -> updateButtons());
+        return component;
+      }
+    };
     PluginManagerConfigurable.registerCopyProvider(myPluginsPanel);
     myPluginsPanel.setSelectionListener(__ -> {
       List<ListPluginComponent> selection = myPluginsPanel.getSelection();
@@ -192,7 +201,9 @@ public class PluginUpdateDialog extends DialogWrapper {
         List<PluginDownloader> downloaders = downloadPluginUpdates(toDownloads, indicator);
         if (!downloaders.isEmpty()) {
           ApplicationManager.getApplication().invokeLater(() -> {
-            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders, ownerComponent, true);
+            PluginUpdateResult result = UpdateInstaller.installDownloadedPluginUpdates(downloaders,
+                                                                                       downloader -> !downloader.tryInstallWithoutRestart(
+                                                                                         ownerComponent));
             if (result.getPluginsInstalled().size() > 0) {
               if (!result.getRestartRequired()) {
                 String message;
@@ -205,7 +216,8 @@ public class PluginUpdateDialog extends DialogWrapper {
                   message = IdeBundle.message("notification.content.updated.plugins", names);
                 }
                 UpdateChecker.getNotificationGroupForUpdateResults()
-                  .createNotification(message, NotificationType.INFORMATION, "plugins.updated.without.restart")
+                  .createNotification(message, NotificationType.INFORMATION)
+                  .setDisplayId("plugins.updated.without.restart")
                   .notify(myProject);
               }
               else if (WelcomeFrame.getInstance() == null) {
@@ -275,14 +287,6 @@ public class PluginUpdateDialog extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.openapi.updateSettings.impl.PluginUpdateInfoDialog";
-  }
-
-  private @NotNull ListPluginComponent createListComponent(@NotNull IdeaPluginDescriptor updateDescriptor) {
-    //noinspection unchecked
-    ListPluginComponent component = new ListPluginComponent(myPluginModel, updateDescriptor, LinkListener.NULL, true);
-    component.setOnlyUpdateMode();
-    component.getChooseUpdateButton().addActionListener(e -> updateButtons());
-    return component;
   }
 
   @Override

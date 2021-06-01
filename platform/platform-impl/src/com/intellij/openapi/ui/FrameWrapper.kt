@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui
 
 import com.intellij.application.options.RegistryManager
@@ -11,6 +11,7 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.MouseGestureManager
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
@@ -369,7 +370,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     }
 
     private fun updateTitle() {
-      if (Registry.`is`("ide.show.fileType.icon.in.titleBar")) {
+      if (AdvancedSettings.getBoolean("ide.show.fileType.icon.in.titleBar")) {
         // this property requires java.io.File
         rootPane.putClientProperty("Window.documentFile", file?.toFile())
       }

@@ -110,7 +110,7 @@ public abstract class SliceNullnessAnalyzerBase {
       @Override
       public void run(final @NotNull ProgressIndicator indicator) {
         NullAnalysisResult leaves = calcNullableLeaves(root, treeStructure, map);
-        SliceRootNode newRoot = createNewTree(leaves, root, map);
+        SliceRootNode newRoot = ReadAction.compute(() -> createNewTree(leaves, root, map));
         newRootRef.set(newRoot);
       }
 

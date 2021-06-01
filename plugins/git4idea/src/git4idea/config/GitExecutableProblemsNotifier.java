@@ -1,8 +1,7 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.Service;
@@ -16,11 +15,11 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.nio.file.NoSuchFileException;
 
 import static com.intellij.notification.NotificationsManager.getNotificationsManager;
 import static git4idea.config.GitExecutableProblemHandlersKt.findGitExecutableProblemHandler;
+import static java.util.Objects.requireNonNullElse;
 
 @Service(Service.Level.PROJECT)
 public final class GitExecutableProblemsNotifier {
@@ -86,13 +85,10 @@ public final class GitExecutableProblemsNotifier {
 
   static class BadGitExecutableNotification extends Notification {
     BadGitExecutableNotification(@NotNull String groupDisplayId,
-                                        @Nullable Icon icon,
-                                        @Nullable @NlsContexts.NotificationTitle String title,
-                                        @Nullable @NlsContexts.NotificationSubtitle String subtitle,
-                                        @Nullable @NlsContexts.NotificationContent String content,
-                                        @NotNull NotificationType type,
-                                        @Nullable NotificationListener listener) {
-      super(groupDisplayId, icon, title, subtitle, content, type, listener);
+                                 @Nullable @NlsContexts.NotificationTitle String title,
+                                 @NotNull @NlsContexts.NotificationContent String content,
+                                 @NotNull NotificationType type) {
+      super(groupDisplayId, requireNonNullElse(title, ""), content, type);
     }
   }
 

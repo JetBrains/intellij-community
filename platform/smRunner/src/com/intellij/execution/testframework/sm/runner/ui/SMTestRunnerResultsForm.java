@@ -366,7 +366,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
 
   @Override
   public void onTestIgnored(@NotNull final SMTestProxy test) {
-    updateOnTestIgnored();
+    updateOnTestIgnored(test);
   }
 
   /**
@@ -526,7 +526,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     return myFailedTestCount;
   }
 
-  protected int getIgnoredTestCount() {
+  public int getIgnoredTestCount() {
     return myIgnoredTestCount;
   }
 
@@ -732,8 +732,10 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     updateStatusLabel(false);
   }
 
-  private void updateOnTestIgnored() {
-    myIgnoredTestCount++;
+  private void updateOnTestIgnored(@NotNull final SMTestProxy test) {
+    if (!test.isSuite()) {
+      myIgnoredTestCount++;
+    }
     updateProgressOnTestDone();
     updateStatusLabel(false);
   }
@@ -777,6 +779,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
         SAXTransformerFactory transformerFactory = (SAXTransformerFactory)TransformerFactory.newInstance();
         TransformerHandler handler = transformerFactory.newTransformerHandler();
         handler.getTransformer().setOutputProperty(OutputKeys.INDENT, "yes");
+        handler.getTransformer().setOutputProperty(OutputKeys.VERSION, "1.1");
         handler.getTransformer().setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
         FileUtilRt.createParentDirs(myOutputFile);
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(myOutputFile, StandardCharsets.UTF_8))) {

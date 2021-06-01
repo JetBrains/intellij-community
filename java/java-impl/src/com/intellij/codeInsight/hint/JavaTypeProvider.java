@@ -22,11 +22,8 @@ import com.intellij.codeInspection.dataFlow.CommonDataflow;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
 import com.intellij.codeInspection.dataFlow.Mutability;
 import com.intellij.codeInspection.dataFlow.jvm.JvmPsiRangeSetUtil;
-import com.intellij.codeInspection.dataFlow.jvm.JvmSpecialField;
-import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
-import com.intellij.codeInspection.dataFlow.types.DfIntegralType;
-import com.intellij.codeInspection.dataFlow.types.DfReferenceType;
-import com.intellij.codeInspection.dataFlow.types.DfType;
+import com.intellij.codeInspection.dataFlow.jvm.SpecialField;
+import com.intellij.codeInspection.dataFlow.types.*;
 import com.intellij.ide.nls.NlsMessages;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ExpressionTypeProvider;
@@ -127,6 +124,12 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
             infoLines.add(Pair.create(JavaBundle.message("type.information.range"), rangeText));
           }
         }
+        else if (dfType instanceof DfFloatingPointType && !(dfType instanceof DfConstantType)) {
+          String presentation = dfType.toString().replaceFirst("^(double|float) ?", ""); //NON-NLS
+          if (!presentation.isEmpty()) {
+            infoLines.add(Pair.create(JavaBundle.message("type.information.range"), presentation));
+          }
+        }
         else if (dfType instanceof DfReferenceType) {
           DfReferenceType refType = (DfReferenceType)dfType;
           infoLines.add(Pair.create(JavaBundle.message("type.information.nullability"), refType.getNullability().getPresentationName()));
@@ -136,7 +139,7 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
           }
           infoLines.add(Pair.create(JavaBundle.message("type.information.locality"),
                                     refType.isLocal() ? JavaBundle.message("type.information.local.object") : ""));
-          JvmSpecialField field = refType.getSpecialField();
+          SpecialField field = refType.getSpecialField();
           if (field != null) {
             infoLines.add(Pair.create(field.getPresentationName(), field.getPresentationText(refType.getSpecialFieldType(), type)));
           }

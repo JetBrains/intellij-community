@@ -245,12 +245,30 @@ class XDebugSessionTab3(
     (myUi as? RunnerLayoutUiImpl)?.setLeftToolbarVisible(false)
     val toolbar = DefaultActionGroup()
     toolbar.addAll(getCustomizedActionGroup(XDebuggerActions.TOOL_WINDOW_TOP_TOOLBAR_3_GROUP))
+
+    // reversed because it was like this in the original tab
+    for (action in session.restartActions.asReversed()) {
+      toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_RERUN))
+    }
+
+    for (action in session.extraActions.asReversed()) {
+      toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    }
+
+    for (action in session.extraStopActions) {
+      toolbar.add(action, Constraints(Anchor.AFTER, IdeActions.ACTION_STOP_PROGRAM))
+    }
+
     myUi.options.setTopLeftToolbar(toolbar, ActionPlaces.DEBUGGER_TOOLBAR)
 
     myUi.options.setTitleProducer(Producer {
       val icon = if (session.isStopped) session.runProfile?.icon else ExecutionUtil.getLiveIndicator(session.runProfile?.icon)
       return@Producer create(icon, StringUtil.shortenTextWithEllipsis(session.sessionName, 15, 0) + ":")
     })
+
+    val settings = DefaultActionGroup(*myUi.options.settingsActionsList)
+    registerAdditionalActions(DefaultActionGroup(), DefaultActionGroup(), settings)
+    (toolWindow as ToolWindowEx).setAdditionalGearActions(settings)
   }
 
   private fun setHeaderState() {
@@ -323,7 +341,7 @@ class XDebugSessionTab3(
       add(Separator.getInstance(), constraints)
     }
 
-    super.registerAdditionalActions(leftToolbar, settings, topLeftToolbar)
+    super.registerAdditionalActions(leftToolbar, topLeftToolbar, settings)
   }
 
   override fun dispose() {

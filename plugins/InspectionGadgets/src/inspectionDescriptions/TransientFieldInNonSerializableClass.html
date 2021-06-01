@@ -1,6 +1,19 @@
 <html>
 <body>
-Reports <b>transient</b> fields in non-<b>Serializable</b> classes.
+Reports <code>transient</code> fields in non-serialized classes (classes which do not implement <code>java.io.Serializable</code>.
+<p><b>Example:</b></p>
+<pre><code>
+  public class NonSerializableClass {
+    private transient String password; // warning: Field 'password' is marked 'transient', in non-Serializable class
+  }
+  </code>
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  public class NonSerializableClass {
+    private String password;
+  }
+</code></pre>
 <!-- tooltip end -->
 <p>
 

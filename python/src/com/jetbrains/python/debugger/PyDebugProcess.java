@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.debugger;
 
 import com.google.common.base.Strings;
@@ -87,9 +87,7 @@ import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * @author yole
- */
+
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
 
   private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
@@ -348,7 +346,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
           }
           if (shouldLogConnectionException(e)) {
             NOTIFICATION_GROUP
-              .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR, null)
+              .createNotification(PyBundle.message("debug.notification.title.connection.failed"), e.getMessage(), NotificationType.ERROR)
               .notify(myProject);
           }
         }
@@ -458,7 +456,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     }
     printToConsole(PyBundle.message("debugger.connected.to.pydev.debugger.build", remoteVersion), ConsoleViewContentType.SYSTEM_OUTPUT);
 
-    if (!(remoteVersion.equals(currentBuild) || remoteVersion.startsWith(currentBuild))) {
+    if (!remoteVersion.startsWith(currentBuild)) {
       LOG.warn(String.format("Wrong debugger version. Remote version: %s Current build: %s", remoteVersion, currentBuild));
       printToConsole(PyBundle.message("debugger.warning.wrong.debugger.version", currentBuild), ConsoleViewContentType.ERROR_OUTPUT);
     }

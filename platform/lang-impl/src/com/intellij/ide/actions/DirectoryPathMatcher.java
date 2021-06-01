@@ -51,12 +51,16 @@ final class DirectoryPathMatcher {
     IdFilter projectIndexableFilesFilter = fileBasedIndex instanceof FileBasedIndexImpl
                                            ? ((FileBasedIndexImpl)fileBasedIndex).projectIndexableFiles(project)
                                            : null;
+    var allScope = GlobalSearchScope.allScope(project);
     if (projectIndexableFilesFilter == null) {
-      var allScope = GlobalSearchScope.allScope(project);
       myProjectFileFilter = vFile -> allScope.contains(vFile);
     }
     else {
-      myProjectFileFilter = vFile -> projectIndexableFilesFilter.containsFileId(((VirtualFileWithId)vFile).getId());
+      myProjectFileFilter = vFile -> {
+        return vFile instanceof VirtualFileWithId
+               ? projectIndexableFilesFilter.containsFileId(((VirtualFileWithId)vFile).getId())
+               : allScope.contains(vFile);
+      };
     }
 
     myService = DirectoryPathMatcherService.getInstance(project);

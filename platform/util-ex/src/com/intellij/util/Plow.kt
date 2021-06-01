@@ -54,6 +54,16 @@ class Plow<T> private constructor(private val producingFunction: (Processor<T>) 
 
   fun cancellable(): Plow<T> = transform { pr -> Processor { v -> ProgressManager.checkCanceled();pr.process(v) } }
 
+  fun limit(n: Int): Plow<T> {
+    var processedCount = 0
+    return transform { pr ->
+      Processor {
+        processedCount++
+        processedCount <= n && pr.process(it)
+      }
+    }
+  }
+
   companion object {
 
     @JvmStatic

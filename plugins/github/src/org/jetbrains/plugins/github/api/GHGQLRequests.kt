@@ -1,11 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.api
 
+import com.intellij.collaboration.api.dto.GraphQLCursorPageInfoDTO
+import com.intellij.collaboration.api.dto.GraphQLPagedResponseDataDTO
 import com.intellij.diff.util.Side
 import org.jetbrains.plugins.github.api.GithubApiRequest.Post.GQLQuery
 import org.jetbrains.plugins.github.api.data.*
-import org.jetbrains.plugins.github.api.data.graphql.GHGQLPageInfo
-import org.jetbrains.plugins.github.api.data.graphql.GHGQLPagedRequestResponse
 import org.jetbrains.plugins.github.api.data.graphql.GHGQLRequestPagination
 import org.jetbrains.plugins.github.api.data.graphql.query.GHGQLSearchQueryResponse
 import org.jetbrains.plugins.github.api.data.pullrequest.*
@@ -19,7 +19,7 @@ object GHGQLRequests {
 
     object Team {
       fun findAll(server: GithubServerPath, organization: String,
-                  pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHTeam>> {
+                  pagination: GHGQLRequestPagination? = null): GQLQuery<GraphQLPagedResponseDataDTO<GHTeam>> {
 
         return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.findOrganizationTeams,
                                         mapOf("organization" to organization,
@@ -30,7 +30,7 @@ object GHGQLRequests {
       }
 
       fun findByUserLogins(server: GithubServerPath, organization: String, logins: List<String>,
-                           pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHTeam>> =
+                           pagination: GHGQLRequestPagination? = null): GQLQuery<GraphQLPagedResponseDataDTO<GHTeam>> =
         GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.findOrganizationTeams,
                                  mapOf("organization" to organization,
                                        "logins" to logins,
@@ -39,7 +39,7 @@ object GHGQLRequests {
                                  TeamsConnection::class.java,
                                  "organization", "teams")
 
-      private class TeamsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHTeam>)
+      private class TeamsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHTeam>)
         : GHConnection<GHTeam>(pageInfo, nodes)
     }
   }
@@ -54,7 +54,7 @@ object GHGQLRequests {
     }
 
     fun getProtectionRules(repository: GHRepositoryCoordinates,
-                           pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHBranchProtectionRule>> {
+                           pagination: GHGQLRequestPagination? = null): GQLQuery<GraphQLPagedResponseDataDTO<GHBranchProtectionRule>> {
       return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.getProtectionRules,
                                       mapOf("repoOwner" to repository.repositoryPath.owner,
                                             "repoName" to repository.repositoryPath.repository,
@@ -64,7 +64,7 @@ object GHGQLRequests {
                                       "repository", "branchProtectionRules")
     }
 
-    private class ProtectedRulesConnection(pageInfo: GHGQLPageInfo, nodes: List<GHBranchProtectionRule>)
+    private class ProtectedRulesConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHBranchProtectionRule>)
       : GHConnection<GHBranchProtectionRule>(pageInfo, nodes)
   }
 
@@ -121,18 +121,18 @@ object GHGQLRequests {
     }
 
     fun findByBranches(repository: GHRepositoryCoordinates, baseBranch: String, headBranch: String)
-      : GQLQuery<GHGQLPagedRequestResponse<GHPullRequest>> =
+      : GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequest>> =
       GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.findOpenPullRequestsByBranches,
-                                      mapOf("repoOwner" to repository.repositoryPath.owner,
-                                            "repoName" to repository.repositoryPath.repository,
-                                            "baseBranch" to baseBranch,
-                                            "headBranch" to headBranch),
-                                      PullRequestsConnection::class.java,
-                                      "repository", "pullRequests").apply {
+                               mapOf("repoOwner" to repository.repositoryPath.owner,
+                                     "repoName" to repository.repositoryPath.repository,
+                                     "baseBranch" to baseBranch,
+                                     "headBranch" to headBranch),
+                               PullRequestsConnection::class.java,
+                               "repository", "pullRequests").apply {
         acceptMimeType = GHSchemaPreview.PR_DRAFT.mimeType
       }
 
-    private class PullRequestsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPullRequest>)
+    private class PullRequestsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequest>)
       : GHConnection<GHPullRequest>(pageInfo, nodes)
 
     fun update(repository: GHRepositoryCoordinates, pullRequestId: String, title: String?, description: String?): GQLQuery<GHPullRequest> {
@@ -179,7 +179,7 @@ object GHGQLRequests {
       : GHGQLSearchQueryResponse<GHPullRequestShort>(search)
 
     fun reviewThreads(repository: GHRepositoryCoordinates, number: Long,
-                      pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHPullRequestReviewThread>> {
+                      pagination: GHGQLRequestPagination? = null): GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequestReviewThread>> {
       return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestReviewThreads,
                                       mapOf("repoOwner" to repository.repositoryPath.owner,
                                             "repoName" to repository.repositoryPath.repository,
@@ -190,11 +190,11 @@ object GHGQLRequests {
                                       "repository", "pullRequest", "reviewThreads")
     }
 
-    private class ThreadsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPullRequestReviewThread>)
+    private class ThreadsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestReviewThread>)
       : GHConnection<GHPullRequestReviewThread>(pageInfo, nodes)
 
     fun commits(repository: GHRepositoryCoordinates, number: Long,
-                pagination: GHGQLRequestPagination? = null): GQLQuery<GHGQLPagedRequestResponse<GHPullRequestCommit>> {
+                pagination: GHGQLRequestPagination? = null): GQLQuery<GraphQLPagedResponseDataDTO<GHPullRequestCommit>> {
       return GQLQuery.TraversedParsed(repository.serverPath.toGraphQLUrl(), GHGQLQueries.pullRequestCommits,
                                       mapOf("repoOwner" to repository.repositoryPath.owner,
                                             "repoName" to repository.repositoryPath.repository,
@@ -205,13 +205,13 @@ object GHGQLRequests {
                                       "repository", "pullRequest", "commits")
     }
 
-    private class CommitsConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPullRequestCommit>)
+    private class CommitsConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPullRequestCommit>)
       : GHConnection<GHPullRequestCommit>(pageInfo, nodes)
 
     object Timeline {
       fun items(server: GithubServerPath, repoOwner: String, repoName: String, number: Long,
                 pagination: GHGQLRequestPagination? = null)
-        : GQLQuery<GHGQLPagedRequestResponse<GHPRTimelineItem>> {
+        : GQLQuery<GraphQLPagedResponseDataDTO<GHPRTimelineItem>> {
 
         return GQLQuery.TraversedParsed(server.toGraphQLUrl(), GHGQLQueries.pullRequestTimeline,
                                         mapOf("repoOwner" to repoOwner,
@@ -226,7 +226,7 @@ object GHGQLRequests {
         }
       }
 
-      private class TimelineConnection(pageInfo: GHGQLPageInfo, nodes: List<GHPRTimelineItem>)
+      private class TimelineConnection(pageInfo: GraphQLCursorPageInfoDTO, nodes: List<GHPRTimelineItem>)
         : GHConnection<GHPRTimelineItem>(pageInfo, nodes)
     }
 

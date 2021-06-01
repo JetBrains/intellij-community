@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tabs.layout.singleRowLayout;
 
 import com.intellij.application.options.editor.EditorTabPlacementKt;
@@ -22,9 +22,7 @@ import java.awt.event.MouseWheelEvent;
 import java.awt.event.MouseWheelListener;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class ScrollableSingleRowLayout extends SingleRowLayout {
   public static final int DEADZONE_FOR_DECLARE_TAB_HIDDEN = 10;
   private final Alarm afterScrollAlarm = new Alarm();

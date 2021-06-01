@@ -9,9 +9,7 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public abstract class TreeFileChooserFactory {
   public static TreeFileChooserFactory getInstance(Project project) {
     return project.getService(TreeFileChooserFactory.class);

@@ -8,7 +8,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.scale.JBUIScale;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -123,16 +122,11 @@ public class DumpScreenConfigurationAction extends DumbAwareAction {
     private boolean update(GraphicsConfiguration configuration) {
       boolean updated = false;
       Rectangle outer = minimize(configuration.getBounds());
-      float sysScale = JBUIScale.sysScale(configuration);
-      outer.width *= sysScale;
-      outer.height *= sysScale;
       if (!myOuterBounds.equals(outer)) {
         myOuterBounds.setBounds(outer);
         updated = true;
       }
       Rectangle inner = minimize(ScreenUtil.getScreenRectangle(configuration));
-      inner.width *= sysScale;
-      inner.height *= sysScale;
       if (!myInnerBounds.equals(inner)) {
         myInnerBounds.setBounds(inner);
         updated = true;

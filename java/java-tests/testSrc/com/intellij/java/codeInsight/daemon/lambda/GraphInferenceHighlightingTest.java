@@ -205,9 +205,8 @@ public class GraphInferenceHighlightingTest extends LightDaemonAnalyzerTestCase 
   public void testNotInferredVarShouldNotBeUsedForInferenceJava10() { doTest(); }
   public void testJavac8UnCaptureBug() { doTest(); }
   public void testLambdaInConditional() { doTest(); }
-  public void testTopLevelParentNoParameters() {
-    doTest();
-  }
+  public void testTopLevelParentNoParameters() { doTest(); }
+  public void testRawTypeOnTheRight() { doTest(); }
 
   private void doTest() {
     doTest(false);

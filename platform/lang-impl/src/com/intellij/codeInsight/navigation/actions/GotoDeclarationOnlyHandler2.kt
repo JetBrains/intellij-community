@@ -7,7 +7,6 @@ import com.intellij.codeInsight.navigation.CtrlMouseInfo
 import com.intellij.codeInsight.navigation.impl.*
 import com.intellij.featureStatistics.FeatureUsageTracker
 import com.intellij.internal.statistic.eventLog.events.EventPair
-import com.intellij.navigation.chooseTargetPopup
 import com.intellij.openapi.actionSystem.ex.ActionUtil.underModalProgress
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ex.util.EditorUtil
@@ -16,6 +15,7 @@ import com.intellij.openapi.project.IndexNotReadyException
 import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
+import com.intellij.ui.list.createTargetPopup
 
 internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
 
@@ -71,7 +71,7 @@ internal object GotoDeclarationOnlyHandler2 : CodeInsightActionHandler {
         // obtain event data before showing the popup,
         // because showing the popup will finish the GotoDeclarationAction#actionPerformed and clear the data
         val eventData: List<EventPair<*>> = GotoDeclarationAction.getCurrentEventData()
-        val popup = chooseTargetPopup(
+        val popup = createTargetPopup(
           CodeInsightBundle.message("declaration.navigation.title"),
           actionResult.targets, GTDTarget::presentation
         ) { (navigatable, _, navigationProvider) ->

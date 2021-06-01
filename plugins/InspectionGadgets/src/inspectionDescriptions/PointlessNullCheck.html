@@ -1,11 +1,16 @@
 <html>
 <body>
-Reports a <b>null</b> check followed by a method call that will definitely return <b>false</b> when <b>null</b> is passed (e.g. <b>Class.isInstance</b>).
-Such a check seems excessive as the method call will always return <b>false</b> in this case.
-<p>Here is an example of a violation: </p>
-<pre><code>    if (x != null && myClass.isInstance(x)) { ... }</code></pre>
-<p>The quickfix changes this code to:</p>
-<pre><code>    if (myClass.isInstance(x)) { ... }</code></pre>
+Reports null checks followed by a method call that will definitely return
+<code>false</code> when <code>null</code> is passed (e.g. <code>Class.isInstance</code>).
+<p>Such a check seems excessive as the method call will always return <code>false</code> in this case.</p>
+<p>Example: </p>
+<pre><code>
+  if (x != null && myClass.isInstance(x)) { ... }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  if (myClass.isInstance(x)) { ... }
+</code></pre>
 <!-- tooltip end -->
 <p>
 </body>

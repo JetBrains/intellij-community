@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.ide.util.PsiNavigationSupport;
@@ -891,9 +891,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
       @Override
       public String getLocationString() {
-        final PsiDirectory psiDirectory = getParent();
-        if (psiDirectory != null) {
-          return psiDirectory.getVirtualFile().getPresentableUrl();
+        VirtualFile file = getViewProvider().getVirtualFile().getParent();
+        if (file != null && file.isValid() && file.isDirectory()) {
+          return file.getPresentableUrl();
         }
         return null;
       }

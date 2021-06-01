@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.completion.test;
 
@@ -921,6 +918,16 @@ public abstract class JSBasicCompletionTestGenerated extends AbstractJSBasicComp
         public static class AutoPopup extends AbstractJSBasicCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AutoPopupBreak.kt")
+            public void testAutoPopupBreak() throws Exception {
+                runTest("testData/basic/common/autoPopup/AutoPopupBreak.kt");
+            }
+
+            @TestMetadata("AutoPopupThis.kt")
+            public void testAutoPopupThis() throws Exception {
+                runTest("testData/basic/common/autoPopup/AutoPopupThis.kt");
             }
 
             @TestMetadata("AutopopupInFunExtensionReceiver.kt")

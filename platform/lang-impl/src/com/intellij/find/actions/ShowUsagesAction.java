@@ -27,6 +27,7 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.AsyncEditorLoader;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -144,7 +145,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   public static int getUsagesPageSize() {
-    return Math.max(1, Registry.intValue("ide.usages.page.size", 100));
+    return Math.max(1, AdvancedSettings.getInt("ide.usages.page.size"));
   }
 
   @Override
@@ -658,16 +659,14 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       }
     };
     DefaultActionGroup pinGroup = new DefaultActionGroup();
-    ActiveComponent pin = createPinButton(project, popup, pinGroup, actionHandler::findUsages);
+    ActiveComponent pin = createPinButton(project, popup, pinGroup, table, actionHandler::findUsages);
     builder.setCommandButton(new CompositeActiveComponent(statusComponent, settingsButton, pin));
 
     DefaultActionGroup toolbar = new DefaultActionGroup();
     usageView.addFilteringActions(toolbar);
 
     toolbar.add(UsageGroupingRuleProviderImpl.createGroupByFileStructureAction(usageView));
-    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, toolbar, true);
-    actionToolbar.setTargetComponent(table);
-    actionToolbar.setReservePlaceAutoPopupIcon(false);
+    ActionToolbar actionToolbar = createActionToolbar(table, toolbar);
     JComponent toolBar = actionToolbar.getComponent();
     toolBar.setOpaque(false);
     builder.setSettingButton(toolBar);
@@ -703,9 +702,18 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   @NotNull
+  private static ActionToolbar createActionToolbar(@NotNull JTable table, @NotNull DefaultActionGroup group) {
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.SHOW_USAGES_POPUP_TOOLBAR, group, true);
+    actionToolbar.setTargetComponent(table);
+    actionToolbar.setReservePlaceAutoPopupIcon(false);
+    return actionToolbar;
+  }
+
+  @NotNull
   private static ActiveComponent createPinButton(@NotNull Project project,
                                                  JBPopup @NotNull [] popup,
                                                  @NotNull DefaultActionGroup pinGroup,
+                                                 @NotNull JTable table,
                                                  @NotNull Runnable findUsagesRunnable) {
     Icon icon = ToolWindowManager.getInstance(project).getLocationIcon(ToolWindowId.FIND, AllIcons.General.Pin_tab);
     AnAction pinAction =
@@ -724,8 +732,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         }
       };
     pinGroup.add(pinAction);
-    ActionToolbar pinToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.USAGE_VIEW_TOOLBAR, pinGroup, true);
-    pinToolbar.setReservePlaceAutoPopupIcon(false);
+    ActionToolbar pinToolbar = createActionToolbar(table, pinGroup);
     JComponent pinToolBar = pinToolbar.getComponent();
     pinToolBar.setBorder(null);
     pinToolBar.setOpaque(false);
@@ -1116,18 +1123,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   @NotNull
   private static ShowUsagesActionState getState(@NotNull Project project) {
     return project.getService(ShowUsagesActionState.class);
-  }
-
-  /**
-   * @deprecated please use {@link #startFindUsages(PsiElement, RelativePoint, Editor)} overload
-   */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2020.3")
-  public void startFindUsages(@NotNull PsiElement element,
-                              @NotNull RelativePoint popupPosition,
-                              @Nullable Editor editor,
-                              int maxUsages) {
-    startFindUsages(element, popupPosition, editor);
   }
 
   @TestOnly

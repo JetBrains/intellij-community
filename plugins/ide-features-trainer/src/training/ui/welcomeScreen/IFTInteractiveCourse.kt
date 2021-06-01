@@ -30,7 +30,7 @@ class IFTInteractiveCourse : InteractiveCourseFactory {
   override fun getInteractiveCourseData(): InteractiveCourseData = IFTInteractiveCourseData()
 }
 
-class IFTInteractiveCourseData : InteractiveCourseData {
+private class IFTInteractiveCourseData : InteractiveCourseData {
 
   override fun getName(): String {
     return LearnBundle.message("welcome.tab.header.learn.ide.features")
@@ -75,7 +75,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   }
 
   private fun moduleDescription(module: IftModule): HeightLimitedPane {
-    return HeightLimitedPane(module.description ?: "", -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
+    return HeightLimitedPane(module.description, -1, LearnIdeContentColorsAndFonts.ModuleDescriptionColor)
   }
 
   private fun moduleHeader(module: IftModule): LinkLabel<Any> {
@@ -106,7 +106,7 @@ class IFTInteractiveCourseData : InteractiveCourseData {
     else {
       CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
       val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
-      ActionUtil.performActionDumbAware(action, anActionEvent)
+      ActionUtil.performActionDumbAwareWithCallbacks(action, anActionEvent)
     }
   }
 

@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.TableCellState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
@@ -28,6 +29,7 @@ import java.util.List;
  * @author spleaner
  */
 public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRenderer, TableCellEditor, JBPopupListener {
+  private final TableCellState myCellState = new TableCellState();
   private final T[] myValues;
   private WeakReference<ListPopup> myPopupRef;
   private ChangeEvent myChangeEvent = null;
@@ -117,6 +119,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
     @SuppressWarnings("unchecked") T t = (T)value;
+    myCellState.collectState(table, isSelected, hasFocus, row, column);
+    myCellState.updateRenderer(this);
     customizeComponent(t, table, isSelected);
     return this;
   }
@@ -125,6 +129,8 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     @SuppressWarnings("unchecked") T t = (T)value;
     myValue = t;
+    myCellState.collectState(table, isSelected, true, row, column);
+    myCellState.updateRenderer(this);
     customizeComponent(t, table, true);
 
     SwingUtilities.invokeLater(() -> showPopup(t, row));
@@ -155,8 +161,6 @@ public class ComboBoxTableRenderer<T> extends JLabel implements TableCellRendere
     setOpaque(true);
     setText(value == null ? "" : getTextFor(value));
     setIcon(value == null ? null : getIconFor(value));
-    setBackground(isSelected ? table.getSelectionBackground() : table.getBackground());
-    setForeground(isSelected ? table.getSelectionForeground() : table.getForeground());
   }
 
   @Override

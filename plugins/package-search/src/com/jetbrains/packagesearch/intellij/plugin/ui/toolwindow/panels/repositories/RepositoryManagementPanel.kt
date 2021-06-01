@@ -20,9 +20,9 @@ internal class RepositoryManagementPanel(
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.repositories.title")) {
 
     private val repositoriesTree = RepositoryTree(
-      project = rootDataModelProvider.project,
-      allKnownRepositories = rootDataModelProvider.dataModelProperty.map { it.allKnownRepositories },
-      lifetime = lifetimeProvider.lifetime
+        project = rootDataModelProvider.project,
+        allKnownRepositories = rootDataModelProvider.dataModelProperty.map { it.allKnownRepositories },
+        lifetime = lifetimeProvider.lifetime
     )
 
     private val autoScrollToSourceHandler = object : AutoScrollToSourceHandler() {

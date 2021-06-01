@@ -7,7 +7,10 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
+import com.intellij.packaging.elements.CompositePackagingElement;
 import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
+import com.intellij.packaging.impl.elements.DirectoryPackagingElement;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.VfsTestUtil;
 
@@ -34,6 +37,175 @@ public class IncrementalArtifactsCompilerTest extends ArtifactCompilerTestCase {
     changeFile(file, "b");
     compileProject();
     assertOutput(a, fs().dir("dir").file("file.txt", "b"));
+  }
+
+  public void testFileNearDir() {
+    VirtualFile file2 = createFile("1.txt", "a");
+    final Artifact a = addArtifact(root().dir("dir").file(file2));
+    make(a);
+    assertOutput(a, fs().dir("dir").file("1.txt"));
+
+    VirtualFile file = createFile("2.txt", "a");
+    WriteAction.runAndWait(() -> {
+      ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+      model.getOrCreateModifiableArtifact(a).getRootElement()
+        .addFirstChild(PackagingElementFactory.getInstance().createFileCopy(file.getPath(), null));
+      model.commit();
+    });
+
+    make(a);
+    assertOutput(a, fs().file("2.txt").dir("dir").file("1.txt"));
+  }
+
+  public void testTwoFilesInOneDir() {
+    VirtualFile file2 = createFile("1.txt", "a");
+    final Artifact a = addArtifact(root().dir("dir").file(file2));
+    make(a);
+    assertOutput(a, fs().dir("dir").file("1.txt"));
+
+    VirtualFile file = createFile("2.txt", "a");
+    WriteAction.runAndWait(() -> {
+      ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+      CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
+      DirectoryPackagingElement element = (DirectoryPackagingElement) rootElement.getChildren().get(0);
+      element.addFirstChild(PackagingElementFactory.getInstance().createFileCopy(file.getPath(), null));
+      model.commit();
+    });
+
+    make(a);
+    assertOutput(a, fs().dir("dir").file("1.txt").file("2.txt"));
+  }
+
+  public void testTwoFilesInOneDirUsingFindCompositeChild() {
+    VirtualFile file2 = createFile("1.txt", "a");
+    final Artifact a = addArtifact(root().dir("dir").file(file2));
+    make(a);
+    assertOutput(a, fs().dir("dir").file("1.txt"));
+
+    VirtualFile file = createFile("2.txt", "a");
+    WriteAction.runAndWait(() -> {
+      ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+      CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
+      DirectoryPackagingElement element = (DirectoryPackagingElement)rootElement.findCompositeChild("dir");
+      element.addFirstChild(PackagingElementFactory.getInstance().createFileCopy(file.getPath(), null));
+      model.commit();
+    });
+
+    make(a);
+    assertOutput(a, fs().dir("dir").file("1.txt").file("2.txt"));
+  }
+
+  public void testTwoFilesInOneDirUsingAddOrCreate() {
+    VirtualFile file2 = createFile("1.txt", "a");
+    final Artifact a = addArtifact(root().dir("dir").file(file2));
+    make(a);
+    assertOutput(a, fs().dir("dir").file("1.txt"));
+
+    VirtualFile file = createFile("2.txt", "a");
+    WriteAction.runAndWait(() -> {
+      ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+      CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
+      DirectoryPackagingElement element = rootElement.addOrFindChild(new DirectoryPackagingElement("dir"));
+      element.addFirstChild(PackagingElementFactory.getInstance().createFileCopy(file.getPath(), null));
+      model.commit();
+    });
+
+    make(a);
+    assertOutput(a, fs().dir("dir").file("1.txt").file("2.txt"));
+  }
+
+  public void testRenameArchive() {
+    VirtualFile file = createFile("file.txt", "a");
+    final Artifact a = addArtifact(root().archive("myArchive").file(file));
+    make(a);
+    assertOutput(a, fs().archive("myArchive").file("file.txt"));
+
+    WriteAction.runAndWait(() -> {
+      ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+      CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
+      ArchivePackagingElement element = (ArchivePackagingElement)rootElement.getChildren().get(0);
+      element.rename("AnotherName");
+      model.commit();
+    });
+
+    make(a);
+    assertOutput(a, fs().archive("AnotherName").file("file.txt"));
+  }
+
+  public void testSetNewNameToArchive() {
+    VirtualFile file = createFile("file.txt", "a");
+    final Artifact a = addArtifact(root().archive("myArchive").file(file));
+    make(a);
+    assertOutput(a, fs().archive("myArchive").file("file.txt"));
+
+    WriteAction.runAndWait(() -> {
+      ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+      CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
+      ArchivePackagingElement element = (ArchivePackagingElement)rootElement.getChildren().get(0);
+      element.setArchiveFileName("AnotherName");
+      model.commit();
+    });
+
+    make(a);
+    assertOutput(a, fs().archive("AnotherName").file("file.txt"));
+  }
+
+  public void testSetDirectoryName() {
+    VirtualFile file = createFile("file.txt", "a");
+    final Artifact a = addArtifact(root().dir("myArchive").file(file));
+    /// Because of some reason the old directory is not cleared, but I actually test the rename itself here
+    //make(a);
+    //assertOutput(a, fs().dir("myArchive").file("file.txt"));
+
+    WriteAction.runAndWait(() -> {
+      ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+      CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
+      DirectoryPackagingElement element = (DirectoryPackagingElement)rootElement.getChildren().get(0);
+      element.setDirectoryName("AnotherName");
+      model.commit();
+    });
+
+    make(a);
+    assertOutput(a, fs().dir("AnotherName").file("file.txt"));
+  }
+
+  public void testRenameDirectory() {
+    VirtualFile file = createFile("file.txt", "a");
+    final Artifact a = addArtifact(root().dir("myArchive").file(file));
+    /// Because of some reason the old directory is not cleared, but I actually test the rename itself here
+    //make(a);
+    //assertOutput(a, fs().dir("myArchive").file("file.txt"));
+
+    WriteAction.runAndWait(() -> {
+      ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+      CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
+      DirectoryPackagingElement element = (DirectoryPackagingElement)rootElement.getChildren().get(0);
+      element.rename("AnotherName");
+      model.commit();
+    });
+
+    make(a);
+    assertOutput(a, fs().dir("AnotherName").file("file.txt"));
+  }
+
+  public void testFilesInTwoDirs() {
+    VirtualFile file2 = createFile("1.txt", "a");
+    final Artifact a = addArtifact(root().dir("dir").dir("anotherDir").file(file2));
+    make(a);
+    assertOutput(a, fs().dir("dir").dir("anotherDir").file("1.txt"));
+
+    VirtualFile file = createFile("2.txt", "a");
+    WriteAction.runAndWait(() -> {
+      ModifiableArtifactModel model = getArtifactManager().createModifiableModel();
+      CompositePackagingElement<?> rootElement = model.getOrCreateModifiableArtifact(a).getRootElement();
+      DirectoryPackagingElement element = rootElement.addOrFindChild(new DirectoryPackagingElement("dir"));
+      DirectoryPackagingElement anotherElement = (DirectoryPackagingElement)element.getChildren().get(0);
+      anotherElement.addFirstChild(PackagingElementFactory.getInstance().createFileCopy(file.getPath(), null));
+      model.commit();
+    });
+
+    make(a);
+    assertOutput(a, fs().dir("dir").dir("anotherDir").file("1.txt").file("2.txt"));
   }
 
   public void testAddRemoveJavaClass() {

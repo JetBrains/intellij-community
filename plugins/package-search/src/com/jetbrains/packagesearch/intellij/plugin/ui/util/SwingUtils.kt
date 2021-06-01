@@ -1,11 +1,10 @@
 @file:Suppress("MagicNumber") // Swing dimension constants
 package com.jetbrains.packagesearch.intellij.plugin.ui.util
 
-import com.intellij.openapi.util.BuildNumber
-import com.intellij.ui.render.RenderingUtil
-import com.intellij.ui.table.JBTable
-import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.intellij.openapi.application.AppUIExecutor
+import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import java.awt.event.MouseEvent
 import java.awt.event.MouseListener
 import javax.swing.UIManager
@@ -40,3 +39,8 @@ internal fun mouseListener(
         onExited(e)
     }
 }
+
+
+@Suppress("unused") // The receiver is technically unused
+internal val Dispatchers.AppUI
+    get() = AppUIExecutor.onUiThread().coroutineDispatchingContext()

@@ -8,7 +8,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -156,7 +155,7 @@ public abstract class SyntheticLibrary {
   }
 
   public final boolean contains(@NotNull VirtualFile file, boolean includeSources, boolean includeBinaries) {
-    Set<VirtualFile> roots = asSet(getRoots(includeSources, includeBinaries));
+    Set<? extends VirtualFile> roots = asSet(getRoots(includeSources, includeBinaries));
     return VfsUtilCore.isUnder(file, roots) && !VfsUtilCore.isUnder(file, getExcludedRoots());
   }
 
@@ -165,12 +164,12 @@ public abstract class SyntheticLibrary {
   }
 
   @NotNull
-  private static <T extends VirtualFile> Set<T> asSet(@NotNull Collection<? extends T> collection) {
-    return collection instanceof Set ? (Set<T>)collection : new ObjectOpenHashSet<>(collection);
+  private static Set<? extends VirtualFile> asSet(@NotNull Collection<? extends VirtualFile> collection) {
+    return collection instanceof Set ? (Set<? extends VirtualFile>)collection : new HashSet<>(collection);
   }
 
   @NotNull
-  static <T extends VirtualFile> List<T> asList(@NotNull Collection<? extends T> collection) {
-    return collection instanceof List ? (List<T>)collection : new ArrayList<>(collection);
+  private static List<? extends VirtualFile> asList(@NotNull Collection<? extends VirtualFile> collection) {
+    return collection instanceof List ? (List<? extends VirtualFile>)collection : new ArrayList<>(collection);
   }
 }

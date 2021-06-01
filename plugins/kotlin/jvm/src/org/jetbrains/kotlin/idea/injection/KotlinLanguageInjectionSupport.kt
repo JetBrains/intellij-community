@@ -1,24 +1,26 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.injection
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.lang.Language
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.openapi.module.ModuleUtilCore
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiTreeUtil.getDeepestLast
+import com.intellij.util.Consumer
 import com.intellij.util.Processor
 import org.intellij.plugins.intelliLang.Configuration
 import org.intellij.plugins.intelliLang.inject.*
 import org.intellij.plugins.intelliLang.inject.config.BaseInjection
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.KotlinJvmBundle
 import org.jetbrains.kotlin.idea.patterns.KotlinPatterns
 import org.jetbrains.kotlin.idea.util.addAnnotation
@@ -35,6 +37,14 @@ val KOTLIN_SUPPORT_ID = "kotlin"
 
 class KotlinLanguageInjectionSupport : AbstractLanguageInjectionSupport() {
     override fun getId(): String = KOTLIN_SUPPORT_ID
+
+    override fun createAddActions(project: Project?, consumer: Consumer<in BaseInjection>?): Array<AnAction> {
+        return super.createAddActions(project, consumer).apply {
+            forEach {
+                it.templatePresentation.icon = KotlinFileType.INSTANCE.icon
+            }
+        }
+    }
 
     override fun getPatternClasses() = arrayOf(KotlinPatterns::class.java)
 

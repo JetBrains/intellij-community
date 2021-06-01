@@ -153,4 +153,22 @@ public interface PyElementTypes {
   PyElementType FSTRING_NODE = new PyElementType("FSTRING_NODE", node -> new PyFormattedStringElementImpl(node));
   PyElementType FSTRING_FRAGMENT = new PyElementType("FSTRING_FRAGMENT", node -> new PyFStringFragmentImpl(node));
   PyElementType FSTRING_FRAGMENT_FORMAT_PART = new PyElementType("FSTRING_FRAGMENT_FORMAT_PART", node -> new PyFStringFragmentFormatPartImpl(node));
+
+  PyElementType MATCH_STATEMENT = new PyElementType("MATCH_STATEMENT", node -> new PyMatchStatementImpl(node));
+  PyElementType CASE_CLAUSE = new PyElementType("CASE_CLAUSE", node -> new PyCaseClauseImpl(node));
+  PyElementType LITERAL_PATTERN = new PyElementType("LITERAL_PATTERN", node -> new PyLiteralPatternImpl(node));
+  PyElementType VALUE_PATTERN = new PyElementType("VALUE_PATTERN", node -> new PyValuePatternImpl(node));
+  PyElementType CAPTURE_PATTERN = new PyElementType("CAPTURE_PATTERN", node -> new PyCapturePatternImpl(node));
+  PyElementType WILDCARD_PATTERN = new PyElementType("WILDCARD_PATTERN", node -> new PyWildcardPatternImpl(node));
+  PyElementType GROUP_PATTERN = new PyElementType("GROUP_PATTERN", node -> new PyGroupPatternImpl(node));
+  PyElementType SEQUENCE_PATTERN = new PyElementType("SEQUENCE_PATTERN", node -> new PySequencePatternImpl(node));
+  PyElementType SINGLE_STAR_PATTERN = new PyElementType("SINGLE_STAR_PATTERN", node -> new PySingleStarPatternImpl(node));
+  PyElementType DOUBLE_STAR_PATTERN = new PyElementType("DOUBLE_STAR_PATTERN", node -> new PyDoubleStarPatternImpl(node));
+  PyElementType MAPPING_PATTERN = new PyElementType("KEY_VALUE_PATTERN", node -> new PyMappingPatternImpl(node));
+  PyElementType KEY_VALUE_PATTERN = new PyElementType("KEY_VALUE_PATTERN", node -> new PyKeyValuePatternImpl(node));
+  PyElementType CLASS_PATTERN = new PyElementType("CLASS_PATTERN", node -> new PyClassPatternImpl(node));
+  PyElementType PATTERN_ARGUMENT_LIST = new PyElementType("PATTERN_ARGUMENT_LIST", node -> new PyPatternArgumentListImpl(node));
+  PyElementType KEYWORD_PATTERN = new PyElementType("KEYWORD_PATTERN", node -> new PyKeywordPatternImpl(node));
+  PyElementType OR_PATTERN = new PyElementType("OR_PATTERN", node -> new PyOrPatternImpl(node));
+  PyElementType AS_PATTERN = new PyElementType("AS_PATTERN", node -> new PyAsPatternImpl(node));
 }

@@ -1,22 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import icons.PlatformImplIcons;
 import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.concurrent.ExecutionException;
-import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -29,20 +25,23 @@ public class PluginGroups {
 
   private final Map<String, List<IdSet>> myGroups = new LinkedHashMap<>();
   private final Map<String, @Nls String> myDescriptions = new LinkedHashMap<>();
-  private final List<PluginNode> myPluginsFromRepository = new ArrayList<>();
-  private final Collection<PluginId> myDisabledPluginIds = new HashSet<>();
-  private final List<IdeaPluginDescriptorImpl> myAllPlugins;
+
+  private final Map<PluginId, PluginNode> myPluginsFromRepository = new HashMap<>();
+  private final Set<PluginId> myDisabledPluginIds = new HashSet<>(DisabledPluginsState.loadDisabledPlugins());
+  private final Map<PluginId, IdeaPluginDescriptorImpl> myEnabledPlugins = PluginDescriptorLoader
+    .loadUncachedDescriptors(PluginManagerCore.isUnitTestMode, PluginManagerCore.isRunningFromSources())
+    .stream()
+    .collect(Collectors.toUnmodifiableMap(IdeaPluginDescriptorImpl::getPluginId, Function.identity()));
+
   private boolean myInitialized;
   private Runnable myLoadingCallback;
 
   public PluginGroups() {
-    myAllPlugins = PluginDescriptorLoader.loadUncachedDescriptors(PluginManagerCore.isUnitTestMode, PluginManagerCore.isRunningFromSources());
     SwingWorker<List<PluginNode>, Object> worker = new SwingWorker<>() {
       @Override
       protected @NotNull List<PluginNode> doInBackground() {
         try {
-          MarketplaceRequests requests = MarketplaceRequests.getInstance();
-          List<PluginNode> featuredPlugins = requests.loadLastCompatiblePluginDescriptors(myFeaturedPlugins.keySet());
+          List<PluginNode> featuredPlugins = MarketplaceRequests.loadLastCompatiblePluginDescriptors(myFeaturedPlugins.keySet());
 
           Set<PluginId> dependsIds = featuredPlugins.stream()
             .map(PluginNode::getDependencies)
@@ -52,7 +51,7 @@ public class PluginGroups {
             .collect(Collectors.toUnmodifiableSet());
 
           ArrayList<PluginNode> result = new ArrayList<>(featuredPlugins);
-          result.addAll(requests.loadLastCompatiblePluginDescriptors(dependsIds));
+          result.addAll(MarketplaceRequests.loadLastCompatiblePluginDescriptors(dependsIds));
           return result;
         }
         catch (Exception e) {
@@ -64,7 +63,9 @@ public class PluginGroups {
       @Override
       protected void done() {
         try {
-          myPluginsFromRepository.addAll(get());
+          for (PluginNode node : get()) {
+            myPluginsFromRepository.put(node.getPluginId(), node);
+          }
           if (myLoadingCallback != null) myLoadingCallback.run();
         }
         catch (InterruptedException | ExecutionException e) {
@@ -92,21 +93,12 @@ public class PluginGroups {
     }
 
     worker.execute();
-    myDisabledPluginIds.addAll(DisabledPluginsState.loadDisabledPlugins());
-    initCloudPlugins(CloudConfigProvider.getProvider());
   }
 
   public void setLoadingCallback(Runnable loadingCallback) {
     myLoadingCallback = loadingCallback;
     if (!myPluginsFromRepository.isEmpty()) {
       myLoadingCallback.run();
-    }
-  }
-
-  private void initCloudPlugins(@Nullable CloudConfigProvider provider) {
-    for (PluginId pluginId : provider != null ? provider.getInstalledPlugins() : Set.<PluginId>of()) {
-      myFeaturedPlugins.computeIfPresent(pluginId,
-                                         PluginGroupDescription.CloudDelegate::new);
     }
   }
 
@@ -120,162 +112,7 @@ public class PluginGroups {
   }
 
   protected @NotNull List<Group> getInitialGroups() {
-    return List.of(
-      new Group(CORE,
-                IdeBundle.message("label.plugin.group.name.core"),
-                null,
-                null,
-                List.of(
-                  "com.intellij.copyright",
-                  "com.intellij.java-i18n",
-                  "org.intellij.intelliLang",
-                  "com.intellij.properties",
-                  "Refactor-X",//?
-                  "Type Migration",
-                  "ZKM"
-                )),
-      new Group("Java Frameworks",
-                IdeBundle.message("label.plugin.group.name.java.frameworks"),
-                PlatformImplIcons.JavaFrameworks,
-                null,
-                List.of(
-                  "Spring:com.intellij.spring.batch," +
-                  "com.intellij.spring.data," +
-                  "com.intellij.spring.integration," +
-                  "com.intellij.spring.osgi," +
-                  "com.intellij.spring.security," +
-                  "com.intellij.spring," +
-                  "com.intellij.spring.webflow," +
-                  "com.intellij.spring.ws,com.intellij.aop",
-
-                  "Java EE:com.intellij.javaee.batch," +
-                  "com.intellij.beanValidation," +
-                  "com.intellij.cdi," +
-                  "com.intellij.javaee," +
-                  "com.intellij.jsf," +
-                  "com.intellij.javaee.extensions," +
-                  "com.jetbrains.restWebServices," +
-                  "Web Services (JAX-WS)," +
-                  "com.intellij.javaee.webSocket," +
-                  "com.intellij.jsp",
-
-                  "com.intellij.hibernate",
-                  "com.intellij.reactivestreams",
-                  "com.intellij.frameworks.java.sql",
-                  // preview ends
-
-                  "org.intellij.grails",
-
-                  "com.intellij.micronaut",
-                  "com.intellij.quarkus",
-                  "com.intellij.helidon",
-
-                  "com.intellij.guice",
-
-                  "com.intellij.freemarker",
-                  "com.intellij.velocity",
-                  "com.intellij.aspectj"
-                )),
-      new Group("Build Tools",
-                IdeBundle.message("label.plugin.group.name.build.tools"),
-                PlatformImplIcons.BuildTools,
-                null,
-                List.of(
-                  "AntSupport",
-                  "Maven:org.jetbrains.idea.maven,org.jetbrains.idea.maven.ext",
-                  "org.jetbrains.plugins.gradle"
-                )),
-      new Group("JavaScript Development",
-                IdeBundle.message("label.plugin.group.name.javascript.development"),
-                PlatformImplIcons.WebDevelopment,
-                IdeBundle.message("label.plugin.group.description.javascript.development"),
-                List.of(
-                  "HTML:HtmlTools,W3Validators",
-                  "JavaScript and TypeScript:JavaScript,JavaScriptDebugger,JSIntentionPowerPack",
-                  "Node.js:NodeJS",
-
-                  "com.intellij.css",
-                  "org.jetbrains.plugins.less",
-                  "org.jetbrains.plugins.sass",
-
-                  "org.jetbrains.plugins.stylus",
-                  "org.jetbrains.plugins.haml",
-                  "AngularJS",
-
-                  "org.coffeescript",
-                  "com.jetbrains.restClient",
-
-                  "com.intellij.swagger"
-                )),
-      Group.vcs(),
-      new Group("Test Tools",
-                IdeBundle.message("label.plugin.group.name.test.tools"),
-                PlatformImplIcons.TestTools,
-                null,
-                List.of(
-                  "JUnit",
-                  "TestNG-J",
-                  "cucumber-java",
-                  "cucumber",
-                  "Coverage:Coverage,Emma"
-                )),
-      new Group("Application Servers",
-                IdeBundle.message("label.plugin.group.name.application.servers"),
-                PlatformImplIcons.ApplicationServers,
-                null,
-                List.of(
-                  "com.intellij.javaee.view",
-                  "Geronimo",
-                  "GlassFish",
-                  "JBoss",
-                  "Jetty",
-                  "Tomcat",
-                  "Weblogic",
-                  "WebSphere",
-                  "JSR45Plugin"
-                )),
-      //myTree.put("Groovy", List.of("org.intellij.grails"));
-      //TODO Scala -> Play 2.x (Play 2.0 Support)
-      new Group("Swing",
-                IdeBundle.message("label.plugin.group.name.swing"),
-                PlatformImplIcons.Swing,
-                null,
-                List.of("com.intellij.uiDesigner") /* TODO JavaFX? */),
-      new Group("Android",
-                IdeBundle.message("label.plugin.group.name.android"),
-                PlatformImplIcons.Android,
-                null,
-                List.of(
-                  "org.jetbrains.android",
-                  "com.intellij.android-designer")),
-      new Group("Database Tools",
-                IdeBundle.message("label.plugin.group.name.database.tools"),
-                PlatformImplIcons.DatabaseTools,
-                null,
-                List.of("com.intellij.database")),
-      new Group("Other Tools",
-                IdeBundle.message("label.plugin.group.name.other.tools"),
-                PlatformImplIcons.OtherTools,
-                null,
-                List.of(
-                  "ByteCodeViewer",
-                  "com.intellij.dsm",
-                  "org.jetbrains.idea.eclipse",
-                  "org.jetbrains.debugger.streams",
-                  "Remote Access:com.jetbrains.plugins.webDeployment,org.jetbrains.plugins.remote-run",
-                  "Task Management:com.intellij.tasks,com.intellij.tasks.timeTracking",
-                  "org.jetbrains.plugins.terminal",
-                  "org.jetbrains.plugins.emojipicker",
-                  "com.intellij.diagram",
-                  "org.jetbrains.plugins.yaml",
-                  "XSLT and XPath:XPathView,XSLT-Debugger"
-                )),
-      new Group("Plugin Development",
-                IdeBundle.message("label.plugin.group.name.plugin.development"),
-                PlatformImplIcons.PluginDevelopment,
-                null,
-                List.of("DevKit"))
-    );
+    return List.of();
   }
 
   /**
@@ -284,21 +121,12 @@ public class PluginGroups {
   @Deprecated(since = "2020.2", forRemoval = true)
   protected void initFeaturedPlugins(@NotNull Map<String, String> featuredPlugins) {
     for (PluginGroupDescription description : getInitialFeaturedPlugins()) {
-      addPlugin(featuredPlugins, description);
+      featuredPlugins.put(description.getName(), description.toString());
     }
   }
 
-  protected @NotNull List<? extends PluginGroupDescription> getInitialFeaturedPlugins() {
-    return List.of(
-      PluginGroupDescription.scala(),
-      PluginGroupDescription.liveEdit(),
-      PluginGroupDescription.vim(),
-      PluginGroupDescription.create("atlassian-idea-plugin",
-                                    "Atlassian Connector",
-                                    "Tools Integration",
-                                    "Integration for Atlassian JIRA, Bamboo, Crucible, FishEye"),
-      PluginGroupDescription.featuresTrainer()
-    );
+  protected @NotNull List<PluginGroupDescription> getInitialFeaturedPlugins() {
+    return List.of();
   }
 
   /**
@@ -307,39 +135,6 @@ public class PluginGroups {
   @Deprecated(since = "2020.2", forRemoval = true)
   public static @NotNull @NonNls String parsePluginId(@NotNull @Nls String string) {
     return parseString(string)[2];
-  }
-
-  /**
-   * @deprecated Please migrate to {@link PluginGroupDescription#vim()}.
-   */
-  @Deprecated(since = "2020.2", forRemoval = true)
-  public static void addVimPlugin(@NotNull Map<String, String> featuredPlugins) {
-    addPlugin(featuredPlugins, PluginGroupDescription.vim());
-  }
-
-  /**
-   * @deprecated Please migrate to {@link PluginGroupDescription#aws()}.
-   */
-  @Deprecated(since = "2020.2", forRemoval = true)
-  public static void addAwsPlugin(@NotNull Map<String, String> featuredPlugins) {
-    addPlugin(featuredPlugins, PluginGroupDescription.aws());
-  }
-
-  /**
-   * @deprecated Please migrate to {@link PluginGroupDescription#teamCity()}.
-   */
-  @Deprecated(since = "2020.2", forRemoval = true)
-  public static void addTeamCityPlugin(@NotNull Map<String, String> featuredPlugins) {
-    addPlugin(featuredPlugins, PluginGroupDescription.teamCity());
-  }
-
-  /**
-   * @deprecated Please migrate to {@link #getInitialFeaturedPlugins()}.
-   */
-  @Deprecated(since = "2020.2", forRemoval = true)
-  private static void addPlugin(@NotNull Map<String, String> featuredPlugins,
-                                @NotNull PluginGroupDescription description) {
-    featuredPlugins.put(description.getName(), description.toString());
   }
 
   /**
@@ -398,15 +193,13 @@ public class PluginGroups {
    */
   @Deprecated(forRemoval = true, since = "2020.2")
   public Map<@NlsSafe String, @Nls String> getFeaturedPlugins() {
-    Map<String, String> featuredPlugins = new LinkedHashMap<>();
-    for (PluginGroupDescription description : myFeaturedPlugins.values()) {
-      addPlugin(featuredPlugins, description);
-    }
-    return featuredPlugins;
+    return myFeaturedPlugins.values()
+      .stream()
+      .collect(Collectors.toUnmodifiableMap(PluginGroupDescription::getName, PluginGroupDescription::toString));
   }
 
-  public @NotNull Map<PluginId, ? extends PluginGroupDescription> getFeaturedPluginDescriptions() {
-    return myFeaturedPlugins;
+  public @NotNull Map<PluginId, PluginGroupDescription> getFeaturedPluginDescriptions() {
+    return Collections.unmodifiableMap(myFeaturedPlugins);
   }
 
   public @Nls String getDescription(String group) {
@@ -419,16 +212,11 @@ public class PluginGroups {
     return myGroups.get(group);
   }
 
-  public final @Nullable IdeaPluginDescriptor findPlugin(@NotNull PluginId id) {
-    for (IdeaPluginDescriptor pluginDescriptor : myAllPlugins) {
-      if (id.equals(pluginDescriptor.getPluginId())) {
-        return pluginDescriptor;
-      }
-    }
-    return null;
+  public final @Nullable IdeaPluginDescriptor findPlugin(@NotNull PluginId pluginId) {
+    return myEnabledPlugins.get(pluginId);
   }
 
-  public boolean isIdSetAllEnabled(@NotNull IdSet set) {
+  public final boolean isIdSetAllEnabled(@NotNull IdSet set) {
     for (PluginId id : set.getPluginIds()) {
       if (!isPluginEnabled(id)) {
         return false;
@@ -437,22 +225,21 @@ public class PluginGroups {
     return true;
   }
 
-  public void setIdSetEnabled(@NotNull IdSet set, boolean enabled) {
+  public final void setIdSetEnabled(@NotNull IdSet set, boolean enabled) {
     for (PluginId id : set.getPluginIds()) {
       setPluginEnabledWithDependencies(id, enabled);
     }
   }
 
-  @NotNull
-  public Collection<PluginId> getDisabledPluginIds() {
-    return Collections.unmodifiableCollection(myDisabledPluginIds);
+  public final @NotNull Set<PluginId> getDisabledPluginIds() {
+    return Collections.unmodifiableSet(myDisabledPluginIds);
   }
 
-  public List<PluginNode> getPluginsFromRepository() {
-    return myPluginsFromRepository;
+  public final @NotNull Collection<PluginNode> getPluginsFromRepository() {
+    return Collections.unmodifiableCollection(myPluginsFromRepository.values());
   }
 
-  public boolean isPluginEnabled(@NotNull PluginId pluginId) {
+  public final boolean isPluginEnabled(@NotNull PluginId pluginId) {
     initIfNeeded();
     return !myDisabledPluginIds.contains(pluginId);
   }
@@ -475,58 +262,54 @@ public class PluginGroups {
   public void setPluginEnabledWithDependencies(@NotNull PluginId pluginId, boolean enabled) {
     initIfNeeded();
 
-    Function<PluginId, List<IdeaPluginDescriptorImpl>> pluginsById =
-      enabled ?
-      new Function<>() {
-        private final Map<PluginId, IdeaPluginDescriptorImpl> myPluginById = myAllPlugins.stream()
-          .collect(Collectors.toUnmodifiableMap(IdeaPluginDescriptorImpl::getPluginId, Function.identity()));
-
-        @Override
-        public @NotNull List<IdeaPluginDescriptorImpl> apply(PluginId pluginId) {
-          IdeaPluginDescriptorImpl descriptor = myPluginById.get(pluginId);
-          return descriptor != null ? List.of(descriptor) : List.of();
-        }
-      } : (__ -> myAllPlugins);
-
-    BiPredicate<PluginId, PluginId> predicate =
-      enabled ?
-      (dependencyId, __) -> !PluginManagerCore.CORE_ID.equals(dependencyId) :
-      Objects::equals;
-
-    Set<PluginId> pluginIds = getAllPluginIds(collectInvolvedIds(pluginId, predicate, pluginsById));
+    Set<PluginId> accumulator = new HashSet<>();
     if (enabled) {
-      myDisabledPluginIds.removeAll(pluginIds);
+      collectIdsToEnable(pluginId, accumulator);
+      myDisabledPluginIds.removeAll(getAllPluginIds(accumulator));
     }
     else {
-      myDisabledPluginIds.addAll(pluginIds);
+      collectIdsToDisable(pluginId, accumulator);
+      myDisabledPluginIds.addAll(getAllPluginIds(accumulator));
     }
   }
 
-  private static @NotNull Set<PluginId> collectInvolvedIds(@NotNull PluginId pluginId,
-                                                           @NotNull BiPredicate<@NotNull PluginId, @NotNull PluginId> predicate,
-                                                           @NotNull Function<@NotNull PluginId, @NotNull List<IdeaPluginDescriptorImpl>> pluginsById) {
-    Set<PluginId> pluginIds = new HashSet<>();
-    pluginIds.add(pluginId);
+  private void collectIdsToEnable(@NotNull PluginId pluginId,
+                                  @NotNull Set<PluginId> accumulator) {
+    accumulator.add(pluginId);
 
-    for (IdeaPluginDescriptorImpl plugin : pluginsById.apply(pluginId)) {
-      for (PluginDependency dependency : plugin.getPluginDependencies()) {
-        if (!dependency.isOptional && predicate.test(dependency.id, pluginId)) {
-          pluginIds.addAll(collectInvolvedIds(dependency.id, predicate, pluginsById));
+    IdeaPluginDescriptorImpl descriptor = myEnabledPlugins.get(pluginId);
+    if (descriptor == null) {
+      return;
+    }
+
+    for (PluginDependency dependency : descriptor.pluginDependencies) {
+      if (!dependency.isOptional() && !dependency.getPluginId().equals(PluginManagerCore.CORE_ID)) {
+        collectIdsToEnable(dependency.getPluginId(), accumulator);
+      }
+    }
+  }
+
+  private void collectIdsToDisable(@NotNull PluginId pluginId,
+                                   @NotNull Set<PluginId> accumulator) {
+    accumulator.add(pluginId);
+
+    for (IdeaPluginDescriptorImpl descriptor : myEnabledPlugins.values()) {
+      for (PluginDependency dependency : descriptor.pluginDependencies) {
+        if (!dependency.isOptional() && dependency.getPluginId().equals(pluginId)) {
+          collectIdsToDisable(descriptor.getPluginId(), accumulator);
         }
       }
     }
-
-    return pluginIds;
   }
 
   private @Nullable IdSet createIdSet(@Nls @Nullable String title,
                                       @NonNls @NotNull String ids) {
-    Ref<IdeaPluginDescriptor> firstDescriptor = Ref.create();
+    Ref<IdeaPluginDescriptorImpl> firstDescriptor = Ref.create();
     Set<PluginId> pluginIds = Arrays.stream(ids.split(","))
       .distinct()
       .map(PluginId::getId)
       .filter(pluginId -> {
-        IdeaPluginDescriptor descriptor = findPlugin(pluginId);
+        IdeaPluginDescriptorImpl descriptor = myEnabledPlugins.get(pluginId);
         firstDescriptor.setIfNull(descriptor);
         return descriptor != null;
       }).collect(Collectors.toUnmodifiableSet());
@@ -588,22 +371,6 @@ public class PluginGroups {
 
     public @NotNull List<String> getPluginIdDescription() {
       return myPluginIdDescription;
-    }
-
-    public static @NotNull Group vcs() {
-      return new Group("Version Controls",
-                       IdeBundle.message("label.plugin.group.name.version.controls"),
-                       PlatformImplIcons.VersionControls,
-                       null,
-                       List.of(
-                         "CVS",
-                         "Git4Idea",
-                         "org.jetbrains.plugins.github",
-                         "hg4idea",
-                         "PerforceDirectPlugin",
-                         "Subversion",
-                         "TFS"
-                       ));
     }
   }
 }

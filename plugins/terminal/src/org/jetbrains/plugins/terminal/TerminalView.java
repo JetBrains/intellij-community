@@ -394,7 +394,8 @@ public final class TerminalView implements Disposable {
 
   public void split(@NotNull JBTerminalWidget widget, boolean vertically) {
     TerminalContainer container = getContainer(widget);
-    JBTerminalWidget newWidget = myTerminalRunner.createTerminalWidget(container.getContent(), null);
+    String workingDirectory = TerminalWorkingDirectoryManager.getWorkingDirectory(widget, container.getContent().getDisplayName());
+    JBTerminalWidget newWidget = myTerminalRunner.createTerminalWidget(container.getContent(), workingDirectory, true);
     setupTerminalWidget(myToolWindow, newWidget, null, container.getContent(), false);
     container.split(!vertically, newWidget);
   }

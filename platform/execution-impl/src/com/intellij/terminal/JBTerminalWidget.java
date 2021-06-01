@@ -48,7 +48,6 @@ import javax.swing.*;
 import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.ItemListener;
-import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.util.List;
@@ -204,52 +203,16 @@ public class JBTerminalWidget extends JediTermWidget implements Disposable, Data
     return bar;
   }
 
-  @Override
-  public List<TerminalAction> getActions() {
-    List<TerminalAction> actions = super.getActions();
-    if (isInTerminalToolWindow()) {
-      JBTerminalSystemSettingsProviderBase settingsProvider = getSettingsProvider();
-      actions.add(new TerminalAction(settingsProvider.getNewSessionActionPresentation(), input -> {
-        myListener.onNewSession();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(settingsProvider.getCloseSessionActionPresentation(), input -> {
-        myListener.onSessionClosed();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-
-      actions.add(TerminalSplitAction.create(true, myListener).withMnemonicKey(KeyEvent.VK_V).separatorBefore(true));
-      actions.add(TerminalSplitAction.create(false, myListener).withMnemonicKey(KeyEvent.VK_H));
-      if (myListener != null && myListener.isGotoNextSplitTerminalAvailable()) {
-        actions.add(settingsProvider.getGotoNextSplitTerminalAction(myListener, true));
-        actions.add(settingsProvider.getGotoNextSplitTerminalAction(myListener, false));
-      }
-      actions.add(new TerminalAction(settingsProvider.getPreviousTabActionPresentation(), input -> {
-        myListener.onPreviousTabSelected();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(settingsProvider.getNextTabActionPresentation(), input -> {
-        myListener.onNextTabSelected();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-      actions.add(new TerminalAction(settingsProvider.getMoveTabRightActionPresentation(), input -> {
-        myListener.moveTabRight();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_R).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabRight()));
-      actions.add(new TerminalAction(settingsProvider.getMoveTabLeftActionPresentation(), input -> {
-        myListener.moveTabLeft();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_L).withEnabledSupplier(() -> myListener != null && myListener.canMoveTabLeft()));
-      actions.add(new TerminalAction(settingsProvider.getShowTabsActionPresentation(), input -> {
-        myListener.showTabs();
-        return true;
-      }).withMnemonicKey(KeyEvent.VK_T).withEnabledSupplier(() -> myListener != null));
-    }
-    return actions;
+  public int getFontSize() {
+    return getSettingsProvider().getUiSettingsManager().getFontSize();
   }
 
-  private boolean isInTerminalToolWindow() {
-    return isTerminalToolWindow(getTerminalPanel().getContextToolWindow());
+  public void setFontSize(int fontSize) {
+    getSettingsProvider().getUiSettingsManager().setFontSize(fontSize);
+  }
+
+  public void resetFontSize() {
+    getSettingsProvider().getUiSettingsManager().resetFontSize();
   }
 
   static boolean isTerminalToolWindow(@Nullable ToolWindow toolWindow) {

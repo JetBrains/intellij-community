@@ -10,11 +10,11 @@ import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.ActionLink
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.NonNls
 import training.learn.LearnBundle
 import training.statistic.StatisticBase
 import training.util.KeymapUtil
@@ -26,8 +26,7 @@ import javax.swing.JLabel
 import javax.swing.JPanel
 
 internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, actionId: String) {
-  val action = ActionManager.getInstance().getAction(actionId)
-  if (action == null) return
+  val action = ActionManager.getInstance().getAction(actionId) ?: return
 
   lateinit var balloon: Balloon
   val jPanel = JPanel()
@@ -37,8 +36,8 @@ internal fun showActionKeyPopup(parent: Component, point: Point, height: Int, ac
   val shortcuts = KeymapManager.getInstance().activeKeymap.getShortcuts(actionId)
   for (shortcut in shortcuts) {
     if (shortcut is KeyboardShortcut) {
-      val keyStrokeText = KeymapUtil.getKeyStrokeText(shortcut.firstKeyStroke)
-      val shortcutLabel = JLabel(if (SystemInfo.isMac) KeymapUtil.decryptMacShortcut(keyStrokeText) else keyStrokeText).also {
+      @NonNls val keyStrokeText = KeymapUtil.getKeyStrokeData(shortcut.firstKeyStroke).first
+      val shortcutLabel = JLabel(keyStrokeText).also {
         it.font = it.font.deriveFont((it.font.size - 1).toFloat())
         it.foreground = JBUI.CurrentTheme.Tooltip.shortcutForeground()
       }

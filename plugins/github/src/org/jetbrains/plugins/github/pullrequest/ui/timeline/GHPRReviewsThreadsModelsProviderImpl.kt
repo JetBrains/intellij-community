@@ -1,10 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
+import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
 import com.intellij.openapi.Disposable
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewThread
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
-import org.jetbrains.plugins.github.util.handleOnEdt
 
 class GHPRReviewsThreadsModelsProviderImpl(private val reviewDataProvider: GHPRReviewDataProvider,
                                            private val parentDisposable: Disposable)
@@ -16,9 +16,9 @@ class GHPRReviewsThreadsModelsProviderImpl(private val reviewDataProvider: GHPRR
   private var threadsUpdateRequired = false
 
   init {
-    reviewDataProvider.addReviewThreadsListener(parentDisposable, {
+    reviewDataProvider.addReviewThreadsListener(parentDisposable) {
       if (threadsModelsByReview.isNotEmpty()) requestUpdateReviewsThreads()
-    })
+    }
   }
 
   override fun getReviewThreadsModel(reviewId: String): GHPRReviewThreadsModel {

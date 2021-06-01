@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions
 
 import com.intellij.internal.statistic.eventLog.EventLogGroup
@@ -11,7 +11,7 @@ import com.intellij.openapi.vcs.changes.Change
 class VcsStatisticsCollector : CounterUsagesCollector() {
   companion object {
     @JvmField
-    val GROUP = EventLogGroup("vcs", 8)
+    val GROUP = EventLogGroup("vcs", 9)
 
     @JvmField
     val UPDATE_ACTIVITY = GROUP.registerIdeActivity("update")
@@ -33,6 +33,12 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
     val NON_MODAL_COMMIT_PROMOTION_ACCEPTED = GROUP.registerEvent("non.modal.commit.promotion.accepted")
     val NON_MODAL_COMMIT_PROMOTION_REJECTED = GROUP.registerEvent("non.modal.commit.promotion.rejected")
 
+    @JvmField
+    val CLONE = GROUP.registerEvent("clone.invoked", EventFields.Class("clone_dialog_extension"))
+
+    @JvmField
+    val CLONED_PROJECT_OPENED = GROUP.registerEvent("cloned.project.opened")
+
     @JvmStatic
     fun logRefreshActionPerformed(project: Project,
                                   changesBefore: Collection<Change>,
@@ -40,15 +46,31 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
                                   unversionedBefore: Collection<FilePath>,
                                   unversionedAfter: Collection<FilePath>,
                                   wasUpdatingBefore: Boolean) {
+      val changesDelta = computeDelta(changesBefore, changesAfter)
+      val unversionedDelta = computeDelta(unversionedBefore, unversionedAfter)
 
-      val changes: MutableSet<Change> = (changesBefore union changesAfter).toMutableSet()
-      changes.removeAll(changesBefore intersect changesAfter)
+      CHANGES_VIEW_REFRESH.log(project,
+                               WAS_UPDATING_BEFORE.with(wasUpdatingBefore),
+                               CHANGES_DELTA.with(changesDelta),
+                               UNVERSIONED_DELTA.with(unversionedDelta))
+    }
 
-      val unversioned: MutableSet<FilePath> = (unversionedBefore union unversionedAfter).toMutableSet()
-      unversioned.removeAll(unversionedBefore intersect unversionedAfter)
+    private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {
+      val beforeSet = before.toHashSet()
+      val afterSet = after.toHashSet()
 
-      CHANGES_VIEW_REFRESH.log(project, WAS_UPDATING_BEFORE.with(wasUpdatingBefore), CHANGES_DELTA.with(changes.size),
-                               UNVERSIONED_DELTA.with(unversioned.size))
+      var result = 0
+      for (value in beforeSet) {
+        if (!afterSet.contains(value)) {
+          result++
+        }
+      }
+      for (value in afterSet) {
+        if (!beforeSet.contains(value)) {
+          result++
+        }
+      }
+      return result
     }
   }
 

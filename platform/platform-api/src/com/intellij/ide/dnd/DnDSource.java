@@ -12,9 +12,9 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public interface DnDSource extends DnDDropActionHandler {
-  boolean canStartDragging(DnDAction action, Point dragOrigin);
+  boolean canStartDragging(DnDAction action, @NotNull Point dragOrigin);
 
-  DnDDragStartBean startDragging(DnDAction action, Point dragOrigin);
+  DnDDragStartBean startDragging(DnDAction action, @NotNull Point dragOrigin);
 
   /**
    * Image to be drawn on screen while dragging and the point of the offset to position cursor

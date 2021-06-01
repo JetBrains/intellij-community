@@ -57,7 +57,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
       myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(this, consoleProperties, null) {
         @Override
-        public void print(final String text, final ConsoleViewContentType contentType) {
+        public void print(final @NotNull String text, final @NotNull ConsoleViewContentType contentType) {
           myMockResettablePrinter.print(text, contentType);
         }
       };
@@ -620,7 +620,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
     mySuite.addChild(mySimpleTest);
     for (int i = 0; i < 550; i++) {
-      String message = "line" + i + "\n";
+      String message = "line" + i + "\u0000\n";
       mySimpleTest.addLast(printer -> printer.print(message, ConsoleViewContentType.NORMAL_OUTPUT));
     }
     mySimpleTest.setFinished();

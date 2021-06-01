@@ -7,39 +7,41 @@ import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.util.containers.CollectionFactory
 import org.languagetool.JLanguageTool
-import org.languagetool.broker.ClassBroker
 import org.languagetool.rules.CategoryId
 import java.net.Authenticator
 import java.util.concurrent.ConcurrentHashMap
 
 internal object LangTool : GrazieStateLifecycle {
-  private val langs: MutableMap<Lang, JLanguageTool> = ConcurrentHashMap()
-  private val rulesToLanguages = CollectionFactory.createSmallMemoryFootprintMap<String, MutableSet<Lang>>()
+  private val langs: MutableMap<CacheKey, JLanguageTool> = ConcurrentHashMap()
+
+  private data class CacheKey(val lang: Lang, val disabledRules: Set<String>, val enabledRules: Set<String>)
 
   init {
     JLanguageTool.setDataBroker(GrazieDynamicDataBroker)
-    JLanguageTool.setClassBrokerBroker(object : ClassBroker {
-      override fun forName(qualifiedName: String): Class<*> {
-        return GrazieDynamic.loadClass(qualifiedName) ?: throw ClassNotFoundException(qualifiedName)
-      }
-    })
+    JLanguageTool.setClassBrokerBroker { qualifiedName ->
+      GrazieDynamic.loadClass(qualifiedName) ?: throw ClassNotFoundException(qualifiedName)
+    }
   }
 
-  val allRules: Set<String>
-    get() = rulesToLanguages.keys
+  internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.remote.iso.name + "."
 
   fun getTool(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): JLanguageTool {
     require(lang.jLanguage != null) { "Trying to get LangTool for not available language" }
 
-    return langs.computeIfAbsent(lang) {
+    val key = CacheKey(lang, state.userDisabledRules, state.userEnabledRules)
+
+    return langs.computeIfAbsent(key) {
       JLanguageTool(lang.jLanguage!!).apply {
         setCheckCancelledCallback { ProgressManager.checkCanceled(); false }
         addMatchFilter(UppercaseMatchFilter())
 
-        state.userDisabledRules.forEach { id -> disableRule(id) }
-        state.userEnabledRules.forEach { id -> enableRule(id) }
+        val prefix = globalIdPrefix(lang)
+        val disabledRules = key.disabledRules.mapNotNull { if (it.startsWith(prefix)) it.substring(prefix.length) else null }.toSet()
+        val enabledRules = key.enabledRules.mapNotNull { if (it.startsWith(prefix)) it.substring(prefix.length) else null }.toSet()
+
+        disabledRules.forEach { id -> disableRule(id) }
+        enabledRules.forEach { id -> enableRule(id) }
 
         fun loadConfigFile(path: String, block: (iso: String, id: String) -> Unit) {
           GrazieDynamicDataBroker.getFromResourceDirAsStream(path).use { stream ->
@@ -51,13 +53,13 @@ internal object LangTool : GrazieStateLifecycle {
         }
 
         loadConfigFile("en/enabled_rules.txt") { iso, ruleId ->
-          if (iso == lang.iso.name && ruleId !in state.userDisabledRules) {
+          if (iso == lang.iso.name && ruleId !in disabledRules) {
             enableRule(ruleId)
           }
         }
 
         loadConfigFile("en/disabled_rules.txt") { iso, ruleId ->
-          if (iso == lang.iso.name && ruleId !in state.userEnabledRules) {
+          if (iso == lang.iso.name && ruleId !in enabledRules) {
             disableRule(ruleId)
           }
         }
@@ -75,10 +77,6 @@ internal object LangTool : GrazieStateLifecycle {
         }
 
         allSpellingCheckRules.forEach { rule -> disableRule(rule.id) }
-
-        allRules.distinctBy { it.id }.onEach { rule ->
-          rulesToLanguages.getOrPut(rule.id, {CollectionFactory.createSmallMemoryFootprintSet()}).add(lang)
-        }
 
         //Fix problem with Authenticator installed by LT
         this.language.disambiguator
@@ -100,10 +98,7 @@ internal object LangTool : GrazieStateLifecycle {
     ) return
 
     langs.clear()
-    rulesToLanguages.clear()
 
     init(newState)
   }
-
-  fun getRuleLanguages(ruleId: String) = rulesToLanguages[ruleId]
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.openapi.application.ReadAction;
@@ -12,11 +12,9 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +34,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.Set;
 
 public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInterface {
@@ -46,7 +45,7 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
 
   private final MavenSourceFoldersModuleExtension myRootModelModuleExtension;
 
-  private final Set<String> myOrderEntriesBeforeJdk = new THashSet<>();
+  private final Set<String> myOrderEntriesBeforeJdk = new HashSet<>();
 
   public MavenRootModelAdapterLegacyImpl(@NotNull MavenProject p, @NotNull Module module, final IdeModifiableModelsProvider rootModelsProvider) {
     myMavenProject = p;
@@ -428,15 +427,6 @@ public class MavenRootModelAdapterLegacyImpl implements MavenRootModelAdapterInt
       return true;
     });
     return result.get();
-  }
-
-  /**
-   * @deprecated use {@link MavenArtifact#getLibraryName()}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static String makeLibraryName(@NotNull MavenArtifact artifact) {
-    return artifact.getLibraryName();
   }
 
   public static boolean isMavenLibrary(@Nullable Library library) {

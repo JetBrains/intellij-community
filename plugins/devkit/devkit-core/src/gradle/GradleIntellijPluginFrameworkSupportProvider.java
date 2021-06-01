@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.gradle;
 
 import com.intellij.execution.RunManager;
@@ -57,7 +57,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final @NonNls String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
   private static final @NonNls String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final @NonNls String FALLBACK_VERSION = "0.7.2";
+  private static final @NonNls String FALLBACK_VERSION = "1.0";
   protected static final @NonNls String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
 
   private static final @NonNls String TASK_NAME_RUN_IDE = ":runIde";
@@ -123,9 +123,9 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     buildScriptData
       .addPluginDefinitionInPluginsGroup("id 'org.jetbrains.intellij' version '" + pluginVersion + "'")
       .addOther(HELP_COMMENT +
-                "intellij {\n    version '" + ideVersion + "'\n}\n")
+                "intellij {\n    version = '" + ideVersion + "'\n}\n")
       .addOther("patchPluginXml {\n" +
-                "    changeNotes \"\"\"\n" +
+                "    changeNotes = \"\"\"\n" +
                 "      Add change notes here.<br>\n" +
                 "      <em>most HTML tags may be used</em>\"\"\"\n" +
                 "}");

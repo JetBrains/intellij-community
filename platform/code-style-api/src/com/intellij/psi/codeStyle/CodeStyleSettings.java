@@ -244,6 +244,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
   public boolean GENERATE_FINAL_LOCALS;
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#GENERATE_FINAL_PARAMETERS} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean GENERATE_FINAL_PARAMETERS;
 
 //----------------- visibility -----------------------------
@@ -254,11 +255,13 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 //----------------- generate parentheses around method arguments ----------
   /** @deprecated Use RubyCodeStyleSettings.PARENTHESES_AROUND_METHOD_ARGUMENTS */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean PARENTHESES_AROUND_METHOD_ARGUMENTS = true;
 
 //----------------- annotations ----------------
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_EXTERNAL_ANNOTATIONS} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean USE_EXTERNAL_ANNOTATIONS;
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#INSERT_OVERRIDE_ANNOTATION} */
   @Deprecated
@@ -296,18 +299,22 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_FQ_CLASS_NAMES} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean USE_FQ_CLASS_NAMES;
 
   /** @deprecated use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_NAMES_IN_JAVADOC} instead */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean USE_FQ_CLASS_NAMES_IN_JAVADOC = true;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#USE_SINGLE_CLASS_IMPORTS */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean USE_SINGLE_CLASS_IMPORTS = true;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#INSERT_INNER_CLASS_IMPORTS */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean INSERT_INNER_CLASS_IMPORTS;
 
   /** @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND */
@@ -472,6 +479,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
    * @deprecated Use {@link com.intellij.psi.codeStyle.JavaCodeStyleSettings#JD_LEADING_ASTERISKS_ARE_ENABLED}
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean JD_LEADING_ASTERISKS_ARE_ENABLED = true;
 
 
@@ -479,6 +487,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings implements Clonea
 
   /** @deprecated Use {@link com.intellij.application.options.JspCodeStyleSettings#JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST} */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public boolean JSP_PREFER_COMMA_SEPARATED_IMPORT_LIST;
 
   //----------------------------------------------------------------------------------------

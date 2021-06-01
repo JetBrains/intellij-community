@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.ide.konan
 
@@ -72,7 +69,7 @@ class NativeIdePlatformKindTooling : IdePlatformKindTooling() {
             else -> return null
         }
 
-        return getTestStateIcon(urls, declaration.project, strict = false)
+        return getTestStateIcon(urls, declaration)
     }
 
     override fun acceptsAsEntryPoint(function: KtFunction): Boolean {

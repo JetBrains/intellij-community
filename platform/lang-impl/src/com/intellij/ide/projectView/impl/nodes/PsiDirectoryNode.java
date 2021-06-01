@@ -34,8 +34,10 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.file.PsiDirectoryFactory;
 import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.SmartHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -250,9 +252,10 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
     if (super.canRepresent(element)) return true;
     PsiDirectory directory = getValue();
     Object owner = getParentValue();
-    if (file == null || directory == null || !(owner instanceof PsiDirectory)) return false;
-    return ProjectViewDirectoryHelper.getInstance(getProject())
-      .canRepresent(file, directory, (PsiDirectory)owner, getSettings());
+    if (file == null || directory == null) return false;
+    ProjectViewDirectoryHelper helper = ProjectViewDirectoryHelper.getInstance(directory.getProject());
+    return helper.canRepresent(file, directory) ||
+    owner instanceof PsiDirectory && helper.canRepresent(file, directory, (PsiDirectory)owner, getSettings());
   }
 
   @Override
@@ -379,6 +382,11 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
   @Override
   public boolean isAlwaysShowPlus() {
     final VirtualFile file = getVirtualFile();
-    return file == null || !file.isValid() || file.getChildren().length > 0;
+    if (file == null || !file.isValid()) return false;
+    VirtualFile[] children = file.getChildren();
+    if (ArrayUtil.isEmpty(children)) return false;
+    if (ContainerUtil.exists(children, child -> !child.isDirectory())) return true;
+    ViewSettings settings = getSettings();
+    return settings == null || !settings.isFlattenPackages();
   }
 }

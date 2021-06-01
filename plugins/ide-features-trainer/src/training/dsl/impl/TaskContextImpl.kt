@@ -34,6 +34,12 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
 
   override val taskId = TaskId(taskIndex)
 
+  override var transparentRestore: Boolean?
+    get() = data.transparentRestore
+    set(value) {
+      data.transparentRestore = value
+    }
+
   private val runtimeContext = TaskRuntimeContext(lessonExecutor,
                                                   recorder,
                                                   { lessonExecutor.applyRestore(this) },
@@ -48,9 +54,10 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
   }
 
   override fun restoreState(restoreId: TaskId?, delayMillis: Int, restoreRequired: TaskRuntimeContext.() -> Boolean) {
+    assert(lessonExecutor.currentTaskIndex == taskIndex)
     data.delayMillis = delayMillis
     val previous = data.shouldRestoreToTask
-    val actualId = restoreId ?: TaskId(taskIndex - 1)
+    val actualId = restoreId ?: TaskId(lessonExecutor.calculateRestoreIndex())
     data.shouldRestoreToTask = { previous?.let { it() } ?: if (restoreRequired(runtimeContext)) actualId else null }
   }
 
@@ -138,7 +145,12 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
 
     if (useBalloon != null) {
       val ui = useBalloon.highlightingComponent ?: runtimeContext.previous.ui as? JComponent ?: return
-      LessonExecutorUtil.showBalloonMessage(text, ui, useBalloon, runtimeContext.actionsRecorder, lessonExecutor.project)
+      LessonExecutorUtil.showBalloonMessage(text,
+                                            ui,
+                                            useBalloon,
+                                            runtimeContext.actionsRecorder,
+                                            lessonExecutor.project,
+                                            lessonExecutor.visualIndexNumber)
     }
   }
 

@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.decompiler
 
@@ -9,6 +6,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiInvalidElementAccessException
 import com.intellij.psi.PsiManager
 import com.intellij.psi.SingleRootFileViewProvider
 import com.intellij.psi.impl.DebugUtil
@@ -27,11 +25,8 @@ class KotlinDecompiledFileViewProvider(
         val psiFile = createFile(manager.project, file, KotlinFileType.INSTANCE)
         val text = psiFile?.text ?: ""
 
-        DebugUtil.startPsiModification("Invalidating throw-away copy of file that was used for getting text")
-        try {
+        DebugUtil.performPsiModification<PsiInvalidElementAccessException>("Invalidating throw-away copy of file that was used for getting text") {
             (psiFile as? PsiFileImpl)?.markInvalidated()
-        } finally {
-            DebugUtil.finishPsiModification()
         }
 
         text

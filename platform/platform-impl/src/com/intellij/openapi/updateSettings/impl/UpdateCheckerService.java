@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -54,6 +54,9 @@ final class UpdateCheckerService {
   private static final String ERROR_LOG_FILE_NAME = "idea_updater_error.log"; // must be equal to com.intellij.updater.Runner.ERROR_LOG_FILE_NAME
   private static final String PREVIOUS_BUILD_NUMBER_PROPERTY = "ide.updates.previous.build.number";
   private static final String WHATS_NEW_SHOWN_FOR_PROPERTY = "ide.updates.whats.new.shown.for";
+  private static final String OLD_DIRECTORIES_SCAN_SCHEDULED = "ide.updates.old.dirs.scan.scheduled";
+  private static final int OLD_DIRECTORIES_SCAN_DELAY_DAYS = 7;
+  private static final int OLD_DIRECTORIES_SHELF_LIFE_DAYS = 180;
 
   private volatile ScheduledFuture<?> myScheduledCheck;
 
@@ -95,7 +98,10 @@ final class UpdateCheckerService {
       if (!ConfigImportHelper.isFirstSession()) {
         String title = IdeBundle.message("updates.notification.title", ApplicationNamesInfo.getInstance().getFullProductName());
         String message = IdeBundle.message("update.channel.enforced", ChannelStatus.EAP);
-        UpdateChecker.getNotificationGroup().createNotification(title, message, NotificationType.INFORMATION, null, "ide.update.channel.switched").notify(null);
+        UpdateChecker.getNotificationGroup()
+          .createNotification(title, message, NotificationType.INFORMATION)
+          .setDisplayId("ide.update.channel.switched")
+          .notify(null);
       }
     }
 
@@ -157,6 +163,8 @@ final class UpdateCheckerService {
       showUpdatedPluginsNotification(project);
 
       ProcessIOExecutorService.INSTANCE.execute(() -> UpdateInstaller.cleanupPatch());
+
+      deleteOldApplicationDirectories();
     }
   }
 
@@ -225,7 +233,9 @@ final class UpdateCheckerService {
     String message = blogPost == null ? IdeBundle.message("update.snap.message")
                                       : IdeBundle.message("update.snap.message.with.blog.post", StringUtil.escapeXmlEntities(blogPost));
     UpdateChecker.getNotificationGroup()
-      .createNotification(title, message, NotificationType.INFORMATION, NotificationListener.URL_OPENING_LISTENER, "ide.updated.by.snap")
+      .createNotification(title, message, NotificationType.INFORMATION)
+      .setListener(NotificationListener.URL_OPENING_LISTENER)
+      .setDisplayId("ide.updated.by.snap")
       .notify(project);
   }
 
@@ -272,9 +282,10 @@ final class UpdateCheckerService {
 
     String title = IdeBundle.message("update.installed.notification.title");
     String text = new HtmlBuilder().appendWithSeparators(HtmlChunk.text(", "), links).wrapWith("html").toString();
-    NotificationListener listener = (__, e) -> showPluginConfigurable(e, project);  // benign leak - notifications are disposed on close
     UpdateChecker.getNotificationGroupForUpdateResults()
-      .createNotification(title, text, NotificationType.INFORMATION, listener, "plugins.updated.after.restart")
+      .createNotification(title, text, NotificationType.INFORMATION)
+      .setListener((__, e) -> showPluginConfigurable(e, project))  // benign leak - notifications are disposed on project close
+      .setDisplayId("plugins.updated.after.restart")
       .notify(project);
   }
 
@@ -305,5 +316,25 @@ final class UpdateCheckerService {
 
   private static Path getUpdatedPluginsFile() {
     return Path.of(PathManager.getConfigPath(), ".updated_plugins_list");
+  }
+
+  private static void deleteOldApplicationDirectories() {
+    if (ConfigImportHelper.isConfigImported()) {
+      long scheduledAt = System.currentTimeMillis() + TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SCAN_DELAY_DAYS);
+      LOG.info("scheduling old directories scan after " + DateFormatUtil.formatDateTime(scheduledAt));
+      PropertiesComponent.getInstance().setValue(OLD_DIRECTORIES_SCAN_SCHEDULED, Long.toString(scheduledAt));
+      OldDirectoryCleaner.Stats.scheduled();
+    }
+    else {
+      long scheduledAt = PropertiesComponent.getInstance().getLong(OLD_DIRECTORIES_SCAN_SCHEDULED, 0L), now;
+      if (scheduledAt != 0 && (now = System.currentTimeMillis()) >= scheduledAt) {
+        OldDirectoryCleaner.Stats.started((int)TimeUnit.MILLISECONDS.toDays(now - scheduledAt) + OLD_DIRECTORIES_SCAN_DELAY_DAYS);
+        LOG.info("starting old directories scan");
+        long expireAfter = now - TimeUnit.DAYS.toMillis(OLD_DIRECTORIES_SHELF_LIFE_DAYS);
+        ProcessIOExecutorService.INSTANCE.execute(() -> new OldDirectoryCleaner(expireAfter).seekAndDestroy(null, null));
+        PropertiesComponent.getInstance().unsetValue(OLD_DIRECTORIES_SCAN_SCHEDULED);
+        LOG.info("old directories scan complete");
+      }
+    }
   }
 }

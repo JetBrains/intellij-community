@@ -3,14 +3,24 @@ package com.intellij.codeInspection.dataFlow.jvm.descriptors;
 
 import com.intellij.codeInspection.dataFlow.DfaNullability;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
+import com.intellij.codeInspection.dataFlow.TypeConstraint;
+import com.intellij.codeInspection.dataFlow.TypeConstraints;
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.types.DfAntiConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfConstantType;
+import com.intellij.codeInspection.dataFlow.types.DfPrimitiveType;
+import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightRecordMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,11 +84,11 @@ public final class GetterDescriptor extends PsiVarDescriptor {
 
   @NotNull
   @Override
-  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier, boolean forAccessor) {
+  public DfaValue createValue(@NotNull DfaValueFactory factory, @Nullable DfaValue qualifier) {
     if (myGetter.hasModifierProperty(PsiModifier.STATIC)) {
       return factory.getVarFactory().createVariableValue(this);
     }
-    return super.createValue(factory, qualifier, forAccessor);
+    return super.createValue(factory, qualifier);
   }
 
   @Override
@@ -92,10 +102,40 @@ public final class GetterDescriptor extends PsiVarDescriptor {
   }
 
   @Override
-  @NotNull DfaNullability calcCanBeNull(@NotNull PsiModifierListOwner var,
-                                        @NotNull DfaVariableValue value,
-                                        @Nullable PsiElement context) {
+  @NotNull DfaNullability calcCanBeNull(@NotNull DfaVariableValue value, @Nullable PsiElement context) {
     PsiType type = getType(value.getQualifier());
-    return DfaNullability.fromNullability(DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, var));
+    return DfaNullability.fromNullability(DfaPsiUtil.getElementNullabilityIgnoringParameterInference(type, myGetter));
+  }
+
+  @Override
+  public boolean alwaysEqualsToItself(@NotNull DfType type) {
+    if (!super.alwaysEqualsToItself(type)) return false;
+    if (type instanceof DfPrimitiveType || type instanceof DfConstantType) return true;
+    if (PropertyUtilBase.isSimplePropertyGetter(myGetter)) return true;
+    return false;
+  }
+
+  @Override
+  public @NotNull DfType getQualifierConstraintFromValue(@NotNull DfaMemoryState state, @NotNull DfaValue value) {
+    if (!PsiTypesUtil.isGetClass(myGetter)) return DfType.TOP;
+    DfType type = state.getDfType(value);
+    DfType constraint = DfType.TOP;
+    PsiType cls = type.getConstantOfType(PsiType.class);
+    if (cls != null) {
+      constraint = TypeConstraints.exact(cls).asDfType();
+    }
+    else if (type instanceof DfAntiConstantType) {
+      constraint = StreamEx.of(((DfAntiConstantType<?>)type).getNotValues()).select(PsiType.class)
+        .map(t -> TypeConstraints.exact(t).tryNegate())
+        .nonNull()
+        .reduce(TypeConstraint::meet).orElse(TypeConstraints.TOP).asDfType();
+    }
+    if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getDescriptor().equals(this)) {
+      DfaVariableValue qualifier = ((DfaVariableValue)value).getQualifier();
+      if (qualifier != null) {
+        constraint = constraint.meet(TypeConstraint.fromDfType(state.getDfType(qualifier)).asDfType());
+      }
+    }
+    return constraint;
   }
 }

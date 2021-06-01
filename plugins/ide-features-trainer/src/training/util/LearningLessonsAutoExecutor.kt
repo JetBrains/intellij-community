@@ -36,18 +36,19 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
     }
   }
 
-  private fun runAllLessons(): MutableMap<Lesson, Long> {
-    val durations = mutableMapOf<Lesson, Long>()
+  private fun runAllLessons(): Map<String, Long> {
+    val durations = mutableMapOf<String, Long>()
     TaskTestContext.inTestMode = true
     val lessons = CourseManager.instance.lessonsForModules
 
     for (lesson in lessons) {
       if (lesson !is KLesson || lesson.testScriptProperties.skipTesting) continue
+      if (durations.containsKey(lesson.id)) continue // Just duplicate from another module
       progress.checkCanceled()
       val duration = TimeoutUtil.measureExecutionTime<Throwable> {
         runSingleLesson(lesson)
       }
-      durations[lesson] = duration
+      durations[lesson.id] = duration
     }
     TaskTestContext.inTestMode = false
     return durations
@@ -97,7 +98,7 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
       }
     }
 
-    private fun getJsonStatus(durations: MutableMap<Lesson, Long>): String {
+    private fun getJsonStatus(durations: Map<String, Long>): String {
       val result = StringBuilder()
 
       result.json {
@@ -107,7 +108,7 @@ class LearningLessonsAutoExecutor(val project: Project, private val progress: Pr
             result.json {
               "id" to lesson.id
               "passed" to lesson.passed
-              "duration" toRaw durations[lesson].toString()
+              "duration" toRaw durations[lesson.id].toString()
             }
           }
         }

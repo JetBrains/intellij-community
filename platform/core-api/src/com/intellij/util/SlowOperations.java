@@ -11,6 +11,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EDT;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -86,10 +87,8 @@ public final class SlowOperations {
         ourStack.isEmpty() && !Registry.is("ide.slow.operations.assertion.other", false)) {
       return;
     }
-    for (String activity : ourStack) {
-      if (FAST_TRACK == activity) {
-        throw new ProcessCanceledException();
-      }
+    if (isInsideActivity(FAST_TRACK)) {
+      throw new ProcessCanceledException();
     }
     for (String activity : ourStack) {
       if (!Registry.is("ide.slow.operations.assertion." + activity, true)) {
@@ -107,6 +106,17 @@ public final class SlowOperations {
       return;
     }
     LOG.error("Slow operations are prohibited on EDT. See SlowOperations.assertSlowOperationsAreAllowed javadoc.");
+  }
+
+  @ApiStatus.Internal
+  public static boolean isInsideActivity(@NotNull String activityName) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    for (String activity : ourStack) {
+      if (activityName == activity) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static boolean isAlwaysAllowed() {

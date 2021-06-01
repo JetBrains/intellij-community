@@ -91,7 +91,8 @@ internal class PackagesListPanel(
             border = scaledEmptyBorder(left = 6)
         }
 
-    private val mainToolbar = ActionManager.getInstance().createActionToolbar("", createActionGroup(), true).apply {
+    private val mainToolbar = ActionManager.getInstance().createActionToolbar("Packages.Manage", createActionGroup(), true).apply {
+        setTargetComponent(toolbar)
         component.background = PackageSearchUI.HeaderBackgroundColor
         component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.paneBackground())
     }
@@ -289,7 +290,7 @@ internal class PackagesListPanel(
     }
 
     private fun updateLaf() {
-        @Suppress("MagicNumber") // Gotta love Swing APIs
+        @Suppress("MagicNumber") // Dimension constants
         with(searchTextField) {
             textEditor.putClientProperty("JTextField.Search.Gap", 6.scaled())
             textEditor.putClientProperty("JTextField.Search.GapEmptyText", (-1).scaled())
@@ -304,7 +305,7 @@ internal class PackagesListPanel(
         add(headerPanel)
         add(listPanel)
 
-        @Suppress("MagicNumber") // Swing APIs are <3
+        @Suppress("MagicNumber") // Dimension constants
         minimumSize = Dimension(200.scaled(), minimumSize.height)
     }
 

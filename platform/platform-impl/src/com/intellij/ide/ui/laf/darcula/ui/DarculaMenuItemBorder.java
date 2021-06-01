@@ -30,7 +30,7 @@ public class DarculaMenuItemBorder implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(2, 11).asUIResource();
+    return JBUI.insets(2).asUIResource();
   }
 
   @Override

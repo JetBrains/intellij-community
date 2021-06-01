@@ -19,6 +19,7 @@ import com.intellij.xdebugger.XDebuggerManager
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.debugger.DebuggableRunConfiguration
+import org.jetbrains.rpc.LOG
 
 @InternalIgnoreDependencyViolation
 open class DebuggableProgramRunner : AsyncProgramRunner<RunnerSettings>() {
@@ -46,6 +47,7 @@ fun doExecuteDebuggableProgram(environment: ExecutionEnvironment, state: RunProf
 
   return configuration.computeDebugAddressAsync(state).thenAsync{ socketAddress ->
     val starter = { executionResult: ExecutionResult? ->
+      LOG.info("Debug session started address=$socketAddress, configuration=$configuration")
       startSession(environment) { configuration.createDebugProcess(socketAddress, it, executionResult, environment) }.runContentDescriptor
     }
     @Suppress("IfThenToElvis")

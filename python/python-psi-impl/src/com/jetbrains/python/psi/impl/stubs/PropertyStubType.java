@@ -22,9 +22,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 
-/**
- * @author yole
- */
+
 public class PropertyStubType extends CustomTargetExpressionStubType<PropertyStubStorage> {
   @Nullable
   @Override

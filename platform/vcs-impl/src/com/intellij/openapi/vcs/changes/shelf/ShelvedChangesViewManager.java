@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContentFactoryEx;
+import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
@@ -46,6 +47,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
+import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.*;
@@ -62,6 +64,7 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -78,10 +81,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellEditor;
-import javax.swing.tree.TreeCellEditor;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -714,7 +714,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       DataManager.registerDataProvider(myRootPanel, this);
 
-      PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
+      PopupHandler.installPopupMenu(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
     }
 
     @Override
@@ -1016,6 +1016,53 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
+    }
+
+    @Override
+    protected @Nullable AnAction createGoToChangeAction() {
+      return new MyGoToChangePopupProvider().createGoToChangeAction();
+    }
+
+    private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
+      @NotNull
+      @Override
+      public List<? extends DiffRequestProducer> getActualProducers() {
+        DataContext dc = DataManager.getInstance().getDataContext(myTree);
+        ListSelection<? extends DiffRequestProducer> diffProducers = DiffShelvedChangesActionProvider.createDiffProducers(dc, false);
+        if (diffProducers == null) return emptyList();
+
+        return diffProducers.getList();
+      }
+
+      @Override
+      public void selectFilePath(@NotNull FilePath filePath) {
+        ShelvedChangeList selectedList = getOnlyItem(getSelectedLists(myTree, it -> true));
+        if (selectedList == null) return;
+
+        ChangesBrowserNode<?> changeListNode = (ChangesBrowserNode<?>)TreeUtil.findNodeWithObject(myTree.getRoot(), selectedList);
+        TreeNode targetNode = TreeUtil.treeNodeTraverser(changeListNode).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
+          if (node instanceof DefaultMutableTreeNode) {
+            Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+            if (userObject instanceof ShelvedWrapper) {
+              ShelvedWrapper shelvedWrapper = (ShelvedWrapper)userObject;
+              Change change = shelvedWrapper.getChange(myProject);
+              return ChangesUtil.getFilePath(change).equals(filePath);
+            }
+          }
+          return false;
+        });
+
+        if (targetNode != null) {
+          TreeUtil.selectNode(myTree, targetNode);
+          refresh(false);
+        }
+      }
+
+      @Nullable
+      @Override
+      public FilePath getSelectedFilePath() {
+        return myCurrentShelvedElement != null ? ChangesUtil.getFilePath(myCurrentShelvedElement.getChange(myProject)) : null;
+      }
     }
 
     @NotNull

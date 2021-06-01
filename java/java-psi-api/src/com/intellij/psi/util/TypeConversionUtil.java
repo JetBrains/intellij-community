@@ -406,8 +406,10 @@ public final class TypeConversionUtil {
                                               @NotNull PsiClass psiClass,
                                               @NotNull List<PsiClass> sealedClasses) {
     if (subClass == null) return false;
-    if (subClass.hasModifierProperty(PsiModifier.NON_SEALED) || subClass.isInheritor(psiClass, true)) return true;
-    if (subClass.hasModifierProperty(PsiModifier.SEALED)) sealedClasses.add(subClass);
+    if (subClass.hasModifierProperty(PsiModifier.NON_SEALED) || InheritanceUtil.isInheritorOrSelf(subClass, psiClass, true)) return true;
+    if (subClass.hasModifierProperty(PsiModifier.SEALED)) {
+      sealedClasses.add(subClass);
+    }
     return false;
   }
 

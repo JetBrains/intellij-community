@@ -16,6 +16,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.NSDefaults;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -23,10 +24,17 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TouchbarSupport {
+  private static final String IS_ENABLED_KEY = "ide.mac.touchbar.enabled";
   private static final Logger LOG = Logger.getInstance(TouchbarSupport.class);
+  private static final @NotNull IdeEventQueue.EventDispatcher ourAWTEventDispatcher = e -> {
+    TouchBarsManager.processAWTEvent(e);
+    return false;
+  };
 
   private static volatile boolean isInitialized;
   private static volatile boolean isEnabled = true;
+
+  private static MessageBusConnection ourConnection;
 
   public static void initialize() {
     if (isInitialized) {
@@ -38,40 +46,46 @@ public class TouchbarSupport {
         return;
       }
 
-      NST.initialize();
+      NST.loadLibrary();
 
-      // calculate isEnabled
-      String appId = Helpers.getAppId();
-      if (appId == null || appId.isEmpty()) {
-        LOG.info("can't obtain application id from NSBundle");
-      }
-      else if (NSDefaults.isShowFnKeysEnabled(appId)) {
-        LOG.info("nst library was loaded, but user enabled fn-keys in touchbar");
+      if (!Registry.is(IS_ENABLED_KEY)) {
+        LOG.info("touchbar disabled: registry");
         isEnabled = false;
+      } else {
+        // read isEnabled from OS (i.e. NSDefaults)
+        String appId = Helpers.getAppId();
+        if (appId == null || appId.isEmpty()) {
+          LOG.info("can't obtain application id from NSBundle (touchbar enabled)");
+        } else if (NSDefaults.isShowFnKeysEnabled(appId)) {
+          // user has enabled setting "FN-keys in touchbar" (global or per-app)
+          if (NSDefaults.isFnShowsAppControls()) {
+            LOG.info("touchbar enabled: show FN-keys but pressing fn-key toggle to show app-controls");
+            isEnabled = true;
+          } else {
+            LOG.info("touchbar disabled: show fn-keys");
+            isEnabled = false;
+          }
+        } else
+          LOG.info("touchbar support is enabled");
       }
 
       isInitialized = true;
     }
   }
 
-  public static void onApplicationLoaded() {
-    initialize();
-    if (!isInitialized || !isEnabled()) {
-      return;
-    }
+  private static void enableSupport() {
+    isEnabled = true;
 
     // initialize keyboard listener
-    IdeEventQueue.getInstance().addDispatcher(e -> {
-      TouchBarsManager.processAWTEvent(e);
-      return false;
-    }, null);
+    IdeEventQueue.getInstance().addDispatcher(ourAWTEventDispatcher, null);
 
     // initialize default and tool-window contexts
     CtxDefault.initialize();
     CtxToolWindows.initialize();
 
     // listen plugins
-    ApplicationManager.getApplication().getMessageBus().connect().subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
+    ourConnection = ApplicationManager.getApplication().getMessageBus().connect();
+    ourConnection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         reloadAllActions();
@@ -82,12 +96,49 @@ public class TouchbarSupport {
     CustomActionsSchema.addSettingsGroup(IdeActions.GROUP_TOUCHBAR, IdeBundle.message("settings.menus.group.touch.bar"));
   }
 
+  public static void enable(boolean enable) {
+    if (!isInitialized || !isAvailable())
+      return;
+
+    if (!enable) {
+      if (isEnabled) {
+        IdeEventQueue.getInstance().removeDispatcher(ourAWTEventDispatcher);
+
+        TouchBarsManager.clearAll();
+        CtxDefault.disable();
+        CtxToolWindows.disable();
+
+        if (ourConnection != null)
+          ourConnection.disconnect();
+        ourConnection = null;
+
+        CustomActionsSchema.removeSettingsGroup(IdeActions.GROUP_TOUCHBAR);
+
+        isEnabled = false;
+      }
+      return;
+    }
+
+    if (!isEnabled && Registry.is(IS_ENABLED_KEY)) {
+      enableSupport();
+    }
+  }
+
+  public static void onApplicationLoaded() {
+    initialize();
+    if (!isInitialized || !isEnabled()) {
+      return;
+    }
+
+    enableSupport();
+  }
+
   public static boolean isAvailable() {
     return SystemInfoRt.isMac && NST.isAvailable();
   }
 
   public static boolean isEnabled() {
-    return isAvailable() && isEnabled && Registry.is("ide.mac.touchbar.enabled");
+    return isAvailable() && isEnabled && Registry.is(IS_ENABLED_KEY);
   }
 
   public static void onUpdateEditorHeader(@NotNull Editor editor) {

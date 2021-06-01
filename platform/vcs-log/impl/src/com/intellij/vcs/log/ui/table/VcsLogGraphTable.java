@@ -15,8 +15,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.ValueKey;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.text.HtmlBuilder;
-import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -464,28 +462,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     repaint();
   }
 
-  @Override
-  public String getToolTipText(@NotNull MouseEvent event) {
-    int row = rowAtPoint(event.getPoint());
-    VcsLogColumn<?> column = getVcsLogColumn(columnAtPoint(event.getPoint()));
-    if (column == null || row < 0) {
-      return null;
-    }
-    if (column == Root.INSTANCE) {
-      Object path = getValueAt(row, VcsLogColumnManager.getInstance().getModelIndex(column));
-      if (path instanceof FilePath) {
-        String clickMessage = isShowRootNames()
-                              ? VcsLogBundle.message("vcs.log.click.to.collapse.paths.column.tooltip")
-                              : VcsLogBundle.message("vcs.log.click.to.expand.paths.column.tooltip");
-        return new HtmlBuilder().append(HtmlChunk.text(myColorManager.getLongName((FilePath)path)).bold())
-          .br()
-          .append(clickMessage)
-          .wrapWith(HtmlChunk.html()).toString();
-      }
-    }
-    return null;
-  }
-
   private boolean isShowRootNames() {
     return myProperties.exists(CommonUiProperties.SHOW_ROOT_NAMES) && myProperties.get(CommonUiProperties.SHOW_ROOT_NAMES);
   }
@@ -902,8 +878,8 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     private void restoreCursor() {
       if (getCursor().getType() != Cursor.DEFAULT_CURSOR) {
         setCursor(UIUtil.cursorIfNotDefault(myLastCursor));
-        myLastCursor = null;
       }
+      myLastCursor = null;
     }
 
     @Override

@@ -16,6 +16,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
@@ -1126,7 +1127,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     final DataContext dataContext = DataManager.getInstance().getDataContext();
-    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
+    final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext, ActionPlaces.UNKNOWN);
 
     final List<ConfigurationFromContext> producers = PreferredProducerFind.getConfigurationsFromContext(context.getLocation(),
                                                                                                          context, false);

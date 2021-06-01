@@ -40,10 +40,12 @@ import com.intellij.util.FileContentUtilCore;
 import com.intellij.util.KeyedLazyInstance;
 import com.intellij.util.messages.MessageBusConnection;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -84,6 +86,7 @@ public final class PsiVFSListener implements BulkFileListener {
       }
 
       connection.subscribe(ProjectTopics.PROJECT_ROOTS, new MyModuleRootListener(project));
+      connection.subscribe(AdditionalLibraryRootsListener.TOPIC, new MyAdditionalLibraryRootListener(project));
       connection.subscribe(FileTypeManager.TOPIC, new FileTypeListener() {
         @Override
         public void fileTypesChanged(@NotNull FileTypeEvent e) {
@@ -631,6 +634,35 @@ public final class PsiVFSListener implements BulkFileListener {
           DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);
 
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(manager);
+          treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
+          manager.propertyChanged(treeEvent);
+        }
+      );
+    }
+  }
+
+  private static class MyAdditionalLibraryRootListener implements AdditionalLibraryRootsListener {
+    private final PsiManagerImpl manager;
+    private final FileManagerImpl fileManager;
+
+    MyAdditionalLibraryRootListener(@NotNull Project project) {
+      this.manager = (PsiManagerImpl)PsiManager.getInstance(project);
+      this.fileManager = (FileManagerImpl)manager.getFileManager();
+    }
+
+    @Override
+    public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
+                                    @NotNull Collection<? extends VirtualFile> oldRoots,
+                                    @NotNull Collection<? extends VirtualFile> newRoots,
+                                    @NotNull String libraryNameForDebug) {
+      ApplicationManager.getApplication().runWriteAction(
+        (ExternalChangeAction)() -> {
+          PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(manager);
+          treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
+          manager.beforePropertyChange(treeEvent);
+          DebugUtil.performPsiModification(null, fileManager::possiblyInvalidatePhysicalPsi);
+
+          treeEvent = new PsiTreeChangeEventImpl(manager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
           manager.propertyChanged(treeEvent);
         }

@@ -9,7 +9,6 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.ListPopupStep;
 import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.ui.popup.list.ListPopupImpl;
-import com.intellij.ui.popup.list.PopupListElementRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,15 +21,14 @@ import java.util.List;
 import java.util.Map;
 
 class CtxPopup {
+  static private final boolean ENABLED = Boolean.getBoolean("touchbar.show.popups");
+
   static @Nullable Disposable showPopupItems(@NotNull JBPopup popup, @NotNull JComponent popupComponent) {
-    if (!(popup instanceof ListPopupImpl)) {
+    if (!ENABLED || !(popup instanceof ListPopupImpl)) {
       return null;
     }
 
     @NotNull ListPopupImpl listPopup = (ListPopupImpl)popup;
-
-    //some toolbars, e.g. one from DarculaJBPopupComboPopup are too custom to be supported here
-    if (!(listPopup.getList().getCellRenderer() instanceof PopupListElementRenderer)) return null;
 
     final TouchBar tb = createScrubberBarFromPopup(listPopup);
     TouchBarsManager.registerAndShow(popupComponent, tb);

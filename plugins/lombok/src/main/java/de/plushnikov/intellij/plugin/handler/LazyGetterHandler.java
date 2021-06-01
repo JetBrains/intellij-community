@@ -47,20 +47,6 @@ public final class LazyGetterHandler {
     if (containingClass == null) {
       return false;
     }
-    return isInitializedInConstructors((PsiField) field, containingClass);
-  }
-
-  private static boolean isInitializedInConstructors(@NotNull PsiField field, @NotNull PsiClass aClass) {
-    final PsiMethod[] constructors = aClass.getConstructors();
-    if (constructors.length == 0) {
-      return false;
-    }
-
-    for (final PsiMethod constructor : constructors) {
-      if (!InitializationUtils.methodAssignsVariableOrFails(constructor, field)) {
-        return false;
-      }
-    }
-    return true;
+    return InitializationUtils.isInitializedInConstructors((PsiField) field, containingClass);
   }
 }

@@ -208,10 +208,11 @@ internal class PasswordSafeConfigurableUi(private val settings: PasswordSafeSett
             keePassDbFile = textFieldWithBrowseButton(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"),
                                                       fileChooserDescriptor = fileChooserDescriptor,
                                                       fileChosen = {
-                                                        when {
+                                                        val path = when {
                                                           it.isDirectory -> "${it.path}${File.separator}$DB_FILE_NAME"
                                                           else -> it.path
                                                         }
+                                                        return@textFieldWithBrowseButton File(path).path
                                                       })
               .apply {
                 if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))

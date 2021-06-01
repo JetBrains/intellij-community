@@ -12,6 +12,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileEditor.TextEditorWithPreview;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.UnknownFileType;
@@ -27,7 +28,6 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanelProvider;
-import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +71,7 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   private final ActionListener myCustomCssTextListener;
 
   private Object myLastItem;
-  private EnumComboBoxModel<SplitFileEditor.SplitEditorLayout> mySplitLayoutModel;
+  private EnumComboBoxModel<TextEditorWithPreview.Layout> mySplitLayoutModel;
   private CollectionComboBoxModel<MarkdownHtmlPanelProvider.ProviderInfo> myPreviewPanelModel;
 
   public MarkdownSettingsForm() {
@@ -115,14 +115,14 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
   }
 
   private void adjustSplitOption() {
-    boolean isSplitted = myDefaultSplitLayout.getSelectedItem() == SplitFileEditor.SplitEditorLayout.SPLIT;
+    boolean isSplitted = myDefaultSplitLayout.getSelectedItem() == TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW;
     myVerticalLayout.setEnabled(isSplitted);
     myHorizontalLayout.setEnabled(isSplitted);
     myVerticalSplitLabel.setEnabled(isSplitted);
   }
 
   private void adjustAutoScroll() {
-    myAutoScrollCheckBox.setEnabled(myDefaultSplitLayout.getSelectedItem() == SplitFileEditor.SplitEditorLayout.SPLIT);
+    myAutoScrollCheckBox.setEnabled(myDefaultSplitLayout.getSelectedItem() == TextEditorWithPreview.Layout.SHOW_EDITOR_AND_PREVIEW);
   }
 
   private void adjustCSSRulesAvailability() {
@@ -254,11 +254,21 @@ public class MarkdownSettingsForm implements MarkdownCssSettings.Holder, Markdow
 
   private void createPreviewUIComponents() {
     myPreviewTitledSeparator = new TitledSeparator(MarkdownBundle.message("markdown.settings.preview.name"));
-    mySplitLayoutModel = new EnumComboBoxModel<>(SplitFileEditor.SplitEditorLayout.class);
+    mySplitLayoutModel = new EnumComboBoxModel<>(TextEditorWithPreview.Layout.class);
     myDefaultSplitLayout = new ComboBox<>(mySplitLayoutModel);
-    myDefaultSplitLayout.setRenderer(SimpleListCellRenderer.create("", SplitFileEditor.SplitEditorLayout::getPresentationText));
+    myDefaultSplitLayout.setRenderer(SimpleListCellRenderer.create("", MarkdownSettingsForm::toPresentableText));
 
     createMultipleProvidersSettings();
+  }
+
+  private static String toPresentableText(TextEditorWithPreview.Layout layout) {
+    switch (layout) {
+      case SHOW_EDITOR: return MarkdownBundle.message("markdown.layout.editor.only");
+      case SHOW_PREVIEW: return MarkdownBundle.message("markdown.layout.preview.only");
+      case SHOW_EDITOR_AND_PREVIEW: return MarkdownBundle.message("markdown.layout.editor.and.preview");
+    }
+
+    return "";
   }
 
   private void createMultipleProvidersSettings() {

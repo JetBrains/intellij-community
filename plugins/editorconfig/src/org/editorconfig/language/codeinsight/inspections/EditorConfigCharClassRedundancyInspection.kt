@@ -14,6 +14,7 @@ class EditorConfigCharClassRedundancyInspection : LocalInspectionTool() {
       if (charClass.charClassExclamation != null) return
       if (charClass.charClassLetterList.size != 1) return
 
+      @Suppress("DialogTitleCapitalization")
       val message = EditorConfigBundle["inspection.charclass.redundant.message"]
       holder.registerProblem(charClass, message, EditorConfigConvertToPlainPatternQuickFix())
     }

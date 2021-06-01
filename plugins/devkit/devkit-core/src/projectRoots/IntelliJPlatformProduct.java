@@ -1,12 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NonNls;
 
-/**
- * @author yole
- */
+
 public enum IntelliJPlatformProduct {
   IDEA("IU", "IntelliJ IDEA", null),
   IDEA_IC("IC", "IntelliJ IDEA Community Edition", PlatformUtils.IDEA_CE_PREFIX),

@@ -2,9 +2,27 @@
 <body>
 Reports methods with three or more negation operators <code>!</code> or <code>!=</code>.
 Such methods may be unnecessarily confusing.
+<p>For example:</p>
+<pre>
+  void doSmth(int a, int b, boolean flag1, boolean flag2) {
+    if (!flag && !flag2) {
+      if (a != b) {
+        doOther();
+      }
+    }
+  }
+</pre>
+<p>This method will be easier to understand without negations:</p>
+<pre>
+  void doSmth(int a, int b, boolean flag1, boolean flag2) {
+    if (flag1 || flag2 || a == b) return;
+    doOther();
+  }
+</pre>
 <!-- tooltip end -->
 <p>
 Use the first option below to disable this inspection within <code>equals()</code> methods.
+<p>
 Use the second option below to disable this inspection within <code>assert</code> statements.
 <p>
 

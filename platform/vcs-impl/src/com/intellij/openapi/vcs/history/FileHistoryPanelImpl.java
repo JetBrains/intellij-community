@@ -320,8 +320,8 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
 
   private void setupDualView(@NotNull DefaultActionGroup group) {
     myDualView.setShowGrid(true);
-    PopupHandler.installPopupHandler(myDualView.getTreeView(), group, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
-    PopupHandler.installPopupHandler(myDualView.getFlatView(), group, ActionPlaces.UPDATE_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(myDualView.getTreeView(), group, ActionPlaces.UPDATE_POPUP);
+    PopupHandler.installPopupMenu(myDualView.getFlatView(), group, ActionPlaces.UPDATE_POPUP);
     IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myDualView, true));
 
     myDualView.addListSelectionListener(e -> updateMessage());
@@ -728,14 +728,6 @@ public final class FileHistoryPanelImpl extends JPanel implements DataProvider, 
     @Override
     protected void customizeCellRenderer(@NotNull JTable table, @Nullable Object value, boolean selected, boolean hasFocus, int row, int column) {
       setToolTipText(myTooltipText);
-      if (selected || hasFocus) {
-        setBackground(table.getSelectionBackground());
-        setForeground(table.getSelectionForeground());
-      }
-      else {
-        setBackground(table.getBackground());
-        setForeground(table.getForeground());
-      }
       if (value != null)  {
         //noinspection HardCodedStringLiteral
         append(value.toString(), getDefaultAttributes());

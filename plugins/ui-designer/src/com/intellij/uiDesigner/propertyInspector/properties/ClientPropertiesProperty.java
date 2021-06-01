@@ -19,9 +19,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class ClientPropertiesProperty extends ReadOnlyProperty {
   private final Project myProject;
 

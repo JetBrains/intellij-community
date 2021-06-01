@@ -65,7 +65,7 @@ internal fun imageSize(file: Path, failOnMalformedImage: Boolean = false): Dimen
 private fun loadImage(file: Path, failOnMalformedImage: Boolean): BufferedImage? {
   if (file.toString().endsWith(".svg")) {
     // don't mask any exception for svg file
-    Files.newBufferedReader(file).use {
+    Files.newInputStream(file).use {
       try {
         return SvgTranscoder.createImage(1f, createSvgDocument(null, it), null)
       }

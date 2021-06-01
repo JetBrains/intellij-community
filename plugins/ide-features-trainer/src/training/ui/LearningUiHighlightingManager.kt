@@ -14,6 +14,7 @@ import javax.swing.JTree
 import javax.swing.SwingUtilities
 import javax.swing.tree.TreePath
 import kotlin.math.absoluteValue
+import kotlin.math.min
 
 private const val pulsationSize = 20
 
@@ -51,14 +52,15 @@ object LearningUiHighlightingManager {
         val treeRect = tree.visibleRect
         val pathRect = tree.getPathBounds(it) ?: return@let null
         val offset = pathRect.x - treeRect.x
-        Rectangle(pathRect.x, pathRect.y, treeRect.width - offset, pathRect.height)
+        val width = min(treeRect.width - offset, pathRect.width)
+        Rectangle(pathRect.x, pathRect.y, width, pathRect.height)
       }
     }
   }
 
   fun <T: Component> highlightPartOfComponent(component: T, options: HighlightingOptions = HighlightingOptions(), rectangle: (T) -> Rectangle?) {
     highlightComponent(component, options.clearPreviousHighlights) { glassPane ->
-      RepaintHighlighting(component, glassPane, options, { rectangle(component) })
+      RepaintHighlighting(component, glassPane, options) { rectangle(component) }
     }
   }
 

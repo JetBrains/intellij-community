@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -55,7 +55,6 @@ import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.xml.NanoXmlBuilder;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener;
-import gnu.trove.THashSet;
 import org.apache.lucene.search.Query;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -334,7 +333,7 @@ public class MavenUtil {
   }
 
   private static <T> Collection<T> toSet(final Collection<T> collection) {
-    return (collection instanceof Set ? collection : new THashSet<>(collection));
+    return (collection instanceof Set ? collection : new HashSet<>(collection));
   }
 
   @NotNull
@@ -948,6 +947,9 @@ public class MavenUtil {
     if (element == null) {
       element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
     }
+    if (element == null) {
+      element = parent.getChild(childName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0"));
+    }
     return element;
   }
 
@@ -958,6 +960,9 @@ public class MavenUtil {
     }
     if (elements.isEmpty()) {
       elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.1.0"));
+    }
+    if (elements.isEmpty()) {
+      elements = parent.getChildren(childrenName, Namespace.getNamespace("http://maven.apache.org/SETTINGS/1.2.0"));
     }
     return elements;
   }
@@ -1055,9 +1060,8 @@ public class MavenUtil {
   }
 
   public static boolean newModelEnabled(Project project) {
-    return LegacyBridgeProjectLifecycleListener.Companion.enabled(project) &&
-           (Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
-            || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY));
+    return Boolean.valueOf(System.getProperty(MAVEN_NEW_PROJECT_MODEL_KEY))
+            || Registry.is(MAVEN_NEW_PROJECT_MODEL_KEY);
   }
 
   public static boolean isProjectTrustedEnoughToImport(Project project, boolean askConfirmation) {

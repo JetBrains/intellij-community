@@ -1,7 +1,4 @@
-/*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
- * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.scratch.ui
 
@@ -16,10 +13,7 @@ import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.EditorKind
 import com.intellij.openapi.editor.event.VisibleAreaListener
 import com.intellij.openapi.editor.ex.EditorEx
-import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.FileEditorPolicy
-import com.intellij.openapi.fileEditor.FileEditorProvider
-import com.intellij.openapi.fileEditor.TextEditor
+import com.intellij.openapi.fileEditor.*
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -91,6 +85,10 @@ class KtScratchFileEditorWithPreview private constructor(
         configureSyncHighlighting(sourceEditor, previewEditor, translator = this)
 
         ScratchFileAutoRunner.addListener(scratchFile.project, sourceTextEditor)
+    }
+
+    override fun getFile(): VirtualFile {
+        return scratchFile.file
     }
 
     override fun previewLineToSourceLines(previewLine: Int): Pair<Int, Int>? {
@@ -180,14 +178,9 @@ class KtScratchFileEditorWithPreview private constructor(
         templatePresentation.description = KotlinJvmBundle.message("scratch.side.panel.output.mode.description")
     }
 
-    override fun setLayout(newLayout: Layout) {
-        val previous = layout
-        super.setLayout(newLayout)
-        val current = layout
-
+    override fun onLayoutChange(oldValue: Layout?, newValue: Layout?) {
         when {
-            previous == Layout.SHOW_EDITOR && current != Layout.SHOW_EDITOR -> clearOutputHandlers()
-            previous != Layout.SHOW_EDITOR && current == Layout.SHOW_EDITOR -> clearOutputHandlers()
+            oldValue != newValue -> clearOutputHandlers()
         }
     }
 
@@ -195,9 +188,6 @@ class KtScratchFileEditorWithPreview private constructor(
     fun setPreviewEnabled(isPreviewEnabled: Boolean) {
         layout = if (isPreviewEnabled) Layout.SHOW_EDITOR_AND_PREVIEW else Layout.SHOW_EDITOR
     }
-
-    @TestOnly
-    fun getPreviewEditor(): TextEditor = previewTextEditor
 
     companion object {
         fun create(scratchFile: ScratchFile): KtScratchFileEditorWithPreview {

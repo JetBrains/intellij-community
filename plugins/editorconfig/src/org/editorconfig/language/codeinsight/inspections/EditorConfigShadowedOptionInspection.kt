@@ -23,6 +23,7 @@ class EditorConfigShadowedOptionInspection : LocalInspectionTool() {
         .drop(1)
         .firstOrNull { equalOptions(option, it) }
         ?.apply {
+          @Suppress("DialogTitleCapitalization")
           val message = EditorConfigBundle["inspection.option.shadowed.message"]
           holder.registerProblem(option, message, ProblemHighlightType.LIKE_UNUSED_SYMBOL, EditorConfigRemoveOptionQuickFix())
         }

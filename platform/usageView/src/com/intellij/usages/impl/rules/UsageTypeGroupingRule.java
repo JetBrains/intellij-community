@@ -71,6 +71,11 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
   }
 
   @Override
+  public int getRank() {
+    return UsageGroupingRulesDefaultRanks.USAGE_TYPE.getAbsoluteRank();
+  }
+
+  @Override
   public @Nullable String getGroupingActionId() {
     return "UsageGrouping.UsageType";
   }

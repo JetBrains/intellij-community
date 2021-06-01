@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components
 
 import com.intellij.openapi.diagnostic.logger
@@ -8,15 +8,17 @@ import com.intellij.util.xmlb.Accessor
 import com.intellij.util.xmlb.SerializationFilter
 import com.intellij.util.xmlb.annotations.Transient
 import org.jetbrains.annotations.ApiStatus
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 import java.nio.charset.Charset
-import java.util.*
 import java.util.concurrent.atomic.AtomicLongFieldUpdater
-import kotlin.collections.ArrayList
-import kotlin.collections.LinkedHashMap
 
 internal val LOG = logger<BaseState>()
 
-private val factory: StatePropertyFactory = ServiceLoader.load(StatePropertyFactory::class.java, BaseState::class.java.classLoader).first()
+private val factory: StatePropertyFactory = run {
+  val implClass = BaseState::class.java.classLoader.loadClass("com.intellij.serialization.stateProperties.StatePropertyFactoryImpl")
+  MethodHandles.lookup().findConstructor(implClass, MethodType.methodType(Void.TYPE)).invoke() as StatePropertyFactory
+}
 
 abstract class BaseState : SerializationFilter, ModificationTracker {
   companion object {

@@ -1,8 +1,13 @@
 <html>
 <body>
-Reports non-<b>final</b> <b>static</b> fields.
+Reports non-<code>final</code> <code>static</code> fields.
+Applying the quick fix makes the field <code>final</code>.
+<p>
+Please note that the inspection doesn't check the fields mutability,
+e.g. if a field is being set some value anywhere, addition <code>final</code> modifier will cause a compilation error.
+</p>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to have this inspection only report on <b>public</b> fields.
+Use the checkbox below to have this inspection only report on <code>public</code> fields.
 </body>
 </html>

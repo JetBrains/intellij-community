@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -27,7 +28,6 @@ final class UnindexedFilesFinder {
   private static final Logger LOG = Logger.getInstance(UnindexedFilesFinder.class);
 
   private final Project myProject;
-  private final boolean myDoTraceForFilesToBeIndexed = FileBasedIndexImpl.LOG.isTraceEnabled();
   private final FileBasedIndexImpl myFileBasedIndex;
   private final UpdatableIndex<FileType, Void, FileContent> myFileTypeIndex;
   private final Collection<FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor> myStateProcessors;
@@ -54,6 +54,7 @@ final class UnindexedFilesFinder {
 
   @Nullable("null if the file is not subject for indexing (a directory, invalid, etc.)")
   public UnindexedFileStatus getFileStatus(@NotNull VirtualFile file) {
+    ProgressManager.checkCanceled(); // give a chance to suspend indexing
     return ReadAction.compute(() -> {
       if (myProject.isDisposed() || !file.isValid() || !(file instanceof VirtualFileWithId)) {
         return null;
@@ -104,6 +105,9 @@ final class UnindexedFilesFinder {
         FileIndexingState fileTypeIndexState = null;
         if (!isDirectory && !myFileBasedIndex.isTooLarge(file)) {
           if ((fileTypeIndexState = myFileTypeIndex.getIndexingStateForFile(inputId, indexedFile)) == FileIndexingState.OUT_DATED) {
+            if (myFileBasedIndex.doTraceStubUpdates()) {
+              LOG.info("Scheduling full indexing of " + indexedFile.getFileName() + " because file type index is outdated");
+            }
             myFileBasedIndex.dropNontrivialIndexedStates(inputId);
             shouldIndex.set(true);
           }
@@ -116,17 +120,16 @@ final class UnindexedFilesFinder {
                 if (myFileBasedIndex.needsFileContentLoading(indexId)) {
                   FileIndexingState fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
                   boolean indexInfrastructureExtensionInvalidated = false;
-                  if (fileIndexingState == FileIndexingState.UP_TO_DATE) {
-                    if (myShouldProcessUpToDateFiles) {
-                      for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
-                        long nowTime = System.nanoTime();
-                        try {
-                          if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
-                            indexInfrastructureExtensionInvalidated = true;
-                          }
-                        } finally {
-                          timeProcessingUpToDateFiles.addAndGet(System.nanoTime() - nowTime);
+                  if (fileIndexingState == FileIndexingState.UP_TO_DATE && myShouldProcessUpToDateFiles) {
+                    for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor p : myStateProcessors) {
+                      long nowTime = System.nanoTime();
+                      try {
+                        if (!p.processUpToDateFile(indexedFile, inputId, indexId)) {
+                          indexInfrastructureExtensionInvalidated = true;
                         }
+                      }
+                      finally {
+                        timeProcessingUpToDateFiles.addAndGet(System.nanoTime() - nowTime);
                       }
                     }
                   }
@@ -134,8 +137,11 @@ final class UnindexedFilesFinder {
                     fileIndexingState = myFileBasedIndex.shouldIndexFile(indexedFile, indexId);
                   }
                   if (fileIndexingState.updateRequired()) {
-                    if (myDoTraceForFilesToBeIndexed) {
-                      LOG.trace("Scheduling indexing of " + file + " by request of index " + indexId);
+                    if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
+                      FileBasedIndexImpl.LOG.info("Scheduling indexing of " + indexedFile.getFileName() + " by request of index; " + indexId +
+                                                  (indexInfrastructureExtensionInvalidated ? " because extension invalidated;" : "") +
+                                                  ((myFileBasedIndex.acceptsInput(indexId, indexedFile)) ? " accepted;" : " unaccepted;") +
+                                                  ("indexing state = " + myFileBasedIndex.getIndexingState(indexedFile, indexId)));
                     }
 
                     long nowTime = System.nanoTime();
@@ -202,6 +208,9 @@ final class UnindexedFilesFinder {
     for (FileBasedIndexInfrastructureExtension.FileIndexingStatusProcessor processor : myStateProcessors) {
       if (processor.tryIndexFileWithoutContent(fileContent, inputId, indexId)) {
         FileBasedIndexImpl.setIndexedState(myFileBasedIndex.getIndex(indexId), fileContent, inputId, true);
+        if (myFileBasedIndex.doTraceStubUpdates(indexId)) {
+          LOG.info("File " + fileContent.getFileName() + " indexed using extension for " + indexId + " without content");
+        }
         return true;
       }
     }

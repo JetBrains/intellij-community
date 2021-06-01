@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.devServer
 
 import com.intellij.util.PathUtilRt
@@ -14,23 +14,44 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ModuleOutputEnt
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.artifact.JpsArtifactService
+import org.jetbrains.jps.model.library.JpsOrderRootType
+import org.jetbrains.jps.util.JpsPathUtil
 import java.net.URLClassLoader
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
+const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
+
 class IdeBuilder(val pluginBuilder: PluginBuilder,
                  builder: DistributionJARsBuilder,
                  homePath: Path,
                  runDir: Path,
-                 private val moduleNameToPlugin: Map<String, BuildItem>) {
-  fun moduleChanged(moduleName: String, reason: Any) {
-    val plugin = moduleNameToPlugin.get(moduleName) ?: return
-    pluginBuilder.addDirtyPluginDir(plugin, reason)
+                 outDir: Path,
+                 moduleNameToPlugin: Map<String, BuildItem>) {
+  private class ModuleChangeInfo(@JvmField val moduleName: String,
+                                 @JvmField var checkFile: Path,
+                                 @JvmField var plugin: BuildItem)
+
+  private val moduleChanges = moduleNameToPlugin.entries.map {
+    val checkFile = outDir.resolve(it.key).resolve(UNMODIFIED_MARK_FILE_NAME)
+    ModuleChangeInfo(moduleName = it.key, checkFile = checkFile, plugin = it.value)
   }
 
   init {
     Files.writeString(runDir.resolve("libClassPath.txt"), createLibClassPath(pluginBuilder.buildContext, builder, homePath))
+  }
+
+  fun checkChanged() {
+    LOG.info("Checking changes...")
+    var changedModules = 0
+    for (item in moduleChanges) {
+      if (!Files.exists(item.checkFile)) {
+        pluginBuilder.addDirtyPluginDir(item.plugin, item.moduleName)
+        changedModules++
+      }
+    }
+    LOG.info("$changedModules changed modules")
   }
 }
 
@@ -73,16 +94,19 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
           for (name in entry.value) {
             moduleNameToPlugin.put(name, item)
           }
+          item.moduleNames.addAll(entry.value)
         }
       }
     }
+
+    item.moduleNames.add(mainModuleName)
     moduleNameToPlugin.put(mainModuleName, item)
     item
   }
 
   val artifactOutDir = homePath.resolve("out/classes/artifacts").toString()
-  JpsArtifactService.getInstance().getArtifacts(buildContext.project).forEach {
-    it.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(it.outputPath)}"
+  for (artifact in JpsArtifactService.getInstance().getArtifacts(buildContext.project)) {
+    artifact.outputPath = "$artifactOutDir/${PathUtilRt.getFileName(artifact.outputPath)}"
   }
 
   val builder = DistributionJARsBuilder(buildContext, null)
@@ -90,11 +114,15 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   // initial building
   val start = System.currentTimeMillis()
   // Ant is not able to build in parallel — not clear how correctly clone with all defined custom tasks
-  buildPlugins(parallelCount = 1, buildContext, pluginLayouts, builder)
-  LOG.info("Initial full build of ${pluginLayouts.size} plugins in ${TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start)}s")
-
   val pluginBuilder = PluginBuilder(builder, buildContext, outDir)
-  return IdeBuilder(pluginBuilder, builder, homePath, runDir, moduleNameToPlugin)
+  pluginBuilder.initialBuild(parallelCount = 1, plugins = pluginLayouts)
+  LOG.info("Initial full build of ${pluginLayouts.size} plugins in ${TimeUnit.MILLISECONDS.toSeconds(System.currentTimeMillis() - start)}s")
+  return IdeBuilder(pluginBuilder = pluginBuilder,
+                    builder = builder,
+                    homePath = homePath,
+                    runDir = runDir,
+                    outDir = outDir,
+                    moduleNameToPlugin = moduleNameToPlugin)
 }
 
 private fun createLibClassPath(buildContext: BuildContext,
@@ -117,6 +145,13 @@ private fun createLibClassPath(buildContext: BuildContext,
         classPath.add(entry.libraryFilePath)
       }
       else -> throw UnsupportedOperationException("Entry $entry is not supported")
+    }
+  }
+
+  for (libName in builder.platform.projectLibrariesToUnpack.values()) {
+    val library = buildContext.project.libraryCollection.findLibrary(libName) ?: throw IllegalStateException("Cannot find library $libName")
+    library.getRootUrls(JpsOrderRootType.COMPILED).mapTo(classPath) {
+      JpsPathUtil.urlToPath(it)
     }
   }
 

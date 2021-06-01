@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.util.io.Murmur3_32Hash;
@@ -89,12 +89,13 @@ public final class ImmutableZipFile implements Closeable {
    */
   @Override
   public void close() throws IOException {
-    if (mappedBuffer != null) {
+    ByteBuffer buffer = mappedBuffer;
+    if (buffer != null) {
+      mappedBuffer = null;
       // we need to unmap buffer immediately without waiting until GC does this job; otherwise further modifications of the created file
-      // will fail with Acce
-      unmapBuffer(mappedBuffer);
+      // will fail with AccessDeniedException
+      unmapBuffer(buffer);
     }
-    mappedBuffer = null;
   }
 
   /**
@@ -130,12 +131,12 @@ public final class ImmutableZipFile implements Closeable {
       }
     }
 
-    ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
     // ensure table is even length
     if (entryCount == 65535) {
       // it means that more than 65k entries - estimate number of entries
       entryCount = centralDirPosition / 47 /* min 46 for entry and 1 for filename */;
     }
+    ImmutableZipEntry[] entries = new ImmutableZipEntry[entryCount];
 
     int entrySetLength = entryCount * 2 /* expand factor */;
     ImmutableZipEntry[] entrySet = new ImmutableZipEntry[entrySetLength];
@@ -254,8 +255,10 @@ public final class ImmutableZipFile implements Closeable {
   /**
    * This method repeats logic from {@link com.intellij.util.io.ByteBufferUtil#cleanBuffer} which isn't accessible from this module
    */
-  private static void unmapBuffer(ByteBuffer buffer) throws IOException {
-    if (!buffer.isDirect()) return;
+  private static void unmapBuffer(@NotNull ByteBuffer buffer) throws IOException {
+    if (!buffer.isDirect()) {
+      return;
+    }
 
     try {
       Field unsafeField = Class.forName("sun.misc.Unsafe").getDeclaredField("theUnsafe");

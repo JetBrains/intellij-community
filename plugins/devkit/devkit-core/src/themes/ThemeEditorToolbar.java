@@ -5,10 +5,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.ExperimentalUI;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
@@ -32,7 +34,8 @@ public final class ThemeEditorToolbar extends EditorNotifications.Provider<Edito
   @Override
   public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
     if (ThemeJsonUtil.isThemeFilename(file.getName())) {
-      EditorNotificationPanel panel = new EditorNotificationPanel(JBColor.PanelBackground);
+      EditorNotificationPanel panel = new EditorNotificationPanel(new JBColor(() -> ExperimentalUI.isNewEditorTabs()
+                                                                                    ? EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground() : JBColor.PanelBackground));
       panel.removeAll();
       DefaultActionGroup group = (DefaultActionGroup)ActionManager.getInstance().getAction("DevKit.ThemeEditorToolbar");
       panel.add(ActionManager.getInstance().createActionToolbar("ThemeEditor", group, true).getComponent());

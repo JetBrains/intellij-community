@@ -4,7 +4,6 @@ package com.intellij.platform.util.plugins
 import com.intellij.util.lang.ZipFilePool
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
-import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -16,37 +15,19 @@ interface DataLoader {
   fun isExcludedFromSubSearch(jarFile: Path): Boolean = false
 
   @Throws(IOException::class)
-  fun load(path: String): InputStream?
+  fun load(path: String): ByteArray?
 
   override fun toString(): String
 }
 
 @ApiStatus.Internal
-class ZipFsDataLoader(private val rootPath: Path) : DataLoader {
-  override val pool: ZipFilePool?
-    get() = null
-
-  @Throws(IOException::class)
-  override fun load(path: String): InputStream? {
-    return try {
-      Files.newInputStream(rootPath.fileSystem.getPath(path))
-    }
-    catch (e: NoSuchFileException) {
-      null
-    }
-  }
-
-  override fun toString() = rootPath.toString()
-}
-
-@ApiStatus.Internal
-class LocalFsDataLoader(private val basePath: Path) : DataLoader {
+class LocalFsDataLoader(val basePath: Path) : DataLoader {
   override val pool: ZipFilePool?
     get() = ZipFilePool.POOL
 
-  override fun load(path: String): InputStream? {
+  override fun load(path: String): ByteArray? {
     return try {
-      Files.newInputStream(basePath.resolve(path))
+      Files.readAllBytes(basePath.resolve(path))
     }
     catch (e: NoSuchFileException) {
       null

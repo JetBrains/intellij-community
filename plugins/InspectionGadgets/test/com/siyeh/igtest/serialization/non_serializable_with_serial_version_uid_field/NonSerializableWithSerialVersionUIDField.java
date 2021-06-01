@@ -7,7 +7,7 @@ public class <warning descr="Non-serializable class 'NonSerializableWithSerialVe
     private static final long serialVersionUID = -25111423935153899L;
 
     void foo() {
-        new <warning descr="Non-serializable anonymous class extending 'Object' defines a 'serialVersionUID' field">Object</warning>() {
+        new <warning descr="Non-serializable anonymous class derived from 'Object' defines a 'serialVersionUID' field">Object</warning>() {
             private static final long serialVersionUID = -25111423935153899L;
         };
     }

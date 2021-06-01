@@ -3,6 +3,7 @@ package com.intellij.psi.impl.source.resolve.graphInference;
 
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 

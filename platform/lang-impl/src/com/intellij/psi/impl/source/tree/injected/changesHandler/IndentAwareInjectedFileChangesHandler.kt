@@ -74,13 +74,16 @@ class IndentAwareInjectedFileChangesHandler(shreds: List<Shred>, editor: Editor,
       var rangeInHost = affectedMarker.hostMarker.range
 
       myHostEditor.caretModel.moveToOffset(rangeInHost.startOffset)
-      val newText0 = CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
-        preProcessor.preprocessOnPaste(myProject, hostPsiFile, myHostEditor, newText, null).also { r ->
-          if (r != newText) {
-            LOG.debug { "preprocessed by $preProcessor '${newText.esclbr()}' -> '${r.esclbr()}'" }
+      val newText0 = if (affectedMarker.host?.getUserData(InjectionMeta.SUPPRESS_COPY_PASTE_HANDLER_IN_FE) == true)
+        markerText
+      else
+        CopyPastePreProcessor.EP_NAME.extensionList.fold(markerText) { newText, preProcessor ->
+          preProcessor.preprocessOnPaste(myProject, hostPsiFile, myHostEditor, newText, null).also { r ->
+            if (r != newText) {
+              LOG.debug { "preprocessed by $preProcessor '${newText.esclbr()}' -> '${r.esclbr()}'" }
+            }
           }
         }
-      }
 
       val indent = affectedMarker.host?.getUserData(InjectionMeta.INJECTION_INDENT)
       val newText = indentHeuristically(indent, newText0, newText0 != markerText)

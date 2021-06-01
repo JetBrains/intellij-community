@@ -32,9 +32,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.List;
 
-/**
- * @author yole
- */
+
 public class CustomCreateProperty extends Property<RadComponent, Boolean> {
   private static final Logger LOG = Logger.getInstance(CustomCreateProperty.class);
 

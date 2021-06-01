@@ -1,3 +1,4 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -7,6 +8,18 @@ public class ThrowableResultOfMethodCallIgnoredInspectionTest extends LightJavaI
 
   public void testThrowableResultOfMethodCallIgnored() {
     doTest();
+  }
+
+  @Override
+  protected String[] getEnvironmentClasses() {
+    return new String[] {
+      "package com.google.errorprone.annotations;\n" +
+      "import static java.lang.annotation.ElementType.METHOD;\n" +
+      "import static java.lang.annotation.ElementType.TYPE;\n" +
+      "import java.lang.annotation.Target;" +
+      "@Target({METHOD, TYPE})\n" +
+      "public @interface CanIgnoreReturnValue {}"
+    };
   }
 
   @Override

@@ -26,7 +26,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.actions.ModuleDeleteProvider;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
@@ -114,11 +113,6 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
     }
     myUpdateQueue.queueModelUpdateFromFocus();
     myUpdateQueue.queueRebuildUi();
-    if (!docked) {
-      final ActionCallback typeAheadDone = new ActionCallback();
-      IdeFocusManager.getInstance(project).typeAheadUntil(typeAheadDone, "NavBarPanel");
-      myUpdateQueue.queueTypeAheadDone(typeAheadDone);
-    }
 
     Disposer.register(project, this);
     AccessibleContextUtil.setName(this, IdeBundle.message("navigation.bar"));
@@ -442,26 +436,35 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   void installPopupHandler(@NotNull JComponent component, int index) {
-    ActionManager actionManager = ActionManager.getInstance();
-    PopupHandler.installPopupHandler(component, new ActionGroup() {
+    component.addMouseListener(new PopupHandler() {
       @Override
-      public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
-        if (e == null) return EMPTY_ARRAY;
-        String popupGroupId = null;
-        for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
-          popupGroupId = modelExtension.getPopupMenuGroup(NavBarPanel.this);
-          if (popupGroupId != null) break;
-        }
-        if (popupGroupId == null) popupGroupId = IdeActions.GROUP_NAVBAR_POPUP;
-        ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(popupGroupId);
-        return group == null ? EMPTY_ARRAY : group.getChildren(e);
-      }
-    }, ActionPlaces.NAVIGATION_BAR_POPUP, actionManager, new PopupMenuListenerAdapter() {
-      @Override
-      public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
-        if (index != -1) {
-          myModel.setSelectedIndex(index);
-        }
+      public void invokePopup(Component comp, int x, int y) {
+        ActionGroup actionGroup = new ActionGroup() {
+          @Override
+          public AnAction @NotNull [] getChildren(@Nullable AnActionEvent e) {
+            if (e == null) return EMPTY_ARRAY;
+            String popupGroupId = null;
+            for (NavBarModelExtension modelExtension : NavBarModelExtension.EP_NAME.getExtensionList()) {
+              popupGroupId = modelExtension.getPopupMenuGroup(NavBarPanel.this);
+              if (popupGroupId != null) break;
+            }
+            if (popupGroupId == null) popupGroupId = IdeActions.GROUP_NAVBAR_POPUP;
+            ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(popupGroupId);
+            return group == null ? EMPTY_ARRAY : group.getChildren(e);
+          }
+        };
+        ActionPopupMenu popupMenu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.NAVIGATION_BAR_POPUP, actionGroup);
+        popupMenu.setTargetComponent(component);
+        JPopupMenu menu = popupMenu.getComponent();
+        menu.addPopupMenuListener(new PopupMenuListenerAdapter() {
+          @Override
+          public void popupMenuWillBecomeVisible(PopupMenuEvent e) {
+            if (index != -1) {
+              myModel.setSelectedIndex(index);
+            }
+          }
+        });
+        menu.show(comp, x, y);
       }
     });
   }

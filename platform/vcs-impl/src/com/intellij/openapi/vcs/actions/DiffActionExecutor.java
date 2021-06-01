@@ -30,11 +30,8 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.impl.VcsBackgroundableActions;
-import com.intellij.diff.DiffVcsDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -157,16 +154,6 @@ public abstract class DiffActionExecutor {
         throw new DiffRequestProducerException(e);
       }
     }
-  }
-
-  /**
-   * @deprecated use {@link #showDiff(DiffProvider, VcsRevisionNumber, VirtualFile, Project)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,
-                              final Project project, final VcsBackgroundableActions actionKey) {
-    showDiff(diffProvider, revisionNumber, selectedFile, project);
   }
 
   public static void showDiff(final DiffProvider diffProvider, final VcsRevisionNumber revisionNumber, final VirtualFile selectedFile,

@@ -92,6 +92,7 @@ class JavaCommentingStrategy extends JavaIntentionPolicy {
                                       intentionText.startsWith("Convert to Basic Latin") ||
                                       intentionText.startsWith("Unwrap 'if' statement") ||//remove ifs content
                                       intentionText.startsWith("Remove 'if' statement") ||//remove content of the if with everything inside
+                                      intentionText.equals("Remove 'while' statement") ||
                                       intentionText.startsWith("Unimplement Class") || intentionText.startsWith("Unimplement Interface") ||//remove methods in batch
                                       intentionText.startsWith("Suppress with 'NON-NLS' comment") ||
                                       intentionText.startsWith("Move comment to separate line") ||//merge comments on same line

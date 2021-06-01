@@ -65,7 +65,7 @@ class LessonManager {
     OpenPassedContext(project).apply(lesson.lessonContent)
     learnPanel.scrollRectToVisible(Rectangle(0, 0, 1, 1))
     learnPanel.makeNextButtonSelected()
-    learnPanel.learnToolWindow?.showGotItAboutRestart()
+    learnPanel.learnToolWindow.showGotItAboutRestart()
   }
 
   internal fun initDslLesson(editor: Editor?, cLesson: Lesson, lessonExecutor: LessonExecutor) {
@@ -103,13 +103,13 @@ class LessonManager {
     LearningUiManager.activeToolWindow?.scrollToTheStart()
   }
 
-  fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false) {
+  fun addMessage(@Language("HTML") text: String, isInformer: Boolean = false, visualNumber: Int? = null) {
     val state = if (isInformer) LessonMessagePane.MessageState.INFORMER else LessonMessagePane.MessageState.NORMAL
-    learnPanel?.addMessage(text, state)
+    learnPanel?.addMessage(text, LessonMessagePane.MessageProperties(state, visualNumber))
   }
 
-  fun addInactiveMessages(messages: List<String>) {
-    for (m in messages) learnPanel?.addMessage(m, state = LessonMessagePane.MessageState.INACTIVE)
+  fun addInactiveMessage(message: String, visualNumber: Int?) {
+    learnPanel?.addMessage(message, LessonMessagePane.MessageProperties(LessonMessagePane.MessageState.INACTIVE, visualNumber))
   }
 
   fun removeInactiveMessages(number: Int) {
@@ -187,7 +187,7 @@ class LessonManager {
     val warningIconIndex = LearningUiManager.getIconIndex(AllIcons.General.NotificationWarning)
     val warningIconMessage = MessagePart(warningIconIndex, MessagePart.MessageType.ICON_IDX)
     val allMessages = mutableListOf(warningIconMessage).also { it.addAll(messages) }
-    learnPanel?.addMessages(allMessages, LessonMessagePane.MessageState.RESTORE)
+    learnPanel?.addMessages(allMessages, LessonMessagePane.MessageProperties(LessonMessagePane.MessageState.RESTORE))
   }
 
   fun lessonShouldBeOpenedCompleted(lesson: Lesson): Boolean = lesson.passed && currentLesson != lesson

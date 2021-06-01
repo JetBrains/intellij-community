@@ -247,6 +247,24 @@ final class TouchBarsManager {
     showTouchbar(componentActions);
   }
 
+  synchronized static void clearAll() {
+    LOG.debug("Clear all actions (disable touchbar suppoprt)");
+
+    ourStacks.forEach((w, s) -> {
+      NST.setTouchBar(w, null);
+    });
+    ourStacks.clear();
+
+    ourComp2Actions.forEach((c, ca) -> {
+      if (ca == null) {
+        LOG.debug("clearAll: component '%s' hasn't any actions", c);
+        return;
+      }
+      ca.clearCachedTouchbars();
+    });
+    ourComp2Actions.clear();
+  }
+
   private static @Nullable Window getWindow(@NotNull Component component) {
     if (component instanceof Window) {
       return (Window)component;
@@ -509,7 +527,13 @@ final class TouchBarsManager {
 
       // ensure that top of stack has current touchbar
       final @Nullable ComponentActions ca = myStack.peek();
-      if (ca == null) return;
+      if (ca == null) {
+        // stack is empty
+        myLastShownTouchbar = null;
+        NST.setTouchBar(myWindow != null ? myWindow.get() : null, null);
+        return;
+      }
+
       if (ca.getCurrent() == null) { // current touchbar wasn't set yet, do it now
         ca.setCurrent(ourLastModifiersEx);
         if (ca.getCurrent() == null)

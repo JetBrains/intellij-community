@@ -94,8 +94,6 @@
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
     <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
-    <applicationService serviceImplementation="com.jetbrains.python.testing.VFSTestFrameworkListenerImpl"
-                        serviceInterface="com.jetbrains.python.testing.VFSTestFrameworkListener"/>
 
 
     <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
@@ -123,17 +121,15 @@
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyLineBreakpointType"/>
     <xdebugger.breakpointType implementation="com.jetbrains.python.debugger.PyExceptionBreakpointType"/>
     <xdebugger.settings implementation="com.jetbrains.python.debugger.settings.PyDebuggerSettings"/>
-    <xdebugger.localAttachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
+    <xdebugger.attachDebuggerProvider implementation="com.jetbrains.python.debugger.attach.PyLocalAttachDebuggerProvider"/>
 
     <configurationType implementation="com.jetbrains.python.testing.PythonTestConfigurationType"/>
     <configurationType implementation="com.jetbrains.python.testing.tox.PyToxConfigurationType"/>
 
-    <runConfigurationProducer implementation="com.jetbrains.python.testing.unittestLegacy.PythonUnitTestConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.jetbrains.python.testing.pytestLegacy.PyTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.doctest.PythonDocTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.tox.PyToxConfigurationProducer"/>
-    <runConfigurationProducer implementation="com.jetbrains.python.testing.nosetestLegacy.PythonNoseTestConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
+    <advancedSetting id="python.pytest.swapdiff" default="false" groupKey="group.advanced.settings.python"/>
     <runLineMarkerContributor language="Python"
                               implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
 
@@ -204,7 +200,6 @@
                                    implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
     <regExpLanguageHost forClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl" implementationClass="com.jetbrains.python.codeInsight.PythonRegExpHost"/>
 
-    <applicationService serviceImplementation="com.jetbrains.python.testing.PyTestFrameworkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
     <completion.ml.contextFeatures language="Python" implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyContextFeatureProvider"/>
@@ -244,6 +239,7 @@
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PyRemoteAnalyzeStacktraceFilter"/>
 
     <internalFileTemplate name="Python Script"/>
+    <internalFileTemplate name="Python Stub"/>
     <internalFileTemplate name="Python Unit Test"/>
     <internalFileTemplate name="Setup Script"/>
 
@@ -311,13 +307,6 @@
     <!-- TestRunnerService -->
     <moduleService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$ModuleService"/>
     <applicationService serviceImplementation="com.jetbrains.python.testing.TestRunnerService$AppService"/>
-
-    <!-- PyFunctionTypeAnnotation -->
-    <lang.parserDefinition language="PyFunctionTypeComment"
-                           implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationParserDefinition"/>
-
-    <lang.parserDefinition language="PyTypeHint"
-                           implementationClass="com.jetbrains.python.codeInsight.typeHints.PyTypeHintParserDefinition"/>
 
     <!-- Packaging -->
     <moduleService serviceImplementation="com.jetbrains.python.packaging.PyPackageRequirementsSettings$ModuleService"/>
@@ -476,8 +465,8 @@
     <extensionPoint qualifiedName="com.jetbrains.python.console.executeCustomizer"
                     interface="com.jetbrains.python.console.PyExecuteConsoleCustomizer"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="com.jetbrains.python.debugger.tableViewCustomizer"
-                    interface="com.jetbrains.python.debugger.pydev.tables.PyTableViewCustomizer"
+    <extensionPoint qualifiedName="com.jetbrains.python.debugger.numericContainerPopupCustomizer"
+                    interface="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizer"
                     dynamic="true"/>
 
     <!-- Experimental sdk EP, avoid using it -->
@@ -515,7 +504,7 @@
     <documentationLinkProvider implementation="com.jetbrains.numpy.codeInsight.SciPyDocumentationLinkProvider"/>
 
     <!-- PyDocstring -->
-    <visitorFilter language="PyDocstring" implementationClass="com.jetbrains.python.documentation.PyDocstringVisitorFilter"/>
+    <visitorFilter language="Doctest" implementationClass="com.jetbrains.python.documentation.PyDocstringVisitorFilter"/>
 
     <!-- Console -->
     <visitorFilter language="Python" implementationClass="com.jetbrains.python.console.ConsoleVisitorFilter"/>
@@ -646,10 +635,14 @@
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
 
-    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode"
-            use-shortcut-of="ForceStepInto">
-      <add-to-group group-id="DebugMainMenu" relative-to-action="StepInto" anchor="after"/>
+    <action id="StepIntoMyCode" class="com.jetbrains.python.debugger.PyStepIntoMyCodeAction" icon="PythonIcons.Python.Debug.StepIntoMyCode">
+      <add-to-group group-id="DebuggingActionsGroup" relative-to-action="StepInto" anchor="after"/>
       <add-to-group group-id="XDebugger.ToolWindow.TopToolbar" relative-to-action="StepInto" anchor="after"/>
+
+      <keyboard-shortcut keymap="$default" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="Mac OS X" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="Mac OS X 10.5+" first-keystroke="alt shift F7" replace-all="true"/>
+      <keyboard-shortcut keymap="macOS System Shortcuts" first-keystroke="alt shift SEMICOLON" second-keystroke="alt shift F7" replace-all="true"/>
     </action>
 
     <action id="SetNextStatement" class="com.jetbrains.python.debugger.PySetNextStatementAction">
@@ -680,10 +673,6 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.jetbrains.python.debugger">
-    <tableViewCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyTableViewCustomizerDefault"/>
+    <numericContainerPopupCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizerDefault"/>
   </extensions>
-
-  <applicationListeners>
-    <listener activeInTestMode="false" class="com.jetbrains.python.testing.VFSTestFrameworkListenerImpl$Listener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-  </applicationListeners>
 </idea-plugin>

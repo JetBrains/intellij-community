@@ -1,16 +1,14 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.ex;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.PluginId;
-import com.intellij.util.TriConsumer;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.event.InputEvent;
 import java.util.Comparator;
 
 public abstract class ActionManagerEx extends ActionManager {
@@ -21,12 +19,28 @@ public abstract class ActionManagerEx extends ActionManager {
   @NotNull
   public abstract ActionToolbar createActionToolbar(@NotNull String place, @NotNull ActionGroup group, boolean horizontal, boolean decorateButtons);
 
-  public abstract void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event);
+  /** Do not call directly, prefer {@link ActionUtil} methods. */
+  @ApiStatus.Internal
+  public abstract void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event);
 
-  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event);
+  /** Do not call directly, prefer {@link ActionUtil} methods. */
+  @ApiStatus.Internal
+  public abstract void fireAfterActionPerformed(@NotNull AnAction action, @NotNull AnActionEvent event, @NotNull AnActionResult result);
 
-  public abstract void fireFinallyActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event, long durationMillis);
 
+  /** @deprecated use {@link #fireBeforeActionPerformed(AnAction, AnActionEvent)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public final void fireBeforeActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    fireBeforeActionPerformed(action, event);
+  }
+
+  /** @deprecated use {@link #fireAfterActionPerformed(AnAction, AnActionEvent, AnActionResult)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
+  public final void fireAfterActionPerformed(@NotNull AnAction action, @NotNull DataContext dataContext, @NotNull AnActionEvent event) {
+    fireAfterActionPerformed(action, event, AnActionResult.PERFORMED);
+  }
 
   public abstract void fireBeforeEditorTyping(char c, @NotNull DataContext dataContext);
 
@@ -80,27 +94,6 @@ public abstract class ActionManagerEx extends ActionManager {
   public abstract String @NotNull [] getPluginActions(@NotNull PluginId pluginId);
 
   public abstract boolean isActionPopupStackEmpty();
-
-  public void fireBeforeActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
-    fireActionPerformed(actionId, event, place, this::fireBeforeActionPerformed);
-  }
-
-  public void fireAfterActionPerformed(@NotNull String actionId, @NotNull InputEvent event, @NotNull String place) {
-    fireActionPerformed(actionId, event, place, this::fireAfterActionPerformed);
-  }
-
-  private void fireActionPerformed(@NotNull String actionId,
-                                   @NotNull InputEvent event,
-                                   @NotNull String place,
-                                   TriConsumer<? super AnAction, ? super DataContext, ? super AnActionEvent> firingFunction) {
-    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(dataContext -> {
-      final AnAction action = getAction(actionId);
-      if (action != null) {
-        AnActionEvent e = AnActionEvent.createFromAnAction(action, event, place, dataContext);
-        firingFunction.accept(action, dataContext, e);
-      }
-    });
-  }
 
   /**
    * Allows to receive notifications when popup menus created from action groups are shown and hidden.

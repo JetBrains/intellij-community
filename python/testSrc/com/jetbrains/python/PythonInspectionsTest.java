@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -14,9 +14,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author yole
- */
+
 public class PythonInspectionsTest extends PyTestCase {
 
   @Override
@@ -134,11 +132,6 @@ public class PythonInspectionsTest extends PyTestCase {
 
   public void testPyComparisonWithNoneInspection() {
     LocalInspectionTool inspection = new PyComparisonWithNoneInspection();
-    doTest(getTestName(false), inspection);
-  }
-
-  public void testPyStringExceptionInspection() {
-    LocalInspectionTool inspection = new PyStringExceptionInspection();
     doTest(getTestName(false), inspection);
   }
 

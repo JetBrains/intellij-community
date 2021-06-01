@@ -33,7 +33,7 @@ internal sealed class TargetData {
 
     override val targets: List<SymbolWithProvider>
       get() = references.flatMap { reference ->
-        reference.resolveReference().map { SymbolWithProvider(it.target, provider(reference)) }
+        reference.resolveReference().map { SymbolWithProvider(it, provider(reference)) }
       }
 
     private fun provider(reference: PsiSymbolReference): Any? {
@@ -58,6 +58,8 @@ internal sealed class PsiOrigin {
     override val absoluteRanges: List<TextRange> get() = BaseCtrlMouseInfo.getReferenceRanges(leaf)
 
     override val elementAtPointer: PsiElement get() = leaf
+
+    override fun toString(): String = "Leaf($leaf)"
   }
 
   class Reference(val reference: PsiReference) : PsiOrigin() {
@@ -65,5 +67,7 @@ internal sealed class PsiOrigin {
     override val absoluteRanges: List<TextRange> get() = ReferenceRange.getAbsoluteRanges(reference)
 
     override val elementAtPointer: PsiElement get() = reference.element
+
+    override fun toString(): String = "Reference($reference)"
   }
 }
