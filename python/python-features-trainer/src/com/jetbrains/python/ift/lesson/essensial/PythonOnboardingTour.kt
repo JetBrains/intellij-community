@@ -551,6 +551,7 @@ class PythonOnboardingTour :
 
     task {
       before {
+        if (backupPopupLocation != null) return@before
         val ui = previous.ui ?: return@before
         val popupWindow = UIUtil.getParentOfType(JWindow::class.java, ui) ?: return@before
         val oldPopupLocation = WindowStateService.getInstance(project).getLocation(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY)

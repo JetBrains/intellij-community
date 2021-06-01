@@ -112,7 +112,9 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     }
 
     prepareRuntimeTask l@{
-      backupDiffLocation = adjustPopupPosition(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
+      if (backupDiffLocation == null) {
+        backupDiffLocation = adjustPopupPosition(DiffWindowBase.DEFAULT_DIALOG_GROUP_KEY)
+      }
     }
 
     if (isAnnotateShortcutSet()) {
