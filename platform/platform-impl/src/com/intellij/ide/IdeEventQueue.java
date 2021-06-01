@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.codeWithMe.ClientId;
@@ -34,7 +34,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -559,13 +558,12 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  @Nullable
-  private static ProgressManager obtainProgressManager() {
+  private static @Nullable ProgressManager obtainProgressManager() {
     ProgressManager manager = ourProgressManager;
     if (manager == null) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        ourProgressManager = manager = ApplicationManager.getApplication().getService(ProgressManager.class);
+        ourProgressManager = manager = app.getService(ProgressManager.class);
       }
     }
     return manager;
@@ -573,11 +571,10 @@ public final class IdeEventQueue extends EventQueue {
 
   private static @Nullable PerformanceWatcher obtainPerformanceWatcher() {
     PerformanceWatcher watcher = ourPerformanceWatcher;
-    if (watcher == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (watcher == null && appIsLoaded()) {
       Application app = ApplicationManager.getApplication();
       if (app != null && !app.isDisposed()) {
-        watcher = ApplicationManager.getApplication().getServiceIfCreated(PerformanceWatcher.class);
-        ourPerformanceWatcher = watcher;
+        ourPerformanceWatcher = watcher = app.getServiceIfCreated(PerformanceWatcher.class);
       }
     }
     return watcher;
@@ -706,7 +703,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void _dispatchEvent(@NotNull AWTEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_DRAGGED && LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (e.getID() == MouseEvent.MOUSE_DRAGGED && appIsLoaded()) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
       if (dndManager != null) {
         dndManager.setLastDropHandler(null);
@@ -753,10 +750,11 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
+    Application application = ApplicationManager.getApplication();
     if (e instanceof ComponentEvent &&
-        LoadingState.COMPONENTS_LOADED.isOccurred() &&
-        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      WindowManagerEx windowManager = (WindowManagerEx)ApplicationManager.getApplication().getServiceIfCreated(WindowManager.class);
+        ourAppIsLoaded &&
+        !application.isHeadlessEnvironment()) {
+      WindowManagerEx windowManager = application.getServiceIfCreated(WindowManagerEx.class);
       if (windowManager != null) {
         windowManager.dispatchComponentEvent((ComponentEvent)e);
       }
@@ -872,11 +870,11 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (!appIsLoaded()) {
       return;
     }
 
-    WindowManagerEx windowManager = (WindowManagerEx)ApplicationManager.getApplication().getServiceIfCreated(WindowManager.class);
+    WindowManagerEx windowManager = ApplicationManager.getApplication().getServiceIfCreated(WindowManagerEx.class);
     if (windowManager == null) {
       return;
     }
