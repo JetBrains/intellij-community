@@ -42,8 +42,6 @@ OS_ARCH=$(uname -m)
 IDE_BIN_HOME=$(dirname "$(realpath "$0")")
 IDE_HOME=$(dirname "${IDE_BIN_HOME}")
 CONFIG_HOME="${XDG_CONFIG_HOME:-${HOME}/.config}"
-PRODUCT_VENDOR="__product_vendor__"
-PATHS_SELECTOR="__system_selector__"
 
 # ---------------------------------------------------------------------
 # Locate a JRE installation directory command -v will be used to run the IDE.
@@ -55,8 +53,8 @@ if [ -n "$__product_uc___JDK" ] && [ -x "$__product_uc___JDK/bin/java" ]; then
 fi
 
 BITS=""
-if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk" ]; then
-  USER_JRE=$(cat "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__.jdk")
+if [ -z "$JRE" ] && [ -s "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk" ]; then
+  USER_JRE=$(cat "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__.jdk")
   if [ -x "$USER_JRE/bin/java" ]; then
     JRE="$USER_JRE"
   fi
@@ -123,9 +121,9 @@ elif [ -r "${IDE_HOME}.vmoptions" ]; then
     VM_OPTIONS_FILE="${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions"
     USER_VM_OPTIONS_FILE="${IDE_HOME}.vmoptions"
   fi
-elif [ -r "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions" ]; then
+elif [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions" ]; then
   # 3. <config_directory>/<bin_name>.vmoptions
-  VM_OPTIONS_FILE="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/__vm_options__${BITS}.vmoptions"
+  VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/__vm_options__${BITS}.vmoptions"
 else
   # 4. <IDE_HOME>/bin/[<os>/]<bin_name>.vmoptions [+ <config_directory>/user.vmoptions]
   if [ -r "${IDE_BIN_HOME}/__vm_options__${BITS}.vmoptions" ]; then
@@ -136,11 +134,11 @@ else
       VM_OPTIONS_FILE="${IDE_BIN_HOME}/${OS_SPECIFIC}/__vm_options__${BITS}.vmoptions"
     fi
   fi
-  if [ -r "${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions" ]; then
+  if [ -r "${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions" ]; then
     if [ -n "$VM_OPTIONS_FILE" ]; then
-      VM_OPTIONS="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions"
+      VM_OPTIONS="${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions"
     else
-      USER_VM_OPTIONS_FILE="${CONFIG_HOME}/${PRODUCT_VENDOR}/${PATHS_SELECTOR}/user.vmoptions"
+      USER_VM_OPTIONS_FILE="${CONFIG_HOME}/__product_vendor__/__system_selector__/user.vmoptions"
     fi
   fi
 fi
