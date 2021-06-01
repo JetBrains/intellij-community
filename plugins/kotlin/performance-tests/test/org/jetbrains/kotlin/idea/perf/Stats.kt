@@ -119,7 +119,8 @@ class Stats(
                 warmUpPhase(warmPhaseData, metricChildren)
                 val statInfoArray = mainPhase(mainPhaseData, metricChildren)
 
-                assertEquals(iterations, statInfoArray.size)
+                if (!mainPhaseData.fastIterations) assertEquals(iterations, statInfoArray.size)
+
                 if (testName != WARM_UP) {
                     // do not estimate stability for warm-up
                     if (!testName.contains(WARM_UP)) {
