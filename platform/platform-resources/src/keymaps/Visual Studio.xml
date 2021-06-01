@@ -9,10 +9,10 @@
     <keyboard-shortcut first-keystroke="shift F9"/>
   </action>
   <action id="EditorDeleteLine">
+    <keyboard-shortcut first-keystroke="ctrl L"/>
     <keyboard-shortcut first-keystroke="ctrl shift L"/>
   </action>
   <action id="ShowErrorDescription">
-    <keyboard-shortcut first-keystroke="control F1"/>
     <keyboard-shortcut first-keystroke="alt T"/>
   </action>
   <action id="HighlightUsagesInFile">
@@ -27,7 +27,6 @@
   <action id="$Cut">
     <keyboard-shortcut first-keystroke="control X"/>
     <keyboard-shortcut first-keystroke="shift DELETE"/>
-    <keyboard-shortcut first-keystroke="ctrl L"/>
   </action>
   <action id="Compile">
     <keyboard-shortcut first-keystroke="control F7"/>
@@ -88,7 +87,6 @@
   <action id="FindNext">
     <keyboard-shortcut first-keystroke="F3"/><!--VS Edit.FindNext-->
     <keyboard-shortcut first-keystroke="control shift DOWN"/><!--VS Edit.NextHighlightedReference-->
-    <keyboard-shortcut first-keystroke="control alt PAGE_DOWN"/><!--ReSharper_ResultListGoToNextLocation-->
     <keyboard-shortcut first-keystroke="alt shift SLASH"/><!--VS Edit.MoveLastCaretDown-->
   </action>
   <action id="Print">
@@ -104,7 +102,6 @@
   <action id="FindPrevious">
     <keyboard-shortcut first-keystroke="shift F3"/><!--VS Edit.FindPrevious-->
     <keyboard-shortcut first-keystroke="control shift UP"/><!--VS Edit.PreviousHighlightedReference-->
-    <keyboard-shortcut first-keystroke="control alt PAGE_UP"/><!--ReSharper_ResultListGoToPrevLocation-->
   </action>
   <action id="CompileDirty">
     <keyboard-shortcut first-keystroke="F7"/>
@@ -112,10 +109,7 @@
   <action id="GotoLine">
     <keyboard-shortcut first-keystroke="control G"/>
   </action>
-  <action id="EditorCodeBlockEnd">
-    <keyboard-shortcut first-keystroke="control CLOSE_BRACKET"/>
-    <keyboard-shortcut first-keystroke="control ASTERISK"/>
-  </action>
+  <action id="EditorCodeBlockEnd"/>
   <action id="OverrideMethods"/>
   <action id="Debug">
     <keyboard-shortcut first-keystroke="alt F5"/>
@@ -150,6 +144,8 @@
     <keyboard-shortcut first-keystroke="control F10"/>
   </action>
   <action id="QuickJavaDoc">
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="I"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control I"/>
     <keyboard-shortcut first-keystroke="control shift F1"/>
   </action>
   <action id="ShowBookmarks">
@@ -186,7 +182,6 @@
   </action>
   <action id="ExternalJavaDoc">
     <keyboard-shortcut first-keystroke="shift F1"/>
-    <keyboard-shortcut first-keystroke="control F1"/>
   </action>
   <action id="VcsShowNextChangeMarker">
     <keyboard-shortcut first-keystroke="shift control alt N"/>
@@ -235,6 +230,8 @@
     <keyboard-shortcut first-keystroke="control R" second-keystroke="control I"/>
   </action>
   <action id="InsertLiveTemplate">
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="X"/>
+    <keyboard-shortcut first-keystroke="control K" second-keystroke="control X"/>
     <keyboard-shortcut first-keystroke="control E" second-keystroke="L"/>
     <keyboard-shortcut first-keystroke="control E" second-keystroke="control L"/>
   </action>
@@ -398,7 +395,7 @@
   <action id="ActivateCommitToolWindow"/>
   <action id="tasks.goto"/>
   <action id="ExpandRegion">
-  <keyboard-shortcut first-keystroke="control M" second-keystroke="E"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="E"/>
     <keyboard-shortcut first-keystroke="control M" second-keystroke="control E"/>
   </action>
   <action id="CollapseRegion">
@@ -474,9 +471,6 @@
   <action id="ToggleFindInSelection"/>
   <action id="EditorCodeBlockStart">
     <keyboard-shortcut first-keystroke="shift alt OPEN_BRACKET"/>
-  </action>
-  <action id="EditorCodeBlockEnd">
-    <keyboard-shortcut first-keystroke="shift alt CLOSE_BRACKET"/>
   </action>
   <action id="EditorCodeBlockStartWithSelection">
     <keyboard-shortcut first-keystroke="control alt shift OPEN_BRACKET"/>
@@ -559,6 +553,26 @@
     <keyboard-shortcut first-keystroke="control R" second-keystroke="control E" />
   </action>
   <action id="GoFmtProjectAction"/>
+  <action id="ShowIntentionActions">
+    <keyboard-shortcut first-keystroke="alt ENTER"/>
+    <keyboard-shortcut first-keystroke="control PERIOD"/>
+    <keyboard-shortcut first-keystroke="alt shift F10"/>
+  </action>
+  <action id="CollapseSelection">
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="H"/>
+    <keyboard-shortcut first-keystroke="control M" second-keystroke="control H"/>
+  </action>
+  <action id="PreviousTab">
+    <keyboard-shortcut first-keystroke="alt LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt PAGE_UP"/><!-- VS: Window.PreviousTa, may conflict with ReSharper_ResultListGoToPrevLocation-->
+  </action>
+  <action id="NextTab">
+    <keyboard-shortcut first-keystroke="alt RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt PAGE_DOWN"/><!--VS: Window.NextTab, may conflict with ReSharper_ResultListGoToNextLocation-->
+  </action>
+  <action id="HelpTopics">
+    <keyboard-shortcut first-keystroke="control F1"/>
+  </action>
 
   <!--KNOWN CONFLICTS: https://youtrack.jetbrains.com/issue/IDEA-268674-->
   <!--MISSING VISUAL STUDIO SHORTCUTS-->

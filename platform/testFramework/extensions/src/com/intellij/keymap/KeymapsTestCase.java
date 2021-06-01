@@ -212,8 +212,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl P",                   "FileChooser.TogglePathShowing", "Print"},
     { "ctrl F10",                 "RunToCursor", "UpdateRunningApplication"},
     { "F5",                       "Graph.RouteEdges", "Resume", "PoBrowserRefresh"},
-    { "ctrl F1",                  "ExternalJavaDoc", "ShowErrorDescription"},
-    { "shift alt CLOSE_BRACKET",  "EditorCodeBlockEnd", "EmmetNextEditPoint"},
     { "shift alt OPEN_BRACKET",   "EditorCodeBlockStart", "EmmetPreviousEditPoint"},
     { "ctrl T",                   "GotoChangedFile", "SearchEverywhere"},
     { "shift alt F11",            "FindUsagesInFile", "HighlightUsagesInFile"},
@@ -237,11 +235,12 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl alt ENTER",           "ReformatCode", "org.jetbrains.r.actions.DebugSelection"},
     { "shift ctrl H",             "ChangesView.ShelveSilently", "ReplaceInPath"},
     { "shift ctrl alt P",         "IntroduceFunctionalParameter", "ReformatWithPrettierAction", "VcsShowPrevChangeMarker"},
-    { "ctrl L",                   "$Cut", "Terminal.ClearBuffer"},
+    { "ctrl L",                   "EditorDeleteLine", "Terminal.ClearBuffer"},
     { "alt O",                    "SwitchHeaderSource", "ExportToTextFile"},
     { "ctrl H",                   "Replace", "Vcs.ShowMessageHistory"},
     { "control alt button1",      "EditorAddOrRemoveCaret", "UiInspector"},
     { "shift alt button1",        "EditorCreateRectangularSelection", "EditorCreateRectangularSelectionOnMouseDrag"},
+    { "ctrl PERIOD",              "EditorChooseLookupItemDot", "ShowIntentionActions"},
     });
     put("Default for XWin", new String[][] {
     { "shift ctrl alt button1",   "EditorAddRectangularSelectionOnMouseDrag", "QuickEvaluateExpression"},
