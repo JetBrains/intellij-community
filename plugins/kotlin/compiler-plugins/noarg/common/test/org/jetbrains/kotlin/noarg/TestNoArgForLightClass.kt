@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinProjectDescriptorWithFacet
-import org.jetbrains.kotlin.noarg.ide.NO_ARG_ANNOTATION_OPTION_PREFIX
+import org.jetbrains.kotlin.idea.compilerPlugin.noarg.NO_ARG_ANNOTATION_OPTION_PREFIX
 import org.jetbrains.kotlin.psi.KtFile
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

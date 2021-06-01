@@ -39,7 +39,7 @@
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-native" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver" scope="RUNTIME" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg" scope="RUNTIME" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize" scope="RUNTIME" />

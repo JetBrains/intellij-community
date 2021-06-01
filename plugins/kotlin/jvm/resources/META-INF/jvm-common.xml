@@ -202,9 +202,9 @@
         <declarationAttributeAltererExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.IdeAllOpenDeclarationAttributeAltererExtension"/>
         <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.allopen.AllOpenUltraLightClassModifierExtension"/>
 
-        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.noarg.ide.IdeNoArgComponentContainerContributor"/>
-        <expressionCodegenExtension implementation="org.jetbrains.kotlin.noarg.ide.IdeNoArgExpressionCodegenExtension"/>
-        <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.noarg.ide.NoArgUltraLightClassModifierExtension"/>
+        <storageComponentContainerContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgComponentContainerContributor"/>
+        <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.IdeNoArgExpressionCodegenExtension"/>
+        <ultraLightClassModifierExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.noarg.NoArgUltraLightClassModifierExtension"/>
         <defaultErrorMessages implementation="org.jetbrains.kotlin.noarg.diagnostic.DefaultErrorMessagesNoArg"/>
 
         <completionExtension implementation="org.jetbrains.kotlin.idea.properties.PropertyKeyCompletion"/>

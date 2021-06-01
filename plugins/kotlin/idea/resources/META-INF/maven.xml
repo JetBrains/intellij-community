@@ -3,7 +3,7 @@
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.maven.configuration.KotlinJavaMavenConfigurator"/>
     <projectConfigurator implementation="org.jetbrains.kotlin.idea.maven.configuration.KotlinJavascriptMavenConfigurator"/>
     <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.maven.compilerPlugin.allopen.AllOpenMavenProjectImportHandler"/>
-    <mavenProjectImportHandler implementation="org.jetbrains.kotlin.noarg.ide.NoArgMavenProjectImportHandler"/>
+    <mavenProjectImportHandler implementation="org.jetbrains.kotlin.idea.maven.compilerPlugin.noarg.NoArgMavenProjectImportHandler"/>
     <mavenProjectImportHandler implementation="org.jetbrains.kotlin.samWithReceiver.ide.SamWithReceiverMavenProjectImportHandler"/>
     <mavenProjectImportHandler implementation="org.jetbrains.kotlinx.serialization.idea.KotlinSerializationMavenImportHandler"/>
     <buildSystemTypeDetector implementation="org.jetbrains.kotlin.idea.maven.MavenDetector"/>

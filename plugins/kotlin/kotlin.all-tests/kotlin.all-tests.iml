@@ -14,7 +14,9 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.annotation-based-compiler-support.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.maven" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" />
     <orderEntry type="module" module-name="kotlin.core" />

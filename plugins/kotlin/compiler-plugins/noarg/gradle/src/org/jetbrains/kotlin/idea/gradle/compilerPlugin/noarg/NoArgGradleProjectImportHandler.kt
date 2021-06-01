@@ -1,11 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.noarg.ide
+package org.jetbrains.kotlin.idea.gradle.compilerPlugin.noarg
 
 import org.jetbrains.kotlin.idea.gradle.compilerPlugin.AbstractGradleImportHandler
 import org.jetbrains.kotlin.idea.compilerPlugin.AnnotationBasedCompilerPluginSetup.PluginOption
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
+import org.jetbrains.kotlin.noarg.ide.NoArgModel
 
 class NoArgGradleProjectImportHandler : AbstractGradleImportHandler<NoArgModel>() {
     override val compilerPluginId = NoArgCommandLineProcessor.PLUGIN_ID

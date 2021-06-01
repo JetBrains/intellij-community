@@ -47,7 +47,9 @@
           <element id="module-output" name="kotlin.compiler-plugins.kotlinx-serialization" />
         </element>
         <element id="archive" name="kotlin-compiler-plugins-noarg.jar">
-          <element id="module-output" name="kotlin.compiler-plugins.noarg" />
+          <element id="module-output" name="kotlin.compiler-plugins.noarg.common" />
+          <element id="module-output" name="kotlin.compiler-plugins.noarg.gradle" />
+          <element id="module-output" name="kotlin.compiler-plugins.noarg.maven" />
         </element>
         <element id="archive" name="kotlin-compiler-plugins-sam-with-receiver.jar">
           <element id="module-output" name="kotlin.compiler-plugins.sam-with-receiver" />
