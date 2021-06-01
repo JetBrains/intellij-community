@@ -111,10 +111,20 @@ class ExtractModuleFromPackageAction : AnAction() {
 
     private fun extractModule(directory: PsiDirectory, module: Module, moduleName: @NlsSafe String,
                               usedModules: Set<Module>, usedLibraries: Set<Library>, targetSourceRootPath: String?) {
-      val newModule = ModuleManager.getInstance(module.project).newModule(module.moduleNioFile.parent.resolve("$moduleName.iml"),
-                                                                          ModuleTypeId.JAVA_MODULE)
       val packagePrefix = JavaDirectoryService.getInstance().getPackage(directory)?.qualifiedName ?: ""
       val targetSourceRoot = targetSourceRootPath?.let { VfsUtil.createDirectories(it) }
+      val (contentRoot, imlFileDirectory) = if (targetSourceRoot != null) {
+        val parent = targetSourceRoot.parent
+        if (parent in ModuleRootManager.getInstance(module).contentRoots) targetSourceRoot to module.moduleNioFile.parent
+        else parent to parent.toNioPath()
+      }
+      else {
+        directory.virtualFile to module.moduleNioFile.parent
+      }
+
+      val newModule = ModuleManager.getInstance(module.project).newModule(imlFileDirectory.resolve("$moduleName.iml"),
+                                                                          ModuleTypeId.JAVA_MODULE)
+
       ModuleRootModificationUtil.updateModel(newModule) { model ->
         if (ModuleRootManager.getInstance(module).isSdkInherited) {
           model.inheritSdk()
@@ -122,13 +132,12 @@ class ExtractModuleFromPackageAction : AnAction() {
         else {
           model.sdk = ModuleRootManager.getInstance(module).sdk
         }
+        val contentEntry = model.addContentEntry(contentRoot)
         if (targetSourceRoot != null) {
-          val parent = targetSourceRoot.parent
-          val contentRoot = if (parent in ModuleRootManager.getInstance(module).contentRoots) targetSourceRoot else parent
-          model.addContentEntry(contentRoot).addSourceFolder(targetSourceRoot, false)
+          contentEntry.addSourceFolder(targetSourceRoot, false)
         }
         else {
-          model.addContentEntry(directory.virtualFile).addSourceFolder(directory.virtualFile, false, packagePrefix)
+          contentEntry.addSourceFolder(directory.virtualFile, false, packagePrefix)
         }
         val moduleDependencies = JavaProjectDependenciesAnalyzer.removeDuplicatingDependencies(usedModules)
         moduleDependencies.forEach { model.addModuleOrderEntry(it) }
