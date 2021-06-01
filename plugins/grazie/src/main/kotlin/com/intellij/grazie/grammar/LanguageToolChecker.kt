@@ -39,7 +39,7 @@ class LanguageToolChecker : TextChecker() {
   }
 
   class Problem(private val match: RuleMatch, lang: Lang, text: TextContent)
-    : TextProblem(toGrazieRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
+    : TextProblem(LanguageToolRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
 
     override fun getShortMessage(): String =
       match.shortMessage.trimToNull() ?: match.rule.description.trimToNull() ?: match.rule.category.name
@@ -61,14 +61,11 @@ class LanguageToolChecker : TextChecker() {
     private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
     private val interner = Interner.createWeakInterner<String>()
 
-    private fun toGrazieRule(lang: Lang, rule: org.languagetool.rules.Rule) =
-      LanguageToolRule(lang, rule, LangTool.isRuleEnabledByDefault(lang, rule.id))
-
     internal fun getRules(lang: Lang): List<LanguageToolRule> {
       return LangTool.getTool(lang).allRules.asSequence()
         .distinctBy { it.id }
         .filter { r -> !r.isDictionaryBasedSpellingRule }
-        .map { toGrazieRule(lang, it) }
+        .map { LanguageToolRule(lang, it) }
         .toList()
     }
 

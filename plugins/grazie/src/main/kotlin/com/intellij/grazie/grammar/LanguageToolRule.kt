@@ -14,8 +14,10 @@ import org.languagetool.rules.IncorrectExample
 import java.net.URL
 
 internal class LanguageToolRule(
-  lang: Lang, private val ltRule: org.languagetool.rules.Rule, enabledByDefault: Boolean
-) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, ltRule.category.name, enabledByDefault) {
+  private val lang: Lang, private val ltRule: org.languagetool.rules.Rule
+) : Rule(LangTool.globalIdPrefix(lang) + ltRule.id, ltRule.description, ltRule.category.name) {
+
+  override fun isEnabledByDefault(): Boolean = LangTool.isRuleEnabledByDefault(lang, ltRule.id)
 
   override fun getUrl(): URL? = ltRule.url
 
