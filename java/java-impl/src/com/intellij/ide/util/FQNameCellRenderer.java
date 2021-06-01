@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.psi.PsiClass;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -18,7 +19,7 @@ public class FQNameCellRenderer extends SimpleColoredComponent implements ListCe
 
   public FQNameCellRenderer() {
     EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-    FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
+    FONT = scheme.getFont(EditorFontType.PLAIN);
     setOpaque(true);
   }
 

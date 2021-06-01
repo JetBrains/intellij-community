@@ -1,11 +1,15 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.patterns;
 
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @author peter
+ * Provides patterns for {@link Character} and contains conditions for digits, letters, whitespace and Java identifier parts.
+ * <p>
+ * Please see the <a href="https://plugins.jetbrains.com/docs/intellij/element-patterns.html">IntelliJ Platform Docs</a>
+ * for a high-level overview.
+ *
  * @see StandardPatterns#character()
  */
 public class CharPattern extends ObjectPattern<Character, CharPattern> {

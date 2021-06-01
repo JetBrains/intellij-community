@@ -9,6 +9,7 @@ import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.cef.network.CefRequest;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -31,6 +32,11 @@ public class IDEA261496Test {
 
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
   @After
   public void after() {
     TestScaleHelper.restoreSystemProperties();
@@ -38,8 +44,6 @@ public class IDEA261496Test {
 
   @Test
   public void test() {
-    TestScaleHelper.assumeStandalone();
-
     CountDownLatch latch = new CountDownLatch(1);
 
     JBCefBrowser jbCefBrowser = new JBCefBrowser("http://maps.google.com"); // heavy page

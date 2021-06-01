@@ -25,9 +25,12 @@ import com.siyeh.ig.LightJavaInspectionTestCase;
  */
 public class ClassInitializerInspectionTest extends LightJavaInspectionTestCase {
 
-  public void testSimple() { 
-    doTest();
-    assertEmpty(myFixture.filterAvailableIntentions("Make 'static'"));
+  public void testSimple() {
+    IdeaTestUtil.withLevel(getModule(), LanguageLevel.JDK_15, () -> {
+      doTest();
+      assertEmpty(myFixture.filterAvailableIntentions("Make 'static'"));
+    });
+    
   }
 
   public void testAnonymous() { doTest(); }

@@ -10,6 +10,7 @@ import com.intellij.execution.target.TargetPlatform
 import com.intellij.execution.target.TargetedCommandLine
 import com.intellij.execution.target.value.getTargetUploadPath
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.diagnostic.trace
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.util.io.BaseOutputReader
+import com.intellij.util.text.nullize
 import org.gradle.initialization.BuildEventConsumer
 import org.gradle.internal.remote.internal.RemoteConnection
 import org.gradle.internal.remote.internal.inet.SocketInetAddress
@@ -38,11 +40,13 @@ import java.util.concurrent.Future
 internal class GradleServerRunner(private val connection: TargetProjectConnection,
                                   private val consumerOperationParameters: ConsumerOperationParameters) {
 
-  fun run(targetBuildParametersBuilder: TargetBuildParameters.Builder, resultHandler: ResultHandler<Any?>) {
+  fun run(classpathInferer: GradleServerClasspathInferer,
+          targetBuildParametersBuilder: TargetBuildParameters.Builder,
+          resultHandler: ResultHandler<Any?>) {
     val project: Project = connection.taskId?.findProject() ?: return
     val progressIndicator = MyTargetProgressIndicator(connection.taskId, connection.taskListener)
     val environmentConfigurationProvider = connection.environmentConfigurationProvider
-    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, environmentConfigurationProvider)
+    val serverEnvironmentSetup = GradleServerEnvironmentSetupImpl(project, classpathInferer, environmentConfigurationProvider)
     val commandLine = serverEnvironmentSetup.prepareEnvironment(targetBuildParametersBuilder, consumerOperationParameters,
                                                                 progressIndicator)
     runTargetProcess(commandLine, serverEnvironmentSetup, progressIndicator, resultHandler)
@@ -269,7 +273,7 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     }
 
     override fun onTextAvailable(event: ProcessEvent, outputType: Key<*>) {
-      log.trace { event.text }
+      log.traceIfNotEmpty(event.text)
       if (connectionAddressReceived) return
       if (outputType === ProcessOutputTypes.STDERR) {
         targetProgressIndicator.addText(event.text, outputType)
@@ -307,4 +311,8 @@ internal class GradleServerRunner(private val connection: TargetProjectConnectio
     private val log = logger<GradleServerRunner>()
     private val targetPreparationKey = Key.create<Boolean>("target preparation key")
   }
+}
+
+private fun Logger.traceIfNotEmpty(text: @NlsSafe String?) {
+  text.nullize(true)?.also { trace { it.trimEnd() } }
 }

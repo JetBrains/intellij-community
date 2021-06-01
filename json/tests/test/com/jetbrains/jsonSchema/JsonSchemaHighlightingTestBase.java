@@ -6,12 +6,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.StatusBarWidgetFactory;
+import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetFactory;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -52,5 +55,11 @@ public abstract class JsonSchemaHighlightingTestBase extends BasePlatformTestCas
     Disposer.register(testRootDisposable, () -> JsonSchemaTestServiceImpl.setProvider(null));
     Project project = fixture.getProject();
     ServiceContainerUtil.replaceService(project, JsonSchemaService.class, new JsonSchemaTestServiceImpl(project), testRootDisposable);
+  }
+
+  public static EditorBasedStatusBarPopup createJsonSchemaStatusWidget(@NotNull Project project) {
+    StatusBarWidgetFactory widgetFactory = StatusBarWidgetFactory.EP_NAME.findExtension(JsonSchemaStatusWidgetFactory.class);
+    assertNotNull(widgetFactory);
+    return (EditorBasedStatusBarPopup)widgetFactory.createWidget(project);
   }
 }

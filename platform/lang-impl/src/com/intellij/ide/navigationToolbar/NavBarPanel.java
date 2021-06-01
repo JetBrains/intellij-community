@@ -545,7 +545,7 @@ public class NavBarPanel extends JPanel implements DataProvider, PopupOwner, Dis
   }
 
   protected void doubleClick(final Object object) {
-    Object target = ObjectUtils.notNull(getNavigatable(object), object);
+    Object target = ObjectUtils.chooseNotNull(getNavigatable(object), object);
     if (target instanceof Navigatable) {
       Navigatable navigatable = (Navigatable)target;
       if (navigatable.canNavigate()) {

@@ -135,7 +135,8 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         return JdkAutoHintService
           .getInstance(project)
           .state
-          .jdks.singleOrNull { it.name.equals(sdkName, ignoreCase = true) }
+          .jdks.singleOrNull { it.name.equals(sdkName, ignoreCase = true) &&
+                               it.path?.let { path -> projectInWsl == WslDistributionManager.isWslPath(path) } ?: false }
       }
 
       private fun parseSdkRequirement(sdk: UnknownSdk): JdkRequirement? {
@@ -230,9 +231,15 @@ class JdkAuto : UnknownSdkResolver, JdkDownloaderBase {
         if (sdk.sdkType != sdkType) return null
 
         val hintMatch = resolveHintPath(sdk, indicator)
-        if (hintMatch != null) return hintMatch
+        if (hintMatch != null) {
+          LOG.info("Found hint path for local SDK: path ${hintMatch.existingSdkHome}")
+          return hintMatch
+        }
 
-        val req = parseSdkRequirement(sdk) ?: return null
+        val req = parseSdkRequirement(sdk) ?: run {
+          LOG.info("Failed to parse unknown SDK requirement ${sdk}")
+          return null
+        }
         LOG.info("Looking for a local SDK for ${sdk.sdkType.presentableName} with name ${sdk}")
 
         fun List<JavaLocalSdkFix>.pickBestMatch() = this.maxByOrNull { it.version }

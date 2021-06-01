@@ -9,7 +9,7 @@ class JavaSelectLesson : NewSelectLesson() {
   override val selectArgument = "\"$selectString\""
   override val selectCall = """someMethod("$firstString", $selectArgument, "$thirdString")"""
 
-  override val numberOfSelectsForWholeCall = 4
+  override val numberOfSelectsForWholeCall = 2
 
   override val sample: LessonSample = parseLessonSample("""
     abstract class Scratch {

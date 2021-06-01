@@ -116,8 +116,10 @@ fun Project.getExplicitTrustedStateOrByHostAndLocation(): ThreeState {
 }
 
 fun Project.setTrusted(value: Boolean) {
+  val oldValue = this.service<TrustedProjectSettings>().trustedState;
   this.service<TrustedProjectSettings>().trustedState = ThreeState.fromBoolean(value)
-  if(value) {
+
+  if (value && oldValue != ThreeState.YES) {
     ApplicationManager.getApplication().messageBus.syncPublisher(TrustChangeNotifier.TOPIC).projectTrusted(this)
   }
 }

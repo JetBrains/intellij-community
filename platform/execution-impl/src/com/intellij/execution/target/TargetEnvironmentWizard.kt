@@ -15,7 +15,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.border.Border
 
-class TargetEnvironmentWizard(project: Project,
+class TargetEnvironmentWizard(val project: Project,
                               @NlsContexts.DialogTitle title: String,
                               val subject: TargetEnvironmentConfiguration,
                               steps: List<AbstractWizardStepEx>)
@@ -38,6 +38,21 @@ class TargetEnvironmentWizard(project: Project,
       it.add(super.createSouthPanel(), BorderLayout.CENTER)
       it.border = JBUI.Borders.empty(0, 12, 8, 12)
     }
+
+  override fun show() {
+    TargetCounterUsagesCollector.reportTargetCreationBegan(project, subject.typeId)
+    super.show()
+  }
+
+  override fun doCancelAction() {
+    TargetCounterUsagesCollector.reportTargetCreationCancelled(project, subject.typeId, currentStep)
+    super.doCancelAction()
+  }
+
+  override fun doOKAction() {
+    TargetCounterUsagesCollector.reportTargetCreationSucceeded(project, subject.typeId)
+    super.doOKAction()
+  }
 
   companion object {
     @JvmStatic

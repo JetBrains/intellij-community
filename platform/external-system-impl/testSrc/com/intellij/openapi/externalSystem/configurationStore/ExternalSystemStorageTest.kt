@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.configurationStore
 
+import com.intellij.configurationStore.StoreReloadManager
 import com.intellij.facet.FacetManager
 import com.intellij.facet.FacetType
 import com.intellij.facet.mock.MockFacetType
@@ -43,6 +44,7 @@ import com.intellij.testFramework.*
 import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.*
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.ide.impl.jps.serialization.JpsProjectModelSynchronizer
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.externalSystemOptions
 import kotlinx.coroutines.runBlocking
@@ -437,7 +439,7 @@ class ExternalSystemStorageTest {
   @Test
   fun `change storeExternally property and save libraries to internal storage`() {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
-    loadModifySaveAndCheck("libraryInExternalStorage", "libraryAfterStoreExternallyPropertyChanged") { project ->
+    loadModifySaveAndCheck("librariesInExternalStorage", "librariesAfterStoreExternallyPropertyChanged") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
     }
   }
@@ -445,12 +447,24 @@ class ExternalSystemStorageTest {
   @Test
   fun `change storeExternally property several times`() {
     assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
-    loadModifySaveAndCheck("libraryInExternalStorage", "libraryAfterStoreExternallyPropertyChanged") { project ->
+    loadModifySaveAndCheck("librariesInExternalStorage", "librariesAfterStoreExternallyPropertyChanged") { project ->
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
       runBlocking { project.stateStore.save() }
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(true)
       runBlocking { project.stateStore.save() }
       ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
+    }
+  }
+
+  @Test
+  fun `remove library stored externally`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("librariesInExternalStorage", "singleLibraryInExternalStorage") { project ->
+      val libraryTable = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+      runWriteActionAndWait {
+        libraryTable.removeLibrary(libraryTable.getLibraryByName("spring")!!)
+        libraryTable.removeLibrary(libraryTable.getLibraryByName("kotlin")!!)
+      }
     }
   }
 
@@ -492,11 +506,64 @@ class ExternalSystemStorageTest {
     }
   }
 
+  @Test
+  fun `check project model saved correctly at internal storage`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
+      ExternalProjectsManagerImpl.getInstance(project).setStoreExternally(false)
+    }
+  }
+
+  @Test
+  fun `check project model saved correctly at internal storage after misc manual modification`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("twoModulesWithLibsAndFacetsInExternalStorage", "twoModulesWithLibrariesAndFacets") { project ->
+      val miscFile = File(project.projectFilePath!!)
+      miscFile.writeText("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project version="4">
+          <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
+        </project>
+      """.trimIndent())
+      WriteAction.runAndWait<RuntimeException> {
+        VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
+        StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
+      }
+    }
+  }
+
+  @Test
+  fun `check project model saved correctly at external storage after misc manual modification`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("twoModulesWithLibrariesAndFacets", "twoModulesInExtAndLibsAndFacetsInInternalStorage") { project ->
+      val miscFile = File(project.projectFilePath!!)
+      miscFile.writeText("""
+        <?xml version="1.0" encoding="UTF-8"?>
+        <project version="4">
+          <component name="ExternalStorageConfigurationManager" enabled="true" />
+          <component name="ProjectRootManager" version="2" languageLevel="JDK_1_8" />
+        </project>
+      """.trimIndent())
+      WriteAction.runAndWait<RuntimeException> {
+        VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
+        StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
+      }
+    }
+  }
+
   @Before
   fun registerFacetType() {
     WriteAction.runAndWait<RuntimeException> {
       FacetType.EP_NAME.getPoint().registerExtension(MockFacetType(), disposableRule.disposable)
       FacetType.EP_NAME.getPoint().registerExtension(MockSubFacetType(), disposableRule.disposable)
+    }
+  }
+
+  @Test
+  fun `external-system-id attributes are not removed from libraries, artifacts and facets on save`() {
+    assumeTrue(ProjectModelRule.isWorkspaceModelEnabled)
+    loadModifySaveAndCheck("elementsWithExternalSystemIdAttributes", "elementsWithExternalSystemIdAttributes") { project ->
+      JpsProjectModelSynchronizer.getInstance(project)!!.markAllEntitiesAsDirty()
     }
   }
 

@@ -11,6 +11,7 @@ import org.cef.handler.CefLoadHandler;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -51,6 +52,11 @@ public class JBCefLoadHtmlTest {
   static final CountDownLatch LATCH = new CountDownLatch(1);
   static volatile boolean testPassed;
 
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
   @After
   public void after() {
     TestScaleHelper.restoreProperties();
@@ -58,8 +64,6 @@ public class JBCefLoadHtmlTest {
 
   @Test
   public void test() {
-    TestScaleHelper.assumeStandalone();
-
     JBCefBrowser browser = new JBCefBrowser();
 
     browser.getJBCefClient().addLoadHandler(new CefLoadHandler() {

@@ -831,7 +831,7 @@ final class DistributionJARsBuilder {
     }
     else {
       for (Pair<PluginLayout, Path> pluginPair in pluginsToScramble) {
-        buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, pluginPair.first, pluginPair.second)
+        buildContext.proprietaryBuildTools.scrambleTool.scramblePlugin(buildContext, pluginPair.first, pluginPair.second, targetDirectory)
       }
     }
   }

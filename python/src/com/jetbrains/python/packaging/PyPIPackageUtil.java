@@ -319,7 +319,7 @@ public class PyPIPackageUtil {
 
   @NotNull
   private static List<String> parsePyPIListFromWeb(@NotNull String url) throws IOException {
-    LOG.debug("Fetching index of all packages available on " + url);
+    LOG.info("Fetching index of all packages available on " + url);
     return HttpRequests.request(url).userAgent(getUserAgent()).connect(request -> {
       final List<String> packages = new ArrayList<>();
       final Reader reader = request.getReader();

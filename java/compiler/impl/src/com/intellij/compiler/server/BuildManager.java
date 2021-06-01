@@ -26,6 +26,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.actions.RevealFileAction;
 import com.intellij.ide.file.BatchFileChangeListener;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -102,7 +103,8 @@ import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.*;
+import javax.tools.JavaCompiler;
+import javax.tools.ToolProvider;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -384,7 +386,7 @@ public final class BuildManager implements Disposable {
       ScheduledFuture<?> future = AppExecutorUtil.getAppScheduledExecutorService()
         .scheduleWithFixedDelay(() -> runCommand(new GCRunnable(getLocalBuildSystemDirectory())), 3, 180, TimeUnit.MINUTES);
       Disposer.register(this, () -> future.cancel(false));
-      if (Registry.is("compiler.build.data.clean.unused.wsl")) {
+      if (Boolean.valueOf(System.getProperty("compiler.build.data.clean.unused.wsl"))) {
         WslDistributionManager.getInstance().getInstalledDistributions().forEach(distribution -> {
           Path wslBuildSystemDirectory = getWslBuildSystemDirectory(distribution);
           if (wslBuildSystemDirectory != null) {
@@ -520,7 +522,7 @@ public final class BuildManager implements Disposable {
             final UUID sessionId = future.getRequestID();
             final Channel channel = myMessageDispatcher.getConnectedChannel(sessionId);
             if (channel != null) {
-              CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent();
+              CmdlineRemoteProto.Message.ControllerMessage.FSEvent event = data.createNextEvent(wslPathMapper(entry.getKey()));
               final CmdlineRemoteProto.Message.ControllerMessage message = CmdlineRemoteProto.Message.ControllerMessage.newBuilder().setType(
                 CmdlineRemoteProto.Message.ControllerMessage.Type.FS_EVENT
               ).setFsEvent(event).build();
@@ -533,6 +535,38 @@ public final class BuildManager implements Disposable {
         }
       }
     });
+  }
+
+  @Nullable
+  private static Project findProjectByProjectPath(@NotNull String projectPath) {
+    return ContainerUtil.find(ProjectManager.getInstance().getOpenProjects(), (project) -> projectPath.equals(getProjectPath(project)));
+  }
+
+  @NotNull
+  private static Function<String, String> wslPathMapper(@Nullable WSLDistribution distr) {
+    return distr == null?
+      Function.identity() :
+      // interned paths collapse repeated slashes so \\wsl$ ends up /wsl$
+      path -> path.startsWith("/wsl$")? distr.getWslPath("/" + path) : path;
+  }
+
+  private static Function<String, String> wslPathMapper(@NotNull String projectPath) {
+    return new Function<>() {
+      private Function<String, String> myImpl;
+
+      @Override
+      public String apply(String path) {
+        if (myImpl != null) {
+          return myImpl.apply(path);
+        }
+        if (path.startsWith("/wsl$")) {
+          Project project = findProjectByProjectPath(projectPath);
+          myImpl = wslPathMapper(project != null ? findWSLDistributionForBuild(project) : null);
+          return myImpl.apply(path);
+        }
+        return path;
+      }
+    };
   }
 
   public static void forceModelLoading(CompileContext context) {
@@ -684,7 +718,7 @@ public final class BuildManager implements Disposable {
       return false;
     }
     final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(project);
-    if (!config.MAKE_PROJECT_ON_SAVE) {
+    if (!config.MAKE_PROJECT_ON_SAVE || !TrustedProjects.isTrusted(project)) {
       return false;
     }
     return config.allowAutoMakeWhileRunningApplication() || !hasRunningProcess(project);
@@ -875,7 +909,7 @@ public final class BuildManager implements Disposable {
                      new HashSet<>(convertToStringPaths(data.myDeleted)));
           }
           needRescan = data.getAndResetRescanFlag();
-          currentFSChanges = needRescan ? null : data.createNextEvent();
+          currentFSChanges = needRescan ? null : data.createNextEvent(wslPathMapper(wslDistribution));
           if (LOG.isDebugEnabled()) {
             LOG.debug("Sending to starting build, ordinal=" + (currentFSChanges == null ? null : currentFSChanges.getOrdinal()));
           }
@@ -2005,18 +2039,18 @@ public final class BuildManager implements Disposable {
       }
     }
 
-    CmdlineRemoteProto.Message.ControllerMessage.FSEvent createNextEvent() {
+    CmdlineRemoteProto.Message.ControllerMessage.FSEvent createNextEvent(Function<String, String> pathMapper) {
       final CmdlineRemoteProto.Message.ControllerMessage.FSEvent.Builder builder =
         CmdlineRemoteProto.Message.ControllerMessage.FSEvent.newBuilder();
       builder.setOrdinal(++myNextEventOrdinal);
 
       for (InternedPath path : myChanged) {
-        builder.addChangedPaths(path.getValue());
+        builder.addChangedPaths(pathMapper.apply(path.getValue()));
       }
       myChanged.clear();
 
       for (InternedPath path : myDeleted) {
-        builder.addDeletedPaths(path.getValue());
+        builder.addDeletedPaths(pathMapper.apply(path.getValue()));
       }
       myDeleted.clear();
 

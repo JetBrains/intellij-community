@@ -21,12 +21,12 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.terminal.TerminalShellCommandHandler;
+import com.intellij.ui.JBColor;
 import com.intellij.util.Alarm;
-import com.jediterm.terminal.StyledTextConsumerAdapter;
-import com.jediterm.terminal.SubstringFinder;
+import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
-import com.jediterm.terminal.model.CharBuffer;
+import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalModelListener;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -61,6 +61,7 @@ public final class TerminalShellCommandHandlerHelper {
   private final SingletonNotificationManager mySingletonNotificationManager =
     new SingletonNotificationManager(ourToolWindowGroup, NotificationType.INFORMATION, null);
   private final AtomicBoolean myKeyPressed = new AtomicBoolean(false);
+  private TerminalLineIntervalHighlighting myCurrentHighlighting;
 
   TerminalShellCommandHandlerHelper(@NotNull ShellTerminalWidget widget) {
     myWidget = widget;
@@ -103,23 +104,23 @@ public final class TerminalShellCommandHandlerHelper {
 
   private void highlightMatchedCommand(@NotNull Project project) {
     if (!isEnabledForProject()) {
-      myWidget.getTerminalPanel().setFindResult(null);
+      setHighlighting(null);
       return;
     }
 
-    //highlight matched command
     String command = myWidget.getTypedShellCommand().trim();
-    SubstringFinder.FindResult result =
-      TerminalShellCommandHandler.Companion.matches(project, getWorkingDirectory(), !hasRunningCommands(), command)
-      ? searchMatchedCommand(command) : null;
-    myWidget.getTerminalPanel().setFindResult(result);
+    TerminalLineIntervalHighlighting commandHighlighting = null;
+    if (TerminalShellCommandHandler.Companion.matches(project, getWorkingDirectory(), !hasRunningCommands(), command)) {
+      commandHighlighting = doHighlight(command);
+    }
+    setHighlighting(commandHighlighting);
 
     //show notification
     if (getPropertiesComponent().getBoolean(TERMINAL_CUSTOM_COMMANDS_GOT_IT, false)) {
       return;
     }
 
-    if (result != null) {
+    if (commandHighlighting != null) {
       String title = TerminalBundle.message("smart_command_execution.notification.title");
       String content = TerminalBundle.message("smart_command_execution.notification.text",
                                               KeymapUtil.getFirstKeyboardShortcutText(getRunAction()),
@@ -136,6 +137,15 @@ public final class TerminalShellCommandHandlerHelper {
       };
       mySingletonNotificationManager.notify(title, content, project, listener);
     }
+  }
+
+  private synchronized void setHighlighting(@Nullable TerminalLineIntervalHighlighting highlighting) {
+    TerminalLineIntervalHighlighting oldHighlighting = myCurrentHighlighting;
+    if (oldHighlighting != null) {
+      oldHighlighting.dispose();
+      myWidget.getTerminalPanel().repaint();
+    }
+    myCurrentHighlighting = highlighting;
   }
 
   private boolean isEnabledForProject() {
@@ -171,37 +181,27 @@ public final class TerminalShellCommandHandlerHelper {
     return hasRunningCommands;
   }
 
-  private @Nullable SubstringFinder.FindResult searchMatchedCommand(@NotNull String pattern) {
-    if (pattern.length() == 0) {
+  private @Nullable TerminalLineIntervalHighlighting doHighlight(@NotNull String command) {
+    if (command.length() == 0) {
       return null;
     }
-
     return myWidget.processTerminalBuffer(textBuffer -> {
       int cursorLine = myWidget.getLineNumberAtCursor();
       if (cursorLine < 0 || cursorLine >= textBuffer.getHeight()) {
         return null;
       }
       String lineText = textBuffer.getLine(cursorLine).getText();
-      int patternStartInd = lineText.lastIndexOf(pattern);
-      if (patternStartInd < 0) {
+      int commandStartInd = lineText.lastIndexOf(command);
+      if (commandStartInd < 0) {
         return null;
       }
-      SubstringFinder finder = new SubstringFinder(pattern, true) {
-        @Override
-        public boolean accept(@NotNull FindResult.FindItem item) {
-          return item.getStart().x >= patternStartInd;
-        }
-      };
-      textBuffer.processScreenLines(cursorLine, 1, new StyledTextConsumerAdapter() {
-        @Override
-        public void consume(int x, int y, @NotNull TextStyle style, @NotNull CharBuffer characters, int startRow) {
-          for (int i = 0; i < characters.length(); i++) {
-            finder.nextChar(x, y - startRow, characters, i);
-          }
-        }
-      });
-      return finder.getResult();
+      TextStyle style = new TextStyle(null, getSmartCommandExecutionHighlightingColor());
+      return myWidget.highlightLineInterval(cursorLine, commandStartInd, command.length(), style);
     });
+  }
+
+  private static @NotNull TerminalColor getSmartCommandExecutionHighlightingColor() {
+    return new TerminalColor(() -> new JBColor(0xCFEFC6, 0x40503C));
   }
 
   public boolean processEnterKeyPressed(@NotNull KeyEvent keyPressed) {

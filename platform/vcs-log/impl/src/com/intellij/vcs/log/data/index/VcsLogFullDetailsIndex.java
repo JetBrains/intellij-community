@@ -13,9 +13,7 @@ import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndex;
 import com.intellij.util.indexing.impl.forward.ForwardIndexAccessor;
 import com.intellij.util.indexing.impl.forward.KeyCollectionForwardIndexAccessor;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorIntegerDescriptor;
-import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.*;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.util.StorageId;
 import it.unimi.dsi.fastutil.ints.IntIterator;
@@ -43,6 +41,7 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
                                 @NotNull String name,
                                 @NotNull DataIndexer<Integer, T, D> indexer,
                                 @NotNull DataExternalizer<T> externalizer,
+                                @Nullable StorageLockContext storageLockContext,
                                 @NotNull FatalErrorHandler fatalErrorHandler,
                                 @NotNull Disposable disposableParent)
     throws IOException {
@@ -51,23 +50,28 @@ public class VcsLogFullDetailsIndex<T, D> implements Disposable {
     myIndexer = indexer;
     myFatalErrorHandler = fatalErrorHandler;
 
-    myMapReduceIndex = createMapReduceIndex(externalizer);
+    myMapReduceIndex = createMapReduceIndex(externalizer, storageLockContext);
 
     Disposer.register(disposableParent, this);
   }
 
-  @NotNull
-  private MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer) throws IOException {
+  private @NotNull MyMapReduceIndex createMapReduceIndex(@NotNull DataExternalizer<T> dataExternalizer,
+                                                         @Nullable StorageLockContext storageLockContext) throws IOException {
     MyIndexExtension<T, D> extension = new MyIndexExtension<>(myName, myIndexer, dataExternalizer, myStorageId.getVersion());
-    Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> pair = createdForwardIndex();
+    Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> pair = createdForwardIndex(storageLockContext);
     ForwardIndex forwardIndex = pair != null ? pair.getFirst() : null;
     ForwardIndexAccessor<Integer, T> forwardIndexAccessor = pair != null ? pair.getSecond() : null;
-    return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex,
-                                forwardIndexAccessor);
+    PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.set(storageLockContext);
+    try {
+      return new MyMapReduceIndex(extension, new MyMapIndexStorage<>(myName, myStorageId, dataExternalizer), forwardIndex,
+                                  forwardIndexAccessor);
+    } finally {
+      PagedFileStorage.THREAD_LOCAL_STORAGE_LOCK_CONTEXT.remove();
+    }
   }
 
   @Nullable
-  protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> createdForwardIndex() throws IOException {
+  protected Pair<ForwardIndex, ForwardIndexAccessor<Integer, T>> createdForwardIndex(@Nullable StorageLockContext storageLockContext) throws IOException {
     return null;
   }
 

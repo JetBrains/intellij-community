@@ -25,7 +25,7 @@ class GithubViewPullRequestsAction :
   }
 
   override fun actionPerformed(e: AnActionEvent) {
-    e.project!!.service<GHPRToolWindowController>().show {
+    e.project!!.service<GHPRToolWindowController>().activate {
       it.initialView = GHPRToolWindowInitialView.LIST
       it.componentController?.viewList()
     }

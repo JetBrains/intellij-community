@@ -87,6 +87,10 @@ public enum LongRangeBinOp {
     return mySymbol;
   }
 
+  public boolean isShift() {
+    return this == SHL || this == SHR || this == USHR;
+  }
+
   /**
    * @param token Java token (like {@link JavaTokenType#PLUS})
    * @return a corresponding {@link LongRangeBinOp} constant; null if no constant corresponds for a given token

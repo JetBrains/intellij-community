@@ -5,9 +5,12 @@ import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.execution.wsl.WslPath
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.idea.maven.execution.SyncBundle
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.server.MavenDistributionsCache
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.server.WslMavenDistribution
@@ -171,9 +174,38 @@ object MavenWslUtil : MavenUtil() {
     return wsl.apply(wslDistribution)
   }
 
+  @JvmStatic
   fun useWslMaven(project: Project): Boolean {
     val projectWslDistr = tryGetWslDistribution(project) ?: return false
     val jdkWslDistr = tryGetWslDistributionForPath(ProjectRootManager.getInstance(project).projectSdk?.homePath) ?: return false
     return jdkWslDistr.id == projectWslDistr.id
+  }
+
+  @JvmStatic
+  fun sameDistributions(first: WSLDistribution?, second: WSLDistribution?): Boolean {
+    return first?.id == second?.id
+  }
+
+  @JvmStatic
+  fun restartMavenConnectorsIfJdkIncorrect(project: Project) {
+    ProgressManager.getInstance().runProcessWithProgressSynchronously(
+      {
+        val projectWslDistr = tryGetWslDistribution(project)
+        var needReset = false;
+
+        MavenServerManager.getInstance().allConnectors.forEach {
+          if (it.project == project) {
+            val jdkWslDistr = tryGetWslDistributionForPath(it.jdk.homePath)
+            if ((projectWslDistr != null && it.supportType != "WSL") || !sameDistributions(projectWslDistr, jdkWslDistr)) {
+              needReset = true;
+              it.shutdown(true)
+            }
+          }
+        }
+        if (!needReset) {
+          MavenProjectsManager.getInstance(project).embeddersManager.reset()
+        }
+
+      }, SyncBundle.message("maven.sync.restarting"), false, project)
   }
 }

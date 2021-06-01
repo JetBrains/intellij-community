@@ -70,7 +70,7 @@ public class MavenIndices {
     }
   }
 
-  public synchronized void close() {
+  public void close() {
     for (MavenSearchIndex each : myIndices) {
       each.close(false);
     }

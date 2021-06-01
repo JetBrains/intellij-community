@@ -47,10 +47,12 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
   public VcsLogPathsIndex(@NotNull StorageId storageId,
                           @NotNull VcsLogStorage storage,
                           @NotNull Set<VirtualFile> roots,
+                          @Nullable StorageLockContext storageLockContext,
                           @NotNull FatalErrorHandler fatalErrorHandler,
                           @NotNull Disposable disposableParent) throws IOException {
-    super(storageId, PATHS, new PathsIndexer(storage, createPathsEnumerator(roots, storageId), createRenamesMap(storageId)),
-          new ChangeKindListKeyDescriptor(), fatalErrorHandler, disposableParent);
+    super(storageId, PATHS, new PathsIndexer(storage, createPathsEnumerator(roots, storageId, storageLockContext),
+                                             createRenamesMap(storageId, storageLockContext)),
+          new ChangeKindListKeyDescriptor(), storageLockContext, fatalErrorHandler, disposableParent);
 
     myPathsIndexer = (PathsIndexer)myIndexer;
     myPathsIndexer.setFatalErrorConsumer(e -> fatalErrorHandler.consume(this, e));
@@ -58,18 +60,20 @@ public final class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPa
 
   @NotNull
   private static PersistentEnumerator<LightFilePath> createPathsEnumerator(@NotNull Collection<VirtualFile> roots,
-                                                                           @NotNull StorageId storageId) throws IOException {
+                                                                           @NotNull StorageId storageId,
+                                                                           @Nullable StorageLockContext storageLockContext) throws IOException {
     Path storageFile = storageId.getStorageFile(INDEX_PATHS_IDS);
     return new PersistentEnumerator<>(storageFile, new LightFilePathKeyDescriptor(roots),
-                                      Page.PAGE_SIZE, null, storageId.getVersion());
+                                      Page.PAGE_SIZE, storageLockContext, storageId.getVersion());
   }
 
   @NotNull
-  private static PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId)
+  private static PersistentHashMap<Couple<Integer>, Collection<Couple<Integer>>> createRenamesMap(@NotNull StorageId storageId,
+                                                                                                  @Nullable StorageLockContext storageLockContext)
     throws IOException {
     Path storageFile = storageId.getStorageFile(RENAMES_MAP);
     return new PersistentHashMap<>(storageFile, new CoupleKeyDescriptor(), new CollectionDataExternalizer(), Page.PAGE_SIZE,
-                                   storageId.getVersion());
+                                   storageId.getVersion(), storageLockContext);
   }
 
   @Nullable

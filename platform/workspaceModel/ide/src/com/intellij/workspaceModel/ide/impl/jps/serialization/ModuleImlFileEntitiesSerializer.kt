@@ -269,7 +269,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
           val name = generateUniqueLibraryName(originalName) { it in moduleLibraryNames }
           moduleLibraryNames.add(name)
           val tableId = LibraryTableId.ModuleLibraryTableId(moduleEntity.persistentId())
-          loadLibrary(name, libraryElement, tableId, builder, entitySource, virtualFileManager)
+          loadLibrary(name, libraryElement, tableId, builder, entitySource, virtualFileManager, false)
           val libraryId = LibraryId(name, tableId)
           ModuleDependencyItem.Exportable.LibraryDependency(libraryId, dependencyElement.isExported(), dependencyElement.readScope())
         }
@@ -488,7 +488,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       if (library.tableId is LibraryTableId.ModuleLibraryTableId) {
         createOrderEntryTag(MODULE_LIBRARY_TYPE).apply {
           setExportedAndScopeAttributes(dependencyItem)
-          addContent(saveLibrary(moduleLibraries.getValue(library.name), null))
+          addContent(saveLibrary(moduleLibraries.getValue(library.name), null, false))
         }
       } else {
         createOrderEntryTag(LIBRARY_TYPE).apply {

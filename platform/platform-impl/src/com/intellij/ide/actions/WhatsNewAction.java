@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.HTMLEditorProvider;
@@ -30,6 +31,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
+import static com.intellij.openapi.application.ex.ApplicationInfoEx.WHATS_NEW_AUTO;
+import static com.intellij.openapi.application.ex.ApplicationInfoEx.WHATS_NEW_EMBED;
+
 public class WhatsNewAction extends AnAction implements DumbAware {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
@@ -37,11 +41,11 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     if (whatsNewUrl == null) throw new IllegalStateException();
 
     Project project = e.getProject();
-    if (project == null || !JBCefApp.isSupported()) {
-      BrowserUtil.browse(whatsNewUrl);
+    if (project != null && JBCefApp.isSupported() && ApplicationInfoEx.getInstanceEx().isWhatsNewEligibleFor(WHATS_NEW_EMBED)) {
+      openWhatsNewFile(project, whatsNewUrl, null);
     }
     else {
-      openWhatsNewFile(project, whatsNewUrl, null);
+      BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(whatsNewUrl));
     }
   }
 
@@ -57,7 +61,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
 
   @ApiStatus.Internal
   public static boolean isAvailable() {
-    return Boolean.getBoolean("whats.new.notification");
+    return ApplicationInfoEx.getInstanceEx().isWhatsNewEligibleFor(WHATS_NEW_AUTO) || Boolean.getBoolean("whats.new.notification");
   }
 
   @Contract("_, null, null -> fail")
@@ -81,17 +85,12 @@ public class WhatsNewAction extends AnAction implements DumbAware {
     }
     else if (url != null) {
       boolean darkTheme = UIUtil.isUnderDarcula();
-      ApplicationInfo appInfo = ApplicationInfo.getInstance();
 
       Url embeddedUrl = Urls.newFromEncoded(url).addParameters(Map.of("var", "embed"));
       if (darkTheme) {
         embeddedUrl = embeddedUrl.addParameters(Map.of("theme", "dark"));
       }
-      embeddedUrl = embeddedUrl
-        .addParameters(Map.of("utm_source", "product"))
-        .addParameters(Map.of("utm_medium", "link"))
-        .addParameters(Map.of("utm_campaign", appInfo.getBuild().getProductCode()))
-        .addParameters(Map.of("utm_content", appInfo.getMajorVersion() + '.' + appInfo.getMinorVersionMainPart()));
+      String finalUrl = IdeUrlTrackingParametersProvider.getInstance().augmentUrl(embeddedUrl.toExternalForm());
 
       String timeoutContent = null;
       try (InputStream html = WhatsNewAction.class.getResourceAsStream("whatsNewTimeoutText.html")) {
@@ -108,7 +107,7 @@ public class WhatsNewAction extends AnAction implements DumbAware {
         Logger.getInstance(WhatsNewAction.class).error(e);
       }
 
-      HTMLEditorProvider.openEditor(project, title, embeddedUrl.toExternalForm(), timeoutContent);
+      HTMLEditorProvider.openEditor(project, title, finalUrl, timeoutContent);
     }
     else {
       HTMLEditorProvider.openEditor(project, title, content);

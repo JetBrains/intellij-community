@@ -41,7 +41,7 @@ public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestC
 
   public void testUnderscore() { doTest(); }
 
-  public void testVarClassesWarning() { doTest(); }
+  public void testRestrictedKeywordWarning() { doTest(); }
 
   public void testModuleInfoWarning() {
     withLevel(LanguageLevel.JDK_1_9, () -> {

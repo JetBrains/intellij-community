@@ -43,7 +43,8 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
         public void propertyChange(PropertyChangeEvent e) {
           String propertyName = e.getPropertyName();
           if (Presentation.PROP_TEXT.equals(propertyName) ||
-              Presentation.PROP_DESCRIPTION.equals(propertyName)) {
+              Presentation.PROP_DESCRIPTION.equals(propertyName) ||
+              Presentation.PROP_ICON.equals(propertyName)) {
             updatePresentation();
           }
         }
@@ -54,6 +55,7 @@ public abstract class ToolbarLabelAction extends DumbAwareAction implements Cust
     private void updatePresentation() {
       setText(StringUtil.notNullize(myPresentation.getText()));
       setToolTipText(StringUtil.nullize(myPresentation.getDescription()));
+      setIcon(myPresentation.getIcon());
     }
   }
 }

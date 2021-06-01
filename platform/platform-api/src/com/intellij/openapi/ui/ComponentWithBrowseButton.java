@@ -44,6 +44,7 @@ import static com.intellij.openapi.actionSystem.PlatformDataKeys.UI_DISPOSABLE;
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
   private final Comp myComponent;
   private final FixedSizeButton myBrowseButton;
+  private final ExtendableTextComponent.Extension myInlineButtonExtension;
   private boolean myButtonEnabled = true;
 
   @ApiStatus.Internal
@@ -59,14 +60,17 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     setFocusable(false);
     boolean inlineBrowseButton = myComponent instanceof ExtendableTextComponent && isUseInlineBrowserButton();
     if (inlineBrowseButton) {
-      ((ExtendableTextComponent)myComponent).addExtension(ExtendableTextComponent.Extension.create(
-        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners));
+      myInlineButtonExtension = ExtendableTextComponent.Extension.create(
+        getDefaultIcon(), getHoveredIcon(), getIconTooltip(), this::notifyActionListeners);
+      ((ExtendableTextComponent)myComponent).addExtension(myInlineButtonExtension);
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           notifyActionListeners();
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.SHIFT_DOWN_MASK)), myComponent);
+    } else {
+      myInlineButtonExtension = null;
     }
     add(myComponent, BorderLayout.CENTER);
 
@@ -149,6 +153,17 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     setEnabled(isEnabled());
   }
 
+  public void setButtonVisible(boolean buttonVisible) {
+    myBrowseButton.setVisible(buttonVisible);
+    if (myInlineButtonExtension != null && myComponent instanceof ExtendableTextComponent) {
+      if (buttonVisible) {
+        ((ExtendableTextComponent)myComponent).addExtension(myInlineButtonExtension);
+      } else {
+        ((ExtendableTextComponent)myComponent).removeExtension(myInlineButtonExtension);
+      }
+    }
+  }
+
   public void setButtonIcon(@NotNull Icon icon) {
     myBrowseButton.setIcon(icon);
     myBrowseButton.setDisabledIcon(IconLoader.getDisabledIcon(icon));
@@ -209,6 +224,15 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     }
   }
 
+  /**
+   * @deprecated The implementation may attach the button via the
+   * {@link ExtendableTextComponent#addExtension(ExtendableTextComponent.Extension)}
+   * so that the returned button may not be visible to the users
+   *
+   * @see #setButtonVisible
+   * @see #setButtonEnabled
+   */
+  @Deprecated
   public FixedSizeButton getButton() {
     return myBrowseButton;
   }

@@ -1,6 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr.ui
 import com.intellij.ui.JBColor
+import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.StartupUiUtil
 import java.awt.Color
 import javax.swing.text.SimpleAttributeSet
 import javax.swing.text.StyleConstants
@@ -11,9 +13,9 @@ object Styles {
     private val headerColor: Color = JBColor.BLACK
     private val linkColor = Color(74, 120, 194)
     private val lineSpacing = 0.1f
-    private val fontSize = 13
-    private val h1FontSize = 24
-    private val h2FontSize = 18
+    private val fontSize = StartupUiUtil.getLabelFont().size
+    private val h1FontSize = JBUIScale.scale(24)
+    private val h2FontSize = JBUIScale.scale(18)
 
     val H1 = SimpleAttributeSet().apply {
         StyleConstants.setForeground(this, headerColor)

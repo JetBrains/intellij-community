@@ -8,6 +8,7 @@ intellij.emojipicker
 intellij.featuresTrainer
 intellij.grazie
 intellij.markdown
+intellij.marketplace
 intellij.platform.langInjection
 intellij.properties
 intellij.reStructuredText

@@ -934,6 +934,9 @@ public class SMTestProxy extends AbstractTestProxy {
   }
 
   public SMRootTestProxy getRoot() {
+    if (this instanceof SMRootTestProxy) {
+      return (SMRootTestProxy)this;
+    }
     SMTestProxy parent = getParent();
     while (parent != null && !(parent instanceof SMRootTestProxy)) {
       parent = parent.getParent();

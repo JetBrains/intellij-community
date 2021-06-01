@@ -77,8 +77,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
                            @NotNull IndexStorageLayout<Key, Value> indexStorageLayout,
                            @Nullable ReadWriteLock lock) throws IOException {
     this(extension,
-         indexStorageLayout.createOrClearIndexStorage(),
-         indexStorageLayout.createOrClearForwardIndex(),
+         indexStorageLayout.openIndexStorage(),
+         indexStorageLayout.openForwardIndex(),
          indexStorageLayout.getForwardIndexAccessor(),
          lock);
   }

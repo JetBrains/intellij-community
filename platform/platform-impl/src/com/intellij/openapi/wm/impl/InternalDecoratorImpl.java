@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.ComponentWithMnemonics;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.MathUtil;
@@ -53,6 +54,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
 
   private final ToolWindowHeader header;
+  private final Wrapper notificationHeader = new Wrapper();
 
   InternalDecoratorImpl(@NotNull ToolWindowImpl toolWindow, @NotNull ToolWindowContentUi contentUi, @NotNull JComponent decoratorChild) {
     setLayout(new BorderLayout());
@@ -79,7 +81,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     installFocusTraversalPolicy(this, new LayoutFocusTraversalPolicy());
 
     dividerAndHeader.setOpaque(false);
-    dividerAndHeader.add(header, BorderLayout.SOUTH);
+    dividerAndHeader.add(JBUI.Panels.simplePanel(header).addToBottom(notificationHeader), BorderLayout.SOUTH);
     add(dividerAndHeader, BorderLayout.NORTH);
     if (SystemInfo.isMac) {
       setBackground(new JBColor(Gray._200, Gray._90));
@@ -303,6 +305,16 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   @NotNull
   public String getToolWindowId() {
     return toolWindow.getId();
+  }
+
+  public void setHeaderComponent(@Nullable JComponent notification) {
+    notificationHeader.setContent(notification);
+  }
+
+  @Nullable
+  public JComponent getHeaderComponent() {
+    JComponent component = notificationHeader.getTargetComponent();
+    return component != notificationHeader ? component : null;
   }
 
   @Override

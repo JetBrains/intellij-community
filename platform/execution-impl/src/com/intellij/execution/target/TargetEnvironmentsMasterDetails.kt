@@ -5,11 +5,13 @@ import com.intellij.execution.ExecutionBundle
 import com.intellij.execution.configurations.RuntimeConfigurationException
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.PlatformDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MasterDetailsComponent
+import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.ui.ColoredTreeCellRenderer
 import com.intellij.ui.CommonActionsPanel
 import com.intellij.ui.LayeredIcon
@@ -20,8 +22,10 @@ import com.intellij.util.text.UniqueNameGenerator
 import com.intellij.util.text.nullize
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import java.awt.Point
 import javax.swing.Icon
 import javax.swing.JTree
+import javax.swing.SwingUtilities
 
 class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
   private val project: Project,
@@ -42,10 +46,22 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     myTree.emptyText.text = ExecutionBundle.message("targets.details.status.empty.text")
     myTree.emptyText.appendSecondaryText(ExecutionBundle.message("targets.details.status.text.add.new.target"),
                                          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-      val popup = ActionManager.getInstance().createActionPopupMenu("TargetEnvironmentsConfigurable.EmptyListText", CreateNewTargetGroup())
       val size = myTree.emptyText.preferredSize
       val textY = myTree.height / if (myTree.emptyText.isShowAboveCenter) 3 else 2
-      popup.component.show(myTree, (myTree.width - size.width) / 2, textY + size.height)
+
+      val visibleBounds = myTree.visibleRect
+      val containerScreenPoint: Point = visibleBounds.location
+      SwingUtilities.convertPointToScreen(containerScreenPoint, myTree)
+      val targetPoint = Point(containerScreenPoint.x + (myTree.width - size.width) / 2, containerScreenPoint.y + textY + size.height)
+
+      JBPopupFactory.getInstance().createActionGroupPopup(null, CreateNewTargetGroup(), object : DataContext {
+        override fun getData(dataId: String): Any? {
+          if (CONTEXT_COMPONENT.`is`(dataId)) {
+            return myTree
+          }
+          return null
+        }
+      }, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false).showInScreenCoordinates(myTree, targetPoint)
     }
     val shortcutText = KeymapUtil.getFirstKeyboardShortcutText(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD))
     myTree.emptyText.appendSecondaryText(" $shortcutText", StatusText.DEFAULT_ATTRIBUTES, null)

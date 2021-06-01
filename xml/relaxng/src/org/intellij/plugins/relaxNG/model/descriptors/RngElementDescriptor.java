@@ -18,6 +18,7 @@ package org.intellij.plugins.relaxNG.model.descriptors;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.navigation.NavigationItem;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -54,7 +55,12 @@ import org.xml.sax.Locator;
 import javax.xml.namespace.QName;
 import java.util.*;
 
+import static com.intellij.util.ObjectUtils.doIfNotNull;
+
 public class RngElementDescriptor implements XmlElementDescriptor {
+
+  private static final Logger LOG = Logger.getInstance(RngElementDescriptor.class);
+
   private static final Key<ParameterizedCachedValue<XmlElementDescriptor, RngElementDescriptor>> DESCR_KEY = Key.create("DESCR");
   private static final Key<ParameterizedCachedValue<XmlAttributeDescriptor[], RngElementDescriptor>> ATTRS_KEY = Key.create("ATTRS");
 
@@ -412,7 +418,11 @@ public class RngElementDescriptor implements XmlElementDescriptor {
       myColumn = column;
       PsiElement definition = getNavigationElement();
       myName = definition.getText();
-      myKind = "element".equals(definition.getPrevSibling().getPrevSibling().getText()) ? Kind.ELEMENT : Kind.ATTRIBUTE;
+      PsiElement prevPrevSibling = doIfNotNull(definition.getPrevSibling(), PsiElement::getPrevSibling);
+      if (prevPrevSibling == null) {
+        LOG.error("Failed to locate type for RNC element - " + myName);
+      }
+      myKind = prevPrevSibling != null && "element".equals(prevPrevSibling.getText()) ? Kind.ELEMENT : Kind.ATTRIBUTE;
     }
 
     @Override

@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.SimpleColoredComponent;
@@ -46,7 +47,7 @@ public class PyImportChooser implements ImportChooser {
 
     CellRenderer() {
       EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
-      FONT = new Font(scheme.getEditorFontName(), Font.PLAIN, scheme.getEditorFontSize());
+      FONT = scheme.getFont(EditorFontType.PLAIN);
       setOpaque(true);
     }
 

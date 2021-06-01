@@ -83,7 +83,7 @@ public abstract class StatusText {
         if (e.getButton() == MouseEvent.BUTTON1 && clickCount == 1) {
           ActionListener actionListener = findActionListenerAt(e.getPoint());
           if (actionListener != null) {
-            actionListener.actionPerformed(new ActionEvent(this, 0, ""));
+            actionListener.actionPerformed(new ActionEvent(e, 0, ""));
             return true;
           }
         }

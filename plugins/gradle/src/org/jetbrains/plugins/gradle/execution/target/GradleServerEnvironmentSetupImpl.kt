@@ -10,7 +10,6 @@ import com.intellij.execution.target.local.LocalTargetEnvironmentRequest
 import com.intellij.execution.target.value.DeferredTargetValue
 import com.intellij.execution.target.value.TargetValue
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
@@ -21,9 +20,11 @@ import com.intellij.openapi.projectRoots.JdkUtil
 import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.io.FileUtil.*
+import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.util.PathMapper
 import com.intellij.util.PathMappingSettings
 import com.intellij.util.io.isDirectory
+import com.intellij.util.text.nullize
 import org.gradle.api.invocation.Gradle
 import org.gradle.tooling.internal.consumer.parameters.ConsumerOperationParameters
 import org.gradle.wrapper.WrapperExecutor
@@ -42,12 +43,12 @@ import org.jetbrains.plugins.gradle.util.GradleConstants.INIT_SCRIPT_CMD_OPTION
 import org.slf4j.LoggerFactory
 import org.slf4j.impl.Log4jLoggerFactory
 import java.io.File
-import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.Paths
 
 internal class GradleServerEnvironmentSetupImpl(private val project: Project,
+                                                private val classpathInferer: GradleServerClasspathInferer,
                                                 private val environmentConfigurationProvider: TargetEnvironmentConfigurationProvider) : GradleServerEnvironmentSetup, UserDataHolderBase() {
   override val javaParameters = SimpleJavaParameters()
   override lateinit var environmentConfiguration: TargetEnvironmentConfiguration
@@ -56,7 +57,7 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
   lateinit var projectUploadRoot: TargetEnvironment.UploadRoot
 
   private val uploader = Uploader()
-  private val localPathsToMap = mutableListOf<String>()
+  private val localPathsToMap = LinkedHashSet<String>()
 
   fun prepareEnvironment(targetBuildParametersBuilder: TargetBuildParameters.Builder,
                          consumerOperationParameters: ConsumerOperationParameters,
@@ -68,6 +69,10 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
 
     val factory = if (environmentConfiguration.typeId == "local") LocalTargetEnvironmentFactory()
     else environmentConfiguration.createEnvironmentFactory(project)
+
+    environmentConfiguration.runtimes.findByType(GradleRuntimeTargetConfiguration::class.java)?.homePath?.nullize(true)?.also {
+      targetBuildParametersBuilder.useInstallation(it)
+    }
 
     val (request, targetArguments) =
       prepareTargetEnvironmentRequest(factory, consumerOperationParameters, targetPathMapper, environmentConfiguration, progressIndicator)
@@ -234,24 +239,31 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
         targetBuildArguments.add(arg to uploader.requestUploadIntoTarget(path, this, environmentConfiguration))
         val file = File(path)
         if (file.extension != GradleConstants.EXTENSION) continue
-        val fileContent = loadFile(file, StandardCharsets.UTF_8)
         if (file.name.startsWith("ijinit")) {
+          val fileContent = loadFile(file, CharsetToolkit.UTF8, true)
           // based on the format of the `/org/jetbrains/plugins/gradle/tooling/internal/init/init.gradle` file
-          val toolingExtensionsPaths = fileContent.substringAfter("initscript {\n" +
-                                                                  "  dependencies {\n" +
-                                                                  "    classpath files(").substringBefore(")\n" +
-                                                                                                          "  }")
-            .drop(10).dropLast(3).split("\"),mapPath(\"")
-          for (toolingExtensionsPath in toolingExtensionsPaths) {
-            javaParameters.classPath.add(toolingExtensionsPath)
-            localPathsToMap += toolingExtensionsPath
+          val toolingExtensionsPaths = fileContent
+            .substringAfter(
+              "initscript {\n" +
+              "  dependencies {\n" +
+              "    classpath files(", "")
+            .substringBefore(
+              ")\n" +
+              "  }", "")
+            .nullize()
+            ?.drop(10)?.dropLast(3)?.split("\"),mapPath(\"")
+          if (toolingExtensionsPaths != null) {
+            for (toolingExtensionsPath in toolingExtensionsPaths) {
+              javaParameters.classPath.add(toolingExtensionsPath)
+              localPathsToMap += toolingExtensionsPath
+            }
           }
         }
         else if (!file.name.startsWith("ijmapper")) {
-          val regex = Regex("mapPath\\(['|\"](.{2,})['|\"][)]")
+          val fileContent = loadFile(file, CharsetToolkit.UTF8, true)
+          val regex = Regex("mapPath\\(['|\"](.{2,}?)['|\"][)]")
           val matches = regex.findAll(fileContent)
-          val elements = matches.map { it.groupValues[1] }
-          localPathsToMap.addAll(elements)
+          matches.mapTo(localPathsToMap) { it.groupValues[1] }
         }
       }
       else {
@@ -282,27 +294,27 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
   }
 
   private fun initJavaParameters() {
-    val classPath = javaParameters.classPath
     // kotlin-stdlib-jdk8
-    classPath.add(PathManager.getJarPathForClass(KotlinVersion::class.java))
+    classpathInferer.add(KotlinVersion::class.java)
     // gradle-api jar
-    classPath.add(PathManager.getJarPathForClass(Gradle::class.java))
+    classpathInferer.add(Gradle::class.java)
     // gradle-api-impldep jar
-    classPath.add(PathManager.getJarPathForClass(org.gradle.internal.impldep.com.google.common.base.Function::class.java))
+    classpathInferer.add(org.gradle.internal.impldep.com.google.common.base.Function::class.java)
     // gradle-wrapper jar
-    classPath.add(PathManager.getJarPathForClass(WrapperExecutor::class.java))
+    classpathInferer.add(WrapperExecutor::class.java)
     // logging jars
-    classPath.add(PathManager.getJarPathForClass(LoggerFactory::class.java))
-    classPath.add(PathManager.getJarPathForClass(Log4jLoggerFactory::class.java))
-    classPath.add(PathManager.getJarPathForClass(org.apache.log4j.Level::class.java))
+    classpathInferer.add(LoggerFactory::class.java)
+    classpathInferer.add(Log4jLoggerFactory::class.java)
+    classpathInferer.add(org.apache.log4j.Level::class.java)
     // gradle tooling proxy module
-    classPath.add(PathManager.getJarPathForClass(Main::class.java))
+    classpathInferer.add(Main::class.java)
     // intellij.gradle.toolingExtension - for use of model adapters classes
-    classPath.add(PathManager.getJarPathForClass(
-      org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier::class.java))
+    classpathInferer.add(
+      org.jetbrains.plugins.gradle.tooling.serialization.internal.adapter.InternalBuildIdentifier::class.java)
     // intellij.platform.externalSystem.rt
-    classPath.add(PathManager.getJarPathForClass(ExternalSystemSourceType::class.java))
+    classpathInferer.add(ExternalSystemSourceType::class.java)
 
+    javaParameters.classPath.addAll(classpathInferer.getClasspath())
     javaParameters.mainClass = Main::class.java.name
     if (log.isDebugEnabled) {
       javaParameters.programParametersList.add("--debug")

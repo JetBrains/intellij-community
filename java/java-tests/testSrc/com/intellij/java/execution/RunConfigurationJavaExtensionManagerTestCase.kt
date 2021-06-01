@@ -18,7 +18,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.concurrency.Semaphore
 
 abstract class RunConfigurationJavaExtensionManagerTestCase : ExecutionTestCase() {
-  override fun initOutputChecker(): OutputChecker = OutputChecker("", "")
+  override fun initOutputChecker(): OutputChecker = OutputChecker({ "" }, { "" })
 
   protected fun doTestOnlyApplicableConfigurationExtensionsShouldBeProcessed(configuration: RunConfiguration,
                                                                              expectedOutput: String? = null) {

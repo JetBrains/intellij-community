@@ -108,6 +108,11 @@ abstract class ProductProperties {
   boolean scramblePrivateFields = true
 
   /**
+   * Path to an alternative scramble script which will should be used for a product
+   */
+  String alternativeScrambleStubPath = null
+
+  /**
    * Describes which modules should be included into the product's platform and which plugins should be bundled with the product
    */
   ProductModulesLayout productLayout = new ProductModulesLayout()

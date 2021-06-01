@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
@@ -128,6 +128,7 @@ class GHLoadingPanelFactory<T>(private val model: GHSimpleLoadingModel<T>,
           content = createContent(panel, currentValueModel)
         }
         else {
+          valueModel = null
           content = when {
             model.loading -> createLoadingLabelPanel()
             model.error != null -> createErrorPanel(model.error!!)

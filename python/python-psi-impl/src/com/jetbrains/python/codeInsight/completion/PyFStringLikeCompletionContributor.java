@@ -3,7 +3,6 @@ package com.jetbrains.python.codeInsight.completion;
 import com.intellij.codeInsight.completion.*;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementDecorator;
-import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.openapi.editor.Document;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.psi.PsiReference;
@@ -72,7 +71,12 @@ public class PyFStringLikeCompletionContributor extends CompletionContributor {
         if (prefixCannotStartReference) {
           return;
         }
-        PyExpression fString = PyUtil.createExpressionFromFragment("f" + stringElemText, stringLiteral.getParent());
+
+        String fStringText = new StringBuilder()
+          .append("f").append(stringElemText)
+          .insert(relOffset + 1 + CompletionUtilCore.DUMMY_IDENTIFIER.length(), "} ")
+          .toString();
+        PyExpression fString = PyUtil.createExpressionFromFragment(fStringText, stringLiteral.getParent());
         assert fString != null;
         PsiReference reference = fString.findReferenceAt(relOffset + 1);
         if (reference == null) {

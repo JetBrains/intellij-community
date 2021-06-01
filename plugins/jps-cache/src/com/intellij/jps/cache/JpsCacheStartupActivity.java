@@ -2,6 +2,7 @@ package com.intellij.jps.cache;
 
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.server.BuildManager;
+import com.intellij.ide.impl.TrustedProjects;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationAction;
@@ -24,7 +25,7 @@ final class JpsCacheStartupActivity implements StartupActivity.DumbAware {
     }
 
     CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(project);
-    if (!workspaceConfiguration.MAKE_PROJECT_ON_SAVE) {
+    if (!workspaceConfiguration.MAKE_PROJECT_ON_SAVE || !TrustedProjects.isTrusted(project)) {
       return;
     }
 

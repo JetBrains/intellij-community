@@ -100,6 +100,10 @@ public abstract class ApplicationInfoEx extends ApplicationInfo {
 
   public abstract String getWhatsNewUrl();
 
+  public static final int WHATS_NEW_EMBED = 1;
+  public static final int WHATS_NEW_AUTO = 2;
+  public abstract boolean isWhatsNewEligibleFor(int role);
+
   public abstract String getWinKeymapUrl();
 
   public abstract String getMacKeymapUrl();

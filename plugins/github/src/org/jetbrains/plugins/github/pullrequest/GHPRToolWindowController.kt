@@ -24,12 +24,12 @@ internal class GHPRToolWindowController(private val project: Project) : Disposab
   fun isAvailable(): Boolean = repositoryManager.knownRepositories.isNotEmpty()
 
   @RequiresEdt
-  fun show(onShown: ((GHPRToolWindowTabController) -> Unit)? = null) {
+  fun activate(onActivated: ((GHPRToolWindowTabController) -> Unit)? = null) {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(GHPRToolWindowFactory.ID) ?: return
-    toolWindow.show {
+    toolWindow.activate {
       val controller = toolWindow.contentManager.selectedContent?.getUserData(GHPRToolWindowTabController.KEY)
-      if (controller != null && onShown != null) {
-        onShown(controller)
+      if (controller != null && onActivated != null) {
+        onActivated(controller)
       }
     }
   }

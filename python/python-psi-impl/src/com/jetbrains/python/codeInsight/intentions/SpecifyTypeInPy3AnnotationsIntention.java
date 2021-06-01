@@ -208,6 +208,7 @@ public class SpecifyTypeInPy3AnnotationsIntention extends TypeIntention {
   @Override
   protected boolean isParamTypeDefined(@NotNull PyNamedParameter parameter) {
     if (parameter.getAnnotation() != null) return true;
+    if (parameter.getTypeComment() != null) return true;
     PyFunction function = PsiTreeUtil.getParentOfType(parameter, PyFunction.class);
     return function != null && function.getTypeComment() != null;
   }

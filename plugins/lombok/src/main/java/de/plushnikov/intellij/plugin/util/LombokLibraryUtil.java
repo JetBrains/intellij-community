@@ -14,6 +14,9 @@ public class LombokLibraryUtil {
   private static final String LOMBOK_PACKAGE = "lombok.experimental";
 
   public static boolean hasLombokLibrary(@NotNull Project project) {
+    if (project.isDefault() || !project.isInitialized()) {
+      return false;
+    }
     ApplicationManager.getApplication().assertReadAccessAllowed();
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
       PsiPackage aPackage = JavaPsiFacade.getInstance(project).findPackage(LOMBOK_PACKAGE);

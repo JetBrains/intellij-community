@@ -19,6 +19,7 @@ import com.intellij.openapi.projectRoots.JdkUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,7 +64,7 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
   public TargetEnvironmentFactory createCustomTargetEnvironmentFactory() {
     try {
       JavaParameters parameters = getJavaParameters();
-      WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters);
+      WslTargetEnvironmentConfiguration config = checkCreateWslConfiguration(parameters.getJdk());
       return config == null ? null : new WslTargetEnvironmentFactory(config);
     }
     catch (ExecutionException e) {
@@ -72,17 +73,16 @@ public abstract class JavaCommandLineState extends CommandLineState implements J
     return null;
   }
 
-  protected static WslTargetEnvironmentConfiguration checkCreateWslConfiguration(JavaParameters parameters) {
-    String path;
-    try {
-      path = parameters.getJdkPath();
-    }
-    catch (CantRunException e) {
+  protected static WslTargetEnvironmentConfiguration checkCreateWslConfiguration(@Nullable Sdk jdk) {
+    if (jdk == null) {
       return null;
     }
-    WslPath wslPath = WslPath.parseWindowsUncPath(path);
-    Sdk jdk = parameters.getJdk();
-    if (jdk != null && wslPath != null) {
+    VirtualFile virtualFile = jdk.getHomeDirectory();
+    if (virtualFile == null) {
+      return null;
+    }
+    WslPath wslPath = WslPath.parseWindowsUncPath(virtualFile.getPath());
+    if (wslPath != null) {
       WslTargetEnvironmentConfiguration config = new WslTargetEnvironmentConfiguration(wslPath.getDistribution());
       JavaLanguageRuntimeConfiguration javaConfig = new JavaLanguageRuntimeConfiguration();
       javaConfig.setHomePath(wslPath.getLinuxPath());

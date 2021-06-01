@@ -19,8 +19,15 @@ package com.intellij.java.codeInspection;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode;
 import com.intellij.testFramework.JavaInspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
+import org.jetbrains.annotations.NotNull;
 
 public class EqualsAndHashCodeTest extends JavaInspectionTestCase {
+  @Override
+  protected @NotNull LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_16;
+  }
+
   private EqualsAndHashcode myTool = new EqualsAndHashcode();
 
   @Override
@@ -47,4 +54,7 @@ public class EqualsAndHashCodeTest extends JavaInspectionTestCase {
     doTest();
   }
 
+  public void testRecord() {
+    doTest();
+  }
 }

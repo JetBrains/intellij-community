@@ -20,7 +20,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.io.StreamUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
@@ -29,7 +28,6 @@ import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
-import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -46,7 +44,6 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.*;
@@ -119,38 +116,18 @@ public class GradleExecutionHelper {
     return withGradleConnection(
       projectDir, taskId, settings, listener, cancellationToken,
       connection -> {
-        String userDir = null;
-        if (!Registry.is("gradle.tooling.use.external.process", false) && !GradleEnvironment.ADJUST_USER_DIR) {
-          try {
-            userDir = System.getProperty("user.dir");
-            if (userDir != null) System.setProperty("user.dir", projectDir);
-          }
-          catch (Exception ignore) {
-          }
-        }
-
         try {
           return f.fun(connection);
         }
-        catch (ExternalSystemException e) {
-          throw e;
-        }
-        catch (ProcessCanceledException e) {
+        catch (ExternalSystemException | ProcessCanceledException e) {
           throw e;
         }
         catch (Throwable e) {
           LOG.warn("Gradle execution error", e);
           Throwable rootCause = ExceptionUtil.getRootCause(e);
-          ExternalSystemException externalSystemException =
-            new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
+          ExternalSystemException externalSystemException = new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
           externalSystemException.initCause(e);
           throw externalSystemException;
-        }
-        finally {
-          if (userDir != null) {
-            // restore original user.dir property
-            System.setProperty("user.dir", userDir);
-          }
         }
       });
   }
@@ -325,7 +302,7 @@ public class GradleExecutionHelper {
         List<String> buildJvmArguments = buildIdentifier == null || "buildSrc".equals(buildIdentifier.getRootDir().getName())
                                          ? ContainerUtil.emptyList()
                                          : buildEnvironment.getJava().getJvmArguments();
-        merged = mergeJvmArgs(settings.getServiceDirectory(), buildJvmArguments, jvmArgs);
+        merged = mergeBuildJvmArguments(buildJvmArguments, jvmArgs);
       }
       else {
         merged = jvmArgs;
@@ -449,18 +426,16 @@ public class GradleExecutionHelper {
     operation.setEnvironmentVariables(effectiveEnvironment);
   }
 
-  @ApiStatus.Experimental
-  static List<String> mergeJvmArgs(String serviceDirectory, List<String> jvmArgs, List<String> jvmArgsFromIdeSettings) {
-    File gradleUserHomeDir = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
-    LOG.debug("Gradle home: " + gradleUserHomeDir);
-    JvmOptions jvmOptions = new JvmOptions(null);
+  @ApiStatus.Internal
+  static List<String> mergeBuildJvmArguments(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     List<String> mergedJvmArgs = mergeJvmArgs(jvmArgs, jvmArgsFromIdeSettings);
+    JvmOptions jvmOptions = new JvmOptions(null);
     jvmOptions.setAllJvmArgs(mergedJvmArgs);
     return jvmOptions.getAllJvmArgs();
   }
 
-  @ApiStatus.Experimental
-  static List<String> mergeJvmArgs(List<String> jvmArgs, List<String> jvmArgsFromIdeSettings) {
+  @ApiStatus.Internal
+  static List<String> mergeJvmArgs(@NotNull List<String> jvmArgs, @NotNull List<String> jvmArgsFromIdeSettings) {
     MultiMap<String, String> argumentsMap = MultiMap.createLinkedSet();
     String lastKey = null;
     for (String jvmArg : ContainerUtil.concat(jvmArgs, jvmArgsFromIdeSettings)) {
@@ -573,7 +548,7 @@ public class GradleExecutionHelper {
     try {
       File initScriptFile = writeToFileGradleInitScript(
         "if(!ext.has('mapPath')) ext.mapPath = { path -> path }\n", "ijmapper");
-      executionSettings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
+      executionSettings.prependArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, initScriptFile.getAbsolutePath());
     }
     catch (IOException e) {
       LOG.warn("Can't generate IJ gradle init script", e);

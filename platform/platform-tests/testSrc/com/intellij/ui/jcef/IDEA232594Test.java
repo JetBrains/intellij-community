@@ -5,6 +5,7 @@ import com.intellij.testFramework.ApplicationRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
 import org.junit.After;
+import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 
@@ -29,6 +30,11 @@ public class IDEA232594Test {
 
   static final AtomicInteger CALLBACL_COUNT = new AtomicInteger(0);
 
+  @Before
+  public void before() {
+    TestScaleHelper.assumeStandalone();
+  }
+
   @After
   public void after() {
     TestScaleHelper.restoreProperties();
@@ -36,8 +42,6 @@ public class IDEA232594Test {
 
   @Test
   public void test() {
-    TestScaleHelper.assumeStandalone();
-
     JBCefBrowser browser = new JBCefBrowser("chrome:version");
 
     JBCefJSQuery jsQuery = JBCefJSQuery.create(browser);

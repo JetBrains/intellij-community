@@ -172,6 +172,11 @@ class LessonMessagePane(private val panelMode: Boolean = true) : JTextPane() {
     return clearRestoreMessages()
   }
 
+  fun getCurrentMessageRectangle(): Rectangle? {
+    val lessonMessage = restoreMessages.lastOrNull() ?: activeMessages.lastOrNull() ?: return null
+    return getRectangleToScroll(lessonMessage)
+  }
+
   private fun insertText(text: String, attributeSet: AttributeSet) {
     document.insertString(insertOffset, text, attributeSet)
     styledDocument.setParagraphAttributes(insertOffset, text.length - 1, paragraphStyle, true)

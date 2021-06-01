@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.saveSettings
@@ -26,6 +26,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx
+import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.*
 import com.intellij.platform.ProjectSelfieUtil
 import com.intellij.ui.ComponentUtil
@@ -178,15 +179,21 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
     cancelled = true
 
     ApplicationManager.getApplication().invokeLater {
-      val frame = frameManager?.frameHelper
+      val frameHelper = frameManager?.frameHelper
       frameManager = null
 
       if (error != null) {
-        ProjectManagerImpl.showCannotConvertMessage(error, frame?.frame)
+        ProjectManagerImpl.showCannotConvertMessage(error, frameHelper?.frame)
       }
 
-      if (frame != null) {
-        Disposer.dispose(frame)
+      if (frameHelper != null) {
+        // projectLoaded was called, but then due to some error, say cancellation, still projectNotLoaded is called
+        if (frameHelper.project == null) {
+          Disposer.dispose(frameHelper)
+        }
+        else {
+          WindowManagerEx.getInstanceEx().releaseFrame(frameHelper)
+        }
       }
     }
   }

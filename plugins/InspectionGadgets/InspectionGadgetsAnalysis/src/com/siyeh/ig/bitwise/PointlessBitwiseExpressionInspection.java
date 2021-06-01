@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2021 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -176,7 +176,7 @@ public class PointlessBitwiseExpressionInspection extends BaseInspection {
       else if (child == untilTarget) {
         stop = false;
       }
-      else if (child instanceof PsiComment || !stop) {
+      else if (child instanceof PsiComment && result.length() > 0 || !stop) {
         result.append(ct.text(child));
       }
       else if (child instanceof PsiJavaToken && untilTarget == null) {

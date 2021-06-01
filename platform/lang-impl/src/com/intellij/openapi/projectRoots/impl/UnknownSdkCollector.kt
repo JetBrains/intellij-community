@@ -3,6 +3,7 @@ package com.intellij.openapi.projectRoots.impl
 
 import com.google.common.collect.MultimapBuilder
 import com.google.common.hash.Hashing
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
@@ -97,8 +98,9 @@ open class UnknownSdkCollector(private val myProject: Project) : UnknownSdkBlock
    * NOTE. The callback may not happen if a given task is merged
    * with a previous or a next similar one.
    */
-  internal fun UnknownSdkCollectorQueue.collectSdksPromise(onCompleted: Consumer<UnknownSdkSnapshot>) {
+  internal fun UnknownSdkCollectorQueue.collectSdksPromise(lifetime: Disposable, onCompleted: Consumer<UnknownSdkSnapshot>) {
     ReadAction.nonBlocking<UnknownSdkSnapshot> { collectSdksUnderReadAction() }
+      .expireWith(lifetime)
       .expireWith(myProject)
       .coalesceBy(myProject, UnknownSdkCollector::class)
       .finishOnUiThread(ApplicationManager.getApplication().defaultModalityState, onCompleted)

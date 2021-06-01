@@ -17,12 +17,12 @@ package com.intellij.execution.filters;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
@@ -103,15 +103,15 @@ public class UrlFilter implements Filter, DumbAware {
       }
       String filePath = url.substring(LocalFileSystem.PROTOCOL_PREFIX.length(), filePathEndIndex);
       return new LazyFileHyperlinkInfo(myProject, filePath, documentLine, documentColumn) {
-        @Nullable
         @Override
-        public OpenFileDescriptor getDescriptor() {
-          OpenFileDescriptor descriptor = super.getDescriptor();
-          if (descriptor == null) {
-            Messages.showErrorDialog(myProject, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(url, 150)),
+        public void navigate(@NotNull Project project) {
+          VirtualFile file = getVirtualFile();
+          if (file == null || !file.isValid()) {
+            Messages.showErrorDialog(project, ExecutionBundle.message("message.cannot.find.file.0", StringUtil.trimMiddle(url, 150)),
                                      IdeBundle.message("title.cannot.open.file"));
+            return;
           }
-          return descriptor;
+          super.navigate(project);
         }
       };
     }

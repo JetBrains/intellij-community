@@ -4,11 +4,15 @@ package org.jetbrains.plugins.gradle.execution.target
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.service.execution.TargetEnvironmentConfigurationProvider
+import org.gradle.initialization.BuildCancellationToken
+import org.gradle.internal.classpath.ClassPath
+import org.gradle.internal.logging.progress.ProgressLoggerFactory
 import org.gradle.internal.time.Time
 import org.gradle.tooling.GradleConnectionException
 import org.gradle.tooling.GradleConnector
 import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.internal.consumer.*
+import org.gradle.tooling.internal.protocol.InternalBuildProgressListener
 import java.io.File
 import java.net.URI
 import java.util.concurrent.TimeUnit
@@ -39,22 +43,22 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
   }
 
   override fun useInstallation(gradleHome: File?): GradleConnector {
-    distribution = distributionFactory.getDistribution(gradleHome)
+    distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleHome), gradleHome?.path)
     return this
   }
 
   override fun useGradleVersion(gradleVersion: String?): GradleConnector {
-    distribution = distributionFactory.getDistribution(gradleVersion)
+    distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleVersion))
     return this
   }
 
   override fun useDistribution(gradleDistribution: URI?): GradleConnector {
-    distribution = distributionFactory.getDistribution(gradleDistribution)
+    distribution = TargetGradleDistribution(distributionFactory.getDistribution(gradleDistribution))
     return this
   }
 
   fun useClasspathDistribution(): GradleConnector {
-    distribution = distributionFactory.classpathDistribution
+    distribution = TargetGradleDistribution(distributionFactory.classpathDistribution)
     return this
   }
 
@@ -106,12 +110,19 @@ class TargetGradleConnector(environmentConfigurationProvider: TargetEnvironmentC
 
   @Throws(GradleConnectionException::class)
   override fun connect(): ProjectConnection {
-    //LOGGER.debug("Connecting from tooling API consumer version {}", GradleVersion.current().version)
     val connectionParameters: ConnectionParameters = connectionParamsBuilder.build()
     checkNotNull(connectionParameters.projectDir) { "A project directory must be specified before creating a connection." }
     if (distribution == null) {
-      val searchUpwards = if (connectionParameters.isSearchUpwards != null) connectionParameters.isSearchUpwards else true
-      distribution = distributionFactory.getDefaultDistribution(connectionParameters.projectDir, searchUpwards)
+      val defaultDistribution = object : Distribution {
+        override fun getDisplayName() = "Default distribution"
+        override fun getToolingImplementationClasspath(progressLoggerFactory: ProgressLoggerFactory?,
+                                                       progressListener: InternalBuildProgressListener?,
+                                                       userHomeDir: File?,
+                                                       cancellationToken: BuildCancellationToken?): ClassPath {
+          throw IllegalStateException("Target Gradle distribution should not be resolved on host environment.")
+        }
+      }
+      distribution = TargetGradleDistribution(defaultDistribution)
     }
     synchronized(connections) {
       if (stopped) {

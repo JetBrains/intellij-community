@@ -7,7 +7,10 @@ import com.intellij.coverage.JavaCoverageEngine;
 import com.intellij.coverage.JavaCoverageRunner;
 import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.execution.target.TargetEnvironment;
+import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -21,6 +24,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,6 +50,14 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
                                           final JavaCoverageEngine coverageProvider) {
     super(configuration);
     setCoverageRunner(CoverageRunner.getInstance(IDEACoverageRunner.class));
+  }
+
+  public void downloadReport(@NotNull TargetEnvironment environment, @NotNull ProgressIndicator indicator) throws IOException {
+    String coverageFilePath = getCoverageFilePath();
+    if (coverageFilePath != null) {
+      Path path = Paths.get(coverageFilePath);
+      TargetEnvironmentFunctions.downloadFromTarget(environment, path, indicator);
+    }
   }
 
   @Nullable

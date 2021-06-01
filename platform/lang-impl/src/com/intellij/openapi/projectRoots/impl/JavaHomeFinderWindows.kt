@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Bitness
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.WindowsRegistryUtil
+import com.intellij.util.SystemProperties
 import com.intellij.util.io.exists
 import java.nio.file.FileSystems
 import java.nio.file.Path
@@ -106,6 +107,7 @@ class JavaHomeFinderWindows : JavaHomeFinderBasic {
       roots.add(root.resolve("Program Files (x86)/Java"))
       roots.add(root.resolve("Java"))
     }
+    roots.add(Path.of(SystemProperties.getUserHome(), ".jdks"))
     return scanAll(roots, true)
   }
 }

@@ -53,18 +53,19 @@ public class PropertyUtilBase {
   @NotNull
   public static Map<String, PsiMethod> getAllProperties(final boolean acceptSetters,
                                                         final boolean acceptGetters, PsiMethod[] methods) {
-    return getAllProperties(acceptSetters, acceptGetters, ONLY_PUBLIC, methods);
+    return getAllProperties(acceptSetters, acceptGetters, false, ONLY_PUBLIC, methods);
   }
 
   @NotNull
   public static Map<String, PsiMethod> getAllProperties(final boolean acceptSetters,
                                                         final boolean acceptGetters,
+                                                        final boolean acceptStatic,
                                                         final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels,
                                                         PsiMethod[] methods) {
     final Map<String, PsiMethod> map = new HashMap<>();
 
     for (PsiMethod method : methods) {
-      if (filterMethods(method, visibilityLevels)) continue;
+      if (filterMethods(method, acceptStatic, visibilityLevels)) continue;
       if (acceptSetters && isSimplePropertySetter(method) ||
           acceptGetters && isSimplePropertyGetter(method)) {
         map.put(getPropertyName(method), method);
@@ -74,9 +75,10 @@ public class PropertyUtilBase {
   }
 
   private static boolean filterMethods(final PsiMethod method,
+                                       final boolean acceptStatic,
                                        final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels) {
-    if (method.hasModifierProperty(PsiModifier.STATIC) ||
-        !ContainerUtil.exists(visibilityLevels, it -> method.hasModifierProperty(it))) {
+    if ((!acceptStatic && method.hasModifierProperty(PsiModifier.STATIC))
+        || !ContainerUtil.exists(visibilityLevels, it -> method.hasModifierProperty(it))) {
       return true;
     }
 
@@ -88,18 +90,19 @@ public class PropertyUtilBase {
 
   @NotNull
   public static List<PsiMethod> getSetters(@NotNull final PsiClass psiClass, final String propertyName) {
-    return getSetters(psiClass, propertyName, ONLY_PUBLIC);
+    return getSetters(psiClass, propertyName, false, ONLY_PUBLIC);
   }
 
   @NotNull
   public static List<PsiMethod> getSetters(@NotNull final PsiClass psiClass,
                                            final String propertyName,
+                                           final boolean acceptStatic,
                                            final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels) {
     final String setterName = suggestSetterName(propertyName);
     final PsiMethod[] psiMethods = psiClass.findMethodsByName(setterName, true);
     final ArrayList<PsiMethod> list = new ArrayList<>(psiMethods.length);
     for (PsiMethod method : psiMethods) {
-      if (filterMethods(method, visibilityLevels)) continue;
+      if (filterMethods(method, acceptStatic, visibilityLevels)) continue;
       if (isSimplePropertySetter(method)) {
         list.add(method);
       }
@@ -109,19 +112,20 @@ public class PropertyUtilBase {
 
   @NotNull
   public static List<PsiMethod> getGetters(@NotNull final PsiClass psiClass, final String propertyName) {
-    return getGetters(psiClass, propertyName, ONLY_PUBLIC);
+    return getGetters(psiClass, propertyName, false, ONLY_PUBLIC);
   }
 
   @NotNull
   public static List<PsiMethod> getGetters(@NotNull final PsiClass psiClass,
                                            final String propertyName,
+                                           final boolean acceptStatic,
                                            final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels) {
     final String[] names = suggestGetterNames(propertyName);
     final ArrayList<PsiMethod> list = new ArrayList<>();
     for (String name : names) {
       final PsiMethod[] psiMethods = psiClass.findMethodsByName(name, true);
       for (PsiMethod method : psiMethods) {
-        if (filterMethods(method, visibilityLevels)) continue;
+        if (filterMethods(method, acceptStatic, visibilityLevels)) continue;
         if (isSimplePropertyGetter(method)) {
           list.add(method);
         }
@@ -132,14 +136,18 @@ public class PropertyUtilBase {
 
   @NotNull
   public static List<PsiMethod> getAccessors(@NotNull final PsiClass psiClass, final String propertyName) {
-    return getAccessors(psiClass, propertyName, ONLY_PUBLIC);
+    return getAccessors(psiClass, propertyName, false, ONLY_PUBLIC);
   }
 
   @NotNull
   public static List<PsiMethod> getAccessors(@NotNull final PsiClass psiClass,
                                              final String propertyName,
+                                             final boolean acceptStatic,
                                              final @NonNls @PsiModifier.ModifierConstant String @NotNull [] visibilityLevels) {
-    return ContainerUtil.concat(getGetters(psiClass, propertyName, visibilityLevels), getSetters(psiClass, propertyName, visibilityLevels));
+    return ContainerUtil.concat(
+      getGetters(psiClass, propertyName, acceptStatic, visibilityLevels),
+      getSetters(psiClass, propertyName, acceptStatic, visibilityLevels)
+    );
   }
 
   public static String @NotNull [] getReadableProperties(@NotNull PsiClass aClass, boolean includeSuperClass) {

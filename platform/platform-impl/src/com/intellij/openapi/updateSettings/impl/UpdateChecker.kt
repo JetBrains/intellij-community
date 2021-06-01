@@ -586,7 +586,7 @@ object UpdateChecker {
         runnable.invoke()
       }
       else {
-        SettingsEntryPointAction.newPlatformUpdate(checkForUpdateResult, checkPluginsUpdateResult.incompatiblePlugins)
+        SettingsEntryPointAction.newPlatformUpdate(checkForUpdateResult, updatedPlugins, checkPluginsUpdateResult.incompatiblePlugins)
 
         // Android Studio: Analytics
         AndroidStudioAnalytics.getInstance().logNotificationShown(newBuild.number.asStringWithoutProductCode());
@@ -617,8 +617,7 @@ object UpdateChecker {
       }
       // don't show notification if all updated plugins is disabled
       else if (updatedPlugins.size != updatedPlugins.count { downloader -> PluginManagerCore.isDisabled(downloader.id) }) {
-        SettingsEntryPointAction.newPluginsUpdate(updatedPlugins, checkPluginsUpdateResult.customRepositoryPlugins)
-
+        SettingsEntryPointAction.newPluginUpdates(updatedPlugins, checkPluginsUpdateResult.customRepositoryPlugins)
 
         val names = updatedPlugins.joinToString { downloader -> StringUtil.wrapWithDoubleQuote(downloader.pluginName) }
         val title = if (updatedPlugins.size == 1) IdeBundle.message("updates.plugin.ready.short.title.available", names)

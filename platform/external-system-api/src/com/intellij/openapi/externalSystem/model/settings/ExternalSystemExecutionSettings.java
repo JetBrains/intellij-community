@@ -108,6 +108,10 @@ public class ExternalSystemExecutionSettings implements Serializable, UserDataHo
     return this;
   }
 
+  public void prependArguments(String... arguments) {
+    myArguments.addAll(0, Arrays.asList(arguments));
+  }
+
   public ExternalSystemExecutionSettings withEnvironmentVariables(Map<String, String> envs) {
     myEnv.putAll(envs);
     return this;

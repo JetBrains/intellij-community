@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.patterns;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -17,7 +17,11 @@ import java.util.Collections;
 import java.util.regex.Pattern;
 
 /**
- * @author peter
+ * Provides patterns for strings, e.g. regex matching, length conditions and member of collection checks.
+ * <p>
+ * Please see the <a href="https://plugins.jetbrains.com/docs/intellij/element-patterns.html">IntelliJ Platform Docs</a>
+ * for a high-level overview.
+ *
  * @see StandardPatterns#string()
  */
 public final class StringPattern extends ObjectPattern<String, StringPattern> {

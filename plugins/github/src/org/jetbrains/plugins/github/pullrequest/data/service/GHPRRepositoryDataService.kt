@@ -19,7 +19,7 @@ interface GHPRRepositoryDataService : Disposable {
     get() = GHGitRepositoryMapping(repositoryCoordinates, remoteCoordinates)
 
   val repositoryId: String
-  val defaultBranchName: String
+  val defaultBranchName: String?
   val isFork: Boolean
 
   val collaborators: CompletableFuture<List<GHUser>>

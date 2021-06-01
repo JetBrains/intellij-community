@@ -8,8 +8,8 @@ import org.jetbrains.plugins.gradle.tooling.proxy.TargetBuildParameters.BuildAct
 
 internal class TargetBuildActionExecuter<T>(connection: TargetProjectConnection, buildAction: BuildAction<T?>) :
   TargetBuildExecuter<TargetBuildActionExecuter<T>, T?>(connection), BuildActionExecuter<T> {
-
   override val targetBuildParametersBuilder = BuildActionParametersBuilder<T?>(buildAction)
+  override val buildActions: List<BuildAction<*>> = listOf(buildAction)
   override fun run(): T? = runAndGetResult()
 
   @Suppress("UNCHECKED_CAST")

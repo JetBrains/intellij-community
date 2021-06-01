@@ -17,8 +17,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.fileEditor.impl.*;
@@ -28,31 +26,23 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
-import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.HorizontalLayout;
-import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.hover.ListHoverListener;
 import com.intellij.ui.popup.PopupUpdateProcessorBase;
 import com.intellij.ui.render.RenderingUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
-import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.*;
 
@@ -104,7 +94,7 @@ public final class Switcher extends BaseSwitcherAction {
 
     final JBPopup myPopup;
     final JBList<SwitcherListItem> toolWindows;
-    final JBList<FileInfo> files;
+    final JBList<SwitcherVirtualFile> files;
     final JCheckBox cbShowOnlyEditedFiles;
     final JLabel pathLabel = new JLabel(" ");
     final Project project;
@@ -122,21 +112,14 @@ public final class Switcher extends BaseSwitcherAction {
         return this.project;
       }
       if (PlatformDataKeys.SELECTED_ITEM.is(dataId)) {
-        List list = getSelectedList().getSelectedValuesList();
-        Object o = ContainerUtil.getOnlyItem(list);
-        return o instanceof FileInfo ? ((FileInfo)o).first : null;
+        if (files.isSelectionEmpty()) return null;
+        SwitcherVirtualFile item = ContainerUtil.getOnlyItem(files.getSelectedValuesList());
+        return item == null ? null : item.getFile();
       }
       if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
-        final List list = getSelectedList().getSelectedValuesList();
-        if (!list.isEmpty()) {
-          final List<VirtualFile> vFiles = new ArrayList<>();
-          for (Object o : list) {
-            if (o instanceof FileInfo) {
-              vFiles.add(((FileInfo)o).first);
-            }
-          }
-          return vFiles.isEmpty() ? null : vFiles.toArray(VirtualFile.EMPTY_ARRAY);
-        }
+        if (files.isSelectionEmpty()) return null;
+        VirtualFile[] array = ContainerUtil.map2Array(files.getSelectedValuesList(), VirtualFile.class, SwitcherVirtualFile::getFile);
+        return array.length > 0 ? array : null;
       }
       return null;
     }
@@ -147,7 +130,7 @@ public final class Switcher extends BaseSwitcherAction {
         if (pinned && (e.isControlDown() || e.isMetaDown() || e.isShiftDown())) return false;
         final Object source = e.getSource();
         if (source instanceof JList) {
-          JList jList = (JList)source;
+          JList<? extends SwitcherListItem> jList = (JList<? extends SwitcherListItem>)source;
           if (jList.getSelectedIndex() == -1 && jList.getAnchorSelectionIndex() != -1) {
             jList.setSelectedIndex(jList.getAnchorSelectionIndex());
           }
@@ -248,68 +231,21 @@ public final class Switcher extends BaseSwitcherAction {
         windows.forEach(window -> window.setMnemonic(null));
       }
 
-      toolWindows = new JBList<>(createModel(twModel, SwitcherListItem::getTextAtLeft, mySpeedSearch));
+      toolWindows = new JBList<>(createModel(twModel, SwitcherListItem::getMainText, mySpeedSearch));
       toolWindows.setVisibleRowCount(toolWindows.getModel().getSize());
       toolWindows.setBorder(JBUI.Borders.empty(5, 0));
       toolWindows.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
+      toolWindows.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.tool.window.list"));
       toolWindows.setCellRenderer(renderer);
       toolWindows.putClientProperty(RenderingUtil.ALWAYS_PAINT_SELECTION_AS_FOCUSED, true);
       toolWindows.addKeyListener(onKeyRelease);
       ScrollingUtil.installActions(toolWindows);
       ListHoverListener.DEFAULT.addTo(toolWindows);
-      ScrollingUtil.ensureSelectionExists(toolWindows);
       myClickListener.installOn(toolWindows);
-      toolWindows.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
-        @Override
-        public void valueChanged(@NotNull ListSelectionEvent e) {
-          if (!toolWindows.isSelectionEmpty() && !files.isSelectionEmpty()) {
-            files.clearSelection();
-          }
-        }
-      });
 
       final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
                                                         toolWindows.getModel().getSize(), recent);
-      final CollectionListModel<FileInfo> filesModel = new CollectionListModel<>();
-      for (FileInfo editor : filesToShow) {
-        filesModel.add(editor);
-      }
-
-      final VirtualFilesRenderer filesRenderer = new VirtualFilesRenderer(this) {
-        final JPanel myPanel = new NonOpaquePanel(new BorderLayout());
-
-        {
-          myPanel.setBackground(UIUtil.getListBackground());
-        }
-
-        @NotNull
-        @Override
-        public Component getListCellRendererComponent(@NotNull JList<? extends FileInfo> list,
-                                                      FileInfo value, int index, boolean selected, boolean hasFocus) {
-          Component c = super.getListCellRendererComponent(list, value, index, selected, selected);
-          myPanel.removeAll();
-          myPanel.add(c, BorderLayout.CENTER);
-
-          // Note: Name=name rendered in cell, Description=path to file, as displayed in bottom panel
-          myPanel.getAccessibleContext().setAccessibleName(c.getAccessibleContext().getAccessibleName());
-          VirtualFile file = value.first;
-          String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
-          String location = FileUtil.getLocationRelativeToUserHome(presentableUrl);
-          myPanel.getAccessibleContext().setAccessibleDescription(location);
-          // update background of hovered list item
-          if (!selected && index == ListHoverListener.getHoveredIndex(list)) {
-            setBackground(JBUI.CurrentTheme.List.Hover.background(true));
-          }
-          return myPanel;
-        }
-
-        @Override
-        protected void customizeCellRenderer(@NotNull JList<? extends FileInfo> list,
-                                             FileInfo value, int index, boolean selected, boolean hasFocus) {
-          setPaintFocusBorder(false);
-          super.customizeCellRenderer(list, value, index, selected, hasFocus);
-        }
-      };
+      CollectionListModel<SwitcherVirtualFile> filesModel = new CollectionListModel<>(wrap(filesToShow));
 
       final ListSelectionListener filesSelectionListener = new ListSelectionListener() {
         private @NlsSafe String getTitle2Text(@Nullable String fullText) {
@@ -335,11 +271,9 @@ public final class Switcher extends BaseSwitcherAction {
         }
 
         private void updatePathLabel() {
-          List<FileInfo> values = files.getSelectedValuesList();
+          List<? extends SwitcherListItem> values = getSelectedList().getSelectedValuesList();
           if (values != null && values.size() == 1) {
-            VirtualFile file = values.get(0).first;
-            String presentableUrl = ObjectUtils.notNull(file.getParent(), file).getPresentableUrl();
-            pathLabel.setText(getTitle2Text(FileUtil.getLocationRelativeToUserHome(presentableUrl)));
+            pathLabel.setText(getTitle2Text(values.get(0).getStatusText()));
           }
           else {
             pathLabel.setText(" ");
@@ -347,31 +281,28 @@ public final class Switcher extends BaseSwitcherAction {
         }
       };
       files = JBListWithOpenInRightSplit
-        .createListWithOpenInRightSplitter(createModel(filesModel, FileInfo::getNameForRendering, mySpeedSearch), null, true);
+        .createListWithOpenInRightSplitter(createModel(filesModel, SwitcherListItem::getMainText, mySpeedSearch), null, true);
       files.setVisibleRowCount(toolWindows.getModel().getSize());
       files.setSelectionMode(pinned ? ListSelectionModel.MULTIPLE_INTERVAL_SELECTION : ListSelectionModel.SINGLE_SELECTION);
-      files.getSelectionModel().addListSelectionListener(e -> {
-        if (!files.isSelectionEmpty() && !toolWindows.isSelectionEmpty()) {
-          toolWindows.getSelectionModel().clearSelection();
-        }
-      });
+      files.getAccessibleContext().setAccessibleName(IdeBundle.message("recent.files.accessible.file.list"));
 
+      toolWindows.getSelectionModel().addListSelectionListener(filesSelectionListener);
       files.getSelectionModel().addListSelectionListener(filesSelectionListener);
 
-      files.setCellRenderer(filesRenderer);
-      files.setBorder(JBUI.Borders.empty(5));
+      files.setCellRenderer(renderer);
+      files.setBorder(JBUI.Borders.empty(5, 0));
       files.addKeyListener(onKeyRelease);
       ScrollingUtil.installActions(files);
       ListHoverListener.DEFAULT.addTo(files);
       myClickListener.installOn(files);
-      ScrollingUtil.ensureSelectionExists(files);
 
       if (filesModel.getSize() > 0) {
         addToCenter(new SwitcherScrollPane(files, JBUI.CurrentTheme.Popup.separatorColor()));
         int selectionIndex = getFilesSelectedIndex(project, files, forward);
-        if (selectionIndex > -1) {
-          files.setSelectedIndex(selectionIndex);
-        }
+        files.setSelectedIndex(selectionIndex > -1 ? selectionIndex : 0);
+      }
+      else {
+        ScrollingUtil.ensureSelectionExists(toolWindows);
       }
       addToTop(header);
       addToLeft(new SwitcherScrollPane(toolWindows, null));
@@ -404,17 +335,13 @@ public final class Switcher extends BaseSwitcherAction {
       new SwitcherListFocusAction(files, toolWindows, ListActions.Left.ID);
       new SwitcherListFocusAction(toolWindows, files, ListActions.Right.ID);
 
-      Window window = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
-      if (window == null) {
-        window = WindowManager.getInstance().getFrame(project);
-      }
       IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
 
       SwitcherPanel old = project.getUserData(SWITCHER_KEY);
       if (old != null) old.cancel();
       project.putUserData(SWITCHER_KEY, this);
 
-      myPopup.showInCenterOf(window);
+      myPopup.showCenteredInCurrentWindow(project);
     }
 
     @Override
@@ -461,6 +388,14 @@ public final class Switcher extends BaseSwitcherAction {
 
     static @NotNull List<VirtualFile> collectFiles(@NotNull Project project, boolean onlyEdited) {
       return onlyEdited ? IdeDocumentHistory.getInstance(project).getChangedFiles() : getRecentFiles(project);
+    }
+
+    static @NotNull List<SwitcherVirtualFile> wrap(@NotNull List<FileInfo> list) {
+      return ContainerUtil.map(list, info -> {
+        SwitcherVirtualFile svf = new SwitcherVirtualFile(info.myProject, info.first, info.second);
+        svf.setMainText(info.getNameForRendering());
+        return svf;
+      });
     }
 
     @NotNull
@@ -524,30 +459,34 @@ public final class Switcher extends BaseSwitcherAction {
       return filesData;
     }
 
-    static int getFilesSelectedIndex(Project project, JList<FileInfo> filesList, boolean forward) {
+    static int getFilesSelectedIndex(Project project, JList<?> filesList, boolean forward) {
       final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
       EditorWindow currentWindow = editorManager.getCurrentWindow();
       VirtualFile currentFile = currentWindow != null ? currentWindow.getSelectedFile() : null;
 
-      ListModel<FileInfo> model = filesList.getModel();
+      ListModel<?> model = filesList.getModel();
       if (forward) {
         for (int i = 0; i < model.getSize(); i++) {
-          FileInfo fileInfo = model.getElementAt(i);
-          if (!isTheSameTab(currentWindow, currentFile, fileInfo)) {
+          if (!isTheSameTab(currentWindow, currentFile, model.getElementAt(i))) {
             return i;
           }
         }
       }
       else {
         for (int i = model.getSize() - 1; i >= 0; i--) {
-          FileInfo fileInfo = model.getElementAt(i);
-          if (!isTheSameTab(currentWindow, currentFile, fileInfo)) {
+          if (!isTheSameTab(currentWindow, currentFile, model.getElementAt(i))) {
             return i;
           }
         }
       }
 
       return -1;
+    }
+
+    private static boolean isTheSameTab(EditorWindow currentWindow, VirtualFile currentFile, Object element) {
+      if (element instanceof FileInfo) return isTheSameTab(currentWindow, currentFile, (FileInfo)element);
+      SwitcherVirtualFile svf = element instanceof SwitcherVirtualFile ? (SwitcherVirtualFile)element : null;
+      return svf != null && svf.getFile().equals(currentFile) && (svf.getWindow() == null || svf.getWindow().equals(currentWindow));
     }
 
     private static boolean isTheSameTab(EditorWindow currentWindow, VirtualFile currentFile, FileInfo fileInfo) {
@@ -623,7 +562,7 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private static boolean addSmartShortcut(SwitcherToolWindow window, Map<String, SwitcherToolWindow> keymap) {
-      String title = window.getTextAtLeft();
+      String title = window.getMainText();
       if (StringUtil.isEmpty(title))
         return false;
       for (int i = 0; i < title.length(); i++) {
@@ -651,32 +590,30 @@ public final class Switcher extends BaseSwitcherAction {
         }
         return;
       }
-      final JBList selectedList = getSelectedList();
+      JList<? extends SwitcherListItem> selectedList = getSelectedList();
       final int[] selected = selectedList.getSelectedIndices();
       Arrays.sort(selected);
       int selectedIndex = 0;
       for (int i = selected.length - 1; i >= 0; i--) {
         selectedIndex = selected[i];
-        Object value = selectedList.getModel().getElementAt(selectedIndex);
-        if (value instanceof FileInfo) {
-          final FileInfo info = (FileInfo)value;
-          final VirtualFile virtualFile = info.first;
+        SwitcherListItem item = selectedList.getModel().getElementAt(selectedIndex);
+        if (item instanceof SwitcherVirtualFile) {
+          SwitcherVirtualFile svf = (SwitcherVirtualFile)item;
+          VirtualFile virtualFile = svf.getFile();
           final FileEditorManagerImpl editorManager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
-          final JList<?> jList = getSelectedList();
-          final EditorWindow wnd = findAppropriateWindow(info);
+          EditorWindow wnd = findAppropriateWindow(svf.getWindow());
           if (wnd == null) {
             editorManager.closeFile(virtualFile, false, false);
           }
           else {
             editorManager.closeFile(virtualFile, wnd, false);
           }
-          ListUtil.removeItem(jList.getModel(), selectedIndex);
+          ListUtil.removeItem(files.getModel(), selectedIndex);
           if (recent) {
             EditorHistoryManager.getInstance(project).removeFile(virtualFile);
           }
         }
-        else if (value instanceof SwitcherListItem) {
-          SwitcherListItem item = (SwitcherListItem)value;
+        else if (item != null) {
           item.close(this);
         }
       }
@@ -716,8 +653,8 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     public void go(boolean forward) {
-      JBList selected = getSelectedList();
-      JList list = selected;
+      JList<? extends SwitcherListItem> selected = getSelectedList();
+      JList<? extends SwitcherListItem> list = selected;
       int index = list.getSelectedIndex();
       if (forward) index++; else index--;
       if ((forward && index >= list.getModel().getSize()) || (!forward && index < 0)) {
@@ -741,12 +678,12 @@ public final class Switcher extends BaseSwitcherAction {
       go(false);
     }
 
-    public JBList<?> getSelectedList() {
+    public JBList<? extends SwitcherListItem> getSelectedList() {
       return getSelectedList(files);
     }
 
     @Nullable
-    JBList getSelectedList(@Nullable JBList preferable) {
+    JBList<? extends SwitcherListItem> getSelectedList(@Nullable JBList<? extends SwitcherListItem> preferable) {
       return files.hasFocus() ? files : toolWindows.hasFocus() ? toolWindows : preferable;
     }
 
@@ -757,9 +694,9 @@ public final class Switcher extends BaseSwitcherAction {
       final List<FileInfo> filesToShow = getFilesToShow(project, collectFiles(project, onlyEdited),
                                                         toolWindows.getModel().getSize(), recent);
 
-      ListModel<FileInfo> model = files.getModel();
+      ListModel<SwitcherVirtualFile> model = files.getModel();
       ListUtil.removeAllItems(model);
-      ListUtil.addAllItems(model, filesToShow);
+      ListUtil.addAllItems(model, wrap(filesToShow));
 
       int selectionIndex = getFilesSelectedIndex(project, files, true);
       if (selectionIndex > -1 && listWasSelected) {
@@ -783,19 +720,15 @@ public final class Switcher extends BaseSwitcherAction {
       if (values.isEmpty()) {
         tryToOpenFileSearch(e, searchQuery);
       }
-      else if (values.get(0) instanceof SwitcherListItem) {
-        SwitcherListItem item = (SwitcherListItem)values.get(0);
-        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> item.navigate(this, mode), ModalityState.current());
-      }
-      else {
+      else if (values.get(0) instanceof SwitcherVirtualFile) {
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
           final FileEditorManagerImpl manager = (FileEditorManagerImpl)FileEditorManager.getInstance(project);
           EditorWindow splitWindow = null;
           for (Object value : values) {
-            if (value instanceof FileInfo) {
-              final FileInfo info = (FileInfo)value;
+            if (value instanceof SwitcherVirtualFile) {
+              SwitcherVirtualFile item = (SwitcherVirtualFile)value;
 
-              VirtualFile file = info.first;
+              VirtualFile file = item.getFile();
               if (mode == RIGHT_SPLIT) {
                 if (splitWindow == null) {
                   splitWindow = OpenInRightSplitAction.Companion.openInRightSplit(project, file, null, true);
@@ -807,8 +740,8 @@ public final class Switcher extends BaseSwitcherAction {
               if (mode == NEW_WINDOW) {
                 manager.openFileInNewWindow(file);
               }
-              else if (info.second != null) {
-                EditorWindow wnd = findAppropriateWindow(info);
+              else if (item.getWindow() != null) {
+                EditorWindow wnd = findAppropriateWindow(item.getWindow());
                 if (wnd != null) {
                   manager.openFileImpl2(wnd, file, true);
                   manager.addSelectionRecord(file, wnd);
@@ -818,7 +751,7 @@ public final class Switcher extends BaseSwitcherAction {
                 UISettingsState settings = UISettings.getInstance().getState();
                 boolean oldValue = settings.getReuseNotModifiedTabs();
                 settings.setReuseNotModifiedTabs(false);
-                manager.openFile(file, true, true);
+                manager.openFile(file, true, UISettings.getInstance().getEditorTabPlacement() != UISettings.TABS_NONE);
                 if (LightEdit.owns(project)) {
                   LightEditFeatureUsagesUtil.logFileOpen(project, RecentFiles);
                 }
@@ -829,6 +762,10 @@ public final class Switcher extends BaseSwitcherAction {
             }
           }
         }, ModalityState.current());
+      }
+      else if (values.get(0) instanceof SwitcherListItem) {
+        SwitcherListItem item = (SwitcherListItem)values.get(0);
+        IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> item.navigate(this, mode), ModalityState.current());
       }
     }
 
@@ -875,14 +812,13 @@ public final class Switcher extends BaseSwitcherAction {
       }
     }
 
-    @Nullable
-    private static EditorWindow findAppropriateWindow(@NotNull FileInfo info) {
-      if (info.second == null) return null;
+    private static @Nullable EditorWindow findAppropriateWindow(@Nullable EditorWindow window) {
+      if (window == null) return null;
       if (UISettings.getInstance().getEditorTabPlacement() == UISettings.TABS_NONE) {
-        return info.second.getOwner().getCurrentWindow();
+        return window.getOwner().getCurrentWindow();
       }
-      final EditorWindow[] windows = info.second.getOwner().getWindows();
-      return ArrayUtil.contains(info.second, windows) ? info.second : windows.length > 0 ? windows[0] : null;
+      final EditorWindow[] windows = window.getOwner().getWindows();
+      return ArrayUtil.contains(window, windows) ? window : windows.length > 0 ? windows[0] : null;
     }
 
     private static class SwitcherSpeedSearch extends SpeedSearchBase<SwitcherPanel> implements PropertyChangeListener {
@@ -906,27 +842,21 @@ public final class Switcher extends BaseSwitcherAction {
       }
 
       @Override
-      protected Object getElementAt(int viewIndex) {
-        ListModel<FileInfo> filesModel = myComponent.files.getModel();
-        ListModel<SwitcherListItem> twModel = myComponent.toolWindows.getModel();
-        if (viewIndex < filesModel.getSize()) return filesModel.getElementAt(viewIndex);
-        return twModel.getElementAt(viewIndex - filesModel.getSize());
+      protected Object getElementAt(int index) {
+        ListModel<?> files = myComponent.files.getModel();
+        if (index < files.getSize()) return files.getElementAt(index);
+        return myComponent.toolWindows.getModel().getElementAt(index - files.getSize());
       }
 
       @Override
-      protected String getElementText(Object element) {
-        if (element instanceof SwitcherListItem) {
-          return ((SwitcherListItem)element).getTextAtLeft();
-        }
-        else if (element instanceof FileInfo) {
-          return ((FileInfo)element).getNameForRendering();
-        }
-        return "";
+      protected @NotNull String getElementText(Object element) {
+        SwitcherListItem item = element instanceof SwitcherListItem ? (SwitcherListItem)element : null;
+        return item == null ? "" : item.getMainText();
       }
 
       @Override
       protected void selectElement(final Object element, String selectedText) {
-        if (element instanceof FileInfo) {
+        if (element instanceof SwitcherVirtualFile) {
           if (!myComponent.toolWindows.isSelectionEmpty()) myComponent.toolWindows.clearSelection();
           myComponent.files.clearSelection();
           myComponent.files.setSelectedValue(element, true);
@@ -957,7 +887,7 @@ public final class Switcher extends BaseSwitcherAction {
         for (int i = 0; i < model.getSize(); i++) {
           T element = model.getElementAt(i);
           String text = getElementText(element);
-          if (text == null) continue;
+          if (text.isEmpty()) continue;
           int degree = getComparator().matchingDegree(pattern, text);
           if (foundElement == null || foundDegree < degree) {
             foundElement = element;
@@ -988,46 +918,8 @@ public final class Switcher extends BaseSwitcherAction {
     }
   }
 
-  private static class VirtualFilesRenderer extends ColoredListCellRenderer<FileInfo> {
-    private final SwitcherPanel mySwitcherPanel;
-    boolean open;
-
-    VirtualFilesRenderer(@NotNull SwitcherPanel switcherPanel) {
-      mySwitcherPanel = switcherPanel;
-    }
-
-    @Override
-    protected void customizeCellRenderer(@NotNull JList<? extends FileInfo> list,
-                                         FileInfo value, int index, boolean selected, boolean hasFocus) {
-      Project project = mySwitcherPanel.project;
-      VirtualFile virtualFile = value.getFirst();
-      String renderedName = value.getNameForRendering();
-      setIcon(IconUtil.getIcon(virtualFile, Iconable.ICON_FLAG_READ_STATUS, project));
-
-      FileStatus fileStatus = FileStatusManager.getInstance(project).getStatus(virtualFile);
-      open = FileEditorManager.getInstance(project).isFileOpen(virtualFile);
-
-      boolean hasProblem = WolfTheProblemSolver.getInstance(project).isProblemFile(virtualFile);
-      TextAttributes attributes =
-        new TextAttributes(fileStatus.getColor(), null, hasProblem ? JBColor.red : null, EffectType.WAVE_UNDERSCORE, Font.PLAIN);
-      append(renderedName, SimpleTextAttributes.fromTextAttributes(attributes));
-
-      // calc color the same way editor tabs do this, i.e. including EPs
-      Color color = EditorTabPresentationUtil.getFileBackgroundColor(project, virtualFile);
-
-      if (!selected && color != null) {
-        setBackground(color);
-      }
-      SpeedSearchUtil.applySpeedSearchHighlighting(mySwitcherPanel, this, false, selected);
-
-      if (Registry.is("show.last.visited.timestamps")) {
-        IdeDocumentHistoryImpl.appendTimestamp(project, this, virtualFile);
-      }
-    }
-  }
-
   static class FileInfo extends Pair<VirtualFile, EditorWindow> {
-    private final Project myProject;
+    final Project myProject;
     private String myNameForRendering;
 
     FileInfo(VirtualFile first, EditorWindow second, Project project) {

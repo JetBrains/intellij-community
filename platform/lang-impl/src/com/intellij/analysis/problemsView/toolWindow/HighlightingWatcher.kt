@@ -50,10 +50,12 @@ internal class HighlightingWatcher(
 
   fun update() {
     val model = reference?.get() ?: getMarkupModel() ?: return
+    val highlighters = arrayListOf<RangeHighlighterEx>()
     model.processRangeHighlightersOverlappingWith(0, model.document.textLength) { highlighter: RangeHighlighterEx ->
-      afterAdded(highlighter)
+      highlighters.add(highlighter)
       true
     }
+    highlighters.forEach { afterAdded(it) }
   }
 
   fun getProblems(): Collection<Problem> = synchronized(problems) { problems.values.toList() }

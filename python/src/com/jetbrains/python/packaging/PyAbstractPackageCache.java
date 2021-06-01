@@ -71,7 +71,16 @@ public abstract class PyAbstractPackageCache {
         LOG.info("Package cache " + cacheFilePath + " was not found");
       }
     }
-    catch (IOException exception) {
+    catch (JsonSyntaxException exception) {
+      LOG.warn("Corrupted package cache " + cacheFilePath, exception);
+      try {
+        // It will be rebuilt on the next startup or displaying packaging UI
+        Files.deleteIfExists(cacheFilePath);
+      }
+      catch (IOException ignored) {
+      }
+    }
+    catch (IOException | JsonIOException exception) {
       LOG.warn("Cannot load package cache " + cacheFilePath, exception);
     }
     return cache;
@@ -85,8 +94,8 @@ public abstract class PyAbstractPackageCache {
         ourGson.toJson(newValue, writer);
       }
     }
-    catch (IOException exception) {
-      LOG.warn("Cannot save " + cacheFileName + " package cache to the filesystem", exception);
+    catch (IOException | JsonIOException exception) {
+      LOG.error("Cannot save " + cacheFileName + " package cache to the filesystem", exception);
     }
   }
 

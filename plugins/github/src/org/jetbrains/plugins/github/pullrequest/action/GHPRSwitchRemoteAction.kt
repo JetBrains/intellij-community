@@ -20,5 +20,5 @@ class GHPRSwitchRemoteAction : DumbAwareAction(GithubBundle.message("pull.reques
   }
 
   override fun actionPerformed(e: AnActionEvent) = e.project!!.service<GHPRToolWindowController>()
-    .show(GHPRToolWindowTabController::resetRemoteAndAccount)
+    .activate(GHPRToolWindowTabController::resetRemoteAndAccount)
 }

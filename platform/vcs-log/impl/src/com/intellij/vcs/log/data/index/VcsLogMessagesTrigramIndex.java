@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.io.StorageLockContext;
 import com.intellij.util.io.VoidDataExternalizer;
 import com.intellij.vcs.log.VcsCommitMetadata;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
@@ -23,10 +24,11 @@ public final class VcsLogMessagesTrigramIndex extends VcsLogFullDetailsIndex<Voi
   @NonNls private static final String TRIGRAMS = "trigrams";
 
   public VcsLogMessagesTrigramIndex(@NotNull StorageId storageId,
+                                    @Nullable StorageLockContext storageLockContext,
                                     @NotNull FatalErrorHandler fatalErrorHandler,
                                     @NotNull Disposable disposableParent) throws IOException {
     super(storageId, TRIGRAMS, new TrigramMessageIndexer(), VoidDataExternalizer.INSTANCE,
-          fatalErrorHandler, disposableParent);
+          storageLockContext, fatalErrorHandler, disposableParent);
   }
 
   @Nullable

@@ -239,4 +239,10 @@ public class PyExtractSuperclassTest extends PyClassRefactoringTest {
     String expected = psi_mgr.findFile(LocalFileSystem.getInstance().findFileByIoFile(expected_file)).getText().trim();
     assertEquals(expected, result);
   }
+
+  // PY-46099
+  public void testNoClassCastExceptionInCopiedFunctionWithClassInitAndMethodCall() {
+    runWithLanguageLevel(LanguageLevel.getLatest(),
+                         () -> doSimpleTest("Baz", "Bar", null, true, false, ".baz"));
+  }
 }

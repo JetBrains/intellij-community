@@ -3,9 +3,11 @@ package com.intellij.testFramework.fixtures;
 
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
+import com.intellij.jarRepository.RepositoryLibraryType;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.ui.OrderRoot;
@@ -54,7 +56,7 @@ public final class MavenDependencyUtil {
     Collection<OrderRoot> roots =
       JarRepositoryManager.loadDependenciesModal(model.getProject(), libraryProperties, false, false, null, remoteRepositoryDescriptions);
     LibraryTable.ModifiableModel tableModel = model.getModuleLibraryTable().getModifiableModel();
-    Library library = tableModel.createLibrary(mavenCoordinates);
+    Library library = tableModel.createLibrary(mavenCoordinates, RepositoryLibraryType.REPOSITORY_LIBRARY_KIND);
     Library.ModifiableModel libraryModel = library.getModifiableModel();
     if (roots.isEmpty()) {
       throw new IllegalStateException(String.format("No roots for '%s'", mavenCoordinates));
@@ -63,6 +65,7 @@ public final class MavenDependencyUtil {
     for (OrderRoot root : roots) {
       libraryModel.addRoot(root.getFile(), root.getType());
     }
+    ((LibraryEx.ModifiableModelEx) libraryModel).setProperties(libraryProperties);
 
     LibraryOrderEntry libraryOrderEntry = model.findLibraryOrderEntry(library);
     if (libraryOrderEntry == null) {

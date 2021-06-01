@@ -284,28 +284,38 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     saveEntities(storage, allSources, writer)
   }
 
-  private fun getActualFileUrl(source: JpsFileEntitySource) = when (source) {
-    is JpsFileEntitySource.ExactFile -> source.file.url
-    is JpsFileEntitySource.FileInDirectory -> {
-      val fileName = fileIdToFileName.get(source.fileNameId)
-      if (fileName != null) source.directory.url + "/" + fileName else null
+  internal fun getActualFileUrl(source: EntitySource): String? {
+    val actualFileSource = getActualFileSource(source) ?: return null
+
+    return when (actualFileSource) {
+      is JpsFileEntitySource.ExactFile -> actualFileSource.file.url
+      is JpsFileEntitySource.FileInDirectory -> {
+        val fileName = fileIdToFileName.get(actualFileSource.fileNameId) ?: run {
+          // We have a situations when we don't have an association at for `fileIdToFileName` entity source returned from `getActualFileSource`
+          // but we have it for the original `JpsImportedEntitySource.internalFile` and base on it we try to calculate actual file url
+          if (source is JpsImportedEntitySource && source.internalFile is JpsFileEntitySource.FileInDirectory && source.storedExternally) {
+            fileIdToFileName.get(source.internalFile.fileNameId)?.substringBeforeLast(".")?.let { "$it.xml" }
+          } else null
+        }
+        if (fileName != null) actualFileSource.directory.url + "/" + fileName else null
+      }
     }
   }
 
-  private fun getActualFileSource(source: EntitySource) = when (source) {
-    is JpsImportedEntitySource -> {
-      if (source.storedExternally) {
-        //todo remove obsolete entries
-        internalSourceToExternal.getOrPut(source.internalFile, { externalStorageMapping.getExternalSource(source.internalFile) })
+  private fun getActualFileSource(source: EntitySource): JpsFileEntitySource? {
+    return when (source) {
+      is JpsImportedEntitySource -> {
+        if (source.storedExternally) {
+          //todo remove obsolete entries
+          internalSourceToExternal.getOrPut(source.internalFile) { externalStorageMapping.getExternalSource(source.internalFile) }
+        }
+        else {
+          source.internalFile
+        }
       }
-      else {
-        source.internalFile
-      }
+      else -> getInternalFileSource(source)
     }
-    else -> getInternalFileSource(source)
   }
-
-  internal fun getActualFileUrl(source: EntitySource) = getActualFileSource(source)?.let { getActualFileUrl(it) }
 
   override fun getAllModulePaths(): List<ModulePath> {
     return fileSerializersByUrl.values.filterIsInstance<ModuleImlFileEntitiesSerializer>().mapTo(LinkedHashSet()) { it.modulePath }.toList()
@@ -319,6 +329,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
       }
     }
     val affectedFileFactories = HashSet<JpsModuleListSerializer>()
+    val affectedEntityTypeSerializers = HashSet<JpsFileEntityTypeSerializer<*>>()
 
     fun processObsoleteSource(fileUrl: String, deleteObsoleteFilesFromFileFactories: Boolean) {
       val obsoleteSerializers = fileSerializersByUrl.getValues(fileUrl)
@@ -341,7 +352,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
         }
         // Remove libraries under `external_build_system/libraries` folder
         if (it in entityTypeSerializers) {
-          (it as JpsFileEntityTypeSerializer).deleteObsoleteFile(fileUrl, writer)
+          if (getFilteredEntitiesForSerializer(it as JpsFileEntityTypeSerializer, storage).isEmpty()) {
+            it.deleteObsoleteFile(fileUrl, writer)
+          }
+          else {
+            affectedEntityTypeSerializers.add(it)
+          }
         }
       }
     }
@@ -427,7 +443,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
           processNewlyAddedDirectoryEntities(entities)
         }
       }
-      val url = actualFileSource?.let { getActualFileUrl(it) }
+      val url = getActualFileUrl(source)
       val internalSource = getInternalFileSource(source)
       if (url != null && internalSource != null
           && (ModuleEntity::class.java in entities || FacetEntity::class.java in entities || ModuleGroupPathEntity::class.java in entities)) {
@@ -468,7 +484,7 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
 
     for (serializer in entityTypeSerializers) {
-      if (entitiesToSave.any { serializer.mainEntityClass in it.value }) {
+      if (entitiesToSave.any { serializer.mainEntityClass in it.value } || serializer in affectedEntityTypeSerializers) {
         val entitiesMap = mutableMapOf(serializer.mainEntityClass to getFilteredEntitiesForSerializer(serializer, storage))
         serializer.additionalEntityTypes.associateWithTo(entitiesMap) {
           storage.entities(it).toList()

@@ -765,7 +765,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
         @Override
         public boolean update(DnDEvent event) {
-          beforeDnDUpdate();
+          beforeDnDUpdate(event);
           return super.update(event);
         }
       };
@@ -776,7 +776,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     }
   }
 
-  protected void beforeDnDUpdate() { }
+  protected void beforeDnDUpdate(DnDEvent event) { }
 
   protected void beforeDnDLeave() { }
 

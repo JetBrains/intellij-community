@@ -60,14 +60,17 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
     MyCommitIdKeyDescriptor commitIdKeyDescriptor = new MyCommitIdKeyDescriptor(roots);
     StorageId hashesStorageId = new StorageId(project.getName(), HASHES_STORAGE, logId, VERSION);
-    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(hashesStorageId, commitIdKeyDescriptor),
+    StorageLockContext storageLockContext = new StorageLockContext(true);
+
+    myCommitIdEnumerator = IOUtil.openCleanOrResetBroken(() -> new MyPersistentBTreeEnumerator(hashesStorageId, commitIdKeyDescriptor,
+                                                                                               storageLockContext),
                                                          hashesStorageId.getStorageFile(STORAGE).toFile());
 
     VcsRefKeyDescriptor refsKeyDescriptor = new VcsRefKeyDescriptor(logProviders, commitIdKeyDescriptor);
     StorageId refsStorageId = new StorageId(project.getName(), REFS_STORAGE, logId, VERSION + REFS_VERSION);
     myRefsEnumerator = IOUtil.openCleanOrResetBroken(() -> new PersistentEnumerator<>(refsStorageId.getStorageFile(STORAGE),
                                                                                       refsKeyDescriptor, Page.PAGE_SIZE,
-                                                                                      null, refsStorageId.getVersion()),
+                                                                                      storageLockContext, refsStorageId.getVersion()),
                                                      refsStorageId.getStorageFile(STORAGE).toFile());
     Disposer.register(parent, this);
   }
@@ -308,8 +311,9 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
   }
 
   private static final class MyPersistentBTreeEnumerator extends PersistentBTreeEnumerator<CommitId> {
-    MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor) throws IOException {
-      super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, Page.PAGE_SIZE, new StorageLockContext(true),
+    MyPersistentBTreeEnumerator(@NotNull StorageId storageId, @NotNull KeyDescriptor<CommitId> commitIdKeyDescriptor,
+                                @Nullable StorageLockContext storageLockContext) throws IOException {
+      super(storageId.getStorageFile(STORAGE), commitIdKeyDescriptor, Page.PAGE_SIZE, storageLockContext,
             storageId.getVersion());
     }
 

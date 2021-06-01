@@ -115,14 +115,22 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       }
 
       val project = result.project
+      if (!addToOpened(project)) {
+        return@run null
+      }
+
       frameAllocator.projectLoaded(project)
-      if (doOpenProject(project)) {
-        frameAllocator.projectOpened(project)
-        result
+      try {
+        openProject(project, ProgressManager.getInstance().progressIndicator, isRunStartUpActivitiesEnabled(project))
       }
-      else {
-        null
+      catch (e: ProcessCanceledException) {
+        app.invokeAndWait { closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false) }
+        app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+        return@run null
       }
+
+      frameAllocator.projectOpened(project)
+      result
     }
       .handle(BiFunction { result, error ->
         disableAutoSaveToken.finish()

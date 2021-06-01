@@ -19,6 +19,7 @@ public final class FacetState {
   private String myFacetType;
   private String myName;
   private String myExternalSystemId;
+  private String myExternalSystemIdInInternalStorage;
   private Element myConfiguration;
 
   @Property(surroundWithTag = false)
@@ -45,6 +46,11 @@ public final class FacetState {
     return myExternalSystemId;
   }
 
+  @Attribute(SerializationConstants.EXTERNAL_SYSTEM_ID_IN_INTERNAL_STORAGE_ATTRIBUTE)
+  public String getExternalSystemIdInInternalStorage() {
+    return myExternalSystemIdInInternalStorage;
+  }
+
   public void setConfiguration(final Element configuration) {
     myConfiguration = configuration;
   }
@@ -59,6 +65,10 @@ public final class FacetState {
 
   public void setExternalSystemId(String externalSystemId) {
     myExternalSystemId = externalSystemId;
+  }
+
+  public void setExternalSystemIdInInternalStorage(String externalSystemIdInInternalStorage) {
+    myExternalSystemIdInInternalStorage = externalSystemIdInInternalStorage;
   }
 
   @Override

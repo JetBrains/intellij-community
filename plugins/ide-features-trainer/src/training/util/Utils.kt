@@ -18,6 +18,8 @@ import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindow
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -194,4 +196,8 @@ fun learningProgressString(lessons: List<Lesson>): String {
     LearnBundle.message("learn.module.progress.completed")
   else
     LearnBundle.message("learn.module.progress", done, total)
+}
+
+fun learningToolWindow(project: Project): ToolWindow? {
+  return ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)
 }

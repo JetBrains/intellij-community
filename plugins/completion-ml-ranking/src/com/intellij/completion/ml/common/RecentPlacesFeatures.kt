@@ -67,16 +67,18 @@ class RecentPlacesFeatures : ElementFeatureProvider {
       @Suppress("IncorrectParentDisposable")
       ReadAction
         .nonBlocking(Runnable {
-            val element = provider.findElementAt(offset)
-            if (element != null && namesValidator.isIdentifier(element.text, project)) synchronized(recentPlaces) {
-              recentPlaces.addToTop(element.text)
-              val declaration = findDeclaration(element)
-              if (declaration != null) {
-                for (childName in declaration.getChildrenNames().take(MAX_CHILDREN_PER_PLACE)) {
-                  childrenRecentPlaces.addToTop(childName)
-                }
+          val psiFile = provider.getPsi(provider.baseLanguage)
+          if (psiFile == null || !psiFile.isValid) return@Runnable
+          val element = provider.findElementAt(offset)
+          if (element != null && namesValidator.isIdentifier(element.text, project)) synchronized(recentPlaces) {
+            recentPlaces.addToTop(element.text)
+            val declaration = findDeclaration(element)
+            if (declaration != null) {
+              for (childName in declaration.getChildrenNames().take(MAX_CHILDREN_PER_PLACE)) {
+                childrenRecentPlaces.addToTop(childName)
               }
             }
+          }
         })
         .coalesceBy(changePlace)
         .expireWith(project)
@@ -97,7 +99,7 @@ class RecentPlacesFeatures : ElementFeatureProvider {
       return null
     }
 
-    private fun<T> MutableSet<T>.addToTop(value: T) {
+    private fun <T> MutableSet<T>.addToTop(value: T) {
       this.remove(value)
       this.add(value)
     }

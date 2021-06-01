@@ -653,6 +653,17 @@ public class JBUI {
       }
     }
 
+    public interface Notification {
+      Color FOREGROUND = JBColor.namedColor("Notification.foreground", Label.foreground());
+      Color BACKGROUND = JBColor.namedColor("Notification.background", 0xFFF8D1, 0x1D3857);
+
+      interface Error {
+        Color FOREGROUND = JBColor.namedColor("Notification.errorForeground", Notification.FOREGROUND);
+        Color BACKGROUND = JBColor.namedColor("Notification.errorBackground", 0xF5E6E7, 0x593D41);
+        Color BORDER_COLOR = JBColor.namedColor("Notification.errorBorderColor", 0xE0A8A9, 0x73454B);
+      }
+    }
+
     public static final class StatusBar {
       @NotNull
       public static Color hoverBackground() {

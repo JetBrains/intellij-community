@@ -92,13 +92,16 @@ public class ProjectJdkConfigurable implements UnnamedConfigurable {
   public JComponent createComponent() {
     if (myJdkPanel == null) {
       myJdkPanel = new JPanel(new GridBagLayout());
-      myCbProjectJdk = new JdkComboBox(myProject, myJdksModel, SimpleJavaSdkType.notSimpleJavaSdkType(), null, null, null);
+      myCbProjectJdk = new JdkComboBox(myProject, myJdksModel, SimpleJavaSdkType.notSimpleJavaSdkType(),
+                                       WslSdkFilter.filterSdkByWsl(myProject), WslSdkFilter.filterSdkSuggestionByWsl(myProject), null, null);
       myCbProjectJdk.showNoneSdkItem();
       myCbProjectJdk.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
           if (myFreeze) return;
-          myJdksModel.setProjectSdk(myCbProjectJdk.getSelectedJdk());
+          if (myCbProjectJdk != null) {
+            myJdksModel.setProjectSdk(myCbProjectJdk.getSelectedJdk());
+          }
           clearCaches();
         }
       });

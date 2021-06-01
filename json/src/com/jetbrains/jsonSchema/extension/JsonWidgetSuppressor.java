@@ -10,8 +10,17 @@ public interface JsonWidgetSuppressor {
   ExtensionPointName<JsonWidgetSuppressor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.json.jsonWidgetSuppressor");
 
   /**
-   * Allows to suppress JSON widget for particular files
-   * This method can access indexes and PSI
+   * Allows to check whether widget for the file should be suppressed or not.
+   * This method is called on EDT.
+   */
+  default boolean isCandidateForSuppress(@NotNull VirtualFile file, @NotNull Project project) {
+    return false;
+  }
+
+  /**
+   * Allows to suppress JSON widget for particular files.
+   * This method is called on a background thread under read action only if {@link #isCandidateForSuppress(VirtualFile, Project)}
+   * return {@code true} for the given file in the given project.
    */
   boolean suppressSwitcherWidget(@NotNull VirtualFile file, @NotNull Project project);
 }

@@ -172,7 +172,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
       if (ConfigurationSettingsEditorWrapper.CONFIGURATION_EDITOR_KEY.is(dataId)) {
         return getEditor();
       }
-      if (RUN_ON_TARGET_NAME_KEY.is(dataId)) {
+      if (RUN_ON_TARGET_NAME_KEY.is(dataId) && myComponent != null) {
         RunOnTargetComboBox runOnComboBox = (RunOnTargetComboBox)myComponent.myRunOnComboBox;
         if (runOnComboBox != null) {
           return runOnComboBox.getSelectedTargetName();

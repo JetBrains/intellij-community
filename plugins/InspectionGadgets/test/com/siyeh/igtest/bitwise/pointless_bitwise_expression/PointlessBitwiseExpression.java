@@ -77,11 +77,11 @@ public class PointlessBitwiseExpression {
       int c = <warning descr="'i & i' can be replaced with 'i'">i &  i</warning>; // i
       int d = <warning descr="'i | i' can be replaced with 'i'">i |  i</warning>; // i
     }
-    
+
     void testChar(int value) {
         int res = value & '\uFFFF';
     }
-    
+
     void testTilde(int x, long y) {
         int r1 = <warning descr="'x & ~x' can be replaced with '0'">x & ~x</warning>;
         int r2 = <warning descr="'~x & x' can be replaced with '0'">~x & x</warning>;
@@ -93,11 +93,18 @@ public class PointlessBitwiseExpression {
         int r8 = <warning descr="'x | ~x' can be replaced with '-1'">x | ~x</warning>;
         long r9 = <warning descr="'y ^ ~y' can be replaced with '-1L'">y ^ ~y</warning>;
     }
-    
+
     void testDoubleTilde(int x, long y) {
         int r1 = <warning descr="'~~x' can be replaced with 'x'">~~x</warning>;
         long r2 = ~<warning descr="'~~y' can be replaced with 'y'">~~y</warning>;
         int r3 = <warning descr="'~(~(x))' can be replaced with '(x)'">~(~(x))</warning>;
         long r4 = ~(~(<warning descr="'~(~y)' can be replaced with 'y'">~(~y)</warning>));
+    }
+
+    void testComments(int length) {
+      final int bits = <warning descr="'0 // comment | length// 1 | 3' can be replaced with 'length// 1
+                       | 3'"><caret>0 // comment
+                       | length// 1
+                       | 3</warning>;
     }
 }

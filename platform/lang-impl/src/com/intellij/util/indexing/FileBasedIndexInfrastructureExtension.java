@@ -2,7 +2,6 @@
 package com.intellij.util.indexing;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.stubs.StubIndexKey;
@@ -91,6 +90,11 @@ public interface FileBasedIndexInfrastructureExtension {
    * For example, it may happen on index invalidation.
    */
   void resetPersistentState();
+
+  /**
+   * Executed when IntelliJ is requested to clear  a particular index. Only data corresponding to requested index should be deleted.
+   */
+  void resetPersistentState(@NotNull ID<?, ?> indexId);
 
   /**
    * Executed when IntelliJ is shutting down it's indexes (IDE shutdown or plugin load/unload). It is the best time

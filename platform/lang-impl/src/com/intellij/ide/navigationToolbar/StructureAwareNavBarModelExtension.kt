@@ -34,7 +34,7 @@ abstract class StructureAwareNavBarModelExtension : AbstractNavBarModelExtension
     if (UISettings.instance.showMembersInNavigationBar) {
       val psiFile = CommonDataKeys.PSI_FILE.getData(dataContext)
       val editor = CommonDataKeys.EDITOR.getData(dataContext)
-      if (psiFile == null || editor == null) return null
+      if (psiFile == null || !psiFile.isValid || editor == null) return null
       val psiElement = psiFile.findElementAt(editor.caretModel.offset)
       if (isAcceptableLanguage(psiElement)) {
         buildStructureViewModel(psiFile, editor)?.let { model ->

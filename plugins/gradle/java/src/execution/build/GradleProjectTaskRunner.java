@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
 import org.gradle.api.internal.jvm.ClassDirectoryBinaryNamingScheme;
+import org.gradle.util.GradleVersion;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,6 +43,7 @@ import org.jetbrains.concurrency.Promise;
 import org.jetbrains.plugins.gradle.service.project.GradleBuildSrcProjectsResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil;
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager;
+import org.jetbrains.plugins.gradle.service.task.VersionSpecificInitScript;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
@@ -77,6 +79,57 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
                                                                          "    outputs.upToDateWhen { false } \n" +
                                                                          "  } \n" +
                                                                          "}\n";
+
+  @Language("Groovy")
+  private static final String COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE = "import org.gradle.tooling.events.OperationCompletionListener\n" +
+                                                                                         "import org.gradle.tooling.events.FinishEvent\n" +
+                                                                                         "import org.gradle.api.services.BuildService\n" +
+                                                                                         "import org.gradle.api.services.BuildServiceParameters\n" +
+                                                                                         "import org.gradle.util.GradleVersion\n" +
+                                                                                         "import org.gradle.api.Task\n" +
+                                                                                         "\n" +
+                                                                                         "def outputFile = new File(\"%s\")\n" +
+                                                                                         "\n" +
+                                                                                         "abstract class OutputPathCollectorService\n" +
+                                                                                         "        implements BuildService<OutputPathCollectorService.Params>, AutoCloseable {\n" +
+                                                                                         "\n" +
+                                                                                         "    interface Params extends BuildServiceParameters {\n" +
+                                                                                         "        Property<File> getOutputFile()\n" +
+                                                                                         "    }\n" +
+                                                                                         "\n" +
+                                                                                         "    Set<Task> tasks = new HashSet<Task>()\n" +
+                                                                                         "\n" +
+                                                                                         "    void registerTask(Task t) {\n" +
+                                                                                         "        tasks.add(t)\n" +
+                                                                                         "    }\n" +
+                                                                                         "\n" +
+                                                                                         "    @Override\n" +
+                                                                                         "    void close() throws Exception {\n" +
+                                                                                         "        def outputFile = getParameters().outputFile.get()\n" +
+                                                                                         "        tasks.each { Task task ->\n" +
+                                                                                         "            def state = task.state\n" +
+                                                                                         "            def work = state.didWork\n" +
+                                                                                         "            def fromCache = state.skipped && state.skipMessage == 'FROM-CACHE'\n" +
+                                                                                         "            def hasOutput = task.outputs.hasOutput\n" +
+                                                                                         "            if ((work || fromCache) && hasOutput) {\n" +
+                                                                                         "                task.outputs.files.files.each { outputFile.append(it.path + '\\n') }\n" +
+                                                                                         "            }\n" +
+                                                                                         "        }\n" +
+                                                                                         "    }\n" +
+                                                                                         "}\n" +
+                                                                                         "\n" +
+                                                                                         "Provider<OutputPathCollectorService> provider = gradle.sharedServices.registerIfAbsent(\"outputPathCollectorService\",\n" +
+                                                                                         "        OutputPathCollectorService) { it.parameters.outputFile.set(outputFile)  }\n" +
+                                                                                         "\n" +
+                                                                                         "gradle.taskGraph.whenReady { TaskExecutionGraph tg ->\n" +
+                                                                                         "    tg.allTasks.each { Task t ->\n" +
+                                                                                         "        t.onlyIf {\n" +
+                                                                                         "            provider.get().registerTask(t)\n" +
+                                                                                         "            return true\n" +
+                                                                                         "        }\n" +
+                                                                                         "    }\n" +
+                                                                                         "}\n";
+
   @Language("Groovy")
   private static final String COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE = "def outputFile = new File(\"%s\")\n" +
                                                                           "def effectiveTasks = []\n" +
@@ -186,8 +239,20 @@ public class GradleProjectTaskRunner extends ProjectTaskRunner {
 
       Collection<String> scripts = initScripts.getModifiable(rootProjectPath);
       if (outputPathsFile != null && context.isCollectionOfGeneratedFilesEnabled()) {
-        scripts.add(String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath())));
+        String outputFilePath = FileUtil.toCanonicalPath(outputPathsFile.getAbsolutePath());
+        GradleVersion v68 = GradleVersion.version("6.8");
+
+        VersionSpecificInitScript simple =
+          new VersionSpecificInitScript(String.format(COLLECT_OUTPUT_PATHS_INIT_SCRIPT_TEMPLATE, outputFilePath),
+                                        "ijpathcollect", (v) -> v.compareTo(v68) < 0);
+
+        VersionSpecificInitScript services =
+          new VersionSpecificInitScript(String.format(COLLECT_OUTPUT_PATHS_USING_SERVICES_INIT_SCRIPT_TEMPLATE, outputFilePath),
+                                        "ijpathcollect", (v) -> v.compareTo(v68) >= 0);
+
+        userData.putUserData(GradleTaskManager.VERSION_SPECIFIC_SCRIPTS_KEY, Arrays.asList(simple, services));
       }
+
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, join(scripts, System.lineSeparator()));
       userData.putUserData(GradleTaskManager.INIT_SCRIPT_PREFIX_KEY, executionName);
 

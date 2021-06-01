@@ -3,6 +3,7 @@ package com.intellij.dvcs.ui
 
 import com.intellij.dvcs.repo.Repository
 import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.dvcs.ui.RepositoryChangesBrowserNode.Companion.getColorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NotNullLazyKey
 import com.intellij.openapi.vcs.FilePath
@@ -21,6 +22,9 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
   override fun getParentNodeFor(nodePath: StaticFilePath, subtreeRoot: ChangesBrowserNode<*>): ChangesBrowserNode<*>? {
     val nextPolicyParent = nextPolicy?.getParentNodeFor(nodePath, subtreeRoot)
 
+    val colorManager = getColorManager(project)
+    if (!colorManager.hasMultiplePaths()) return nextPolicyParent
+
     val filePath = nodePath.filePath
     val repository = getRepositoryFor(filePath)
     if (repository == null || repositoryManager.isExternal(repository)) return nextPolicyParent
@@ -30,7 +34,7 @@ class RepositoryChangesGroupingPolicy(val project: Project, val model: DefaultTr
 
     REPOSITORY_CACHE.getValue(cachingRoot)[repository]?.let { return it }
 
-    val repoNode = RepositoryChangesBrowserNode(repository)
+    val repoNode = RepositoryChangesBrowserNode(repository, colorManager)
     repoNode.markAsHelperNode()
 
     model.insertNodeInto(repoNode, grandParent, grandParent.childCount)

@@ -12,8 +12,10 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.ProcessTtyConnector;
 import com.jediterm.terminal.Terminal;
+import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
 import com.jediterm.terminal.model.TerminalLine;
+import com.jediterm.terminal.model.TerminalLineIntervalHighlighting;
 import com.jediterm.terminal.model.TerminalTextBuffer;
 import com.jediterm.terminal.ui.TerminalAction;
 import org.jetbrains.annotations.NotNull;
@@ -206,6 +208,18 @@ public class ShellTerminalWidget extends JBTerminalWidget {
       return ContainerUtil.concat(baseActions, actions);
     }
     return baseActions;
+  }
+
+  public @Nullable TerminalLineIntervalHighlighting highlightLineInterval(int lineNumber, int intervalStartOffset, int intervalLength,
+                                                                          @NotNull TextStyle style) {
+    TerminalLine line = getTerminalTextBuffer().getLine(lineNumber);
+    if (line == null) {
+      LOG.error("No line found");
+      return null;
+    }
+    TerminalLineIntervalHighlighting highlighting = line.addCustomHighlighting(intervalStartOffset, intervalLength, style);
+    getTerminalPanel().repaint();
+    return highlighting;
   }
 
   public static @Nullable ProcessTtyConnector getProcessTtyConnector(@Nullable TtyConnector connector) {

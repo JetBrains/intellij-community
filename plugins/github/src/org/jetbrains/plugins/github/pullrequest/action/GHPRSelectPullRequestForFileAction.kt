@@ -35,7 +35,7 @@ class GHPRSelectPullRequestForFileAction : DumbAwareAction(GithubBundle.messageP
   override fun actionPerformed(e: AnActionEvent) {
     val project = e.getRequiredData(PlatformDataKeys.PROJECT)
     val file = FileEditorManager.getInstance(project).selectedFiles.filterIsInstance<GHPRVirtualFile>().first()
-    project.service<GHPRToolWindowController>().show {
+    project.service<GHPRToolWindowController>().activate {
       it.componentController?.viewPullRequest(file.pullRequest)
     }
   }

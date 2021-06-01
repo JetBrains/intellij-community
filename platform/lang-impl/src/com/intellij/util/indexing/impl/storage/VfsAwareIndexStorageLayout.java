@@ -16,4 +16,6 @@ public interface VfsAwareIndexStorageLayout<Key, Value> extends IndexStorageLayo
   default @Nullable SnapshotInputMappings<Key, Value> createOrClearSnapshotInputMappings() throws IOException {
     return null;
   }
+
+  void clearIndexData();
 }

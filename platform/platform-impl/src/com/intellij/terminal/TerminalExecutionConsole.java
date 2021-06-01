@@ -64,17 +64,21 @@ public class TerminalExecutionConsole implements ConsoleView, ObservableConsoleV
 
   public TerminalExecutionConsole(@NotNull Project project, int columns, int lines, @Nullable ProcessHandler processHandler) {
     myProject = project;
-    JBTerminalSystemSettingsProviderBase provider = new JBTerminalSystemSettingsProviderBase() {
+    myDataStream = new AppendableTerminalDataStream();
+    myTerminalWidget = new ConsoleTerminalWidget(project, columns, lines, getProvider());
+    if (processHandler != null) {
+      attachToProcess(processHandler);
+    }
+  }
+
+  @NotNull
+  private static JBTerminalSystemSettingsProviderBase getProvider() {
+    return new JBTerminalSystemSettingsProviderBase() {
       @Override
       public HyperlinkStyle.HighlightMode getHyperlinkHighlightingMode() {
         return HyperlinkStyle.HighlightMode.ALWAYS;
       }
     };
-    myDataStream = new AppendableTerminalDataStream();
-    myTerminalWidget = new ConsoleTerminalWidget(project, columns, lines, provider);
-    if (processHandler != null) {
-      attachToProcess(processHandler);
-    }
   }
 
   public @NotNull JBTerminalWidget getTerminalWidget() {

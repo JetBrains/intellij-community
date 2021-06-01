@@ -24,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.keymap.Keymap;
@@ -130,6 +131,9 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
         }
       }
     }, AWTEvent.MOUSE_EVENT_MASK);
+    if (Boolean.getBoolean("idea.ui.debug.mode") || Boolean.getBoolean("idea.ui.inspector")) {
+      ApplicationManager.getApplication().invokeLater(() -> new UiInspector(null));
+    }
   }
 
   private void updateMouseShortcuts() {

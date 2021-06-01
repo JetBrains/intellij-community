@@ -72,6 +72,18 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
+  @ApiStatus.Internal
+  public Set<Class<?>> getModelProvidersClasses() {
+    Set<Class<?>> result = new LinkedHashSet<Class<?>>();
+    for (ProjectImportModelProvider provider : myProjectsLoadedModelProviders) {
+      result.add(provider.getClass());
+    }
+    for (ProjectImportModelProvider provider : myBuildFinishedModelProviders) {
+      result.add(provider.getClass());
+    }
+    return result;
+  }
+
   public void addTargetTypes(@NotNull Set<Class<?>> targetTypes) {
     myTargetTypes.addAll(targetTypes);
   }

@@ -19,8 +19,8 @@ class JavaTargetParameter private constructor(
    * Resolves all upload and download paths provided by this parameter.
    */
   fun resolvePaths(
-    uploadPathsResolver: (String) -> TargetValue<String>,
-    downloadPathsResolver: (String) -> TargetValue<String>
+    uploadPathsResolver: (TargetPath) -> TargetValue<String>,
+    downloadPathsResolver: (TargetPath) -> TargetValue<String>
   ) {
     targetPaths.resolveAll(uploadPathsResolver, downloadPathsResolver)
   }
@@ -30,20 +30,21 @@ class JavaTargetParameter private constructor(
    */
   fun toLocalParameter(): String {
     targetPaths.resolveAll(
-      uploadPathsResolver = { TargetValue.fixed(it) },
-      downloadPathsResolver = { TargetValue.fixed(it) }
+      uploadPathsResolver = TargetPath::toLocalPath,
+      downloadPathsResolver = TargetPath::toLocalPath
     )
     return parameter.targetValue.blockingGet(0)!!
   }
 
   class Builder(
-    uploadPaths: Set<String> = setOf(),
-    downloadPaths: Set<String> = setOf()
+    val targetPaths: TargetPaths
   ) {
-    private val targetPaths: TargetPaths = TargetPaths(uploadPaths, downloadPaths)
+
+    constructor(uploadPaths: Set<String> = setOf(),
+                downloadPaths: Set<String> = setOf())
+      : this(TargetPaths.unordered(uploadPaths, downloadPaths))
 
     private val parameterBuilderParts: MutableList<() -> String> = mutableListOf()
-    private val asyncActions: MutableList<() -> Unit> = mutableListOf()
 
     /**
      * Adds given string as-is to the overall parameter.
@@ -56,18 +57,8 @@ class JavaTargetParameter private constructor(
      */
     fun resolved(value: String) = apply { parameterBuilderParts += { getResolved(value) } }
 
-    /**
-     * Requests some action to be done asynchronously when given value will be resolved.
-     * It may be used, for example, when resolved string is needed somewhere outside the parameter,
-     * e.g. in configuration file.
-     */
-    fun doWithResolved(value: String, block: (String) -> Unit) = doAsync { block(getResolved(value)) }
-
-    private fun doAsync(block: () -> Unit) = apply { asyncActions += block }
-
     fun build(): JavaTargetParameter {
       val parameter = TargetValue.map(TargetValue.EMPTY_VALUE) {
-        asyncActions.forEach { it() }
         parameterBuilderParts.joinToString("") { it() }
       }
       return JavaTargetParameter(parameter, targetPaths)
@@ -83,22 +74,8 @@ class JavaTargetParameter private constructor(
     }
   }
 
-  private class TargetPaths(val uploadPaths: Set<String> = emptySet(),
-                            val downloadPaths: Set<String> = emptySet()) {
-
-    private var resolvedPaths: Map<String, TargetValue<String>>? = null
-
-    fun resolveAll(uploadPathsResolver: (String) -> TargetValue<String>,
-                   downloadPathsResolver: (String) -> TargetValue<String>) {
-      resolvedPaths = uploadPaths.associateWith(uploadPathsResolver) + downloadPaths.associateWith(downloadPathsResolver)
-    }
-
-    fun getResolved(localValue: String): TargetValue<String> = resolvedPaths?.get(localValue)
-                                                               ?: throw IllegalStateException("Path $localValue is not resolved")
-  }
-
   companion object {
     @JvmStatic
-    fun fixed(parameter: String) = JavaTargetParameter(TargetValue.fixed(parameter), TargetPaths())
+    fun fixed(parameter: String) = JavaTargetParameter(TargetValue.fixed(parameter), TargetPaths.unordered())
   }
 }

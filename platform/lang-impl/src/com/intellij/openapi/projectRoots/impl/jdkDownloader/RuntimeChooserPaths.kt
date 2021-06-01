@@ -41,9 +41,10 @@ class RuntimeChooserPaths {
     }
 
     val home = RuntimeChooserJreValidator.testNewJdkUnderProgress(
+      allowRunProcesses = true,
       computeHomePath = { sdkHome?.toAbsolutePath()?.toString() },
       callback = object : RuntimeChooserJreValidatorCallback<Path?> {
-        override fun onSdkResolved(versionString: String, sdkHome: Path) = sdkHome
+        override fun onSdkResolved(displayName: String?, versionString: String, sdkHome: Path) = sdkHome
         override fun onError(message: String): Path? {
           RuntimeChooserMessages.showErrorMessage(message)
           return null
@@ -64,7 +65,7 @@ class RuntimeChooserPaths {
 
   private fun runWithProgress(action: (indicator: ProgressIndicator, jdkFile: Path) -> /*runtime name*/ @NlsSafe String?) {
     val title = LangBundle.message("progress.title.choose.ide.runtime.set.jdk")
-    object : Task.ConditionalModal(null, title, true, DEAF) {
+    object : Task.Backgroundable(null, title, true, DEAF) {
       override fun run(indicator: ProgressIndicator) {
         var jdkFileShadow: Path? = null
         try {
