@@ -6,17 +6,26 @@ import org.jetbrains.kotlin.psi.KtIsExpression
 import org.jetbrains.uast.UBinaryExpressionWithType
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
+import org.jetbrains.uast.UastErrorType
 
 class KotlinUTypeCheckExpression(
-        override val sourcePsi: KtIsExpression,
-        givenParent: UElement?
+    override val sourcePsi: KtIsExpression,
+    givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UBinaryExpressionWithType, KotlinUElementWithType, KotlinEvaluatableUElement {
-    override val operand by lz { KotlinConverter.convertOrEmpty(sourcePsi.leftHandSide, this) }
-    
-    override val type by lz { sourcePsi.typeReference.toPsiType(this) }
-    
-    override val typeReference = sourcePsi.typeReference?.let {
-        KotlinUTypeReferenceExpression(it, this) { it.toPsiType(this) }
+    override val operand by lz {
+        baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.leftHandSide, this)
+    }
+
+    override val type by lz {
+        sourcePsi.typeReference?.let {
+            baseResolveProviderService.resolveToType(it, this)
+        } ?: UastErrorType
+    }
+
+    override val typeReference by lz {
+        sourcePsi.typeReference?.let {
+            KotlinUTypeReferenceExpression(it, this) { type }
+        }
     }
 
     override val operationKind =
