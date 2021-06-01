@@ -73,7 +73,8 @@
                      implementationClass="com.intellij.codeInspection.i18n.ConvertToBasicLatinInspection" />
     <intentionAction>
       <className>com.intellij.codeInspection.capitalization.AnnotateCapitalizationIntention</className>
-      <category>Java/I18N</category>
+      <bundleName>messages.JavaBundle</bundleName>
+      <categoryKey>intention.category.i18n</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.codeInspection.i18n.folding.EditPropertyValueIntentionAction</className>
