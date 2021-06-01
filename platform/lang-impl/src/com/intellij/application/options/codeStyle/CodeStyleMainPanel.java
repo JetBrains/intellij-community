@@ -88,6 +88,8 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
 
       @Override
       public void schemeListChanged() {
+        mySettingsPanels.keySet().removeIf(
+          name -> !myModel.containsScheme(name, false) && !myModel.containsScheme(name, true));
         mySchemesPanel.resetSchemesCombo();
       }
 
