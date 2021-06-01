@@ -57,18 +57,19 @@ import javax.swing.event.HyperlinkEvent
  */
 class GitApplyChangesProcess(private val project: Project,
                              private val commits: List<VcsFullCommitDetails>,
-                             private val autoCommit: Boolean,
+                             forceAutoCommit: Boolean,
                              @Nls private val operationName: String,
                              @Nls private val appliedWord: String,
-                             private val command: (GitRepository, Hash, Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
+                             private val command: (GitRepository, Hash, autoCommit: Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
                              private val emptyCommitDetector: (GitCommandResult) -> Boolean,
                              private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
                              private val preserveCommitMetadata: Boolean,
-                             private val cleanupBeforeCommit: (GitRepository) -> Unit = {}) {
+                             private val cleanupBeforeCommit: (GitRepository, autoCommit: Boolean) -> Unit = { _, _ -> }) {
   private val repositoryManager = GitRepositoryManager.getInstance(project)
   private val vcsNotifier = VcsNotifier.getInstance(project)
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
   private val vcsHelper = AbstractVcsHelper.getInstance(project)
+  private val autoCommit = forceAutoCommit || !changeListManager.areChangeListsEnabled()
 
   fun execute() {
     // ensure there are no stall changes (ex: from recent commit) that prevent changes from being moved into temp changelist
@@ -107,7 +108,6 @@ class GitApplyChangesProcess(private val project: Project,
                                commit: VcsFullCommitDetails,
                                successfulCommits: MutableList<VcsFullCommitDetails>,
                                alreadyPicked: MutableList<VcsFullCommitDetails>): Boolean {
-    val doAutoCommit = autoCommit || !changeListManager.areChangeListsEnabled()
     val conflictDetector = GitSimpleEventDetector(CHERRY_PICK_CONFLICT)
     val localChangesOverwrittenDetector = GitSimpleEventDetector(LOCAL_CHANGES_OVERWRITTEN_BY_CHERRY_PICK)
     val untrackedFilesDetector = GitUntrackedFilesOverwrittenByOperationDetector(repository.root)
@@ -131,11 +131,11 @@ class GitApplyChangesProcess(private val project: Project,
     try {
       val startHash = GitUtil.getHead(repository)
 
-      val result = command(repository, commit.id, doAutoCommit,
+      val result = command(repository, commit.id, autoCommit,
                            listOf(conflictDetector, localChangesOverwrittenDetector, untrackedFilesDetector))
 
       if (result.success()) {
-        if (doAutoCommit) {
+        if (autoCommit) {
           refreshChangedVfs(repository, startHash)
           successfulCommits.add(commit)
           return true
@@ -313,7 +313,7 @@ class GitApplyChangesProcess(private val project: Project,
     val sem = Semaphore(0)
     ApplicationManager.getApplication().invokeAndWait({
       try {
-        cleanupBeforeCommit(repository)
+        cleanupBeforeCommit(repository, autoCommit)
         val commitNotCancelled = vcsHelper.commitChanges(changes, changeList, commitMessage,
           object : CommitResultHandler {
             override fun onSuccess(commitMessage1: String) {

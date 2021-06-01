@@ -17,7 +17,6 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
 
   override fun setUp() {
     super.setUp()
-    appSettings.isAutoCommitOnCherryPick = true
     setValueForTest(vcsAppSettings::CREATE_CHANGELISTS_AUTOMATICALLY, createChangelistAutomatically)
   }
 
