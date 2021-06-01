@@ -20,6 +20,7 @@ import com.intellij.openapi.options.OptionsBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsActions
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.TextWithMnemonic
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -214,6 +215,22 @@ object LessonUtil {
         val y = editor.visualLineToY(editor.logicalToVisualPosition(logicalPosition()).line)
         return@l Rectangle(20, y, ui.width - 26, editor.lineHeight)
       }
+    }
+  }
+
+  /**
+   * Should be called after task with detection of UI element inside desired window to adjust
+   * @return location of window before adjustment
+   */
+  fun TaskRuntimeContext.adjustPopupPosition(windowKey: String): Point? {
+    val window = UIUtil.getWindow(previous.ui) ?: return null
+    val previousWindowLocation = WindowStateService.getInstance(project).getLocation(windowKey)
+    return if (adjustPopupPosition(project, window)) previousWindowLocation else null
+  }
+
+  fun restorePopupPosition(project: Project, windowKey: String, savedLocation: Point?) {
+    if (savedLocation != null) invokeLater {
+      WindowStateService.getInstance(project).putLocation(windowKey, savedLocation)
     }
   }
 

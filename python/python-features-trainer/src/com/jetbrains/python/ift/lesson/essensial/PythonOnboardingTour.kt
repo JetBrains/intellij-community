@@ -51,6 +51,7 @@ import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.dsl.LessonUtil.restoreIfModified
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
+import training.dsl.LessonUtil.restorePopupPosition
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
@@ -144,12 +145,8 @@ class PythonOnboardingTour :
   }
 
   override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
-    if (backupPopupLocation != null) {
-      invokeLater {
-        WindowStateService.getInstance(project).putLocation(SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
-        backupPopupLocation = null
-      }
-    }
+    restorePopupPosition(project, SearchEverywhereManagerImpl.LOCATION_SETTINGS_KEY, backupPopupLocation)
+    backupPopupLocation = null
     if (!lessonPassed) return
     invokeLater {
       val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
