@@ -38,9 +38,6 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
     var HIGHLIGHT_POLICY: HighlightPolicy = HighlightPolicy.BY_WORD,
     var IGNORE_POLICY: IgnorePolicy = IgnorePolicy.DEFAULT,
 
-    // Presentation settings
-    var ENABLE_SYNC_SCROLL: Boolean = true,
-
     // Editor settings
     var SHOW_WHITESPACES: Boolean = false,
     var SHOW_LINE_NUMBERS: Boolean = true,
@@ -68,9 +65,7 @@ class TextDiffSettingsHolder : PersistentStateComponent<TextDiffSettingsHolder.S
 
     // Presentation settings
 
-    var isEnableSyncScroll: Boolean
-      get()      = PLACE_SETTINGS.ENABLE_SYNC_SCROLL
-      set(value) { PLACE_SETTINGS.ENABLE_SYNC_SCROLL = value }
+    var isEnableSyncScroll: Boolean = true
 
     // Diff settings
 
