@@ -228,7 +228,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
-    String archString = '<key>LSArchitecturePriority</key>\n    <array>'
+    String archString = '<key>LSArchitecturePriority</key>\n    <array>\n'
     macCustomizer.architectures.each {archString += '      <string>' + it + '</string>\n' }
     archString += '    </array>'
 
@@ -245,8 +245,8 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         <key>CFBundleURLSchemes</key>
         <array>
 '''
-      urlSchemes.each {urlSchemesString += '        <string>' + it + '</string>\n' }
-      urlSchemesString += '''
+      urlSchemes.each {urlSchemesString += '          <string>' + it + '</string>\n' }
+      urlSchemesString += '''\
         </array>
       </dict>
     </array>'''
