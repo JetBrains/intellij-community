@@ -17,7 +17,7 @@ public abstract class Rule {
   /**
    * @param globalId a rule identifier that should be as unique as possible.
    *                 For that, it should preferably include some id of its supplying {@link TextChecker}
-   *                 and some code of the language that it checks.
+   *                 and some code of the language that it checks, separated by dots.
    *                 These ids are stored in {@link GrazieConfig.State} when a rule is enabled/disabled manually.
    * @param presentableName the presentable name of the rule
    * @param category the presentable name of the rule's category, to group the rules in the settings
@@ -28,6 +28,9 @@ public abstract class Rule {
     this.presentableName = presentableName;
     this.category = category;
     this.enabledByDefault = enabledByDefault;
+    if (!globalId.contains(".")) {
+      throw new IllegalArgumentException("Global id should be a qualified name with at least one dot inside: " + this);
+    }
   }
 
   public String getGlobalId() {

@@ -6,8 +6,10 @@ import com.intellij.grazie.config.CheckingContext
 import com.intellij.grazie.config.DetectionContext
 import com.intellij.grazie.config.SuppressingContext
 import com.intellij.grazie.config.migration.VersionedState
+import com.intellij.grazie.grammar.LanguageToolChecker
 import com.intellij.grazie.ide.msg.GrazieInitializerManager
 import com.intellij.grazie.jlanguage.Lang
+import com.intellij.grazie.text.Rule
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -15,6 +17,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.xmlb.annotations.Property
+import org.jetbrains.annotations.VisibleForTesting
 import java.util.*
 
 @State(name = "GraziConfig", presentableName = GrazieConfig.PresentableNameGetter::class, storages = [
@@ -94,6 +97,19 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
     private val defaultEnabledStrategies =
       Collections.unmodifiableSet(hashSetOf("nl.rubensten.texifyidea:Latex", "org.asciidoctor.intellij.asciidoc:AsciiDoc"))
 
+    @VisibleForTesting
+    fun migrateLTRuleIds(state: State): State {
+      val ltRules: List<Rule> by lazy { state.enabledLanguages.flatMap { LanguageToolChecker.getRules(it) } }
+
+      fun convert(ids: Set<String>): Set<String> =
+        ids.flatMap { id ->
+          if (id.contains(".")) listOf(id)
+          else ltRules.asSequence().map { it.globalId }.filter { it.startsWith("LanguageTool.") && it.endsWith(".$id") }.toList()
+        }.toSet()
+
+      return state.copy(userEnabledRules = convert(state.userEnabledRules), userDisabledRules = convert(state.userDisabledRules))
+    }
+
     private val instance by lazy { service<GrazieConfig>() }
 
     /**
@@ -118,7 +134,7 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
 
   override fun loadState(state: State) {
     val prevState = myState
-    myState = VersionedState.migrate(state)
+    myState = migrateLTRuleIds(VersionedState.migrate(state))
 
     if (prevState != myState) {
       service<GrazieInitializerManager>().publisher.update(prevState, myState)

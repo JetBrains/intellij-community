@@ -24,6 +24,8 @@ internal object LangTool : GrazieStateLifecycle {
     }
   }
 
+  internal fun globalIdPrefix(lang: Lang): String = "LanguageTool." + lang.remote.iso.name + "."
+
   fun getTool(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): JLanguageTool {
     require(lang.jLanguage != null) { "Trying to get LangTool for not available language" }
 
@@ -34,8 +36,12 @@ internal object LangTool : GrazieStateLifecycle {
         setCheckCancelledCallback { ProgressManager.checkCanceled(); false }
         addMatchFilter(UppercaseMatchFilter())
 
-        key.disabledRules.forEach { id -> disableRule(id) }
-        key.enabledRules.forEach { id -> enableRule(id) }
+        val prefix = globalIdPrefix(lang)
+        val disabledRules = key.disabledRules.mapNotNull { if (it.startsWith(prefix)) it.substring(prefix.length) else null }.toSet()
+        val enabledRules = key.enabledRules.mapNotNull { if (it.startsWith(prefix)) it.substring(prefix.length) else null }.toSet()
+
+        disabledRules.forEach { id -> disableRule(id) }
+        enabledRules.forEach { id -> enableRule(id) }
 
         fun loadConfigFile(path: String, block: (iso: String, id: String) -> Unit) {
           GrazieDynamicDataBroker.getFromResourceDirAsStream(path).use { stream ->
@@ -47,13 +53,13 @@ internal object LangTool : GrazieStateLifecycle {
         }
 
         loadConfigFile("en/enabled_rules.txt") { iso, ruleId ->
-          if (iso == lang.iso.name && ruleId !in key.disabledRules) {
+          if (iso == lang.iso.name && ruleId !in disabledRules) {
             enableRule(ruleId)
           }
         }
 
         loadConfigFile("en/disabled_rules.txt") { iso, ruleId ->
-          if (iso == lang.iso.name && ruleId !in key.enabledRules) {
+          if (iso == lang.iso.name && ruleId !in enabledRules) {
             disableRule(ruleId)
           }
         }
