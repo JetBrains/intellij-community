@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.productInfo.CustomProperty
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -66,6 +67,14 @@ abstract class ProductProperties {
    * Whether to use splash for application start-up.
    */
   boolean useSplash = false
+
+  /**
+   * Class-loader that product application should use by default.
+   * <p/>
+   * `com.intellij.util.lang.PathClassLoader` is used by default as
+   * it unifies class-loading logic of an application and allows to avoid double-loading of bootstrap classes.
+   */
+  @Nullable String classLoader = "com.intellij.util.lang.PathClassLoader"
 
   /**
    * Additional arguments which will be added to JVM command line in IDE launchers for all operating systems

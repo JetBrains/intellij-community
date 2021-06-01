@@ -345,7 +345,10 @@ final class BuildContextImpl extends BuildContext {
   @NotNull List<String> getAdditionalJvmArguments() {
     List<String> jvmArgs = new ArrayList<>()
 
-    jvmArgs.add('-Djava.system.class.loader=com.intellij.util.lang.PathClassLoader')
+    def classLoader = productProperties.classLoader
+    if (classLoader != null) {
+      jvmArgs.add('-Djava.system.class.loader=' + classLoader)
+    }
 
     jvmArgs.add('-Didea.vendor.name=' + applicationInfo.shortCompanyName)
 
