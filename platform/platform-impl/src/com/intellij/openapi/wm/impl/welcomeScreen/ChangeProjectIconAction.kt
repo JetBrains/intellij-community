@@ -50,7 +50,8 @@ class ChangeProjectIconAction : RecentProjectsWelcomeScreenActionBase() {
         {
          component(panel {
            fullRow {
-             component(ui.setIconActionLink).comment("The SVG file will be saved to the .idea folder.\nTo share the project icon, add it to the repository.")
+             component(ui.setIconActionLink)
+               .comment(IdeBundle.message("link.change.project.icon.description"))
              component(createToolbar(projectPath))
            }
          }).withLargeLeftGap()
