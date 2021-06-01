@@ -45,34 +45,28 @@ abstract class NewModuleStep<T> : ModuleWizardStep() {
   }
 
   fun LayoutBuilder.advancedModuleSettings() {
-    var selected: ComponentPredicate? = null
-    row {
-      val checkBox = checkBox(UIBundle.message("label.project.wizard.new.project.advanced.settings"))
-      selected = checkBox.selected
-    }
-
-    row {
+    hideableRow(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
       row {
-        cell { label(UIBundle.message("label.project.wizard.new.project.module.name")).visibleIf(selected!!) }
+        cell { label(UIBundle.message("label.project.wizard.new.project.module.name")) }
         cell {
-          textField(baseSettings::moduleName).visibleIf(selected!!)
+          textField(baseSettings::moduleName)
         }
       }
 
       row{
-        cell { label(UIBundle.message("label.project.wizard.new.project.content.root")).visibleIf(selected!!) }
+        cell { label(UIBundle.message("label.project.wizard.new.project.content.root")) }
         cell {
           textFieldWithBrowseButton(baseSettings::contentRoot, UIBundle.message("label.project.wizard.new.project.content.root"), null,
-                                    FileChooserDescriptorFactory.createSingleFolderDescriptor()).visibleIf(selected!!)
+                                    FileChooserDescriptorFactory.createSingleFolderDescriptor())
         }
       }
 
       row{
-        cell { label(UIBundle.message("label.project.wizard.new.project.module.file.location")).visibleIf(selected!!) }
+        cell { label(UIBundle.message("label.project.wizard.new.project.module.file.location")) }
         cell {
           textFieldWithBrowseButton(baseSettings::moduleFileLocation,
                                     UIBundle.message("label.project.wizard.new.project.module.file.location"), null,
-                                    FileChooserDescriptorFactory.createSingleFolderDescriptor()).visibleIf(selected!!)
+                                    FileChooserDescriptorFactory.createSingleFolderDescriptor())
         }
       }
     }
