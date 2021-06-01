@@ -34,42 +34,42 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     return OsFamily.MACOS
   }
 
+  @CompileStatic(TypeCheckingMode.SKIP)
   String getDocTypes() {
-    def iprAssociation = (customizer.associateIpr ? """
-      <dict>
+    List<String> associations = []
+
+    if (customizer.associateIpr) {
+      String association = """<dict>
         <key>CFBundleTypeExtensions</key>
         <array>
           <string>ipr</string>
         </array>
         <key>CFBundleTypeIconFile</key>
-        <string>$targetIcnsFileName</string>
+        <string>${targetIcnsFileName}</string>
         <key>CFBundleTypeName</key>
         <string>${buildContext.applicationInfo.productName} Project File</string>
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
-      </dict>
-""" : "")
-    def associations = ""
+      </dict>"""
+      associations.add(association)
+    }
+
     for (FileAssociation fileAssociation : customizer.fileAssociations) {
-        def iconFileName = targetIcnsFileName
-        def iconFile = fileAssociation.iconPath
-        if (!iconFile.isEmpty()) {
-          iconFileName = iconFile.substring(iconFile.lastIndexOf(File.separator) + 1, iconFile.size())
-        }
-        associations += """<dict>
+      String iconPath = fileAssociation.iconPath
+      String association = """<dict>
         <key>CFBundleTypeExtensions</key>
         <array>
-"""
-          associations += "          <string>${fileAssociation.extension}</string>\n"
-          associations +=  """        </array>
+          <string>${fileAssociation.extension}</string>
+        </array>
+        <key>CFBundleTypeIconFile</key>
+        <string>${iconPath.isEmpty() ? targetIcnsFileName : new File(iconPath).name}</string>        
         <key>CFBundleTypeRole</key>
         <string>Editor</string>
-        <key>CFBundleTypeIconFile</key>
-        <string>$iconFileName</string>        
-      </dict>
-"""
+      </dict>"""
+      associations.add(association)
     }
-    return iprAssociation + associations + customizer.additionalDocTypes
+
+    return associations.join('\n      ') + customizer.additionalDocTypes
   }
 
   @Override
@@ -228,36 +228,28 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
 
     String classPath = buildContext.bootClassPathJarNames.collect { "\$APP_PACKAGE/Contents/lib/${it}" }.join(":")
 
-    String archsString = """
-    <key>LSArchitecturePriority</key>
-    <array>"""
-    macCustomizer.architectures.each {
-      archsString += "<string>$it</string>"
-    }
-    archsString += "</array>\n"
+    String archString = '<key>LSArchitecturePriority</key>\n    <array>'
+    macCustomizer.architectures.each {archString += '      <string>' + it + '</string>\n' }
+    archString += '    </array>'
 
     List<String> urlSchemes = macCustomizer.urlSchemes
     String urlSchemesString = ""
     if (urlSchemes.size() > 0) {
-      urlSchemesString += """
-      <key>CFBundleURLTypes</key>
-      <array>
-        <dict>
-          <key>CFBundleTypeRole</key>
-          <string>Editor</string>
-          <key>CFBundleURLName</key>
-          <string>Stacktrace</string>
-          <key>CFBundleURLSchemes</key>
-          <array>
-"""
-      urlSchemes.each { scheme ->
-        urlSchemesString += "            <string>${scheme}</string>"
-      }
-      urlSchemesString += """
-          </array>
-        </dict>
-      </array>
-"""
+      urlSchemesString += '''<key>CFBundleURLTypes</key>
+    <array>
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLName</key>
+        <string>Stacktrace</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+'''
+      urlSchemes.each {urlSchemesString += '        <string>' + it + '</string>\n' }
+      urlSchemesString += '''
+        </array>
+      </dict>
+    </array>'''
     }
     String todayYear = LocalDate.now().year
     buildContext.ant.replace(file: "$target/Info.plist") {
@@ -276,7 +268,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       replacefilter(token: "@@idea_properties@@", value: coreProperties)
       replacefilter(token: "@@class_path@@", value: classPath)
       replacefilter(token: "@@url_schemes@@", value: urlSchemesString)
-      replacefilter(token: "@@archs@@", value: archsString)
+      replacefilter(token: "@@architectures@@", value: archString)
       replacefilter(token: "@@min_osx@@", value: macCustomizer.minOSXVersion)
     }
 
@@ -368,12 +360,12 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     StringBuilder buff = new StringBuilder()
     properties.each { it ->
       int p = it.indexOf('=')
-      buff.append('    <key>').append(it.substring(2, p)).append('</key>\n')
-      buff.append('    <string>').append(it.substring(p + 1)).append('</string>\n')
+      buff.append('        <key>').append(it.substring(2, p)).append('</key>\n')
+      buff.append('        <string>').append(it.substring(p + 1)).append('</string>\n')
     }
     moreProperties.each { key, value ->
-      buff.append('    <key>').append(key).append('</key>\n')
-      buff.append('    <string>').append(value).append('</string>\n')
+      buff.append('        <key>').append(key).append('</key>\n')
+      buff.append('        <string>').append(value).append('</string>\n')
     }
     return buff.toString().trim()
   }
