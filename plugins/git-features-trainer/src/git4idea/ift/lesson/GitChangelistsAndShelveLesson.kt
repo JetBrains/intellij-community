@@ -25,6 +25,9 @@ import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.moveLearnToolWindowRight
 import git4idea.ift.GitLessonsUtil.showWarningIfCommitWindowClosed
 import training.dsl.*
+import training.dsl.LessonUtil.adjustPopupPosition
+import training.dsl.LessonUtil.restorePopupPosition
+import java.awt.Point
 import java.awt.Rectangle
 import javax.swing.JButton
 
@@ -33,6 +36,20 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
   private val branchName = "main"
   private val commentingLineText = "fur_type: long haired"
   private val commentText = "# debug: check another types (short haired, hairless)"
+
+  private var backupShelveDialogLocation: Point? = null
+  private var backupUnshelveDialogLocation: Point? = null
+
+  /**
+   * Constructs from dialog name and layout version.
+   * The same value as returns from [com.intellij.openapi.vcs.changes.ui.CommitChangeListDialog.getDimensionServiceKey]
+   */
+  private val commitChangelistDialogStateKey = "CommitChangelistDialog2"
+
+  /**
+   * The same value as returns from [com.intellij.openapi.vcs.changes.patch.ApplyPatchDifferentiatedDialog.getDimensionServiceKey]
+   */
+  private val applyPatchDialogStateKey = "vcs.ApplyPatchDifferentiatedDialog"
 
   private val fileAddition = """
     |
@@ -151,6 +168,11 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
 
     task {
+      before {
+        if (backupShelveDialogLocation == null) {
+          backupShelveDialogLocation = adjustPopupPosition(commitChangelistDialogStateKey)
+        }
+      }
       text(GitLessonsBundle.message("git.changelists.shelf.shelve.changelist", strong(shelveChangesButtonText), strong(shelfText)))
       stateCheck {
         ShelveChangesManager.getInstance(project).allLists.size == 1
@@ -188,10 +210,22 @@ class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLe
     }
 
     task {
+      before {
+        if (backupUnshelveDialogLocation == null) {
+          backupUnshelveDialogLocation = adjustPopupPosition(applyPatchDialogStateKey)
+        }
+      }
       text(GitLessonsBundle.message("git.changelists.shelf.unshelve.changelist", strong(unshelveChangesButtonText)))
       stateCheck { editor.document.text.contains(commentText) }
       restoreByUi(delayMillis = defaultRestoreDelay)
     }
+  }
+
+  override fun onLessonEnd(project: Project, lessonPassed: Boolean) {
+    restorePopupPosition(project, commitChangelistDialogStateKey, backupShelveDialogLocation)
+    backupShelveDialogLocation = null
+    restorePopupPosition(project, applyPatchDialogStateKey, backupUnshelveDialogLocation)
+    backupUnshelveDialogLocation = null
   }
 
   private fun removeShelvedChangeLists(project: Project) {
