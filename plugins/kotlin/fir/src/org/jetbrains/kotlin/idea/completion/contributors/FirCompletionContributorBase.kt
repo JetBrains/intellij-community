@@ -47,8 +47,8 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         if (symbol !is KtNamedSymbol) return
         with(lookupElementFactory) {
             createLookupElement(symbol)
-                ?.let { applyWeighers(it, symbol, expectedType) }
-                ?.let(sink::addElement)
+                .let { applyWeighers(it, symbol, expectedType) }
+                .let(sink::addElement)
         }
     }
 
