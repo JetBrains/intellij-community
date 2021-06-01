@@ -25,19 +25,19 @@ class KtFirCompositeScope(
     override val token: ValidityToken
 ) : KtCompositeScope, ValidityTokenOwner {
     override fun getAllPossibleNames(): Set<Name> = withValidityAssertion {
-        buildSet {
-            subScopes.flatMapTo(this) { it.getAllPossibleNames() }
+        mutableSetOf<Name>().apply {
+            subScopes.flatMapTo(this) { it.getAllPossibleNames() }.toSet()
         }
     }
 
     override fun getPossibleCallableNames(): Set<Name> = withValidityAssertion {
-        buildSet {
+        mutableSetOf<Name>().apply {
             subScopes.flatMapTo(this) { it.getPossibleCallableNames() }
         }
     }
 
     override fun getPossibleClassifierNames(): Set<Name> = withValidityAssertion {
-        buildSet {
+        mutableSetOf<Name>().apply {
             subScopes.flatMapTo(this) { it.getPossibleClassifierNames() }
         }
     }
