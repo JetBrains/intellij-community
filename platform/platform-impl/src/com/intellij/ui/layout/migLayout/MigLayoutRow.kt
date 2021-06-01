@@ -33,6 +33,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             private val incrementsIndent: Boolean = parent != null) : Row() {
   companion object {
     private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
+    private const val COMPONENT_VISIBLE_STATE_KEY = "MigLayoutRow.visible"
 
     // as static method to ensure that members of current row are not used
     private fun createCommentRow(parent: MigLayoutRow,
@@ -81,11 +82,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   var gapAfter: String? = null
     set(value) {
-      field = value;
+      field = value
       rowConstraints?.gapAfter = if (value == null) null else ConstraintParser.parseBoundSize(value, true, false)
     }
 
-  var rowConstraints: DimConstraint? = null;
+  var rowConstraints: DimConstraint? = null
 
   private var componentIndexWhenCellModeWasEnabled = -1
 
@@ -144,9 +145,20 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
 
       field = value
+
       for ((index, c) in components.withIndex()) {
-        c.isVisible = value
         builder.componentConstraints[c]?.hideMode = if (index == components.size - 1 && value) 2 else 3
+
+        if (!value) {
+          c.putClientProperty(COMPONENT_VISIBLE_STATE_KEY, if (c.isVisible) null else false)
+        }
+        else {
+          if (c.getClientProperty(COMPONENT_VISIBLE_STATE_KEY) == false) {
+            c.putClientProperty(COMPONENT_VISIBLE_STATE_KEY, null)
+            continue
+          }
+        }
+        c.isVisible = value
       }
     }
 
@@ -187,7 +199,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
   internal val columnIndexIncludingSubRows: Int
-    get() = max(columnIndex, subRows?.asSequence()?.map { it.columnIndexIncludingSubRows }?.max() ?: -1)
+    get() = max(columnIndex, subRows?.asSequence()?.map { it.columnIndexIncludingSubRows }?.maxOrNull() ?: -1)
 
   override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     return createChildRow(indent, label, isSeparated, noGrid, title)
