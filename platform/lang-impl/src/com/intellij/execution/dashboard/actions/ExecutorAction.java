@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.*;
@@ -23,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.ui.content.Content;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
@@ -105,7 +104,7 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
     if (runner == null) return false;
 
     if (target == null) {
-      target = findTarget(configuration);
+      target = ExecutionTargetManager.getInstance(project).findTarget(configuration);
       if (target == null) return false;
     }
     else if (!ExecutionTargetManager.canRun(configuration, target)) {
@@ -159,7 +158,7 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
     }
     else {
       if (target == null) {
-        target = findTarget(configuration);
+        target = ExecutionTargetManager.getInstance(project).findTarget(configuration);
         assert target != null : "No target for configuration of type " + configuration.getType().getDisplayName();
       }
       ProcessHandler processHandler = descriptor == null ? null : descriptor.getProcessHandler();
@@ -170,13 +169,4 @@ public abstract class ExecutorAction extends DumbAwareAction implements UpdateIn
   protected abstract Executor getExecutor();
 
   protected abstract void update(@NotNull AnActionEvent e, boolean running);
-
-  private static ExecutionTarget findTarget(RunConfiguration configuration) {
-    Project project = configuration.getProject();
-    ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
-    if (ExecutionTargetManager.canRun(configuration, target)) return target;
-
-    List<ExecutionTarget> targets = ExecutionTargetManager.getInstance(project).getTargetsFor(configuration);
-    return ContainerUtil.getFirstItem(targets);
-  }
 }
