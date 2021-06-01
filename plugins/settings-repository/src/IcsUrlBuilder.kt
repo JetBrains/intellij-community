@@ -16,13 +16,7 @@ internal fun getOsFolderName() = when {
 }
 
 internal fun toRepositoryPath(path: String, roamingType: RoamingType): String {
-  if (roamingType == RoamingType.PER_OS) {
-    // mac/keymap.xml -> keymap.xml
-    val pathWithoutOsPrefix = path.removePrefix(com.intellij.configurationStore.getOsFolderName() + "/")
-    // keymap.xml -> _mac/keymap.xml
-    return "${getOsFolderName()}/$pathWithoutOsPrefix"
-  }
-  return path
+  return if (roamingType == RoamingType.PER_OS) "${getOsFolderName()}/$path" else path
 }
 
 internal fun toIdeaPath(path: String): String {
