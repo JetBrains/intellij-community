@@ -2,13 +2,12 @@
 package org.jetbrains.idea.maven.externalSystemIntegration.output.parsers;
 
 import com.intellij.build.events.BuildEvent;
-import com.intellij.build.events.FinishEvent;
 import com.intellij.build.events.impl.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.*;
@@ -22,12 +21,17 @@ public class MavenSpyOutputParser {
   public static final String DOWNLOAD_DEPENDENCIES_NAME = "dependencies";
   private final Set<String> downloadingMap = new HashSet<>();
   private final MavenParsingContext myContext;
+  private final List<MavenSpyLoggedEventParser> mySpyLoggedEventParsers;
 
   public static boolean isSpyLog(String s) {
     return s != null && s.startsWith(PREFIX);
   }
 
-  public MavenSpyOutputParser(MavenParsingContext context) {myContext = context;}
+  public MavenSpyOutputParser(@NotNull MavenParsingContext context,
+                              @NotNull List<MavenSpyLoggedEventParser> spyLoggedEventParsers) {
+    myContext = context;
+    mySpyLoggedEventParsers = spyLoggedEventParsers;
+  }
 
 
   public void processLine(@NotNull String spyLine,
@@ -58,7 +62,7 @@ public class MavenSpyOutputParser {
       Map<String, String> parameters =
         data.stream().map(d -> d.split("=")).filter(d -> d.length == 2).peek(d -> d[1] = d[1].replace(NEWLINE, "\n"))
           .collect(Collectors.toMap(d -> d[0], d -> d[1]));
-      parse(threadId, type, parameters, messageConsumer);
+      parse(threadId, type, parameters, spyLine, messageConsumer);
     }
     catch (Exception e) {
       MavenLog.LOG.error(e);
@@ -68,6 +72,7 @@ public class MavenSpyOutputParser {
   protected void parse(int threadId,
                        String type,
                        Map<String, String> parameters,
+                       String spyLine,
                        Consumer<? super BuildEvent> messageConsumer) {
     switch (type) {
       case "SessionStarted": {
@@ -77,9 +82,10 @@ public class MavenSpyOutputParser {
       }
       case "ProjectStarted": {
         MavenParsingContext.ProjectExecutionEntry execution = myContext.getProject(threadId, parameters, true);
-        if(execution == null){
+        if (execution == null) {
           MavenLog.LOG.debug("Not found for " + parameters);
-        } else {
+        }
+        else {
           messageConsumer
             .accept(new StartEventImpl(execution.getId(), execution.getParentId(), System.currentTimeMillis(), execution.getName()));
         }
@@ -104,6 +110,7 @@ public class MavenSpyOutputParser {
           MavenLog.LOG.debug("Not found id for " + parameters);
         }
         else {
+          processLogLine(spyLine, messageConsumer);
           messageConsumer.accept(
             new FinishEventImpl(mojoExecution.getId(), mojoExecution.getParentId(), System.currentTimeMillis(), mojoExecution.getName(),
                                 new MavenTaskFailedResultImpl(parameters.get("error"))));
@@ -144,6 +151,15 @@ public class MavenSpyOutputParser {
 
       case "ARTIFACT_DOWNLOADING": {
         artifactDownloading(threadId, parameters, messageConsumer);
+      }
+    }
+  }
+
+  private void processLogLine(String spyLine,
+                              Consumer<? super BuildEvent> messageConsumer) {
+    for (MavenSpyLoggedEventParser eventParser : mySpyLoggedEventParsers) {
+      if (eventParser.processLogLine(myContext.getLastId(), myContext, spyLine, messageConsumer)) {
+        return;
       }
     }
   }

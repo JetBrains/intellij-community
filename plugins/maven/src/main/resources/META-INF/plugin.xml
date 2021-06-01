@@ -37,6 +37,7 @@
     <extensionPoint name="artifactBuilder" interface="org.jetbrains.idea.maven.execution.build.MavenArtifactBuilder" dynamic="true"/>
     <extensionPoint name="targetConfigurationExtension" interface="org.jetbrains.idea.maven.execution.target.TargetConfigurationMavenExtension" dynamic="true"/>
     <extensionPoint name="log.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenLoggedEventParser" dynamic="true"/>
+    <extensionPoint name="log.spy.parser" interface="org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser" dynamic="true"/>
     <extensionPoint name="mavenServerSupportFactory" interface="org.jetbrains.idea.maven.server.MavenRemoteProcessSupportFactory" dynamic="true"/>
     <extensionPoint name="remotePathTransformerFactory" interface="org.jetbrains.idea.maven.server.RemotePathTransformerFactory" dynamic="true"/>
   </extensionPoints>
@@ -452,6 +453,7 @@
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.KotlinBuildErrorNotification"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.WarningNotifier"/>
     <log.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.SourceOptionQuickFix"/>
+    <log.spy.parser implementation="org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.TargetOptionQuickFix"/>
   </extensions>
   <extensions defaultExtensionNs="org.jetbrains.idea.reposearch">
     <provider implementation="org.jetbrains.idea.maven.onlinecompletion.MavenCompletionProviderFactory"/>
