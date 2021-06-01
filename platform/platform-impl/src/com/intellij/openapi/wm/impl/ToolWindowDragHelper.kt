@@ -192,7 +192,6 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
         }, true, null)
       }
     }
-    stopDrag()
   }
 
   private fun getToolWindow(): ToolWindowImpl? {
@@ -204,9 +203,11 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   }
 
   override fun cancelDragging(): Boolean {
-    super.cancelDragging()
-    stopDrag()
-    return true
+    if (super.cancelDragging()) {
+      stopDrag()
+      return true
+    }
+    return false
   }
 
   override fun stop() {
