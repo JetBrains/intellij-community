@@ -84,7 +84,7 @@ class VariableView(override val variableName: String, private val variable: Vari
         renderer.renderValue("\u2026")
       }
     }, false)
-    node.setFullValueEvaluator(object : XFullValueEvaluator(" (invoke getter)") {
+    node.setFullValueEvaluator(object : XFullValueEvaluator(ScriptDebuggerBundle.message("full.evaluator.invoke.getter")) {
       override fun startEvaluation(callback: XFullValueEvaluationCallback) {
         var valueModifier = variable.valueModifier
         var nonProtoContext = context
