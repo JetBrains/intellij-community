@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table.column
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.text.DateFormatUtil
@@ -58,6 +59,7 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
     )
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
+    updateTableOnCommitDetailsLoaded(this, table)
     val graphCellPainter: GraphCellPainter = object : SimpleGraphCellPainter(DefaultColorGenerator()) {
       override fun getRowHeight(): Int {
         return table.rowHeight
@@ -73,7 +75,10 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
 internal object Author : VcsLogDefaultColumn<String>("Default.Author", VcsLogBundle.message("vcs.log.column.author")) {
   override fun getValue(model: GraphTableModel, row: Int) = CommitPresentationUtil.getAuthorPresentation(model.getCommitMetadata(row))
 
-  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = VcsLogStringCellRenderer(true)
+  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
+    updateTableOnCommitDetailsLoaded(this, table)
+    return VcsLogStringCellRenderer(true)
+  }
 
   override fun getStubValue(model: GraphTableModel) = ""
 }
@@ -87,16 +92,19 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
     return if (timeStamp < 0) "" else JBDateFormat.getFormatter().formatPrettyDateTime(timeStamp)
   }
 
-  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = VcsLogStringCellRenderer(
-    contentSampleProvider = {
-      if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed) {
-        null
+  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
+    updateTableOnCommitDetailsLoaded(this, table)
+    return VcsLogStringCellRenderer(
+      contentSampleProvider = {
+        if (DateTimeFormatManager.getInstance().isPrettyFormattingAllowed) {
+          null
+        }
+        else {
+          JBDateFormat.getFormatter().formatDateTime(DateFormatUtil.getSampleDateTime())
+        }
       }
-      else {
-        JBDateFormat.getFormatter().formatDateTime(DateFormatUtil.getSampleDateTime())
-      }
-    }
-  )
+    )
+  }
 
   override fun getStubValue(model: GraphTableModel): String = ""
 }
@@ -104,9 +112,25 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
 internal object Hash : VcsLogDefaultColumn<String>("Default.Hash", VcsLogBundle.message("vcs.log.column.hash")) {
   override fun getValue(model: GraphTableModel, row: Int): String = model.getCommitMetadata(row).id.toShortString()
 
-  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = VcsLogStringCellRenderer(
-    contentSampleProvider = { "e".repeat(VcsLogUtil.SHORT_HASH_LENGTH) }
-  )
+  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
+    updateTableOnCommitDetailsLoaded(this, table)
+    return VcsLogStringCellRenderer(
+      contentSampleProvider = { "e".repeat(VcsLogUtil.SHORT_HASH_LENGTH) }
+    )
+  }
 
   override fun getStubValue(model: GraphTableModel): String = ""
+}
+
+private fun updateTableOnCommitDetailsLoaded(column: VcsLogColumn<*>, graphTable: VcsLogGraphTable) {
+  val miniDetailsLoadedListener = {
+    if (graphTable.getTableColumn(column) != null) {
+      graphTable.reLayout()
+      graphTable.repaint()
+    }
+  }
+  graphTable.logData.miniDetailsGetter.addDetailsLoadedListener(miniDetailsLoadedListener)
+  Disposer.register(graphTable) {
+    graphTable.logData.miniDetailsGetter.removeDetailsLoadedListener(miniDetailsLoadedListener)
+  }
 }

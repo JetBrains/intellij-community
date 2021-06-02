@@ -130,7 +130,6 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     Disposer.register(this, () -> myGraphTable.getSelectionModel().removeListSelectionListener(listenerForDiff));
 
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
-    VcsLogUiUtil.installDetailsListeners(myGraphTable, myLogData, this);
 
     myNotificationLabel = new EditorNotificationPanel(UIUtil.getPanelBackground());
     myNotificationLabel.setVisible(false);

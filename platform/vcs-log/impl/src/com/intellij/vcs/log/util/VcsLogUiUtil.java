@@ -11,7 +11,6 @@ import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager;
@@ -30,7 +29,6 @@ import com.intellij.vcs.log.data.VcsLogProgress;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.filter.VcsLogFilterUiEx;
 import com.intellij.vcs.log.ui.frame.ProgressStripe;
-import com.intellij.vcs.log.ui.frame.VcsLogCommitDetailsListPanel;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.Nls;
@@ -98,19 +96,6 @@ public final class VcsLogUiUtil {
     ComponentUtil.putClientProperty(scrollPane, UIUtil.KEEP_BORDER_SIDES, SideBorder.TOP);
     graphTable.viewportSet(scrollPane.getViewport());
     return scrollPane;
-  }
-
-  public static void installDetailsListeners(@NotNull VcsLogGraphTable graphTable,
-                                             @NotNull VcsLogData logData,
-                                             @NotNull Disposable disposableParent) {
-    Runnable miniDetailsLoadedListener = () -> {
-      graphTable.reLayout();
-      graphTable.repaint();
-    };
-    logData.getMiniDetailsGetter().addDetailsLoadedListener(miniDetailsLoadedListener);
-    Disposer.register(disposableParent, () -> {
-      logData.getMiniDetailsGetter().removeDetailsLoadedListener(miniDetailsLoadedListener);
-    });
   }
 
   public static void showTooltip(@NotNull JComponent component,

@@ -115,7 +115,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
-    VcsLogUiUtil.installDetailsListeners(myGraphTable, logData, this);
 
     setEditorDiffPreview();
     EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
