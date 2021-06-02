@@ -481,7 +481,6 @@ bool LoadVMOptions() {
   std::vector<std::string> lines;
 
   GetModuleFileNameA(NULL, bin_vmoptions, _MAX_PATH);
-  size_t moduleBaseLen = strrchr(bin_vmoptions, '\\') - bin_vmoptions;
   strcat_s(bin_vmoptions, ".vmoptions");
 
   // 1. %<IDE_NAME>_VM_OPTIONS%
@@ -493,7 +492,8 @@ bool LoadVMOptions() {
   // 2. <IDE_HOME>.vmoptions (Toolbox) [+ <IDE_HOME>\bin\<exe_name>.vmoptions]
   if (vmOptionsFile == NULL) {
     strcpy_s(buffer1, _MAX_PATH, bin_vmoptions);
-    strcpy_s(buffer1 + moduleBaseLen, _MAX_PATH - moduleBaseLen, ".vmoptions");
+    char *ideHomeEnd = strrchr(buffer1, '\\') - 4;  // "bin\"
+    strcpy_s(ideHomeEnd, _MAX_PATH - (ideHomeEnd - buffer1), ".vmoptions");
     if (LoadVMOptionsFile(buffer1, lines)) {
       vmOptionsFile = buffer1;
       if (std::find(lines.begin(), lines.end(), std::string("-ea")) == lines.end()) {
@@ -509,7 +509,8 @@ bool LoadVMOptions() {
   if (vmOptionsFile == NULL) {
     LoadStringA(hInst, IDS_VM_OPTIONS_PATH, buffer1, _MAX_PATH);
     ExpandEnvironmentStringsA(buffer1, buffer2, _MAX_PATH);
-    strcat_s(buffer2, bin_vmoptions + moduleBaseLen);
+    char *exeParentEnd = strrchr(bin_vmoptions, '\\');
+    strcat_s(buffer2, exeParentEnd);
     if (LoadVMOptionsFile(buffer2, lines)) {
       vmOptionsFile = buffer2;
     }
