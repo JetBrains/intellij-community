@@ -189,6 +189,10 @@ public class StructClass extends StructMember {
             (majorVersion == CodeConstants.BYTECODE_JAVA_LE_4 && minorVersion > 0)); // FIXME: check second condition
   }
 
+  public boolean isVersion7() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_7;
+  }
+
   public boolean isVersion8() {
     return majorVersion >= CodeConstants.BYTECODE_JAVA_8;
   }
