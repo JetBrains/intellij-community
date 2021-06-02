@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.editor.images
 
 import com.intellij.lang.html.HTMLLanguage
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.PsiElement
 import com.intellij.psi.XmlElementFactory
 import com.intellij.psi.XmlElementFactoryImpl
@@ -23,17 +24,20 @@ internal object ImageUtils {
   @JvmStatic
   fun createHtmlImageText(imageData: MarkdownImageData): String {
     val (path, width, height, title, description) = imageData
-    val attributes = listOf(
-      "src" to path,
-      "width" to width,
-      "height" to height,
-      "title" to title,
-      "alt" to description
-    )
-    val attributesString = attributes.filter { it.second.isNotEmpty() }.joinToString(" ") {
-      "${it.first}=${XmlElementFactoryImpl.quoteValue(it.second)}"
+    val element = HtmlChunk.tag("img")
+      .nonEmptyAttribute("src", path)
+      .nonEmptyAttribute("width", width)
+      .nonEmptyAttribute("height", height)
+      .nonEmptyAttribute("title", title)
+      .nonEmptyAttribute("alt", description)
+    return element.toString()
+  }
+
+  private fun HtmlChunk.Element.nonEmptyAttribute(name: String, value: String): HtmlChunk.Element {
+    return when {
+      value.isNotEmpty() -> attr(name, value)
+      else -> this
     }
-    return "<img $attributesString/>"
   }
 
   @JvmStatic
