@@ -85,7 +85,6 @@ public final class IdeEventQueue extends EventQueue {
   private static final boolean ourTypeAheadSearchEverywhereEnabled = Boolean.getBoolean("action.aware.typeAhead.searchEverywhere");
   private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
   private static TransactionGuardImpl ourTransactionGuard;
-  private static PerformanceWatcher ourPerformanceWatcher;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -367,7 +366,7 @@ public final class IdeEventQueue extends EventQueue {
   public void dispatchEvent(@NotNull AWTEvent e) {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
-    PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
+    PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstanceOrNull();
     EventWatcher eventWatcher = EventWatcher.getInstance();
     try {
       if (performanceWatcher != null) {
@@ -559,17 +558,6 @@ public final class IdeEventQueue extends EventQueue {
         }
       }
     }
-  }
-
-  private static @Nullable PerformanceWatcher obtainPerformanceWatcher() {
-    PerformanceWatcher watcher = ourPerformanceWatcher;
-    if (watcher == null && appIsLoaded()) {
-      Application app = ApplicationManager.getApplication();
-      if (app != null && !app.isDisposed()) {
-        ourPerformanceWatcher = watcher = app.getServiceIfCreated(PerformanceWatcher.class);
-      }
-    }
-    return watcher;
   }
 
   private static boolean isMetaKeyPressedOnLinux(@NotNull AWTEvent e) {
