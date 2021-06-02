@@ -71,7 +71,12 @@ object PyTypeShed {
       val alternativePossiblePackages = PyPsiPackageUtil.PACKAGES_TOPLEVEL[possiblePackage] ?: emptyList()
 
       val packageManager = PyPackageManagers.getInstance().forSdk(sdk)
-      val installedPackages = packageManager.packages ?: return true
+      val installedPackages = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+        packageManager.refreshAndGetPackages(false)
+      }
+      else {
+        packageManager.packages ?: return true
+      }
 
       return packageManager.parseRequirement(possiblePackage)?.match(installedPackages) != null ||
              alternativePossiblePackages.any { PyPsiPackageUtil.findPackage(installedPackages, it) != null }
