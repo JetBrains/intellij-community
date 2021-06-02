@@ -19,6 +19,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -42,7 +43,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
 
   private final List<AsyncFormattingRequest> myPendingRequests = Collections.synchronizedList(new ArrayList<>());
 
-  protected static final int DEFAULT_TIMEOUT = 30; // seconds
+  protected static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(30);
   private static final int RETRY_PERIOD = 1000; // milliseconds
 
   @Override
@@ -116,9 +117,9 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
   protected abstract @NotNull @NlsSafe String getName();
 
   /**
-   * @return A number of seconds to wait for the service to respond (call either {@code onTextReady()} or {@code onError()}).
+   * @return A duration to wait for the service to respond (call either {@code onTextReady()} or {@code onError()}).
    */
-  protected int getTimeout() {
+  protected Duration getTimeout() {
     return DEFAULT_TIMEOUT;
   }
 
@@ -204,7 +205,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
           myTaskSemaphore.acquire();
           task.run();
           long waitTime = 0;
-          while (waitTime < getTimeout() * 1000L) {
+          while (waitTime < getTimeout().getSeconds() * 1000L) {
             if (myTaskSemaphore.tryAcquire(RETRY_PERIOD, TimeUnit.MILLISECONDS)) {
               myTaskSemaphore.release();
               break;
@@ -215,7 +216,7 @@ public abstract class AsyncDocumentFormattingService extends AbstractDocumentFor
           if (myStateRef.compareAndSet(FormattingRequestState.RUNNING, FormattingRequestState.EXPIRED)) {
             FormattingNotificationService.getInstance(myContext.getProject()).reportError(
               getNotificationGroupId(), getName(),
-              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Integer.toString(getTimeout())));
+              CodeStyleBundle.message("async.formatting.service.timeout", getName(), Long.toString(getTimeout().getSeconds())));
           }
         }
         catch (InterruptedException ie) {
