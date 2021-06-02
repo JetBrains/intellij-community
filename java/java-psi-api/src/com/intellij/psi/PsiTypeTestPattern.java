@@ -2,12 +2,11 @@
 package com.intellij.psi;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public interface PsiTypeTestPattern extends PsiPrimaryPattern {
   @NotNull
   PsiTypeElement getCheckType();
 
-  @Nullable
+  @NotNull
   PsiPatternVariable getPatternVariable();
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
@@ -7,7 +7,8 @@ import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+
+import java.util.Objects;
 
 public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTypeTestPattern, Constants {
   public PsiTypeTestPatternImpl() {
@@ -24,10 +25,10 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     throw new IllegalStateException(this.getText());
   }
 
-  @Nullable
+  @NotNull
   @Override
   public PsiPatternVariable getPatternVariable() {
-    return PsiTreeUtil.getChildOfType(this, PsiPatternVariable.class);
+    return Objects.requireNonNull(PsiTreeUtil.getChildOfType(this, PsiPatternVariable.class));
   }
 
 
@@ -47,7 +48,7 @@ public class PsiTypeTestPatternImpl extends CompositePsiElement implements PsiTy
     processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, this);
     
     PsiPatternVariable variable = getPatternVariable();
-    if (variable != null && variable != lastParent) {
+    if (variable != lastParent) {
       return processor.execute(variable, state);
     }
     return true;
