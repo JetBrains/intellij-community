@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.formatter.AbstractTypingIndentationTestBase
 import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
 import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
+import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.*
 import org.jetbrains.kotlin.idea.fir.inspections.AbstractFe10BindingIntentionTest
@@ -1057,17 +1058,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("fir", testDataPath = "../compiler/testData") {
+    testGroup("fir", testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/testData")) {
         testClass<AbstractFirLightClassTest> {
-            model("compiler/asJava/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
+            model("asJava/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractFirClassLoadingTest> {
-            model("compiler/asJava//ultraLightClasses", pattern = KT_OR_KTS)
+            model("asJava/ultraLightClasses", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractFirLightFacadeClassTest> {
-            model("compiler/asJava//ultraLightFacades", pattern = KT_OR_KTS)
+            model("asJava/ultraLightFacades", pattern = KT_OR_KTS)
         }
     }
 
@@ -1319,41 +1320,41 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("idea/tests") {
+    testGroup("idea/tests", testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/testData")) {
         testClass<AbstractResolveByStubTest> {
-            model("compiler/loadJava/compiledKotlin")
+            model("loadJava/compiledKotlin")
         }
 
         testClass<AbstractLoadJavaClsStubTest> {
-            model("compiler/loadJava/compiledKotlin", testMethodName = "doTestCompiledKotlin")
+            model("loadJava/compiledKotlin", testMethodName = "doTestCompiledKotlin")
         }
 
         testClass<AbstractIdeLightClassTest> {
-            model("compiler/asJava/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
+            model("asJava/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractIdeLightClassForScriptTest> {
-            model("compiler/asJava/script/ide", pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model("asJava/script/ide", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
         testClass<AbstractUltraLightClassSanityTest> {
-            model("compiler/asJava/lightClasses", pattern = KT_OR_KTS)
+            model("asJava/lightClasses", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractUltraLightClassLoadingTest> {
-            model("compiler/asJava/ultraLightClasses", pattern = KT_OR_KTS)
+            model("asJava/ultraLightClasses", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractUltraLightScriptLoadingTest> {
-            model("compiler/asJava/ultraLightScripts", pattern = KT_OR_KTS)
+            model("asJava/ultraLightScripts", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractUltraLightFacadeClassTest> {
-            model("compiler/asJava/ultraLightFacades", pattern = KT_OR_KTS)
+            model("asJava/ultraLightFacades", pattern = KT_OR_KTS)
         }
 
         testClass<AbstractIdeCompiledLightClassTest> {
-            model("compiler/asJava/lightClasses", excludedDirectories = listOf("local", "compilationErrors", "ideRegression", "script"), pattern = KT_OR_KTS_WITHOUT_DOTS)
+            model("asJava/lightClasses", excludedDirectories = listOf("local", "compilationErrors", "ideRegression", "script"), pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
     }
 
