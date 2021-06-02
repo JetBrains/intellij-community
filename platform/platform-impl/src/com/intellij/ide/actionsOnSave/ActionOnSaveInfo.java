@@ -15,6 +15,14 @@ import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Some 'actions on save' can be configured in 2 places: on the 'Actions on Save' page and on some other technology-specific page in
+ * Settings (Preferences). The state of the corresponding 'action enabled' check boxes (and maybe other UI components) must be
+ * the same on both pages at any time. Consider extending {@link ActionOnSaveBackedByOwnConfigurable}.
+ *
+ * @see #ActionOnSaveInfo(String)
+ * @see ActionOnSaveBackedByOwnConfigurable
+ */
 public abstract class ActionOnSaveInfo {
 
   final @Nullable String myConfigurableId;
@@ -26,18 +34,21 @@ public abstract class ActionOnSaveInfo {
   private @Nullable UnnamedConfigurable myConfigurableWithInitializedUiComponent;
 
   /**
-   * Some 'actions on save' can be configured in 2 places: on the 'Actions on Save' page and on some other technology-specific page in 
-   * Settings (Preferences). The state of the corresponding 'action enabled' check boxes (and maybe other UI components) should be 
-   * synchronized. In such cases {@link ActionOnSaveInfo} implementations should pass not-null <code>configurableId</code> to this constructor.
-   * <br/><br/> 
+   * Some 'actions on save' can be configured in 2 places: on the 'Actions on Save' page and on some other technology-specific page in
+   * Settings (Preferences). The state of the corresponding 'action enabled' check boxes (and maybe other UI components) must be
+   * the same on both pages at any time. In such cases {@link ActionOnSaveInfo} implementations should pass not-null <code>configurableId</code> to this constructor.
+   * Consider extending {@link ActionOnSaveBackedByOwnConfigurable}.
+   * <br/><br/>
    * If <code>configurableId</code> is not null then {@link #getConfigurableIfItsUiComponentInitialized()} is guaranteed to return not-null at
    * the moment when the Platform calls setters like {@link #setActionOnSaveEnabled(boolean)}.
    * <br/><br/>
-   * When Platform calls getters (like {@link #isActionOnSaveEnabled()} or {@link #getActionOnSaveName()}, 
-   * {@link #getConfigurableIfItsUiComponentInitialized()} may return both null and not-null (it depends on whether the corresponding page 
+   * When Platform calls getters (like {@link #isActionOnSaveEnabled()} or {@link #getActionOnSaveName()},
+   * {@link #getConfigurableIfItsUiComponentInitialized()} may return both null and not-null (it depends on whether the corresponding page
    * in Settings has already been initialized or not). If it's null then the getter implementation should
-   * use the currently persisted state of the corresponding 'action on save'. If it's not-null then the getter implementation should use the
+   * use the currently stored state of the corresponding 'action on save'. If it's not-null then the getter implementation should use the
    * current state of the corresponding UI component on the corresponding page.
+   *
+   * @see ActionOnSaveBackedByOwnConfigurable
    */
   public ActionOnSaveInfo(@Nullable String configurableId) {
     myConfigurableId = configurableId;
@@ -59,7 +70,7 @@ public abstract class ActionOnSaveInfo {
    * When Platform calls getters (like {@link #isActionOnSaveEnabled()} or {@link #getActionOnSaveName()}, 
    * this method may return both null and not-null (it depends on whether the corresponding page 
    * in Settings has already been initialized or not). If it's null then the getter implementation should
-   * use the currently persisted state of the corresponding 'action on save'. If it's not-null then the getter implementation should use the
+   * use the currently stored state of the corresponding 'action on save'. If it's not-null then the getter implementation should use the
    * current state of the corresponding UI component on the corresponding page.-
    */
   protected final @Nullable UnnamedConfigurable getConfigurableIfItsUiComponentInitialized() {
@@ -67,29 +78,26 @@ public abstract class ActionOnSaveInfo {
   }
 
   /**
+   * Text for the corresponding check box (if {@link #isSaveActionApplicable()} is <code>true</code>) or label (if {@link #isSaveActionApplicable()} is <code>false</code>).
+   */
+  public abstract @NotNull @NlsContexts.Checkbox String getActionOnSaveName();
+
+  /**
    * Implementations may return <code>false</code> if this 'action on save' can't be enabled in this project with the current configuration.
    * For example, a corresponding technology is not used in the current project. In this case the text returned by
    * {@link #getActionOnSaveName()} will appear as a label but not as an actionable check box.
    * <br/><br/>
-   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted
+   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the stored
    * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
    */
   public boolean isSaveActionApplicable() { return true; }
-
-  /**
-   * Text for the corresponding check box (if {@link #isSaveActionApplicable()} is <code>true</code>) or label (if {@link #isSaveActionApplicable()} is <code>false</code>).
-   * <br/><br/>
-   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted
-   * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
-   */
-  public abstract @NotNull @NlsContexts.Checkbox String getActionOnSaveName();
 
   /**
    * This comment accompanies the corresponding check box (if {@link #isSaveActionApplicable()} is <code>true</code>) or label (if {@link #isSaveActionApplicable()} is <code>false</code>).
    * The text usually depends on the current state of the corresponding 'action on save' configuration. This might be a short summary of
    * the configuration of this 'action on save', or a warning about some problems with the feature configuration.
    * <br/><br/>
-   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted
+   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the stored
    * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
    *
    * @see #isWarningComment()
@@ -99,7 +107,7 @@ public abstract class ActionOnSaveInfo {
   /**
    * If <code>true</code> then the text returned by {@link #getComment()} will be accompanied by a warning icon.
    * <br/><br/>
-   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted
+   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the stored
    * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
    *
    * @see #getComment()
