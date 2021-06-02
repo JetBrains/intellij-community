@@ -7,6 +7,7 @@ import com.intellij.codeInsight.navigation.NavigationUtil
 import com.intellij.codeInsight.template.*
 import com.intellij.codeInsight.template.impl.TemplateImpl
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
+import com.intellij.codeInsight.template.impl.TemplateState
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.ScrollType
@@ -131,7 +132,7 @@ sealed class CallablePlacement {
 class CallableBuilder(val config: CallableBuilderConfiguration) {
     private var finished: Boolean = false
 
-    val currentFileContext: BindingContext by lazy { config.currentFile.analyzeWithContent() }
+    val currentFileContext = config.currentFile.analyzeWithContent()
 
     private lateinit var _currentFileModule: ModuleDescriptor
     val currentFileModule: ModuleDescriptor
