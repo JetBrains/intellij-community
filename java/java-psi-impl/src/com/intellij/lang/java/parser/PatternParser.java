@@ -3,7 +3,6 @@ package com.intellij.lang.java.parser;
 
 import com.intellij.core.JavaPsiBundle;
 import com.intellij.lang.PsiBuilder;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -72,16 +71,13 @@ public class PatternParser {
   private PsiBuilder.@NotNull Marker parseTypePattern(final PsiBuilder builder) {
     PsiBuilder.Marker pattern = builder.mark();
     PsiBuilder.Marker patternVariable = builder.mark();
-    PsiBuilder.Marker modifiers = myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS).first;
+    myParser.getDeclarationParser().parseModifierList(builder, PATTERN_MODIFIERS);
 
     PsiBuilder.Marker type = myParser.getReferenceParser().parseType(builder, ReferenceParser.EAT_LAST_DOT | ReferenceParser.WILDCARD);
-    assert type != null; // guarded by isPattern
-    if (!expect(builder, JavaTokenType.IDENTIFIER)) {
-      patternVariable.drop();
-      modifiers.drop();
-    } else {
-      done(patternVariable, JavaElementType.PATTERN_VARIABLE);
-    }
+    // guarded by isPattern
+    assert type != null;
+    assert expect(builder, JavaTokenType.IDENTIFIER);
+    done(patternVariable, JavaElementType.PATTERN_VARIABLE);
     done(pattern, JavaElementType.TYPE_TEST_PATTERN);
     return pattern;
   }
