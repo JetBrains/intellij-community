@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.terminal.TerminalUiSettingsManager
 import org.jetbrains.annotations.Nls
@@ -131,7 +132,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     get() = myState.cursorShape
     set(value) {
       myState.cursorShape = value
-      TerminalUiSettingsManager.getInstance().fireCursorUpdate()
+      service<TerminalUiSettingsManager>().fireCursorUpdate()
     }
 
   enum class CursorShape(val text: @Nls String) {

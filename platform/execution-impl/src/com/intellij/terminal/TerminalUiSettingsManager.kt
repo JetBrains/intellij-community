@@ -1,125 +1,115 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.terminal;
+package com.intellij.terminal
 
-import com.intellij.application.options.editor.EditorOptionsListener;
-import com.intellij.execution.ui.ConsoleViewContentType;
-import com.intellij.ide.ui.UISettings;
-import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.Service;
-import com.intellij.openapi.editor.colors.EditorColorsListener;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.util.messages.MessageBusConnection;
-import com.jediterm.terminal.emulator.ColorPalette;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-
-import java.awt.*;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import com.intellij.application.options.editor.EditorOptionsListener
+import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
+import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.editor.colors.EditorColorsListener
+import com.intellij.openapi.editor.colors.EditorColorsManager
+import com.intellij.openapi.editor.colors.EditorColorsScheme
+import com.intellij.openapi.util.Disposer
+import com.jediterm.terminal.emulator.ColorPalette
+import java.awt.Color
+import java.util.concurrent.CopyOnWriteArrayList
 
 @Service(Service.Level.APP)
-public final class TerminalUiSettingsManager implements Disposable {
-  private @NotNull EditorColorsScheme myColorsScheme;
-  private int myFontSize;
-  private JBTerminalSchemeColorPalette myColorPalette;
-  private final List<JBTerminalPanel> myTerminalPanels = new CopyOnWriteArrayList<>();
+class TerminalUiSettingsManager internal constructor() : Disposable {
+  var editorColorsScheme: EditorColorsScheme
+    private set
+  private var cachedColorPalette: JBTerminalSchemeColorPalette? = null
+  private var fontSize = -1
+  private val terminalPanels: MutableList<JBTerminalPanel> = CopyOnWriteArrayList()
 
-  TerminalUiSettingsManager() {
-    myColorsScheme = EditorColorsManager.getInstance().getGlobalScheme();
-
-    MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
-    connection.subscribe(UISettingsListener.TOPIC, uiSettings -> {
-      setFontSize(detectFontSize());
-    });
-    connection.subscribe(EditorColorsManager.TOPIC, new EditorColorsListener() {
-      @Override
-      public void globalSchemeChange(@Nullable EditorColorsScheme scheme) {
-        myColorsScheme = scheme != null ? scheme : EditorColorsManager.getInstance().getGlobalScheme();
-        myColorPalette = null;
-        fireFontChanged();
-      }
-    });
-    connection.subscribe(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC, () -> {
-      fireCursorUpdate(); // update on "Caret blinking" changes in "Editor | General | Appearance"
-    });
+  init {
+    editorColorsScheme = EditorColorsManager.getInstance().globalScheme
+    val connection = ApplicationManager.getApplication().messageBus.connect(this)
+    connection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
+      resetFontSize() // Enter/Exit Presentation Mode
+    })
+    connection.subscribe(EditorColorsManager.TOPIC, EditorColorsListener { scheme ->
+      // ANSI colors changed, Console Font changed
+      editorColorsScheme = scheme ?: EditorColorsManager.getInstance().globalScheme
+      cachedColorPalette = null
+      resetFontSize()
+    })
+    connection.subscribe(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC, EditorOptionsListener {
+      fireCursorUpdate() // update on "Caret blinking" changes in "Editor | General | Appearance"
+    })
   }
 
-  @NotNull Color getDefaultForeground() {
-    Color foregroundColor = myColorsScheme.getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).getForegroundColor();
-    return foregroundColor != null ? foregroundColor : myColorsScheme.getDefaultForeground();
+  fun getTerminalColorPalette(): ColorPalette {
+    var palette = cachedColorPalette
+    if (palette == null) {
+      palette = JBTerminalSchemeColorPalette(editorColorsScheme)
+      cachedColorPalette = palette
+    }
+    return palette
   }
 
-  @NotNull Color getDefaultBackground() {
-    Color color = myColorsScheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY);
-    return color != null ? color : myColorsScheme.getDefaultBackground();
+  fun getDefaultForeground(): Color {
+    val foregroundColor = editorColorsScheme.getAttributes(ConsoleViewContentType.NORMAL_OUTPUT_KEY).foregroundColor
+    return foregroundColor ?: editorColorsScheme.defaultForeground
   }
 
-  public static @NotNull TerminalUiSettingsManager getInstance() {
-    return ApplicationManager.getApplication().getService(TerminalUiSettingsManager.class);
+  fun getDefaultBackground(): Color {
+    val backgroundColor = editorColorsScheme.getColor(ConsoleViewContentType.CONSOLE_BACKGROUND_KEY)
+    return backgroundColor ?: editorColorsScheme.defaultBackground
   }
 
-  void addListener(@NotNull JBTerminalPanel terminalPanel) {
-    myTerminalPanels.add(terminalPanel);
-    Disposer.register(terminalPanel, () -> myTerminalPanels.remove(terminalPanel));
+  @JvmName("addListener")
+  internal fun addListener(terminalPanel: JBTerminalPanel) {
+    terminalPanels.add(terminalPanel)
+    Disposer.register(terminalPanel) { terminalPanels.remove(terminalPanel) }
   }
 
-  public void fireCursorUpdate() {
-    for (JBTerminalPanel panel : myTerminalPanels) {
-      JBTerminalSystemSettingsProviderBase provider = panel.getSettingsProvider();
-      panel.setCursorShape(provider.getCursorShape());
-      panel.repaint();
+  fun fireCursorUpdate() {
+    for (panel in terminalPanels) {
+      panel.setCursorShape(panel.settingsProvider.cursorShape)
+      panel.repaint()
     }
   }
 
-  private void fireFontChanged() {
-    for (JBTerminalPanel panel : myTerminalPanels) {
-      panel.fontChanged();
+  private fun fireFontChanged() {
+    for (panel in terminalPanels) {
+      panel.fontChanged()
     }
   }
 
-  @NotNull EditorColorsScheme getEditorColorsScheme() {
-    return myColorsScheme;
-  }
-
-  @NotNull ColorPalette getTerminalColorPalette() {
-    JBTerminalSchemeColorPalette colorPalette = myColorPalette;
-    if (colorPalette == null) {
-      colorPalette = new JBTerminalSchemeColorPalette(myColorsScheme);
-      myColorPalette = colorPalette;
+  fun getFontSize() : Int {
+    if (fontSize <= 0) {
+      fontSize = detectFontSize()
     }
-    return colorPalette;
+    return fontSize
   }
 
-  int getFontSize() {
-    if (myFontSize <= 0) {
-      myFontSize = detectFontSize();
-    }
-    return myFontSize;
-  }
-
-  private int detectFontSize() {
-    if (UISettings.getInstance().getPresentationMode()) {
-      return UISettings.getInstance().getPresentationModeFontSize();
-    }
-    return myColorsScheme.getConsoleFontSize();
-  }
-
-  void setFontSize(int fontSize) {
-    int prevFontSize = myFontSize;
-    myFontSize = fontSize;
+  fun setFontSize(newFontSize: Int) {
+    val prevFontSize = fontSize
+    fontSize = newFontSize
     if (prevFontSize != fontSize) {
-      fireFontChanged();
+      fireFontChanged()
     }
   }
 
-  public void resetFontSize() {
-    setFontSize(detectFontSize());
+  private fun detectFontSize(): Int {
+    return if (UISettings.instance.presentationMode) {
+      UISettings.instance.presentationModeFontSize
+    }
+    else editorColorsScheme.consoleFontSize
   }
 
-  @Override
-  public void dispose() {}
+  fun resetFontSize() {
+    setFontSize(detectFontSize())
+  }
+
+  override fun dispose() {}
+
+  companion object {
+    @JvmStatic
+    fun getInstance(): TerminalUiSettingsManager = service()
+  }
 }
