@@ -154,9 +154,8 @@ final class PortableCompilationCache {
     synchronized (PortableCompilationCache) {
       if (isAlreadyUpdated) {
         context.messages.info("${getClass().simpleName} is already updated")
-        return
       }
-      if (forceRebuild) {
+      else if (forceRebuild) {
         clean()
       }
       else if (!isLocalCacheUsed()) {
