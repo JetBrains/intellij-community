@@ -951,7 +951,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon BigQuery = load("providers/bigQuery.svg", -1485203038192915431L, 0);
     /** 16x16 */ public static final @NotNull Icon Cassandra = load("providers/cassandra.svg", -7281058075200040514L, 2);
     /** 16x16 */ public static final @NotNull Icon ClickHouse = load("providers/clickHouse.svg", 1647149862900553939L, 0);
-    /** 16x16 */ public static final @NotNull Icon CockroachDB = load("providers/cockroachDB.svg", -840155423285507372L, 7);
+    /** 16x16 */ public static final @NotNull Icon CockroachDB = load("providers/cockroachDB.svg", -8622465395810973373L, 0);
     /** 16x16 */ public static final @NotNull Icon Couchbase = load("providers/couchbase.svg", 2362485358505666920L, 0);
     /** 16x16 */ public static final @NotNull Icon DB2 = load("providers/DB2.svg", 6413560575348587225L, 2);
     /** 16x16 */ public static final @NotNull Icon Eclipse = load("providers/eclipse.svg", 8001776984939118232L, 2);

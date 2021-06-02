@@ -30,6 +30,7 @@ import com.intellij.openapi.vfs.impl.VirtualFilePointerTracker
 import com.intellij.project.TestProjectManager
 import com.intellij.project.stateStore
 import com.intellij.util.containers.forEachGuaranteed
+import com.intellij.util.io.isDirectory
 import com.intellij.util.io.sanitizeFileName
 import com.intellij.util.throwIfNotEmpty
 import kotlinx.coroutines.runBlocking
@@ -416,16 +417,23 @@ suspend fun loadProject(projectPath: Path, task: suspend (Project) -> Unit) {
  */
 fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: TemporaryDirectory, checkProject: suspend (Project) -> Unit) {
   @Suppress("RedundantSuspendModifier")
-  suspend fun copyProjectFiles(dir: VirtualFile): Path {
-    val projectDir = VfsUtil.virtualToIoFile(dir)
+  suspend fun copyProjectFiles(targetDir: VirtualFile): Path {
+    val projectDir = VfsUtil.virtualToIoFile(targetDir)
+    var projectFileName: String? = null
     for (projectPath in projectPaths) {
-      FileUtil.copyDir(projectPath.toFile(), projectDir)
+      val dir = if (projectPath.isDirectory()) projectPath
+      else {
+        projectFileName = projectPath.fileName.toString()
+        projectPath.parent
+      }
+      FileUtil.copyDir(dir.toFile(), projectDir)
     }
-    VfsUtil.markDirtyAndRefresh(false, true, true, dir)
-    return projectDir.toPath()
+    VfsUtil.markDirtyAndRefresh(false, true, true, targetDir)
+    return if (projectFileName != null) projectDir.toPath().resolve(projectFileName) else projectDir.toPath()
   }
   runBlocking {
-    createOrLoadProject(tempDirectory, ::copyProjectFiles, loadComponentState = true, useDefaultProjectSettings = false) {
+    createOrLoadProject(tempDirectory, ::copyProjectFiles, directoryBased = projectPaths.all { it.isDirectory() },
+                        loadComponentState = true, useDefaultProjectSettings = false) {
       checkProject(it)
     }
   }

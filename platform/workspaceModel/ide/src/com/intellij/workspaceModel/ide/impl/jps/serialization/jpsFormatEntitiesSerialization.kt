@@ -74,6 +74,8 @@ interface JpsDirectoryEntitiesSerializerFactory<E : WorkspaceEntity> {
   fun createSerializer(fileUrl: String, entitySource: JpsFileEntitySource.FileInDirectory, virtualFileManager: VirtualFileUrlManager): JpsFileEntitiesSerializer<E>
 
   fun getDefaultFileName(entity: E): String
+
+  fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder, configLocation: JpsProjectConfigLocation)
 }
 
 /**
@@ -124,6 +126,8 @@ interface JpsProjectSerializers {
   fun saveEntities(storage: WorkspaceEntityStorage, affectedSources: Set<EntitySource>, writer: JpsFileContentWriter)
   
   fun getAllModulePaths(): List<ModulePath>
+
+  fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder)
 }
 
 interface ErrorReporter {

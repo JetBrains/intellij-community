@@ -244,7 +244,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
         RunLineMarkerProvider.markRunnable(vFile, true);
       }
       final List<ConfigurationFromContext> fromContext = getConfigurationsFromContext(context);
-      if (fromContext.isEmpty()) {
+      if (existing == null && fromContext.isEmpty()) {
         presentation.setEnabledAndVisible(false);
         return;
       }

@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.idea.Bombed;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -26,8 +27,13 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.OrderEntryUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.util.io.DirectoryContentSpecKt;
+import kotlin.Unit;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
+import java.io.File;
 import java.util.Calendar;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -344,6 +350,48 @@ public class ReimportingTest extends MavenImportingTestCase {
     importProject();
     resolveDependenciesAndImport();
     assertEquals(0, counter.get());
+  }
+
+  public void testMoveModuleWithSystemScopedDependency() {
+    DirectoryContentSpecKt.zipFile(builder -> {
+      builder.file("a.txt");
+      return Unit.INSTANCE;
+    }).generate(new File(getProjectPath(), "lib.jar"));
+    createModulePom("m1", generatePomWithSystemDependency("../lib.jar"));
+    importProject();
+
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+                     "<modules>" +
+                     "  <module>dir/m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+    createModulePom("dir/m1", generatePomWithSystemDependency("../../lib.jar"));
+    importProject();
+    assertModules("project", "m1", "m2");
+    StoreUtilKt.runInAllowSaveMode(true, () -> {
+      myProject.save();
+      return Unit.INSTANCE;
+    });
+  }
+
+  @NotNull
+  @Language(value = "XML", prefix = "<project>", suffix = "</project>")
+  private static String generatePomWithSystemDependency(String relativePath) {
+    return "<groupId>test</groupId>" +
+           "<artifactId>m1</artifactId>" +
+           "<version>1</version>" +
+           "<dependencies>" +
+           "   <dependency>" +
+           "      <groupId>my-group</groupId>" +
+           "      <artifactId>lib</artifactId>" +
+           "      <scope>system</scope>" +
+           "      <version>1</version>" +
+           "      <systemPath>${basedir}/" + relativePath + "</systemPath>" +
+           "   </dependency>" +
+           "</dependencies>";
   }
 
   @Bombed(year = 2019, month = Calendar.APRIL, day = 1,

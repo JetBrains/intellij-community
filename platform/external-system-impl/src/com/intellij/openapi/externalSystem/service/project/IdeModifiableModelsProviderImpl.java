@@ -34,6 +34,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.facet.FacetManagerBridge;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge;
@@ -45,8 +46,8 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
 public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModelsProvider {
   public static final Key<IdeModifiableModelsProviderImpl> MODIFIABLE_MODELS_PROVIDER_KEY = Key.create("IdeModelsProvider");
@@ -153,33 +154,42 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
       if (ExternalProjectsWorkspaceImpl.isDependencySubstitutionEnabled()) {
         updateSubstitutions();
       }
+      LibraryTable.ModifiableModel projectLibrariesModel = getModifiableProjectLibrariesModel();
       for (Map.Entry<Library, Library.ModifiableModel> entry: myModifiableLibraryModels.entrySet()) {
         Library fromLibrary = entry.getKey();
+        String libraryName = fromLibrary.getName();
         Library.ModifiableModel modifiableModel = entry.getValue();
-        // removed and (previously) not committed library is being disposed by LibraryTableBase.LibraryModel.removeLibrary
-        // the modifiable model of such library shouldn't be committed
-        if (fromLibrary instanceof LibraryEx && ((LibraryEx)fromLibrary).isDisposed()) {
+        // Modifiable model for the new library which was disposed via ModifiableModel.removeLibrary should also be disposed
+        // Modifiable model for the old library which was removed from ProjectLibraryTable should also be disposed
+        if (fromLibrary instanceof LibraryEx && (((LibraryEx)fromLibrary).isDisposed() ||
+            fromLibrary.getTable() != null && libraryName != null && projectLibrariesModel.getLibraryByName(libraryName) == null)) {
           Disposer.dispose(modifiableModel);
         }
         else {
           ((LibraryModifiableModelBridge)modifiableModel).prepareForCommit();
         }
       }
-      ((ProjectModifiableLibraryTableBridge)getModifiableProjectLibrariesModel()).prepareForCommit();
+      ((ProjectModifiableLibraryTableBridge)projectLibrariesModel).prepareForCommit();
 
-      Collection<ModifiableRootModel> rootModels = myModifiableRootModels.values();
-      ModifiableRootModel[] rootModels1 = rootModels.toArray(new ModifiableRootModel[0]);
-      for (ModifiableRootModel model: rootModels1) {
-        assert !model.isDisposed() : "Already disposed: " + model;
-      }
+      ModifiableRootModel[] rootModels;
       if (myModifiableModuleModel != null) {
         Module[] modules = myModifiableModuleModel.getModules();
         for (Module module : modules) {
           module.putUserData(MODIFIABLE_MODELS_PROVIDER_KEY, null);
         }
+        Set<Module> existingModules = ContainerUtil.set(modules);
+        rootModels = myModifiableRootModels.entrySet().stream().filter(entry -> existingModules.contains(entry.getKey())).map(Map.Entry::getValue).toArray(ModifiableRootModel[]::new);
         ((ModifiableModuleModelBridge)myModifiableModuleModel).prepareForCommit();
       }
-      for (ModifiableRootModel model : rootModels1) {
+      else {
+        rootModels = myModifiableRootModels.values().toArray(new ModifiableRootModel[0]);
+      }
+
+      for (ModifiableRootModel model : rootModels) {
+        assert !model.isDisposed() : "Already disposed: " + model;
+      }
+
+      for (ModifiableRootModel model : rootModels) {
         ((ModifiableRootModelBridge)model).prepareForCommit();
       }
 
@@ -198,7 +208,7 @@ public class IdeModifiableModelsProviderImpl extends AbstractIdeModifiableModels
         return null;
       });
 
-      for (ModifiableRootModel model : rootModels1) {
+      for (ModifiableRootModel model : rootModels) {
         ((ModifiableRootModelBridge)model).postCommit();
       }
     });

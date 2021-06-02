@@ -21,7 +21,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Reference expression
             PsiElement(identifier)('Exception1')
-          PsiErrorElement:')' expected, got 'e1'
+          PsiErrorElement:')' or ',' expected, got 'e1'
             <empty list>
         PsiWhiteSpace(' ')
         Command arguments
@@ -44,7 +44,7 @@ Groovy script
           PsiWhiteSpace(' ')
           Reference expression
             PsiElement(identifier)('Exception1')
-          PsiErrorElement:')' expected, got 'e2'
+          PsiErrorElement:')' or ',' expected, got 'e2'
             <empty list>
         PsiWhiteSpace(' ')
         Command arguments

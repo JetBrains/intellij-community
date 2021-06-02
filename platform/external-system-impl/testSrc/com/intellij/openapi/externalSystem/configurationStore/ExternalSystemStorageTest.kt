@@ -540,6 +540,9 @@ class ExternalSystemStorageTest {
         VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
         StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
       }
+      ApplicationManager.getApplication().invokeAndWait{
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
+      }
     }
   }
 
@@ -558,6 +561,9 @@ class ExternalSystemStorageTest {
       WriteAction.runAndWait<RuntimeException> {
         VfsUtil.markDirtyAndRefresh(false, false, false, miscFile)
         StoreReloadManager.getInstance().flushChangedProjectFileAlarm()
+      }
+      ApplicationManager.getApplication().invokeAndWait{
+        PlatformTestUtil.dispatchAllInvocationEventsInIdeEventQueue()
       }
     }
   }

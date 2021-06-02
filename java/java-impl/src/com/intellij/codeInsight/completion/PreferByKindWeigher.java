@@ -290,6 +290,14 @@ public class PreferByKindWeigher extends LookupElementWeigher {
       if (object instanceof PsiField && myNonInitializedFields.contains(object)) {
         return MyResult.nonInitialized;
       }
+
+      if (object instanceof PsiPackage) {
+        String name = ((PsiPackage)object).getName();
+        if (name != null && !name.isEmpty() && Character.isUpperCase(name.charAt(0))) {
+          // Disprefer package names starting with uppercase letter, as they could pop up before classes
+          return MyResult.unlikelyItem;
+        }
+      }
     }
 
     return MyResult.normal;

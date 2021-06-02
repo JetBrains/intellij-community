@@ -138,29 +138,22 @@ internal class ModifiableModuleLibraryTableBridge(private val modifiableModel: M
     }
 
     val libraryId = libraryEntity.persistentId()
-    modifiableModel.removeDependencies {
-      it is ModuleDependencyItem.Exportable.LibraryDependency && it.library == libraryId
+    modifiableModel.removeDependencies { _, item ->
+      item is ModuleDependencyItem.Exportable.LibraryDependency && item.library == libraryId
     }
 
     modifiableModel.diff.removeEntity(libraryEntity)
     Disposer.dispose(library)
   }
 
-  internal fun disposeLibraryCopies() {
-    libraryIterator.forEach {
-      Disposer.dispose(it)
-    }
-  }
-
   internal fun restoreLibraryMappingsAndDisposeCopies() {
     libraryIterator.forEach {
       val originalLibrary = copyToOriginal[it]
-      if (originalLibrary == null)  {
-        LOG.error("Cannot find an original library for $it")
-        return@forEach
+      //originalLibrary may be null if the library was added after the table was created
+      if (originalLibrary != null)  {
+        val mutableLibraryMap = modifiableModel.diff.mutableLibraryMap
+        mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(it as LibraryBridge).single(), originalLibrary)
       }
-      val mutableLibraryMap = modifiableModel.diff.mutableLibraryMap
-      mutableLibraryMap.addMapping(mutableLibraryMap.getEntities(it as LibraryBridge).single(), originalLibrary)
 
       Disposer.dispose(it)
     }

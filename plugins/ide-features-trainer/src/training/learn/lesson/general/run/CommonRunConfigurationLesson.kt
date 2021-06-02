@@ -82,7 +82,7 @@ abstract class CommonRunConfigurationLesson(id: String) : KLesson(id, LessonsBun
         }
         test {
           ideFrame {
-            jList(saveConfigurationItemName).click()
+            jList(saveConfigurationItemName).item(saveConfigurationItemName).click()
           }
         }
       }

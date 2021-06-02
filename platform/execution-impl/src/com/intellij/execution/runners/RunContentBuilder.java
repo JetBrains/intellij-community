@@ -138,7 +138,7 @@ public final class RunContentBuilder extends RunTab {
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
     final AnAction[] actions = contentDescriptor.getRestartActions();
     actionGroup.addAll(actions);
-    actionGroup.add(new CreateAction());
+    actionGroup.add(new CreateAction(AllIcons.General.Settings));
     actionGroup.addSeparator();
 
     actionGroup.add(ActionManager.getInstance().getAction(IdeActions.ACTION_STOP_PROGRAM));

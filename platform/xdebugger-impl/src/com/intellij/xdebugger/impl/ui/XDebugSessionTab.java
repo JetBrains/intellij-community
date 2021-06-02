@@ -12,6 +12,7 @@ import com.intellij.execution.ui.RunnerLayoutUi;
 import com.intellij.execution.ui.layout.PlaceInGrid;
 import com.intellij.execution.ui.layout.impl.RunnerContentUi;
 import com.intellij.execution.ui.layout.impl.ViewImpl;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.idea.ActionsBundle;
@@ -277,7 +278,7 @@ public class XDebugSessionTab extends DebuggerSessionTabBase {
     if (myEnvironment != null) {
       leftToolbar.add(ActionManager.getInstance().getAction(IdeActions.ACTION_RERUN));
       leftToolbar.addAll(session.getRestartActions());
-      leftToolbar.add(new CreateAction());
+      leftToolbar.add(new CreateAction(AllIcons.General.Settings));
       leftToolbar.addSeparator();
       leftToolbar.addAll(session.getExtraActions());
     }

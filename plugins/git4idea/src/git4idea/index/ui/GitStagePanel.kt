@@ -304,7 +304,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     }
 
     fun getIncludedRoots(): Collection<VirtualFile> {
-      if (!isInclusionEnabled()) return state.rootStates.keys
+      if (!isInclusionEnabled()) return state.allRoots
 
       return inclusionModel.getInclusion().mapNotNull { (it as? GitRepository)?.root }
     }

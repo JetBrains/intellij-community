@@ -90,7 +90,8 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
   }
 
   override fun unlinkExternalOptions() {
-    editEntity {
+    val moduleDiff = getModuleDiff()
+    editEntity(moduleDiff) {
       externalSystem = null
       externalSystemModuleVersion = null
       externalSystemModuleGroup = null
@@ -98,7 +99,7 @@ class ExternalSystemModulePropertyManagerBridge(private val module: Module) : Ex
       linkedProjectPath = null
       rootProjectPath = null
     }
-    updateSource()
+    updateSource(moduleDiff)
   }
 
   override fun setExternalOptions(id: ProjectSystemId, moduleData: ModuleData, projectData: ProjectData?) {

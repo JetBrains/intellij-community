@@ -1038,9 +1038,13 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
         }
 
         WindowInfo info = (((InternalDecoratorImpl)component)).getToolWindow().getWindowInfo();
+        int rootWidth = getRootPane().getWidth();
+        int rootHeight = getRootPane().getHeight();
+        
+
         float weight = info.getAnchor().isHorizontal()
-                       ? (float)component.getHeight() / getHeight()
-                       : (float)component.getWidth() / getWidth();
+                       ? ToolWindowManagerImpl.Companion.getAdjustedRatio(component.getHeight(), rootHeight, 1)
+                       : ToolWindowManagerImpl.Companion.getAdjustedRatio(component.getWidth(),  rootWidth, 1);
         setBoundsInPaletteLayer(component, info.getAnchor(), weight);
       }
     }
@@ -1052,18 +1056,21 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       else if (weight > 1.0f) {
         weight = 1.0f;
       }
+      int rootHeight = getRootPane().getHeight();
+      int rootWidth = getRootPane().getWidth();
+      
       if (ToolWindowAnchor.TOP == anchor) {
-        component.setBounds(0, 0, getWidth(), (int)(getHeight() * weight + .5f));
+        component.setBounds(0, 0, getWidth(), (int)(rootHeight * weight));
       }
       else if (ToolWindowAnchor.LEFT == anchor) {
-        component.setBounds(0, 0, (int)(getWidth() * weight + .5f), getHeight());
+        component.setBounds(0, 0, (int)(rootWidth * weight), getHeight());
       }
       else if (ToolWindowAnchor.BOTTOM == anchor) {
-        final int height = (int)(getHeight() * weight + .5f);
+        final int height = (int)(rootHeight * weight);
         component.setBounds(0, getHeight() - height, getWidth(), height);
       }
       else if (ToolWindowAnchor.RIGHT == anchor) {
-        final int width = (int)(getWidth() * weight + .5f);
+        final int width = (int)(rootWidth * weight);
         component.setBounds(getWidth() - width, 0, width, getHeight());
       }
       else {

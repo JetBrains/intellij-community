@@ -85,8 +85,7 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
     return LocalGradleExecutionAware().isGradleInstallationHomeDir(project, windowsPath)
   }
 
-  private fun getTargetPathMapper(projectPath: String): PathMapper? {
-    val wslDistribution = resolveWslDistribution(projectPath) ?: return null
+  private fun getTargetPathMapper(wslDistribution: WSLDistribution): PathMapper {
     return object : PathMapper {
       override fun isEmpty(): Boolean = false
       override fun canReplaceLocal(localPath: String): Boolean = true
@@ -98,13 +97,16 @@ class GradleOnWslExecutionAware : GradleExecutionAware {
   }
 
   private fun getWslEnvironmentProvider(project: Project, path: String, targetName: String?): GradleServerConfigurationProvider? {
-    val wslDistribution = resolveWslDistribution(path) ?: return null
+    val wslEnvironmentConfiguration = targetName?.let {
+      TargetEnvironmentsManager.getInstance(project).targets.findByName(it)
+    } as? WslTargetEnvironmentConfiguration
+
+    val wslDistribution = wslEnvironmentConfiguration?.distribution ?: resolveWslDistribution(path) ?: return null
     return object : GradleServerConfigurationProvider {
       override val environmentConfiguration by lazy {
-        val targetEnvironmentConfiguration = targetName?.let { TargetEnvironmentsManager.getInstance(project).targets.findByName(it) }
-        targetEnvironmentConfiguration ?: WslTargetEnvironmentConfiguration(wslDistribution)
+        wslEnvironmentConfiguration ?: WslTargetEnvironmentConfiguration(wslDistribution)
       }
-      override val pathMapper = getTargetPathMapper(path)
+      override val pathMapper = getTargetPathMapper(wslDistribution)
       override fun getServerBindingAddress(targetEnvironmentConfiguration: TargetEnvironmentConfiguration): HostPort {
         return HostPort(wslDistribution.wslIp, 0)
       }

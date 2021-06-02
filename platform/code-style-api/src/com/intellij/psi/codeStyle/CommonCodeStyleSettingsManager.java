@@ -154,24 +154,19 @@ final class CommonCodeStyleSettingsManager {
   public void readExternal(@NotNull Element element) throws InvalidDataException {
     synchronized (this) {
       initCommonSettingsMap();
+      CodeStyleSettingsService settingsService = CodeStyleSettingsService.getInstance();
       for (Element commonSettingsElement : element.getChildren(COMMON_SETTINGS_TAG)) {
         final String languageId = commonSettingsElement.getAttributeValue(LANGUAGE_ATTR);
         if (!StringUtil.isEmpty(languageId)) {
-          Language target = Language.findLanguageByID(languageId);
-          boolean isKnownLanguage = target != null;
-          if (isKnownLanguage) {
-            final LanguageCodeStyleProvider provider = CodeStyleSettingsService.getLanguageCodeStyleProvider(target);
-            if (provider != null) {
-              CommonCodeStyleSettings commonSettings = readExternal(provider, commonSettingsElement);
-              if (commonSettings != null) {
-                init(commonSettings, provider.getLanguage().getID());
-              }
-            }
-            else {
-              isKnownLanguage = false;
+          final LanguageCodeStyleProvider provider = ContainerUtil.find(settingsService.getLanguageCodeStyleProviders(),
+                                                                        p -> languageId.equals(p.getLanguage().getID()));
+          if (provider != null) {
+            CommonCodeStyleSettings commonSettings = readExternal(provider, commonSettingsElement);
+            if (commonSettings != null) {
+              init(commonSettings, provider.getLanguage().getID());
             }
           }
-          if (!isKnownLanguage) {
+          else {
             myUnknownSettingsMap.put(languageId, JDOMUtil.internElement(commonSettingsElement));
           }
         }

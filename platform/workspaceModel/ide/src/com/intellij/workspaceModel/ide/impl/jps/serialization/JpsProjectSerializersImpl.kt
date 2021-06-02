@@ -666,6 +666,12 @@ class JpsProjectSerializersImpl(directorySerializersFactories: List<JpsDirectory
     }
   }
 
+  override fun changeEntitySourcesToDirectoryBasedFormat(builder: WorkspaceEntityStorageBuilder) {
+    for (factory in directorySerializerFactoriesByUrl.values) {
+      factory.changeEntitySourcesToDirectoryBasedFormat(builder, configLocation)
+    }
+  }
+
   private fun mergeSerializerEntitiesMap(existingSerializer2EntitiesMap: HashMap<JpsFileEntitiesSerializer<*>, MutableMap<Class<out WorkspaceEntity>, MutableSet<WorkspaceEntity>>>,
                                          serializer: JpsFileEntitiesSerializer<*>,
                                          entitiesMap: Map<Class<out WorkspaceEntity>, List<WorkspaceEntity>>) {

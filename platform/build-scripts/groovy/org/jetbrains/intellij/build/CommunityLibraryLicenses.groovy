@@ -202,7 +202,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "batik", libraryName: "batik-codec", license: "Apache 2.0",
                        licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt", url: "https://xmlgraphics.apache.org/batik/"),
     new LibraryLicense(name: "blockmap", libraryName: "org.jetbrains.intellij:blockmap:1.0.2", license: "Apache 2.0",
-                       url: "https://bintray.com/jetbrains/intellij-third-party-dependencies/blockmap-library"),
+                       url: "https://packages.jetbrains.team/maven/p/ij/intellij-dependencies/org/jetbrains/intellij/blockmap/"),
     new LibraryLicense(libraryName: "bouncy-castle-provider", license: "MIT License", url: "http://bouncycastle.org",
                        licenseUrl: "http://bouncycastle.org/licence.html"),
     new LibraryLicense(name: "BridJ (NativeLibs4Java C/C++ Interop Layer)", libraryName: "com.nativelibs4java:bridj:0.7.0",
@@ -721,7 +721,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "XZ for Java", libraryName: "xz", license: "Public Domain",
                        url: "http://tukaani.org/xz/java.html"),
     new LibraryLicense(name: "zip-signer", libraryName: "zip-signer", license: "Apache 2.0",
-                       url: "https://bintray.com/jetbrains/intellij-plugin-service/zip-signer"),
+                       url: "https://github.com/JetBrains/marketplace-zip-signer"),
     new LibraryLicense(name: "Zstd-JNI", libraryName: "com.github.luben:zstd", license: "BSD",
                        url: "https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE"),
 

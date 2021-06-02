@@ -17,8 +17,6 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
   abstract val intentionCaret: String
   abstract val intentionPossibleArea: String
 
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
-
   override val lessonContent: LessonContext.() -> Unit = {
     prepareSample(sample)
     lateinit var showIntentionsTaskId: TaskContext.TaskId
@@ -29,6 +27,13 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
         item.toString().contains(warningQuickFix)
       }
       restoreIfModifiedOrMovedIncorrectly(warningPossibleArea)
+      test {
+        // For some reason there is no necessary hotfix in intentions, need to force IDE to update it
+        invokeActionViaShortcut("LEFT")
+        Thread.sleep(200)
+        invokeActionViaShortcut("RIGHT")
+        actions(it)
+      }
     }
 
     var before = ""
@@ -46,6 +51,11 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
         (insideIntention() && before != editor.document.text).also { updateBefore() }
       }
       restoreIfIntentionsPopupClosed(showIntentionsTaskId)
+      test {
+        ideFrame {
+          jListContains(warningQuickFix).item(warningQuickFix).doubleClick()
+        }
+      }
     }
 
     caret(intentionCaret)
@@ -56,6 +66,7 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
         item.toString().contains(intentionText)
       }
       restoreIfModifiedOrMovedIncorrectly(intentionPossibleArea)
+      test { actions(it) }
     }
 
     prepareRuntimeTask {
@@ -68,6 +79,11 @@ abstract class ContextActionsLesson : KLesson("context.actions", LessonsBundle.m
         (insideIntention() && before != editor.document.text).also { updateBefore() }
       }
       restoreIfIntentionsPopupClosed(showIntentionsTaskId)
+      test {
+        ideFrame {
+          jListContains(intentionText).item(intentionText).doubleClick()
+        }
+      }
     }
 
     text(LessonsBundle.message("context.actions.refactorings.promotion",

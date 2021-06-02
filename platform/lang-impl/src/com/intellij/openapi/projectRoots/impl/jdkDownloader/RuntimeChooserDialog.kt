@@ -4,6 +4,7 @@ package com.intellij.openapi.projectRoots.impl.jdkDownloader
 import com.intellij.icons.AllIcons
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
@@ -140,7 +141,7 @@ class RuntimeChooserDialog(
           verticalTextPosition = SwingConstants.TOP
           text = HtmlChunk
             .html()
-            .addText(LangBundle.message("dialog.label.choose.ide.runtime.warn"))
+            .addText(LangBundle.message("dialog.label.choose.ide.runtime.warn", ApplicationInfo.getInstance().shortCompanyName))
             .toString()
         })
 

@@ -45,6 +45,9 @@ internal abstract class OrderEntryBridge(
     index = newIndex
   }
 
+  internal val currentIndex: Int
+    get() = index
+
   override fun getOwnerModule() = ownerModuleBridge
   override fun compareTo(other: OrderEntry?) = index.compareTo((other as OrderEntryBridge).index)
   override fun isValid() = true

@@ -748,13 +748,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @Override
     public boolean remove(@NotNull Collection<? extends Module> modules) {
       ModulesConfigurator modulesConfigurator = myContext.myModulesConfigurator;
-      List<Module> deleted = modulesConfigurator.deleteModules(modules);
-      if (deleted.isEmpty()) {
-        return false;
-      }
-      for (Module module : deleted) {
+      List<ModuleEditor> moduleEditors = ContainerUtil.mapNotNull(modules, modulesConfigurator::getModuleEditor);
+      if (moduleEditors.isEmpty()) return false;
+      if (!modulesConfigurator.canDeleteModules(moduleEditors)) return false;
+
+      List<Module> modulesToDelete = ContainerUtil.mapNotNull(moduleEditors, ModuleEditor::getModule);
+      for (Module module : modulesToDelete) {
         List<Facet> removed = modulesConfigurator.getFacetsConfigurator().removeAllFacets(module);
         myProjectStructureConfigurable.getFacetStructureConfigurable().removeFacetNodes(removed);
+      }
+      modulesConfigurator.deleteModules(moduleEditors);
+      for (Module module : modulesToDelete) {
         myContext.getDaemonAnalyzer().removeElement(new ModuleProjectStructureElement(myContext, module));
 
         for (final ModuleStructureExtension extension : ModuleStructureExtension.EP_NAME.getExtensions()) {

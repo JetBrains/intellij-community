@@ -10,6 +10,9 @@ buildscript {
 }
 
 allprojects {
+  repositories {
+    maven { url 'https://cache-redirector.jetbrains.com/intellij-dependencies' }
+  }
   apply plugin: 'idea'
   idea {
     module {

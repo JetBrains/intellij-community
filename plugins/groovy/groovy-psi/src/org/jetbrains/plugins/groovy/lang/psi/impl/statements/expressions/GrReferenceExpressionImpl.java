@@ -11,7 +11,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
-import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
@@ -50,7 +49,6 @@ import java.util.*;
 
 import static com.intellij.psi.util.PsiUtilCore.ensureValid;
 import static java.util.Collections.emptyList;
-import static kotlin.LazyKt.lazy;
 import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isLValue;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyLValueUtil.isRValue;
@@ -68,8 +66,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   private final GroovyReference myStaticReference = new GrStaticExpressionReference(this);
-  private final Lazy<GroovyReference> myRValueReference = lazy(() -> new GrRValueExpressionReference(this));
-  private final Lazy<GroovyReference> myLValueReference = lazy(() -> new GrLValueExpressionReference(this));
+  private final GroovyReference myRValueReference = new GrRValueExpressionReference(this);
+  private final GroovyReference myLValueReference = new GrLValueExpressionReference(this);
 
   @Override
   public void accept(@NotNull GroovyElementVisitor visitor) {
@@ -389,13 +387,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Nullable
   @Override
   public GroovyReference getRValueReference() {
-    return isRValue(this) ? myRValueReference.getValue() : null;
+    return isRValue(this) ? myRValueReference : null;
   }
 
   @Nullable
   @Override
   public GroovyReference getLValueReference() {
-    return isLValue(this) ? myLValueReference.getValue() : null;
+    return isLValue(this) ? myLValueReference : null;
   }
 
   @Override

@@ -8,6 +8,8 @@ import com.intellij.grazie.utils.LinkedSet
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.ClassLoaderUtil
 import com.intellij.util.ExceptionUtil
+import org.languagetool.JLanguageTool
+import org.languagetool.markup.AnnotatedTextBuilder
 import org.slf4j.LoggerFactory
 
 object GrammarEngine {
@@ -26,7 +28,9 @@ object GrammarEngine {
 
     return try {
       ClassLoaderUtil.computeWithClassLoader<Set<Typo>, Throwable>(GraziePlugin.classLoader) {
-        LangTool.getTool(lang).check(str)
+        val annotated = AnnotatedTextBuilder().addText(str).build()
+        LangTool.getTool(lang).check(annotated, true, JLanguageTool.ParagraphHandling.NORMAL,
+                                     null, JLanguageTool.Mode.ALL, JLanguageTool.Level.PICKY)
           .asSequence()
           .filterNotNull()
           .map { Typo(it, lang, offset) }

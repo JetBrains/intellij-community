@@ -15,6 +15,7 @@ import org.jetbrains.zip.signer.verifier.ZipVerifier
 import java.io.File
 import java.security.cert.Certificate
 import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 
 @ApiStatus.Internal
 object PluginSignatureChecker {
@@ -67,7 +68,9 @@ object PluginSignatureChecker {
       is InvalidSignatureResult -> verificationResult.errorMessage
       is MissingSignatureResult -> IdeBundle.message("plugin.signature.not.signed")
       is SuccessfulVerificationResult -> {
-        val isSigned = certificates.any { certificate -> verificationResult.isSignedBy(certificate) }
+        val isSigned = certificates.any { certificate ->
+          certificate is X509Certificate && verificationResult.isSignedBy(certificate)
+        }
         if (!isSigned) {
           IdeBundle.message("plugin.signature.not.signed.by")
         }

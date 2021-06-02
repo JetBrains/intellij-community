@@ -159,6 +159,20 @@ public class JBCefBrowser extends JBCefBrowserBase {
 
     myCefClient.addFocusHandler(myCefFocusHandler = new CefFocusHandlerAdapter() {
       @Override
+      public void onTakeFocus(CefBrowser browser, boolean next) {
+        super.onTakeFocus(browser, next);
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        focusedBrowser = null;
+      }
+
+      @Override
+      public void onGotFocus(CefBrowser browser) {
+        super.onGotFocus(browser);
+        //noinspection AssignmentToStaticFieldFromInstanceMethod
+        focusedBrowser = JBCefBrowser.this;
+      }
+
+      @Override
       public boolean onSetFocus(CefBrowser browser, FocusSource source) {
         Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
         boolean componentFocused = focusOwner == getComponent() || focusOwner == getCefBrowser().getUIComponent();

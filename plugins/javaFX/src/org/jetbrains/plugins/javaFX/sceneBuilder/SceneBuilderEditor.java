@@ -114,8 +114,8 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
       myErrorLabel.addHyperlinkListener(e1 -> {
         DownloadableFileService service = DownloadableFileService.getInstance();
         DownloadableFileDescription
-          description = service.createFileDescription("https://cache-redirector.jetbrains.com/jetbrains.bintray.com/" +
-                                                      "intellij-third-party-dependencies/org/jetbrains/intellij/deps/scenebuilderkit/" +
+          description = service.createFileDescription("https://cache-redirector.jetbrains.com/" +
+                                                      "intellij-dependencies/org/jetbrains/intellij/deps/scenebuilderkit/" +
                                                       SceneBuilderUtil.SCENE_BUILDER_VERSION + "/" + SceneBuilderUtil.SCENE_BUILDER_KIT_FULL_NAME,
                                                       SceneBuilderUtil.SCENE_BUILDER_KIT_FULL_NAME);
         FileDownloader downloader = service.createDownloader(Collections.singletonList(description), "Scene Builder Kit");

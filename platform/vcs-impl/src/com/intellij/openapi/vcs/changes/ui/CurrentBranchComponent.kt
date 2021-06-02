@@ -86,36 +86,6 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
       else emptySet()
   }
 
-  @Nls
-  private fun getText(branches: Collection<BranchData>): String {
-    val distinct = branches.distinctBy { it.branchName }
-    return when (distinct.size) {
-      0 -> ""
-      1 -> getPresentableText(distinct.first())
-      else -> "${getPresentableText(distinct.first())},..."
-    }
-  }
-
-  @Nls
-  private fun getTooltip(branches: Collection<BranchData>): String? {
-    val distinct = branches.distinctBy { it.branchName to (it as? LinkedBranchData)?.linkedBranchName }
-    return when (distinct.size) {
-      0 -> null
-      1 -> getSingleTooltip(distinct.first())
-      else -> branches.joinToString("") { getMultiTooltip(it) }
-    }
-  }
-
-  @Nls
-  private fun getMultiTooltip(branch: BranchData): String {
-    val linkedBranchPart = if (branch is LinkedBranchData && branch.branchName != null) {
-      branch.linkedBranchName?.let { " ${rightArrow()} $it" } ?: VcsBundle.message("changes.no.tracking.branch.suffix")
-    }
-    else ""
-
-    return "<tr><td>${branch.presentableRootName}:</td><td>${getPresentableText(branch)}$linkedBranchPart</td></tr>" // NON-NLS
-  }
-
   companion object {
     private val BACKGROUND_BALANCE
       get() = namedDouble("VersionControl.RefLabel.backgroundBrightness", 0.08)
@@ -141,6 +111,36 @@ class CurrentBranchComponent(private val tree: ChangesTree) : JBLabel(), Disposa
 
     fun getCurrentBranch(project: Project, path: FilePath) =
       getProviders(project).asSequence().mapNotNull { it.getCurrentBranch(path) }.firstOrNull()
+
+    @Nls
+    fun getText(branches: Collection<BranchData>): String {
+      val distinct = branches.distinctBy { it.branchName }
+      return when (distinct.size) {
+        0 -> ""
+        1 -> getPresentableText(distinct.first())
+        else -> "${getPresentableText(distinct.first())},..."
+      }
+    }
+
+    @Nls
+    fun getTooltip(branches: Collection<BranchData>): String? {
+      val distinct = branches.distinctBy { it.branchName to (it as? LinkedBranchData)?.linkedBranchName }
+      return when (distinct.size) {
+        0 -> null
+        1 -> getSingleTooltip(distinct.first())
+        else -> branches.joinToString("") { getMultiTooltip(it) }
+      }
+    }
+
+    @Nls
+    private fun getMultiTooltip(branch: BranchData): String {
+      val linkedBranchPart = if (branch is LinkedBranchData && branch.branchName != null) {
+        branch.linkedBranchName?.let { " ${rightArrow()} $it" } ?: VcsBundle.message("changes.no.tracking.branch.suffix")
+      }
+      else ""
+
+      return "<tr><td>${branch.presentableRootName}:</td><td>${getPresentableText(branch)}$linkedBranchPart</td></tr>" // NON-NLS
+    }
 
     @Nls
     fun getPresentableText(branch: BranchData) = if (branch is LinkedBranchData) branch.branchName ?: "!"

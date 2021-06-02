@@ -34,7 +34,7 @@ import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
 import static com.intellij.openapi.util.text.StringUtilRt.notNullize;
 import static com.intellij.sh.ShBundle.message;
 
-final class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
+public final class ShRunConfiguration extends LocatableConfigurationBase implements RefactoringListenerProvider {
   @NonNls private static final String TAG_PREFIX = "INDEPENDENT_";
   @NonNls private static final String SCRIPT_TEXT_TAG = "SCRIPT_TEXT";
   @NonNls private static final String SCRIPT_PATH_TAG = "SCRIPT_PATH";

@@ -586,7 +586,7 @@ idea.fatal.error.notification=disabled
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  static def unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
+  static @NotNull Path unpackPty4jNative(BuildContext buildContext, @NotNull Path distDir, String pty4jOsSubpackageName) {
     def pty4jNativeDir = "$distDir/lib/pty4j-native"
     def nativePkg = "resources/com/pty4j/native"
     def includedNativePkg = Strings.trimEnd(nativePkg + "/" + Strings.notNullize(pty4jOsSubpackageName), '/')
@@ -605,6 +605,7 @@ idea.fatal.error.notification=disabled
     if (files.empty) {
       buildContext.messages.error("Cannot layout pty4j native: no files extracted")
     }
+    return Path.of(pty4jNativeDir)
   }
 
   //dbus-java is used only on linux for KWallet integration.
@@ -619,11 +620,16 @@ idea.fatal.error.notification=disabled
       Files.copy(file.toPath(), destLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
       extraJars += file.name
     }
-    def classPathTxt = destLibDir.resolve("classpath.txt")
+    def srcClassPathTxt = Paths.get("$buildContext.paths.distAll/lib/classpath.txt")
     //no file in fleet
-    if (Files.exists(classPathTxt)) {
-      Files.copy(Paths.get("$buildContext.paths.distAll/lib/classpath.txt"), classPathTxt, StandardCopyOption.REPLACE_EXISTING)
+    if (Files.exists(srcClassPathTxt)) {
+      def classPathTxt = destLibDir.resolve("classpath.txt")
+      Files.copy(srcClassPathTxt, classPathTxt, StandardCopyOption.REPLACE_EXISTING)
       Files.writeString(classPathTxt, "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
+      buildContext.messages.warning("added dbus-java to classpath.txt")
+    }
+    else {
+      buildContext.messages.warning("no classpath.txt - no patching")
     }
   }
 

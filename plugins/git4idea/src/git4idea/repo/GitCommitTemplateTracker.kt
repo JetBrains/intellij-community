@@ -51,12 +51,26 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
 
   @JvmOverloads
   fun exists(repository: GitRepository? = null): Boolean {
-    return TEMPLATES_LOCK.read { if (repository != null) commitTemplates.containsKey(repository) else commitTemplates.values.isNotEmpty() }
+    return TEMPLATES_LOCK.read {
+      if (repository != null) {
+        commitTemplates[repository]?.content?.isNotBlank() == true
+      }
+      else {
+        commitTemplates.values.any { it.content.isNotBlank() }
+      }
+    }
   }
 
   @JvmOverloads
   fun getTemplateContent(repository: GitRepository? = null): String? {
-    return TEMPLATES_LOCK.read { if (repository != null) commitTemplates[repository]?.content else commitTemplates.values.firstOrNull()?.content }
+    return TEMPLATES_LOCK.read {
+      if (repository != null) {
+        commitTemplates[repository]?.content?.ifBlank { null }
+      }
+      else {
+        commitTemplates.values.firstOrNull()?.content?.ifBlank { null }
+      }
+    }
   }
 
   override fun notifyConfigChanged(repository: GitRepository) {
@@ -137,7 +151,11 @@ internal class GitCommitTemplateTracker(private val project: Project) : GitConfi
 
   private fun loadTemplateContent(repository: GitRepository, commitTemplateFilePath: String): String? {
     try {
-      return FileUtil.loadFile(File(commitTemplateFilePath), GitConfigUtil.getCommitEncoding(project, repository.root))
+      val fileContent = FileUtil.loadFile(File(commitTemplateFilePath), GitConfigUtil.getCommitEncoding(project, repository.root))
+      if (fileContent.isBlank()) {
+        LOG.warn("Empty or blank commit template detected for repository $repository by path $commitTemplateFilePath")
+      }
+      return fileContent
     }
     catch (e: IOException) {
       LOG.warn("Cannot load commit template for repository $repository by path $commitTemplateFilePath", e)

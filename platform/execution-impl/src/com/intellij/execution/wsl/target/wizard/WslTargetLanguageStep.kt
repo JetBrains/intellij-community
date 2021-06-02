@@ -17,8 +17,15 @@ internal class WslTargetLanguageStep(model: WslTargetWizardModel) : WslTargetSte
     stepDescription = getStepDescriptionMessage()
     removeLanguagesPanel()
     val languagesForEditing = model.subject.createMergedLanguagesList(model.languageConfigForIntrospection)
+
+    // We have to save the model to have valid `WslTargetEnvironmentConfiguration`.
+    // So, `model.subject` can be used later in this step via `targetSupplier`
+    // e.g. for creation of WSL file browser using saved `model.subject.distribution`
+    model.save()
+    val targetSupplier: () -> TargetEnvironmentConfiguration = { model.subject }
+
     languagesPanel = TargetEnvironmentLanguagesPanel(model.project, model.subject.getTargetType(),
-                                                     { model.subject }, languagesForEditing) {
+                                                     targetSupplier, languagesForEditing) {
       forceMainPanelLayout()
     }.also {
       mainPanel.addToCenter(it.component)

@@ -19,6 +19,7 @@ import training.dsl.*
 import training.learn.LessonsBundle
 import training.learn.course.KLesson
 import training.learn.course.LessonType
+import training.util.toNullableString
 import java.awt.Point
 import java.awt.event.KeyEvent
 import javax.swing.JList
@@ -67,7 +68,7 @@ abstract class SearchEverywhereLesson : KLesson("Search everywhere", LessonsBund
       triggerByListItemAndHighlight { item ->
         if (item is PsiNameIdentifierOwner)
           item.name == requiredClassName
-        else item.toString().contains(requiredClassName)
+        else item.toNullableString()?.contains(requiredClassName) ?: false
       }
       restoreByUi()
     }

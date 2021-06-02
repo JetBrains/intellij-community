@@ -17,6 +17,7 @@ public class ShFoldingTest extends BasePlatformTestCase {
   public void testHeredoc()  { doTest(); }
   public void testDoBlock()  { doTest(); }
   public void testComment()  { doTest(); }
+  public void testShebang()  { doTest(); }
 
   private void doTest() {
     myFixture.testFoldingWithCollapseStatus(getTestDataPath() + "/" + getTestName(true) + ".sh");

@@ -7,9 +7,9 @@
       <option name="url" value="https://cache-redirector.jetbrains.com/maven-central" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="intellij-third-party-dependencies" />
-      <option name="name" value="IntelliJ Dependencies on Bintray" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/intellij-third-party-dependencies" />
+      <option name="id" value="intellij-dependencies" />
+      <option name="name" value="IntelliJ Dependencies" />
+      <option name="url" value="https://cache-redirector.jetbrains.com/intellij-dependencies" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="jcenter" />
@@ -25,21 +25,6 @@
       <option name="id" value="5ddb844f-da77-4dd2-9c71-ab1484ec2e60" />
       <option name="name" value="5ddb844f-da77-4dd2-9c71-ab1484ec2e60" />
       <option name="url" value="https://cache-redirector.jetbrains.com/repo.jenkins-ci.org/releases" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="groovy" />
-      <option name="name" value="Groovy Bintray Repository" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/dl.bintray.com/groovy/maven/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="8e0b07ff-f7c3-4a77-a62b-ab464737b720" />
-      <option name="name" value="8e0b07ff-f7c3-4a77-a62b-ab464737b720" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/jetbrains.bintray.com/jediterm/" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="a93311a0-6b4a-43ad-94e7-90f6ea1986ee" />
-      <option name="name" value="a93311a0-6b4a-43ad-94e7-90f6ea1986ee" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/jetbrains.bintray.com/markdown" />
     </remote-repository>
     <remote-repository>
       <option name="id" value="7f849d18-5038-490f-a93d-226871e8f98c" />
@@ -60,11 +45,6 @@
       <option name="id" value="KotlinIdeMavenArtifacts" />
       <option name="name" value="KotlinIdeMavenArtifacts" />
       <option name="url" value="https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/kotlin-ide" />
-    </remote-repository>
-    <remote-repository>
-      <option name="id" value="JetBrainsPluginRepository" />
-      <option name="name" value="JetBrains Plugin Repository libraries" />
-      <option name="url" value="https://cache-redirector.jetbrains.com/jetbrains.bintray.com/intellij-plugin-service" />
     </remote-repository>
   </component>
 </project>

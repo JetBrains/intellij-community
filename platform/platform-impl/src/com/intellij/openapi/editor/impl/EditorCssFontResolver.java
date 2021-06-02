@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.JBHtmlEditorKit;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.text.AttributeSet;
@@ -61,6 +62,7 @@ public class EditorCssFontResolver implements JBHtmlEditorKit.FontResolver {
       return defaultFont;
     }
     EditorColorsScheme scheme = myEditor == null ? EditorColorsManager.getInstance().getGlobalScheme() : myEditor.getColorsScheme();
-    return scheme.getFont(EditorFontType.forJavaStyle(defaultFont.getStyle())).deriveFont(defaultFont.getSize2D());
+    Font font = scheme.getFont(EditorFontType.forJavaStyle(defaultFont.getStyle())).deriveFont(defaultFont.getSize2D());
+    return UIUtil.getFontWithFallback(font);
   }
 }
