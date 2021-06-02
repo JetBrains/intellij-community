@@ -75,7 +75,7 @@ class EclipseProjectDetector extends ProjectDetector {
         String property = "eclipse.projects.detected";
         if (group == null && PropertiesComponent.getInstance().isValueSet(property)) {
           // the group was removed by user
-          return;
+//          return;
         }
 
         List<String> projects = new ArrayList<>();
@@ -133,6 +133,9 @@ class EclipseProjectDetector extends ProjectDetector {
       return;
     }
     for (File file : files) {
+      if (isInSpecialMacFolder(file.getPath())) {
+        continue;
+      }
       String[] list = file.list();
       if (list != null && ContainerUtil.or(list, s -> ".project".equals(s)) && ContainerUtil.or(list, s -> ".classpath".equals(s))) {
         projects.add(file.getPath());
