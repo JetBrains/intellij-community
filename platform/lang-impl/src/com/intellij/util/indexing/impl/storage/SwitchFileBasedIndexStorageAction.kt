@@ -35,7 +35,7 @@ class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
         FileBasedIndexLayoutSettings.setUsedLayout(indexStorage.bean)
       }
       finally {
-        switcher.turnOn()
+        switcher.turnOn(null, "Index Storage Switching")
       }
     }
   }
