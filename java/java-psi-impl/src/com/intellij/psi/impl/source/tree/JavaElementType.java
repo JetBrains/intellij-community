@@ -141,7 +141,6 @@ public interface JavaElementType {
   IElementType PARENTHESIZED_PATTERN = new JavaCompositeElementType("PARENTHESIZED_PATTERN", () -> new PsiParenthesizedPatternImpl());
   IElementType GUARDED_PATTERN = new JavaCompositeElementType("GUARDED_PATTERN", () -> new PsiGuardedPatternImpl());
   IElementType DEFAULT_ELEMENT = new JavaCompositeElementType("DEFAULT_ELEMENT", () -> new PsiDefaultElementImpl());
-  IElementType NULL_CASE_LABEL_ELEMENT = new JavaCompositeElementType("NULL_CASE_LABEL_ELEMENT", () -> new PsiNullCaseLabelElementImpl());
   IElementType CASE_LABEL_ELEMENT_LIST = new JavaCompositeElementType("CASE_LABEL_ELEMENT_LIST", () -> new PsiCaseLabelElementListImpl());
 
   final class ICodeBlockElementType extends IErrorCounterReparseableElementType implements ICompositeElementType, ILightLazyParseableElementType {

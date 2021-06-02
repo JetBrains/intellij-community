@@ -443,12 +443,6 @@ public class StatementParser {
         done(defaultElement, JavaElementType.DEFAULT_ELEMENT);
         return Pair.create(defaultElement, false);
       }
-      if (builder.getTokenType() == JavaTokenType.NULL_KEYWORD) {
-        PsiBuilder.Marker defaultElement = builder.mark();
-        builder.advanceLexer();
-        done(defaultElement, JavaElementType.NULL_CASE_LABEL_ELEMENT);
-        return Pair.create(defaultElement, false);
-      }
       if (myParser.getPatternParser().isPattern(builder)) {
         return Pair.create(myParser.getPatternParser().parsePattern(builder), false);
       }
