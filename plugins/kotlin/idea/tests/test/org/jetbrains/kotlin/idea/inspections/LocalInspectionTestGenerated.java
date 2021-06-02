@@ -14061,27 +14061,27 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("ifElse.kt")
         public void testIfElse() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse.kt");
+            runTest("testData/inspectionsLocal/unnecessaryVariable/ifElse.kt");
         }
 
         @TestMetadata("ifElse2.kt")
         public void testIfElse2() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse2.kt");
+            runTest("testData/inspectionsLocal/unnecessaryVariable/ifElse2.kt");
         }
 
         @TestMetadata("ifElse3.kt")
         public void testIfElse3() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse3.kt");
+            runTest("testData/inspectionsLocal/unnecessaryVariable/ifElse3.kt");
         }
 
         @TestMetadata("ifElse4.kt")
         public void testIfElse4() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse4.kt");
+            runTest("testData/inspectionsLocal/unnecessaryVariable/ifElse4.kt");
         }
 
         @TestMetadata("ifElse5.kt")
         public void testIfElse5() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/ifElse5.kt");
+            runTest("testData/inspectionsLocal/unnecessaryVariable/ifElse5.kt");
         }
 
         @TestMetadata("it.kt")
@@ -14091,12 +14091,12 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("lambda.kt")
         public void testLambda() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/lambda.kt");
+            runTest("testData/inspectionsLocal/unnecessaryVariable/lambda.kt");
         }
 
         @TestMetadata("lambda2.kt")
         public void testLambda2() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/lambda2.kt");
+            runTest("testData/inspectionsLocal/unnecessaryVariable/lambda2.kt");
         }
 
         @TestMetadata("override.kt")
@@ -14131,7 +14131,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("try.kt")
         public void testTry() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/try.kt");
+            runTest("testData/inspectionsLocal/unnecessaryVariable/try.kt");
         }
 
         @TestMetadata("varCopy.kt")
@@ -14141,7 +14141,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @TestMetadata("when.kt")
         public void testWhen() throws Exception {
-            runTest("idea/testData/inspectionsLocal/unnecessaryVariable/when.kt");
+            runTest("testData/inspectionsLocal/unnecessaryVariable/when.kt");
         }
 
         @TestMetadata("whenSubject.kt")
