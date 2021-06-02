@@ -13,8 +13,10 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.testFramework.LightProjectDescriptor
 import org.jetbrains.kotlin.cli.jvm.compiler.MockExternalAnnotationsManager
+import org.jetbrains.kotlin.test.ConfigurationKind
 import org.jetbrains.kotlin.idea.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
@@ -32,6 +34,7 @@ import org.jetbrains.kotlin.test.TestRunner
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.testConfiguration
 import org.jetbrains.kotlin.test.directives.FirDiagnosticsDirectives
+import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
 import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
@@ -40,6 +43,7 @@ import org.jetbrains.kotlin.test.runners.*
 import org.jetbrains.kotlin.test.services.*
 import org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurator
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
+import java.io.File
 
 abstract class AbstractCompilerBasedTest : KotlinLightCodeInsightFixtureTestCase() {
     private var _configuration: TestConfiguration? = null
@@ -185,11 +189,33 @@ abstract class AbstractCompilerBasedTest : KotlinLightCodeInsightFixtureTestCase
                 add(KotlinArtifacts.instance.kotlinStdlib)
                 add(KotlinArtifacts.instance.kotlinScriptRuntime)
             }
-            addAll(JvmEnvironmentConfigurator.getLibraryFilesExceptRealRuntime(configurationKind, allDirectives))
+            addAll(getLibraryFilesExceptRealRuntime(configurationKind, allDirectives))
         }
 
         return object : KotlinJdkAndLibraryProjectDescriptor(libraryFiles) {
             override fun getSdk(): Sdk = PluginTestCaseBase.jdk(jdkKind)
         }
+    }
+
+    // Copy-pasted from compiler org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurator.Companion#getLibraryFilesExceptRealRuntime and patched
+    private fun getLibraryFilesExceptRealRuntime(configurationKind: ConfigurationKind, directives: RegisteredDirectives): List<File> {
+        val files = mutableListOf<File>()
+        if (configurationKind.withRuntime) {
+            files.add(KotlinArtifacts.instance.kotlinTest)
+        } else if (configurationKind.withMockRuntime) {
+            //KotlinArtifacts.instance.kotlinStdlib
+            files.add(KotlinArtifacts.instance.kotlinStdlib)
+            files.add(KotlinArtifacts.instance.kotlinScriptRuntime)
+        }
+        if (configurationKind.withReflection) {
+            files.add(KotlinArtifacts.instance.kotlinReflect)
+        }
+        files.add(AdditionalKotlinArtifacts.jetbrainsAnnotations)
+
+        if (JvmEnvironmentConfigurationDirectives.STDLIB_JDK8 in directives) {
+            files.add(KotlinArtifacts.instance.kotlinStdlibJdk8)
+        }
+        files.add(AdditionalKotlinArtifacts.jetbrainsAnnotations)
+        return files
     }
 }
