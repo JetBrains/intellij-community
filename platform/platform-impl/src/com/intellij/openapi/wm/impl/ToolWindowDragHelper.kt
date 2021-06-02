@@ -100,7 +100,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     myInitialButton = myPane.getStripeFor(toolWindow.anchor).getButtonFor(toolWindow.id)
     myInitialSize = toolWindow.getBoundsOnScreen(toolWindow.anchor).size
     val dragOutImage = if (decorator != null) createDragImage(decorator) else null
-    val dragImage = if (myInitialButton != null) myInitialButton!!.createDragImage(event) else dragOutImage
+    val dragImage = if (myInitialButton != null) myInitialButton!!.createDragImage() else dragOutImage
     val point = relativePoint.getPoint(myPane)
     val component = SwingUtilities.getDeepestComponentAt(myPane, point.x, point.y)
     mySourceIsHeader = true
@@ -109,7 +109,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       mySourceIsHeader = false
     }
     else if (dragImage != null) {
-      myInitialOffset.location = Point(dragImage.getWidth(myPane) / 2, dragImage.getHeight(myPane) / 2)
+      myInitialOffset.location = Point(dragImage.getWidth(myPane) / 4, dragImage.getHeight(myPane) / 4)
     }
     if (dragImage != null) {
       myDialog = MyDialog(myPane, this, dragImage, dragOutImage)

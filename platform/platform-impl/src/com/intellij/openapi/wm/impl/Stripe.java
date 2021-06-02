@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
@@ -29,6 +30,7 @@ import java.util.List;
  */
 class Stripe extends JPanel implements UISettingsListener {
   private static final Dimension EMPTY_SIZE = new Dimension();
+  static final Key<Rectangle> VIRTUAL_BOUNDS = Key.create("Virtual stripe bounds");
 
   private final int anchor;
   private final List<StripeButton> buttons = new ArrayList<>();
@@ -447,12 +449,23 @@ class Stripe extends JPanel implements UISettingsListener {
 
   public boolean containsScreen(@NotNull Rectangle screenRec) {
     Point point = screenRec.getLocation();
-    SwingUtilities.convertPointFromScreen(point, this);
+    SwingUtilities.convertPointFromScreen(point, isVisible() ? this : getParent());
+    int width = getWidth();
+    int height = getHeight();
+    if (!isVisible()) {
+      Rectangle bounds = UIUtil.getClientProperty(this, VIRTUAL_BOUNDS);
+      if (bounds != null) {
+        point.x -= bounds.x;
+        point.y -= bounds.y;
+        width = bounds.width;
+        height = bounds.height;
+      }
+    }
     return new Rectangle(point, screenRec.getSize()).intersects(
       new Rectangle(-DROP_DISTANCE_SENSITIVITY,
                     -DROP_DISTANCE_SENSITIVITY,
-                    getWidth() + 2 * DROP_DISTANCE_SENSITIVITY,
-                    getHeight() + 2 * DROP_DISTANCE_SENSITIVITY)
+                    width + 2 * DROP_DISTANCE_SENSITIVITY,
+                    height + 2 * DROP_DISTANCE_SENSITIVITY)
     );
   }
 
@@ -478,7 +491,7 @@ class Stripe extends JPanel implements UISettingsListener {
 
   void processDropButton(@NotNull StripeButton button, @NotNull JComponent buttonImage, Point screenPoint) {
     if (!isDroppingButton()) {
-      final BufferedImage image = UIUtil.createImage(button, button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage image = button.createDragImage();
       buttonImage.paint(image.getGraphics());
       myDragButton = button;
       myDragButtonImage = buttonImage;

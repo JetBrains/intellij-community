@@ -197,7 +197,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
         return;
       }
 
-      BufferedImage image = createDragImage(e);
+      BufferedImage image = createDragImage();
       myDragButtonImage = new JLabel(IconUtil.createImageIcon((Image)image)) {
         @Override
         public String toString() {
@@ -252,16 +252,25 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   }
 
   @NotNull
-  BufferedImage createDragImage(MouseEvent e) {
-    int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
-    int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
-    BufferedImage image = UIUtil.createImage(e.getComponent(), width, height, BufferedImage.TYPE_INT_RGB);
-    Graphics graphics = image.getGraphics();
-    graphics.setColor(UIUtil.getBgFillColor(getParent()));
-    graphics.fillRect(0, 0, width, height);
-    paint(graphics);
-    graphics.dispose();
-    return image;
+  BufferedImage createDragImage() {
+    Rectangle initialBounds = getBounds();
+    try {
+      if (initialBounds.isEmpty()) {
+        setSize(getPreferredSize());
+      }
+      int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
+      int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
+      BufferedImage image = UIUtil.createImage(this, width, height, BufferedImage.TYPE_INT_RGB);
+      Graphics graphics = image.getGraphics();
+      graphics.setColor(UIUtil.getBgFillColor(getParent()));
+      graphics.fillRect(0, 0, width, height);
+      paint(graphics);
+      graphics.dispose();
+      return image;
+    }
+    finally {
+      setBounds(initialBounds);
+    }
   }
 
   public @NotNull ToolWindowImpl getToolWindow() {

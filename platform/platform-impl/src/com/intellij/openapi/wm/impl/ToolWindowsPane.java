@@ -29,6 +29,7 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -171,6 +172,19 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @Override
   public void doLayout() {
     Dimension size = getSize();
+    Dimension topSize = topStripe.getPreferredSize();
+    Dimension bottomSize = bottomStripe.getPreferredSize();
+    Dimension leftSize = leftStripe.getPreferredSize();
+    Dimension rightSize = rightStripe.getPreferredSize();
+    Rectangle topBounds = new Rectangle(0, 0, size.width, topSize.height);
+    int height = size.height - topSize.height - bottomSize.height;
+    Rectangle leftBounds = new Rectangle(0, topSize.height, leftSize.width, height);
+    Rectangle rightBounds = new Rectangle(size.width - rightSize.width, topSize.height, rightSize.width, height);
+    Rectangle bottomBounds = new Rectangle(0, size.height - bottomSize.height, size.width, bottomSize.height);
+    UIUtil.putClientProperty(topStripe, Stripe.VIRTUAL_BOUNDS, topBounds);
+    UIUtil.putClientProperty(leftStripe, Stripe.VIRTUAL_BOUNDS, leftBounds);
+    UIUtil.putClientProperty(rightStripe, Stripe.VIRTUAL_BOUNDS, rightBounds);
+    UIUtil.putClientProperty(bottomStripe, Stripe.VIRTUAL_BOUNDS, bottomBounds);
     if (!topStripe.isVisible()) {
       topStripe.setBounds(0, 0, 0, 0);
       bottomStripe.setBounds(0, 0, 0, 0);
@@ -179,16 +193,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       layeredPane.setBounds(0, 0, getWidth(), getHeight());
     }
     else {
-      Dimension topSize = topStripe.getPreferredSize();
-      Dimension bottomSize = bottomStripe.getPreferredSize();
-      Dimension leftSize = leftStripe.getPreferredSize();
-      Dimension rightSize = rightStripe.getPreferredSize();
-
-      topStripe.setBounds(0, 0, size.width, topSize.height);
-      int height = size.height - topSize.height - bottomSize.height;
-      leftStripe.setBounds(0, topSize.height, leftSize.width, height);
-      rightStripe.setBounds(size.width - rightSize.width, topSize.height, rightSize.width, height);
-      bottomStripe.setBounds(0, size.height - bottomSize.height, size.width, bottomSize.height);
+      topStripe.setBounds(topBounds);
+      leftStripe.setBounds(leftBounds);
+      rightStripe.setBounds(rightBounds);
+      bottomStripe.setBounds(bottomBounds);
 
       UISettings uiSettings = UISettings.getInstance();
       if (uiSettings.getHideToolStripes() || uiSettings.getPresentationMode()) {
