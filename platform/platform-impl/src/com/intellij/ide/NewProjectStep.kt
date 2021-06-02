@@ -11,6 +11,7 @@ import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
+import javax.swing.JComponent
 
 class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
   private val settingsMap = mutableMapOf<String, List<LabelAndComponent>>()
@@ -45,7 +46,9 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
       }
     }
 
-    advancedModuleSettings()
+    nestedPanel {
+      advancedModuleSettings()
+    }
 
     settings.languageProperty.set(languages.first())
   }.withBorder(JBUI.Borders.empty(10, 10))
