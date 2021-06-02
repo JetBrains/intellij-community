@@ -6,23 +6,29 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.*;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import com.intellij.terminal.TerminalShellCommandHandler;
-import com.intellij.ui.JBColor;
+import com.intellij.ui.GotItTooltip;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
 import com.jediterm.terminal.TerminalColor;
 import com.jediterm.terminal.TextStyle;
 import com.jediterm.terminal.TtyConnector;
@@ -37,7 +43,7 @@ import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalExecutorAction;
 import org.jetbrains.plugins.terminal.shellCommandRunner.TerminalRunSmartCommandAction;
 
 import javax.swing.*;
-import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.io.IOException;
 import java.util.Arrays;
@@ -46,22 +52,17 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class TerminalShellCommandHandlerHelper {
   private static final Logger LOG = Logger.getInstance(TerminalShellCommandHandler.class);
-  @NonNls private static final String TERMINAL_CUSTOM_COMMANDS_GOT_IT = "TERMINAL_CUSTOM_COMMANDS_GOT_IT";
-  @NonNls private static final String GOT_IT = "got_it";
   @NonNls private static final String FEATURE_ID = "terminal.shell.command.handling";
 
   private static Experiments ourExperiments;
-  private static final NotificationGroup ourToolWindowGroup =
-    NotificationGroup.toolWindowGroup("Terminal", TerminalToolWindowFactory.TOOL_WINDOW_ID);
   private final ShellTerminalWidget myWidget;
   private final Alarm myAlarm;
   private volatile String myWorkingDirectory;
   private volatile Boolean myHasRunningCommands;
   private PropertiesComponent myPropertiesComponent;
-  private final SingletonNotificationManager mySingletonNotificationManager =
-    new SingletonNotificationManager(ourToolWindowGroup, NotificationType.INFORMATION, null);
   private final AtomicBoolean myKeyPressed = new AtomicBoolean(false);
-  private TerminalLineIntervalHighlighting myCurrentHighlighting;
+  private TerminalLineIntervalHighlighting myCommandHighlighting;
+  private Disposable myNotificationDisposable;
 
   TerminalShellCommandHandlerHelper(@NotNull ShellTerminalWidget widget) {
     myWidget = widget;
@@ -79,10 +80,12 @@ public final class TerminalShellCommandHandlerHelper {
     Disposer.register(myWidget, () -> widget.getTerminalTextBuffer().removeModelListener(listener));
   }
 
-  public void processKeyPressed() {
+  public void processKeyPressed(KeyEvent e) {
     if (isFeatureEnabled()) {
       myKeyPressed.set(true);
-      scheduleCommandHighlighting();
+      if (e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiersEx() == 0 && hideNotification()) {
+        e.consume();
+      }
     }
   }
 
@@ -104,48 +107,67 @@ public final class TerminalShellCommandHandlerHelper {
 
   private void highlightMatchedCommand(@NotNull Project project) {
     if (!isEnabledForProject()) {
-      setHighlighting(null);
+      setCommandHighlighting(null);
       return;
     }
 
     String command = myWidget.getTypedShellCommand().trim();
-    TerminalLineIntervalHighlighting commandHighlighting = null;
-    if (TerminalShellCommandHandler.Companion.matches(project, getWorkingDirectory(), !hasRunningCommands(), command)) {
-      commandHighlighting = doHighlight(command);
-    }
-    setHighlighting(commandHighlighting);
+    TerminalLineIntervalHighlighting commandHighlighting = highlightCommandIfMatched(project, command);
+    setCommandHighlighting(commandHighlighting);
 
-    //show notification
-    if (getPropertiesComponent().getBoolean(TERMINAL_CUSTOM_COMMANDS_GOT_IT, false)) {
-      return;
-    }
-
-    if (commandHighlighting != null) {
-      String title = TerminalBundle.message("smart_command_execution.notification.title");
-      String content = TerminalBundle.message("smart_command_execution.notification.text",
-                                              KeymapUtil.getFirstKeyboardShortcutText(getRunAction()),
-                                              KeymapUtil.getFirstKeyboardShortcutText(getDebugAction()),
-                                              ShowSettingsUtil.getSettingsMenuName(),
-                                              GOT_IT);
-      NotificationListener.Adapter listener = new NotificationListener.Adapter() {
-        @Override
-        protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-          if (GOT_IT.equals(e.getDescription())) {
-            getPropertiesComponent().setValue(TERMINAL_CUSTOM_COMMANDS_GOT_IT, true, false);
-          }
-        }
-      };
-      mySingletonNotificationManager.notify(title, content, project, listener);
-    }
+    ApplicationManager.getApplication().invokeLater(() -> {
+      showOrHideNotification(commandHighlighting);
+    }, ModalityState.stateForComponent(myWidget.getTerminalPanel()));
   }
 
-  private synchronized void setHighlighting(@Nullable TerminalLineIntervalHighlighting highlighting) {
-    TerminalLineIntervalHighlighting oldHighlighting = myCurrentHighlighting;
+  private synchronized void setCommandHighlighting(@Nullable TerminalLineIntervalHighlighting commandHighlighting) {
+    TerminalLineIntervalHighlighting oldHighlighting = myCommandHighlighting;
     if (oldHighlighting != null) {
       oldHighlighting.dispose();
       myWidget.getTerminalPanel().repaint();
     }
-    myCurrentHighlighting = highlighting;
+    myCommandHighlighting = commandHighlighting;
+  }
+
+  private boolean hideNotification() {
+    boolean shown = myNotificationDisposable != null && !Disposer.isDisposed(myNotificationDisposable);
+    if (shown) {
+      Disposer.dispose(myNotificationDisposable);
+    }
+    myNotificationDisposable = null;
+    return shown;
+  }
+
+  private void showOrHideNotification(@Nullable TerminalLineIntervalHighlighting commandHighlighting) {
+    if (commandHighlighting == null || commandHighlighting.isDisposed()) {
+      hideNotification();
+      return;
+    }
+    if (myNotificationDisposable != null && !Disposer.isDisposed(myNotificationDisposable)) {
+      return;
+    }
+    Disposable notificationDisposable = Disposer.newDisposable(myWidget.getTerminalPanel(), "terminal.smart_command_execution"); 
+    String content = TerminalBundle.message("smart_command_execution.notification.text",
+                                            KeymapUtil.getFirstKeyboardShortcutText(getRunAction()),
+                                            KeymapUtil.getFirstKeyboardShortcutText(getDebugAction()));
+    GotItTooltip tooltip = new GotItTooltip("terminal.smart_command_execution", content, notificationDisposable)
+      .withHeader(TerminalBundle.message("smart_command_execution.notification.title"))
+      .withLink(TerminalBundle.message("smart_command_execution.notification.configure_link.text"), () -> {
+        ShowSettingsUtil.getInstance().showSettingsDialog(myWidget.getProject(), TerminalOptionsConfigurable.class);
+      });
+    if (!tooltip.canShow()) {
+      Disposer.dispose(notificationDisposable);
+      return;
+    }
+    tooltip.show(myWidget.getTerminalPanel(), component -> {
+      Rectangle bounds = myWidget.processTerminalBuffer(buffer -> myWidget.getTerminalPanel().getBounds(commandHighlighting));
+      if (bounds != null) {
+        return new Point(bounds.x + bounds.width / 2, bounds.y + bounds.height);
+      }
+      Disposer.dispose(notificationDisposable);
+      return new Point(0, 0);
+    });
+    myNotificationDisposable = notificationDisposable;
   }
 
   private boolean isEnabledForProject() {
@@ -181,8 +203,11 @@ public final class TerminalShellCommandHandlerHelper {
     return hasRunningCommands;
   }
 
-  private @Nullable TerminalLineIntervalHighlighting doHighlight(@NotNull String command) {
-    if (command.length() == 0) {
+  private @Nullable TerminalLineIntervalHighlighting highlightCommandIfMatched(@NotNull Project project, @NotNull String command) {
+    if (command.isEmpty()) {
+      return null;
+    }
+    if (!TerminalShellCommandHandler.Companion.matches(project, getWorkingDirectory(), !hasRunningCommands(), command)) {
       return null;
     }
     return myWidget.processTerminalBuffer(textBuffer -> {
@@ -195,13 +220,21 @@ public final class TerminalShellCommandHandlerHelper {
       if (commandStartInd < 0) {
         return null;
       }
-      TextStyle style = new TextStyle(null, getSmartCommandExecutionHighlightingColor());
-      return myWidget.highlightLineInterval(cursorLine, commandStartInd, command.length(), style);
+      TextStyle textStyle = getSmartCommandExecutionStyle();
+      if (textStyle == null) {
+        return null;
+      }
+      return myWidget.highlightLineInterval(cursorLine, commandStartInd, command.length(), textStyle);
     });
   }
 
-  private static @NotNull TerminalColor getSmartCommandExecutionHighlightingColor() {
-    return new TerminalColor(() -> new JBColor(0xCFEFC6, 0x40503C));
+  private static @Nullable TextStyle getSmartCommandExecutionStyle() {
+    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    TextAttributes attributes = scheme.getAttributes(JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY);
+    if (attributes == null) {
+      return null;
+    }
+    return new TextStyle(TerminalColor.awt(attributes.getForegroundColor()), TerminalColor.awt(attributes.getBackgroundColor()));
   }
 
   public boolean processEnterKeyPressed(@NotNull KeyEvent keyPressed) {
@@ -209,6 +242,7 @@ public final class TerminalShellCommandHandlerHelper {
       onShellCommandExecuted();
       return false;
     }
+    myKeyPressed.set(true);
     String command = myWidget.getTypedShellCommand().trim();
     if (LOG.isDebugEnabled()) {
       LOG.debug("typed shell command to execute: " + command);
@@ -274,7 +308,7 @@ public final class TerminalShellCommandHandlerHelper {
     final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
     AnAction action = getRunAction();
     return action instanceof TerminalRunSmartCommandAction
-           && Arrays.stream(action.getShortcutSet().getShortcuts()).anyMatch(sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
+           && ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
            ? ((TerminalRunSmartCommandAction)action)
            : null;
   }
@@ -283,7 +317,7 @@ public final class TerminalShellCommandHandlerHelper {
     final KeyboardShortcut eventShortcut = new KeyboardShortcut(KeyStroke.getKeyStrokeForEvent(e), null);
     AnAction action = getDebugAction();
     return action instanceof TerminalDebugSmartCommandAction
-           && Arrays.stream(action.getShortcutSet().getShortcuts()).anyMatch(sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
+           && ContainerUtil.exists(action.getShortcutSet().getShortcuts(), sc -> sc.isKeyboard() && sc.startsWith(eventShortcut))
            ? ((TerminalDebugSmartCommandAction)action)
            : null;
   }

@@ -38,11 +38,19 @@ public class GradleSystemSettings implements PersistentStateComponent<GradleSyst
     myGradleVmOptions = state.gradleVmOptions;
   }
 
+  /**
+   * @deprecated use GradleSettings#getServiceDirectoryPath()
+   */
+  @Deprecated
   @Nullable
   public String getServiceDirectoryPath() {
     return myServiceDirectoryPath;
   }
 
+  /**
+   * @deprecated use GradleSettings#setServiceDirectoryPath(java.lang.String)
+   */
+  @Deprecated
   public void setServiceDirectoryPath(@Nullable String newPath) {
     myServiceDirectoryPath = newPath;
   }

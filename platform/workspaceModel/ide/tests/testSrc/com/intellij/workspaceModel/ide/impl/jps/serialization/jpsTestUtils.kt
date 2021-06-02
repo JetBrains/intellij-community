@@ -207,7 +207,7 @@ internal class JpsFileContentWriterImpl(private val baseProjectDir: File) : JpsF
         }
         components.entries.sortedBy { it.key }.forEach { (name, element) ->
           if (element != null && !isEmptyComponentTag(element)) {
-            if (name == "DeprecatedModuleOptionManager") {
+            if (name == DEPRECATED_MODULE_MANAGER_COMPONENT_NAME) {
               element.getChildren("option").forEach {
                 newRootElement.setAttribute(it.getAttributeValue("key")!!, it.getAttributeValue("value")!!)
               }

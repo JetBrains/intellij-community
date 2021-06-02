@@ -289,11 +289,12 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final JPanel container = new JPanel(new BorderLayout());
     final JPanel decoratorPanel = new JPanel(new VerticalFlowLayout());
 
-    final List<Sdk> existingSdks = getValidPythonSdks();
+    final List<Sdk> allExistingSdks = Arrays.asList(PyConfigurableInterpreterList.getInstance(null).getModel().getSdks());
+    final List<Sdk> existingSdks = getValidPythonSdks(allExistingSdks);
     final Sdk preferredSdk = getPreferredSdk(existingSdks);
 
     final String newProjectPath = getProjectLocation();
-    final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath, preferredEnvironment);
+    final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(allExistingSdks, newProjectPath, preferredEnvironment);
     final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, null, existingSdks, newProjectPath, preferredSdk);
 
     PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?
@@ -358,9 +359,9 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
   }
 
   @NotNull
-  private static List<Sdk> getValidPythonSdks() {
+  private static List<Sdk> getValidPythonSdks(@NotNull List<Sdk> existingSdks) {
     return StreamEx
-      .of(PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks())
+      .of(existingSdks)
       .filter(sdk -> sdk != null && sdk.getSdkType() instanceof PythonSdkType && !PythonSdkUtil.isInvalid(sdk))
       .sorted(new PreferredSdkComparator())
       .toList();

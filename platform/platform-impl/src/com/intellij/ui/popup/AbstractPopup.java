@@ -1709,6 +1709,10 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     return myAdComponent != null ? myAdComponent.getPreferredSize().height + JBUIScale.scale(1) : 0;
   }
 
+  protected boolean isAdVisible() {
+    return myAdComponent != null && myAdComponent.isVisible();
+  }
+
   @Override
   public Dimension getSize() {
     if (myPopup != null) {

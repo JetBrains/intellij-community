@@ -75,10 +75,12 @@ class LessonManager {
 
   internal fun lessonIsRunning() : Boolean = currentLessonExecutor?.hasBeenStopped?.not() ?: false
 
-  fun stopLesson() {
+  fun stopLesson() = stopLesson(false)
+
+  private fun stopLesson(lessonPassed: Boolean) {
     shownRestoreNotification = null
     currentLessonExecutor?.takeIf { !it.hasBeenStopped }?.let {
-      it.lesson.onStop()
+      it.lesson.onStop(it.project, lessonPassed)
       it.stopLesson()
       currentLessonExecutor = null
     }
@@ -134,7 +136,7 @@ class LessonManager {
     LearningUiHighlightingManager.clearHighlights()
     val learnPanel = learnPanel ?: return
     learnPanel.makeNextButtonSelected()
-    stopLesson()
+    stopLesson(true)
   }
 
 

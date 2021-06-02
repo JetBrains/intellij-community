@@ -37,34 +37,44 @@ import java.util.stream.Collectors;
 public class IconLineMarkerProvider extends LineMarkerProviderDescriptor {
   @Override
   public LineMarkerInfo<?> getLineMarkerInfo(@NotNull PsiElement element) {
-    UCallExpression expression = UastContextKt.toUElement(element, UCallExpression.class);
-    if (expression == null) {
-      return null;
-    }
+    return null;
+  }
 
-    if (!ProjectIconsAccessor.isIconClassType(expression.getExpressionType())) {
-      return null;
-    }
+  @Override
+  public void collectSlowLineMarkers(@NotNull List<? extends PsiElement> elements,
+                                     @NotNull Collection<? super LineMarkerInfo<?>> result) {
+    for (PsiElement element : elements) {
 
-    UValue uValue = UEvaluationContextKt.uValueOf(expression);
-    if (uValue instanceof UCallResultValue) {
-      List<UValue> arguments = ((UCallResultValue)uValue).getArguments();
-      if (!arguments.isEmpty()) {
-        Collection<UExpression> constants = UValueKt.toPossibleConstants(arguments.get(0))
-          .stream()
-          .filter(constant -> constant instanceof UStringConstant)
-          .map(UConstant::getSource)
-          .collect(Collectors.toList());
-        if (!constants.isEmpty()) {
-          UIdentifier identifier = expression.getMethodIdentifier();
-          if (identifier != null) {
-            return createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getPsi());
+      UCallExpression expression = UastContextKt.toUElement(element, UCallExpression.class);
+      if (expression == null) {
+        continue;
+      }
+
+      if (!ProjectIconsAccessor.isIconClassType(expression.getExpressionType())) {
+        continue;
+      }
+
+      UValue uValue = UEvaluationContextKt.uValueOf(expression);
+      if (uValue instanceof UCallResultValue) {
+        List<UValue> arguments = ((UCallResultValue)uValue).getArguments();
+        if (!arguments.isEmpty()) {
+          Collection<UExpression> constants = UValueKt.toPossibleConstants(arguments.get(0))
+            .stream()
+            .filter(constant -> constant instanceof UStringConstant)
+            .map(UConstant::getSource)
+            .collect(Collectors.toList());
+          if (!constants.isEmpty()) {
+            UIdentifier identifier = expression.getMethodIdentifier();
+            if (identifier != null) {
+              LineMarkerInfo<PsiElement> marker = createIconLineMarker(ContainerUtil.getFirstItem(constants), identifier.getPsi());
+              if (marker != null) {
+                result.add(marker);
+              }
+            }
           }
         }
       }
     }
-
-    return null;
   }
 
   @Nullable

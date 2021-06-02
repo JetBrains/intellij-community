@@ -2,13 +2,14 @@ package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemNewBuilder;
 import de.plushnikov.intellij.plugin.processor.AbstractProcessor;
-import de.plushnikov.intellij.plugin.thirdparty.LombokUtils;
+import de.plushnikov.intellij.plugin.thirdparty.LombokCopyableAnnotations;
 import de.plushnikov.intellij.plugin.util.LombokProcessorUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -95,15 +96,15 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
                                         @NotNull PsiField psiField,
                                         @NotNull ProblemBuilder builder,
                                         @NotNull String parameterName) {
-    final List<String> copyableAnnotations = copyableAnnotations(psiField, LombokUtils.BASE_COPYABLE_ANNOTATIONS);
+    final @NotNull List<PsiAnnotation> copyableAnnotations = copyableAnnotations(psiField, LombokCopyableAnnotations.BASE_COPYABLE);
 
     if (!copyableAnnotations.isEmpty()) {
       final Iterable<String> onXAnnotations = LombokProcessorUtil.getOnX(psiAnnotation, parameterName);
-
-      for (String copyableAnnotation : copyableAnnotations) {
+      List<String> copyableAnnotationsFQNs = ContainerUtil.map(copyableAnnotations, PsiAnnotation::getQualifiedName);
+      for (String copyableAnnotationFQN : copyableAnnotationsFQNs) {
         for (String onXAnnotation : onXAnnotations) {
-          if (onXAnnotation.startsWith(copyableAnnotation)) {
-            builder.addError(LombokBundle.message("inspection.message.annotation.copy.duplicate", copyableAnnotation));
+          if (onXAnnotation.startsWith(copyableAnnotationFQN)) {
+            builder.addError(LombokBundle.message("inspection.message.annotation.copy.duplicate", copyableAnnotationFQN));
           }
         }
       }
@@ -120,5 +121,4 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   protected abstract void generatePsiElements(@NotNull PsiField psiField,
                                               @NotNull PsiAnnotation psiAnnotation,
                                               @NotNull List<? super PsiElement> target);
-
 }

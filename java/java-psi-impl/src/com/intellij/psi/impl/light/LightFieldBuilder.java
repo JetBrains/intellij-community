@@ -60,6 +60,11 @@ public class LightFieldBuilder extends LightVariableBuilder<LightFieldBuilder> i
   }
 
   @Override
+  public boolean hasInitializer() {
+    return myInitializer != null;
+  }
+
+  @Override
   public PsiDocComment getDocComment() {
     return myDocComment;
   }

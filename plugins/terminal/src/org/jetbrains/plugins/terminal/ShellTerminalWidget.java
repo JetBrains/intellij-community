@@ -69,7 +69,7 @@ public class ShellTerminalWidget extends JBTerminalWidget {
         }
       }
       else {
-        myShellCommandHandlerHelper.processKeyPressed();
+        myShellCommandHandlerHelper.processKeyPressed(e);
       }
     });
   }

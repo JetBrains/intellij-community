@@ -149,6 +149,11 @@ public class LocalTerminalDirectRunner extends AbstractTerminalRunner<PtyProcess
   }
 
   @Override
+  public PtyProcess createProcess(@Nullable String directory) throws ExecutionException {
+    return super.createProcess(directory, null);
+  }
+
+  @Override
   public @NotNull PtyProcess createProcess(@NotNull TerminalProcessOptions options,
                                            @Nullable JBTerminalWidget widget) throws ExecutionException {
     Map<String, String> envs = getTerminalEnvironment();

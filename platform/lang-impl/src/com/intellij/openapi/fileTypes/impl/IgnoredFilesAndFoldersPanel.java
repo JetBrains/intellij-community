@@ -46,7 +46,7 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
     myPatternList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     ToolbarDecorator decorator = ToolbarDecorator.createDecorator(myPatternList)
                                                  .setScrollPaneBorder(JBUI.Borders.empty())
-                                                 .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),0,1,0,1))
+                                                 .setPanelBorder(JBUI.Borders.customLine(JBColor.border(),1,1,0,1))
                                                  .setAddAction(__ -> addPattern())
                                                  .setEditAction(__ -> editPattern())
                                                  .setRemoveAction(__ -> removePattern())
@@ -57,6 +57,7 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
     listPanel.add(myEditField, BorderLayout.NORTH);
     JBScrollPane scrollPane = new JBScrollPane(myPatternList);
     listPanel.add(scrollPane, BorderLayout.CENTER);
+    scrollPane.setBorder(JBUI.Borders.customLine(JBColor.border(), 0, 1, 1, 1));
     add(listPanel, BorderLayout.CENTER);
     JLabel label = new JLabel(FileTypesBundle.message("filetype.ignore.text"));
     label.setFont(JBUI.Fonts.smallFont());
@@ -146,7 +147,7 @@ class IgnoredFilesAndFoldersPanel extends JPanel {
 
     void setBorder(boolean isValid) {
       if (isValid) {
-        setBorder(JBUI.Borders.customLine(JBColor.LIGHT_GRAY, 1, 1, 0, 1));
+        setBorder(JBUI.Borders.customLine(JBColor.LIGHT_GRAY, 0, 1, 1, 1));
       }
       else {
         setBorder(JBUI.Borders.customLine(JBColor.RED));

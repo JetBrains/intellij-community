@@ -13,7 +13,7 @@ public class HelpTooltipManager extends HelpTooltip {
   public static final String SHORTCUT_PROPERTY = "helptooltip.shortcut";
 
   public HelpTooltipManager() {
-    getDismissDelay();
+    initDismissDelay();
     createMouseListeners();
   }
 

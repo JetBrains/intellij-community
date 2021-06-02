@@ -155,10 +155,10 @@ public class JBTerminalPanel extends TerminalPanel implements FocusListener, Dis
 
   @Override
   public void handleKeyEvent(@NotNull KeyEvent e) {
-    myEscapeKeyListener.handleKeyEvent(e);
     for (Consumer<? super KeyEvent> preKeyEventConsumer : myPreKeyEventConsumers) {
       preKeyEventConsumer.accept(e);
     }
+    myEscapeKeyListener.handleKeyEvent(e);
     if (!e.isConsumed()) {
       super.handleKeyEvent(e);
     }

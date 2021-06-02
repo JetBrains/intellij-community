@@ -15,6 +15,9 @@
       world
     ahahah    : ppp
       fsfsdfs
+    map       :
+      key1: value1
+      key2: value2
   - bugaga
 
   - &an

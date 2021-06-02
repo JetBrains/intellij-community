@@ -28,7 +28,7 @@ public class TerminalEscapeKeyListener {
   }
 
   public void handleKeyEvent(@NotNull KeyEvent e) {
-    if (e.getID() == KeyEvent.KEY_PRESSED && isMatched(e) && switchFocusToEditorIfSuitable()) {
+    if (e.getID() == KeyEvent.KEY_PRESSED && !e.isConsumed() && isMatched(e) && switchFocusToEditorIfSuitable()) {
       e.consume();
     }
   }

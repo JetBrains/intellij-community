@@ -10,6 +10,7 @@ import com.intellij.psi.SyntheticElement;
 import com.intellij.psi.impl.light.LightParameter;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Objects;
 import java.util.stream.Stream;
 
 /**
@@ -48,6 +49,11 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
   }
 
   @Override
+  public @NotNull LombokLightModifierList getModifierList() {
+    return (LombokLightModifierList)super.getModifierList();
+  }
+
+  @Override
   public TextRange getTextRange() {
     TextRange r = super.getTextRange();
     return r == null ? TextRange.EMPTY_RANGE : r;
@@ -55,7 +61,7 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
 
   @Override
   public LombokLightParameter setModifiers(String... modifiers) {
-    final LombokLightModifierList lombokLightModifierList = (LombokLightModifierList)getModifierList();
+    final LombokLightModifierList lombokLightModifierList = getModifierList();
     lombokLightModifierList.clearModifiers();
     Stream.of(modifiers).forEach(lombokLightModifierList::addModifier);
     return this;
@@ -71,18 +77,15 @@ public class LombokLightParameter extends LightParameter implements SyntheticEle
     }
 
     LombokLightParameter that = (LombokLightParameter)o;
-
-    final PsiType thisType = getType();
-    final PsiType thatType = that.getType();
-    if (thisType.isValid() != thatType.isValid()) {
+    if (!Objects.equals(getName(), that.getName())) {
       return false;
     }
 
-    return thisType.getCanonicalText().equals(thatType.getCanonicalText());
+    return getType().equals(that.getType());
   }
 
   @Override
   public int hashCode() {
-    return getType().hashCode();
+    return Objects.hash(getName(), getType());
   }
 }

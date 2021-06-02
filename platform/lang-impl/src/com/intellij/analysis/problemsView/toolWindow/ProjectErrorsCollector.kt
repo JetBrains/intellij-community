@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -9,6 +9,10 @@ import com.intellij.analysis.problemsView.ProblemsListener
 import com.intellij.icons.AllIcons.Toolwindows
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileManager
+import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
 import com.intellij.ui.AppUIUtil
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -113,5 +117,16 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   private fun getToolWindowIcon() = when (getProblemCount() == 0) {
     true -> Toolwindows.ToolWindowProblemsEmpty
     else -> Toolwindows.ToolWindowProblems
+  }
+
+  private fun onVfsChanges(events: List<VFileEvent>) = events
+    .filter { it is VFileDeleteEvent || it is VFileMoveEvent }
+    .mapNotNull { it.file }
+    .distinct()
+    .flatMap { getFileProblems(it) }
+    .forEach { problemDisappeared(it) }
+
+  init {
+    VirtualFileManager.getInstance().addAsyncFileListener({ onVfsChanges(it);null }, project)
   }
 }

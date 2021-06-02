@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.registry.Registry;
@@ -31,6 +32,9 @@ import java.util.Collections;
 import java.util.List;
 
 public class JBTerminalSystemSettingsProviderBase extends DefaultTabbedSettingsProvider {
+
+  public static final TextAttributesKey COMMAND_TO_RUN_USING_IDE_KEY =
+    TextAttributesKey.createTextAttributesKey("TERMINAL_COMMAND_TO_RUN_USING_IDE");
 
   private final TerminalUiSettingsManager myUiSettingsManager;
   private final EditorColorsScheme myColorsScheme;

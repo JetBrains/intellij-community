@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TrustedProjects")
+@file:ApiStatus.Experimental
 
 package com.intellij.ide.impl
 
@@ -15,14 +16,30 @@ import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.SystemProperties
 import com.intellij.util.ThreeState
 import com.intellij.util.messages.Topic
 import com.intellij.util.xmlb.annotations.Attribute
+import org.jetbrains.annotations.ApiStatus
 import java.nio.file.Path
 import java.nio.file.Paths
 
+fun confirmOpeningUntrustedProject(
+  virtualFile: VirtualFile,
+  projectTypeNames: List<String>,
+): OpenUntrustedProjectChoice {
+  val systemsPresentation: String = StringUtil.naturalJoin(projectTypeNames)
+  return confirmOpeningUntrustedProject(
+    virtualFile,
+    IdeBundle.message("untrusted.project.open.dialog.title", systemsPresentation, projectTypeNames.size),
+    IdeBundle.message("untrusted.project.open.dialog.text", systemsPresentation, projectTypeNames.size),
+    IdeBundle.message("untrusted.project.dialog.trust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
+    IdeBundle.message("untrusted.project.open.dialog.cancel.button")
+  )
+}
 
 fun confirmOpeningUntrustedProject(
   virtualFile: VirtualFile,
@@ -30,17 +47,7 @@ fun confirmOpeningUntrustedProject(
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String,
-  @NlsContexts.Button cancelButtonText: String,
-) = confirmOpeningUntrustedProject(virtualFile) {
-  MessageDialogBuilder.yesNoCancel(title, message)
-    .yesText(trustButtonText)
-    .noText(distrustButtonText)
-    .cancelText(cancelButtonText)
-}
-
-fun confirmOpeningUntrustedProject(
-  virtualFile: VirtualFile,
-  createDialog: () -> MessageDialogBuilder.YesNoCancel
+  @NlsContexts.Button cancelButtonText: String
 ): OpenUntrustedProjectChoice {
   val projectDir = if (virtualFile.isDirectory) virtualFile else virtualFile.parent
   val trustedCheckResult = getImplicitTrustedCheckResult(projectDir.toNioPath())
@@ -48,7 +55,10 @@ fun confirmOpeningUntrustedProject(
     return OpenUntrustedProjectChoice.IMPORT
   }
 
-  val choice = createDialog()
+  val choice = MessageDialogBuilder.yesNoCancel(title, message)
+    .yesText(trustButtonText)
+    .noText(distrustButtonText)
+    .cancelText(cancelButtonText)
     .doNotAsk(createDoNotAskOptionForLocation(projectDir.parent.path))
     .asWarning()
     .show(project = null)
@@ -72,20 +82,16 @@ fun confirmLoadingUntrustedProject(
   @NlsContexts.DialogMessage message: String,
   @NlsContexts.Button trustButtonText: String,
   @NlsContexts.Button distrustButtonText: String
-) = confirmLoadingUntrustedProject(project) {
-  MessageDialogBuilder.yesNo(title, message)
-    .yesText(trustButtonText)
-    .noText(distrustButtonText)
-}
-
-fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> MessageDialogBuilder.YesNo): Boolean {
+) : Boolean {
   val trustedCheckResult = getImplicitTrustedCheckResult(project)
   if (trustedCheckResult is Trusted) {
     project.setTrusted(true)
     return true
   }
 
-  val answer = createDialog()
+  val answer = MessageDialogBuilder.yesNo(title, message)
+    .yesText(trustButtonText)
+    .noText(distrustButtonText)
     .asWarning()
     .ask(project)
   project.setTrusted(answer)
@@ -93,26 +99,19 @@ fun confirmLoadingUntrustedProject(project: Project, createDialog: () -> Message
   return answer
 }
 
+@ApiStatus.Experimental
 enum class OpenUntrustedProjectChoice {
   IMPORT,
   OPEN_WITHOUT_IMPORTING,
   CANCEL;
 }
 
-fun Project.isTrusted() = this.service<TrustedProjectSettings>().trustedState == ThreeState.YES
+fun Project.isTrusted() = getTrustedState() == ThreeState.YES
 
-fun Project.getTrustedState() = this.service<TrustedProjectSettings>().trustedState
-
-fun Project.getExplicitTrustedStateOrByHostAndLocation(): ThreeState {
-  val explicit = getTrustedState()
+fun Project.getTrustedState() : ThreeState {
+  val explicit = this.service<TrustedProjectSettings>().trustedState
   if (explicit != ThreeState.UNSURE) return explicit
-
-  return if (getImplicitTrustedCheckResult(this) is Trusted) {
-    ThreeState.YES
-  }
-  else {
-    ThreeState.UNSURE
-  }
+  return if (getImplicitTrustedCheckResult(this) is Trusted) ThreeState.YES else ThreeState.UNSURE
 }
 
 fun Project.setTrusted(value: Boolean) {
@@ -169,6 +168,7 @@ private fun getImplicitTrustedCheckResult(projectDir: Path?, project: Project? =
 
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
+@ApiStatus.Internal
 class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
 
   class State : BaseState() {
@@ -192,6 +192,7 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
     }
 }
 
+@ApiStatus.Experimental
 interface TrustChangeNotifier {
   fun projectTrusted(project: Project)
 
@@ -205,4 +206,3 @@ interface TrustChangeNotifier {
 const val TRUSTED_PROJECTS_HELP_TOPIC = "Project_security"
 
 private val LOG = Logger.getInstance("com.intellij.ide.impl.TrustedProjects")
-

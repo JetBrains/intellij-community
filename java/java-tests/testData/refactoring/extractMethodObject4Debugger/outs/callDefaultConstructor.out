@@ -1,7 +1,7 @@
-call text: Inner result = Test.invoke();
+call text: Object result = Test.invoke();
 class: 
 public class GeneratedEvaluationClass {
-    static WithReflectionAccess.Inner invoke() {
+    static Object invoke() {
         return newWithReflectionAccess$Inner1();
     }
 

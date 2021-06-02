@@ -14,7 +14,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil;
-import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
@@ -176,12 +175,16 @@ public class MavenProjectReader {
     String parentGroupId = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.groupId");
     String parentArtifactId = MavenJDOMUtil.findChildValueByPath(xmlProject, "parent.artifactId");
     if (parentGroupId == null || parentArtifactId == null) {
-      problems.add(new MavenProjectProblem(file.getPath(), MavenProjectBundle.message("consumer.pom.cannot.determine.parent.version"), MavenProjectProblem.ProblemType.STRUCTURE));
+      problems.add(new MavenProjectProblem(file.getPath(), MavenProjectBundle.message("consumer.pom.cannot.determine.parent.version"),
+                                           MavenProjectProblem.ProblemType.STRUCTURE,
+                                           false));
       return UNKNOWN;
     }
     VirtualFile parentFile = file.findFileByRelativePath("../../pom.xml");
     if (parentFile == null) {
-      problems.add(new MavenProjectProblem(file.getPath(), MavenProjectBundle.message("consumer.pom.cannot.determine.parent.version"), MavenProjectProblem.ProblemType.STRUCTURE));
+      problems.add(new MavenProjectProblem(file.getPath(), MavenProjectBundle.message("consumer.pom.cannot.determine.parent.version"),
+                                           MavenProjectProblem.ProblemType.STRUCTURE,
+                                           false));
       return UNKNOWN;
     }
 
@@ -428,8 +431,9 @@ public class MavenProjectReader {
                                         final MavenProjectReaderProjectLocator locator,
                                         Collection<MavenProjectProblem> problems) {
     if (recursionGuard.contains(file)) {
-      problems.add(MavenProjectProblem.createProblem(file.getPath(), MavenProjectBundle.message("maven.project.problem.recursiveInheritance"),
-                                                     MavenProjectProblem.ProblemType.PARENT));
+      problems
+        .add(MavenProjectProblem.createProblem(file.getPath(), MavenProjectBundle.message("maven.project.problem.recursiveInheritance"),
+                                               MavenProjectProblem.ProblemType.PARENT, false));
       return model;
     }
     recursionGuard.add(file);
@@ -439,8 +443,9 @@ public class MavenProjectReader {
       MavenParent parent = model.getParent();
       if (parent != null) {
         if (model.getMavenId().equals(parent.getMavenId())) {
-          problems.add(MavenProjectProblem.createProblem(file.getPath(), MavenProjectBundle.message("maven.project.problem.selfInheritance"),
-                                                         MavenProjectProblem.ProblemType.PARENT));
+          problems
+            .add(MavenProjectProblem.createProblem(file.getPath(), MavenProjectBundle.message("maven.project.problem.selfInheritance"),
+                                                   MavenProjectProblem.ProblemType.PARENT, false));
           return model;
         }
         parentDesc[0] = new MavenParentDesc(parent.getMavenId(), parent.getRelativePath());
@@ -483,7 +488,7 @@ public class MavenProjectReader {
         problems.add(MavenProjectProblem.createProblem(parentModelWithProblems.first.getPath(),
                                                        MavenProjectBundle.message("maven.project.problem.parentHasProblems",
                                                                                   parentModel.getMavenId()),
-                                                       MavenProjectProblem.ProblemType.PARENT));
+                                                       MavenProjectProblem.ProblemType.PARENT, false));
       }
 
       model = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath()).assembleInheritance(model, parentModel);
@@ -609,7 +614,7 @@ public class MavenProjectReader {
       @Override
       public void onReadError(IOException e) {
         MavenLog.LOG.warn("Cannot read the pom file: " + e);
-        problems.add(MavenProjectProblem.createProblem(file.getPath(), e.getMessage(), type));
+        problems.add(MavenProjectProblem.createProblem(file.getPath(), e.getMessage(), type, false));
       }
 
       @Override

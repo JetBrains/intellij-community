@@ -27,18 +27,6 @@ import java.util.ResourceBundle;
 
 public class DynamicBundle extends AbstractBundle {
   private static final Logger LOG = Logger.getInstance(DynamicBundle.class);
-  private static final MethodHandle SET_PARENT;
-
-  static {
-    try {
-      Method method = ResourceBundle.class.getDeclaredMethod("setParent", ResourceBundle.class);
-      method.setAccessible(true);
-      SET_PARENT = MethodHandles.lookup().unreflect(method);
-    }
-    catch (NoSuchMethodException | IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-  }
 
   private static @NotNull String ourLangTag = Locale.ENGLISH.toLanguageTag();
   private static final Map<String, DynamicBundle> ourBundlesForForms = CollectionFactory.createConcurrentSoftValueMap();
@@ -60,8 +48,8 @@ public class DynamicBundle extends AbstractBundle {
         ResourceBundle pluginBundle = super.findBundle(pathToBundle, pluginDescriptor == null ? getClass().getClassLoader() : pluginDescriptor.getPluginClassLoader(), control);
         if (pluginBundle != null) {
           try {
-            if (SET_PARENT != null) {
-              SET_PARENT.bindTo(pluginBundle).invoke(base);
+            if (DynamicBundleInternal.SET_PARENT != null) {
+              DynamicBundleInternal.SET_PARENT.bindTo(pluginBundle).invoke(base);
             }
             return pluginBundle;
           }
@@ -73,6 +61,25 @@ public class DynamicBundle extends AbstractBundle {
     }
     return base;
   }
+
+  /**
+   * "SET_PARENT" has been temporary moved into the internal class to fix Kotlin compiler.
+   * It's to be refactored with "ResourceBundleProvider" since 'core-api' module will use java 1.9+
+   */
+ private static class DynamicBundleInternal {
+   private static final MethodHandle SET_PARENT;
+
+   static {
+     try {
+       Method method = ResourceBundle.class.getDeclaredMethod("setParent", ResourceBundle.class);
+       method.setAccessible(true);
+       SET_PARENT = MethodHandles.lookup().unreflect(method);
+     }
+     catch (NoSuchMethodException | IllegalAccessException e) {
+       throw new RuntimeException(e);
+     }
+   }
+ }
 
   // todo: one language per application
   public static @Nullable LanguageBundleEP findLanguageBundle() {

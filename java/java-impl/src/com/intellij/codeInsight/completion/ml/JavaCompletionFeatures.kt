@@ -6,7 +6,9 @@ import com.intellij.internal.ml.WordsSplitter
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
 import com.intellij.psi.CommonClassNames.JAVA_LANG_STRING
+import com.intellij.psi.scope.util.PsiScopesUtil
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.TypeConversionUtil
 import java.util.*
 
@@ -120,8 +122,8 @@ internal object JavaCompletionFeatures {
   }
 
   fun calculateVariables(environment: CompletionEnvironment) = try {
-    val position = environment.parameters.position
-    val variables = MacroUtil.getVariablesVisibleAt(position, "").toList()
+    val parentClass = PsiTreeUtil.getParentOfType(environment.parameters.position, PsiClass::class.java)
+    val variables = getVariablesInScope(environment.parameters.position, parentClass)
     val names = variables.mapNotNull { it.name }.toSet()
     val types = variables.map { it.type }.toSet()
     val names2types = variables.mapNotNull { variable -> variable.name?.let { Pair(it, variable.type) } }.toSet()
@@ -161,6 +163,17 @@ internal object JavaCompletionFeatures {
       return qualifier is PsiNewExpression || qualifier is PsiMethodCallExpression
     }
     return false
+  }
+
+  private fun getVariablesInScope(position: PsiElement, maxScope: PsiElement?, maxVariables: Int = 100): List<PsiVariable> {
+    val variables = mutableListOf<PsiVariable>()
+    val variablesProcessor = object : MacroUtil.VisibleVariablesProcessor(position, "", variables) {
+      override fun execute(pe: PsiElement, state: ResolveState): Boolean {
+        return variables.size < maxVariables && super.execute(pe, state)
+      }
+    }
+    PsiScopesUtil.treeWalkUp(variablesProcessor, position, maxScope)
+    return variables
   }
 
   private data class VariablesInfo(

@@ -103,7 +103,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     try {
       myForwardIndex = forwardIndex == null ? null : forwardIndex.compute();
     } catch (IOException e) {
-      clearAndDispose();
+      tryDispose();
       throw e;
     }
     myForwardIndexAccessor = forwardIndexAccessor;
@@ -114,9 +114,8 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     myValueSerializationChecker = IndexDebugProperties.DEBUG ? new ValueSerializationChecker<>(extension) : null;
   }
 
-  protected void clearAndDispose() {
+  protected void tryDispose() {
     try {
-      clear();
       dispose();
     } catch (Exception e) {
       LOG.info(e);

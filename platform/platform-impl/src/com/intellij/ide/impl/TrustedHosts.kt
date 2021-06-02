@@ -16,7 +16,7 @@ import java.nio.file.Paths
 import java.util.*
 
 @NlsSafe
-internal fun getProjectOriginUrl(projectDir: Path?): String? {
+fun getProjectOriginUrl(projectDir: Path?): String? {
   if (projectDir == null) return null
   val epName = ExtensionPointName.create<ProjectOriginInfoProvider>("com.intellij.projectOriginInfoProvider")
   for (extension in epName.extensions) {
@@ -107,7 +107,7 @@ class TrustedHostsSettings : SimplePersistentStateComponent<TrustedHostsSettings
 
 @State(name = "Trusted.Paths.Settings", storages = [Storage("trusted-paths.xml")])
 @Service(Service.Level.APP)
-class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
+internal class TrustedPathsSettings : SimplePersistentStateComponent<TrustedPathsSettings.State>(State()) {
 
   class State : BaseState() {
     @get:OptionTag("TRUSTED_PATHS")

@@ -11,6 +11,7 @@ import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.WrapLayout;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,13 +25,16 @@ public class CommandLinePanel extends JPanel {
   private final List<JComponent> myComponents;
   private final JLabel myHintLabel;
 
-  public CommandLinePanel(Collection<? extends SettingsEditorFragment<?,?>> fragments, @NotNull Disposable disposable) {
+  public CommandLinePanel(Collection<? extends SettingsEditorFragment<?, ?>> fragments,
+                          @Nullable String configId,
+                          @NotNull Disposable disposable) {
     super();
     myComponents = ContainerUtil.map(fragments, fragment -> fragment.createEditor());
     myHintLabel = ComponentPanelBuilder.createNonWrappingCommentComponent("");
     String keystrokeText = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ALT, 0));
     FragmentHintManager manager = new FragmentHintManager(s -> myHintLabel.setText(s),
                                                           IdeBundle.message("dialog.message.press.for.field.hints", keystrokeText),
+                                                          configId,
                                                           disposable);
     manager.registerFragments(fragments);
 

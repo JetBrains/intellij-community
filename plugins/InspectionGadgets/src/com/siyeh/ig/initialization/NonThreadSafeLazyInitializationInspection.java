@@ -104,14 +104,15 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
     if (!field.equals(referenceExpression.resolve())) {
       return false;
     }
-    final boolean safe = PsiTreeUtil.processElements(assignmentExpression.getRExpression(), PsiReferenceExpression.class, ref -> {
+    final PsiExpression rhs = assignmentExpression.getRExpression();
+    final boolean safe = PsiTreeUtil.processElements(rhs, PsiReferenceExpression.class, ref -> {
       final PsiElement target = ref.resolve();
       return !(target instanceof PsiLocalVariable) && !(target instanceof PsiParameter);
     });
     if (!safe) {
       return false;
     }
-    PsiElement[] elements = {assignmentExpression.getRExpression()};
+    final PsiElement[] elements = rhs == null ? PsiElement.EMPTY_ARRAY : new PsiElement[] {rhs};
     final HashSet<PsiField> usedFields = new HashSet<>();
     final PsiClass targetClass = field.getContainingClass();
     return ExtractMethodProcessor.canBeStatic(targetClass, expressionStatement, elements, usedFields) && usedFields.isEmpty();
@@ -221,6 +222,10 @@ public class NonThreadSafeLazyInitializationInspection extends BaseInspection {
       super.visitAssignmentExpression(expression);
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
       if (!(lhs instanceof PsiReferenceExpression)) {
+        return;
+      }
+      final PsiExpression rhs = PsiUtil.skipParenthesizedExprDown(expression.getRExpression());
+      if (rhs == null) {
         return;
       }
       final PsiReferenceExpression reference = (PsiReferenceExpression)lhs;

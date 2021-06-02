@@ -27,13 +27,12 @@ import java.util.Collections;
 public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
 
   @Override
-  public Info getInfo(@NotNull PsiElement e) {
-    UElement uElement = UastUtils.getUParentForIdentifier(e);
-    if (!(uElement instanceof UMethod) &&
-        !(uElement instanceof UClass)) {
-      return null;
-    }
+  public @Nullable Info getInfo(@NotNull PsiElement element) {
+    return null;
+  }
 
+  @Override
+  public Info getSlowInfo(@NotNull PsiElement e) {
     final Project project = e.getProject();
     if (DumbService.isDumb(project) || !PsiUtil.isPluginProject(project)) {
       return null;
@@ -41,6 +40,12 @@ public final class TestDataLineMarkerProvider extends RunLineMarkerContributor {
 
     final VirtualFile file = PsiUtilCore.getVirtualFile(e);
     if (file == null || !ProjectFileIndex.SERVICE.getInstance(project).isInTestSourceContent(file)) {
+      return null;
+    }
+
+    UElement uElement = UastUtils.getUParentForIdentifier(e);
+    if (!(uElement instanceof UMethod) &&
+        !(uElement instanceof UClass)) {
       return null;
     }
 

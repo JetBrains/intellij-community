@@ -6,6 +6,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsContexts.PopupTitle;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ActiveComponent;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.util.BooleanFunction;
@@ -335,7 +336,7 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
     myScrollPane = myChooserComponent.createScrollPane();
 
     myScrollPane.getViewport().setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-    Insets viewportPadding = UIUtil.getListViewportPadding();
+    Insets viewportPadding = UIUtil.getListViewportPadding(StringUtil.isNotEmpty(myAd));
     ((JComponent)myScrollPane.getViewport().getView()).setBorder(
       BorderFactory.createEmptyBorder(viewportPadding.top, viewportPadding.left, viewportPadding.bottom, viewportPadding.right));
 

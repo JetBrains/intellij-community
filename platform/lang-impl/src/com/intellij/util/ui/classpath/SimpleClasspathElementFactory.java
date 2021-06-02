@@ -69,13 +69,12 @@ public final class SimpleClasspathElementFactory {
     return list;
   }
 
-  public static List<VirtualFile> convertToFiles(Collection<? extends SimpleClasspathElement> cpeList)
-  {
+  public static List<VirtualFile> convertToFiles(Collection<? extends SimpleClasspathElement> cpeList, boolean refresh) {
     VirtualFileManager fileManager = VirtualFileManager.getInstance();
     List<VirtualFile> files = new ArrayList<>();
     for (SimpleClasspathElement cpe : cpeList) {
       for (String fileUrl : cpe.getClassesRootUrls()) {
-        VirtualFile file = fileManager.findFileByUrl(fileUrl);
+        VirtualFile file = refresh ? fileManager.refreshAndFindFileByUrl(fileUrl) : fileManager.findFileByUrl(fileUrl);
         if (file != null) {
           files.add(file);
         }

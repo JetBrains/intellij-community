@@ -112,7 +112,7 @@ class ValueContainerMap<Key, Value> {
   }
 
   boolean isDirty() {
-    return myPersistentMap.isClosed();
+    return myPersistentMap.isDirty();
   }
 
   @TestOnly

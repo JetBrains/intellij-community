@@ -14,7 +14,7 @@ import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.util.io.size
+import com.intellij.util.io.sizeOrNull
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
@@ -67,15 +67,15 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     localPortBindingsSession.start()
 
     for (localPortBinding in wslRequest.localPortBindings) {
-      val targetPortFuture = localPortBindingsSession.getTargetPortFuture(localPortBinding)
-      var targetPort = localPortBinding.local
+      val targetHostPortFuture = localPortBindingsSession.getTargetHostPortFuture(localPortBinding)
+      var targetHostPort = HostPort("localhost", localPortBinding.local)
       try {
-        targetPort = targetPortFuture.get(10, TimeUnit.SECONDS)
+        targetHostPort = targetHostPortFuture.get(10, TimeUnit.SECONDS)
       }
       catch (e: Exception) {
-        LOG.info("Cannot get target port for $localPortBinding")
+        LOG.info("Cannot get target host and port for $localPortBinding")
       }
-      myLocalPortBindings[localPortBinding] = HostPort(distribution.hostIp, targetPort)
+      myLocalPortBindings[localPortBinding] = targetHostPort
     }
   }
 
@@ -131,13 +131,17 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     override fun download(relativePath: String, progressIndicator: ProgressIndicator) {
       // Synchronization may be slow -- let us wait until file size does not change
       // in a reasonable amount of time
+      // (see https://github.com/microsoft/WSL/issues/4197)
       val path = localRoot.resolve(relativePath)
-      var previousSize = -1L
-      var newSize = path.size()
+      var previousSize = -2L  // sizeOrNull returns -1 if file does not exist
+      var newSize = path.sizeOrNull()
       while (previousSize < newSize) {
         Thread.sleep(100)
         previousSize = newSize
-        newSize = path.size()
+        newSize = path.sizeOrNull()
+      }
+      if (newSize == -1L) {
+        LOG.warn("Path $path was not found on local filesystem")
       }
     }
   }

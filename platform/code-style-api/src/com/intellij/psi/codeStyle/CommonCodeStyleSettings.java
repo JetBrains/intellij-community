@@ -180,7 +180,7 @@ public class CommonCodeStyleSettings {
     }
   }
 
-  void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
+  public void writeExternal(@NotNull Element element, @NotNull LanguageCodeStyleProvider provider) {
     CommonCodeStyleSettings defaultSettings = provider.getDefaultCommonSettings();
     Set<String> supportedFields = provider.getSupportedFields();
     if (supportedFields != null) {

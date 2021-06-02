@@ -96,6 +96,25 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
         .addPostfix("dependencies {",
                     "  testCompile 'junit:junit:4.12'",
                     "}",
+                    """
+                      import java.util.concurrent.atomic.AtomicBoolean;
+                      def resolutionAllowed = new AtomicBoolean(false)
+              
+                      if (configurations.findByName("testRuntimeClasspath") != null) {
+                        configurations.testRuntimeClasspath.incoming.beforeResolve {
+                            if (!resolutionAllowed.get() && !System.properties["idea.sync.active"]) {
+                                logger.warn("Attempt to resolve configuration too early")
+                            }
+                        }
+                      }
+                      
+                      gradle.taskGraph.beforeTask { Task task ->
+                          if (task.path == ":test" ) {
+                              println("Greenlight to resolving the configuration!")
+                              resolutionAllowed.set(true)
+                          }
+                      }
+                    """.trimIndent(),
                     if (gradleSupportsJunitPlatform) {
                     """
                       sourceSets {
@@ -170,6 +189,8 @@ open class GradleJavaTestEventsIntegrationTest: GradleImportingTestCase() {
           "<descriptor name='testSuccess' className='my.pack.AClassTest' />")
         .doesNotContain(
           "<descriptor name='testSuccess' className='my.otherpack.AClassTest' />")
+        .doesNotContain(
+          "Attempt to resolve configuration too early")
     }
   }
 

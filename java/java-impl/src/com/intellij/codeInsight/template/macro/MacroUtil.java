@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.macro;
 
 import com.intellij.codeInsight.completion.proc.VariablesProcessor;
@@ -132,23 +132,32 @@ public final class MacroUtil {
       return new PsiVariable[0];
     }
 
-    final Set<String> usedNames = new HashSet<>();
     final List<PsiVariable> list = new ArrayList<>();
-    VariablesProcessor varproc = new VariablesProcessor(prefix, true, list) {
-      @Override
-      public boolean execute(@NotNull PsiElement pe, @NotNull ResolveState state) {
-        if (pe instanceof PsiVariable) {
-          if (!usedNames.add(((PsiVariable)pe).getName())) {
-            return false;
-          }
-          //exclude variables that are initialized in 'place'
-          final PsiExpression initializer = ((PsiVariable)pe).getInitializer();
-          if (initializer != null && PsiTreeUtil.isAncestor(initializer, place, false)) return true;
-        }
-        return pe instanceof PsiField && !PsiUtil.isAccessible((PsiField)pe, place, null) || super.execute(pe, state);
-      }
-    };
+    VariablesProcessor varproc = new VisibleVariablesProcessor(place, prefix, list);
     PsiScopesUtil.treeWalkUp(varproc, place, null);
     return varproc.getResultsAsArray();
+  }
+
+  public static class VisibleVariablesProcessor extends VariablesProcessor {
+    private final Set<String> usedNames = new HashSet<>();
+    private final PsiElement myPlace;
+
+    public VisibleVariablesProcessor(PsiElement place, String _prefix, List<? super PsiVariable> lst) {
+      super(_prefix, true, lst);
+      myPlace = place;
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement pe, @NotNull ResolveState state) {
+      if (pe instanceof PsiVariable) {
+        if (!usedNames.add(((PsiVariable)pe).getName())) {
+          return false;
+        }
+        //exclude variables that are initialized in 'place'
+        final PsiExpression initializer = ((PsiVariable)pe).getInitializer();
+        if (initializer != null && PsiTreeUtil.isAncestor(initializer, myPlace, false)) return true;
+      }
+      return pe instanceof PsiField && !PsiUtil.isAccessible((PsiField)pe, myPlace, null) || super.execute(pe, state);
+    }
   }
 }

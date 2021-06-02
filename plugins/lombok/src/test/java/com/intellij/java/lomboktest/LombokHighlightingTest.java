@@ -49,6 +49,10 @@ public class LombokHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testLombokBasics() { doTest(); }
 
+  public void testLombokStaticVars() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {

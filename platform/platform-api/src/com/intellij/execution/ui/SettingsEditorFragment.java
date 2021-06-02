@@ -14,6 +14,7 @@ import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.Ref;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,11 +183,18 @@ public class SettingsEditorFragment<Settings, C extends JComponent> extends Sett
   }
 
   public void toggle(boolean selected, @Nullable AnActionEvent e) {
+    boolean changed = isSelected() != selected;
     setSelected(selected);
     if (selected) {
+      JScrollPane scrollpane = UIUtil.getParentOfType(JScrollPane.class, myComponent);
+      if (scrollpane != null) {
+        scrollpane.validate();  // should be validated beforehand to make scrollRectToVisible() work correctly
+      }
       myComponent.scrollRectToVisible(new Rectangle(new Point(0, 50), myComponent.getPreferredSize()));
     }
-    logChange(selected, e);
+    if (changed) {
+      logChange(selected, e);
+    }
   }
 
   protected void logChange(boolean selected, @Nullable AnActionEvent e) {

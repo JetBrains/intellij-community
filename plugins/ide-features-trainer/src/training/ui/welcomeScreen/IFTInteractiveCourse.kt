@@ -16,7 +16,9 @@ import com.intellij.ui.scale.JBUIScale
 import icons.FeaturesTrainerIcons.Img.PluginIcon
 import training.learn.CourseManager
 import training.learn.LearnBundle
+import training.learn.OpenLessonActivities
 import training.learn.course.IftModule
+import training.learn.course.KLesson
 import training.statistic.StatisticBase
 import training.util.rigid
 import java.awt.event.ActionEvent
@@ -97,12 +99,19 @@ class IFTInteractiveCourseData : InteractiveCourseData {
   private fun openLearningFromWelcomeScreen(module: IftModule?) {
     val action = ActionManager.getInstance().getAction("ShowLearnPanel")
 
-    //val context = if (module != null) SimpleDataContext.getSimpleContext(OpenLearnPanel.LEARNING_MODULE_KEY.name, module)
-    //else DataContext.EMPTY_CONTEXT
+    val onboardingLesson = findOnboardingLesson(module)
+    if (onboardingLesson != null) {
+      OpenLessonActivities.openOnboardingFromWelcomeScreen(onboardingLesson)
+    }
+    else {
+      CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
+      val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
+      ActionUtil.performActionDumbAware(action, anActionEvent)
+    }
+  }
 
-    CourseManager.instance.unfoldModuleOnInit = module ?: CourseManager.instance.modules.firstOrNull()
-
-    val anActionEvent = AnActionEvent.createFromAnAction(action, null, ActionPlaces.WELCOME_SCREEN, DataContext.EMPTY_CONTEXT)
-    ActionUtil.performActionDumbAware(action, anActionEvent)
+  private fun findOnboardingLesson(module: IftModule?): KLesson? {
+    val firstLesson = module?.lessons?.singleOrNull()
+    return firstLesson?.takeIf { it.id.contains("onboarding") }
   }
 }

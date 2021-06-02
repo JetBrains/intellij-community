@@ -234,15 +234,20 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
       LOG.assertTrue(scheme != null, "Wizard scheme " + wizardEditorScheme + " not found");
     }
 
-    if (!themeIsCustomized && scheme == null && currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
-      String schemeName = ((UIThemeBasedLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
-      if (schemeName != null) {
-        scheme = getScheme(schemeName);
+    if (!themeIsCustomized && scheme == null) {
+      if (currentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+        String schemeName = ((UIThemeBasedLookAndFeelInfo)currentLaf).getTheme().getEditorSchemeName();
+        if (schemeName != null) {
+          scheme = getScheme(schemeName);
+        }
+      }
+      else if (currentLaf.getName().contains("Darcula")) {
+        scheme = getScheme("Darcula");
       }
     }
 
     if (scheme != null) {
-      setGlobalSchemeInner(scheme);
+      mySchemeManager.setCurrent(scheme, false);
     }
   }
 

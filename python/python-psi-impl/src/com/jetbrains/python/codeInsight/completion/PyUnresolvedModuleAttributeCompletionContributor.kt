@@ -17,12 +17,12 @@ import com.intellij.psi.util.QualifiedName
 import com.intellij.util.ProcessingContext
 import com.intellij.util.Processor
 import com.jetbrains.python.PyTokenTypes
+import com.jetbrains.python.PythonRuntimeService
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.codeInsight.imports.AddImportHelper
 import com.jetbrains.python.inspections.unresolvedReference.PyPackageAliasesProvider
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.resolve.PyResolveUtil
-import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.search.PySearchUtilBase
 import com.jetbrains.python.psi.stubs.PyModuleNameIndex
 import com.jetbrains.python.psi.stubs.PyQualifiedNameCompletionMatcher
@@ -82,9 +82,9 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         val psiElement = item.psiElement
         if (psiElement is PsiNamedElement && psiElement.containingFile != null) {
           val name = QualifiedName.fromDottedString(item.lookupString).removeLastComponent().toString()
-          val commonAlias = PyPackageAliasesProvider.commonImportAliases[name]
-          val nameToImport = commonAlias ?: name
-          AddImportHelper.addImportStatement(context.file, nameToImport, if (commonAlias != null) name else null,
+          val packageNameForAlias = PyPackageAliasesProvider.commonImportAliases[name]
+          val nameToImport = packageNameForAlias ?: name
+          AddImportHelper.addImportStatement(context.file, nameToImport, if (packageNameForAlias != null) name else null,
                                              AddImportHelper.getImportPriority(context.file, psiElement.containingFile),
                                              ref?.element as? PyElement)
         }
@@ -115,9 +115,9 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
         val packageNameForAlias = PyPackageAliasesProvider.commonImportAliases[qualifier.toString()]
         val packageName = if (packageNameForAlias != null) QualifiedName.fromDottedString(packageNameForAlias) else qualifier
         val resultMatchingCompleteReference = result.withPrefixMatcher(QualifiedNameMatcher(qualifiedName))
+        val scope = PySearchUtilBase.defaultSuggestionScope(parameters.originalFile)
 
-        val availableModules = PyModuleNameIndex.findByQualifiedName(packageName, project,
-                                                                     PySearchUtilBase.defaultSuggestionScope(parameters.originalFile))
+        val availableModules = PyModuleNameIndex.findByQualifiedName(packageName, project, scope)
           .asSequence()
 
         if (packageNameForAlias == null) {
@@ -141,11 +141,10 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
           .filter { it.containingFile != null }
           .filterNot { it is PsiFileSystemItem }
           .filterNot { it.name == null || it.name!!.startsWith('_') }
-          .filter { attribute.isEmpty() || resultMatchingCompleteReference.prefixMatcher.prefixMatches("$packageName.${it.name}") }
+          .filter { attribute.isEmpty() || resultMatchingCompleteReference.prefixMatcher.prefixMatches("$qualifier.${it.name}") }
           .mapNotNull {
-            val qualifiedNameToSuggest = "$qualifier.${it.name}"
-            if (suggestedQualifiedNames.add(qualifiedNameToSuggest)) {
-              LookupElementBuilder.create(it, qualifiedNameToSuggest)
+            if (suggestedQualifiedNames.add("$packageName.${it.name}")) {
+              LookupElementBuilder.create(it, "$qualifier.${it.name}")
                 .withIcon(it.getIcon(0))
                 .withInsertHandler(getInsertHandler(it, parameters.position))
                 .withTypeText(packageNameForAlias)
@@ -158,14 +157,13 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
           result.restartCompletionOnAnyPrefixChange()
           return
         }
-        val scope = PySearchUtilBase.defaultSuggestionScope(parameters.originalFile)
         PyQualifiedNameCompletionMatcher.processMatchingExportedNames(
-          packageName.append(attribute), if (packageNameForAlias != null) qualifiedName else null, parameters.originalFile, scope,
+          qualifiedName, parameters.originalFile, scope,
           Processor {
             ProgressManager.checkCanceled()
             if (suggestedQualifiedNames.add(it.qualifiedName.toString())) {
               resultMatchingCompleteReference.addElement(LookupElementBuilder
-                                                           .createWithSmartPointer(it.qualifiedNameWithUserTypedAlias.toString(),
+                                                           .createWithSmartPointer(it.qualifiedName.toString(),
                                                                                    it.element)
                                                            .withIcon(it.element.getIcon(0))
                                                            .withInsertHandler(getInsertHandler(it.element, parameters.position)))
@@ -176,4 +174,10 @@ class PyUnresolvedModuleAttributeCompletionContributor : CompletionContributor()
     })
   }
 
+  override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
+    if (PythonRuntimeService.getInstance().isInPydevConsole(parameters.originalFile)) {
+      return
+    }
+    super.fillCompletionVariants(parameters, result)
+  }
 }

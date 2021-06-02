@@ -146,7 +146,7 @@ class ToolWindowsWidget extends JLabel implements CustomStatusBarWidget, StatusB
 
         final Dimension size = list.getPreferredSize();
         final JComponent c = this;
-        final Insets padding = UIUtil.getListViewportPadding();
+        final Insets padding = UIUtil.getListViewportPadding(false);
         final RelativePoint point = new RelativePoint(c, new Point(-4, -padding.top - padding.bottom -4 - size.height + (SystemInfo.isMac
                                                                                                                          ? 2 : 0)));
 

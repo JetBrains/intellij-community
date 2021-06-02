@@ -2,15 +2,13 @@
 package com.intellij.execution.actions
 
 import com.intellij.execution.ExecutionBundle
-import com.intellij.execution.impl.EditConfigurationsDialog
+import com.intellij.execution.impl.showTemplatesDialog
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.ProjectManager
 
 class EditRunConfigurationTemplatesForNewProjectsAction : DumbAwareAction(ExecutionBundle.message("edit.configuration.templates.action")) {
   override fun actionPerformed(e: AnActionEvent) {
-    val dialog = EditConfigurationsDialog(ProjectManager.getInstance().defaultProject)
-    dialog.title = e.presentation.text
-    dialog.show()
+    showTemplatesDialog(ProjectManager.getInstance().defaultProject, null)
   }
 }

@@ -28,6 +28,7 @@ import com.intellij.execution.util.ProgramParametersConfigurator;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentConfiguration;
 import com.intellij.execution.wsl.target.WslTargetEnvironmentFactory;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -641,7 +642,7 @@ public abstract class JavaTestFrameworkRunnableState<T extends
   protected boolean forkPerModule() {
     return getScope() != TestSearchScope.SINGLE_MODULE &&
            toChangeWorkingDirectory(getConfiguration().getWorkingDirectory()) &&
-           spansMultipleModules(getConfiguration().getPackage());
+           ReadAction.compute(() -> spansMultipleModules(getConfiguration().getPackage()));
   }
 
   private static boolean toChangeWorkingDirectory(final String workingDirectory) {

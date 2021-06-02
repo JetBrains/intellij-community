@@ -1,6 +1,7 @@
 package com.siyeh.igtest.encapsulation;
 
 import java.util.*;
+import java.util.stream.*;
 import com.google.common.collect.*;
 
 public class AssignmentOrReturnOfFieldWithMutableType
@@ -182,4 +183,24 @@ class NoArrayInitializer {
     String[] getStr() {
         return EMPTY;
     }
+}
+// IDEA-265286
+class Demo {
+  public enum Foo {
+    ONE,
+    TWO,
+    THEE
+  }
+
+  private static Foo fooOne;
+  private static final List<Foo> LIST_ONE = List.of(Foo.TWO, Foo.THEE);
+  private static final List<Foo> LIST_TWO = Stream.of(Foo.ONE, Foo.THEE).collect(Collectors.toUnmodifiableList());
+
+  public static List<Foo> getListOne() {
+    return LIST_ONE;
+  }
+
+  public static List<Foo> getListTwo() {
+    return LIST_TWO;
+  }
 }

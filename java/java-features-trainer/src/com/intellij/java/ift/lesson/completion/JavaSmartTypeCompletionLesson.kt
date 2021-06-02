@@ -6,9 +6,10 @@ import training.dsl.LessonContext
 import training.dsl.LessonUtil.restoreIfModifiedOrMoved
 import training.dsl.TaskTestContext
 import training.dsl.parseLessonSample
+import training.learn.LessonsBundle
 import training.learn.course.KLesson
 
-class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", JavaLessonsBundle.message("java.smart.type.completion.lesson.name")) {
+class JavaSmartTypeCompletionLesson : KLesson("Smart type completion", LessonsBundle.message("smart.completion.lesson.name")) {
 
   override val testScriptProperties = TaskTestContext.TestScriptProperties(skipTesting = true)
 

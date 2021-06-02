@@ -370,9 +370,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
-      HelpTooltip ht = HelpTooltip.getOrCreate(this).clear();
       if (StringUtil.isNotEmpty(text) || StringUtil.isNotEmpty(description)) {
-        ht.setTitle(text).setShortcut(getShortcutText());
+        HelpTooltip ht = new HelpTooltip().setTitle(text).setShortcut(getShortcutText());
         if (myAction instanceof TooltipLinkProvider) {
           TooltipLinkProvider.TooltipLink link = ((TooltipLinkProvider)myAction).getTooltipLink(this);
           if (link != null) {

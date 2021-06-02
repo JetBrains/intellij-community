@@ -36,6 +36,8 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
 
   open val testScriptProperties : TaskTestContext.TestScriptProperties = TaskTestContext.TestScriptProperties()
 
+  open fun onLessonEnd(project: Project, lessonPassed: Boolean) = Unit
+
   fun addLessonListener(lessonListener: LessonListener) {
     lessonListeners.add(lessonListener)
   }
@@ -55,8 +57,9 @@ abstract class Lesson(@NonNls val id: String, @Nls val name: String) {
     lessonListeners.forEach { it.lessonStarted(this) }
   }
 
-  internal fun onStop() {
+  internal fun onStop(project: Project, lessonPassed: Boolean) {
     lessonListeners.forEach { it.lessonStopped(this) }
+    onLessonEnd(project, lessonPassed)
   }
 
   internal fun pass() {

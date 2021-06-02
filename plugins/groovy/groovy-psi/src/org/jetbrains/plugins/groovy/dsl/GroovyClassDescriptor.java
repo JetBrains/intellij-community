@@ -1,21 +1,8 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.dsl;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
@@ -23,7 +10,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import org.codehaus.groovy.runtime.GroovyCategorySupport;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.LinkedHashSet;
+import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -39,46 +26,65 @@ public class GroovyClassDescriptor {
     }
   }
 
+  private final Project myProject;
   private final PsiType myPsiType;
+  private final PsiClass myPsiClass;
   private final PsiElement myPlace;
   private final PsiFile myFile;
 
-  //order is important
-  final Set<Factor> affectingFactors = new LinkedHashSet<>();
+  final Set<Factor> affectingFactors = EnumSet.noneOf(Factor.class);
 
-  public GroovyClassDescriptor(@NotNull PsiType psiType, PsiElement place, final PsiFile placeFile) {
+  public GroovyClassDescriptor(
+    @NotNull PsiType psiType,
+    @NotNull PsiClass aClass,
+    @NotNull PsiElement place,
+    @NotNull PsiFile placeFile
+  ) {
+    myProject = placeFile.getProject();
     myPsiType = psiType;
+    myPsiClass = aClass;
     myPlace = place;
     myFile = placeFile;
   }
 
-  public Project getProject() {
-    return myFile.getProject();
+  public @NotNull Project getProject() {
+    return myProject;
   }
 
-  public GlobalSearchScope getResolveScope() {
+  public @NotNull GlobalSearchScope getResolveScope() {
     //affectingFactors.add(Factor.placeFile);
     return myPlace.getResolveScope();
   }
 
-  public PsiElement getPlace() {
+  public @NotNull PsiElement getPlace() {
     affectingFactors.add(Factor.placeElement);
     return myPlace;
   }
 
-  @NotNull
-  public PsiType getPsiType() {
+  public @NotNull PsiType getPsiType() {
     affectingFactors.add(Factor.qualifierType);
     return myPsiType;
   }
 
-  public PsiFile getPlaceFile() {
+  public @NotNull PsiClass getPsiClass() {
+    affectingFactors.add(Factor.qualifierType);
+    return myPsiClass;
+  }
+
+  public @NotNull PsiFile getPlaceFile() {
     affectingFactors.add(Factor.placeFile);
     return myFile;
   }
 
-  public PsiFile justGetPlaceFile() {
+  public @NotNull PsiFile justGetPlaceFile() {
     return myFile;
   }
 
+  public @NotNull PsiElement justGetPlace() {
+    return myPlace;
+  }
+
+  public @NotNull PsiClass justGetPsiClass() {
+    return myPsiClass;
+  }
 }

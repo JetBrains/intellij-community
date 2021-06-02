@@ -23,7 +23,7 @@ class JPackageArtifactProperties extends ArtifactProperties<JPackageArtifactProp
 
   @Override
   public ArtifactPropertiesEditor createEditor(@NotNull ArtifactEditorContext context) {
-    return new JPackageArtifactPropertiesEditor(this);
+    return new JPackageArtifactPropertiesEditor(this, context.getProject());
   }
 
   @Override

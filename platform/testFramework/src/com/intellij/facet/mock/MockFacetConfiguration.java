@@ -10,7 +10,6 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jdom.Element;
 
 import java.util.ArrayList;
@@ -18,7 +17,7 @@ import java.util.Collection;
 import java.util.List;
 
 public class MockFacetConfiguration implements FacetConfiguration {
-  private final List<VirtualFile> myRoots = new ArrayList<>();
+  private final List<String> myRootUrls = new ArrayList<>();
   private String myData = "";
   private MockFacetEditorTab myEditor;
 
@@ -40,11 +39,15 @@ public class MockFacetConfiguration implements FacetConfiguration {
   }
 
   public void addRoot(VirtualFile root) {
-    myRoots.add(root);
+    myRootUrls.add(root.getUrl());
+  }
+
+  public void addRoot(String url) {
+    myRootUrls.add(url);
   }
 
   public void removeRoot(VirtualFile root) {
-    myRoots.remove(root);
+    myRootUrls.remove(root.getUrl());
   }
 
   public void setData(final String data) {
@@ -58,10 +61,10 @@ public class MockFacetConfiguration implements FacetConfiguration {
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myData = StringUtil.notNullize(element.getAttributeValue("data"));
-    myRoots.clear();
+    myRootUrls.clear();
     final List<Element> children = element.getChildren("root");
     for (Element child : children) {
-      myRoots.add(VirtualFileManager.getInstance().findFileByUrl(child.getAttributeValue("url")));
+      myRootUrls.add(child.getAttributeValue("url"));
     }
   }
 
@@ -70,12 +73,12 @@ public class MockFacetConfiguration implements FacetConfiguration {
     if (!myData.isEmpty()) {
       element.setAttribute("data", myData);
     }
-    for (VirtualFile root : myRoots) {
-      element.addContent(new Element("root").setAttribute("url", root.getUrl()));
+    for (String url : myRootUrls) {
+      element.addContent(new Element("root").setAttribute("url", url));
     }
   }
 
-  public Collection<VirtualFile> getRoots() {
-    return myRoots;
+  public Collection<String> getRootUrls() {
+    return myRootUrls;
   }
 }

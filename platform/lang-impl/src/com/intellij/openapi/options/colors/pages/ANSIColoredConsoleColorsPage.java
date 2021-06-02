@@ -13,6 +13,7 @@ import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
+import com.intellij.terminal.JBTerminalSystemSettingsProviderBase;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,6 +56,8 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     "<cyanBright>ANSI: bright cyan</cyanBright>\n" +
     "<white>ANSI: white</white>\n" +
     "\n" +
+    "<terminalCommandToRunUsingIDE>git log</terminalCommandToRunUsingIDE>" +
+    "\n" +
     "<stdsys>Process finished with exit code 1</stdsys>\n";
 
   private static final AttributesDescriptor[] ATTRS = {
@@ -87,6 +90,9 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.magentaBright"), ConsoleHighlighter.MAGENTA_BRIGHT),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.cyanBright"), ConsoleHighlighter.CYAN_BRIGHT),
     new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.console.white"), ConsoleHighlighter.WHITE),
+
+    new AttributesDescriptor(OptionsBundle.messagePointer("color.settings.terminal.command.to.run.using.ide"),
+                             JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY),
   };
 
   private static final Map<String, TextAttributesKey> ADDITIONAL_HIGHLIGHT_DESCRIPTORS = new HashMap<>();
@@ -119,6 +125,8 @@ public class ANSIColoredConsoleColorsPage implements ColorSettingsPage, DisplayP
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("magentaBright", ConsoleHighlighter.MAGENTA_BRIGHT);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("cyanBright", ConsoleHighlighter.CYAN_BRIGHT);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("white", ConsoleHighlighter.WHITE);
+
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("terminalCommandToRunUsingIDE", JBTerminalSystemSettingsProviderBase.COMMAND_TO_RUN_USING_IDE_KEY);
   }
 
   private static final ColorDescriptor[] COLORS = {

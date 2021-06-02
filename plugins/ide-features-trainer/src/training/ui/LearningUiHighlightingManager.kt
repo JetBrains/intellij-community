@@ -47,7 +47,12 @@ object LearningUiHighlightingManager {
                          options: HighlightingOptions = HighlightingOptions(),
                          path: () -> TreePath?) {
     highlightPartOfComponent(tree, options) {
-      path()?.let { tree.getPathBounds(it) }
+      path()?.let {
+        val treeRect = tree.visibleRect
+        val pathRect = tree.getPathBounds(it) ?: return@let null
+        val offset = pathRect.x - treeRect.x
+        Rectangle(pathRect.x, pathRect.y, treeRect.width - offset, pathRect.height)
+      }
     }
   }
 

@@ -47,6 +47,12 @@
                      enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.gradle.codeInspection.BintrayPublishingPluginInspection"/>
 
+    <localInspection language="Groovy" groupPath="Gradle" shortName="JCenterRepository"
+                     bundle="messages.GradleInspectionBundle"
+                     key="jcenter.repository" groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.gradle.codeInspection.JCenterRepositoryInspection"/>
+
     <runConfigurationProducer implementation="org.jetbrains.plugins.gradle.execution.GradleGroovyScriptRunConfigurationProducer"
                               order="last"/>
     <runLineMarkerContributor language="Groovy" id="gradleGroovyRunLineMarkerProvider"

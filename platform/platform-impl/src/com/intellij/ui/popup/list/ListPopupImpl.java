@@ -99,7 +99,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {
-    int offset = -UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding().left;
+    int offset = -UIUtil.getListCellHPadding() - UIUtil.getListViewportPadding(isAdVisible()).left;
     if (label.getIcon() != null) {
       offset += label.getIcon().getIconWidth() + label.getIconTextGap();
     }
@@ -263,8 +263,7 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.setSelectionModel(new MyListSelectionModel());
 
     selectFirstSelectableItem();
-    Insets padding = UIUtil.getListViewportPadding();
-    myList.setBorder(new EmptyBorder(padding));
+    updateListPaddings();
 
     ScrollingUtil.installActions(myList);
 
@@ -297,6 +296,17 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
     myList.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
 
     return myList;
+  }
+
+  @Override
+  public void setAdText(@NotNull String s, int alignment) {
+    super.setAdText(s, alignment);
+    updateListPaddings();
+  }
+
+  private void updateListPaddings() {
+    Insets padding = UIUtil.getListViewportPadding(isAdVisible());
+    myList.setBorder(new EmptyBorder(padding));
   }
 
   private boolean isMultiSelectionEnabled() {

@@ -235,7 +235,8 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
     @Override
     public void run() {
       ProgressIndicator indicator = new EmptyProgressIndicator();
-      MavenLog.LOG.info("Connecting maven connector in " + myMultimoduleDirectory);
+      String dirForLogs = myMultimoduleDirectories.iterator().next();
+      MavenLog.LOG.info("Connecting maven connector in " + dirForLogs);
       try {
         if (myDebugPort != null) {
           //noinspection UseOfSystemOutOrSystemErr
@@ -253,10 +254,10 @@ public class MavenServerConnectorImpl extends MavenServerConnector {
 
         server.set(myLogger, myDownloadListener, MavenRemoteObjectWrapper.ourToken);
         myServerPromise.setResult(server);
-        MavenLog.LOG.info("Connector in " + myMultimoduleDirectory + " has been connected");
+        MavenLog.LOG.info("Connector in " + dirForLogs + " has been connected");
       }
       catch (Throwable e) {
-        MavenLog.LOG.warn("Cannot connect connector in " + myMultimoduleDirectory, e);
+        MavenLog.LOG.warn("Cannot connect connector in " + dirForLogs, e);
         myServerPromise.setError(e);
       }
     }

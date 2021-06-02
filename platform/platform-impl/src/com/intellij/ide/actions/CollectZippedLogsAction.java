@@ -144,7 +144,7 @@ public class CollectZippedLogsAction extends AnAction implements DumbAware {
 
   private static File[] getJavaErrorLogs() {
     return new File(SystemProperties.getUserHome())
-      .listFiles(file -> file.isFile() && file.getName().startsWith("java_error_in") && !file.getName().endsWith("hprof"));
+      .listFiles(file -> file.isFile() && (file.getName().startsWith("java_error_in") || file.getName().startsWith("jbr_err_pid")) && !file.getName().endsWith("hprof"));
   }
 
   @NotNull

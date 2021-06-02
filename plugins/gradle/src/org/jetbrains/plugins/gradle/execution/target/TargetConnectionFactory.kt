@@ -17,6 +17,7 @@ class TargetConnectionFactory(private val environmentConfigurationProvider: Targ
                       parameters: ConnectionParameters,
                       connectionCloseListener: ProjectConnectionCloseListener): ProjectConnection {
     require(distribution is TargetGradleDistribution)
+    require(parameters is TargetConnectionParameters)
     return TargetProjectConnection(environmentConfigurationProvider, taskId, taskListener,
                                    distribution, parameters, connectionCloseListener)
   }

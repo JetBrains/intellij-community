@@ -12,7 +12,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Iconable.ICON_FLAG_READ_STATUS
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome
-import com.intellij.openapi.util.text.StringUtil.naturalCompare
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.openapi.vcs.FileStatusManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil.getFileBackgroundColor
@@ -41,10 +42,12 @@ import javax.swing.ListCellRenderer
 
 private fun shortcutText(actionId: String) = ActionManager.getInstance().getKeyboardShortcut(actionId)?.let { getShortcutText(it) }
 
+private val mainTextComparator by lazy { Comparator.comparing(SwitcherListItem::mainText, NaturalComparator.INSTANCE) }
+
 
 internal interface SwitcherListItem {
   val mainText: String
-  val statusText: String? get() = null
+  val statusText: String get() = ""
   val shortcutText: String? get() = null
   val separatorAbove: Boolean get() = false
 
@@ -69,12 +72,12 @@ internal class SwitcherRecentLocations(val switcher: Switcher.SwitcherPanel) : S
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> message("recent.locations.changed.locations")
       else -> message("recent.locations.popup.title")
-    }!!
+    }
   override val statusText: String
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> message("recent.files.accessible.open.recently.edited.locations")
       else -> message("recent.files.accessible.open.recently.viewed.locations")
-    }!!
+    }
   override val shortcutText: String?
     get() = when (switcher.isOnlyEditedFilesShown) {
       true -> null
@@ -132,7 +135,7 @@ internal class SwitcherVirtualFile(
 
   override var mainText: String = ""
 
-  override val statusText: String?
+  override val statusText: String
     get() = getLocationRelativeToUserHome((file.parent ?: file).presentableUrl)
 
   override fun navigate(switcher: Switcher.SwitcherPanel, mode: OpenMode) {
@@ -142,7 +145,10 @@ internal class SwitcherVirtualFile(
   }
 
   override fun prepareMainRenderer(component: SimpleColoredComponent, selected: Boolean) {
-    component.icon = RenderingUtil.getIcon(icon, selected)
+    component.icon = when (Registry.`is`("ide.project.view.change.icon.on.selection", true)) {
+      true -> RenderingUtil.getIcon(icon, selected)
+      else -> icon
+    }
     val foreground = if (selected) null else FileStatusManager.getInstance(project).getStatus(file).color
     val effectColor = if (isProblemFile) JBColor.red else null
     val style = when (effectColor) {
@@ -184,23 +190,28 @@ internal class SwitcherListRenderer(val switcher: Switcher.SwitcherPanel) : List
     value.prepareExtraRenderer(extra, selected)
     applySpeedSearchHighlighting(switcher, main, false, selected)
     panel.accessibleContext.accessibleName = value.mainText
-    panel.accessibleContext.accessibleDescription = value.statusText ?: ""
+    panel.accessibleContext.accessibleDescription = value.statusText
     return panel
   }
 
+  private val toolWindowsAllowed = when (switcher.recent) {
+    true -> Registry.`is`("ide.recent.files.tool.window.list")
+    else -> Registry.`is`("ide.switcher.tool.window.list")
+  }
 
-  val toolWindows: List<SwitcherToolWindow> by lazy {
+  val toolWindows: List<SwitcherToolWindow> = if (toolWindowsAllowed) {
     val manager = ToolWindowManager.getInstance(switcher.project)
     val windows = manager.toolWindowIds
       .mapNotNull { manager.getToolWindow(it) }
       .filter { it.isAvailable && it.isShowStripeButton }
       .map { SwitcherToolWindow(it, switcher.pinned) }
-      .sortedWith(Comparator { window1, window2 -> naturalCompare(window1.mainText, window2.mainText) })
+      .sortedWith(mainTextComparator)
 
     // TODO: assign mnemonics
 
     windows
   }
+  else emptyList()
 }
 
 

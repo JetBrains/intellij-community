@@ -817,7 +817,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon RwAccess = load("nodes/rw-access.svg", -2790954136544911595L, 0);
     /** 16x16 */ public static final @Deprecated @NotNull Icon Rw_access = RwAccess;
     /** 16x16 */ public static final @NotNull Icon SecurityRole = load("nodes/securityRole.svg", -5500371977726954805L, 0);
-    /** 14x12 */ public static final @NotNull Icon Services = load("nodes/services.svg", -2057777837011288462L, 0);
+    /** 16x16 */ public static final @NotNull Icon Services = load("nodes/services.svg", -2057777837011288462L, 0);
     /** 16x16 */ public static final @NotNull Icon Servlet = load("nodes/servlet.svg", -6853224320261092461L, 0);
     /** 16x16 */ public static final @NotNull Icon Shared = load("nodes/shared.svg", -6894260543915480253L, 0);
     /** 16x16 */ public static final @NotNull Icon SortBySeverity = load("nodes/sortBySeverity.svg", 3926891644325651337L, 2);

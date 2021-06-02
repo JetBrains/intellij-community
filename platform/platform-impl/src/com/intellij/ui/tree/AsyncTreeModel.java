@@ -916,6 +916,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
   }
 
+  public void treeStructureChanged(TreePath path) {
+    treeStructureChanged(path, null, null);
+  }
+
   @Override
   protected void treeNodesChanged(TreePath path, int[] indices, Object[] children) {
     try {
@@ -924,6 +928,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     catch (Throwable throwable) {
       LOG.error("custom model: " + model, throwable);
     }
+  }
+
+  public void treeNodesChanged(TreePath path) {
+    treeNodesChanged(path, null, null);
   }
 
   @Override
@@ -936,6 +944,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     }
   }
 
+  public void treeNodesInserted(TreePath path) {
+    treeNodesInserted(path, null, null);
+  }
+
   @Override
   protected void treeNodesRemoved(TreePath path, int[] indices, Object[] children) {
     try {
@@ -944,6 +956,10 @@ public final class AsyncTreeModel extends AbstractTreeModel implements Searchabl
     catch (Throwable throwable) {
       LOG.error("custom model: " + model, throwable);
     }
+  }
+
+  public void treeNodesRemoved(TreePath path) {
+    treeNodesRemoved(path, null, null);
   }
 
   /**

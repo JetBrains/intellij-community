@@ -329,6 +329,11 @@ public class SceneBuilderEditor extends UserDataHolderBase implements FileEditor
   }
 
   @Override
+  public @Nullable VirtualFile getFile() {
+    return myFile;
+  }
+
+  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
   }
 

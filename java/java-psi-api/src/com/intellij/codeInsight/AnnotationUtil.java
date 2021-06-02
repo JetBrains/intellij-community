@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 @ApiStatus.NonExtendable
 public class AnnotationUtil {
   public static final String NULLABLE = "org.jetbrains.annotations.Nullable";
+  public static final String UNKNOWN_NULLABILITY = "org.jetbrains.annotations.UnknownNullability";
   public static final String NOT_NULL = "org.jetbrains.annotations.NotNull";
 
   public static final String NON_NLS = "org.jetbrains.annotations.NonNls";
@@ -220,7 +221,7 @@ public class AnnotationUtil {
     AnnotationAndOwner result = findAnnotationAndOwnerInHierarchy(listOwner, annotationNames, skipExternal);
     return result == null ? null : result.annotation;
   }
-  
+
   static final class AnnotationAndOwner {
     final @NotNull PsiModifierListOwner owner;
     final @NotNull PsiAnnotation annotation;

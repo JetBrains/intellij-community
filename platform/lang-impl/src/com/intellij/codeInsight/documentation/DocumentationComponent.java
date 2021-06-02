@@ -30,6 +30,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -83,7 +84,6 @@ import javax.swing.plaf.TextUI;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
-import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import java.awt.*;
 import java.awt.event.*;
@@ -276,7 +276,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       UIUtil.doNotScrollToCaret(myEditorPane);
     }
     myEditorPane.setBackground(EditorColorsUtil.getGlobalOrDefaultColor(COLOR_KEY));
-    HTMLEditorKit editorKit = new JBHtmlEditorKit(true, true) {
+    JBHtmlEditorKit editorKit = new JBHtmlEditorKit(true, true) {
       @Override
       public ViewFactory getViewFactory() {
         JBHtmlFactory factory = new JBHtmlFactory() {
@@ -550,15 +550,16 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     });
   }
 
-  private static void prepareCSS(@NotNull HTMLEditorKit editorKit) {
+  private static void prepareCSS(@NotNull JBHtmlEditorKit editorKit) {
     Color borderColor = UIUtil.getTooltipSeparatorColor();
     int leftPadding = 8;
     int definitionTopPadding = 4;
-    String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
-    editorKit.getStyleSheet().addRule("tt {font-family:\"" + editorFontName + "\"; font-size: 96%;}");
-    editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"; font-size: 96%;}");
-    editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"; font-size: 96%;}");
-    editorKit.getStyleSheet().addRule(".pre {font-family:\"" + editorFontName + "\"; font-size: 96%;}");
+    editorKit.setFontResolver(EditorCssFontResolver.getGlobalInstance());
+    String editorFontStyle = "{font-family:\"" + EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER + "\"; font-size: 96%;}";
+    editorKit.getStyleSheet().addRule("tt" + editorFontStyle);
+    editorKit.getStyleSheet().addRule("code" + editorFontStyle);
+    editorKit.getStyleSheet().addRule("pre" + editorFontStyle);
+    editorKit.getStyleSheet().addRule(".pre" + editorFontStyle);
     editorKit.getStyleSheet().addRule("html { padding-bottom: 8px; }");
     editorKit.getStyleSheet().addRule("h1, h2, h3, h4, h5, h6 { margin-top: 0; padding-top: 1px; }");
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");

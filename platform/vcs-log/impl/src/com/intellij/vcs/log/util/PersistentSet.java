@@ -25,6 +25,8 @@ public interface PersistentSet<T> {
 
   void put(@NotNull T element) throws IOException;
 
+  boolean isEmpty() throws IOException;
+
   void flush();
 
   void markCorrupted();

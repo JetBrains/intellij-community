@@ -15,19 +15,23 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
+import com.intellij.util.ExceptionUtilRt;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.building.ModelBuildingRequest;
+import org.apache.maven.model.building.ModelProblem;
 import org.apache.maven.model.building.ModelProblemCollector;
+import org.apache.maven.model.building.ModelProblemCollectorRequest;
 import org.apache.maven.model.interpolation.ModelInterpolator;
 import org.apache.maven.model.interpolation.StringSearchModelInterpolator;
+import org.apache.maven.project.interpolation.ModelInterpolationException;
 import org.codehaus.plexus.component.annotations.Component;
+import org.codehaus.plexus.interpolation.InterpolationPostProcessor;
 import org.codehaus.plexus.interpolation.MapBasedValueSource;
 import org.codehaus.plexus.interpolation.SingleResponseValueSource;
 import org.codehaus.plexus.interpolation.ValueSource;
 
 import java.io.File;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.List;
@@ -38,7 +42,7 @@ import static org.jetbrains.idea.maven.server.MavenServerEmbedder.MAVEN_EMBEDDER
 /**
  * @author Sergey Evdokimov
  */
-@Component( role = ModelInterpolator.class, hint = "ide")
+@Component(role = ModelInterpolator.class, hint = "ide")
 public class CustomMaven3ModelInterpolator2 extends StringSearchModelInterpolator {
 
   public static final String SHA1_PROPERTY = "sha1";
@@ -47,7 +51,18 @@ public class CustomMaven3ModelInterpolator2 extends StringSearchModelInterpolato
 
   private String localRepository;
 
-  @Override
+
+  public Model interpolateModel(Model model, File projectDir, ModelBuildingRequest config, ModelProblemCollector problems) {
+    String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
+    if (VersionComparatorUtil.compare(mavenVersion, "3.6.2") >= 0) {
+      interpolateObjectFor362(model, model, projectDir, config, problems);
+    }
+    else {
+      return super.interpolateModel(model, projectDir, config, problems);
+    }
+    return model;
+  }
+
   public void interpolateObject(Object obj, Model model, File projectDir, ModelBuildingRequest config, ModelProblemCollector problems) {
     String mavenVersion = System.getProperty(MAVEN_EMBEDDER_VERSION);
     if (VersionComparatorUtil.compare(mavenVersion, "3.6.2") >= 0) {
@@ -70,14 +85,10 @@ public class CustomMaven3ModelInterpolator2 extends StringSearchModelInterpolato
       interpolateObjectMethod.setAccessible(true);
       interpolateObjectMethod.invoke(this, obj, model, projectDir, config, problems);
     }
-    catch (NoSuchMethodException e) {
-      throw new RuntimeException(e);
-    }
-    catch (IllegalAccessException e) {
-      throw new RuntimeException(e);
-    }
-    catch (InvocationTargetException e) {
-      throw new RuntimeException(e);
+    catch (Exception e) {
+      problems.add(new ModelProblemCollectorRequest(ModelProblem.Severity.ERROR, ModelProblem.Version.BASE)
+                     .setException(e)
+                     .setMessage(e.getMessage()));
     }
   }
 

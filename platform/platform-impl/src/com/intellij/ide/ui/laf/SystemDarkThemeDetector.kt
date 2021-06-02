@@ -111,7 +111,7 @@ private class WindowsDetector(override val syncFunction: Consumer<Boolean>) : As
 
   init {
     Toolkit.getDefaultToolkit().addPropertyChangeListener("win.lightTheme.on") { e: PropertyChangeEvent ->
-      syncFunction.accept(e.newValue != java.lang.Boolean.TRUE)
+      ApplicationManager.getApplication().invokeLater(Runnable { syncFunction.accept(e.newValue != java.lang.Boolean.TRUE) }, ModalityState.any())
     }
   }
 

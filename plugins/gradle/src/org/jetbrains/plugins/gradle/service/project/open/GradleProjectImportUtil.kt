@@ -53,7 +53,7 @@ fun createLinkSettings(projectDirectory: Path, project: Project): GradleProjectS
   val gradleSettings = GradleSettings.getInstance(project)
   gradleSettings.setupGradleSettings()
   val gradleProjectSettings = GradleProjectSettings()
-  gradleProjectSettings.setupGradleProjectSettings(projectDirectory)
+  gradleProjectSettings.setupGradleProjectSettings(project, projectDirectory)
 
   val gradleVersion = gradleProjectSettings.resolveGradleVersion()
   setupGradleJvm(project, gradleProjectSettings, gradleVersion)
@@ -69,19 +69,19 @@ fun GradleSettings.setupGradleSettings() {
 }
 
 @ApiStatus.Internal
-fun GradleProjectSettings.setupGradleProjectSettings(projectDirectory: Path) {
+fun GradleProjectSettings.setupGradleProjectSettings(project: Project, projectDirectory: Path) {
   externalProjectPath = projectDirectory.systemIndependentPath
   isUseQualifiedModuleNames = true
   distributionType = GradleEnvironment.Headless.GRADLE_DISTRIBUTION_TYPE?.let(DistributionType::valueOf)
                      ?: DistributionType.DEFAULT_WRAPPED
-  gradleHome = GradleEnvironment.Headless.GRADLE_HOME ?: suggestGradleHome()
+  gradleHome = GradleEnvironment.Headless.GRADLE_HOME ?: suggestGradleHome(project)
 }
 
-private fun suggestGradleHome(): String? {
+private fun suggestGradleHome(project: Project): String? {
   val installationManager = ApplicationManager.getApplication().getService(GradleInstallationManager::class.java)
   val lastUsedGradleHome = GradleUtil.getLastUsedGradleHome().nullize()
   if (lastUsedGradleHome != null) return lastUsedGradleHome
-  val gradleHome = installationManager.autodetectedGradleHome ?: return null
+  val gradleHome = installationManager.getAutodetectedGradleHome(project) ?: return null
   return FileUtil.toCanonicalPath(gradleHome.path)
 }
 

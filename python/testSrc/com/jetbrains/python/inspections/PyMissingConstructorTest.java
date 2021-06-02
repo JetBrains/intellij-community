@@ -72,6 +72,11 @@ public class PyMissingConstructorTest extends PyTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON34, this::doTest);
   }
 
+  // PY-33265
+  public void testAbstractConstructor() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile(TEST_DIRECTORY + getTestName(true) + ".py");
     myFixture.enableInspections(PyMissingConstructorInspection.class);

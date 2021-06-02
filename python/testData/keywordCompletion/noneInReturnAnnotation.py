@@ -1,0 +1,1 @@
+def foo() -> Non<caret>

@@ -56,7 +56,7 @@ public class ConstructorCountInspection extends ClassMetricInspection {
       new CheckBox(InspectionGadgetsBundle.message("too.many.constructors.ignore.deprecated.option"), this, "ignoreDeprecatedConstructors");
 
     final InspectionOptionsPanel panel = new InspectionOptionsPanel();
-    panel.row(label, valueField);
+    panel.addRow(label, valueField);
     panel.add(includeCheckBox);
     return panel;
   }

@@ -8,6 +8,7 @@ public class NonThreadSafeLazyInitialization {
     private static Object foo5;
     private static Object foo6;
     private static Object foo7;
+    private static Object foo8;
     private Object instance;
 
     public Object getInstance() {
@@ -66,5 +67,10 @@ public class NonThreadSafeLazyInitialization {
     public Object getInstance3() {
         if (foo7 == null) <warning descr="Lazy initialization of 'static' field 'foo7' is not thread-safe">foo7</warning> = "";
         return foo7;
+    }
+
+    public Object getInstance4() {
+      if (foo8 == null) foo8 =<EOLError descr="Expression expected"></EOLError><EOLError descr="';' expected"></EOLError>
+      return foo8;
     }
 }

@@ -19,8 +19,12 @@ public interface JsonWidgetSuppressor {
 
   /**
    * Allows to suppress JSON widget for particular files.
-   * This method is called on a background thread under read action only if {@link #isCandidateForSuppress(VirtualFile, Project)}
+   * This method is called only if {@link #isCandidateForSuppress(VirtualFile, Project)}
    * return {@code true} for the given file in the given project.
+   * <br>This method is called on a background thread under read action with progress indicator.
+   * Implementors might want to call {@link com.intellij.openapi.progress.ProgressManager#checkCanceled()}
+   * time to time to check whether widget suppression is still actual for the given file.
+   * For instance progress indicator is canceled if another editor tab is selected.
    */
   boolean suppressSwitcherWidget(@NotNull VirtualFile file, @NotNull Project project);
 }

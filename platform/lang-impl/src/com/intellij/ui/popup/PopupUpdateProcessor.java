@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui.popup;
 
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.ComponentUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -60,12 +61,6 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
   }
 
   private static QuickSearchComponent findQuickSearchComponent(Component c) {
-    while (c != null) {
-      if (c instanceof QuickSearchComponent) {
-        return (QuickSearchComponent) c;
-      }
-      c = c.getParent();
-    }
-    return null;
+    return ComponentUtil.getParentOfType(QuickSearchComponent.class, c);
   }
 }

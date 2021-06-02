@@ -29,7 +29,7 @@ import static com.intellij.openapi.roots.ui.configuration.JdkComboBox.JdkComboBo
  * @author Eugene Zhuravlev
  */
 public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
-  private static final Logger LOG = Logger.getInstance(JdkComboBox.class);
+  private final @Nullable Project myProject;
   @NotNull private final Consumer<Sdk> myOnNewSdkAdded;
 
   @Nullable private JButton mySetUpButton;
@@ -123,6 +123,7 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
                      @NotNull SdkListModelBuilder modelBuilder,
                      @Nullable Consumer<? super Sdk> onNewSdkAdded) {
     super(modelBuilder);
+    myProject = project;
     myOnNewSdkAdded = sdk -> {
       if (onNewSdkAdded != null) {
         onNewSdkAdded.consume(sdk);
@@ -243,10 +244,18 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
     return (JdkComboBoxItem)super.getSelectedItem();
   }
 
-  @Nullable
-  public Sdk getSelectedJdk() {
-    final JdkComboBoxItem selectedItem = getSelectedItem();
-    return selectedItem != null? selectedItem.getJdk() : null;
+  /**
+   * Returns selected JDK or null if there is no selection or Project JDK inherited.
+   *
+   * @see #isProjectJdkSelected()
+   */
+  public @Nullable Sdk getSelectedJdk() {
+    JdkComboBoxItem selectedItem = getSelectedItem();
+    return selectedItem != null ? selectedItem.getJdk() : null;
+  }
+
+  public boolean isProjectJdkSelected() {
+    return getSelectedItem() instanceof ProjectJdkComboBoxItem;
   }
 
   public void setSelectedJdk(@Nullable Sdk jdk) {
@@ -286,7 +295,8 @@ public class JdkComboBox extends SdkComboBoxBase<JdkComboBoxItem> {
 
     DialogWrapper dialogWrapper = DialogWrapper.findInstance(this);
     if (dialogWrapper == null) {
-      LOG.warn("Cannot find DialogWrapper parent for the JdkComboBox " + this + ", SDK search is disabled", new RuntimeException());
+      Logger.getInstance(JdkComboBox.class)
+        .warn("Cannot find DialogWrapper parent for the JdkComboBox " + this + ", SDK search is disabled", new RuntimeException());
       return;
     }
 

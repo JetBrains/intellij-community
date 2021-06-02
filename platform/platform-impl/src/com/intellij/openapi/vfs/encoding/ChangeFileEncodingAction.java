@@ -63,14 +63,14 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
   public final void actionPerformed(@NotNull final AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
 
-    ListPopup popup = createPopup(dataContext);
+    ListPopup popup = createPopup(dataContext, null);
     if (popup != null) {
       popup.showInBestPositionFor(dataContext);
     }
   }
 
   @Nullable
-  public ListPopup createPopup(@NotNull DataContext dataContext) {
+  public ListPopup createPopup(@NotNull DataContext dataContext, @Nullable ActionGroup extraActions) {
     final VirtualFile virtualFile = CommonDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (virtualFile == null) return null;
     boolean enabled = checkEnabled(virtualFile);
@@ -88,9 +88,15 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware, Lig
       return null;
     }
     DefaultActionGroup group = createActionGroup(virtualFile, editor, document, bytes, null);
+    DefaultActionGroup popupGroup = new DefaultActionGroup();
+    if (extraActions != null) {
+      popupGroup.add(extraActions);
+      popupGroup.addSeparator();
+    }
+    popupGroup.add(group);
 
     return JBPopupFactory.getInstance().createActionGroupPopup(getTemplatePresentation().getText(),
-      group, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
+      popupGroup, dataContext, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
   @NotNull

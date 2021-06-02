@@ -1,6 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.workspaceModel.ide
 
+import com.esotericsoftware.kryo.DefaultSerializer
+import com.esotericsoftware.kryo.Kryo
+import com.esotericsoftware.kryo.Serializer
+import com.esotericsoftware.kryo.io.Input
+import com.esotericsoftware.kryo.io.Output
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.roots.ProjectModelExternalSource
@@ -8,6 +13,8 @@ import com.intellij.project.isDirectoryBased
 import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.jps.util.JpsPathUtil
 import java.util.concurrent.atomic.AtomicInteger
 
@@ -53,6 +60,7 @@ sealed class JpsFileEntitySource : EntitySource {
    * Represents an xml file located in the specified [directory] which contains configuration of some entities of IntelliJ IDEA project.
    * The file name is automatically derived from the entity name.
    */
+  @DefaultSerializer(FileInDirectorySerializer::class)
   data class FileInDirectory(val directory: VirtualFileUrl, override val projectLocation: JpsProjectConfigLocation) : JpsFileEntitySource() {
     /**
      * Automatically generated value which is used to distinguish different files in [directory]. The actual name is stored in serialization
@@ -62,6 +70,15 @@ sealed class JpsFileEntitySource : EntitySource {
 
     companion object {
       private val nextId = AtomicInteger()
+
+      /**
+       * This method is temporary added for tests only
+       */
+      @ApiStatus.Internal
+      @TestOnly
+      fun resetId() {
+        nextId.set(0)
+      }
     }
 
     override val virtualFileUrl: VirtualFileUrl
@@ -136,3 +153,16 @@ val Project.configLocation: JpsProjectConfigLocation?
       JpsProjectConfigLocation.FileBased(iprFile, virtualFileUrlManager.getParentVirtualUrl(iprFile)!!)
     }
   }
+
+internal class FileInDirectorySerializer : Serializer<JpsFileEntitySource.FileInDirectory>(false, true) {
+  override fun write(kryo: Kryo, output: Output, o: JpsFileEntitySource.FileInDirectory) {
+    kryo.writeClassAndObject(output, o.directory)
+    kryo.writeClassAndObject(output, o.projectLocation)
+  }
+
+  override fun read(kryo: Kryo, input: Input, type: Class<JpsFileEntitySource.FileInDirectory>): JpsFileEntitySource.FileInDirectory {
+    val fileUrl = kryo.readClassAndObject(input) as VirtualFileUrl
+    val location = kryo.readClassAndObject(input) as JpsProjectConfigLocation
+    return JpsFileEntitySource.FileInDirectory(fileUrl, location)
+  }
+}

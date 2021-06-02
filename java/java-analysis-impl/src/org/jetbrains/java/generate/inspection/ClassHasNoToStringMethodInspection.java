@@ -188,7 +188,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
             }
         });
 
-        panel.row(new JLabel(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.exclude.classes.reg.exp.option")), excludeClassNamesField);
+        panel.addRow(new JLabel(JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.exclude.classes.reg.exp.option")), excludeClassNamesField);
 
         final CheckBox excludeExceptionCheckBox = new CheckBox(
           JavaAnalysisBundle.message("inspection.class.has.no.to.string.method.ignore.exception.classes.option"), this, "excludeException");

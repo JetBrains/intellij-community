@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle
 
+import com.intellij.execution.target.value.TargetValue
 import com.intellij.ide.impl.ProjectUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
@@ -18,7 +19,9 @@ import org.gradle.tooling.ProjectConnection
 import org.gradle.tooling.internal.consumer.DefaultGradleConnector
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.ApiStatus
+import org.jetbrains.concurrency.resolvedPromise
 import org.jetbrains.plugins.gradle.execution.target.TargetGradleConnector
+import org.jetbrains.plugins.gradle.execution.target.maybeConvertToRemote
 import org.jetbrains.plugins.gradle.internal.daemon.GradleDaemonServices
 import org.jetbrains.plugins.gradle.service.project.DistributionFactoryExt
 import org.jetbrains.plugins.gradle.settings.DistributionType
@@ -196,23 +199,42 @@ internal class GradleConnectorService(@Suppress("UNUSED_PARAMETER") project: Pro
         connector = GradleConnector.newConnector()
       }
       val projectDir = File(connectorParams.projectPath)
-      val gradleUserHome = if (connectorParams.serviceDirectory == null) null else File(connectorParams.serviceDirectory)
+      // GradleExecutionSettings.serviceDirectory contains the path in IDE "host" system file format
+      val localPathToGradleUserHome = connectorParams.serviceDirectory
 
       if (connectorParams.distributionType == DistributionType.LOCAL) {
-        val gradleHome = if (connectorParams.gradleHome == null) null else File(connectorParams.gradleHome)
-        if (gradleHome != null) {
-          connector.useInstallation(gradleHome)
+        // GradleExecutionSettings.gradleHome contains the path in IDE "host" system file format for compatibility reasons
+        val localPathToGradleHome = connectorParams.gradleHome
+        if (localPathToGradleHome != null) {
+          if (connector is TargetGradleConnector) {
+            val targetPathMapper = connectorParams.environmentConfigurationProvider?.pathMapper
+            val targetGradleHomePath = targetPathMapper.maybeConvertToRemote(localPathToGradleHome)
+            // can not use system dependant java.io.File to pass the value to target Gradle runner i.e. GradleConnector#useInstallation(java.io.File)
+            connector.useInstallation(TargetValue.create(localPathToGradleHome, resolvedPromise(targetGradleHomePath)))
+          }
+          else {
+            connector.useInstallation(File(localPathToGradleHome))
+          }
         }
       }
       else if (connectorParams.distributionType == DistributionType.WRAPPED) {
         if (connectorParams.wrapperPropertyFile != null) {
-          DistributionFactoryExt.setWrappedDistribution(connector, connectorParams.wrapperPropertyFile, gradleUserHome, projectDir)
+          val gradleUserHomeLocalFile = localPathToGradleUserHome?.let { File(localPathToGradleUserHome) }
+          DistributionFactoryExt.setWrappedDistribution(connector, connectorParams.wrapperPropertyFile, gradleUserHomeLocalFile, projectDir)
         }
       }
 
       // Setup Grade user home if necessary
-      if (gradleUserHome != null) {
-        connector.useGradleUserHomeDir(gradleUserHome)
+      if (localPathToGradleUserHome != null) {
+        if (connector is TargetGradleConnector) {
+          val targetPathMapper = connectorParams.environmentConfigurationProvider?.pathMapper
+          val targetGradleUserHomePath = targetPathMapper.maybeConvertToRemote(localPathToGradleUserHome)
+          // can not use system dependant java.io.File to pass the value to target Gradle runner i.e. GradleConnector#useInstallation(java.io.File)
+          connector.useGradleUserHomeDir(TargetValue.create(localPathToGradleUserHome, resolvedPromise(targetGradleUserHomePath)))
+        }
+        else {
+          connector.useGradleUserHomeDir(File(localPathToGradleUserHome))
+        }
       }
       // Setup logging if necessary
       if (connectorParams.verboseProcessing == true && connector is DefaultGradleConnector) {

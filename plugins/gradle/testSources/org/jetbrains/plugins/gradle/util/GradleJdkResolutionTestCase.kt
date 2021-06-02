@@ -8,9 +8,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ui.configuration.SdkLookupProviderImpl
 import com.intellij.openapi.util.io.FileUtil
 import org.gradle.util.GradleVersion
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
-import org.jetbrains.plugins.gradle.settings.GradleSystemSettings
 import java.io.File
 import java.util.*
 
@@ -95,7 +95,7 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
   }
 
   fun assertGradleProperties(java: TestSdk?) {
-    assertEquals(java?.homePath, getGradleJavaHome(externalProjectPath))
+    assertEquals(java?.homePath, getGradleJavaHome(project, externalProjectPath))
   }
 
   fun assertSuggestedGradleVersionFor(gradleVersion: GradleVersion?, javaVersionString: String) {
@@ -115,14 +115,14 @@ abstract class GradleJdkResolutionTestCase : ExternalSystemJdkUtilTestCase() {
   }
 
   fun withServiceGradleUserHome(action: () -> Unit) {
-    val systemSettings = GradleSystemSettings.getInstance()
-    val serviceDirectoryPath = systemSettings.serviceDirectoryPath
-    systemSettings.serviceDirectoryPath = gradleUserHome
+    val localSettings = GradleLocalSettings.getInstance(project)
+    val localGradleUserHome = localSettings.gradleUserHome
+    localSettings.gradleUserHome = gradleUserHome
     try {
       action()
     }
     finally {
-      systemSettings.serviceDirectoryPath = serviceDirectoryPath
+      localSettings.gradleUserHome = localGradleUserHome
     }
   }
 

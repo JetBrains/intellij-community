@@ -193,11 +193,10 @@ public final class LogsFragment<T extends RunConfigurationBase<?>> extends Neste
       LabeledComponent.create(myOutputFile, ExecutionBundle.message("save.output.console.to.file"), BorderLayout.WEST);
     SettingsEditorFragment<T, LabeledComponent<TextFieldWithBrowseButton>> fragment =
       new SettingsEditorFragment<>("logs.save.output", ExecutionBundle.message("save.output.console.to.file.option"), null, component,
-                                   (t, component1) -> component1.getComponent().setText(
-                                     StringUtil.notNullize(t.getOutputFilePath())),
-                                   (t, component1) -> {
-                                     t.setFileOutputPath(component1.getComponent().getText());
-                                     t.setSaveOutputToFile(StringUtil.isNotEmpty(component.getComponent().getText()));
+                                   (t, c) -> c.getComponent().setText(StringUtil.notNullize(t.getOutputFilePath())),
+                                   (t, c) -> {
+                                     t.setFileOutputPath(c.getComponent().getText());
+                                     t.setSaveOutputToFile(c.isVisible() && StringUtil.isNotEmpty(component.getComponent().getText()));
                                    },
                                    t -> t.isSaveOutputToFile());
     fragment.setActionHint(ExecutionBundle.message("write.the.output.of.the.application.to.a.file.for.later.inspection"));

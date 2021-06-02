@@ -1,18 +1,20 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.diagnostic.dto
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.util.SystemInfo
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 
+@JsonIgnoreProperties(ignoreUnknown = true)
 data class JsonIndexDiagnosticAppInfo(
-  val build: String,
-  val buildDate: JsonDateTime,
-  val productCode: String,
-  val generated: JsonDateTime,
-  val os: String,
-  val runtime: String
+  val build: String = "",
+  val buildDate: JsonDateTime = JsonDateTime(),
+  val productCode: String = "",
+  val generated: JsonDateTime = JsonDateTime(),
+  val os: String = "",
+  val runtime: String = ""
 ) {
   companion object {
     fun create(): JsonIndexDiagnosticAppInfo {

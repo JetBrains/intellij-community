@@ -2,8 +2,10 @@
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JPanel
 
+@ApiStatus.Internal
 interface StartPagePromoter {
   companion object {
     @JvmField
@@ -12,5 +14,6 @@ interface StartPagePromoter {
 
   fun getPromotionForInitialState(): JPanel?
 
+  @Deprecated("This API is not using anymore")
   fun needToHideSingleProject(path: String): Boolean = false
 }

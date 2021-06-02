@@ -19,6 +19,8 @@
     <executor implementation="com.intellij.coverage.CoverageExecutor" />
     <editorFactoryListener implementation="com.intellij.coverage.CoverageDataManagerImpl$CoverageEditorFactoryListener"/>
     <selectInTarget implementation="com.intellij.coverage.view.SelectInCoverageView"/>
+
+    <statistics.counterUsagesCollector implementationClass="com.intellij.coverage.CoverageLogger"/>
   </extensions>
   <applicationListeners>
     <listener class="com.intellij.coverage.CoverageDataManagerImpl$CoverageProjectManagerListener" topic="com.intellij.openapi.project.ProjectManagerListener"/>

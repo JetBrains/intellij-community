@@ -56,7 +56,7 @@ import static com.intellij.vcs.log.util.PersistentUtil.calcIndexId;
 @NonNls
 public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogPersistentIndex.class);
-  private static final int VERSION = 16;
+  private static final int VERSION = 17;
   public static final VcsLogProgress.ProgressKey INDEXING = new VcsLogProgress.ProgressKey("index");
 
   @NotNull private final Project myProject;
@@ -352,10 +352,28 @@ public class VcsLogPersistentIndex implements VcsLogModifiableIndex, Disposable 
         timestamps = new PersistentHashMap<>(timestampsStorage, EnumeratorIntegerDescriptor.INSTANCE, new LongPairDataExternalizer(),
                                              Page.PAGE_SIZE, storageId.getVersion(), storageLockContext);
         Disposer.register(this, () -> catchAndWarn(timestamps::close));
+
+        checkConsistency();
       }
       catch (Throwable t) {
         Disposer.dispose(this);
         throw t;
+      }
+    }
+
+    private void checkConsistency() throws IOException {
+      if (!commits.isEmpty()) {
+        boolean trigramsEmpty = trigrams.isEmpty();
+        boolean usersEmpty = users.isEmpty();
+        boolean pathsEmpty = paths.isEmpty();
+        if (trigramsEmpty || usersEmpty || pathsEmpty) {
+          IOException exception = new IOException("Broken index maps:\n" +
+                                                  "trigrams empty " + trigramsEmpty + "\n" +
+                                                  "users empty " + usersEmpty + "\n" +
+                                                  "paths empty " + pathsEmpty);
+          LOG.error(exception);
+          throw exception;
+        }
       }
     }
 

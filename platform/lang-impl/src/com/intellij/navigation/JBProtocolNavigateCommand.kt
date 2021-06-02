@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.navigation
 
 import com.intellij.ide.IdeBundle
@@ -6,8 +6,7 @@ import com.intellij.ide.RecentProjectListActionProvider
 import com.intellij.ide.RecentProjectsManagerBase
 import com.intellij.ide.ReopenProjectAction
 import com.intellij.ide.actions.searcheverywhere.SymbolSearchEverywhereContributor
-import com.intellij.ide.impl.OpenProjectTask
-import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.impl.*
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext
@@ -25,12 +24,15 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.StatusBarProgress
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.guessProjectDir
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiElement
 import com.intellij.util.PsiNavigateUtil
 import java.io.File
+import java.nio.file.Path
 import java.nio.file.Paths
 import java.util.regex.Pattern
 
@@ -38,6 +40,7 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
   companion object {
     const val NAVIGATE_COMMAND = "navigate"
     const val PROJECT_NAME_KEY = "project"
+    const val ORIGIN_URL_KEY = "origin"
     const val REFERENCE_TARGET = "reference"
     const val PATH_KEY = "path"
     const val FQN_KEY = "fqn"
@@ -60,7 +63,8 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
      */
 
     val projectName = parameters[PROJECT_NAME_KEY]
-    if (projectName.isNullOrEmpty()) {
+    val originUrl = parameters[ORIGIN_URL_KEY]
+    if (projectName.isNullOrEmpty() && originUrl.isNullOrEmpty()) {
       return
     }
 
@@ -69,27 +73,33 @@ open class JBProtocolNavigateCommand : JBProtocolCommand(NAVIGATE_COMMAND) {
       return
     }
 
-    for (recentProjectAction in RecentProjectListActionProvider.getInstance().getActions()) {
-      if (recentProjectAction !is ReopenProjectAction || recentProjectAction.projectName != projectName) {
-        continue
-      }
-
-      for (project in ProjectUtil.getOpenProjects()) {
-        if (project.name == projectName) {
-          findAndNavigateToReference(project, parameters)
-          return
-        }
-      }
-
-      ApplicationManager.getApplication().invokeLater(Runnable {
-        val project = RecentProjectsManagerBase.instanceEx.openProject(Paths.get(recentProjectAction.projectPath), OpenProjectTask()) ?: return@Runnable
-        StartupManager.getInstance(project).runAfterOpened {
-          DumbService.getInstance(project).runWhenSmart {
-            findAndNavigateToReference(project, parameters)
-          }
-        }
-      }, ModalityState.NON_MODAL)
+    val check = { name: String, path: Path? ->
+      !projectName.isNullOrEmpty() && name == projectName || areOriginsEqual(originUrl, getProjectOriginUrl(path))
     }
+
+    val project = ProjectUtil.getOpenProjects().find { project -> check.invoke(project.name, project.guessProjectDir()?.toNioPath()) }
+
+    if (project != null) {
+      findAndNavigateToReference(project, parameters)
+      return
+    }
+
+    val actions = RecentProjectListActionProvider.getInstance().getActions()
+    val recentProjectAction =
+      actions
+        .filterIsInstance(ReopenProjectAction::class.java)
+        .find { check.invoke(it.projectName, Paths.get(it.projectPath)) }
+      ?: return
+
+
+    ApplicationManager.getApplication().invokeLater(Runnable {
+      val openProject = RecentProjectsManagerBase.instanceEx.openProject(Paths.get(recentProjectAction.projectPath), OpenProjectTask()) ?: return@Runnable
+      StartupManager.getInstance(openProject).runAfterOpened {
+        DumbService.getInstance(openProject).runWhenSmart {
+          findAndNavigateToReference(openProject, parameters)
+        }
+      }
+    }, ModalityState.NON_MODAL)
   }
 }
 
@@ -100,6 +110,7 @@ private const val FILE_PROTOCOL = "file://"
 private const val PATH_GROUP = "path"
 private const val LINE_GROUP = "line"
 private const val COLUMN_GROUP = "column"
+private const val REVISION = "revision"
 private val PATH_WITH_LOCATION = Pattern.compile("(?<${PATH_GROUP}>[^:]*)(:(?<${LINE_GROUP}>[\\d]+))?(:(?<${COLUMN_GROUP}>[\\d]+))?")
 
 private fun findAndNavigateToReference(project: Project, parameters: Map<String, String>) {
@@ -135,13 +146,42 @@ private fun navigateByPath(project: Project, parameters: Map<String, String>, pa
     path = File(project.basePath, path).absolutePath
   }
 
-  val virtualFile = VirtualFileManager.getInstance().findFileByUrl(FILE_PROTOCOL + path) ?: return
-  FileEditorManager.getInstance(project).openFile(virtualFile, true)
-    .filterIsInstance<TextEditor>().first().let { textEditor ->
-      val editor = textEditor.editor
-      editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
-      setSelections(parameters, project)
+  runNavigateTask(pathText, project) {
+    val virtualFile = findFile(project, path, parameters[REVISION])
+    if (virtualFile == null) return@runNavigateTask
+
+    ApplicationManager.getApplication().invokeLater {
+      FileEditorManager.getInstance(project).openFile(virtualFile, true)
+        .filterIsInstance<TextEditor>().first().let { textEditor ->
+          val editor = textEditor.editor
+          editor.caretModel.moveToOffset(editor.logicalPositionToOffset(LogicalPosition(line?.toInt() ?: 0, column?.toInt() ?: 0)))
+          setSelections(parameters, project)
+        }
     }
+  }
+}
+
+private fun findFile(project: Project, absolutePath: String?, revision: String?): VirtualFile? {
+  absolutePath ?: return null
+
+  if (revision != null) {
+    val virtualFile = JBProtocolRevisionResolver.processResolvers(project, absolutePath, revision)
+    if (virtualFile != null) return virtualFile
+  }
+  return VirtualFileManager.getInstance().findFileByUrl(FILE_PROTOCOL + absolutePath)
+}
+
+
+private fun runNavigateTask(reference: String, project: Project, task: (indicator: ProgressIndicator) -> Unit) {
+  ProgressManager.getInstance().run(
+    object : Task.Backgroundable(project, IdeBundle.message("navigate.command.search.reference.progress.title", reference), true) {
+      override fun run(indicator: ProgressIndicator) {
+        task.invoke(indicator)
+      }
+
+      override fun shouldStartInBackground(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
+      override fun isConditionalModal(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
+    })
 }
 
 private fun navigateByFqn(project: Project, parameters: Map<String, String>, reference: String) {
@@ -149,24 +189,19 @@ private fun navigateByFqn(project: Project, parameters: Map<String, String>, ref
   // multiple references are encoded and decoded properly
   val fqn = parameters[FRAGMENT_PARAM_NAME]?.let { "$reference#$it" } ?: reference
 
-  ProgressManager.getInstance().run(
-    object : Task.Backgroundable(project, IdeBundle.message("navigate.command.search.reference.progress.title", fqn), true) {
-      override fun run(indicator: ProgressIndicator) {
-        val dataContext = SimpleDataContext.getProjectContext(project)
-        SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext))
-          .search(fqn, ProgressManager.getInstance().progressIndicator ?: StatusBarProgress())
-          .filterIsInstance<PsiElement>()
-          .forEach {
-            ApplicationManager.getApplication().invokeLater {
-              PsiNavigateUtil.navigate(it)
-              setSelections(parameters, project)
-            }
-          }
+  runNavigateTask(reference, project) {
+    val dataContext = SimpleDataContext.getProjectContext(project)
+    SymbolSearchEverywhereContributor(AnActionEvent.createFromDataContext(ActionPlaces.UNKNOWN, null, dataContext))
+      .search(fqn, ProgressManager.getInstance().progressIndicator ?: StatusBarProgress())
+      .filterIsInstance<PsiElement>()
+      .forEach {
+        ApplicationManager.getApplication().invokeLater {
+          PsiNavigateUtil.navigate(it)
+          setSelections(parameters, project)
+        }
       }
+  }
 
-      override fun shouldStartInBackground(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
-      override fun isConditionalModal(): Boolean = !ApplicationManager.getApplication().isUnitTestMode
-    })
 }
 
 private fun setSelections(parameters: Map<String, String>, project: Project) {

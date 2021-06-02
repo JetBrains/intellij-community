@@ -9,7 +9,6 @@ import com.intellij.execution.configurations.ConfigurationTypeUtil
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.project.DumbService
 import com.intellij.ui.ColoredTreeCellRenderer
-import com.intellij.ui.IconManager
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.ui.EmptyIcon
@@ -52,9 +51,7 @@ internal class RunConfigurableTreeRenderer(private val runManager: RunManagerImp
           val configurationSettings: RunnerAndConfigurationSettings = userObject.settings
           configuration = configurationSettings
           isShared = userObject.isStoredInFile
-          icon = IconManager.getInstance().createDeferredIcon(ProgramRunnerUtil.getConfigurationIcon(configurationSettings, false), userObject) {
-            return@createDeferredIcon ProgramRunnerUtil.getConfigurationIcon(configurationSettings, !it.isValid)
-          }
+          icon = ProgramRunnerUtil.getConfigurationIcon(configurationSettings, !userObject.isValid)
         }
         else if (userObject is RunnerAndConfigurationSettings) {
           isShared = userObject.isShared

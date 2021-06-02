@@ -69,7 +69,7 @@ public class MultipleReturnPointsPerMethodInspection
     final JFormattedTextField termLimitTextField =
       prepareNumberEditor("m_limit");
 
-    panel.row(label, termLimitTextField);
+    panel.addRow(label, termLimitTextField);
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.guard.clauses.option"), "ignoreGuardClauses");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.for.equals.methods.option"), "ignoreEqualsMethod");
 

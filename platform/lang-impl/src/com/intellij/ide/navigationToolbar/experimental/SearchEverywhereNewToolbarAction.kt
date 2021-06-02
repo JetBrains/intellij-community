@@ -107,7 +107,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         JBInsets.removeFrom(viewRect, margins)
         val iconRect = Rectangle()
         val textRect = Rectangle()
-        val text = SwingUtilities.layoutCompoundLabel(this, fm, presentation.text, icon,
+        val text = SwingUtilities.layoutCompoundLabel(this, fm, presentation.getText(true), icon,
                                                       SwingConstants.CENTER, horizontalTextAlignment(),
                                                       SwingConstants.CENTER, horizontalTextPosition(),
                                                       viewRect, iconRect, textRect, iconTextSpace())

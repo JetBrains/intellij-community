@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.builder;
 
 import org.gradle.api.Project;
@@ -33,7 +19,10 @@ import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder;
 import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -93,33 +82,33 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
         Collection<File> projectDependencyArtifacts = projectDependency.getProjectDependencyArtifacts();
         Collection<File> projectDependencyArtifactsSources = projectDependency.getProjectDependencyArtifactsSources();
         buildScriptClasspath.add(new ClasspathEntryModelImpl(
-          pathSet(projectDependencyArtifacts),
-          pathSet(projectDependencyArtifactsSources),
-          Collections.<String>emptySet()
+          projectDependencyArtifacts,
+          projectDependencyArtifactsSources,
+          Collections.<File>emptySet()
         ));
       }
       else if (dependency instanceof ExternalLibraryDependency) {
         final ExternalLibraryDependency libraryDep = (ExternalLibraryDependency)dependency;
         buildScriptClasspath.add(new ClasspathEntryModelImpl(
-          pathSet(libraryDep.getFile()),
-          pathSet(libraryDep.getSource()),
-          pathSet(libraryDep.getJavadoc())
+          singletonListOrEmpty(libraryDep.getFile()),
+          singletonListOrEmpty(libraryDep.getSource()),
+          singletonListOrEmpty(libraryDep.getJavadoc())
         ));
       }
       else if (dependency instanceof ExternalMultiLibraryDependency) {
         ExternalMultiLibraryDependency multiLibraryDependency = (ExternalMultiLibraryDependency)dependency;
         buildScriptClasspath.add(new ClasspathEntryModelImpl(
-          pathSet(multiLibraryDependency.getFiles()),
-          pathSet(multiLibraryDependency.getSources()),
-          pathSet(multiLibraryDependency.getJavadoc())
+          multiLibraryDependency.getFiles(),
+          multiLibraryDependency.getSources(),
+          multiLibraryDependency.getJavadoc()
         ));
       }
       else if (dependency instanceof FileCollectionDependency) {
         FileCollectionDependency fileCollectionDependency = (FileCollectionDependency)dependency;
         buildScriptClasspath.add(new ClasspathEntryModelImpl(
-          pathSet(fileCollectionDependency.getFiles()),
-          Collections.<String>emptySet(),
-          Collections.<String>emptySet()
+          fileCollectionDependency.getFiles(),
+          Collections.<File>emptySet(),
+          Collections.<File>emptySet()
         ));
       }
     }
@@ -136,20 +125,8 @@ public class ModelBuildScriptClasspathBuilderImpl extends AbstractModelBuilderSe
     ).withDescription("Unable to resolve additional buildscript classpath dependencies");
   }
 
-  private static Set<String> pathSet(Collection<File> files) {
-    if (files.isEmpty()) return Collections.emptySet();
-    Set<String> set = new HashSet<String>(files.size());
-    for (File file : files) {
-      if(file != null) {
-        set.add(file.getPath());
-      }
-    }
-    if (set.isEmpty()) return Collections.emptySet();
-    if (set.size() == 1) return Collections.singleton(set.iterator().next());
-    return set;
-  }
-
-  private static Set<String> pathSet(File... files) {
-    return pathSet(Arrays.asList(files));
+  @NotNull
+  private static List<File> singletonListOrEmpty(@Nullable File file) {
+    return file == null ? Collections.<File>emptyList() : Collections.singletonList(file);
   }
 }

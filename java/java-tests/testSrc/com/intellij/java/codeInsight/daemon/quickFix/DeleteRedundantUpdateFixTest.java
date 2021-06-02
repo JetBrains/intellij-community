@@ -32,7 +32,7 @@ public class DeleteRedundantUpdateFixTest extends LightQuickFixParameterizedTest
   @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
-    return LightJavaCodeInsightFixtureTestCase.JAVA_10_ANNOTATED;
+    return LightJavaCodeInsightFixtureTestCase.JAVA_11_ANNOTATED;
   }
 
   @Override

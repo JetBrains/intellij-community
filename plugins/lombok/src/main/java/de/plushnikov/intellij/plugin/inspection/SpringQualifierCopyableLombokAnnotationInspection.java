@@ -2,7 +2,6 @@ package de.plushnikov.intellij.plugin.inspection;
 
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import de.plushnikov.intellij.plugin.LombokBundle;
 import de.plushnikov.intellij.plugin.LombokClassNames;
@@ -12,7 +11,6 @@ import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.Objects;
 
 /**
  * @author Plushnikov Michail
@@ -20,7 +18,6 @@ import java.util.Objects;
 public class SpringQualifierCopyableLombokAnnotationInspection extends LombokJavaInspectionBase {
 
   private static final String SPRING_QUALIFIER_FQN = "org.springframework.beans.factory.annotation.Qualifier";
-  private static final String SPRING_QUALIFIER_SIMPLE_NAME = StringUtil.getShortName(SPRING_QUALIFIER_FQN);
 
   @NotNull
   @Override
@@ -37,8 +34,7 @@ public class SpringQualifierCopyableLombokAnnotationInspection extends LombokJav
 
     @Override
     public void visitAnnotation(final PsiAnnotation annotation) {
-      if (Objects.equals(PsiAnnotationSearchUtil.getSimpleNameOf(annotation), SPRING_QUALIFIER_SIMPLE_NAME) &&
-          Objects.equals(annotation.getQualifiedName(), SPRING_QUALIFIER_FQN)) {
+      if (annotation.hasQualifiedName(SPRING_QUALIFIER_FQN)) {
 
         PsiAnnotationOwner annotationOwner = annotation.getOwner();
         if (annotationOwner instanceof PsiModifierList) {

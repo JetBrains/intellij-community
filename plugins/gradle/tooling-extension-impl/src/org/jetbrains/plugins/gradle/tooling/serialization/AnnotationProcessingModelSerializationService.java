@@ -15,6 +15,7 @@ import org.jetbrains.plugins.gradle.tooling.util.IntObjectMap;
 import org.jetbrains.plugins.gradle.tooling.util.ObjectCollector;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
@@ -141,7 +142,7 @@ public final class AnnotationProcessingModelSerializationService implements Seri
           @Override
           public AnnotationProcessingConfigImpl create() {
             List<String> args = readStringList(reader);
-            List<String> files = readStringList(reader);
+            List<File> files = readFiles(reader);
             String output = readString(reader, "output");
             boolean isTest = readBoolean(reader,"isTestSources");
             return new AnnotationProcessingConfigImpl(files, args, output, isTest);

@@ -12,10 +12,12 @@ import com.google.common.collect.HashMultimap
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.ReflectionUtil
 import com.intellij.util.SmartList
-import com.intellij.util.containers.*
+import com.intellij.util.containers.BidirectionalMultiMap
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MostlySingularMultiMap
+import com.intellij.util.containers.MultiMap
 import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.impl.containers.*
-import com.intellij.workspaceModel.storage.impl.containers.BidirectionalMap
 import com.intellij.workspaceModel.storage.impl.indices.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -38,7 +40,7 @@ private val LOG = logger<EntityStorageSerializerImpl>()
 class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver,
                                   private val virtualFileManager: VirtualFileUrlManager) : EntityStorageSerializer {
   companion object {
-    const val SERIALIZER_VERSION = "v12"
+    const val SERIALIZER_VERSION = "v16"
   }
 
   private val KRYO_BUFFER_SIZE = 64 * 1024
@@ -49,6 +51,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   internal fun createKryo(): Kryo {
     val kryo = Kryo()
 
+    kryo.setAutoReset(false)
     kryo.isRegistrationRequired = true
     kryo.instantiatorStrategy = StdInstantiatorStrategy()
 
@@ -414,7 +417,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
     }
   }
 
-  override fun deserializeCache(stream: InputStream): WorkspaceEntityStorageBuilder? {
+  override fun deserializeCache(stream: InputStream, consistencyCheckingMode: ConsistencyCheckingMode): WorkspaceEntityStorageBuilder? {
     return Input(stream, KRYO_BUFFER_SIZE).use { input ->
       val kryo = createKryo()
 
@@ -450,9 +453,8 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
         val persistentIdIndex = kryo.readClassAndObject(input) as EntityStorageInternalIndex<PersistentEntityId<*>>
         val storageIndexes = StorageIndexes(softLinks, virtualFileIndex, entitySourceIndex, persistentIdIndex)
 
-        val checkingMode = ConsistencyCheckingMode.default()
-        val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes, checkingMode)
-        val builder = WorkspaceEntityStorageBuilderImpl.from(storage, checkingMode)
+        val storage = WorkspaceEntityStorageImpl(entitiesBarrel, refsTable, storageIndexes, consistencyCheckingMode)
+        val builder = WorkspaceEntityStorageBuilderImpl.from(storage, consistencyCheckingMode)
 
         builder.entitiesByType.entityFamilies.forEach { family ->
           family?.entities?.asSequence()?.filterNotNull()?.forEach { entityData -> builder.createAddEvent(entityData) }
@@ -484,7 +486,7 @@ class EntityStorageSerializerImpl(private val typesResolver: EntityTypesResolver
   }
 
   fun deserializeCacheAndDiffLog(storeStream: InputStream, diffLogStream: InputStream): WorkspaceEntityStorageBuilder? {
-    val builder = this.deserializeCache(storeStream) ?: return null
+    val builder = this.deserializeCache(storeStream, ConsistencyCheckingMode.default()) ?: return null
 
     var log: ChangeLog
     Input(diffLogStream, KRYO_BUFFER_SIZE).use { input ->

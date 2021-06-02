@@ -86,9 +86,9 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
       writer.saveComponent(fileUrlString, "ExternalSystem", componentTag)
     }
     if (moduleType != null) {
-      val componentTag = JDomSerializationUtil.createComponentElement("DeprecatedModuleOptionManager")
+      val componentTag = JDomSerializationUtil.createComponentElement(DEPRECATED_MODULE_MANAGER_COMPONENT_NAME)
       componentTag.addContent(Element("option").setAttribute("key", "type").setAttribute("value", moduleType))
-      writer.saveComponent(fileUrlString, "DeprecatedModuleOptionManager", componentTag)
+      writer.saveComponent(fileUrlString, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, componentTag)
     }
   }
 
@@ -96,7 +96,7 @@ internal class ExternalModuleImlFileEntitiesSerializer(modulePath: ModulePath,
     JpsImportedEntitySource(internalEntitySource, externalSystemId, true)
 
   override fun createFacetSerializer(): FacetEntitiesSerializer {
-    return FacetEntitiesSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", true)
+    return FacetEntitiesSerializer(fileUrl, internalEntitySource, "ExternalFacetManager", getBaseDirPath(), true)
   }
 
   override fun getBaseDirPath(): String? {
@@ -144,7 +144,7 @@ internal class ExternalModuleListSerializer(private val externalStorageRoot: Vir
     if (FileUtil.extensionEquals(fileUrl, "xml")) {
       writer.saveComponent(fileUrl, "ExternalSystem", null)
       writer.saveComponent(fileUrl, "ExternalFacetManager", null)
-      writer.saveComponent(fileUrl, "DeprecatedModuleOptionManager", null)
+      writer.saveComponent(fileUrl, DEPRECATED_MODULE_MANAGER_COMPONENT_NAME, null)
     }
   }
 

@@ -70,14 +70,9 @@ public class AnnotationProcessingModelBuilder extends AbstractModelBuilderServic
                 annotationProcessorArgs.add(arg);
               }
             }
-            Set<String> paths = new LinkedHashSet<String>(files.size());
-            for (File file : files) {
-              paths.add(file.getAbsolutePath());
-            }
-
             File generatedSourcesDirectory = isAtLeastGradle4_3 ? options.getAnnotationProcessorGeneratedSourcesDirectory() : null;
             String output = generatedSourcesDirectory != null ? generatedSourcesDirectory.getAbsolutePath() : null;
-            sourceSetConfigs.put(sourceSet.getName(), new AnnotationProcessingConfigImpl(new ArrayList<String>(paths), annotationProcessorArgs, output, isTestSourceSet(sourceSet, ideaModule)));
+            sourceSetConfigs.put(sourceSet.getName(), new AnnotationProcessingConfigImpl(files, annotationProcessorArgs, output, isTestSourceSet(sourceSet, ideaModule)));
           }
         }
       }

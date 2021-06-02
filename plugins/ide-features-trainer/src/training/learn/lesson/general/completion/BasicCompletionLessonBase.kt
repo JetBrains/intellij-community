@@ -47,9 +47,9 @@ abstract class BasicCompletionLessonBase : KLesson("Basic completion", LessonsBu
           type(item1StartToType)
         }
       }
-      task("EditorChooseLookupItem") {
-        text(LessonsBundle.message("basic.completion.just.press.to.complete", action(it)))
-        trigger(it) {
+      task {
+        text(LessonsBundle.message("basic.completion.just.press.to.complete", action("EditorChooseLookupItem")))
+        stateCheck {
           editor.document.text == result1
         }
         restoreAfterStateBecomeFalse {

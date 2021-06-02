@@ -85,6 +85,7 @@ public class ParameterInfoController extends ParameterInfoControllerBase {
     myParameterInfoControllerData.setParameterOwner(parameterOwner);
     myParameterInfoControllerData.setHighlighted(highlighted);
 
+    registerSelf();
     setupListeners();
 
     LookupListener lookupListener = new LookupListener() {

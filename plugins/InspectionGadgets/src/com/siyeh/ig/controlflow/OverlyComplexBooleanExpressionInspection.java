@@ -68,7 +68,7 @@ public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
     final JLabel label = new JLabel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"));
     final JFormattedTextField termLimitTextField = prepareNumberEditor("m_limit");
 
-    panel.row(label, termLimitTextField);
+    panel.addRow(label, termLimitTextField);
     panel.addCheckbox(InspectionGadgetsBundle.message("overly.complex.boolean.expression.ignore.option"), "m_ignorePureConjunctionsDisjunctions");
 
     return panel;

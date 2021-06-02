@@ -1096,6 +1096,7 @@ public class Messages {
   }
 
   public static class InputDialog extends MessageDialog {
+    public static final int INPUT_DIALOG_COLUMNS = 30;
     protected JTextComponent myField;
     private final InputValidator myValidator;
     private final @DetailedDescription String myComment;
@@ -1265,7 +1266,7 @@ public class Messages {
     }
 
     protected JTextComponent createTextFieldComponent() {
-      JTextField field = new JTextField(30);
+      JTextField field = new JTextField(INPUT_DIALOG_COLUMNS);
       field.setMargin(JBInsets.create(0, 5));
       return field;
     }

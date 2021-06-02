@@ -114,10 +114,9 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
     }
 
     private void copyPresentation(Presentation presentation) {
-      myPresentation.copyFrom(presentation);
+      myPresentation.copyFrom(presentation, this);
       actionEnabled = presentation.isEnabled();
       myPresentation.setEnabled(true);
-      myPresentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, this);
     }
 
     @Override

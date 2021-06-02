@@ -70,7 +70,7 @@ public final class FSRecords {
   private static int nextMask(@SuppressWarnings("SameParameterValue") int versionValue, int prevMask) {
     return nextMask(versionValue, 8, prevMask);
   }
-  static final int VERSION = nextMask(58,  // acceptable range is [0..255]
+  static final int VERSION = nextMask(59,  // acceptable range is [0..255]
                              nextMask(useContentHashes,
                              nextMask(IOUtil.BYTE_BUFFERS_USE_NATIVE_BYTE_ORDER,
                              nextMask(bulkAttrReadSupport,

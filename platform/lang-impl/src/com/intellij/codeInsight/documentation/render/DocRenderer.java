@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.CaretEvent;
 import com.intellij.openapi.editor.event.CaretListener;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -81,7 +82,6 @@ class DocRenderer implements EditorCustomElementRenderer {
 
   private static StyleSheet ourCachedStyleSheet;
   private static String ourCachedStyleSheetLinkColor = "non-existing";
-  private static String ourCachedStyleSheetMonoFont = "non-existing";
 
   final DocRenderItem myItem;
   private boolean myContentUpdateNeeded;
@@ -412,23 +412,22 @@ class DocRenderer implements EditorCustomElementRenderer {
   }
 
   private static EditorKit createEditorKit(@NotNull Editor editor) {
-    HTMLEditorKit editorKit = new MyEditorKit();
+    HTMLEditorKit editorKit = new MyEditorKit(editor);
     editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor));
     return editorKit;
   }
 
   private static StyleSheet getStyleSheet(@NotNull Editor editor) {
     EditorColorsScheme colorsScheme = editor.getColorsScheme();
-    String editorFontName = ObjectUtils.notNull(colorsScheme.getEditorFontName(), Font.MONOSPACED);
     Color linkColor = colorsScheme.getColor(DefaultLanguageHighlighterColors.DOC_COMMENT_LINK);
     if (linkColor == null) linkColor = getTextColor(colorsScheme);
     String linkColorHex = ColorUtil.toHex(linkColor);
-    if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor) || !Objects.equals(editorFontName, ourCachedStyleSheetMonoFont)) {
-      String escapedFontName = StringUtil.escapeQuotes(editorFontName);
+    if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
+      String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_PLACEHOLDER;
       ourCachedStyleSheet = StartupUiUtil.createStyleSheet(
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
-        "code {font-family: \"" + escapedFontName + "\"}" +
-        "pre {font-family: \"" + escapedFontName + "\";" +
+        "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
+        "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +
              "white-space: pre-wrap}" + // supported by JetBrains Runtime
         "h1, h2, h3, h4, h5, h6 {margin-top: 0; padding-top: 1}" +
         "a {color: #" + linkColorHex + "; text-decoration: none}" +
@@ -446,7 +445,6 @@ class DocRenderer implements EditorCustomElementRenderer {
         ".content {padding: 2 0 2 0}"
       );
       ourCachedStyleSheetLinkColor = linkColorHex;
-      ourCachedStyleSheetMonoFont = editorFontName;
     }
     return ourCachedStyleSheet;
   }
@@ -589,6 +587,10 @@ class DocRenderer implements EditorCustomElementRenderer {
   }
 
   private static class MyEditorKit extends JBHtmlEditorKit {
+    private MyEditorKit(Editor editor) {
+      setFontResolver(EditorCssFontResolver.getInstance(editor));
+    }
+
     @Override
     public ViewFactory getViewFactory() {
       return MyViewFactory.INSTANCE;

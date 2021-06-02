@@ -426,6 +426,8 @@ public abstract class GitHandler {
       prepareEnvironment();
       myExecutable.patchCommandLine(this, myCommandLine, myWithLowPriority, myWithNoTty);
 
+      OUTPUT_LOG.debug(String.format("%s %% %s started: %s", getCommand(), this.hashCode(), myCommandLine));
+
       // start process
       myProcess = startProcess();
       startHandlingStreams();

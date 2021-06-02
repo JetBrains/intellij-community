@@ -299,7 +299,8 @@ public class RunConfigurationStorageUi {
     LOG.assertTrue(baseDir != null);
 
     // 5. If project base dir is not within project content, use .idea/runConfigurations
-    if (!ProjectFileIndex.getInstance(myProject).isInContent(baseDir)) {
+    // In Rider baseDir always not in the project content by design after migration to the new workspace model.
+    if (!PlatformUtils.isRider() && !ProjectFileIndex.getInstance(myProject).isInContent(baseDir)) {
       myRCStorageType = RCStorageType.DotIdeaFolder;
       myFolderPathIfStoredInArbitraryFile = null;
       return;
