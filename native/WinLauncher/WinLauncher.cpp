@@ -340,7 +340,7 @@ static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOpti
   char line[4096];
   while (fgets(line, sizeof(line), f)) {
     TrimLine(line);
-    if (line[0] != '#' && strcmp(line, "-server") != 0) {
+    if (strlen(line) > 0 && line[0] != '#' && strcmp(line, "-server") != 0) {
       vmOptionLines.push_back(line);
     }
   }
