@@ -4,7 +4,6 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots
 import com.intellij.configurationStore.deserializeAndLoadState
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.roots.impl.ModuleOrderEnumerator
 import com.intellij.openapi.roots.impl.RootModelBase
@@ -14,8 +13,6 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ContentRootEntity
@@ -35,7 +32,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
   private val module: ModuleBridge = rootModel.moduleBridge
 
   private val extensions by lazy {
-    loadExtensions(storage = VersionedEntityStorageOnStorage(storage), module = module, writable = false, diff = null, parentDisposable = this)
+    loadExtensions(storage = storage, module = module, writable = false, parentDisposable = this)
   }
 
   private val orderEntriesArray: Array<OrderEntry> by lazy {
@@ -102,8 +99,6 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
   override fun orderEntries(): OrderEnumerator = ModuleOrderEnumerator(this, null)
 
   companion object {
-    private val MODULE_EXTENSION_BRIDGE_FACTORY_EP = ExtensionPointName<ModuleExtensionBridgeFactory>("com.intellij.workspaceModel.moduleExtensionBridgeFactory")
-
     internal fun toOrderEntry(
       item: ModuleDependencyItem,
       index: Int,
@@ -121,27 +116,19 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
       }
     }
 
-    internal fun loadExtensions(storage: VersionedEntityStorage,
+    internal fun loadExtensions(storage: WorkspaceEntityStorage,
                                 module: ModuleBridge,
                                 writable: Boolean,
-                                diff: WorkspaceEntityStorageDiffBuilder?,
                                 parentDisposable: Disposable): Set<ModuleExtension> {
 
       val result = TreeSet<ModuleExtension> { o1, o2 ->
         Comparing.compare(o1.javaClass.name, o2.javaClass.name)
       }
 
-      MODULE_EXTENSION_BRIDGE_FACTORY_EP.extensionList.mapTo(result) {
-        it.createExtension(module, storage, diff)
-      }
-
-      val moduleEntity = storage.current.findModuleEntity(module)
+      val moduleEntity = storage.findModuleEntity(module)
       val rootManagerElement = moduleEntity?.customImlData?.rootManagerTagCustomData?.let { JDOMUtil.load(it) }
 
       for (extension in ModuleRootManagerEx.MODULE_EXTENSION_NAME.getExtensions(module)) {
-        //todo remove this as soon as we get rid of old implementations of ModuleExtension
-        if (MODULE_EXTENSION_BRIDGE_FACTORY_EP.extensions().anyMatch { it.originalExtensionType.isInstance(it) }) continue
-
         val readOnlyExtension = loadExtension(extension, parentDisposable, rootManagerElement)
 
         if (writable) {

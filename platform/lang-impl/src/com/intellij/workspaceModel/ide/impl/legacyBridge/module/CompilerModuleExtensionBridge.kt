@@ -89,7 +89,6 @@ class CompilerModuleExtensionBridge(
       excludeOutput = true,
       compilerOutputForTests = null,
       compilerOutput = null,
-      languageLevelId = null,
       module = moduleEntity,
       source = moduleSource
     )

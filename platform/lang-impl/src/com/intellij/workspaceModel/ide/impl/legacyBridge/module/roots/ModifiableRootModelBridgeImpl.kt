@@ -32,7 +32,6 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleEx
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModifiableRootModelBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
 import com.intellij.workspaceModel.storage.CachedValue
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
@@ -75,7 +74,7 @@ class ModifiableRootModelBridgeImpl(
   private val virtualFileManager: VirtualFileUrlManager = VirtualFileUrlManager.getInstance(project)
 
   private val extensionsDelegate = lazy {
-    RootModelBridgeImpl.loadExtensions(storage = entityStorageOnDiff, module = module, diff = diff, writable = true,
+    RootModelBridgeImpl.loadExtensions(storage = initialStorage, module = module, writable = true,
                                        parentDisposable = extensionsDisposable)
       .filterNot { compilerModuleExtensionClass.isAssignableFrom(it.javaClass) }
   }
@@ -430,8 +429,6 @@ class ModifiableRootModelBridgeImpl(
       val element = Element("component")
 
       for (extension in extensions) {
-        if (extension is ModuleExtensionBridge) continue
-
         extension.commit()
 
         if (extension is PersistentStateComponent<*>) {
