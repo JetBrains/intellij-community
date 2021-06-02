@@ -59,7 +59,7 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
   }
 
   private static @NotNull JPanel createActionNamePanel(@NotNull ActionOnSaveInfo info) {
-    if (info.isShowCheckbox()) {
+    if (info.isSaveActionApplicable()) {
       // This anchorCheckBox is not painted and doesn't appear in the UI component hierarchy. Its purpose is to make sure that the preferred
       // size of the real checkBox is calculated correctly. The problem is that com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.getBorderInsets()
       // returns different result for a check box that has CellRendererPane class as its UI ancestor. But we need TableCellEditor and

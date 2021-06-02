@@ -19,6 +19,10 @@ public abstract class ActionOnSaveInfo {
 
   final @Nullable String myConfigurableId;
 
+  /**
+   * If this field is not-null, it means that {@link UnnamedConfigurable#createComponent()} and {@link UnnamedConfigurable#reset()} have
+   * already been run for this configurable.
+   */
   private @Nullable UnnamedConfigurable myConfigurableWithInitializedUiComponent;
 
   /**
@@ -63,42 +67,47 @@ public abstract class ActionOnSaveInfo {
   }
 
   /**
-   * Implementations may decide not to show the check box if the corresponding 'action on save' is not properly configured or not applicable
-   * for the current project. In this case the text returned by {@link #getActionOnSaveName()} will appear as a label but not as a check box.
+   * Implementations may return <code>false</code> if this 'action on save' can't be enabled in this project with the current configuration.
+   * For example, a corresponding technology is not used in the current project. In this case the text returned by
+   * {@link #getActionOnSaveName()} will appear as a label but not as an actionable check box.
    * <br/><br/>
-   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted 
+   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted
    * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
    */
-  public boolean isShowCheckbox() { return true; }
+  public boolean isSaveActionApplicable() { return true; }
 
   /**
-   * Text for the corresponding check box (if {@link #isShowCheckbox()} is <code>true</code>) or label (if {@link #isShowCheckbox()} is <code>false</code>).
+   * Text for the corresponding check box (if {@link #isSaveActionApplicable()} is <code>true</code>) or label (if {@link #isSaveActionApplicable()} is <code>false</code>).
    * <br/><br/>
-   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted 
+   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted
    * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
    */
   public abstract @NotNull @NlsContexts.Checkbox String getActionOnSaveName();
 
   /**
-   * This comment accompanies the corresponding check box (if {@link #isShowCheckbox()} is <code>true</code>) or label (if {@link #isShowCheckbox()} is <code>false</code>).
+   * This comment accompanies the corresponding check box (if {@link #isSaveActionApplicable()} is <code>true</code>) or label (if {@link #isSaveActionApplicable()} is <code>false</code>).
    * The text usually depends on the current state of the corresponding 'action on save' configuration. This might be a short summary of
    * the configuration of this 'action on save', or a warning about some problems with the feature configuration.
    * <br/><br/>
-   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted 
+   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted
    * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
+   *
+   * @see #isWarningComment()
    */
   public @Nullable @NlsContexts.Label String getComment() { return null; }
 
   /**
    * If <code>true</code> then the text returned by {@link #getComment()} will be accompanied by a warning icon.
    * <br/><br/>
-   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted 
+   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted
    * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
+   *
+   * @see #getComment()
    */
   public boolean isWarningComment() { return false; }
 
   /**
-   * If {@link #isShowCheckbox()} returns <code>true</code> then the returned value is used to call <code>setSelected()</code> for the 
+   * If {@link #isSaveActionApplicable()} returns <code>true</code> then the returned value is used to call <code>setSelected()</code> for the
    * corresponding check box.
    * <br/><br/>
    * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the persisted
