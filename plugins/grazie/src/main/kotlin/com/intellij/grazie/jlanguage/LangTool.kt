@@ -7,13 +7,14 @@ import com.intellij.grazie.ide.msg.GrazieStateLifecycle
 import com.intellij.grazie.jlanguage.broker.GrazieDynamicDataBroker
 import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.util.containers.ContainerUtil
 import org.languagetool.JLanguageTool
 import org.languagetool.rules.CategoryId
 import java.net.Authenticator
 import java.util.concurrent.ConcurrentHashMap
 
 internal object LangTool : GrazieStateLifecycle {
-  private val langs: MutableMap<Lang, JLanguageTool> = ConcurrentHashMap()
+  private val langs: MutableMap<Lang, JLanguageTool> = ContainerUtil.createConcurrentSoftValueMap()
   private val rulesEnabledByDefault: MutableMap<Lang, Set<String>> = ConcurrentHashMap()
 
   init {
