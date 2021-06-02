@@ -52,6 +52,12 @@ public class GitExecutableDetector {
 
   @Nullable
   public String detect(@Nullable WSLDistribution distribution) {
+    synchronized (DETECTED_EXECUTABLE_LOCK) {
+      if (myDetectionComplete) {
+        return getExecutable(distribution);
+      }
+    }
+
     return runUnderProgressIfNeeded(null, GitBundle.message("git.executable.detect.progress.title"), () -> {
       synchronized (DETECTED_EXECUTABLE_LOCK) {
         if (!myDetectionComplete) {
