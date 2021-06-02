@@ -87,8 +87,8 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
   open fun selectFilePath(filePath: FilePath) {}
 
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getActualProducers(): List<DiffRequestProducer> {
-      return chain?.requests ?: emptyList()
+    override fun getChanges(): List<PresentableChange> {
+      return chain?.requests?.mapNotNull { it as? ChangeDiffRequestChain.Producer } ?: emptyList()
     }
 
     override fun getSelectedChange(): PresentableChange? {

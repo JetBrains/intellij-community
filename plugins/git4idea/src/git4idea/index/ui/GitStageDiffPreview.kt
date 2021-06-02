@@ -57,7 +57,7 @@ class GitStageDiffPreview(project: Project, private val tree: GitStageTree, trac
   }
 
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getActualProducers(): List<DiffRequestProducer> {
+    override fun getChanges(): List<PresentableChange> {
       return tree.statusNodesListSelection(true)
         .map { createTwoSidesDiffRequestProducer(project, it) }.list
     }

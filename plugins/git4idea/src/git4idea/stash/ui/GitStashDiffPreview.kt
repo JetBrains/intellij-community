@@ -2,7 +2,6 @@
 package git4idea.stash.ui
 
 import com.intellij.diff.FrameDiffTool
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
@@ -11,6 +10,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -53,8 +53,8 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, paren
   }
 
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getActualProducers(): List<DiffRequestProducer> {
-      return allChanges.asSequence().mapNotNull { wrapper -> wrapper.createProducer(project) }.toList()
+    override fun getChanges(): List<PresentableChange> {
+      return allChanges.asSequence().mapNotNull { wrapper -> wrapper.createProducer(project) as? ChangeDiffRequestChain.Producer }.toList()
     }
 
     override fun select(change: PresentableChange) {

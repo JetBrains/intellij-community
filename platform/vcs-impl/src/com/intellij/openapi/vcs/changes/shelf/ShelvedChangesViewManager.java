@@ -3,7 +3,6 @@ package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContentFactoryEx;
-import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
@@ -1026,9 +1025,9 @@ public class ShelvedChangesViewManager implements Disposable {
     private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
       @NotNull
       @Override
-      public List<? extends DiffRequestProducer> getActualProducers() {
+      public List<? extends PresentableChange> getChanges() {
         DataContext dc = DataManager.getInstance().getDataContext(myTree);
-        ListSelection<? extends DiffRequestProducer> diffProducers = DiffShelvedChangesActionProvider.createDiffProducers(dc, false);
+        ListSelection<? extends PresentableChange> diffProducers = DiffShelvedChangesActionProvider.createDiffProducers(dc, false);
         if (diffProducers == null) return emptyList();
 
         return diffProducers.getList();

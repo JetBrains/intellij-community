@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
-import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
@@ -45,7 +44,7 @@ private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesLi
   }
 
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
-    override fun getActualProducers(): List<DiffRequestProducer> {
+    override fun getChanges(): List<PresentableChange> {
       val currentChanges = changesView.selectedChanges.toList()
       val currentUnversioned = changesView.selectedUnversionedFiles.toList()
       return ShowDiffFromLocalChangesActionProvider.collectRequestProducers(project, currentChanges, currentUnversioned, changesView).list
