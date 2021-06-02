@@ -8,7 +8,9 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.openapi.module.ModuleTypeId
+import com.intellij.openapi.roots.DependencyScope
 import com.intellij.pom.java.LanguageLevel
+import java.util.*
 
 fun project(name: String = "project",
             projectPath: String,
@@ -26,9 +28,24 @@ interface Node {
 
 abstract class AbstractNode<DataType : Any?>(val type: String) : Node {
   lateinit var systemId: ProjectSystemId
-  protected lateinit var parent: AbstractNode<*>
-  val children = arrayListOf<Node>()
+  private var parent: AbstractNode<*>? = null
+  val children = arrayListOf<AbstractNode<*>>()
   val props = hashMapOf<String, String>()
+
+  protected fun find(predicate: (AbstractNode<*>) -> Boolean): AbstractNode<*>? {
+    var rootNode: AbstractNode<*> = this
+    while (rootNode.parent != null) {
+      rootNode = rootNode.parent!!
+    }
+    val queue: Queue<AbstractNode<*>> = LinkedList()
+    queue.add(rootNode)
+    while (queue.isNotEmpty()) {
+      val node = queue.remove()
+      if (predicate.invoke(node)) return node
+      queue.addAll(node.children)
+    }
+    return null
+  }
 
   protected fun <T : Node> initChild(node: T, init: T.() -> Unit): T {
     (node as AbstractNode<*>).systemId = this.systemId
@@ -119,6 +136,8 @@ class Module : NamedNode<ModuleData>("module") {
       props["moduleFileDirectoryPath"] = value
     }
 
+  val moduleData by lazy { ModuleData(name, systemId, ModuleTypeId.JAVA_MODULE, name, moduleFileDirectoryPath, externalProjectPath) }
+
   fun module(name: String = "module",
              externalProjectPath: String,
              moduleFilePath: String? = null,
@@ -144,10 +163,14 @@ class Module : NamedNode<ModuleData>("module") {
       init.invoke(this)
     }
 
-  override fun createDataNode(parentData: Any?): DataNode<ModuleData> {
-    val moduleData = ModuleData(name, systemId, ModuleTypeId.JAVA_MODULE, name, moduleFileDirectoryPath, externalProjectPath)
-    return DataNode(ProjectKeys.MODULE, moduleData, null)
-  }
+  fun moduleDependency(targetModuleName: String, scope: DependencyScope = DependencyScope.COMPILE, init: ModuleDependency.() -> Unit = {}) =
+    initChild(ModuleDependency()) {
+      this.name = targetModuleName
+      this.scope = scope
+      init.invoke(this)
+    }
+
+  override fun createDataNode(parentData: Any?) = DataNode(ProjectKeys.MODULE, moduleData, null)
 }
 
 class ContentRoot : AbstractNode<ContentRootData>("contentRoot") {
@@ -196,6 +219,22 @@ class Lib : NamedNode<LibraryDependencyData>("lib") {
     }
     val libraryDependencyData = LibraryDependencyData(parentData, libraryData, level)
     return DataNode(ProjectKeys.LIBRARY_DEPENDENCY, libraryDependencyData, null)
+  }
+}
+
+class ModuleDependency : NamedNode<ModuleDependencyData>("moduleDependency") {
+  var scope: DependencyScope
+    get() = DependencyScope.valueOf(props["scope"]!!)
+    set(value) {
+      props["scope"] = value.name
+    }
+
+  override fun createDataNode(parentData: Any?): DataNode<ModuleDependencyData> {
+    check(parentData is ModuleData)
+    val targetModule = find { it is Module && it.name == name } as? Module ?:
+                       throw IllegalStateException("Can not find module '$name'")
+    val moduleDependencyData = ModuleDependencyData(parentData, targetModule.moduleData).also { it.scope = scope }
+    return DataNode(ProjectKeys.MODULE_DEPENDENCY, moduleDependencyData, null)
   }
 }
 

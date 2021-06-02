@@ -84,6 +84,39 @@ class ExternalSystemProjectTest : ExternalSystemProjectTestCase() {
   }
 
   @Test
+  fun `test no duplicate module dependency is added on subsequent refresh when duplicated dependencies exist`() {
+    val projectModel = project {
+      module("module1")
+      module("module2") {
+        moduleDependency("module1", DependencyScope.RUNTIME)
+        moduleDependency("module1", DependencyScope.TEST)
+      }
+    }
+
+    applyProjectModel(projectModel)
+
+    val assertOrderEntries = {
+      val modelsProvider = IdeModelsProviderImpl(project)
+      val module = modelsProvider.findIdeModule("module2")
+      val dependencies = modelsProvider.getOrderEntries(module!!)
+        .filterIsInstance<ExportableOrderEntry>().map { it.presentableName to it.scope }
+      val expected = listOf("module1" to DependencyScope.RUNTIME, "module1" to DependencyScope.TEST)
+      assertThat(dependencies).containsExactlyInAnyOrderElementsOf(expected)
+    }
+    assertOrderEntries.invoke()
+
+    // change dependency scope to test to get duplicated order entries
+    with(IdeModifiableModelsProviderImpl(project)) {
+      val modifiableRootModel = getModifiableRootModel(findIdeModule("module2"))
+      modifiableRootModel.orderEntries.filterIsInstance<ExportableOrderEntry>().forEach { it.scope = DependencyScope.TEST }
+      runWriteAction { commit() }
+    }
+
+    applyProjectModel(projectModel)
+    assertOrderEntries.invoke()
+  }
+
+  @Test
   fun `test optimized method for getting modules libraries order entries`() {
     val libBinPath = File(projectPath, "bin_path")
     val libSrcPath = File(projectPath, "source_path")
