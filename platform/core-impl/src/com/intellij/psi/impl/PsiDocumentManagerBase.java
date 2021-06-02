@@ -65,6 +65,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
   boolean myStopTrackingDocuments;
   private boolean myPerformBackgroundCommit = true;
 
+  @SuppressWarnings("ThreadLocalNotStaticFinal")
   private final ThreadLocal<Integer> myIsCommitInProgress = new ThreadLocal<>();
   private static final ThreadLocal<Boolean> ourIsFullReparseInProgress = new ThreadLocal<>();
   private final PsiToDocumentSynchronizer mySynchronizer;
@@ -669,9 +670,7 @@ public abstract class PsiDocumentManagerBase extends PsiDocumentManager implemen
       runActionsWhenAllCommitted();
     }
     else {
-      app.invokeLater(() -> {
-        runActionsWhenAllCommitted();
-      }, myProject.getDisposed());
+      app.invokeLater(() -> runActionsWhenAllCommitted(), myProject.getDisposed());
     }
   }
 
