@@ -4,6 +4,10 @@ package org.jetbrains.kotlin.idea.artifacts
 import java.io.File
 
 object AdditionalKotlinArtifacts {
+    val jetbrainsAnnotations: File by lazy {
+        findLibrary(RepoLocation.MAVEN_REPOSITORY, "jetbrains_annotations.xml", "org.jetbrains", "annotations")
+    }
+
     val kotlinStdlibCommon: File by lazy {
         findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common")
     }
