@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
@@ -56,6 +56,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     if (testDataFiles.isEmpty()) return;
     if (testDataFiles.size() == 1) {
       TestDataUtil.openOrAskToCreateFile(project, testDataFiles.get(0));
+      return;
     }
     else if (testDataFiles.size() == 2) {
       TestDataGroupVirtualFile groupFile = TestDataUtil.getTestDataGroup(testDataFiles.get(0), testDataFiles.get(1));
