@@ -6,9 +6,13 @@ import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT;
+import static com.intellij.psi.CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE;
 
 
 /**
@@ -18,22 +22,25 @@ import org.jetbrains.annotations.Nullable;
 abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
 
   private static final CallMatcher OBJECT_EQUALS =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_OBJECT, "equals").parameterTypes(CommonClassNames.JAVA_LANG_OBJECT);
+    CallMatcher.instanceCall(JAVA_LANG_OBJECT, "equals").parameterTypes(JAVA_LANG_OBJECT);
   private static final CallMatcher STATIC_EQUALS =
     CallMatcher.anyOf(
       CallMatcher.staticCall("java.util.Objects", "equals").parameterCount(2),
       CallMatcher.staticCall("com.google.common.base.Objects", "equal").parameterCount(2));
   private static final CallMatcher PREDICATE_TEST =
-    CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "test").parameterCount(1);
+    CallMatcher.instanceCall(JAVA_UTIL_FUNCTION_PREDICATE, "test").parameterCount(1);
   private static final CallMatcher PREDICATE_IS_EQUAL =
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "isEqual").parameterCount(1);
-  private static final CallMatcher PREDICATE_SOURCE_FOR_FIND_IS_EQUAL =
-    CallMatcher.anyOf(
-      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "not").parameterCount(1),
-      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "negate").parameterCount(0),
-      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "or").parameterCount(1),
-      CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE, "and").parameterCount(1)
-    );
+    CallMatcher.staticCall(JAVA_UTIL_FUNCTION_PREDICATE, "isEqual").parameterCount(1);
+  private static final CallMatcher PREDICATE_NOT = CallMatcher.staticCall(JAVA_UTIL_FUNCTION_PREDICATE, "not").parameterCount(1);
+  private static final CallMatcher PREDICATE_OR = CallMatcher.instanceCall(JAVA_UTIL_FUNCTION_PREDICATE, "or").parameterCount(1);
+  private static final CallMatcher PREDICATE_AND = CallMatcher.instanceCall(JAVA_UTIL_FUNCTION_PREDICATE, "and").parameterCount(1);
+  private static final CallMatcher PREDICATE_NEGATE = CallMatcher.instanceCall(JAVA_UTIL_FUNCTION_PREDICATE, "negate").parameterCount(0);
+  private static final CallMatcher PREDICATE_NOT_OR_AND = CallMatcher.anyOf(PREDICATE_NOT,
+                                                                            PREDICATE_OR,
+                                                                            PREDICATE_AND);
+  private static final CallMatcher PREDICATE_OR_AND_NEGATE = CallMatcher.anyOf(PREDICATE_OR,
+                                                                               PREDICATE_AND,
+                                                                               PREDICATE_NEGATE);
 
   @Override
   public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
@@ -90,89 +97,74 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
   }
 
   @Nullable
-  private static PsiType resolveIsEqualPredicateType(PsiMethodCallExpression expression) {
-    PsiExpression upperPredicate = expression;
-    PsiElement parent = upperPredicate.getParent();
+  private static PsiType resolveIsEqualPredicateType(@NotNull PsiMethodCallExpression expression) {
+    PsiExpression highestPredicate = expression;
     int max = 100;
     int currentLevel = 0;
     while (currentLevel <= max) {
       currentLevel++;
-      if (parent instanceof PsiParenthesizedExpression || parent instanceof PsiReferenceExpression) {
-        parent = parent.getParent();
+
+      //example: Predicate.isEqual("1").or(...) or Predicate.isEqual("1").and(...) or Predicate.isEqual("1").negate()
+      final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(highestPredicate);
+      if (PREDICATE_OR_AND_NEGATE.matches(call)) {
+        highestPredicate = call;
+        continue;
       }
-      else if (parent instanceof PsiExpressionList && isPredicateSourceForIsEqual(parent.getParent())) {
-        upperPredicate = (PsiExpression)parent.getParent();
-        parent = upperPredicate.getParent();
+
+      //example: Predicate.not(Predicate.isEqual("1")) or predicate.or(Predicate.isEqual("1")) or predicate.and(Predicate.isEqual("1"))
+      final PsiElement parent = PsiUtil.skipParenthesizedExprUp(highestPredicate.getParent());
+      if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiExpression) {
+        final PsiExpression psiExpressionNextParent = (PsiExpression)parent.getParent();
+        if (PREDICATE_NOT_OR_AND.matches(psiExpressionNextParent)) {
+          highestPredicate = psiExpressionNextParent;
+          continue;
+        }
       }
-      else if (isPredicateSourceForIsEqual(parent)) {
-        upperPredicate = (PsiExpression)parent;
-        parent = upperPredicate.getParent();
-      }
-      else {
-        break;
-      }
+
+      break;
     }
 
-    return findPsiTypeForPredicate(upperPredicate, parent);
+    return findPsiTypeForPredicate(highestPredicate);
   }
 
   @Nullable
-  private static PsiType findPsiTypeForPredicate(PsiExpression upperPredicate, PsiElement parent) {
-    PsiType returnParameter = findPredicateParameter(upperPredicate);
-    if (returnParameter != null) {
-      return returnParameter;
+  private static PsiType findPsiTypeForPredicate(@NotNull PsiExpression predicate) {
+    PsiType typeParameter =
+      PsiUtil.substituteTypeParameter(predicate.getType(), JAVA_UTIL_FUNCTION_PREDICATE, 0, false);
+    if (typeParameter != null && !typeParameter.equalsToText(JAVA_LANG_OBJECT)) {
+      return typeParameter;
     }
 
-    if (parent instanceof PsiMethodCallExpression) {
-      final PsiMethodCallExpression callExpresion = (PsiMethodCallExpression)parent;
-      if (PREDICATE_TEST.test(callExpresion)) {
-        final PsiExpression[] argumentExpressions = callExpresion.getArgumentList().getExpressions();
-        if (argumentExpressions.length != 1) {
-          return null;
-        }
-        PsiExpression argument = PsiUtil.skipParenthesizedExprDown(argumentExpressions[0]);
-        return getType(argument);
+    final PsiMethodCallExpression call = ExpressionUtils.getCallForQualifier(predicate);
+    if (PREDICATE_TEST.test(call)) {
+      final PsiExpression[] argumentExpressions = call.getArgumentList().getExpressions();
+      if (argumentExpressions.length != 1) {
+        return null;
       }
+      PsiExpression argument = PsiUtil.skipParenthesizedExprDown(argumentExpressions[0]);
+      return getType(argument);
     }
-    else if (parent instanceof PsiExpressionList) {
-      return findPredicateTypeFromExpressionList(upperPredicate, (PsiExpressionList)parent);
+
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(predicate.getParent());
+    if (parent instanceof PsiExpressionList) {
+      return findPredicateExpectedType(predicate);
     }
     return null;
   }
 
   @Nullable
-  private static PsiType findPredicateTypeFromExpressionList(PsiExpression upperPredicate, PsiExpressionList expressionList) {
-    Integer index = findParameterIndex(expressionList, upperPredicate);
-    if (index == null || expressionList.getExpressionCount() <= index) {
+  private static PsiType findPredicateExpectedType(@NotNull PsiExpression predicate) {
+    final PsiType expectedType = ExpectedTypeUtils.findExpectedType(predicate, true);
+    if (!(expectedType instanceof PsiClassType)) {
       return null;
     }
-
-    if (!(expressionList.getParent() instanceof PsiMethodCallExpression)) {
-      return null;
-    }
-
-    final PsiMethodCallExpression expectedCall = (PsiMethodCallExpression)expressionList.getParent();
-    PsiMethod method = expectedCall.resolveMethod();
-    if (method == null) {
-      return null;
-    }
-    PsiType[] arguments = method.getSignature(expectedCall.resolveMethodGenerics().getSubstitutor())
-      .getParameterTypes();
-
-    if (arguments.length <= index) {
-      return null;
-    }
-    PsiType type = arguments[index];
-    if (!(type instanceof PsiClassType)) {
-      return null;
-    }
-    PsiClassType classType = (PsiClassType)type;
-    if (classType.getParameterCount() != 1 || !PsiTypesUtil.classNameEquals(classType, CommonClassNames.JAVA_UTIL_FUNCTION_PREDICATE)) {
+    PsiClassType classType = (PsiClassType)expectedType;
+    if (classType.getParameterCount() != 1 || !PsiTypesUtil.classNameEquals(classType, JAVA_UTIL_FUNCTION_PREDICATE)) {
       return null;
     }
     PsiType parameter = classType.getParameters()[0];
     //Object can be cast to any
-    if (parameter == null || parameter.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+    if (parameter == null || parameter.equalsToText(JAVA_LANG_OBJECT)) {
       return null;
     }
     if (parameter instanceof PsiWildcardType) {
@@ -180,40 +172,6 @@ abstract class BaseEqualsVisitor extends BaseInspectionVisitor {
       parameter = psiWildcardType.isSuper() ? psiWildcardType.getSuperBound() : parameter;
     }
     return parameter;
-  }
-
-  @Nullable
-  private static Integer findParameterIndex(PsiExpressionList list, PsiExpression predicate) {
-    for (int i = 0; i < list.getExpressionCount(); i++) {
-      final PsiExpression expression = list.getExpressions()[i];
-      if (predicate.equals(PsiUtil.skipParenthesizedExprDown(expression))) {
-        return i;
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static PsiType findPredicateParameter(PsiExpression predicate) {
-    final PsiType returnType = predicate.getType();
-    if (!(returnType instanceof PsiClassType)) {
-      return null;
-    }
-
-    PsiClassType classType = (PsiClassType)returnType;
-    if (classType.getParameterCount() != 1) {
-      return null;
-    }
-    PsiType parameter = classType.getParameters()[0];
-    if (!parameter.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-      return parameter;
-    }
-    return null;
-  }
-
-  private static boolean isPredicateSourceForIsEqual(PsiElement parent) {
-    return parent instanceof PsiMethodCallExpression &&
-           PREDICATE_SOURCE_FOR_FIND_IS_EQUAL.test((PsiMethodCallExpression)parent);
   }
 
   private void checkTypes(@NotNull PsiMethodCallExpression expression, PsiExpression expression1, PsiExpression expression2) {
