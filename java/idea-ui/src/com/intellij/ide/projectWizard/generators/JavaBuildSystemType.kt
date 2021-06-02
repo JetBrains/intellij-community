@@ -10,12 +10,6 @@ abstract class JavaBuildSystemType(override val name: String) : BuildSystemType<
   }
 }
 
-class MavenJavaBuildSystemType : JavaBuildSystemType("Maven") {
-  override fun setupProject(settings: JavaSettings) {
-    TODO("Not yet implemented")
-  }
-}
-
 class IntelliJJavaBuildSystemType : JavaBuildSystemType("IntelliJ") {
   override fun setupProject(settings: JavaSettings) {
     TODO("Not yet implemented")

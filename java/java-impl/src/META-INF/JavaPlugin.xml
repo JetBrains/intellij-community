@@ -2139,7 +2139,6 @@
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
 
     <newProjectWizard implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
-    <newProjectWizard.buildSystem.java implementation="com.intellij.ide.projectWizard.generators.MavenJavaBuildSystemType"/>
     <newProjectWizard.buildSystem.java implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaBuildSystemType"/>
 
     <registryKey key="starters.dependency.update.host"

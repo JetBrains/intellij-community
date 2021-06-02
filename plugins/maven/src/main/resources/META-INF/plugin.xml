@@ -294,6 +294,7 @@
     <starter.moduleImporter implementation="org.jetbrains.idea.maven.starters.MavenStarterModuleImporter"/>
 
     <dependencyCollector kind="java" implementation="org.jetbrains.idea.maven.project.MavenDependencyCollector"/>
+    <newProjectWizard.buildSystem.java implementation="org.jetbrains.idea.maven.wizards.MavenJavaBuildSystemType"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.properties">
