@@ -203,17 +203,24 @@ open class ArtifactBridge(
         elementsWithDiff += it
       }
     }
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
-      this.rootElement = rootEntity
+    val oldRootElement = entity.rootElement
+    if (oldRootElement != rootEntity) {
+      diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+        this.rootElement = rootEntity
+      }
+      diff.removeEntity(oldRootElement)
     }
   }
 
   override fun setProperties(provider: ArtifactPropertiesProvider, properties: ArtifactProperties<*>?) {
     if (properties == null) {
       val entity = diff.get(artifactId)
-      val filtered = entity.customProperties.filterNot { it.providerType == provider.id }
-      diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
-        this.customProperties = filtered
+      val (toBeRemoved, filtered) = entity.customProperties.partition { it.providerType == provider.id }
+      if (toBeRemoved.isNotEmpty()) {
+        diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+          this.customProperties = filtered.asSequence()
+        }
+        toBeRemoved.forEach { diff.removeEntity(it) }
       }
     }
     else {
