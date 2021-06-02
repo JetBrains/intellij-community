@@ -9,6 +9,7 @@ import com.intellij.grazie.jlanguage.filters.UppercaseMatchFilter
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
 import org.languagetool.JLanguageTool
+import org.languagetool.ResultCache
 import org.languagetool.rules.CategoryId
 import java.net.Authenticator
 import java.util.concurrent.ConcurrentHashMap
@@ -37,7 +38,7 @@ internal object LangTool : GrazieStateLifecycle {
   private fun createTool(lang: Lang, state: GrazieConfig.State): JLanguageTool {
     val jLanguage = lang.jLanguage
     require(jLanguage != null) { "Trying to get LangTool for not available language" }
-    return JLanguageTool(jLanguage).apply {
+    return JLanguageTool(jLanguage, null, ResultCache(1_000)).apply {
       setCheckCancelledCallback { ProgressManager.checkCanceled(); false }
       addMatchFilter(UppercaseMatchFilter())
 
