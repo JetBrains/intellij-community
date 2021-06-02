@@ -1225,7 +1225,7 @@
 
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
-    <advancedSetting id="temporary.configurations.limit" default="4" groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
