@@ -99,6 +99,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider, Place
       }
 
       @Override
+      protected void checkModifiedImpl(@NotNull Configurable configurable) {
+        SettingsEditor.this.checkModified(configurable);
+      }
+
+      @Override
       protected void setSearchText(String search) {
         myFilter.update(search);
       }

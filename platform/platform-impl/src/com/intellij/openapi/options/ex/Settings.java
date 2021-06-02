@@ -73,6 +73,16 @@ public abstract class Settings {
   protected abstract Configurable getConfigurableWithInitializedUiComponentImpl(@NotNull Configurable configurable,
                                                                                 boolean initializeUiComponentIfNotYet);
 
+  public final void checkModified(@NotNull String configurableId) {
+    Configurable c = find(configurableId);
+    if (c == null) return;
+
+    Configurable configurable = choose(c, myMap.get(c));
+    checkModifiedImpl(configurable);
+  }
+
+  protected abstract void checkModifiedImpl(@NotNull Configurable configurable);
+
   protected abstract void setSearchText(String option);
 
   private <T extends Configurable> T unwrap(Configurable configurable, Class<T> type) {

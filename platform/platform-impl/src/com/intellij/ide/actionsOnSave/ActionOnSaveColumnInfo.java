@@ -71,17 +71,21 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
 
       checkBox.setSelected(info.isActionOnSaveEnabled());
       checkBox.addActionListener(e -> {
-        if (info.getConfigurableIfItsUiComponentInitialized() == null) {
-          Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(checkBox));
-          if (settings == null) {
-            LOG.error("Settings not found");
-            return;
-          }
+        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(checkBox));
+        if (settings == null) {
+          LOG.error("Settings not found");
+          return;
+        }
 
+        if (info.getConfigurableIfItsUiComponentInitialized() == null) {
           ActionsOnSaveConfigurable.updateInfoIfConfigurableUiComponentInitialized(settings, info, true);
         }
 
         info.setActionOnSaveEnabled(checkBox.isSelected());
+
+        if (info.myConfigurableId != null) {
+          settings.checkModified(info.myConfigurableId);
+        }
       });
 
       ComponentPanelBuilder builder = UI.PanelFactory.panel(checkBox);
