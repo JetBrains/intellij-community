@@ -28,7 +28,7 @@ The Kotlin FIR plugin provides language support in IntelliJ IDEA and Android Stu
   <depends>com.intellij.modules.idea</depends>
   <depends>com.intellij.modules.java</depends>
   <depends optional="true" config-file="kotlin-copyright.xml">com.intellij.copyright</depends>
-<!--  <depends optional="true" config-file="injection.xml">org.intellij.intelliLang</depends>-->
+<!--  <depends optional="true" config-file="dep-injection.xml">org.intellij.intelliLang</depends>-->
   <!-- CIDR-PLUGIN-PLACEHOLDER-END -->
 
   <xi:include href="indexes.xml" xpointer="xpointer(/idea-plugin/*)"/>
