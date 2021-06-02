@@ -93,18 +93,9 @@ public abstract class TextExtractor {
   }
 
   private static boolean isSuitable(TextContent content, PsiElement psi) {
-    TextRange range = psi.getTextRange();
-    PsiFile file = psi.getContainingFile();
-    return content.intersectsRange(range) &&
-           !hasIntersectingInjection(content, file) &&
-           !isSuppressionComment(content) &&
-           !isTodoComment(range, file);
-  }
-
-  // the _todo_ word spoils the grammar of what follows
-  private static boolean isTodoComment(TextRange range, PsiFile file) {
-    return PsiTodoSearchHelper.SERVICE.getInstance(file.getProject())
-             .findTodoItems(file, range.getStartOffset(), range.getEndOffset()).length != 0;
+    return content.intersectsRange(psi.getTextRange()) &&
+           !hasIntersectingInjection(content, psi.getContainingFile()) &&
+           !isSuppressionComment(content);
   }
 
   private static boolean isSuppressionComment(TextContent content) {
