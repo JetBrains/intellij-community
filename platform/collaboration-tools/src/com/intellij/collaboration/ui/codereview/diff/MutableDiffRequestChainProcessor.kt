@@ -83,7 +83,6 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
     return MyGoToChangePopupProvider().createGoToChangeAction()
   }
 
-  //TODO implement: get relevant changes tree and select node
   open fun selectFilePath(filePath: FilePath) {}
 
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
