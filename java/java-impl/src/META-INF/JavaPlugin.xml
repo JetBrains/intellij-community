@@ -2141,6 +2141,7 @@
     <newProjectWizard implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
     <newProjectWizard.buildSystem.java implementation="com.intellij.ide.projectWizard.generators.GradleJavaBuildSystemType"/>
     <newProjectWizard.buildSystem.java implementation="com.intellij.ide.projectWizard.generators.MavenJavaBuildSystemType"/>
+    <newProjectWizard.buildSystem.java implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaBuildSystemType"/>
 
     <registryKey key="starters.dependency.update.host"
                  defaultValue="https://frameworks.jetbrains.com"
