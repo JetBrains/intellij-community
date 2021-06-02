@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -405,7 +405,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
     while (current != null) {
       if (current instanceof PsiJavaDocumentedElement && !(current instanceof PsiTypeParameter) && !(current instanceof PsiAnonymousClass)) {
         PsiDocComment comment = ((PsiJavaDocumentedElement)current).getDocComment();
-        return Pair.create(current instanceof PsiField ? ((PsiField)current).getModifierList() : current, comment);
+        return Pair.create(current, comment);
       }
       else if (PackageUtil.isPackageInfoFile(current)) {
         return Pair.create(current, getPackageInfoComment(current));

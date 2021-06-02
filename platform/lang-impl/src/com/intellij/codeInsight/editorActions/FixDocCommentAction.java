@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.application.options.CodeStyle;
@@ -158,7 +158,7 @@ public class FixDocCommentAction extends EditorAction {
       //       <offset>
       //    }
       // We want to insert the comment at the start of the line where 'test2()' is declared.
-      int nonWhiteSpaceOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), commentStartOffset - 1, " \t");
+      int nonWhiteSpaceOffset = CharArrayUtil.shiftBackward(document.getCharsSequence(), lineStartOffset, commentStartOffset - 1, " \t") + 1;
       commentStartOffset = Math.max(nonWhiteSpaceOffset, lineStartOffset);
     }
   
