@@ -123,7 +123,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
 
   @Nullable
   private fun createDragImage(component: JComponent): BufferedImage {
-    val image = UIUtil.createImage(component, component.width, component.height, BufferedImage.TRANSLUCENT)
+    val image = UIUtil.createImage(component, component.width, component.height, BufferedImage.TYPE_INT_RGB)
     val graphics = image.graphics
     component.paint(graphics)
     graphics.dispose()
