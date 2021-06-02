@@ -180,7 +180,12 @@ public final class JavaBackwardReferenceIndexReaderFactory implements CompilerRe
     @NotNull
     IntSet getAllContainingFileIds(@NotNull CompilerRef ref) throws StorageException {
       return InvertedIndexUtil
-        .collectInputIdsContainingAllKeys(myIndex.get(JavaCompilerIndices.BACK_USAGES), Collections.singletonList(ref), null, null, null);
+        .collectInputIdsContainingAllKeys(myIndex.get(JavaCompilerIndices.BACK_USAGES),
+                                          Collections.singletonList(ref),
+                                          null,
+                                          null,
+                                          null,
+                                          ProgressManager::checkCanceled);
     }
 
     @NotNull
