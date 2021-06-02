@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.messages.Topic;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
@@ -45,6 +46,8 @@ public class GitExecutableManager {
 
   @NotNull private final GitExecutableDetector myExecutableDetector = new GitExecutableDetector();
   @NotNull private final CachingFileTester<GitVersion> myVersionCache;
+
+  public static final Topic<GitExecutableListener> TOPIC = new Topic<>(GitExecutableListener.class, Topic.BroadcastDirection.NONE);
 
   public GitExecutableManager() {
     myVersionCache = new CachingFileTester<>() {
@@ -152,6 +155,7 @@ public class GitExecutableManager {
 
   public void dropExecutableCache() {
     myExecutableDetector.clear();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(TOPIC).executableChanged();
   }
 
   /**
