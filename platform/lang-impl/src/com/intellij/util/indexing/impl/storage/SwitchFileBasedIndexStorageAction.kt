@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.popup.list.ComboBoxPopup
-import com.intellij.util.indexing.FileBasedIndexSwitcher
+import com.intellij.util.indexing.FileBasedIndexTumbler
 import com.intellij.util.indexing.IndexingBundle
 import com.intellij.util.indexing.storage.FileBasedIndexLayoutProviderBean
 import org.jetbrains.annotations.Nls
@@ -29,7 +29,7 @@ class SwitchFileBasedIndexStorageAction : DumbAwareAction() {
   private fun restartIndexesWithStorage(indexStorage: IndexStorageDescriptor) {
     val usedLayout = FileBasedIndexLayoutSettings.getUsedLayout()
     if (usedLayout != indexStorage.bean) {
-      val switcher = FileBasedIndexSwitcher()
+      val switcher = FileBasedIndexTumbler()
       switcher.turnOff()
       try {
         FileBasedIndexLayoutSettings.setUsedLayout(indexStorage.bean)

@@ -22,7 +22,7 @@ class IndexInfrastructureExtensionTest : LightJavaCodeInsightFixtureTestCase() {
       it.toList().associate { p -> p.fileName.toString() to p.lastModified().toMillis() }.toSortedMap()
     }
 
-    val switcher = FileBasedIndexSwitcher()
+    val switcher = FileBasedIndexTumbler()
     switcher.turnOff()
     switcher.turnOn()
 
