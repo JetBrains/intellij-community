@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionsOnSave;
 
+import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actionsOnSave.api.ActionOnSaveInfo;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
@@ -18,6 +20,8 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSaveInfo> {
+  private static final Logger LOG = Logger.getInstance(ActionOnSaveColumnInfo.class);
+
   ActionOnSaveColumnInfo() {
     super(IdeBundle.message("actions.on.save.table.column.name.action"));
   }
@@ -64,6 +68,21 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
 
       JBCheckBox checkBox = new JBCheckBox(info.getActionOnSaveName());
       checkBox.setAnchor(anchorCheckBox);
+
+      checkBox.setSelected(info.isActionOnSaveEnabled());
+      checkBox.addActionListener(e -> {
+        if (info.getConfigurableIfItsUiComponentInitialized() == null) {
+          Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(checkBox));
+          if (settings == null) {
+            LOG.error("Settings not found");
+            return;
+          }
+
+          ActionsOnSaveConfigurable.updateInfoIfConfigurableUiComponentInitialized(settings, info, true);
+        }
+
+        info.setActionOnSaveEnabled(checkBox.isSelected());
+      });
 
       ComponentPanelBuilder builder = UI.PanelFactory.panel(checkBox);
       if (info.getComment() != null) {

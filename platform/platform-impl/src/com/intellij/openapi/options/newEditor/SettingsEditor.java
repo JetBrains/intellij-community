@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.plugins.PluginManagerConfigurable;
@@ -83,6 +83,19 @@ final class SettingsEditor extends AbstractEditor implements DataProvider, Place
       protected Promise<? super Object> selectImpl(Configurable configurable) {
         myFilter.update(null);
         return myTreeView.select(configurable);
+      }
+
+      @Override
+      protected @Nullable Configurable getConfigurableWithInitializedUiComponentImpl(@Nullable Configurable configurable,
+                                                                                     boolean initializeUiComponentIfNotYet) {
+        JComponent content = myEditor.getContent(configurable);
+        if (!initializeUiComponentIfNotYet || content != null) {
+          return content == null ? null : configurable;
+        }
+
+        myEditor.readContent(configurable); // calls Configurable.createComponent() and Configurable.reset()
+
+        return configurable;
       }
 
       @Override

@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.actionsOnSave.api;
+package com.intellij.ide.actionsOnSave;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
@@ -18,7 +18,7 @@ public abstract class ActionOnSaveInfoProvider {
   private static final ExtensionPointName<ActionOnSaveInfoProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.actionOnSaveInfoProvider");
 
-  public static List<ActionOnSaveInfo> getAllActionOnSaveInfos(@NotNull Project project) {
+  static List<ActionOnSaveInfo> getAllActionOnSaveInfos(@NotNull Project project) {
     ArrayList<ActionOnSaveInfo> infos = new ArrayList<>();
     for (ActionOnSaveInfoProvider provider : EP_NAME.getExtensionList()) {
       infos.addAll(provider.getActionOnSaveInfos(project));
@@ -26,5 +26,5 @@ public abstract class ActionOnSaveInfoProvider {
     return infos;
   }
 
-  public abstract @NotNull Collection<ActionOnSaveInfo> getActionOnSaveInfos(@NotNull Project project);
+  protected abstract @NotNull Collection<ActionOnSaveInfo> getActionOnSaveInfos(@NotNull Project project);
 }

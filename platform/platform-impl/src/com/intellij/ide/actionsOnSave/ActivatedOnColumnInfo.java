@@ -2,7 +2,6 @@
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actionsOnSave.api.ActionOnSaveInfo;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 

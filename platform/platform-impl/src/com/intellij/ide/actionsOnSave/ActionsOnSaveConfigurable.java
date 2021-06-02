@@ -3,14 +3,16 @@ package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.actionsOnSave.api.ActionOnSaveInfo;
-import com.intellij.ide.actionsOnSave.api.ActionOnSaveInfoProvider;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.UnnamedConfigurable;
+import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.ui.AncestorListenerAdapter;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.hover.TableHoverListener;
@@ -21,11 +23,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.AncestorEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Collections;
+import java.util.List;
 
 public class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
+  private final static Logger LOG = Logger.getInstance(ActionsOnSaveConfigurable.class);
 
   private final @NotNull Project myProject;
 
@@ -59,15 +65,23 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
     return panel;
   }
 
-  private static @NotNull TableView<ActionOnSaveInfo> createTable() {
+  private @NotNull TableView<ActionOnSaveInfo> createTable() {
     TableView<ActionOnSaveInfo> table = new TableView<>(new ListTableModel<>(new ActionOnSaveColumnInfo(), new ActivatedOnColumnInfo()));
     table.getTableHeader().setReorderingAllowed(false);
     table.setShowGrid(false);
     table.setRowSelectionAllowed(false);
+    table.addAncestorListener(new AncestorListenerAdapter() {
+      @Override
+      public void ancestorAdded(AncestorEvent event) {
+        // The 'Actions on Save' page has become visible, either the first time (right after createComponent()), or after switching to some
+        // other page in Settings and then back to this page. Need to update the table.
+        reset();
+      }
+    });
 
     // Table cells contain ActionLinks and DropDownLinks. They should get underlined on hover, and should handle clicks. In order to have
     // actionable UI inside cells, table switches from renderer to editor for the currently hovered cell as mouse pointer moves.
-    // TableCellRenderer) and TableCellEditor return the same component, so users don't notice cell editing start/stop.
+    // TableCellRenderer and TableCellEditor return the same component, so users don't notice cell editing start/stop.
     new TableHoverListener() {
       @Override
       public void onHover(@NotNull JTable table, int row, int column) {
@@ -94,21 +108,57 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
 
   @Override
   public void reset() {
-    myTable.getListTableModel().setItems(ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myProject));
+    if (!myTable.isShowing()) {
+      // The table will be updated in the next UI cycle, when this method is called from the AncestorListener registered in the createTable() method above.
+      // Settings.KEY.getData(...) is null at this point so we'd rather return and initialize a bit later.
+      return;
+    }
+
+    Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myTable));
+    if (settings == null) {
+      myTable.getListTableModel().setItems(Collections.emptyList());
+      LOG.error("Settings not found");
+      return;
+    }
+
+    List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myProject);
+    for (ActionOnSaveInfo info : infos) {
+      updateInfoIfConfigurableUiComponentInitialized(settings, info, false);
+    }
+
+    myTable.getListTableModel().setItems(infos);
   }
 
-  public static @NotNull ActionLink createGoToPageInSettingsLink(@NotNull String pageId) {
-    return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.configure"), pageId);
+  static void updateInfoIfConfigurableUiComponentInitialized(@NotNull Settings settings,
+                                                             @NotNull ActionOnSaveInfo info,
+                                                             boolean initializeUiComponentIfNotYet) {
+    if (info.myConfigurableId == null) return;
+
+    UnnamedConfigurable configurable =
+      settings.getConfigurableWithInitializedUiComponent(info.myConfigurableId, initializeUiComponentIfNotYet);
+
+    if (configurable instanceof ConfigurableWrapper) {
+      configurable = ((ConfigurableWrapper)configurable).getRawConfigurable();
+    }
+
+    if (configurable != null) {
+      info.setConfigurableWithInitializedUiComponent(configurable);
+    }
   }
 
-  public static @NotNull ActionLink createGoToPageInSettingsLink(@NotNull @NlsContexts.LinkLabel String linkText, @NotNull String pageId) {
+  public static @NotNull ActionLink createGoToPageInSettingsLink(@NotNull String configurableId) {
+    return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.configure"), configurableId);
+  }
+
+  public static @NotNull ActionLink createGoToPageInSettingsLink(@NotNull @NlsContexts.LinkLabel String linkText,
+                                                                 @NotNull String configurableId) {
     return new ActionLink(linkText, new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
           Settings settings = Settings.KEY.getData(context);
           if (settings != null) {
-            settings.select(settings.find(pageId));
+            settings.select(settings.find(configurableId));
           }
         });
       }
