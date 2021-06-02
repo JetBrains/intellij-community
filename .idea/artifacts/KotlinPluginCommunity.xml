@@ -205,7 +205,8 @@
         </element>
         <element id="library" level="project" name="completion-ranking-kotlin" />
         <element id="archive" name="kotlin-parcelize.jar">
-          <element id="module-output" name="kotlin.compiler-plugins.parcelize" />
+          <element id="module-output" name="kotlin.compiler-plugins.parcelize.common" />
+          <element id="module-output" name="kotlin.compiler-plugins.parcelize.gradle" />
         </element>
         <element id="archive" name="parcelize-compiler-plugin-for-ide.jar">
           <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/parcelize-compiler-plugin-for-ide/1.4.32-release-380/parcelize-compiler-plugin-for-ide-1.4.32-release-380.jar" path-in-jar="/" />

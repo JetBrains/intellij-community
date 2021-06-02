@@ -1162,7 +1162,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("compiler-plugins/parcelize") {
+    testGroup("compiler-plugins/parcelize/common") {
         testClass<AbstractParcelizeQuickFixTest> {
             model("quickfix", pattern = "^([\\w\\-_]+)\\.kt$".toRegex())
         }

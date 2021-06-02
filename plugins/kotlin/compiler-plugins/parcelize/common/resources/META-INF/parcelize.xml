@@ -1,0 +1,24 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.availabilityProvider"
+            interface="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.ParcelizeAvailabilityProvider"
+            dynamic="true"
+            area="IDEA_PROJECT"
+    />
+  </extensionPoints>
+
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <expressionCodegenExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeCodegenExtension"/>
+    <irGenerationExtension implementation="org.jetbrains.kotlin.parcelize.ParcelizeIrGeneratorExtension"/>
+    <syntheticResolveExtension implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeResolveExtension"/>
+    <classBuilderFactoryInterceptorExtension
+            implementation="org.jetbrains.kotlin.parcelize.ParcelizeClinitClassBuilderInterceptorExtension"/>
+    <storageComponentContainerContributor
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.IdeParcelizeDeclarationCheckerComponentContainerContributor"/>
+
+    <ultraLightClassModifierExtension
+            implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.ParcelizeUltraLightClassModifierExtension"/>
+    <quickFixContributor implementation="org.jetbrains.kotlin.idea.compilerPlugin.parcelize.quickfixes.ParcelizeQuickFixContributor"/>
+  </extensions>
+</idea-plugin>
