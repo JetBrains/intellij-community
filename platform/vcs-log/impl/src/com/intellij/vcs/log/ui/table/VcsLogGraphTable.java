@@ -258,9 +258,11 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
   }
 
   public void onColumnDataChanged(@NotNull VcsLogColumn<?> column) {
-    if (getTableColumn(column) != null) {
+    if (getRowCount() == 0) return;
+    TableColumn tableColumn = getTableColumn(column);
+    if (tableColumn != null) {
       reLayout();
-      repaint();
+      getModel().fireTableChanged(new TableModelEvent(getModel(), 0, getRowCount() - 1, tableColumn.getModelIndex()));
     }
   }
 
