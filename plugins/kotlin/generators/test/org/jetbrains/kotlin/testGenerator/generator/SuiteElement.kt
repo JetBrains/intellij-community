@@ -59,7 +59,12 @@ class SuiteElement private constructor(
                 val match = model.matcher(file.name) ?: continue
                 val methodNameBase = getTestMethodNameBase(match.methodName)
                 val path = file.toRelativeStringSystemIndependent(group.moduleRoot)
-                methods += TestCaseMethod(methodNameBase, if (file.isDirectory) "$path/" else path, file.toRelativeStringSystemIndependent(rootFile))
+                methods += TestCaseMethod(
+                    methodNameBase,
+                    if (file.isDirectory) "$path/" else path,
+                    file.toRelativeStringSystemIndependent(rootFile),
+                    group.isCompilerTestData
+                )
             }
 
             if (methods.isNotEmpty()) {
