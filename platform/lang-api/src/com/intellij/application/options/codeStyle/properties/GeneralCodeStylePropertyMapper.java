@@ -126,5 +126,6 @@ public final class GeneralCodeStylePropertyMapper extends AbstractCodeStylePrope
   @Override
   protected void addAdditionalAccessors(@NotNull Map<String, CodeStylePropertyAccessor<?>> accessorMap) {
     accessorMap.put(VisualGuidesAccessor.VISUAL_GUIDES_PROPERTY_NAME, new VisualGuidesAccessor(getRootSettings(), null));
+    accessorMap.put(FormatterEnabledAccessor.PROPERTY_NAME, new FormatterEnabledAccessor(getRootSettings()));
   }
 }
