@@ -66,7 +66,8 @@ class SuiteElement private constructor(
                 methods += TestCaseMethod(
                     methodNameBase,
                     if (file.isDirectory) "$path/" else path,
-                    file.toRelativeStringSystemIndependent(rootFile)
+                    file.toRelativeStringSystemIndependent(rootFile),
+                    group.isCompilerTestData
                 )
             }
 
