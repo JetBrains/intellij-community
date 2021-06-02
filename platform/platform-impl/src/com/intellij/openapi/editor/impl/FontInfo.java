@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
+import com.intellij.openapi.editor.colors.impl.EditorFontCacheImpl;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.util.SystemInfo;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
@@ -12,16 +13,11 @@ import sun.font.FontDesignMetrics;
 
 import java.awt.*;
 import java.awt.font.FontRenderContext;
-import java.awt.font.TextAttribute;
-import java.util.Collections;
-import java.util.Map;
 
 public final class FontInfo {
   public static final FontRenderContext DEFAULT_CONTEXT = new FontRenderContext(null, false, false);
 
   private static final Font DUMMY_FONT = new Font(null);
-  private static final Map<TextAttribute, Integer> LIGATURES_ATTRIBUTES =
-    Collections.singletonMap(TextAttribute.LIGATURES, TextAttribute.LIGATURES_ON);
 
   private final Font myFont;
   private final int mySize;
@@ -35,8 +31,7 @@ public final class FontInfo {
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures,
                   FontRenderContext fontRenderContext) {
     mySize = size;
-    Font font = new Font(familyName, style, size);
-    myFont = useLigatures ? font.deriveFont(LIGATURES_ATTRIBUTES) : font;
+    myFont = EditorFontCacheImpl.deriveFontWithLigatures(new Font(familyName, style, size), useLigatures);
     myContext = fontRenderContext;
   }
 
@@ -45,11 +40,7 @@ public final class FontInfo {
    */
   public FontInfo(Font font, int size, boolean useLigatures, FontRenderContext fontRenderContext) {
     mySize = size;
-    font = font.deriveFont((float)size);
-    if (useLigatures) {
-      font = font.deriveFont(LIGATURES_ATTRIBUTES);
-    }
-    myFont = font;
+    myFont = EditorFontCacheImpl.deriveFontWithLigatures(font.deriveFont((float)size), useLigatures);
     myContext = fontRenderContext;
   }
 
