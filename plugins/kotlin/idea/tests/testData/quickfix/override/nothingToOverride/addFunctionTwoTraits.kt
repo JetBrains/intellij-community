@@ -1,4 +1,4 @@
-// "Add function to supertype..." "true"
+// "Add function to supertype…" "true"
 interface A {}
 interface B {}
 class C: A, B {
