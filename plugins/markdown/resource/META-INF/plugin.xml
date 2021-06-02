@@ -247,7 +247,7 @@ Includes the following features:</p>
     </group>
 
     <group id="Markdown.Tools" popup="true">
-      <add-to-group group-id="ToolsMenu" anchor="after" relative-to-action="Internal"/>
+      <add-to-group group-id="ToolsMenu" anchor="before" relative-to-action="ExternalToolsGroup"/>
       <action id="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"
               class="org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportFromDocxAction"/>
       <action id="org.intellij.plugins.markdown.fileActions.export.MarkdownExportAction"
