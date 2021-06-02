@@ -11,6 +11,9 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 // Vfs invalidation will rebuild this mapping, also any exception with the mapping will cause rebuild of the vfs
 // stored data is VfsTimeStamp Version T*
 public final class VfsDependentEnum<T> {
-  private final File myFile;
+  private final Path myFile;
   private final DataExternalizer<T> myKeyDescriptor;
   private final int myVersion;
 
@@ -77,29 +80,24 @@ public final class VfsDependentEnum<T> {
   }
 
   private void saveToFile(@NotNull T instance) throws IOException {
-    FileOutputStream fileOutputStream = new FileOutputStream(myFile, true);
-
-    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(fileOutputStream))) {
-      if (myFile.length() == 0) {
+    Files.createDirectories(myFile.getParent());
+    try (DataOutputStream output = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(myFile,
+                                                                                                       StandardOpenOption.APPEND,
+                                                                                                       StandardOpenOption.CREATE,
+                                                                                                       StandardOpenOption.WRITE)))) {
+      if (Files.size(myFile) == 0L) {
         DataInputOutputUtil.writeTIME(output, FSRecords.getCreationTimestamp());
         DataInputOutputUtil.writeINT(output, myVersion);
       }
       myKeyDescriptor.save(output, instance);
     }
-    finally {
-      try {
-        fileOutputStream.getFD().sync();
-      }
-      catch (IOException ignored) {
-      }
-    }
   }
 
   private boolean loadFromFile() throws IOException {
-    if (!myTriedToLoadFile && myInstances.isEmpty() && myFile.exists()) {
+    if ( !myTriedToLoadFile && myInstances.isEmpty() && Files.exists(myFile)) {
       myTriedToLoadFile = true;
       boolean deleteFile = false;
-      try (DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)))) {
+      try (DataInputStream input = new DataInputStream(new BufferedInputStream(Files.newInputStream(myFile)))) {
         long vfsVersion = DataInputOutputUtil.readTIME(input);
 
         if (vfsVersion != FSRecords.getCreationTimestamp()) {

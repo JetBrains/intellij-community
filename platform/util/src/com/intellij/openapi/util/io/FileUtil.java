@@ -1465,6 +1465,10 @@ public class FileUtil extends FileUtilRt {
     return true;
   }
 
+  public static boolean deleteWithRenaming(@NotNull Path file) {
+    return deleteWithRenaming(file.toFile());
+  }
+
   public static boolean deleteWithRenaming(@NotNull File file) {
     File tempFileNameForDeletion = findSequentNonexistentFile(file.getParentFile(), file.getName(), "");
     boolean success = file.renameTo(tempFileNameForDeletion);
