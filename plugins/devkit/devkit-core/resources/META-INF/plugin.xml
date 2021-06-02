@@ -192,11 +192,6 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"
                      key="inspection.use.couple.display.name"/>
-    <localInspection language="JAVA" shortName="DontUsePairConstructor"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.DontUseNewPairInspection"
-                     key="inspection.dont.use.pair.constructor.display.name"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="UAST" shortName="UseVirtualFileEquals"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
