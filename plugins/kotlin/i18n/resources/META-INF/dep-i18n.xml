@@ -1,8 +1,8 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-      <psi.referenceContributor language="kotlin" implementation="org.jetbrains.kotlin.idea.properties.KotlinPropertiesReferenceContributor"/>
+      <psi.referenceContributor language="kotlin" implementation="org.jetbrains.kotlin.idea.i18n.KotlinPropertiesReferenceContributor"/>
 
-      <localInspection implementationClass="org.jetbrains.kotlin.idea.i18n.inspections.KotlinInvalidBundleOrPropertyInspection"
+      <localInspection implementationClass="org.jetbrains.kotlin.idea.i18n.KotlinInvalidBundleOrPropertyInspection"
                        groupName="Kotlin"
                        enabledByDefault="true"
                        level="ERROR"

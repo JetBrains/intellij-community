@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.i18n
 
 import com.intellij.lang.properties.psi.Property
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
-import org.jetbrains.kotlin.idea.i18n.inspections.KotlinInvalidBundleOrPropertyInspection
 import org.junit.Assert
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith

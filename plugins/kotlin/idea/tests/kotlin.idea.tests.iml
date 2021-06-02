@@ -56,6 +56,7 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.services" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.i18n" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.langInjection" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="TEST" />
