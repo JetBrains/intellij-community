@@ -13,7 +13,7 @@ internal class ImportFix(expression: KtSimpleNameExpression) : AbstractImportFix
         val element = element ?: return false
         val project = element.project
         if (!ShowAutoImportPass.isAddUnambiguousImportsOnTheFlyEnabled(element.containingFile)) return false
-        val addImportAction = createAction(project, editor, element)
+        val addImportAction = createAction(project, editor, element, filterSuggestionsWithEP = true)
         if (addImportAction.isUnambiguous()) {
             addImportAction.execute()
             return true
