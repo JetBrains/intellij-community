@@ -590,12 +590,17 @@ public class KotlinTestUtils {
     }
 
     private static void runTestImpl(@NotNull DoTest test, @NotNull TestCase testCase, String testDataFilePath) throws Exception {
-        File testRoot = TestMetadataUtil.getTestRoot(testCase.getClass());
-        if (testRoot == null) {
-            throw new IllegalStateException("@TestRoot annotation was not found on " + testCase.getName());
-        }
+        String absoluteTestDataFilePath;
 
-        String absoluteTestDataFilePath = new File(testRoot, testDataFilePath).getAbsolutePath();
+        if (testDataFilePath.startsWith("/")) {
+            absoluteTestDataFilePath = testDataFilePath;
+        } else {
+            File testRoot = TestMetadataUtil.getTestRoot(testCase.getClass());
+            if (testRoot == null) {
+                throw new IllegalStateException("@TestRoot annotation was not found on " + testCase.getName());
+            }
+            absoluteTestDataFilePath  = new File(testRoot, testDataFilePath).getAbsolutePath();
+        }
 
         test.invoke(absoluteTestDataFilePath);
     }
