@@ -153,6 +153,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
         //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
         withoutProjectLibrary("layoutlib")
+
+        // Android Studio: we exclude the Markdown plugin in Studio, which has the unfortunate side effect
+        // of excluding the intellij-markdown library too. This library is used by the Kotlin plugin, so we have to
+        // include it. This workaround can be removed once the Markdown plugin is bundled in Studio.
+        withProjectLibrary("intellij-markdown")
       }
     } as Consumer<PlatformLayout>
 
