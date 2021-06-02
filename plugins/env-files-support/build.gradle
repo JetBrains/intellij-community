@@ -39,6 +39,7 @@ intellij {
             'Docker',
             'pythonid:193.6015.28',
             'org.jetbrains.plugins.ruby:193.6015.9',
+            'Kotlin',
             'coverage',
             'CSS',
             'java-i18n',

@@ -1,0 +1,12 @@
+<idea-plugin>
+    <extensions defaultExtensionNs="com.intellij">
+        <completion.contributor language="JAVA" implementationClass="ru.adelf.idea.dotenv.java.JavaEnvCompletionContributor"/>
+        <gotoDeclarationHandler implementation="ru.adelf.idea.dotenv.java.JavaEnvCompletionContributor"/>
+        <completion.confidence language="JAVA" implementationClass="ru.adelf.idea.dotenv.java.JavaCompletionConfidence"
+                               id="envStringCompletionConfidence" order="first"/>
+    </extensions>
+
+    <extensions defaultExtensionNs="ru.adelf.idea.dotenv">
+        <environmentVariablesUsagesProvider implementation="ru.adelf.idea.dotenv.java.JavaEnvironmentVariablesUsagesProvider"/>
+    </extensions>
+</idea-plugin>
