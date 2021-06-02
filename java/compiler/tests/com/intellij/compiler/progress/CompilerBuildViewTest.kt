@@ -87,7 +87,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Updating dependency information... [a]\n" +
                                     "Adding @NotNull assertions... [a]\n" +
                                     "Adding pattern assertions... [a]\n" +
-                                    "Adding the Threading Model assertions... [a]\n" +
+                                    "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks\n")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
@@ -111,7 +111,7 @@ class CompilerBuildViewTest : BaseCompilerTestCase() {
                                     "Updating dependency information... [a]\n" +
                                     "Adding @NotNull assertions... [a]\n" +
                                     "Adding pattern assertions... [a]\n" +
-                                    "Adding the Threading Model assertions... [a]\n" +
+                                    "Adding the Threading Model assertions… [a]\n" +
                                     "Running 'after' tasks")
       assertThat(output).contains("Finished, saving caches...\n" +
                                   "Executing post-compile tasks...\n" +
