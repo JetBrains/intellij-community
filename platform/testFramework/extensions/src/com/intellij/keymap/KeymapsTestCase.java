@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.keymap;
 
 import org.jetbrains.annotations.NonNls;
@@ -46,7 +46,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control E",                "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox", "Vcs.ShowMessageHistory"},
     { "control INSERT",           "$Copy", "Terminal.CopySelectedText"},
     { "control M",                "EditorScrollToCenter", "Vcs.ShowMessageHistory"},
-    { "control N",                "Console.TableResult.AddRow", "FileChooser.NewFolder", "GotoClass", "GotoChangedFile"},
+    { "control N",                "Console.TableResult.AddRow", "FileChooser.NewFolder", "GotoClass"},
     { "control P",                "FileChooser.TogglePathShowing", "ParameterInfo"},
     { "control R",                "Replace", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
     { "control SLASH",            "CommentByLineComment", "Graph.ActualSize"},
@@ -137,7 +137,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta 2",                   "ActivateFavoritesToolWindow", "FileChooser.GotoProject", "DuplicatesForm.SendToRight"},
     { "meta 3",                   "ActivateFindToolWindow", "FileChooser.GotoModule"},
     { "meta N",                   "Console.TableResult.AddRow", "FileChooser.NewFolder", "Generate", "NewElement"},
-    { "meta O",                   "GotoClass", "GotoChangedFile"},
     { "shift ctrl LEFT",          "Diff.ApplyRightSide", "PreviousEditorTab"},
     { "shift ctrl RIGHT",         "Diff.ApplyLeftSide", "NextEditorTab"},
     { "shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindPrevious"},
@@ -199,7 +198,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control alt G",            "GotoDeclaration", "org.jetbrains.plugins.ruby.rails.actions.generators.GeneratorsPopupAction", "Mvc.RunTarget"},
     { "control alt S",            "ShowSettings", "Find"},
     { "shift alt S",              "FindUsages", "context.save"},
-    { "shift alt G",              "GotoChangedFile", "GotoClass", "hg4idea.QGotoFromPatches"},
+    { "shift alt G",              "GotoClass", "hg4idea.QGotoFromPatches"},
     { "shift alt P",              "ParameterInfo", "hg4idea.QPushAction"},
     { "shift control X",          SECOND_STROKE, "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
     { "shift ctrl DOWN",          "EditorForwardParagraphWithSelection", "ResizeToolWindowDown"},
@@ -213,7 +212,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl F10",                 "RunToCursor", "UpdateRunningApplication"},
     { "F5",                       "Graph.RouteEdges", "Resume", "PoBrowserRefresh"},
     { "shift alt OPEN_BRACKET",   "EditorCodeBlockStart", "EmmetPreviousEditPoint"},
-    { "ctrl T",                   "GotoChangedFile", "SearchEverywhere"},
     { "shift alt F11",            "FindUsagesInFile", "HighlightUsagesInFile"},
     { "ctrl alt B",               "ViewBreakpoints", "org.jetbrains.r.rendering.chunk.RunChunksAboveAction"},
     { "ctrl alt F",               "ActivateStructureToolWindow", "ShowFilterPopup"},
@@ -297,7 +295,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control UP",         "ResizeToolWindowUp", "MethodUp"},
     { "shift control K",          "Vcs.Push", "FindPrevious"},
     { "shift control X",          "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
-    { "shift control T",          "GotoClass", "GotoChangedFile"},
     { "shift ctrl alt RIGHT",     "PreviousEditorTab", "Terminal.MoveToolWindowTabRight"},
     { "shift ctrl alt LEFT",      "NextEditorTab", "Terminal.MoveToolWindowTabLeft"},
     { "ctrl L",                   "GotoLine", "Terminal.ClearBuffer"},
@@ -316,7 +313,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control N",                "Console.TableResult.AddRow", "NewElement", "FileChooser.NewFolder"},
     { "control R",                "RenameElement", "org.jetbrains.plugins.ruby.rails.console.ReloadSources", "Git.Reword.Commit", "Git.Rename.Local.Branch", "ShelvedChanges.Rename", "ChangesView.Rename"},
     { "control U",                SECOND_STROKE, "CommanderSwapPanels"},
-    { "control O",                "GotoClass", "GotoChangedFile"},
     { "control PERIOD",           "GotoNextError", "EditorChooseLookupItemDot"},
     { "control PAGE_DOWN",        "Diff.NextChange", "NextTab"},
     { "control PAGE_UP",          "Diff.PrevChange", "PreviousTab"},
@@ -353,7 +349,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "meta U",                   "CommanderSwapPanels", "EvaluateExpression"},
     { "meta W",                   "CloseContent", "CloseActiveTab"},
     { "meta F6",                  "Diff.NextChange", "NextTab"},
-    { "shift meta T",             "GotoClass", "GotoChangedFile"},
     { "meta alt B",               "ShowNavBar", "org.jetbrains.r.rendering.chunk.RunChunksAboveAction"},
     { "meta alt C",               "ChangeSignature", "org.jetbrains.r.rendering.chunk.RunChunkAction"},
     { "meta alt I",               "Inline", "RMarkdownNewChunk"},

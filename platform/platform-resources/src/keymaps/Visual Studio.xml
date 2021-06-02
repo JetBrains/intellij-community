@@ -63,9 +63,7 @@
   <action id="SearchEverywhere">
     <keyboard-shortcut first-keystroke="control T"/>
   </action>
-  <action id="GotoChangedFile">
-    <keyboard-shortcut first-keystroke="control T"/>
-  </action>
+  <action id="GotoChangedFile"/>
   <action id="GotoFile">
     <keyboard-shortcut first-keystroke="control shift T"/>
   </action>
