@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.testGenerator.generator
 
 import com.intellij.testFramework.TestDataPath
+import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.test.*
 import org.jetbrains.kotlin.testGenerator.model.*
 import org.junit.runner.RunWith
@@ -40,7 +41,7 @@ object TestGenerator {
             appendLine("package $packageName;")
             newLine()
 
-            appendImports(getImports(suite))
+            appendImports(getImports(suite, group))
             appendGeneratedComment()
             appendAnnotation(TAnnotation<SuppressWarnings>("all"))
             appendAnnotation(TAnnotation<TestRoot>(group.modulePath))
@@ -77,7 +78,7 @@ object TestGenerator {
 
     private fun normalizeContent(content: String): String = content.replace(Regex("\\R"), "\n")
 
-    private fun getImports(suite: TSuite): List<String> {
+    private fun getImports(suite: TSuite, group: TGroup): List<String> {
         val imports = (commonImports + suite.imports).toMutableList()
 
         if (suite.models.any { it.targetBackend != TargetBackend.ANY }) {
@@ -88,6 +89,10 @@ object TestGenerator {
         val selfPackageName = suite.generatedClassName.substringBeforeLast('.')
         if (superPackageName != selfPackageName) {
             imports += importsListOf(suite.abstractTestClass.kotlin)
+        }
+
+        if (group.isCompilerTestData) {
+            imports += "static ${AdditionalKotlinArtifacts::class.java.canonicalName}.${AdditionalKotlinArtifacts::compilerTestData.name}"
         }
 
         return imports
