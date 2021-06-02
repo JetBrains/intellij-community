@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.facet.PythonFacet;
 import com.jetbrains.python.facet.PythonFacetType;
 import com.jetbrains.python.sdk.PyDetectedSdk;
 import com.jetbrains.python.sdk.PySdkExtKt;
@@ -120,7 +121,10 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
       if (facet == null) {
         logger.reportMessage(3, "Setting Python facet for: " + m.getName());
 
-        WriteAction.runAndWait(() -> facetManager.addFacet(facetType, facetType.getPresentableName(), null));
+        WriteAction.runAndWait(() -> {
+          final PythonFacet addedFacet = facetManager.addFacet(facetType, facetType.getPresentableName(), null);
+          PySdkExtKt.excludeInnerVirtualEnv(m, addedFacet.getConfiguration().getSdk());
+        });
       }
       else {
         logger.reportMessage(3, "Python facet already here: " + m.getName());
