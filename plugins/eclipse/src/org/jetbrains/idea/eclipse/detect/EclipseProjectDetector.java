@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector;
@@ -75,7 +76,7 @@ class EclipseProjectDetector extends ProjectDetector {
         String property = "eclipse.projects.detected";
         if (group == null && PropertiesComponent.getInstance().isValueSet(property)) {
           // the group was removed by user
-//          return;
+          return;
         }
 
         List<String> projects = new ArrayList<>();
@@ -153,6 +154,9 @@ class EclipseProjectDetector extends ProjectDetector {
 
   private static boolean isInSpecialMacFolder(String file) {
     if (!SystemInfo.isMac) return false;
+    if (FileSystemUtil.isSymLink(file)) {
+      return true;
+    }
     String home = System.getProperty("user.home");
     Path path = Path.of(file);
     return path.startsWith(Path.of(home, "Documents")) ||
