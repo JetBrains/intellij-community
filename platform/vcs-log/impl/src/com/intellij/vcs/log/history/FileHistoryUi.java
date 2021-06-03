@@ -221,9 +221,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       else if (property instanceof TableColumnWidthProperty) {
         getTable().forceReLayout(((TableColumnWidthProperty)property).getColumn());
       }
-      else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
-        getTable().rootColumnUpdated();
-      }
     }
   }
 

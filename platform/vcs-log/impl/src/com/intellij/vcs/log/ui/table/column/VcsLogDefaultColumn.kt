@@ -46,7 +46,14 @@ internal object Root : VcsLogDefaultColumn<FilePath>("Default.Root", "", false) 
 
   override fun getValue(model: GraphTableModel, row: Int): FilePath = model.visiblePack.getFilePath(row)
 
-  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer = RootCellRenderer(table.properties, table.colorManager)
+  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
+    doOnPropertyChange(table) { property ->
+      if (CommonUiProperties.SHOW_ROOT_NAMES == property) {
+        table.rootColumnUpdated()
+      }
+    }
+    return RootCellRenderer(table.properties, table.colorManager)
+  }
 
   override fun getStubValue(model: GraphTableModel): FilePath = VcsUtil.getFilePath(ContainerUtil.getFirstItem(model.logData.roots))
 }

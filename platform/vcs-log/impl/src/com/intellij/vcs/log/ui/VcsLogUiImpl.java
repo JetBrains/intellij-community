@@ -233,9 +233,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       else if (MainVcsLogUiProperties.SHOW_LONG_EDGES.equals(property)) {
         onShowLongEdgesChanged();
       }
-      else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
-        getTable().rootColumnUpdated();
-      }
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));
       }
