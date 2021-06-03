@@ -7,7 +7,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementDecorator
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.util.Key
 import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns.elementType
 import com.intellij.patterns.PsiJavaPatterns.psiElement
@@ -31,22 +30,20 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import kotlin.math.max
 
-var KtFile.doNotComplete: Boolean? by UserDataProperty(Key.create("DO_NOT_COMPLETE"))
-
 class KotlinCompletionContributor : CompletionContributor() {
-
     private val AFTER_NUMBER_LITERAL = psiElement().afterLeafSkipping(
         psiElement().withText(""),
         psiElement().withElementType(elementType().oneOf(KtTokens.FLOAT_LITERAL, KtTokens.INTEGER_LITERAL))
     )
+
     private val AFTER_INTEGER_LITERAL_AND_DOT = psiElement().afterLeafSkipping(
         psiElement().withText("."),
         psiElement().withElementType(elementType().oneOf(KtTokens.INTEGER_LITERAL))
     )
 
     companion object {
-        val DEFAULT_DUMMY_IDENTIFIER: String =
-            CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + "$" // add '$' to ignore context after the caret
+        // add '$' to ignore context after the caret
+        const val DEFAULT_DUMMY_IDENTIFIER: String = CompletionUtilCore.DUMMY_IDENTIFIER_TRIMMED + "$"
     }
 
     init {
@@ -223,7 +220,7 @@ class KotlinCompletionContributor : CompletionContributor() {
                 val file = KtPsiFactory(tokenBefore.project).createFile(text)
                 val declaration = file.declarations.singleOrNull() ?: return null
                 if (declaration.textLength != text.length) return null
-                val containsErrorElement = !PsiTreeUtil.processElements(file, PsiElementProcessor<PsiElement> { it !is PsiErrorElement })
+                val containsErrorElement = !PsiTreeUtil.processElements(file, PsiElementProcessor { it !is PsiErrorElement })
                 return if (containsErrorElement) null else "$tail$"
             }
             if (tokenType !in declarationTokens) return null
@@ -238,7 +235,6 @@ class KotlinCompletionContributor : CompletionContributor() {
         val position = parameters.position
         val parametersOriginFile = parameters.originalFile
         if (position.containingFile !is KtFile || parametersOriginFile !is KtFile) return
-        if (parametersOriginFile.doNotComplete == true) return
 
         if (position.node.elementType == KtTokens.LONG_TEMPLATE_ENTRY_START) {
             val expression = (position.parent as? KtBlockStringTemplateEntry)?.expression
@@ -283,7 +279,7 @@ class KotlinCompletionContributor : CompletionContributor() {
             return
         }
 
-        for (extension in KotlinCompletionExtension.EP_NAME.getExtensions()) {
+        for (extension in KotlinCompletionExtension.EP_NAME.extensionList) {
             if (extension.perform(parameters, result)) return
         }
 
@@ -485,7 +481,6 @@ abstract class KotlinCompletionExtension {
     abstract fun perform(parameters: CompletionParameters, result: CompletionResultSet): Boolean
 
     companion object {
-        val EP_NAME: ExtensionPointName<KotlinCompletionExtension> =
-            ExtensionPointName.create<KotlinCompletionExtension>("org.jetbrains.kotlin.completionExtension")
+        val EP_NAME: ExtensionPointName<KotlinCompletionExtension> = ExtensionPointName.create("org.jetbrains.kotlin.completionExtension")
     }
 }
