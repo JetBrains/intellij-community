@@ -78,7 +78,9 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         @Override
         boolean process(File file) {
           if (signFileFilter.accept(file)) {
-            buildContext.signExeFile(file.absolutePath)
+            buildContext.executeStep("Signing $file", BuildOptions.WIN_SIGN_STEP) {
+              buildContext.signExeFile(file.absolutePath)
+            }
           }
           return true
         }
