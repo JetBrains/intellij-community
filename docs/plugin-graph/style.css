@@ -1,0 +1,48 @@
+/* Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. */
+html, body {
+  height: 100%;
+}
+
+#cy {
+  width: 100%;
+  height: 100%;
+}
+
+.tooltipMainName {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  user-select: text;
+}
+
+.tooltipValue {
+  float: right;
+  margin-left: 10px;
+  user-select: text;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+}
+
+.tippy-box {
+  line-height: 1.2;
+  background: rgba(255, 255, 255, 0.9);
+  color: #515151;
+  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+  font-size: 14px;
+  padding: 10px;
+  border-radius: 4px;
+  box-shadow: 0 2px 12px 0 rgba(0, 0, 0, .1);
+  text-align: justify;
+  border: 1px solid #ebeef5;
+  width: fit-content;
+  max-width: 1000px !important;
+}
+
+.searchFieldContainer {
+  position: absolute;
+  margin-left: auto;
+  margin-right: auto;
+  left: 0;
+  right: 0;
+  text-align: center;
+  z-index: 100;
+}

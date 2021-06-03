@@ -1,0 +1,171 @@
+lockfileVersion: 5.3
+
+specifiers:
+  '@fontsource/jetbrains-mono': ^4.4.2
+  cytoscape: ^3.19.0
+  cytoscape-fcose: ^2.0.0
+  cytoscape-popper: ^2.0.0
+  flexsearch: ^0.6.32
+  tippy.js: ^6.3.1
+  vite: ^2.3.6
+
+dependencies:
+  '@fontsource/jetbrains-mono': 4.4.2
+  cytoscape: 3.19.0
+  cytoscape-fcose: 2.0.0_cytoscape@3.19.0
+  cytoscape-popper: 2.0.0_cytoscape@3.19.0
+  flexsearch: 0.6.32
+  tippy.js: 6.3.1
+
+devDependencies:
+  vite: 2.3.6
+
+packages:
+
+  /@fontsource/jetbrains-mono/4.4.2:
+    resolution: {integrity: sha512-5kDjpcnQFogrgGulmES5xX80cDd628+69zSE0ClTqzOAYI43yTyH3MeAH4mxohN6MR7v7AQ9bn+OOFvUuuYwBA==}
+    dev: false
+
+  /@popperjs/core/2.9.2:
+    resolution: {integrity: sha512-VZMYa7+fXHdwIq1TDhSXoVmSPEGM/aa+6Aiq3nVVJ9bXr24zScr+NlKFKC3iPljA7ho/GAZr+d2jOf5GIRC30Q==}
+    dev: false
+
+  /colorette/1.2.2:
+    resolution: {integrity: sha512-MKGMzyfeuutC/ZJ1cba9NqcNpfeqMUcYmyF1ZFY6/Cn7CNSAKx6a+s48sqLqyAiZuaP2TcqMhoo+dlwFnVxT9w==}
+    dev: true
+
+  /cose-base/2.0.0:
+    resolution: {integrity: sha512-SdE/oR+5SmdxI5lflXiD9RsUfJ78bXbAzpKkMuK890wVa2PTHQGl1pVwpNca81PWQArM4lNdYmLOt1gCyOdfbg==}
+    dependencies:
+      layout-base: 2.0.0
+    dev: false
+
+  /cytoscape-fcose/2.0.0_cytoscape@3.19.0:
+    resolution: {integrity: sha512-Wy80mbn50qKba5KH2GhZRPZYZGvGXCVK3yWcxSxrZOMJwXmoFQqp76OLUASgdSk5jPsrH3XA+O/bW+hJ5I0Dzw==}
+    peerDependencies:
+      cytoscape: ^3.2.0
+    dependencies:
+      cose-base: 2.0.0
+      cytoscape: 3.19.0
+    dev: false
+
+  /cytoscape-popper/2.0.0_cytoscape@3.19.0:
+    resolution: {integrity: sha512-b7WSOn8qXHWtdIXFNmrgc8qkaOs16tMY0EwtRXlxzvn8X+al6TAFrUwZoYATkYSlotfd/36ZMoeKMEoUck6feA==}
+    peerDependencies:
+      cytoscape: ^3.2.0
+    dependencies:
+      '@popperjs/core': 2.9.2
+      cytoscape: 3.19.0
+    dev: false
+
+  /cytoscape/3.19.0:
+    resolution: {integrity: sha512-DANM8bM4EuSTS3DraPK0nLSmzANrzQ2g/cb3u5Biexu/NVsJA+xAoXVvWHRIHDXz3y0gpMjTPv3Z13ZbkNrEPw==}
+    engines: {node: '>=0.10'}
+    dependencies:
+      heap: 0.2.6
+      lodash.debounce: 4.0.8
+    dev: false
+
+  /esbuild/0.12.5:
+    resolution: {integrity: sha512-vcuP53pA5XiwUU4FnlXM+2PnVjTfHGthM7uP1gtp+9yfheGvFFbq/KyuESThmtoHPUrfZH5JpxGVJIFDVD1Egw==}
+    hasBin: true
+    requiresBuild: true
+    dev: true
+
+  /flexsearch/0.6.32:
+    resolution: {integrity: sha512-EF1BWkhwoeLtbIlDbY/vDSLBen/E5l/f1Vg7iX5CDymQCamcx1vhlc3tIZxIDplPjgi0jhG37c67idFbjg+v+Q==}
+    dev: false
+
+  /fsevents/2.3.2:
+    resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
+    engines: {node: ^8.16.0 || ^10.6.0 || >=11.0.0}
+    os: [darwin]
+    dev: true
+    optional: true
+
+  /function-bind/1.1.1:
+    resolution: {integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==}
+    dev: true
+
+  /has/1.0.3:
+    resolution: {integrity: sha512-f2dvO0VU6Oej7RkWJGrehjbzMAjFp5/VKPp5tTpWIV4JHHZK1/BxbFRtf/siA2SWTe09caDmVtYYzWEIbBS4zw==}
+    engines: {node: '>= 0.4.0'}
+    dependencies:
+      function-bind: 1.1.1
+    dev: true
+
+  /heap/0.2.6:
+    resolution: {integrity: sha1-CH4fELBGky/IWU3Z5tN4r8nR5aw=}
+    dev: false
+
+  /is-core-module/2.4.0:
+    resolution: {integrity: sha512-6A2fkfq1rfeQZjxrZJGerpLCTHRNEBiSgnu0+obeJpEPZRUooHgsizvzv0ZjJwOz3iWIHdJtVWJ/tmPr3D21/A==}
+    dependencies:
+      has: 1.0.3
+    dev: true
+
+  /layout-base/2.0.0:
+    resolution: {integrity: sha512-I3y9zwMl7/ZaGCeQMUwBVABQ0Vz5c1DFlmMtcON4H/E1sBx+RFOcd7SH8nmkOZ0L2wfVPr68MXvtTZB93vT+2w==}
+    dev: false
+
+  /lodash.debounce/4.0.8:
+    resolution: {integrity: sha1-gteb/zCmfEAF/9XiUVMArZyk168=}
+    dev: false
+
+  /nanoid/3.1.23:
+    resolution: {integrity: sha512-FiB0kzdP0FFVGDKlRLEQ1BgDzU87dy5NnzjeW9YZNt+/c3+q82EQDUwniSAUxp/F0gFNI1ZhKU1FqYsMuqZVnw==}
+    engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+    dev: true
+
+  /path-parse/1.0.7:
+    resolution: {integrity: sha512-LDJzPVEEEPR+y48z93A0Ed0yXb8pAByGWo/k5YYdYgpY2/2EsOsksJrq7lOHxryrVOn1ejG6oAp8ahvOIQD8sw==}
+    dev: true
+
+  /postcss/8.3.0:
+    resolution: {integrity: sha512-+ogXpdAjWGa+fdYY5BQ96V/6tAo+TdSSIMP5huJBIygdWwKtVoB5JWZ7yUd4xZ8r+8Kvvx4nyg/PQ071H4UtcQ==}
+    engines: {node: ^10 || ^12 || >=14}
+    dependencies:
+      colorette: 1.2.2
+      nanoid: 3.1.23
+      source-map-js: 0.6.2
+    dev: true
+
+  /resolve/1.20.0:
+    resolution: {integrity: sha512-wENBPt4ySzg4ybFQW2TT1zMQucPK95HSh/nq2CFTZVOGut2+pQvSsgtda4d26YrYcr067wjbmzOG8byDPBX63A==}
+    dependencies:
+      is-core-module: 2.4.0
+      path-parse: 1.0.7
+    dev: true
+
+  /rollup/2.50.6:
+    resolution: {integrity: sha512-6c5CJPLVgo0iNaZWWliNu1Kl43tjP9LZcp6D/tkf2eLH2a9/WeHxg9vfTFl8QV/2SOyaJX37CEm9XuGM0rviUg==}
+    engines: {node: '>=10.0.0'}
+    hasBin: true
+    optionalDependencies:
+      fsevents: 2.3.2
+    dev: true
+
+  /source-map-js/0.6.2:
+    resolution: {integrity: sha512-/3GptzWzu0+0MBQFrDKzw/DvvMTUORvgY6k6jd/VS6iCR4RDTKWH6v6WPwQoUO8667uQEf9Oe38DxAYWY5F/Ug==}
+    engines: {node: '>=0.10.0'}
+    dev: true
+
+  /tippy.js/6.3.1:
+    resolution: {integrity: sha512-JnFncCq+rF1dTURupoJ4yPie5Cof978inW6/4S6kmWV7LL9YOSEVMifED3KdrVPEG+Z/TFH2CDNJcQEfaeuQww==}
+    dependencies:
+      '@popperjs/core': 2.9.2
+    dev: false
+
+  /vite/2.3.6:
+    resolution: {integrity: sha512-fsEpNKDHgh3Sn66JH06ZnUBnIgUVUtw6ucDhlOj1CEqxIkymU25yv1/kWDPlIjyYHnalr0cN6V+zzUJ+fmWHYw==}
+    engines: {node: '>=12.0.0'}
+    hasBin: true
+    dependencies:
+      esbuild: 0.12.5
+      postcss: 8.3.0
+      resolve: 1.20.0
+      rollup: 2.50.6
+    optionalDependencies:
+      fsevents: 2.3.2
+    dev: true

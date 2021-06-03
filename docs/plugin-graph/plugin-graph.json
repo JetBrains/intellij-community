@@ -3,6 +3,7 @@
   "data" : {
     "id" : "QZ",
     "name" : "intellij.angularJS",
+    "n" : "i.angularJS",
     "package" : null,
     "sourceModule" : "intellij.angularJS",
     "descriptor" : "contrib/AngularJS/resources/META-INF/plugin.xml",
@@ -14,6 +15,7 @@
   "data" : {
     "id" : "YE",
     "name" : "intellij.angularJS/diagram",
+    "n" : "i.angularJS/diagram",
     "package" : "org.angularjs.diagram",
     "sourceModule" : "intellij.angularJS",
     "descriptor" : "contrib/AngularJS/resources/intellij.angularJS.diagram.xml",
@@ -24,6 +26,7 @@
   "data" : {
     "id" : "Oc",
     "name" : "intellij.cloudFormation",
+    "n" : "i.cloudFormation",
     "package" : "com.intellij.aws.cloudformation",
     "sourceModule" : "intellij.cloudFormation",
     "descriptor" : "contrib/CloudFormation/src/main/resources/META-INF/plugin.xml",
@@ -35,6 +38,7 @@
   "data" : {
     "id" : "7x",
     "name" : "intellij.clouds.docker.impl",
+    "n" : "i.clouds.docker.impl",
     "package" : "com.intellij.docker",
     "sourceModule" : "intellij.clouds.docker.impl",
     "descriptor" : "plugins/Docker/resources/META-INF/plugin.xml",
@@ -46,6 +50,7 @@
   "data" : {
     "id" : "Jm",
     "name" : "intellij.clouds.docker.java",
+    "n" : "i.clouds.docker.java",
     "package" : "com.intellij.docker.java",
     "sourceModule" : "intellij.clouds.docker.java",
     "descriptor" : "plugins/Docker/Docker-java-impl/resources/intellij.clouds.docker.java.xml",
@@ -56,6 +61,7 @@
   "data" : {
     "id" : "tU",
     "name" : "intellij.clouds.docker.compose",
+    "n" : "i.clouds.docker.compose",
     "package" : "com.intellij.docker.composeFile",
     "sourceModule" : "intellij.clouds.docker.compose",
     "descriptor" : "plugins/Docker/Docker-compose/resources/intellij.clouds.docker.compose.xml",
@@ -66,6 +72,7 @@
   "data" : {
     "id" : "dI",
     "name" : "intellij.clouds.docker.file",
+    "n" : "i.clouds.docker.file",
     "package" : "com.intellij.docker.dockerFile",
     "sourceModule" : "intellij.clouds.docker.file",
     "descriptor" : "plugins/Docker/Docker-file/resources/intellij.clouds.docker.file.xml",
@@ -76,6 +83,7 @@
   "data" : {
     "id" : "ra",
     "name" : "intellij.clouds.docker.remoteRun",
+    "n" : "i.clouds.docker.remoteRun",
     "package" : "com.intellij.docker.remote",
     "sourceModule" : "intellij.clouds.docker.remoteRun",
     "descriptor" : "plugins/Docker/Docker-remote-run/resources/intellij.clouds.docker.remoteRun.xml",
@@ -86,6 +94,7 @@
   "data" : {
     "id" : "up",
     "name" : "intellij.clouds.kubernetes",
+    "n" : "i.clouds.kubernetes",
     "package" : "com.intellij.kubernetes",
     "sourceModule" : "intellij.clouds.kubernetes",
     "descriptor" : "plugins/kubernetes/resources/META-INF/plugin.xml",
@@ -97,6 +106,7 @@
   "data" : {
     "id" : "RP",
     "name" : "intellij.clouds.kubernetes.charts.gotpl",
+    "n" : "i.clouds.kubernetes.charts.gotpl",
     "package" : "com.intellij.kubernetes.helm.gotpl",
     "sourceModule" : "intellij.clouds.kubernetes.charts.gotpl",
     "descriptor" : "plugins/kubernetes/charts-gotpl/resources/intellij.clouds.kubernetes.charts.gotpl.xml",
@@ -107,6 +117,7 @@
   "data" : {
     "id" : "17",
     "name" : "intellij.coffeescript",
+    "n" : "i.coffeescript",
     "package" : "org.coffeescript",
     "sourceModule" : "intellij.coffeescript",
     "descriptor" : "plugins/coffeescript/coffeescript-core/resources/META-INF/plugin.xml",
@@ -118,6 +129,7 @@
   "data" : {
     "id" : "w4",
     "name" : "intellij.configurationScript",
+    "n" : "i.configurationScript",
     "package" : "com.intellij.configurationScript",
     "sourceModule" : "intellij.configurationScript",
     "descriptor" : "community/plugins/configuration-script/resources/META-INF/plugin.xml",
@@ -129,6 +141,7 @@
   "data" : {
     "id" : "Bv",
     "name" : "intellij.diagram.impl",
+    "n" : "i.diagram.impl",
     "package" : "com.intellij.uml",
     "sourceModule" : "intellij.diagram.impl",
     "descriptor" : "plugins/uml/resources/META-INF/plugin.xml",
@@ -140,6 +153,7 @@
   "data" : {
     "id" : "HS",
     "name" : "intellij.exceptionAnalyzer",
+    "n" : "i.exceptionAnalyzer",
     "package" : "com.intellij.sisyphus",
     "sourceModule" : "intellij.exceptionAnalyzer",
     "descriptor" : "plugins/exception-analyzer/src/main/resources/META-INF/plugin.xml",
@@ -151,6 +165,7 @@
   "data" : {
     "id" : "de",
     "name" : "intellij.exceptionAnalyzer/profiler",
+    "n" : "i.exceptionAnalyzer/profiler",
     "package" : "com.intellij.sisyphus.profiler",
     "sourceModule" : "intellij.exceptionAnalyzer",
     "descriptor" : "plugins/exception-analyzer/src/main/resources/intellij.exceptionAnalyzer.profiler.xml",
@@ -161,6 +176,7 @@
   "data" : {
     "id" : "xq",
     "name" : "intellij.exceptionAnalyzer/git",
+    "n" : "i.exceptionAnalyzer/git",
     "package" : "com.intellij.sisyphus.git",
     "sourceModule" : "intellij.exceptionAnalyzer",
     "descriptor" : "plugins/exception-analyzer/src/main/resources/intellij.exceptionAnalyzer.git.xml",
@@ -171,6 +187,7 @@
   "data" : {
     "id" : "uY",
     "name" : "intellij.fileWatcher",
+    "n" : "i.fileWatcher",
     "package" : "com.intellij.plugins.watcher",
     "sourceModule" : "intellij.fileWatcher",
     "descriptor" : "plugins/fileWatcher/resources/META-INF/plugin.xml",
@@ -182,6 +199,7 @@
   "data" : {
     "id" : "gR",
     "name" : "intellij.freemarker",
+    "n" : "i.freemarker",
     "package" : "com.intellij.freemarker",
     "sourceModule" : "intellij.freemarker",
     "descriptor" : "plugins/freemarker/core/resources/META-INF/plugin.xml",
@@ -193,6 +211,7 @@
   "data" : {
     "id" : "vW",
     "name" : "intellij.go.ide",
+    "n" : "i.go.ide",
     "package" : "com.goide.ide",
     "sourceModule" : "intellij.go.ide",
     "descriptor" : "goland/intellij-go/ide/resources/META-INF/plugin.xml",
@@ -204,6 +223,7 @@
   "data" : {
     "id" : "ae",
     "name" : "intellij.go.plugin",
+    "n" : "i.go.plugin",
     "package" : "com.goide",
     "sourceModule" : "intellij.go.plugin",
     "descriptor" : "goland/intellij-go/plugin/resources/META-INF/plugin.xml",
@@ -215,6 +235,7 @@
   "data" : {
     "id" : "m2",
     "name" : "intellij.go.template.integration",
+    "n" : "i.go.template.integration",
     "package" : "com.goide.template.integration",
     "sourceModule" : "intellij.go.template.integration",
     "descriptor" : "goland/intellij-go/template-integration/resources/intellij.go.template.integration.xml",
@@ -225,6 +246,7 @@
   "data" : {
     "id" : "Pj",
     "name" : "intellij.go.terminal",
+    "n" : "i.go.terminal",
     "package" : "com.goide.terminal",
     "sourceModule" : "intellij.go.terminal",
     "descriptor" : "goland/intellij-go/go-terminal/resources/intellij.go.terminal.xml",
@@ -235,6 +257,7 @@
   "data" : {
     "id" : "30",
     "name" : "intellij.go.shell",
+    "n" : "i.go.shell",
     "package" : "com.goide.sh",
     "sourceModule" : "intellij.go.shell",
     "descriptor" : "goland/intellij-go/go-shell/resources/intellij.go.shell.xml",
@@ -245,6 +268,7 @@
   "data" : {
     "id" : "lQ",
     "name" : "intellij.go.coverage",
+    "n" : "i.go.coverage",
     "package" : "com.goide.execution.testing.coverage",
     "sourceModule" : "intellij.go.coverage",
     "descriptor" : "goland/intellij-go/go-coverage/resources/intellij.go.coverage.xml",
@@ -255,6 +279,7 @@
   "data" : {
     "id" : "j5",
     "name" : "intellij.go.copyright",
+    "n" : "i.go.copyright",
     "package" : "com.goide.copyright",
     "sourceModule" : "intellij.go.copyright",
     "descriptor" : "goland/intellij-go/go-copyright/resources/intellij.go.copyright.xml",
@@ -265,6 +290,7 @@
   "data" : {
     "id" : "9e",
     "name" : "intellij.go.watchers",
+    "n" : "i.go.watchers",
     "package" : "com.goide.watchers",
     "sourceModule" : "intellij.go.watchers",
     "descriptor" : "goland/intellij-go/go-watchers/resources/intellij.go.watchers.xml",
@@ -275,6 +301,7 @@
   "data" : {
     "id" : "tK",
     "name" : "intellij.go.featuresTrainer",
+    "n" : "i.go.featuresTrainer",
     "package" : "com.goide.training",
     "sourceModule" : "intellij.go.featuresTrainer",
     "descriptor" : "goland/intellij-go/go-features-trainer/resources/intellij.go.featuresTrainer.xml",
@@ -285,6 +312,7 @@
   "data" : {
     "id" : "qK",
     "name" : "intellij.go.grazie",
+    "n" : "i.go.grazie",
     "package" : "com.goide.grazie",
     "sourceModule" : "intellij.go.grazie",
     "descriptor" : "goland/intellij-go/go-grazie/resources/intellij.go.grazie.xml",
@@ -295,6 +323,7 @@
   "data" : {
     "id" : "7H",
     "name" : "intellij.go.completionMlRanking",
+    "n" : "i.go.completionMlRanking",
     "package" : "com.goide.completion.ml",
     "sourceModule" : "intellij.go.completionMlRanking",
     "descriptor" : "goland/intellij-go/go-completion-ml-ranking/resources/intellij.go.completionMlRanking.xml",
@@ -305,6 +334,7 @@
   "data" : {
     "id" : "l8",
     "name" : "intellij.go.sharedIndexes",
+    "n" : "i.go.sharedIndexes",
     "package" : "com.goide.index.shared",
     "sourceModule" : "intellij.go.sharedIndexes",
     "descriptor" : "goland/intellij-go/go-shared-indexes/resources/intellij.go.sharedIndexes.xml",
@@ -315,6 +345,7 @@
   "data" : {
     "id" : "VF",
     "name" : "intellij.go.diagram",
+    "n" : "i.go.diagram",
     "package" : "com.goide.diagram",
     "sourceModule" : "intellij.go.diagram",
     "descriptor" : "goland/intellij-go/go-diagram/resources/intellij.go.diagram.xml",
@@ -325,6 +356,7 @@
   "data" : {
     "id" : "hz",
     "name" : "intellij.go.sharedIndexes.bundled",
+    "n" : "i.go.sharedIndexes.bundled",
     "package" : "com.goide.index.shared.bundled",
     "sourceModule" : "intellij.go.sharedIndexes.bundled",
     "descriptor" : "goland/intellij-go/go-shared-indexes-bundled/resources/META-INF/plugin.xml",
@@ -336,6 +368,7 @@
   "data" : {
     "id" : "Aa",
     "name" : "intellij.go.template",
+    "n" : "i.go.template",
     "package" : "com.goide.template",
     "sourceModule" : "intellij.go.template",
     "descriptor" : "goland/intellij-go/template/resources/META-INF/plugin.xml",
@@ -347,6 +380,7 @@
   "data" : {
     "id" : "FJ",
     "name" : "intellij.gradle.ext",
+    "n" : "i.gradle.ext",
     "package" : null,
     "sourceModule" : "intellij.gradle.ext",
     "descriptor" : "plugins/gradle-ext/src/main/resources/META-INF/plugin.xml",
@@ -358,6 +392,7 @@
   "data" : {
     "id" : "QD",
     "name" : "intellij.gradle.ext/profiler",
+    "n" : "i.gradle.ext/profiler",
     "package" : "org.jetbrains.idea.gradle.ext.profiler",
     "sourceModule" : "intellij.gradle.ext",
     "descriptor" : "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.profiler.xml",
@@ -368,6 +403,7 @@
   "data" : {
     "id" : "05",
     "name" : "intellij.gradle.javaee",
+    "n" : "i.gradle.javaee",
     "package" : "com.intellij.javaee.gradle",
     "sourceModule" : "intellij.gradle.javaee",
     "descriptor" : "plugins/javaee/gradle-integration/resources/META-INF/plugin.xml",
@@ -379,6 +415,7 @@
   "data" : {
     "id" : "yH",
     "name" : "intellij.gradle.javaee/javaee",
+    "n" : "i.gradle.javaee/javaee",
     "package" : "com.intellij.javaee.gradle.javaee",
     "sourceModule" : "intellij.gradle.javaee",
     "descriptor" : "plugins/javaee/gradle-integration/resources/intellij.gradle.javaee.javaee.xml",
@@ -389,6 +426,7 @@
   "data" : {
     "id" : "yC",
     "name" : "intellij.gradle.javaee/javaee.web",
+    "n" : "i.gradle.javaee/javaee.web",
     "package" : "com.intellij.javaee.gradle.javaeeWeb",
     "sourceModule" : "intellij.gradle.javaee",
     "descriptor" : "plugins/javaee/gradle-integration/resources/intellij.gradle.javaee.javaee.web.xml",
@@ -399,6 +437,7 @@
   "data" : {
     "id" : "49",
     "name" : "intellij.grazie",
+    "n" : "i.grazie",
     "package" : "com.intellij.grazie",
     "sourceModule" : "intellij.grazie",
     "descriptor" : "community/plugins/grazie/resources/META-INF/plugin.xml",
@@ -410,6 +449,7 @@
   "data" : {
     "id" : "Uo",
     "name" : "intellij.grazie.java",
+    "n" : "i.grazie.java",
     "package" : "com.intellij.grazie.ide.language.java",
     "sourceModule" : "intellij.grazie.java",
     "descriptor" : "community/plugins/grazie/java/src/main/resources/intellij.grazie.java.xml",
@@ -420,6 +460,7 @@
   "data" : {
     "id" : "jh",
     "name" : "intellij.grazie.json",
+    "n" : "i.grazie.json",
     "package" : "com.intellij.grazie.ide.language.json",
     "sourceModule" : "intellij.grazie.json",
     "descriptor" : "community/plugins/grazie/json/src/main/resources/intellij.grazie.json.xml",
@@ -430,6 +471,7 @@
   "data" : {
     "id" : "e9",
     "name" : "intellij.grazie.markdown",
+    "n" : "i.grazie.markdown",
     "package" : "com.intellij.grazie.ide.language.markdown",
     "sourceModule" : "intellij.grazie.markdown",
     "descriptor" : "community/plugins/grazie/markdown/src/main/resources/intellij.grazie.markdown.xml",
@@ -440,6 +482,7 @@
   "data" : {
     "id" : "I3",
     "name" : "intellij.grazie.properties",
+    "n" : "i.grazie.properties",
     "package" : "com.intellij.grazie.ide.language.properties",
     "sourceModule" : "intellij.grazie.properties",
     "descriptor" : "community/plugins/grazie/properties/src/main/resources/intellij.grazie.properties.xml",
@@ -450,6 +493,7 @@
   "data" : {
     "id" : "HP",
     "name" : "intellij.grazie.xml",
+    "n" : "i.grazie.xml",
     "package" : "com.intellij.grazie.ide.language.xml",
     "sourceModule" : "intellij.grazie.xml",
     "descriptor" : "community/plugins/grazie/xml/main/resources/intellij.grazie.xml.xml",
@@ -460,6 +504,7 @@
   "data" : {
     "id" : "Sw",
     "name" : "intellij.grazie.yaml",
+    "n" : "i.grazie.yaml",
     "package" : "com.intellij.grazie.ide.language.yaml",
     "sourceModule" : "intellij.grazie.yaml",
     "descriptor" : "community/plugins/grazie/yaml/main/resources/intellij.grazie.yaml.xml",
@@ -470,6 +515,7 @@
   "data" : {
     "id" : "PH",
     "name" : "intellij.groovy",
+    "n" : "i.groovy",
     "package" : "org.jetbrains.plugins.groovy",
     "sourceModule" : "intellij.groovy",
     "descriptor" : "community/plugins/groovy/src/META-INF/plugin.xml",
@@ -481,6 +527,7 @@
   "data" : {
     "id" : "CF",
     "name" : "intellij.grpc",
+    "n" : "i.grpc",
     "package" : "com.intellij.grpc",
     "sourceModule" : "intellij.grpc",
     "descriptor" : "plugins/frameworks/grpc/resources/META-INF/plugin.xml",
@@ -492,6 +539,7 @@
   "data" : {
     "id" : "6U",
     "name" : "intellij.guice",
+    "n" : "i.guice",
     "package" : "com.intellij.guice",
     "sourceModule" : "intellij.guice",
     "descriptor" : "plugins/frameworks/Guice/resources/META-INF/plugin.xml",
@@ -503,6 +551,7 @@
   "data" : {
     "id" : "mS",
     "name" : "intellij.haml",
+    "n" : "i.haml",
     "package" : "org.jetbrains.plugins.haml",
     "sourceModule" : "intellij.haml",
     "descriptor" : "plugins/haml/resources/META-INF/plugin.xml",
@@ -514,6 +563,7 @@
   "data" : {
     "id" : "L2",
     "name" : "intellij.helidon",
+    "n" : "i.helidon",
     "package" : "com.intellij.helidon",
     "sourceModule" : "intellij.helidon",
     "descriptor" : "plugins/frameworks/helidon/resources/META-INF/plugin.xml",
@@ -525,6 +575,7 @@
   "data" : {
     "id" : "AL",
     "name" : "intellij.jade",
+    "n" : "i.jade",
     "package" : "com.jetbrains.plugins.jade",
     "sourceModule" : "intellij.jade",
     "descriptor" : "plugins/Jade/resources/META-INF/plugin.xml",
@@ -536,6 +587,7 @@
   "data" : {
     "id" : "S9",
     "name" : "intellij.java.plugin",
+    "n" : "i.java.plugin",
     "package" : null,
     "sourceModule" : "intellij.java.plugin",
     "descriptor" : "community/java/plugin/resources/META-INF/plugin.xml",
@@ -547,6 +599,7 @@
   "data" : {
     "id" : "Se",
     "name" : "intellij.profiler.ultimate",
+    "n" : "i.profiler.ultimate",
     "package" : "com.intellij.profiler.ultimate",
     "sourceModule" : "intellij.profiler.ultimate",
     "descriptor" : "plugins/profiler/ultimate/resources/intellij.profiler.ultimate.xml",
@@ -557,6 +610,7 @@
   "data" : {
     "id" : "ZX",
     "name" : "intellij.javaFX.css",
+    "n" : "i.javaFX.css",
     "package" : "org.jetbrains.plugins.javaFX",
     "sourceModule" : "intellij.javaFX.css",
     "descriptor" : "plugins/javaFX-CSS/src/META-INF/plugin.xml",
@@ -568,6 +622,7 @@
   "data" : {
     "id" : "QG",
     "name" : "intellij.javaHttpClients",
+    "n" : "i.javaHttpClients",
     "package" : "com.intellij.javahttp",
     "sourceModule" : "intellij.javaHttpClients",
     "descriptor" : "plugins/frameworks/java-http-clients/resources/META-INF/plugin.xml",
@@ -579,6 +634,7 @@
   "data" : {
     "id" : "Sp",
     "name" : "intellij.javaee.app.servers.impl",
+    "n" : "i.javaee.app.servers.impl",
     "package" : null,
     "sourceModule" : "intellij.javaee.app.servers.impl",
     "descriptor" : "plugins/javaee/core/javaee-app-server-integration/app-server-integration-impl/resources/META-INF/plugin.xml",
@@ -590,6 +646,7 @@
   "data" : {
     "id" : "NV",
     "name" : "intellij.javaee.app.servers.impl/profiler",
+    "n" : "i.javaee.app.servers.impl/profiler",
     "package" : "com.intellij.javaee.appServers.run.profiler",
     "sourceModule" : "intellij.javaee.app.servers.impl",
     "descriptor" : "plugins/javaee/core/javaee-app-server-integration/app-server-integration-impl/resources/intellij.javaee.app.servers.impl.profiler.xml",
@@ -600,6 +657,7 @@
   "data" : {
     "id" : "i7",
     "name" : "intellij.javaee.appServers.tomcat",
+    "n" : "i.javaee.appServers.tomcat",
     "package" : null,
     "sourceModule" : "intellij.javaee.appServers.tomcat",
     "descriptor" : "plugins/tomcat/resources/META-INF/plugin.xml",
@@ -611,6 +669,7 @@
   "data" : {
     "id" : "1U",
     "name" : "intellij.javaee.appServers.tomcat/profiler",
+    "n" : "i.javaee.appServers.tomcat/profiler",
     "package" : "org.jetbrains.idea.tomcat.profiler",
     "sourceModule" : "intellij.javaee.appServers.tomcat",
     "descriptor" : "plugins/tomcat/resources/intellij.javaee.appServers.tomcat.profiler.xml",
@@ -621,6 +680,7 @@
   "data" : {
     "id" : "Yg",
     "name" : "intellij.javaee.beanValidation",
+    "n" : "i.javaee.beanValidation",
     "package" : "com.intellij.beanValidation",
     "sourceModule" : "intellij.javaee.beanValidation",
     "descriptor" : "plugins/javaee/bean-validation/bv-core/resources/META-INF/plugin.xml",
@@ -632,6 +692,7 @@
   "data" : {
     "id" : "ck",
     "name" : "intellij.javaee.cdi",
+    "n" : "i.javaee.cdi",
     "package" : "com.intellij.cdi",
     "sourceModule" : "intellij.javaee.cdi",
     "descriptor" : "plugins/javaee/cdi/cdi-core/resources/META-INF/plugin.xml",
@@ -643,6 +704,7 @@
   "data" : {
     "id" : "Xe",
     "name" : "intellij.javaee.ejb.impl",
+    "n" : "i.javaee.ejb.impl",
     "package" : "com.intellij.javaee.ejb",
     "sourceModule" : "intellij.javaee.ejb.impl",
     "descriptor" : "plugins/javaee/ejb/ejb-impl/resources/META-INF/plugin.xml",
@@ -654,6 +716,7 @@
   "data" : {
     "id" : "X0",
     "name" : "intellij.javaee.jax.rs",
+    "n" : "i.javaee.jax.rs",
     "package" : "com.intellij.ws.rest",
     "sourceModule" : "intellij.javaee.jax.rs",
     "descriptor" : "plugins/javaee/web-services/rs/resources/META-INF/plugin.xml",
@@ -665,6 +728,7 @@
   "data" : {
     "id" : "GA",
     "name" : "intellij.javaee.jax.ws",
+    "n" : "i.javaee.jax.ws",
     "package" : "com.intellij.ws.xml",
     "sourceModule" : "intellij.javaee.jax.ws",
     "descriptor" : "plugins/javaee/web-services/ws/resources/META-INF/plugin.xml",
@@ -676,6 +740,7 @@
   "data" : {
     "id" : "oF",
     "name" : "intellij.javaee.jpa.impl",
+    "n" : "i.javaee.jpa.impl",
     "package" : "com.intellij.jpa",
     "sourceModule" : "intellij.javaee.jpa.impl",
     "descriptor" : "plugins/javaee/jpa/jpa-impl/resources/META-INF/plugin.xml",
@@ -687,6 +752,7 @@
   "data" : {
     "id" : "FR",
     "name" : "intellij.javaee.jsf",
+    "n" : "i.javaee.jsf",
     "package" : "com.intellij.jsf",
     "sourceModule" : "intellij.javaee.jsf",
     "descriptor" : "plugins/javaee/jsf/jsf-core/src/META-INF/plugin.xml",
@@ -698,6 +764,7 @@
   "data" : {
     "id" : "fx",
     "name" : "intellij.javaee.web.impl",
+    "n" : "i.javaee.web.impl",
     "package" : "com.intellij.javaee.web",
     "sourceModule" : "intellij.javaee.web.impl",
     "descriptor" : "plugins/javaee/web/web-impl/resources/META-INF/plugin.xml",
@@ -709,6 +776,7 @@
   "data" : {
     "id" : "PN",
     "name" : "intellij.javascript.impl",
+    "n" : "i.javascript.impl",
     "package" : null,
     "sourceModule" : "intellij.javascript.impl",
     "descriptor" : "plugins/JavaScriptLanguage/src/META-INF/plugin.xml",
@@ -720,6 +788,7 @@
   "data" : {
     "id" : "HW",
     "name" : "intellij.javascript.impl/diagrams",
+    "n" : "i.javascript.impl/diagrams",
     "package" : "com.intellij.lang.javascript.modules.diagram",
     "sourceModule" : "intellij.javascript.impl",
     "descriptor" : "plugins/JavaScriptLanguage/src/intellij.javascript.impl.diagrams.xml",
@@ -730,6 +799,7 @@
   "data" : {
     "id" : "n5",
     "name" : "intellij.jboss.arquillian",
+    "n" : "i.jboss.arquillian",
     "package" : "com.intellij.plugins.jboss.arquillian",
     "sourceModule" : "intellij.jboss.arquillian",
     "descriptor" : "plugins/frameworks/jboss/arquillian/arquillian-core/src/META-INF/plugin.xml",
@@ -741,6 +811,7 @@
   "data" : {
     "id" : "Pz",
     "name" : "intellij.jboss.jbpm",
+    "n" : "i.jboss.jbpm",
     "package" : "com.intellij.jboss.bpmn",
     "sourceModule" : "intellij.jboss.jbpm",
     "descriptor" : "plugins/frameworks/jboss/bpmn/jbpm/resources/META-INF/plugin.xml",
@@ -752,6 +823,7 @@
   "data" : {
     "id" : "v4",
     "name" : "intellij.less",
+    "n" : "i.less",
     "package" : "org.jetbrains.plugins.less",
     "sourceModule" : "intellij.less",
     "descriptor" : "plugins/less/resources/META-INF/plugin.xml",
@@ -763,6 +835,7 @@
   "data" : {
     "id" : "2z",
     "name" : "intellij.maven.ext",
+    "n" : "i.maven.ext",
     "package" : null,
     "sourceModule" : "intellij.maven.ext",
     "descriptor" : "plugins/maven-ext/src/main/resources/META-INF/plugin.xml",
@@ -774,6 +847,7 @@
   "data" : {
     "id" : "wG",
     "name" : "intellij.maven.ext/profiler",
+    "n" : "i.maven.ext/profiler",
     "package" : "org.jetbrains.idea.maven.ext.profiler",
     "sourceModule" : "intellij.maven.ext",
     "descriptor" : "plugins/maven-ext/src/main/resources/intellij.maven.ext.profiler.xml",
@@ -784,6 +858,7 @@
   "data" : {
     "id" : "aK",
     "name" : "intellij.micronaut",
+    "n" : "i.micronaut",
     "package" : "com.intellij.micronaut",
     "sourceModule" : "intellij.micronaut",
     "descriptor" : "plugins/frameworks/micronaut/micronaut-core/resources/META-INF/plugin.xml",
@@ -795,6 +870,7 @@
   "data" : {
     "id" : "s0",
     "name" : "intellij.microservices.ui",
+    "n" : "i.microservices.ui",
     "package" : "com.intellij.microservices.ui",
     "sourceModule" : "intellij.microservices.ui",
     "descriptor" : "plugins/microservices/microservices-ui/resources/META-INF/plugin.xml",
@@ -806,6 +882,7 @@
   "data" : {
     "id" : "Nn",
     "name" : "intellij.nodeJS.remoteInterpreter",
+    "n" : "i.nodeJS.remoteInterpreter",
     "package" : "com.jetbrains.nodejs.remote",
     "sourceModule" : "intellij.nodeJS.remoteInterpreter",
     "descriptor" : "plugins/NodeJS/node-remote-interpreter/resources/META-INF/plugin.xml",
@@ -817,6 +894,7 @@
   "data" : {
     "id" : "Ea",
     "name" : "intellij.nodeJS.remoteInterpreter/docker",
+    "n" : "i.nodeJS.remoteInterpreter/docker",
     "package" : "com.jetbrains.nodejs.remote.docker",
     "sourceModule" : "intellij.nodeJS.remoteInterpreter",
     "descriptor" : "plugins/NodeJS/node-remote-interpreter/resources/intellij.nodeJS.remoteInterpreter.docker.xml",
@@ -827,6 +905,7 @@
   "data" : {
     "id" : "T4",
     "name" : "intellij.performanceTesting",
+    "n" : "i.performanceTesting",
     "package" : null,
     "sourceModule" : "intellij.performanceTesting",
     "descriptor" : "plugins/performanceTesting/resources/META-INF/plugin.xml",
@@ -838,6 +917,7 @@
   "data" : {
     "id" : "j0",
     "name" : "intellij.performanceTesting/java",
+    "n" : "i.performanceTesting/java",
     "package" : "com.jetbrains.performancePlugin.java",
     "sourceModule" : "intellij.performanceTesting",
     "descriptor" : "plugins/performanceTesting/resources/intellij.performanceTesting.java.xml",
@@ -848,6 +928,7 @@
   "data" : {
     "id" : "HX",
     "name" : "intellij.php.docker",
+    "n" : "i.php.docker",
     "package" : "com.jetbrains.php.remote.docker",
     "sourceModule" : "intellij.php.docker",
     "descriptor" : "phpstorm/phpstorm-docker/resources/META-INF/plugin.xml",
@@ -859,6 +940,7 @@
   "data" : {
     "id" : "qt",
     "name" : "intellij.phpspec",
+    "n" : "i.phpspec",
     "package" : "com.jetbrains.php.phpspec",
     "sourceModule" : "intellij.phpspec",
     "descriptor" : "phpstorm/phpspec/resources/META-INF/plugin.xml",
@@ -870,6 +952,7 @@
   "data" : {
     "id" : "jH",
     "name" : "intellij.play",
+    "n" : "i.play",
     "package" : "com.intellij.play",
     "sourceModule" : "intellij.play",
     "descriptor" : "plugins/frameworks/play/resources/META-INF/plugin.xml",
@@ -881,6 +964,7 @@
   "data" : {
     "id" : "3J",
     "name" : "intellij.properties",
+    "n" : "i.properties",
     "package" : "com.intellij.lang.properties",
     "sourceModule" : "intellij.properties",
     "descriptor" : "community/plugins/properties/src/META-INF/plugin.xml",
@@ -892,6 +976,7 @@
   "data" : {
     "id" : "gk",
     "name" : "intellij.protoeditor",
+    "n" : "i.protoeditor",
     "package" : "com.intellij.protobuf",
     "sourceModule" : "intellij.protoeditor",
     "descriptor" : "contrib/protobuf/resources/META-INF/plugin.xml",
@@ -903,6 +988,7 @@
   "data" : {
     "id" : "45",
     "name" : "intellij.puppet",
+    "n" : "i.puppet",
     "package" : "com.intellij.lang.puppet",
     "sourceModule" : "intellij.puppet",
     "descriptor" : "plugins/puppet/resources/META-INF/plugin.xml",
@@ -914,6 +1000,7 @@
   "data" : {
     "id" : "he",
     "name" : "intellij.python.plugin",
+    "n" : "i.python.plugin",
     "package" : null,
     "sourceModule" : "intellij.python.plugin",
     "descriptor" : "python/pluginSrc/META-INF/plugin.xml",
@@ -925,6 +1012,7 @@
   "data" : {
     "id" : "I6",
     "name" : "intellij.python.docker",
+    "n" : "i.python.docker",
     "package" : "com.jetbrains.python.docker",
     "sourceModule" : "intellij.python.docker",
     "descriptor" : "python/python-docker/resources/intellij.python.docker.xml",
@@ -935,6 +1023,7 @@
   "data" : {
     "id" : "Ql",
     "name" : "intellij.quarkus",
+    "n" : "i.quarkus",
     "package" : "com.intellij.quarkus",
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/META-INF/plugin.xml",
@@ -946,6 +1035,7 @@
   "data" : {
     "id" : "v2",
     "name" : "intellij.quarkus/yaml",
+    "n" : "i.quarkus/yaml",
     "package" : "com.intellij.quarkus.config.yaml",
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.yaml.xml",
@@ -956,6 +1046,7 @@
   "data" : {
     "id" : "ea",
     "name" : "intellij.quarkus/maven",
+    "n" : "i.quarkus/maven",
     "package" : "com.intellij.quarkus.run.maven",
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.maven.xml",
@@ -966,6 +1057,7 @@
   "data" : {
     "id" : "YL",
     "name" : "intellij.quarkus/gradle",
+    "n" : "i.quarkus/gradle",
     "package" : "com.intellij.quarkus.run.gradle",
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.gradle.xml",
@@ -976,6 +1068,7 @@
   "data" : {
     "id" : "Op",
     "name" : "intellij.quarkus/docker",
+    "n" : "i.quarkus/docker",
     "package" : "com.intellij.quarkus.run.docker",
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.docker.xml",
@@ -986,6 +1079,7 @@
   "data" : {
     "id" : "py",
     "name" : "intellij.reactivestreams.core",
+    "n" : "i.reactivestreams.core",
     "package" : "com.intellij.reactivestreams",
     "sourceModule" : "intellij.reactivestreams.core",
     "descriptor" : "plugins/frameworks/reactive/reactive-streams-core/resources/META-INF/plugin.xml",
@@ -997,6 +1091,7 @@
   "data" : {
     "id" : "xs",
     "name" : "intellij.remoteRun",
+    "n" : "i.remoteRun",
     "package" : "com.jetbrains.plugins.remotesdk",
     "sourceModule" : "intellij.remoteRun",
     "descriptor" : "plugins/remote-run/resources/META-INF/plugin.xml",
@@ -1008,6 +1103,7 @@
   "data" : {
     "id" : "2K",
     "name" : "intellij.ruby.plugin",
+    "n" : "i.ruby.plugin",
     "package" : null,
     "sourceModule" : "intellij.ruby.plugin",
     "descriptor" : "ruby/pluginResources/META-INF/plugin.xml",
@@ -1019,6 +1115,7 @@
   "data" : {
     "id" : "uu",
     "name" : "intellij.ruby.remoteInterpreter",
+    "n" : "i.ruby.remoteInterpreter",
     "package" : "org.jetbrains.plugins.ruby.remote.impl",
     "sourceModule" : "intellij.ruby.remoteInterpreter",
     "descriptor" : "ruby/remote-interpreter/resources/intellij.ruby.remoteInterpreter.xml",
@@ -1029,6 +1126,7 @@
   "data" : {
     "id" : "GA1",
     "name" : "intellij.ruby.copyright",
+    "n" : "i.ruby.copyright",
     "package" : "org.jetbrains.plugins.ruby.copyright",
     "sourceModule" : "intellij.ruby.copyright",
     "descriptor" : "ruby/ruby-copyright/resources/intellij.ruby.copyright.xml",
@@ -1039,6 +1137,7 @@
   "data" : {
     "id" : "1I",
     "name" : "intellij.ruby.coverage",
+    "n" : "i.ruby.coverage",
     "package" : "org.jetbrains.plugins.ruby.coverage",
     "sourceModule" : "intellij.ruby.coverage",
     "descriptor" : "ruby/coverage/ruby-coverage-common/resources/intellij.ruby.coverage.xml",
@@ -1049,6 +1148,7 @@
   "data" : {
     "id" : "P5",
     "name" : "intellij.ruby.database",
+    "n" : "i.ruby.database",
     "package" : "org.jetbrains.plugins.ruby.rails.database.impl",
     "sourceModule" : "intellij.ruby.database",
     "descriptor" : "ruby/ruby-database/resources/intellij.ruby.database.xml",
@@ -1059,6 +1159,7 @@
   "data" : {
     "id" : "HP1",
     "name" : "intellij.ruby.puppet.shared",
+    "n" : "i.ruby.puppet.shared",
     "package" : "com.intellij.lang.puppet.rubyShared",
     "sourceModule" : "intellij.ruby.puppet.shared",
     "descriptor" : "ruby/ruby-puppet-shared/src/intellij.ruby.puppet.shared.xml",
@@ -1069,6 +1170,7 @@
   "data" : {
     "id" : "Jp",
     "name" : "intellij.ruby.java",
+    "n" : "i.ruby.java",
     "package" : "org.jetbrains.plugins.ruby.java",
     "sourceModule" : "intellij.ruby.java",
     "descriptor" : "ruby/ruby-java/src/intellij.ruby.java.xml",
@@ -1079,6 +1181,7 @@
   "data" : {
     "id" : "5r",
     "name" : "intellij.ruby.puppet.java",
+    "n" : "i.ruby.puppet.java",
     "package" : "com.intellij.lang.puppet.ruby.java.ide",
     "sourceModule" : "intellij.ruby.puppet.java",
     "descriptor" : "ruby/ruby-puppet-java/resources/intellij.ruby.puppet.java.xml",
@@ -1089,6 +1192,7 @@
   "data" : {
     "id" : "oO",
     "name" : "intellij.ruby.cucumber",
+    "n" : "i.ruby.cucumber",
     "package" : "org.jetbrains.plugins.ruby.cucumber",
     "sourceModule" : "intellij.ruby.cucumber",
     "descriptor" : "ruby/ruby-cucumber/resources/intellij.ruby.cucumber.xml",
@@ -1099,6 +1203,7 @@
   "data" : {
     "id" : "Pz1",
     "name" : "intellij.ruby.cucumber.java",
+    "n" : "i.ruby.cucumber.java",
     "package" : "org.jetbrains.plugins.ruby.cucumber.java.run",
     "sourceModule" : "intellij.ruby.cucumber.java",
     "descriptor" : "ruby/ruby-plugin-cucumber/resources/intellij.ruby.cucumber.java.xml",
@@ -1109,6 +1214,7 @@
   "data" : {
     "id" : "qc",
     "name" : "intellij.ruby.uml",
+    "n" : "i.ruby.uml",
     "package" : "com.intellij.diagram.ruby",
     "sourceModule" : "intellij.ruby.uml",
     "descriptor" : "ruby/ruby-uml/resources/intellij.ruby.uml.xml",
@@ -1119,6 +1225,7 @@
   "data" : {
     "id" : "Ch",
     "name" : "intellij.ruby.wsl",
+    "n" : "i.ruby.wsl",
     "package" : "com.intellij.wsl.remote.ruby",
     "sourceModule" : "intellij.ruby.wsl",
     "descriptor" : "ruby/ruby-wsl/resources/intellij.ruby.wsl.xml",
@@ -1129,6 +1236,7 @@
   "data" : {
     "id" : "JW",
     "name" : "intellij.ruby.docker",
+    "n" : "i.ruby.docker",
     "package" : "com.intellij.docker.remote.ruby",
     "sourceModule" : "intellij.ruby.docker",
     "descriptor" : "ruby/ruby-docker/resources/intellij.ruby.docker.xml",
@@ -1139,6 +1247,7 @@
   "data" : {
     "id" : "hA",
     "name" : "intellij.ruby.terminal",
+    "n" : "i.ruby.terminal",
     "package" : "org.jetbrains.plugins.ruby.terminal",
     "sourceModule" : "intellij.ruby.terminal",
     "descriptor" : "ruby/ruby-terminal/resources/intellij.ruby.terminal.xml",
@@ -1149,6 +1258,7 @@
   "data" : {
     "id" : "eN",
     "name" : "intellij.ruby.puppet",
+    "n" : "i.ruby.puppet",
     "package" : "com.intellij.lang.puppet.ruby",
     "sourceModule" : "intellij.ruby.puppet",
     "descriptor" : "ruby/ruby-puppet/resources/intellij.ruby.puppet.xml",
@@ -1159,6 +1269,7 @@
   "data" : {
     "id" : "J4",
     "name" : "intellij.ruby.performanceTesting",
+    "n" : "i.ruby.performanceTesting",
     "package" : "org.jetbrains.ruby.performanceTesting",
     "sourceModule" : "intellij.ruby.performanceTesting",
     "descriptor" : "ruby/performanceTesting/src/intellij.ruby.performanceTesting.xml",
@@ -1169,6 +1280,7 @@
   "data" : {
     "id" : "Jp1",
     "name" : "intellij.ruby.intelliLang",
+    "n" : "i.ruby.intelliLang",
     "package" : "org.jetbrains.plugins.ruby.ruby.intelliLang",
     "sourceModule" : "intellij.ruby.intelliLang",
     "descriptor" : "ruby/ruby-intelliLang/resources/intellij.ruby.intelliLang.xml",
@@ -1179,6 +1291,7 @@
   "data" : {
     "id" : "jl",
     "name" : "intellij.ruby.featuresTrainer",
+    "n" : "i.ruby.featuresTrainer",
     "package" : "org.jetbrains.ruby.ift",
     "sourceModule" : "intellij.ruby.featuresTrainer",
     "descriptor" : "contrib/ide-features-trainer/ruby-features-trainer/resources/intellij.ruby.featuresTrainer.xml",
@@ -1189,6 +1302,7 @@
   "data" : {
     "id" : "LD",
     "name" : "intellij.ruby.haml",
+    "n" : "i.ruby.haml",
     "package" : "org.jetbrains.plugins.haml.ruby",
     "sourceModule" : "intellij.ruby.haml",
     "descriptor" : "ruby/ruby-haml/resources/intellij.ruby.haml.xml",
@@ -1199,6 +1313,7 @@
   "data" : {
     "id" : "WF",
     "name" : "intellij.ruby.slim",
+    "n" : "i.ruby.slim",
     "package" : "org.jetbrains.plugins.slim.ruby",
     "sourceModule" : "intellij.ruby.slim",
     "descriptor" : "ruby/ruby-slim/resources/intellij.ruby.slim.xml",
@@ -1209,6 +1324,7 @@
   "data" : {
     "id" : "YP",
     "name" : "intellij.safe.push",
+    "n" : "i.safe.push",
     "package" : "com.intellij.safepush",
     "sourceModule" : "intellij.safe.push",
     "descriptor" : "plugins/safe-push/resources/META-INF/plugin.xml",
@@ -1220,6 +1336,7 @@
   "data" : {
     "id" : "tR",
     "name" : "intellij.selenium",
+    "n" : "i.selenium",
     "package" : "com.intellij.selenium",
     "sourceModule" : "intellij.selenium",
     "descriptor" : "plugins/frameworks/selenium/selenium/resources/META-INF/plugin.xml",
@@ -1231,6 +1348,7 @@
   "data" : {
     "id" : "Ha",
     "name" : "intellij.selenium.jvm",
+    "n" : "i.selenium.jvm",
     "package" : "com.intellij.selenium.jvm",
     "sourceModule" : "intellij.selenium.jvm",
     "descriptor" : "plugins/frameworks/selenium/selenium-jvm/resources/intellij.selenium.jvm.xml",
@@ -1241,6 +1359,7 @@
   "data" : {
     "id" : "fo",
     "name" : "intellij.selenium.docker",
+    "n" : "i.selenium.docker",
     "package" : "com.intellij.selenium.docker",
     "sourceModule" : "intellij.selenium.docker",
     "descriptor" : "plugins/frameworks/selenium/selenium-docker/resources/intellij.selenium.docker.xml",
@@ -1251,6 +1370,7 @@
   "data" : {
     "id" : "Qs",
     "name" : "intellij.selenium.python",
+    "n" : "i.selenium.python",
     "package" : "com.intellij.selenium.python",
     "sourceModule" : "intellij.selenium.python",
     "descriptor" : "plugins/frameworks/selenium/selenium-python/resources/intellij.selenium.python.xml",
@@ -1261,6 +1381,7 @@
   "data" : {
     "id" : "v41",
     "name" : "intellij.sh",
+    "n" : "i.sh",
     "package" : "com.intellij.sh",
     "sourceModule" : "intellij.sh",
     "descriptor" : "community/plugins/sh/resources/META-INF/plugin.xml",
@@ -1272,6 +1393,7 @@
   "data" : {
     "id" : "WL",
     "name" : "intellij.slim",
+    "n" : "i.slim",
     "package" : "org.jetbrains.plugins.slim",
     "sourceModule" : "intellij.slim",
     "descriptor" : "plugins/slim-lang/resources/META-INF/plugin.xml",
@@ -1283,6 +1405,7 @@
   "data" : {
     "id" : "mA",
     "name" : "intellij.space",
+    "n" : "i.space",
     "package" : "com.intellij.space",
     "sourceModule" : "intellij.space",
     "descriptor" : "plugins/space/src/main/resources/META-INF/plugin.xml",
@@ -1294,6 +1417,7 @@
   "data" : {
     "id" : "wI",
     "name" : "intellij.space.kotlin",
+    "n" : "i.space.kotlin",
     "package" : "com.intellij.space.kotlin",
     "sourceModule" : "intellij.space.kotlin",
     "descriptor" : "plugins/space/kotlin/resources/intellij.space.kotlin.xml",
@@ -1304,6 +1428,7 @@
   "data" : {
     "id" : "wr",
     "name" : "intellij.space.index",
+    "n" : "i.space.index",
     "package" : "com.intellij.space.index",
     "sourceModule" : "intellij.space.index",
     "descriptor" : "plugins/space/index/resources/intellij.space.index.xml",
@@ -1314,6 +1439,7 @@
   "data" : {
     "id" : "cj",
     "name" : "intellij.spring.batch",
+    "n" : "i.spring.batch",
     "package" : "com.intellij.spring.batch",
     "sourceModule" : "intellij.spring.batch",
     "descriptor" : "plugins/spring/spring-batch/resources/META-INF/plugin.xml",
@@ -1325,6 +1451,7 @@
   "data" : {
     "id" : "QO",
     "name" : "intellij.spring.batch/javaee-integration",
+    "n" : "i.spring.batch/javaee-integration",
     "package" : "com.intellij.spring.batch.el",
     "sourceModule" : "intellij.spring.batch",
     "descriptor" : "plugins/spring/spring-batch/resources/intellij.spring.batch.javaee-integration.xml",
@@ -1335,6 +1462,7 @@
   "data" : {
     "id" : "LR",
     "name" : "intellij.spring.boot.core",
+    "n" : "i.spring.boot.core",
     "package" : "com.intellij.spring.boot",
     "sourceModule" : "intellij.spring.boot.core",
     "descriptor" : "plugins/spring/spring-boot/spring-boot-core/resources/META-INF/plugin.xml",
@@ -1346,6 +1474,7 @@
   "data" : {
     "id" : "2Z",
     "name" : "intellij.spring.core",
+    "n" : "i.spring.core",
     "package" : "com.intellij.spring",
     "sourceModule" : "intellij.spring.core",
     "descriptor" : "plugins/spring/spring-framework/spring-core/resources/META-INF/plugin.xml",
@@ -1357,6 +1486,7 @@
   "data" : {
     "id" : "6z",
     "name" : "intellij.spring.core/hibernate-integration",
+    "n" : "i.spring.core/hibernate-integration",
     "package" : "com.intellij.spring.persistence.integration.hibernate",
     "sourceModule" : "intellij.spring.core",
     "descriptor" : "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.hibernate-integration.xml",
@@ -1367,6 +1497,7 @@
   "data" : {
     "id" : "wC",
     "name" : "intellij.spring.core/el",
+    "n" : "i.spring.core/el",
     "package" : "com.intellij.spring.el",
     "sourceModule" : "intellij.spring.core",
     "descriptor" : "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.el.xml",
@@ -1377,6 +1508,7 @@
   "data" : {
     "id" : "G9",
     "name" : "intellij.spring.data",
+    "n" : "i.spring.data",
     "package" : "com.intellij.spring.data",
     "sourceModule" : "intellij.spring.data",
     "descriptor" : "plugins/spring/spring-data/resources/META-INF/plugin.xml",
@@ -1388,6 +1520,7 @@
   "data" : {
     "id" : "5T",
     "name" : "intellij.spring.data/el",
+    "n" : "i.spring.data/el",
     "package" : "com.intellij.spring.data.commons.ql",
     "sourceModule" : "intellij.spring.data",
     "descriptor" : "plugins/spring/spring-data/resources/intellij.spring.data.el.xml",
@@ -1398,6 +1531,7 @@
   "data" : {
     "id" : "nQ",
     "name" : "intellij.spring.integration.core",
+    "n" : "i.spring.integration.core",
     "package" : "com.intellij.spring.integration",
     "sourceModule" : "intellij.spring.integration.core",
     "descriptor" : "plugins/spring/spring-integration/spring-integration-core/resources/META-INF/plugin.xml",
@@ -1409,6 +1543,7 @@
   "data" : {
     "id" : "8x",
     "name" : "intellij.spring.integration.core/integration-el",
+    "n" : "i.spring.integration.core/integration-el",
     "package" : "com.intellij.spring.integration.injection.el",
     "sourceModule" : "intellij.spring.integration.core",
     "descriptor" : "plugins/spring/spring-integration/spring-integration-core/resources/intellij.spring.integration.core.integration-el.xml",
@@ -1419,6 +1554,7 @@
   "data" : {
     "id" : "nx",
     "name" : "intellij.spring.mvc.impl",
+    "n" : "i.spring.mvc.impl",
     "package" : "com.intellij.spring.mvc",
     "sourceModule" : "intellij.spring.mvc.impl",
     "descriptor" : "plugins/spring/spring-mvc-support/spring-mvc/resources/META-INF/plugin.xml",
@@ -1430,6 +1566,7 @@
   "data" : {
     "id" : "ik",
     "name" : "intellij.spring.security",
+    "n" : "i.spring.security",
     "package" : "com.intellij.spring.security",
     "sourceModule" : "intellij.spring.security",
     "descriptor" : "plugins/spring/spring-security/resources/META-INF/plugin.xml",
@@ -1441,6 +1578,7 @@
   "data" : {
     "id" : "Tk",
     "name" : "intellij.spring.security/el",
+    "n" : "i.spring.security/el",
     "package" : "com.intellij.spring.security.el",
     "sourceModule" : "intellij.spring.security",
     "descriptor" : "plugins/spring/spring-security/resources/intellij.spring.security.el.xml",
@@ -1451,6 +1589,7 @@
   "data" : {
     "id" : "2j",
     "name" : "intellij.spring.webflow",
+    "n" : "i.spring.webflow",
     "package" : "com.intellij.spring.webflow",
     "sourceModule" : "intellij.spring.webflow",
     "descriptor" : "plugins/spring/spring-webflow/resources/META-INF/plugin.xml",
@@ -1462,6 +1601,7 @@
   "data" : {
     "id" : "Tf",
     "name" : "intellij.spring.websocket",
+    "n" : "i.spring.websocket",
     "package" : "com.intellij.spring.websocket",
     "sourceModule" : "intellij.spring.websocket",
     "descriptor" : "plugins/spring/spring-websocket/resources/META-INF/plugin.xml",
@@ -1473,6 +1613,7 @@
   "data" : {
     "id" : "xm",
     "name" : "intellij.struts2",
+    "n" : "i.struts2",
     "package" : "com.intellij.struts2",
     "sourceModule" : "intellij.struts2",
     "descriptor" : "contrib/struts2/plugin/resources/META-INF/plugin.xml",
@@ -1484,6 +1625,7 @@
   "data" : {
     "id" : "nC",
     "name" : "intellij.swagger",
+    "n" : "i.swagger",
     "package" : "com.intellij.swagger",
     "sourceModule" : "intellij.swagger",
     "descriptor" : "plugins/frameworks/swagger/swagger-core/resources/META-INF/plugin.xml",
@@ -1495,6 +1637,7 @@
   "data" : {
     "id" : "kf",
     "name" : "intellij.swagger/endpoints",
+    "n" : "i.swagger/endpoints",
     "package" : "com.intellij.swagger.providers.endpoints",
     "sourceModule" : "intellij.swagger",
     "descriptor" : "plugins/frameworks/swagger/swagger-core/resources/intellij.swagger.endpoints.xml",
@@ -1505,6 +1648,7 @@
   "data" : {
     "id" : "sf",
     "name" : "intellij.thymeleaf",
+    "n" : "i.thymeleaf",
     "package" : "com.intellij.thymeleaf",
     "sourceModule" : "intellij.thymeleaf",
     "descriptor" : "plugins/frameworks/thymeleaf/thymeleaf-core/resources/META-INF/plugin.xml",
@@ -1516,6 +1660,7 @@
   "data" : {
     "id" : "JP",
     "name" : "intellij.vcs.git",
+    "n" : "i.vcs.git",
     "package" : "git4idea",
     "sourceModule" : "intellij.vcs.git",
     "descriptor" : "community/plugins/git4idea/resources/META-INF/plugin.xml",
@@ -1527,6 +1672,7 @@
   "data" : {
     "id" : "IV",
     "name" : "intellij.vcs.github",
+    "n" : "i.vcs.github",
     "package" : "org.jetbrains.plugins.github",
     "sourceModule" : "intellij.vcs.github",
     "descriptor" : "community/plugins/github/resources/META-INF/plugin.xml",
@@ -1538,6 +1684,7 @@
   "data" : {
     "id" : "E9",
     "name" : "intellij.vuejs",
+    "n" : "i.vuejs",
     "package" : "org.jetbrains.vuejs",
     "sourceModule" : "intellij.vuejs",
     "descriptor" : "contrib/vuejs/resources/META-INF/plugin.xml",
@@ -1549,6 +1696,7 @@
   "data" : {
     "id" : "IH",
     "name" : "intellij.w3validators",
+    "n" : "i.w3validators",
     "package" : "org.jetbrains.w3validators",
     "sourceModule" : "intellij.w3validators",
     "descriptor" : "plugins/w3validators/src/META-INF/plugin.xml",
@@ -1560,6 +1708,7 @@
   "data" : {
     "id" : "ZR",
     "name" : "intellij.wsl",
+    "n" : "i.wsl",
     "package" : "com.intellij.wsl",
     "sourceModule" : "intellij.wsl",
     "descriptor" : "plugins/WSL/resources/META-INF/plugin.xml",
@@ -1571,6 +1720,7 @@
   "data" : {
     "id" : "Pc",
     "name" : "intellij.wsl.fs.helper",
+    "n" : "i.wsl.fs.helper",
     "package" : "com.intellij.wsl.fs",
     "sourceModule" : "intellij.wsl.fs.helper",
     "descriptor" : "plugins/wsl-file-system-helper/resources/META-INF/plugin.xml",
@@ -1582,6 +1732,7 @@
   "data" : {
     "id" : "cV",
     "name" : "intellij.yaml",
+    "n" : "i.yaml",
     "package" : "org.jetbrains.yaml",
     "sourceModule" : "intellij.yaml",
     "descriptor" : "community/plugins/yaml/resources/META-INF/plugin.xml",
@@ -1593,6 +1744,7 @@
   "data" : {
     "id" : "Dx",
     "name" : "com.intellij.modules.lang",
+    "n" : "c.i.m.lang",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1603,6 +1755,7 @@
   "data" : {
     "id" : "sk",
     "name" : "com.intellij.modules.json",
+    "n" : "c.i.m.json",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1613,6 +1766,7 @@
   "data" : {
     "id" : "eZ",
     "name" : "com.intellij.modules.remoteServers",
+    "n" : "c.i.m.remoteServers",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1623,6 +1777,7 @@
   "data" : {
     "id" : "wo",
     "name" : "com.intellij.modules.ultimate",
+    "n" : "c.i.m.ultimate",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1633,6 +1788,7 @@
   "data" : {
     "id" : "6X",
     "name" : "intellij.terminal",
+    "n" : "i.terminal",
     "package" : null,
     "sourceModule" : "intellij.terminal",
     "descriptor" : "community/plugins/terminal/resources/META-INF/plugin.xml",
@@ -1644,6 +1800,7 @@
   "data" : {
     "id" : "rS",
     "name" : "com.intellij.modules.coverage",
+    "n" : "c.i.m.coverage",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1654,6 +1811,7 @@
   "data" : {
     "id" : "EG",
     "name" : "intellij.copyright",
+    "n" : "i.copyright",
     "package" : null,
     "sourceModule" : "intellij.copyright",
     "descriptor" : "community/plugins/copyright/src/META-INF/plugin.xml",
@@ -1665,6 +1823,7 @@
   "data" : {
     "id" : "dn",
     "name" : "intellij.featuresTrainer",
+    "n" : "i.featuresTrainer",
     "package" : null,
     "sourceModule" : "intellij.featuresTrainer",
     "descriptor" : "community/plugins/ide-features-trainer/res/META-INF/plugin.xml",
@@ -1676,6 +1835,7 @@
   "data" : {
     "id" : "ZY",
     "name" : "intellij.completionMlRanking",
+    "n" : "i.completionMlRanking",
     "package" : null,
     "sourceModule" : "intellij.completionMlRanking",
     "descriptor" : "community/plugins/completion-ml-ranking/resources/META-INF/plugin.xml",
@@ -1687,6 +1847,7 @@
   "data" : {
     "id" : "M4",
     "name" : "intellij.indexing.shared.ultimate.plugin.bundled",
+    "n" : "i.indexing.shared.ultimate.plugin.bundled",
     "package" : null,
     "sourceModule" : "intellij.indexing.shared.ultimate.plugin.bundled",
     "descriptor" : "plugins/shared-indexes/ultimate.plugin.bundled/resources/META-INF/plugin.xml",
@@ -1698,6 +1859,7 @@
   "data" : {
     "id" : "87",
     "name" : "intellij.gradle.java",
+    "n" : "i.gradle.java",
     "package" : null,
     "sourceModule" : "intellij.gradle.java",
     "descriptor" : "community/plugins/gradle/java/resources/META-INF/plugin.xml",
@@ -1709,6 +1871,7 @@
   "data" : {
     "id" : "s7",
     "name" : "intellij.javaee.platform.impl",
+    "n" : "i.javaee.platform.impl",
     "package" : null,
     "sourceModule" : "intellij.javaee.platform.impl",
     "descriptor" : "plugins/javaee/core/javaee-platform/javaee-impl/resources/META-INF/plugin.xml",
@@ -1720,6 +1883,7 @@
   "data" : {
     "id" : "Rt",
     "name" : "intellij.markdown",
+    "n" : "i.markdown",
     "package" : null,
     "sourceModule" : "intellij.markdown",
     "descriptor" : "community/plugins/markdown/resource/META-INF/plugin.xml",
@@ -1731,6 +1895,7 @@
   "data" : {
     "id" : "It",
     "name" : "com.intellij.modules.xml",
+    "n" : "c.i.m.xml",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1741,6 +1906,7 @@
   "data" : {
     "id" : "K0",
     "name" : "com.intellij.modules.profiler",
+    "n" : "c.i.m.profiler",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1751,6 +1917,7 @@
   "data" : {
     "id" : "xc",
     "name" : "intellij.webDeployment",
+    "n" : "i.webDeployment",
     "package" : null,
     "sourceModule" : "intellij.webDeployment",
     "descriptor" : "plugins/webDeployment/resources/META-INF/plugin.xml",
@@ -1762,6 +1929,7 @@
   "data" : {
     "id" : "gg",
     "name" : "intellij.javascript.debugger",
+    "n" : "i.javascript.debugger",
     "package" : null,
     "sourceModule" : "intellij.javascript.debugger",
     "descriptor" : "plugins/JavaScriptDebugger/resources/META-INF/plugin.xml",
@@ -1773,6 +1941,7 @@
   "data" : {
     "id" : "kL",
     "name" : "intellij.nodeJS",
+    "n" : "i.nodeJS",
     "package" : null,
     "sourceModule" : "intellij.nodeJS",
     "descriptor" : "plugins/NodeJS/resources/META-INF/plugin.xml",
@@ -1784,6 +1953,7 @@
   "data" : {
     "id" : "Rm",
     "name" : "intellij.php.impl",
+    "n" : "i.php.impl",
     "package" : null,
     "sourceModule" : "intellij.php.impl",
     "descriptor" : "phpstorm/php/src/META-INF/plugin.xml",
@@ -1795,6 +1965,7 @@
   "data" : {
     "id" : "uT",
     "name" : "intellij.php.remoteInterpreter",
+    "n" : "i.php.remoteInterpreter",
     "package" : null,
     "sourceModule" : "intellij.php.remoteInterpreter",
     "descriptor" : "phpstorm/phpstorm-remote-interpreter/resources/META-INF/plugin.xml",
@@ -1806,6 +1977,7 @@
   "data" : {
     "id" : "J7",
     "name" : "com.intellij.modules.microservices",
+    "n" : "c.i.m.microservices",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1816,6 +1988,7 @@
   "data" : {
     "id" : "JI",
     "name" : "intellij.microservices.config",
+    "n" : "i.microservices.config",
     "package" : null,
     "sourceModule" : "intellij.microservices.config",
     "descriptor" : "plugins/microservices/microservices-config/resources/META-INF/plugin.xml",
@@ -1827,6 +2000,7 @@
   "data" : {
     "id" : "1s",
     "name" : "intellij.microservices.uast",
+    "n" : "i.microservices.uast",
     "package" : null,
     "sourceModule" : "intellij.microservices.uast",
     "descriptor" : "plugins/microservices/microservices-uast/resources/META-INF/plugin.xml",
@@ -1838,6 +2012,7 @@
   "data" : {
     "id" : "Up",
     "name" : "intellij.maven",
+    "n" : "i.maven",
     "package" : null,
     "sourceModule" : "intellij.maven",
     "descriptor" : "community/plugins/maven/src/main/resources/META-INF/plugin.xml",
@@ -1849,6 +2024,7 @@
   "data" : {
     "id" : "Fa",
     "name" : "com.intellij.modules.database",
+    "n" : "c.i.m.database",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1859,6 +2035,7 @@
   "data" : {
     "id" : "DI",
     "name" : "intellij.gherkin",
+    "n" : "i.gherkin",
     "package" : null,
     "sourceModule" : "intellij.gherkin",
     "descriptor" : "contrib/cucumber/resources/META-INF/plugin.xml",
@@ -1870,6 +2047,7 @@
   "data" : {
     "id" : "HN",
     "name" : "intellij.platform.langInjection",
+    "n" : "i.platform.langInjection",
     "package" : null,
     "sourceModule" : "intellij.platform.langInjection",
     "descriptor" : "community/plugins/IntelliLang/src/META-INF/plugin.xml",
@@ -1881,6 +2059,7 @@
   "data" : {
     "id" : "43",
     "name" : "com.intellij.modules.python",
+    "n" : "c.i.m.python",
     "package" : null,
     "sourceModule" : "",
     "descriptor" : "",
@@ -1891,6 +2070,7 @@
   "data" : {
     "id" : "RP1",
     "name" : "kotlin.idea",
+    "n" : "kotlin.idea",
     "package" : null,
     "sourceModule" : "kotlin.idea",
     "descriptor" : "community/plugins/kotlin/resources-descriptors/META-INF/plugin.xml",
@@ -1902,6 +2082,7 @@
   "data" : {
     "id" : "RM",
     "name" : "intellij.javaee.jsp.base.impl",
+    "n" : "i.javaee.jsp.base.impl",
     "package" : null,
     "sourceModule" : "intellij.javaee.jsp.base.impl",
     "descriptor" : "plugins/jsp/jsp-base-impl/src/META-INF/plugin.xml",
@@ -1913,6 +2094,7 @@
   "data" : {
     "id" : "ep",
     "name" : "intellij.hibernate",
+    "n" : "i.hibernate",
     "package" : null,
     "sourceModule" : "intellij.hibernate",
     "descriptor" : "plugins/frameworks/hibernate/hibernate-core/resources/META-INF/plugin.xml",

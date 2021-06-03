@@ -1,0 +1,20 @@
+{
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build --outDir ../out/plugin-graph --base /plugin-graph/ --emptyOutDir",
+    "serve": "vite preview"
+  },
+  "devDependencies": {
+    "vite": "^2.3.6"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^4.4.2",
+    "cytoscape": "^3.19.0",
+    "cytoscape-fcose": "^2.0.0",
+    "cytoscape-popper": "^2.0.0",
+    "flexsearch": "^0.6.32",
+    "tippy.js": "^6.3.1"
+  }
+}

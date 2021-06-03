@@ -81,6 +81,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
       writer.obj("data") {
         writer.writeStringField("id", id)
         writer.writeStringField("name", nodeName)
+        writer.writeStringField("n", getShortName(nodeName))
         writer.writeStringField("package", item.packageName)
         writer.writeStringField("sourceModule", item.sourceModuleName)
         writer.writeStringField("descriptor", pathToShortString(item.descriptorFile).replace(File.separatorChar, '/'))
@@ -112,6 +113,18 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
         writeModuleInfo(writer = writer, item = dep, parentId = null)
       }
       dependencyLinks.computeIfAbsent(dependentId) { mutableListOf() }.add(nodeInfoToId.get(dep)!!)
+    }
+  }
+
+  private fun getShortName(name: String): String {
+    if (name.startsWith("intellij.")) {
+      return "i.${name.substring("intellij.".length)}"
+    }
+    else if (name.startsWith("com.intellij.modules.")) {
+      return "c.i.m.${name.substring("com.intellij.modules.".length)}"
+    }
+    else {
+      return name
     }
   }
 }
