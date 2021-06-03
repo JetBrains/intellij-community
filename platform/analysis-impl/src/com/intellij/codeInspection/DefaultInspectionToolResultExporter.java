@@ -227,9 +227,8 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       }
       @NonNls final String template = descriptor.getDescriptionTemplate();
       String highlightedText = ProblemDescriptorUtil.extractHighlightedText(descriptor, psiElement);
-      @NonNls String problemText = ProblemDescriptorUtil.removeLocReference(
-        StringUtil.replace(template, "#ref", psiElement != null ? highlightedText : "")
-      );
+      @NonNls String problemText = StringUtil
+        .replace(StringUtil.replace(template, "#ref", psiElement != null ? highlightedText : ""), " #loc ", " ");
       Element descriptionElement = new Element(INSPECTION_RESULTS_DESCRIPTION_ELEMENT);
       descriptionElement.addContent(sanitizeIllegalXmlChars(problemText));
       element.addContent(descriptionElement);
