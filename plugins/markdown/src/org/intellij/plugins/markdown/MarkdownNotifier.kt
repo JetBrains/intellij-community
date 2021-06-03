@@ -9,6 +9,13 @@ import com.intellij.openapi.util.NlsSafe
 object MarkdownNotifier {
   val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Markdown")
 
+  fun notifyNetworkProblems(project: Project) {
+    NOTIFICATION_GROUP.createNotification(
+      MarkdownBundle.message("markdown.google.import.network.problems.msg"),
+      NotificationType.ERROR
+    ).notify(project)
+  }
+
   fun notifyPandocDetected(project: Project) {
     NOTIFICATION_GROUP.createNotification(
       MarkdownBundle.message("markdown.settings.pandoc.notification.detected"),
