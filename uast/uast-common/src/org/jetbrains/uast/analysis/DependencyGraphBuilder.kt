@@ -217,6 +217,7 @@ internal class DependencyGraphBuilder private constructor(
     val initElements = initializer.extractBranchesResultAsDependency().inlineElementsIfPossible().elements
     currentScope[name] = initElements
     updatePotentialEqualReferences(name, initElements)
+    currentScope.setLastPotentialUpdateAsAssignment(name, initElements)
     return@checkedDepthCall true
   }
 
