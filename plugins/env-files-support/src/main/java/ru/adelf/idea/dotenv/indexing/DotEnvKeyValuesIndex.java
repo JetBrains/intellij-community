@@ -5,6 +5,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NotNull;
+import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesProvider;
 import ru.adelf.idea.dotenv.models.KeyValuePsiElement;
 import ru.adelf.idea.dotenv.util.EnvironmentVariablesProviderUtil;
@@ -28,9 +29,15 @@ public class DotEnvKeyValuesIndex extends FileBasedIndexExtension<String, String
         return fileContent -> {
             final Map<String, String> map = new HashMap<>();
 
+            boolean storeValues = DotEnvSettings.getInstance(fileContent.getProject()).storeValues;
+
             for (EnvironmentVariablesProvider provider : EnvironmentVariablesProviderUtil.PROVIDERS) {
                 for (KeyValuePsiElement keyValueElement : provider.getElements(fileContent.getPsiFile())) {
-                    map.put(keyValueElement.getKey(), keyValueElement.getShortValue());
+                    if (storeValues) {
+                        map.put(keyValueElement.getKey(), keyValueElement.getShortValue());
+                    } else {
+                        map.put(keyValueElement.getKey(), "");
+                    }
                 }
             }
 
@@ -69,6 +76,6 @@ public class DotEnvKeyValuesIndex extends FileBasedIndexExtension<String, String
 
     @Override
     public int getVersion() {
-        return 5;
+        return 6;
     }
 }

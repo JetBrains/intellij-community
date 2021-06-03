@@ -13,6 +13,7 @@ import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
@@ -22,7 +23,12 @@ public class JavaEnvCompletionContributor extends BaseEnvCompletionProvider impl
             @Override
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
                 PsiElement psiElement = completionParameters.getOriginalPosition();
-                if(psiElement == null || getStringLiteral(psiElement) == null) {
+
+                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                    return;
+                }
+
+                if (getStringLiteral(psiElement) == null) {
                     return;
                 }
 
@@ -34,13 +40,13 @@ public class JavaEnvCompletionContributor extends BaseEnvCompletionProvider impl
     @Nullable
     @Override
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
-        if(psiElement == null) {
+        if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
         PsiLiteralExpression stringLiteral = getStringLiteral(psiElement);
 
-        if(stringLiteral == null) {
+        if (stringLiteral == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
@@ -50,18 +56,18 @@ public class JavaEnvCompletionContributor extends BaseEnvCompletionProvider impl
             return PsiElement.EMPTY_ARRAY;
         }
 
-        return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), (String)value);
+        return EnvironmentVariablesApi.getKeyDeclarations(psiElement.getProject(), (String) value);
     }
 
     @Nullable
     private PsiLiteralExpression getStringLiteral(@NotNull PsiElement psiElement) {
         PsiElement parent = psiElement.getParent();
 
-        if(!(parent instanceof PsiLiteralExpression)) {
+        if (!(parent instanceof PsiLiteralExpression)) {
             return null;
         }
 
-        if(!JavaPsiHelper.isEnvStringLiteral((PsiLiteralExpression) parent)) {
+        if (!JavaPsiHelper.isEnvStringLiteral((PsiLiteralExpression) parent)) {
             return null;
         }
 

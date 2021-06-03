@@ -13,6 +13,7 @@ import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.psi.KtLiteralStringTemplateEntry;
+import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
@@ -22,7 +23,12 @@ public class KotlinEnvCompletionContributor extends BaseEnvCompletionProvider im
             @Override
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
                 PsiElement psiElement = completionParameters.getOriginalPosition();
-                if (psiElement == null || getStringLiteral(psiElement) == null) {
+
+                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                    return;
+                }
+
+                if (getStringLiteral(psiElement) == null) {
                     return;
                 }
 

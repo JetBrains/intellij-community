@@ -16,6 +16,7 @@ import com.intellij.psi.xml.XmlToken;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
@@ -29,8 +30,14 @@ public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider i
         extend(CompletionType.BASIC, PlatformPatterns.psiElement(XmlToken.class).withParent(XmlAttributeValue.class), new CompletionProvider<CompletionParameters>() {
             @Override
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
+
                 PsiElement psiElement = completionParameters.getOriginalPosition();
-                if (psiElement == null || getXmlAttributeValue(psiElement) == null) {
+
+                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                    return;
+                }
+
+                if (getXmlAttributeValue(psiElement) == null) {
                     return;
                 }
 
@@ -66,7 +73,7 @@ public class PhpunitEnvCompletionContributor extends BaseEnvCompletionProvider i
 
         if (!(attribute instanceof XmlAttribute)) return null;
 
-        if (!((XmlAttribute)attribute).getName().equals("name")) return null;
+        if (!((XmlAttribute) attribute).getName().equals("name")) return null;
 
         if (!(attribute.getParent() instanceof XmlTag)) return null;
 

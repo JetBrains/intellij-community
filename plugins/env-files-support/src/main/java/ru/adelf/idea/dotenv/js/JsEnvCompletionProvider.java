@@ -12,6 +12,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
@@ -22,7 +23,12 @@ public class JsEnvCompletionProvider extends BaseEnvCompletionProvider implement
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
-                if(psiElement == null || !JsPsiHelper.checkPsiElement(psiElement)) {
+
+                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                    return;
+                }
+
+                if (!JsPsiHelper.checkPsiElement(psiElement)) {
                     return;
                 }
 
@@ -35,11 +41,11 @@ public class JsEnvCompletionProvider extends BaseEnvCompletionProvider implement
     @Override
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
-        if(psiElement == null) {
+        if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
-        if(!JsPsiHelper.checkPsiElement(psiElement)) {
+        if (!JsPsiHelper.checkPsiElement(psiElement)) {
             return PsiElement.EMPTY_ARRAY;
         }
 

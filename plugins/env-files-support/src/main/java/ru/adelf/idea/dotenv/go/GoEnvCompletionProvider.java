@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
@@ -24,7 +25,12 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
-                if(psiElement == null || getStringLiteral(psiElement) == null) {
+
+                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                    return;
+                }
+
+                if (getStringLiteral(psiElement) == null) {
                     return;
                 }
 
@@ -36,13 +42,13 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
     @Nullable
     @Override
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
-        if(psiElement == null) {
+        if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
         GoStringLiteral stringLiteral = getStringLiteral(psiElement);
 
-        if(stringLiteral == null) {
+        if (stringLiteral == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
@@ -53,17 +59,17 @@ public class GoEnvCompletionProvider extends BaseEnvCompletionProvider implement
     private GoStringLiteral getStringLiteral(@NotNull PsiElement psiElement) {
         PsiElement parent = psiElement.getParent();
 
-        if(!(parent instanceof GoStringLiteral)) {
+        if (!(parent instanceof GoStringLiteral)) {
             return null;
         }
 
-        if(parent.getParent() == null) {
+        if (parent.getParent() == null) {
             return null;
         }
 
         PsiElement candidate = parent.getParent().getParent();
 
-        if(candidate instanceof GoCallExpr) {
+        if (candidate instanceof GoCallExpr) {
             return GoPsiHelper.getEnvironmentGoLiteral((GoCallExpr) candidate);
         }
 

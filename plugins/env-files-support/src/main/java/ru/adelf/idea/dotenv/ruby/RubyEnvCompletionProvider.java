@@ -1,6 +1,9 @@
 package ru.adelf.idea.dotenv.ruby;
 
-import com.intellij.codeInsight.completion.*;
+import com.intellij.codeInsight.completion.CompletionParameters;
+import com.intellij.codeInsight.completion.CompletionProvider;
+import com.intellij.codeInsight.completion.CompletionResultSet;
+import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
@@ -12,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.basicTypes.stringLiterals.RStringLiteral;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.expressions.RArrayIndexing;
 import org.jetbrains.plugins.ruby.ruby.lang.psi.variables.RConstant;
+import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
@@ -24,7 +28,12 @@ public class RubyEnvCompletionProvider extends BaseEnvCompletionProvider impleme
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
-                if(psiElement == null || getStringLiteral(psiElement) == null) {
+
+                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                    return;
+                }
+
+                if (getStringLiteral(psiElement) == null) {
                     return;
                 }
 
@@ -37,13 +46,13 @@ public class RubyEnvCompletionProvider extends BaseEnvCompletionProvider impleme
     @Override
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
-        if(psiElement == null) {
+        if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
         RStringLiteral stringLiteral = getStringLiteral(psiElement);
 
-        if(stringLiteral == null) {
+        if (stringLiteral == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
@@ -54,31 +63,31 @@ public class RubyEnvCompletionProvider extends BaseEnvCompletionProvider impleme
     private RStringLiteral getStringLiteral(@NotNull PsiElement psiElement) {
         PsiElement parent = psiElement.getParent();
 
-        if(!(parent instanceof RStringLiteral)) {
+        if (!(parent instanceof RStringLiteral)) {
             return null;
         }
 
-        if(parent.getParent() == null) {
+        if (parent.getParent() == null) {
             return null;
         }
 
         PsiElement array = parent.getParent().getParent();
 
-        if(!(array instanceof RArrayIndexing)) {
+        if (!(array instanceof RArrayIndexing)) {
             return null;
         }
 
         PsiElement receiver = ((RArrayIndexing) array).getReceiver();
 
-        if(!(receiver instanceof RConstant)) {
+        if (!(receiver instanceof RConstant)) {
             return null;
         }
 
-        if(receiver.getFirstChild() == null) {
+        if (receiver.getFirstChild() == null) {
             return null;
         }
 
-        if(!Objects.equals(receiver.getFirstChild().getText(), "ENV")) {
+        if (!Objects.equals(receiver.getFirstChild().getText(), "ENV")) {
             return null;
         }
 

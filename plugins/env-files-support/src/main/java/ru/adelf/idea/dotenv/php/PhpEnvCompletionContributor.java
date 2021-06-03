@@ -13,6 +13,7 @@ import com.intellij.util.ProcessingContext;
 import com.jetbrains.php.lang.psi.elements.StringLiteralExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import ru.adelf.idea.dotenv.DotEnvSettings;
 import ru.adelf.idea.dotenv.api.EnvironmentVariablesApi;
 import ru.adelf.idea.dotenv.common.BaseEnvCompletionProvider;
 
@@ -23,7 +24,12 @@ public class PhpEnvCompletionContributor extends BaseEnvCompletionProvider imple
             protected void addCompletions(@NotNull CompletionParameters completionParameters, @NotNull ProcessingContext processingContext, @NotNull CompletionResultSet completionResultSet) {
 
                 PsiElement psiElement = completionParameters.getOriginalPosition();
-                if(psiElement == null || getStringLiteral(psiElement) == null) {
+
+                if (psiElement == null || !DotEnvSettings.getInstance(psiElement.getProject()).completionEnabled) {
+                    return;
+                }
+
+                if (getStringLiteral(psiElement) == null) {
                     return;
                 }
 
@@ -36,13 +42,13 @@ public class PhpEnvCompletionContributor extends BaseEnvCompletionProvider imple
     @Override
     public PsiElement[] getGotoDeclarationTargets(@Nullable PsiElement psiElement, int i, Editor editor) {
 
-        if(psiElement == null) {
+        if (psiElement == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
         StringLiteralExpression stringLiteral = getStringLiteral(psiElement);
 
-        if(stringLiteral == null) {
+        if (stringLiteral == null) {
             return PsiElement.EMPTY_ARRAY;
         }
 
@@ -53,11 +59,11 @@ public class PhpEnvCompletionContributor extends BaseEnvCompletionProvider imple
     private StringLiteralExpression getStringLiteral(@NotNull PsiElement psiElement) {
         PsiElement parent = psiElement.getParent();
 
-        if(!(parent instanceof StringLiteralExpression)) {
+        if (!(parent instanceof StringLiteralExpression)) {
             return null;
         }
 
-        if(!PhpPsiHelper.isEnvStringLiteral((StringLiteralExpression) parent)) {
+        if (!PhpPsiHelper.isEnvStringLiteral((StringLiteralExpression) parent)) {
             return null;
         }
 
