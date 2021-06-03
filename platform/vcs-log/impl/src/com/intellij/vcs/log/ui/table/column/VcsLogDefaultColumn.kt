@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table.column
 
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
@@ -10,6 +11,7 @@ import com.intellij.util.text.JBDateFormat
 import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.graph.DefaultColorGenerator
 import com.intellij.vcs.log.impl.CommonUiProperties
+import com.intellij.vcs.log.impl.VcsLogUiProperties
 import com.intellij.vcs.log.paint.GraphCellPainter
 import com.intellij.vcs.log.paint.SimpleGraphCellPainter
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil
@@ -59,13 +61,39 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
     )
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
-    updateTableOnCommitDetailsLoaded(this, table)
     val graphCellPainter: GraphCellPainter = object : SimpleGraphCellPainter(DefaultColorGenerator()) {
       override fun getRowHeight(): Int {
         return table.rowHeight
       }
     }
-    return GraphCommitCellRenderer(table.logData, graphCellPainter, table)
+
+    val commitCellRenderer = GraphCommitCellRenderer(table.logData, graphCellPainter, table)
+    commitCellRenderer.setCompactReferencesView(table.properties[CommonUiProperties.COMPACT_REFERENCES_VIEW])
+    commitCellRenderer.setShowTagsNames(table.properties[CommonUiProperties.SHOW_TAG_NAMES])
+    commitCellRenderer.setLeftAligned(table.properties[CommonUiProperties.LABELS_LEFT_ALIGNED])
+
+    val propertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
+      override fun <T : Any?> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) {
+        if (CommonUiProperties.COMPACT_REFERENCES_VIEW == property) {
+          commitCellRenderer.setCompactReferencesView(table.properties[CommonUiProperties.COMPACT_REFERENCES_VIEW])
+          table.repaint()
+        }
+        else if (CommonUiProperties.SHOW_TAG_NAMES == property) {
+          commitCellRenderer.setShowTagsNames(table.properties[CommonUiProperties.SHOW_TAG_NAMES])
+          table.repaint()
+        }
+        else if (CommonUiProperties.LABELS_LEFT_ALIGNED == property) {
+          commitCellRenderer.setLeftAligned(table.properties[CommonUiProperties.LABELS_LEFT_ALIGNED])
+          table.repaint()
+        }
+      }
+    }
+    table.properties.addChangeListener(propertiesChangeListener)
+    Disposer.register(table, Disposable { table.properties.removeChangeListener(propertiesChangeListener) })
+
+    updateTableOnCommitDetailsLoaded(this, table)
+
+    return commitCellRenderer
   }
 
   override fun getStubValue(model: GraphTableModel): GraphCommitCell = GraphCommitCell("", emptyList(), emptyList())

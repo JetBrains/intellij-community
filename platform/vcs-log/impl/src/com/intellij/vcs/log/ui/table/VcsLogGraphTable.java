@@ -127,9 +127,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     onColumnOrderSettingChanged();
     setRootColumnSize();
     myGraphCommitCellRenderer = (GraphCommitCellRenderer)myTableColumns.get(Commit.INSTANCE).getCellRenderer();
-    myGraphCommitCellRenderer.setCompactReferencesView(myProperties.get(CommonUiProperties.COMPACT_REFERENCES_VIEW));
-    myGraphCommitCellRenderer.setShowTagsNames(myProperties.get(CommonUiProperties.SHOW_TAG_NAMES));
-    myGraphCommitCellRenderer.setLeftAligned(myProperties.get(CommonUiProperties.LABELS_LEFT_ALIGNED));
     VcsLogColumnManager.getInstance().addCurrentColumnsListener(this, new MyCurrentColumnsListener());
 
     setShowVerticalLines(false);
@@ -671,21 +668,6 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
     if (column != Commit.INSTANCE) return;
     GraphCommitCellController controller = (GraphCommitCellController)Objects.requireNonNull(getController(column));
     controller.showTooltip(row);
-  }
-
-  public void setCompactReferencesView(boolean compact) {
-    myGraphCommitCellRenderer.setCompactReferencesView(compact);
-    repaint();
-  }
-
-  public void setShowTagNames(boolean showTagsNames) {
-    myGraphCommitCellRenderer.setShowTagsNames(showTagsNames);
-    repaint();
-  }
-
-  public void setLabelsLeftAligned(boolean leftAligned) {
-    myGraphCommitCellRenderer.setLeftAligned(leftAligned);
-    repaint();
   }
 
   @NotNull
