@@ -63,7 +63,7 @@ class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
     for (String extension : extensions) {
       new File(winDistPath, "bin").listFiles(FileFilters.filesWithExtension(extension))?.each { file ->
         buildContext.executeStep("Signing $file", BuildOptions.WIN_SIGN_STEP) {
-          buildContext.signExeFile(file.absolutePath)
+          buildContext.signFile(file.absolutePath)
         }
       }
     }

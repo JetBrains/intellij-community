@@ -153,7 +153,7 @@ class WinExeInstallerBuilder {
       buildContext.messages.error("Windows installer wasn't created.")
     }
     buildContext.executeStep("Signing $installerPath", BuildOptions.WIN_SIGN_STEP) {
-      buildContext.signExeFile(installerPath)
+      buildContext.signFile(installerPath)
     }
     buildContext.notifyArtifactBuilt(installerPath)
     return installerPath
