@@ -122,7 +122,7 @@ private fun writeLinks(writer: JsonGenerator, links: Map<String, List<String>>, 
       writer.obj {
         writer.writeStringField("group", "edges")
         writer.obj("data") {
-          writer.writeStringField("id", "e_${source}_${target}")
+          writer.writeStringField("id", "${source}_${target}")
           writer.writeStringField("source", source)
           writer.writeStringField("target", target)
           writer.writeNumberField("type", if (isContent) 1 else 0)
