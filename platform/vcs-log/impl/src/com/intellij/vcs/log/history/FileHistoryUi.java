@@ -228,6 +228,15 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(Date.INSTANCE) != null) {
         getTable().repaint();
       }
+      else if (CommonUiProperties.COMPACT_REFERENCES_VIEW.equals(property)) {
+        getTable().setCompactReferencesView(myUiProperties.get(CommonUiProperties.COMPACT_REFERENCES_VIEW));
+      }
+      else if (CommonUiProperties.SHOW_TAG_NAMES.equals(property)) {
+        getTable().setShowTagNames(myUiProperties.get(CommonUiProperties.SHOW_TAG_NAMES));
+      }
+      else if (CommonUiProperties.LABELS_LEFT_ALIGNED.equals(property)) {
+        getTable().setLabelsLeftAligned(myUiProperties.get(CommonUiProperties.LABELS_LEFT_ALIGNED));
+      }
     }
   }
 

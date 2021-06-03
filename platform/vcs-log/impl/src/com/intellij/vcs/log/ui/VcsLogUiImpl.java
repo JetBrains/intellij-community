@@ -236,14 +236,14 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
         getTable().rootColumnUpdated();
       }
-      else if (MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW.equals(property)) {
-        getTable().setCompactReferencesView(myUiProperties.get(MainVcsLogUiProperties.COMPACT_REFERENCES_VIEW));
+      else if (CommonUiProperties.COMPACT_REFERENCES_VIEW.equals(property)) {
+        getTable().setCompactReferencesView(myUiProperties.get(CommonUiProperties.COMPACT_REFERENCES_VIEW));
       }
-      else if (MainVcsLogUiProperties.SHOW_TAG_NAMES.equals(property)) {
-        getTable().setShowTagNames(myUiProperties.get(MainVcsLogUiProperties.SHOW_TAG_NAMES));
+      else if (CommonUiProperties.SHOW_TAG_NAMES.equals(property)) {
+        getTable().setShowTagNames(myUiProperties.get(CommonUiProperties.SHOW_TAG_NAMES));
       }
-      else if (MainVcsLogUiProperties.LABELS_LEFT_ALIGNED.equals(property)) {
-        getTable().setLabelsLeftAligned(myUiProperties.get(MainVcsLogUiProperties.LABELS_LEFT_ALIGNED));
+      else if (CommonUiProperties.LABELS_LEFT_ALIGNED.equals(property)) {
+        getTable().setLabelsLeftAligned(myUiProperties.get(CommonUiProperties.LABELS_LEFT_ALIGNED));
       }
       else if (MainVcsLogUiProperties.BEK_SORT_TYPE.equals(property)) {
         myRefresher.onSortTypeChange(myUiProperties.get(MainVcsLogUiProperties.BEK_SORT_TYPE));

@@ -15,9 +15,6 @@ public interface MainVcsLogUiProperties extends VcsLogUiProperties {
 
   VcsLogUiProperty<Boolean> SHOW_LONG_EDGES = new VcsLogUiProperty<>("Graph.ShowLongEdges");
   VcsLogUiProperty<PermanentGraph.SortType> BEK_SORT_TYPE = new VcsLogUiProperty<>("Graph.BekSortType");
-  VcsLogUiProperty<Boolean> COMPACT_REFERENCES_VIEW = new VcsLogUiProperty<>("Table.CompactReferencesView");
-  VcsLogUiProperty<Boolean> SHOW_TAG_NAMES = new VcsLogUiProperty<>("Table.ShowTagNames");
-  VcsLogUiProperty<Boolean> LABELS_LEFT_ALIGNED = new VcsLogUiProperty<>("Table.LabelsLeftAligned");
   VcsLogUiProperty<Boolean> TEXT_FILTER_MATCH_CASE = new VcsLogUiProperty<>("TextFilter.MatchCase");
   VcsLogUiProperty<Boolean> TEXT_FILTER_REGEX = new VcsLogUiProperty<>("TextFilter.Regex");
   VcsLogUiProperty<Boolean> SHOW_CHANGES_FROM_PARENTS = new VcsLogUiProperty<>("Changes.ShowChangesFromParents");
