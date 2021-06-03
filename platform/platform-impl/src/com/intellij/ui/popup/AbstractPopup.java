@@ -83,7 +83,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private WindowResizeListener myResizeListener;
   private WindowMoveListener myMoveListener;
   private JPanel myHeaderPanel;
-  private JPanel myBottomPanel;
   private CaptionPanel myCaption;
   private JComponent myComponent;
   private SpeedSearch mySpeedSearchFoundInRootComponent;
@@ -124,7 +123,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
   private boolean myHeaderAlwaysFocusable;
   private boolean myMovable;
   private JComponent myHeaderComponent;
-  private JComponent myBottomComponent;
 
   InputEvent myDisposeEvent;
 
@@ -274,7 +272,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
     ActiveIcon actualIcon = titleIcon == null ? new ActiveIcon(EmptyIcon.ICON_0) : titleIcon;
 
     myHeaderPanel = new JPanel(new BorderLayout());
-    myBottomPanel = new JPanel(new BorderLayout());
 
     if (caption != null) {
       if (!caption.isEmpty()) {
@@ -310,7 +307,6 @@ public class AbstractPopup implements JBPopup, ScreenAreaConsumer {
 
     myHeaderPanel.add(myCaption, BorderLayout.NORTH);
     myContent.add(myHeaderPanel, BorderLayout.NORTH);
-    myContent.add(myBottomPanel, BorderLayout.SOUTH);
 
     myForcedHeavyweight = true;
     myResizable = resizable;
