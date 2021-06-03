@@ -98,7 +98,8 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
 
       ComponentPanelBuilder builder = UI.PanelFactory.panel(checkBox);
       if (info.getComment() != null) {
-        builder.withComment(info.getComment(), false);
+        builder.withComment(info.getComment().getCommentText(), false);
+        // TODO add warning icon to the comment if needed
       }
 
       return builder.createPanel();
@@ -117,7 +118,8 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
     panel.add(label);
 
     if (info.getComment() != null) {
-      panel.add(ComponentPanelBuilder.createCommentComponent(info.getComment(), true, -1, false));
+      panel.add(ComponentPanelBuilder.createCommentComponent(info.getComment().getCommentText(), true, -1, false));
+      // TODO add warning icon to the comment if needed
     }
 
     return panel;

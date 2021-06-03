@@ -63,41 +63,28 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
   }
 
   @Override
-  public final @Nullable String getComment() {
+  public final @Nullable ActionOnSaveComment getComment() {
     return getSomeValue(this::getCommentAccordingToStoredState, this::getCommentAccordingToUiState);
   }
 
   /**
+   * If {@link #isActionOnSaveEnabled()} is false then the implementation should return either <code>null</code> or {@link ActionOnSaveComment#info(String)}.
+   * The recommended style is to use {@link ActionOnSaveComment#warning(String)} only for enabled 'actions on save' that are not configured properly.
+   *
    * @see ActionOnSaveInfo#getComment()
    */
-  protected @Nullable String getCommentAccordingToStoredState() {
+  protected @Nullable ActionOnSaveComment getCommentAccordingToStoredState() {
     return null;
   }
 
   /**
+   * If {@link #isActionOnSaveEnabled()} is false then the implementation should return either <code>null</code> or {@link ActionOnSaveComment#info(String)}.
+   * The recommended style is to use {@link ActionOnSaveComment#warning(String)} only for enabled 'actions on save' that are not configured properly.
+   *
    * @see ActionOnSaveInfo#getComment()
    */
-  protected @Nullable String getCommentAccordingToUiState(@NotNull Conf configurable) {
+  protected @Nullable ActionOnSaveComment getCommentAccordingToUiState(@NotNull Conf configurable) {
     return null;
-  }
-
-  @Override
-  public final boolean isWarningComment() {
-    return getSomeValue(this::isWarningCommentAccordingToStoredState, this::isWarningCommentAccordingToUiState);
-  }
-
-  /**
-   * @see ActionOnSaveInfo#isWarningComment()
-   */
-  protected boolean isWarningCommentAccordingToStoredState() {
-    return false;
-  }
-
-  /**
-   * @see ActionOnSaveInfo#isWarningComment()
-   */
-  protected boolean isWarningCommentAccordingToUiState(@NotNull Conf configurable) {
-    return false;
   }
 
   @Override

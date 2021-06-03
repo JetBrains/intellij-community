@@ -97,22 +97,13 @@ public abstract class ActionOnSaveInfo {
    * The text usually depends on the current state of the corresponding 'action on save' configuration. This might be a short summary of
    * the configuration of this 'action on save', or a warning about some problems with the feature configuration.
    * <br/><br/>
-   * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the stored
-   * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
-   *
-   * @see #isWarningComment()
-   */
-  public @Nullable @NlsContexts.Label String getComment() { return null; }
-
-  /**
-   * If <code>true</code> then the text returned by {@link #getComment()} will be accompanied by a warning icon.
+   * If {@link #isActionOnSaveEnabled()} is false then the implementation should return either <code>null</code> or {@link ActionOnSaveComment#info(String)}.
+   * The recommended style is to use {@link ActionOnSaveComment#warning(String)} only for enabled 'actions on save' that are not configured properly.
    * <br/><br/>
    * Implementation may use {@link #getConfigurableIfItsUiComponentInitialized()} to decide whether its logic should depend on the stored
    * state of this 'action on save' or on the current UI components state on the corresponding page in Settings.
-   *
-   * @see #getComment()
    */
-  public boolean isWarningComment() { return false; }
+  public @Nullable ActionOnSaveComment getComment() { return null; }
 
   /**
    * If {@link #isSaveActionApplicable()} returns <code>true</code> then the returned value is used to call <code>setSelected()</code> for the
