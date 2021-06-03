@@ -13,6 +13,7 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import git4idea.GitApplyChangesProcess;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
+import git4idea.actions.GitAbortOperationAction;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandlerListener;
@@ -51,6 +52,7 @@ public class GitCherryPicker extends VcsCherryPicker {
                                  Git.getInstance()
                                    .cherryPick(repository, commit.asString(), autoCommit, shouldAddSuffix(repository, commit),
                                                listeners.toArray(new GitLineHandlerListener[0])),
+                               new GitAbortOperationAction.CherryPick(),
                                result -> isNothingToCommitMessage(result),
                                (repository, commit) -> createCommitMessage(repository, commit),
                                true,

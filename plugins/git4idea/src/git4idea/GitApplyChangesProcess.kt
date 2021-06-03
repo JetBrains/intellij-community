@@ -3,8 +3,8 @@ package git4idea
 
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.DvcsUtil.getShortRepositoryName
-import com.intellij.notification.Notification
-import com.intellij.notification.NotificationListener
+import com.intellij.notification.NotificationAction
+import com.intellij.notification.NotificationType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
@@ -27,6 +27,7 @@ import com.intellij.vcs.log.util.VcsUserUtil
 import com.intellij.xml.util.XmlStringUtil.wrapInHtml
 import com.intellij.xml.util.XmlStringUtil.wrapInHtmlTag
 import git4idea.GitUtil.refreshChangedVfs
+import git4idea.actions.GitAbortOperationAction
 import git4idea.changes.GitChangeUtils.getStagedChanges
 import git4idea.commands.GitCommandResult
 import git4idea.commands.GitLineHandlerListener
@@ -48,23 +49,23 @@ import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.Semaphore
 import java.util.concurrent.atomic.AtomicBoolean
-import javax.swing.event.HyperlinkEvent
 
 /**
  * Applies the given Git operation (e.g. cherry-pick or revert) to the current working tree,
  * waits for the [ChangeListManager] update, shows the commit dialog and removes the changelist after commit,
  * if the commit was successful.
  */
-class GitApplyChangesProcess(private val project: Project,
-                             private val commits: List<VcsFullCommitDetails>,
-                             forceAutoCommit: Boolean,
-                             @Nls private val operationName: String,
-                             @Nls private val appliedWord: String,
-                             private val command: (GitRepository, Hash, autoCommit: Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
-                             private val emptyCommitDetector: (GitCommandResult) -> Boolean,
-                             private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
-                             private val preserveCommitMetadata: Boolean,
-                             private val cleanupBeforeCommit: (GitRepository, autoCommit: Boolean) -> Unit = { _, _ -> }) {
+internal class GitApplyChangesProcess(private val project: Project,
+                                      private val commits: List<VcsFullCommitDetails>,
+                                      forceAutoCommit: Boolean,
+                                      @Nls private val operationName: String,
+                                      @Nls private val appliedWord: String,
+                                      private val command: (GitRepository, Hash, autoCommit: Boolean, List<GitLineHandlerListener>) -> GitCommandResult,
+                                      private val abortCommand: GitAbortOperationAction,
+                                      private val emptyCommitDetector: (GitCommandResult) -> Boolean,
+                                      private val defaultCommitMessageGenerator: (GitRepository, VcsFullCommitDetails) -> @NonNls String,
+                                      private val preserveCommitMetadata: Boolean,
+                                      private val cleanupBeforeCommit: (GitRepository, autoCommit: Boolean) -> Unit = { _, _ -> }) {
   private val repositoryManager = GitRepositoryManager.getInstance(project)
   private val vcsNotifier = VcsNotifier.getInstance(project)
   private val changeListManager = ChangeListManagerEx.getInstanceEx(project)
@@ -381,15 +382,27 @@ class GitApplyChangesProcess(private val project: Project,
   private fun notifyConflictWarning(repository: GitRepository,
                                     commit: VcsFullCommitDetails,
                                     successfulCommits: List<VcsFullCommitDetails>) {
-    val resolveLinkListener = ResolveLinkListener(repository.root,
-                                                  commit.id.toShortString(),
-                                                  VcsUserUtil.getShortPresentation(commit.author),
-                                                  commit.subject)
-    var description = commitDetails(commit) + UIUtil.BR + GitBundle.message("apply.changes.unresolved.conflicts", RESOLVE)
+    val title = GitBundle.message("apply.changes.operation.performed.with.conflicts", operationName.capitalize())
+
+    var description = commitDetails(commit)
+    description += UIUtil.BR + GitBundle.message("apply.changes.unresolved.conflicts.text")
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
-    vcsNotifier.notifyImportantWarning(null,
-                                       GitBundle.message("apply.changes.operation.performed.with.conflicts", operationName.capitalize()),
-                                       description, resolveLinkListener)
+
+    VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+      .createNotification(title, description, NotificationType.WARNING)
+      .addAction(NotificationAction.createSimple(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text")) {
+        val hash = commit.id.toShortString()
+        val commitAuthor = VcsUserUtil.getShortPresentation(commit.author)
+        val commitMessage = commit.subject
+        ConflictResolver(project, repository.root, hash, commitAuthor, commitMessage, operationName).mergeNoProceedInBackground()
+      })
+      .addAction(NotificationAction.create(GitBundle.message("apply.changes.unresolved.conflicts.notification.abort.action.text",
+                                                             operationName.capitalize())) { _, notification ->
+        if (abortCommand.performInBackground(repository)) {
+          notification.expire()
+        }
+      })
+      .notify(project)
   }
 
   private fun notifyCommitCancelled(commit: VcsFullCommitDetails, successfulCommits: List<VcsFullCommitDetails>) {
@@ -453,20 +466,6 @@ class GitApplyChangesProcess(private val project: Project,
     }
   }
 
-  private inner class ResolveLinkListener(private val root: VirtualFile,
-                                          private val hash: String,
-                                          private val author: String,
-                                          private val message: String) : NotificationListener {
-
-    override fun hyperlinkUpdate(notification: Notification, event: HyperlinkEvent) {
-      if (event.eventType == HyperlinkEvent.EventType.ACTIVATED) {
-        if (event.description == RESOLVE) {
-          ConflictResolver(project, root, hash, author, message, operationName).mergeNoProceedInBackground()
-        }
-      }
-    }
-  }
-
   class ConflictResolver(project: Project,
                          root: VirtualFile,
                          commitHash: String,
@@ -481,7 +480,6 @@ class GitApplyChangesProcess(private val project: Project,
 
   companion object {
     private val LOG = logger<GitApplyChangesProcess>()
-    private const val RESOLVE = "resolve"
   }
 }
 
