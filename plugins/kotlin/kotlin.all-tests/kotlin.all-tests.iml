@@ -20,6 +20,7 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.maven" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.tests" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.maven" />

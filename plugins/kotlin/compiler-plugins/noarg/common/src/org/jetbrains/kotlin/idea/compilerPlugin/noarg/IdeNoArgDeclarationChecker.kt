@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.noarg.NoArgCommandLineProcessor
 import org.jetbrains.kotlin.noarg.diagnostic.AbstractNoArgDeclarationChecker
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
-internal val NO_ARG_ANNOTATION_OPTION_PREFIX =
+val NO_ARG_ANNOTATION_OPTION_PREFIX =
     "plugin:${NoArgCommandLineProcessor.PLUGIN_ID}:${NoArgCommandLineProcessor.ANNOTATION_OPTION.optionName}="
 
 class IdeNoArgDeclarationChecker(project: Project) : AbstractNoArgDeclarationChecker(false) {
