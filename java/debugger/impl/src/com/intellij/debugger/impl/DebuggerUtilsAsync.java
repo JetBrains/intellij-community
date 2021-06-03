@@ -121,6 +121,20 @@ public final class DebuggerUtilsAsync {
     return completedFuture(ref.length());
   }
 
+  public static CompletableFuture<String> sourceName(ReferenceType type) {
+    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
+      return reschedule(((ReferenceTypeImpl)type).sourceNameAsync());
+    }
+    return toCompletableFuture(() -> type.sourceName());
+  }
+
+  public static CompletableFuture<List<String>> availableStrata(ReferenceType type) {
+    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
+      return reschedule(((ReferenceTypeImpl)type).availableStrataAsync());
+    }
+    return toCompletableFuture(() -> type.availableStrata());
+  }
+
   public static CompletableFuture<List<Location>> locationsOfLine(@NotNull ReferenceType type, int lineNumber) {
     return locationsOfLine(type, type.virtualMachine().getDefaultStratum(), null, lineNumber);
   }
