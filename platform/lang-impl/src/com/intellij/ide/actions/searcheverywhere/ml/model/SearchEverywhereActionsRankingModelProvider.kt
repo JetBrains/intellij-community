@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.actions.searcheverywhere.ml
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.actions.searcheverywhere.ml.model
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
@@ -20,7 +20,7 @@ class SearchEverywhereActionsRankingModelProvider(private val resourceDirectory:
     }
 
   override val displayNameInSettings: String
-    get() = IdeBundle.message("searcheverywhere.ml.display.name.in.settings")
+    get() = IdeBundle.message("searcheverywhere.ml.actions.display.name.in.settings")
 
   override fun isContributorSupported(contributor: SearchEverywhereContributor<*>): Boolean {
     return contributor is ActionSearchEverywhereContributor

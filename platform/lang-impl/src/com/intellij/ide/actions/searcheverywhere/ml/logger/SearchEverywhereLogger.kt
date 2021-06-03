@@ -1,16 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.internal.statistic.eventLog.fus
+package com.intellij.ide.actions.searcheverywhere.ml.logger
 
 import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 
-object SearchEverywhereLogger {
+internal object SearchEverywhereLogger {
   internal const val recorderId = "MLSE"
 
   /**
-   * [com.intellij.internal.statistic.eventLog.fus.SearchEverywhereEventLoggerProvider]
+   * [com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider]
    */
   internal val loggerProvider = StatisticsEventLogProviderUtil.getEventLogProvider(recorderId)
   internal val group = EventLogGroup("mlse.log", 1)

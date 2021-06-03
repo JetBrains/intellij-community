@@ -1,8 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.gotoByName;
 
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration;
-import com.intellij.internal.statistic.eventLog.fus.SearchEverywhereLogger;
+import com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereLogger;
 import com.intellij.internal.statistic.local.ActionGlobalUsageInfo;
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
