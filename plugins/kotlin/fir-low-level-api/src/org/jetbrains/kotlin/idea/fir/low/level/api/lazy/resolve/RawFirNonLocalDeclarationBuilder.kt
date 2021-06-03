@@ -32,7 +32,8 @@ internal class RawFirNonLocalDeclarationBuilder private constructor(
             rootNonLocalDeclaration: KtDeclaration,
             replacement: RawFirReplacement? = null
         ): FirDeclaration {
-            val replacementApplier = replacement?.Applier()
+            @Suppress("IfThenToSafeAccess") // safe call cannot be used cause wrong bytecode will be generated KT-31994
+            val replacementApplier = if (replacement != null) replacement.Applier() else null
             val builder = RawFirNonLocalDeclarationBuilder(session, baseScopeProvider, rootNonLocalDeclaration, replacementApplier)
             builder.context.packageFqName = rootNonLocalDeclaration.containingKtFile.packageFqName
             return builder.moveNext(designation.path.iterator(), containingClass = null).also {
