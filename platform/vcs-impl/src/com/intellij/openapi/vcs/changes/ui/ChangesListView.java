@@ -39,6 +39,8 @@ import java.util.stream.Stream;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getNavigatableArray;
 import static com.intellij.openapi.vcs.changes.ChangesUtil.getPathsCaseSensitive;
 import static com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode.*;
+import static com.intellij.openapi.vcs.changes.ui.VcsTreeModelData.findTagNode;
+import static com.intellij.util.ObjectUtils.notNull;
 import static com.intellij.vcs.commit.ChangesViewCommitPanelKt.subtreeRootObject;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
@@ -322,8 +324,17 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
       .filter(new DistinctChangePredicate());
   }
 
+  @NotNull
+  static JBIterable<ChangesBrowserNode<?>> getChangesNodes(TreePath @Nullable [] paths) {
+    return JBIterable.of(paths)
+      .map(TreePath::getLastPathComponent)
+      .map(node -> ((ChangesBrowserNode<?>)node))
+      .flatMap(node -> node.traverse())
+      .unique();
+  }
+
   @Nullable
-  private static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
+  public static Change toHijackedChange(@NotNull Project project, @NotNull VirtualFile file) {
     VcsCurrentRevisionProxy before = VcsCurrentRevisionProxy.create(file, project);
     if (before != null) {
       ContentRevision afterRevision = new CurrentContentRevision(VcsUtil.getFilePath(file));
@@ -386,6 +397,11 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
     return getRoot().traverseObjectsUnder().filter(Change.class);
   }
 
+  @NotNull
+  public JBIterable<ChangesBrowserChangeNode> getChangesNodes() {
+    return TreeUtil.treeNodeTraverser(getRoot()).traverse().filter(ChangesBrowserChangeNode.class);
+  }
+
   @Nullable
   public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
     return getAllChangesUnder(change, ChangesBrowserChangeListNode.class);
@@ -419,6 +435,11 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   @NotNull
   public JBIterable<Change> getSelectedChanges() {
     return getChanges(myProject, getSelectionPaths());
+  }
+
+  @NotNull
+  public JBIterable<ChangesBrowserNode<?>> getSelectedChangesNodes() {
+    return getChangesNodes(getSelectionPaths());
   }
 
   @NotNull
@@ -468,19 +489,31 @@ public class ChangesListView extends HoverChangesTree implements DataProvider, D
   }
 
   @Nullable
-  public DefaultMutableTreeNode findNodeInTree(Object userObject) {
-    if (userObject instanceof LocalChangeList) {
-      return TreeUtil.nodeChildren(getRoot()).filter(DefaultMutableTreeNode.class).find(node -> userObject.equals(node.getUserObject()));
-    }
-    if (userObject instanceof ChangeListChange) {
-      return TreeUtil.findNode(getRoot(), node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
-    }
-    return TreeUtil.findNodeWithObject(getRoot(), userObject);
+  public DefaultMutableTreeNode findNodeInTree(@Nullable Object userObject) {
+    return findNodeInTree(userObject, null);
   }
 
   @Nullable
-  public TreePath findNodePathInTree(Object userObject) {
-    DefaultMutableTreeNode node = findNodeInTree(userObject);
+  public DefaultMutableTreeNode findNodeInTree(@Nullable Object userObject, @Nullable Object tag) {
+    DefaultMutableTreeNode fromNode = tag != null ? notNull(findTagNode(this, tag), getRoot()) : getRoot();
+
+    if (userObject instanceof LocalChangeList) {
+      return TreeUtil.nodeChildren(fromNode).filter(DefaultMutableTreeNode.class).find(node -> userObject.equals(node.getUserObject()));
+    }
+    if (userObject instanceof ChangeListChange) {
+      return TreeUtil.findNode(fromNode, node -> ChangeListChange.HASHING_STRATEGY.equals(node.getUserObject(), userObject));
+    }
+    return TreeUtil.findNodeWithObject(fromNode, userObject);
+  }
+
+  @Nullable
+  public TreePath findNodePathInTree(@Nullable Object userObject) {
+    return findNodePathInTree(userObject, null);
+  }
+
+  @Nullable
+  public TreePath findNodePathInTree(@Nullable Object userObject, @Nullable Object tag) {
+    DefaultMutableTreeNode node = findNodeInTree(userObject, tag);
     return node != null ? TreeUtil.getPathFromRoot(node) : null;
   }
 

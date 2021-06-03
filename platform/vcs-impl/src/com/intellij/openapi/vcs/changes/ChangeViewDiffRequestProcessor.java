@@ -358,9 +358,15 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
 
   protected static class ChangeWrapper extends Wrapper {
     @NotNull protected final Change change;
+    @Nullable protected final ChangesBrowserNode.Tag nodeTag;
 
     public ChangeWrapper(@NotNull Change change) {
+      this(change, null);
+    }
+
+    public ChangeWrapper(@NotNull Change change, @Nullable ChangesBrowserNode.Tag nodeTag) {
       this.change = change;
+      this.nodeTag = nodeTag;
     }
 
     @NotNull
@@ -383,6 +389,11 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     @Override
     public String getPresentableName() {
       return getFilePath().getName();
+    }
+
+    @Override
+    public @Nullable ChangesBrowserNode.Tag getTag() {
+      return nodeTag;
     }
 
     @Nullable
@@ -409,12 +420,12 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
       if (getClass() != o.getClass()) return false;
 
       ChangeWrapper wrapper = (ChangeWrapper)o;
-      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change);
+      return ChangeListChange.HASHING_STRATEGY.equals(wrapper.change, change) && Objects.equals(wrapper.nodeTag, nodeTag);
     }
 
     @Override
     public int hashCode() {
-      return change.hashCode();
+      return Objects.hash(change, nodeTag);
     }
   }
 
