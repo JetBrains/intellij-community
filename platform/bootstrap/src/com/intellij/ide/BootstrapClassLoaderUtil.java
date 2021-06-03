@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.idea.Main;
@@ -18,6 +18,7 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.*;
+import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -87,7 +88,13 @@ public final class BootstrapClassLoaderUtil {
                                                           .files(Collections.singletonList(mpBoot))
                                                           .parent(BootstrapClassLoaderUtil.class.getClassLoader()));
         Iterator<BytecodeTransformer> transformers = ServiceLoader.load(BytecodeTransformer.class, spiLoader).iterator();
-        return new PathClassLoader(builder, transformers.hasNext() ? transformers.next() : null);
+        if (transformers.hasNext()) {
+          BytecodeTransformer impl = transformers.next();
+          return new PathClassLoader(builder, new BytecodeTransformerAdapter(impl));
+        }
+        else {
+          return new PathClassLoader(builder);
+        }
       }
       catch (Throwable e) {
         // at this point logging is not initialized yet, so reporting the error directly
@@ -313,6 +320,28 @@ public final class BootstrapClassLoaderUtil {
       catch (NumberFormatException ignored) {
       }
       return 0;
+    }
+  }
+
+  private static final class BytecodeTransformerAdapter implements PathClassLoader.BytecodeTransformer {
+    private final BytecodeTransformer impl;
+
+    private BytecodeTransformerAdapter(BytecodeTransformer impl) {
+      this.impl = impl;
+    }
+
+    @Override
+    public boolean isApplicable(String className,
+                                ClassLoader loader,
+                                @Nullable ProtectionDomain protectionDomain) {
+      return impl.isApplicable(className, loader, protectionDomain);
+    }
+
+    @Override
+    public byte[] transform(ClassLoader loader,
+                            String className,
+                            @Nullable ProtectionDomain protectionDomain, byte[] classBytes) {
+      return impl.transform(loader, className, protectionDomain, classBytes);
     }
   }
 }
