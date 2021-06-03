@@ -106,6 +106,14 @@ public final class DebuggerUtilsAsync {
     return completedFuture(ref.getValues(index, length));
   }
 
+  public static CompletableFuture<List<ThreadReference>> allThreads(VirtualMachine vm) {
+    if (vm instanceof VirtualMachineImpl && isAsyncEnabled()) {
+      return reschedule(((VirtualMachineImpl)vm).allThreadsAsync());
+    }
+    return completedFuture(vm.allThreads());
+  }
+
+
   public static CompletableFuture<Integer> length(ArrayReference ref) {
     if (ref instanceof ArrayReferenceImpl && isAsyncEnabled()) {
       return reschedule(((ArrayReferenceImpl)ref).lengthAsync());
