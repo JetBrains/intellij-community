@@ -10,8 +10,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache;
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLStatisticsCollector;
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereSessionService;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
@@ -114,9 +112,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private ProgressIndicator mySearchProgressIndicator;
   private final SEListSelectionTracker mySelectionTracker;
   private final SearchFieldTypingListener mySearchTypingListener;
-  private final SearchEverywhereMLStatisticsCollector myMLStatisticsCollector;
   private final HintHelper myHintHelper;
-  private final int mySessionId = ApplicationManager.getApplication().getService(SearchEverywhereSessionService.class).incAndGet();
 
   public SearchEverywhereUI(@Nullable Project project,
                             Map<SearchEverywhereContributor<?>, SearchEverywhereTabDescriptor> contributors) {
@@ -139,7 +135,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     Runnable scopeChangedCallback = () -> {
       updateSearchFieldAdvertisement();
-      scheduleRebuildList(RebuildReason.SCOPE_CHANGED);
+      scheduleRebuildList(SearchRestartReason.SCOPE_CHANGED);
     };
     myHeader = new SearchEverywhereHeader(project, contributors, scopeChangedCallback,
                                           shortcutSupplier, project == null ? null : new ShowInFindToolWindowAction(), this);
@@ -168,9 +164,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     myResultsList.addListSelectionListener(mySelectionTracker);
     mySearchTypingListener = new SearchFieldTypingListener();
     mySearchField.addKeyListener(mySearchTypingListener);
-    myMLStatisticsCollector = new SearchEverywhereMLStatisticsCollector(myProject);
     myHintHelper = new HintHelper(mySearchField);
 
+    SearchEverywhereSessionService.getInstance().onSessionStarted();
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, myProject));
   }
 
@@ -275,7 +271,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public void dispose() {
     stopSearching();
     myListModel.clear();
-    SearchEverywhereMLCache.removeCache(mySessionId);
+    SearchEverywhereSessionService.getInstance().onDialogClose();
   }
 
   @Nullable
@@ -420,11 +416,11 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private static final long REBUILD_LIST_DELAY = 100;
   private final Alarm rebuildListAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
-  private void scheduleRebuildList(RebuildReason reason) {
+  private void scheduleRebuildList(SearchRestartReason reason) {
     if (rebuildListAlarm.getActiveRequestCount() == 0) rebuildListAlarm.addRequest(() -> rebuildList(reason), REBUILD_LIST_DELAY);
   }
 
-  private void rebuildList(RebuildReason reason) {
+  private void rebuildList(SearchRestartReason reason) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     stopSearching();
@@ -462,7 +458,12 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       }
     }
 
-    myMLStatisticsCollector.recordListRebuilt(mySessionId, myHeader.getSelectedTab().getID(), reason, myListModel.getFoundElementsInfo());
+    String tabId = myHeader.getSelectedTab().getID();
+    SearchEverywhereSessionService.getInstance().onSearchRestart(
+      tabId, reason,
+      mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, mySearchField.getText().length(),
+      () -> myListModel.getFoundElementsInfo()
+    );
 
     myListModel.expireResults();
     contributors.forEach(contributor -> myListModel.setHasMore(contributor, false));
@@ -574,7 +575,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
           }
         }
 
-        scheduleRebuildList(RebuildReason.TEXT_CHANGED);
+        scheduleRebuildList(SearchRestartReason.TEXT_CHANGED);
       }
     });
 
@@ -596,7 +597,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       public void exitDumbMode() {
         ApplicationManager.getApplication().invokeLater(() -> {
           updateSearchFieldAdvertisement();
-          scheduleRebuildList(RebuildReason.EXIT_DUMB_MODE);
+          scheduleRebuildList(SearchRestartReason.EXIT_DUMB_MODE);
         });
       }
     });
@@ -790,9 +791,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
-    myMLStatisticsCollector.recordSelectedItem(indexes, closePopup, () -> myListModel.getFoundElementsInfo(),
-                                               mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
-                                               mySearchField.getText().length(), myHeader.getSelectedTab().getID(), mySessionId);
+    SearchEverywhereSessionService.getInstance().onItemSelected(
+      indexes, closePopup, () -> myListModel.getFoundElementsInfo()
+    );
 
     if (closePopup) {
       closePopup();
@@ -842,10 +843,9 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void sendStatisticsAndClose() {
     if (isShowing()) {
-      myMLStatisticsCollector.recordPopupClosed(
-        () -> myListModel.getFoundElementsInfo(),
-        mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped,
-        mySearchField.getText().length(), myHeader.getSelectedTab().getID(), mySessionId);
+      SearchEverywhereSessionService.getInstance().onSearchFinished(
+        () -> myListModel.getFoundElementsInfo()
+      );
     }
     closePopup();
   }
@@ -1172,7 +1172,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       if (showResetFilter) {
         ActionListener clearFiltersAction = e -> {
           myHeader.getSelectedTab().clearFilter();
-          scheduleRebuildList(RebuildReason.TAB_CHANGED);
+          scheduleRebuildList(SearchRestartReason.TAB_CHANGED);
         };
         if (firstPartAdded.get()) emptyStatus.appendText(", ");
         String resetFilterMessage = IdeBundle.message("searcheverywhere.reset.filters");

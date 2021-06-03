@@ -2,14 +2,11 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.RebuildReason
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereLogger
-import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
-import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -45,136 +42,86 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     return false
   }
 
+  private fun isLoggingEnabled(tabId: String?): Boolean = myIsReporting && (tabId == null || isActionOrAllTab(tabId))
+
   private fun isActionOrAllTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId ||
                                                          SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == tabId
 
-  private fun reportElements(indexes: IntArray,
-                             closePopup: Boolean,
-                             keysTyped: Int,
-                             backspacesTyped: Int,
-                             symbolsInQuery: Int,
-                             elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                             tabId: String,
-                             seSessionId: Int) {
-    if (isLoggingEnabled(tabId)) {
-      val foundElements = elementsProvider.invoke()
-      NonUrgentExecutor.getInstance().execute {
-        reportElements(indexes, closePopup, keysTyped, backspacesTyped, symbolsInQuery, foundElements, tabId, seSessionId)
-      }
+  fun onItemSelected(selectedIndices: IntArray,
+                     closePopup: Boolean,
+                     elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                     state: SearchEverywhereSearchState,
+                     seSessionId: Int) {
+    val data = arrayListOf<Pair<String, Any>>(CLOSE_POPUP_KEY to closePopup)
+    if (selectedIndices.isNotEmpty()) {
+      data.add(SELECTED_INDEXES_DATA_KEY to selectedIndices.map { it.toString() })
     }
+    reportElements(SESSION_FINISHED, seSessionId, state, data, elementsProvider)
   }
 
-  private fun reportElements(indexes: IntArray,
-                             closePopup: Boolean,
-                             symbolsTyped: Int, backspacesTyped: Int,
-                             symbolsInQuery: Int,
-                             elements: List<SearchEverywhereFoundElementInfo>,
-                             tabId: String,
-                             seSessionId: Int) {
-    val data = mutableMapOf<String, Any>()
-    // put common data
-    data.putAll(buildContextData(seSessionId, tabId, indexes, closePopup, elements.size, symbolsTyped, backspacesTyped))
-    data.putAll(SearchEverywhereContextFeaturesProvider.getContextFeatures(myProject, myLastToolWindowId, symbolsInQuery))
-    val currentTime = System.currentTimeMillis()
-
-    // put data for every item
-    val elementFeatureProvider = SearchEverywhereFeaturesProvider.getElementFeatureProvider()
-    data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-      elementFeatureProvider.getElementFeatures(it.priority, it.element, it.contributor, currentTime).toMap()
-    }
-
-    SearchEverywhereLogger.log(SESSION_FINISHED, data)
+  fun onSearchFinished(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+                       state: SearchEverywhereSearchState,
+                       seSessionId: Int) {
+    reportElements(SESSION_FINISHED, seSessionId, state, listOf(CLOSE_POPUP_KEY to true), elementsProvider)
   }
 
-  fun recordSelectedItem(indexes: IntArray,
-                         closePopup: Boolean,
-                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                         keysTyped: Int,
-                         backspacesTyped: Int,
-                         textLength: Int,
-                         tabId: String,
-                         seSessionId: Int) {
-    reportElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elementsProvider, tabId, seSessionId)
+  fun onSearchRestarted(seSessionId: Int,
+                        state: SearchEverywhereSearchState,
+                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+    reportElements(SEARCH_RESTARTED, seSessionId, state, emptyList(), elementsProvider)
   }
 
-  fun recordPopupClosed(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
-                        keysTyped: Int,
-                        backspacesTyped: Int,
-                        textLength: Int,
-                        tabId: String,
-                        seSessionId: Int) {
-    reportElements(EMPTY, true, keysTyped, backspacesTyped, textLength, elementsProvider, tabId, seSessionId)
-  }
-
-  fun recordListRebuilt(seSessionId: Int, tabId: String, reason: RebuildReason, elements: List<SearchEverywhereFoundElementInfo>) {
-    if (isLoggingEnabled(tabId)) {
+  private fun reportElements(eventId: String,
+                             seSessionId: Int,
+                             state: SearchEverywhereSearchState,
+                             additional: List<Pair<String, Any>>,
+                             elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+    if (isLoggingEnabled(state.tabId)) {
+      val elements = elementsProvider.invoke()
       NonUrgentExecutor.getInstance().execute {
         val data = hashMapOf<String, Any>()
         data[SESSION_ID_LOG_DATA_KEY] = seSessionId
-        data[REBUILD_REASON_KEY] = reason
-        val currentTime = System.currentTimeMillis()
-        data[CURRENT_TIME_KEY] = currentTime
+        data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
+        data[SE_TAB_ID_KEY] = state.tabId
+        data[SEARCH_START_TIME_KEY] = state.startTime
+        data[TYPED_SYMBOL_KEYS] = state.keysTyped
+        data[TYPED_BACKSPACES_DATA_KEY] = state.backspacesTyped
+        data[REBUILD_REASON_KEY] = state.searchStartReason
+        data.putAll(additional)
+        data.putAll(SearchEverywhereContextFeaturesProvider.getContextFeatures(myProject, myLastToolWindowId, state.queryLength))
 
+        val currentTime = System.currentTimeMillis()
         val elementFeatureProvider = SearchEverywhereFeaturesProvider.getElementFeatureProvider()
-        data[REBUILD_ELEMENTS] = elements.take(REPORTED_ITEMS_LIMIT).map {
+        data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
           elementFeatureProvider.getElementFeatures(it.priority, it.element, it.contributor, currentTime).toMap()
         }
-        SearchEverywhereLogger.log(LIST_REBUILT, data)
+
+        SearchEverywhereLogger.log(eventId, data)
       }
     }
-  }
-
-  private fun isLoggingEnabled(tabId: String): Boolean = myIsReporting && isActionOrAllTab(tabId)
-
-  fun buildContextData(seSessionId: Int,
-                       tabId: String,
-                       indexes: IntArray,
-                       closePopup: Boolean,
-                       size: Int,
-                       symbolsTyped: Int,
-                       backspacesTyped: Int): Map<String, Any> {
-    val data = hashMapOf<String, Any>()
-    if (indexes.isNotEmpty()) {
-      data[SELECTED_INDEXES_DATA_KEY] = indexes.map { it.toString() }
-    }
-    data[SE_TAB_ID_KEY] = tabId
-    data[SESSION_ID_LOG_DATA_KEY] = seSessionId
-    data[CLOSE_POPUP_KEY] = closePopup
-    data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = size
-    data[TYPED_SYMBOL_KEYS] = symbolsTyped
-    data[TYPED_BACKSPACES_DATA_KEY] = backspacesTyped
-    return data
   }
 
   companion object {
     private val isExperimentModeEnabled: Boolean = ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()
-    val localSummary: ActionsLocalSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
-    val globalSummary: ActionsGlobalSummaryManager = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
+    private const val REPORTED_ITEMS_LIMIT = 100
 
-    private val EMPTY: IntArray = IntArray(0)
-
-    private const val REPORTED_ITEMS_LIMIT = 50
-
+    // events
     private const val SESSION_FINISHED = "sessionFinished"
-    private const val LIST_REBUILT = "listRebuilt"
-    private const val TYPED_SYMBOL_KEYS = "typedSymbolKeys"
-    private const val TYPED_BACKSPACES_DATA_KEY = "typedBackspaces"
-    private const val SESSION_ID_LOG_DATA_KEY = "sessionId"
+    private const val SEARCH_RESTARTED = "searchRestarted"
+
+    // context fields
     private const val SE_TAB_ID_KEY = "seTabId"
+    private const val CLOSE_POPUP_KEY = "closePopup"
+    private const val SEARCH_START_TIME_KEY = "startTime"
+    private const val REBUILD_REASON_KEY = "rebuildReason"
+    private const val SESSION_ID_LOG_DATA_KEY = "sessionId"
+    private const val TYPED_SYMBOL_KEYS = "typedSymbolKeys"
+    private const val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = "totalItems"
+    private const val TYPED_BACKSPACES_DATA_KEY = "typedBackspaces"
     private const val COLLECTED_RESULTS_DATA_KEY = "collectedItems"
-    private const val REBUILD_ELEMENTS = "rebuildElements"
     private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
 
-    // context features
-    private const val CLOSE_POPUP_KEY = "closePopup"
-    private const val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = "totalItems"
-    private const val REBUILD_REASON_KEY = "rebuildReason"
-    private const val CURRENT_TIME_KEY = "currentTime"
-
-    // action features
+    // item fields
     internal const val ML_WEIGHT_KEY = "mlWeight"
-    internal const val ADDITIONAL_DATA_KEY = "additionalData"
-    internal const val CONTRIBUTOR_ID_KEY = "contributorId"
-    internal const val ACTION_ID_KEY = "id"
   }
 }

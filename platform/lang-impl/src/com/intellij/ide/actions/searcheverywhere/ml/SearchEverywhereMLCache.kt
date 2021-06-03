@@ -12,7 +12,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import java.util.*
 
-class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
+class SearchEverywhereMLCache internal constructor(val seSessionId: Int) {
   private var idCounter = 0
   private val elementIds = IdentityHashMap<Any, Int>()
   private val elementIdsToFeatures = mutableMapOf<Int, Map<String, Any>>()
@@ -25,7 +25,7 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun getMLWeight(element: Any, contributor: SearchEverywhereContributor<*>, project: Project?, seTabId: String, patternLength: Int): Double {
+  fun getMLWeight(element: Any, contributor: SearchEverywhereContributor<*>, project: Project?, patternLength: Int): Double {
     val mlId = getMLId(element)
     return elementIdsToFeatures.computeIfAbsent(mlId) {
       computeWeight(element, contributor, project, patternLength)
@@ -55,10 +55,6 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
     features.putAll(contextFeaturesProvider.getContextFeatures(project, getLastTWId(project), patternLength))
     val itemInfo = elementFeaturesProvider.getElementFeatures(element.matchingDegree, element, contributor, System.currentTimeMillis())
     features.putAll(itemInfo.additionalData)
-
-    itemInfo.id?.let {
-      features.put(SearchEverywhereMLStatisticsCollector.ACTION_ID_KEY, it)
-    }
     features[ML_WEIGHT_KEY] = model.predict(features)
     return features
   }
@@ -78,19 +74,5 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
       }
     }
     return lastToolwindowId.ifEmpty { null }
-  }
-
-  companion object {
-    private val sessionIdsToCaches = mutableMapOf<Int, SearchEverywhereMLCache>()
-
-    @JvmStatic
-    fun getCache(sessionId: Int): SearchEverywhereMLCache {
-      return sessionIdsToCaches.computeIfAbsent(sessionId) { SearchEverywhereMLCache(sessionId) }
-    }
-
-    @JvmStatic
-    fun removeCache(sessionId: Int): SearchEverywhereMLCache? {
-      return sessionIdsToCaches.remove(sessionId)
-    }
   }
 }

@@ -235,9 +235,9 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
   private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element,
                                                                                         @Nullable Project project,
                                                                                         int patternLength) {
-    final SearchEverywhereSessionService service = ApplicationManager.getApplication().getService(SearchEverywhereSessionService.class);
-    final double mlWeight = SearchEverywhereMLCache.getCache(service.getCurrentSessionId())
-      .getMLWeight(element, this, project, "Actions", patternLength /*TODO Actions or All depending on the flag*/);
+    //TODO: calculate ML weight only for "Actions" tab
+    final double mlWeight = SearchEverywhereSessionService.getInstance().getCurrentSession()
+      .getMLWeight(project, this, element, patternLength);
     return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
   }
 
