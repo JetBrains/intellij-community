@@ -19,12 +19,15 @@ import com.google.common.util.concurrent.Uninterruptibles;
 import com.intellij.execution.rmi.RemoteProcessSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -100,11 +103,26 @@ public class MavenServerManagerTest extends MavenTestCase {
     assertNotSame(connector, newConnector);
   }
 
-  private MavenServerConnector ensureConnected(MavenServerConnector connector) {
+  public void testShouldDropConnectorForMultiplyDirs() throws IOException {
+    File topDir = myProjectRoot.toNioPath().toFile();
+    File first = new File(topDir, "first/.mvn");
+    File second = new File(topDir, "second/.mvn");
+    assertTrue(first.mkdirs());
+    assertTrue(second.mkdirs());
+    MavenServerConnector connectorFirst = MavenServerManager.getInstance().getConnector(myProject, first.getAbsolutePath());
+    ensureConnected(connectorFirst);
+    MavenServerConnector connectorSecond = MavenServerManager.getInstance().getConnector(myProject, second.getAbsolutePath());
+    assertSame(connectorFirst, connectorSecond);
+    MavenServerManager.getInstance().cleanUp(connectorFirst);
+    assertEmpty(MavenServerManager.getInstance().getAllConnectors());
+    connectorFirst.shutdown(true);
+  }
+
+  private static MavenServerConnector ensureConnected(MavenServerConnector connector) {
     assertTrue("Connector is Dummy!", connector instanceof MavenServerConnectorImpl);
     long timeout = TimeUnit.SECONDS.toMillis(10);
     long start = System.currentTimeMillis();
-    while (((MavenServerConnectorImpl)connector).getState() == MavenServerConnectorImpl.State.STARTING) {
+    while (connector.getState() == MavenServerConnectorImpl.State.STARTING) {
       if (System.currentTimeMillis() > start + timeout) {
         throw new RuntimeException("Server connector not connected in 10 seconds");
       }
