@@ -6,9 +6,14 @@ import com.intellij.openapi.components.PersistentStateComponentWithModificationT
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * This is an internal class, use {@link LanguageLevelModuleExtension} instead.
+ */
+@ApiStatus.Internal
 public class LanguageLevelModuleExtensionImpl extends ModuleExtension implements LanguageLevelModuleExtension,
                                                                                  PersistentStateComponentWithModificationTracker<LanguageLevelState> {
   private static final Logger LOG = Logger.getInstance(LanguageLevelModuleExtensionImpl.class);
@@ -25,6 +30,10 @@ public class LanguageLevelModuleExtensionImpl extends ModuleExtension implements
     return myState.getModificationCount();
   }
 
+  /**
+   * @deprecated this method returns an implementation specific class, use {@link com.intellij.openapi.module.LanguageLevelUtil#getCustomLanguageLevel(Module)} instead.
+   */
+  @Deprecated
   public static LanguageLevelModuleExtensionImpl getInstance(final Module module) {
     return ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtensionImpl.class);
   }

@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.project.importing;
 
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -543,7 +543,7 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
     importProject();
 
     assertEquals("7", getMavenProject().getReleaseLevel());
-    assertEquals(LanguageLevel.JDK_1_7, LanguageLevelModuleExtensionImpl.getInstance(getModule("project")).getLanguageLevel());
+    assertEquals(LanguageLevel.JDK_1_7, LanguageLevelUtil.getCustomLanguageLevel(getModule("project")));
   }
 
   @Test 

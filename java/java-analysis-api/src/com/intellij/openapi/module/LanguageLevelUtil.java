@@ -2,5 +2,18 @@
 package com.intellij.openapi.module;
 
 
+import com.intellij.openapi.roots.LanguageLevelModuleExtension;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.pom.java.LanguageLevel;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
 public class LanguageLevelUtil extends EffectiveLanguageLevelUtil {
+  /**
+   * Returns explicitly specified custom language level for {@code module}, or {@code null} if the module uses 'Project default' language level
+   */
+  public static @Nullable LanguageLevel getCustomLanguageLevel(@NotNull Module module) {
+    LanguageLevelModuleExtension moduleExtension = ModuleRootManager.getInstance(module).getModuleExtension(LanguageLevelModuleExtension.class);
+    return moduleExtension != null ? moduleExtension.getLanguageLevel() : null;
+  }
 }

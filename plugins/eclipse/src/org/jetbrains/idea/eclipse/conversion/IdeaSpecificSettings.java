@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.pom.java.LanguageLevel;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -244,9 +245,10 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
       isModified = true;
     }
 
-    LanguageLevelModuleExtensionImpl languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtensionImpl.class);
-    if (languageLevelModuleExtension.getLanguageLevel() != null) {
-      XmlSerializer.serializeStateInto(languageLevelModuleExtension, root);
+    LanguageLevelModuleExtension languageLevelModuleExtension = model.getModuleExtension(LanguageLevelModuleExtension.class);
+    LanguageLevel languageLevel = languageLevelModuleExtension.getLanguageLevel();
+    if (languageLevel != null) {
+      root.setAttribute(JpsJavaModelSerializerExtension.MODULE_LANGUAGE_LEVEL_ATTRIBUTE, languageLevel.name());
       isModified = true;
     }
 
