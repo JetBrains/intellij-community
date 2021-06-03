@@ -57,7 +57,7 @@ abstract class BuildContext implements CompilationContext {
 
   abstract File findFileInModuleSources(String moduleName, String relativePath)
 
-  abstract void signFile(String path)
+  abstract void signFile(String path, Map<String, String> options = [:])
 
   /**
    * Execute a build step or skip it if {@code stepId} is included into {@link BuildOptions#buildStepsToSkip}
