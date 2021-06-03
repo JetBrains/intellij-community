@@ -2,14 +2,11 @@
 package com.intellij.ide.projectView.impl;
 
 import com.intellij.ide.dnd.aware.DnDAwareTree;
-import com.intellij.ide.projectView.ProjectViewNode;
-import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.ide.util.treeView.PresentableNodeDescriptor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.presentation.FilePresentationService;
 import com.intellij.psi.PsiElement;
-import com.intellij.ui.DirtyUI;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.ObjectUtils;
@@ -91,7 +88,6 @@ public class ProjectViewTree extends DnDAwareTree {
     return enabled;
   }
 
-  @DirtyUI
   @Nullable
   @Override
   public Color getFileColorFor(Object object) {
@@ -99,23 +95,8 @@ public class ProjectViewTree extends DnDAwareTree {
       DefaultMutableTreeNode node = (DefaultMutableTreeNode)object;
       object = node.getUserObject();
     }
-    if (object instanceof AbstractTreeNode) {
-      AbstractTreeNode<?> node = (AbstractTreeNode<?>)object;
-      Object value = node.getValue();
-      if (value instanceof PsiElement) {
-        return getColorForElement((PsiElement)value);
-      }
-    }
-    if (object instanceof ProjectViewNode) {
-      ProjectViewNode<?> node = (ProjectViewNode<?>)object;
-      VirtualFile file = node.getVirtualFile();
-      if (file != null) {
-        Project project = node.getProject();
-        if (project != null && !project.isDisposed()) {
-          Color color = FilePresentationService.getInstance(project).getFileBackgroundColor(file);
-          if (color != null) return color;
-        }
-      }
+    if (object instanceof PresentableNodeDescriptor) {
+      return ((PresentableNodeDescriptor<?>)object).getPresentation().getBackground();
     }
     return null;
   }

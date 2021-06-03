@@ -12,6 +12,8 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.presentation.FilePresentationService;
+import com.intellij.psi.PsiElement;
 import com.intellij.ui.tree.LeafState;
 import org.jetbrains.annotations.*;
 
@@ -262,5 +264,15 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   protected String getToolTip() {
     return getPresentation().getTooltip();
+  }
+
+  @Override
+  protected @Nullable Color computeBackgroundColor() {
+    Object value = getValue();
+    if (!(value instanceof PsiElement)) {
+      return null;
+    }
+    PsiElement element = (PsiElement)value;
+    return FilePresentationService.getInstance((element).getProject()).getFileBackgroundColor(element);
   }
 }
