@@ -21,12 +21,12 @@ public class MutedLoggerTest extends BareTestFixtureTestCase {
 
   @BeforeClass
   public static void setFrequency() {
-    System.setProperty("ide.muted.error.logger.frequency", String.valueOf(FREQUENCY));
+    IdeaLogger.setMutedExceptionFrequency(String.valueOf(FREQUENCY));
   }
 
   @AfterClass
   public static void resetFrequency() {
-    System.clearProperty("ide.muted.error.logger.frequency");
+    IdeaLogger.setMutedExceptionFrequency("");
   }
 
   @After
