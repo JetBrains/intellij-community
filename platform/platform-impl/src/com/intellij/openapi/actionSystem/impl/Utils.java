@@ -189,8 +189,8 @@ public final class Utils {
   private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise) {
     Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
-      if (event instanceof FocusEvent && !((FocusEvent)event).isTemporary() &&
-          event.getID() == FocusEvent.FOCUS_GAINED && !UIUtil.isAncestor(focusOwner, ((FocusEvent)event).getComponent()) ||
+      if (event instanceof FocusEvent && !((FocusEvent)event).isTemporary() && event.getID() == FocusEvent.FOCUS_GAINED &&
+          focusOwner != null && !UIUtil.isAncestor(focusOwner, ((FocusEvent)event).getComponent()) ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
         promise.cancel();
