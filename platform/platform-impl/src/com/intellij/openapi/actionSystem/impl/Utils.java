@@ -22,6 +22,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ExceptionUtil;
@@ -151,7 +152,7 @@ public final class Utils {
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
-      try (AccessToken ignore = cancelOnUserActivityInside(promise, context.getData(PlatformDataKeys.CONTEXT_COMPONENT))) {
+      try (AccessToken ignore = cancelOnUserActivityInside(promise)) {
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -185,13 +186,11 @@ public final class Utils {
     return list;
   }
 
-  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
-                                                                 @Nullable Component contextComponent) {
+  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise) {
+    Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
       if (event instanceof FocusEvent && !((FocusEvent)event).isTemporary() &&
-          (event.getID() == FocusEvent.FOCUS_GAINED
-           ? ((FocusEvent)event).getComponent()
-           : ((FocusEvent)event).getOppositeComponent()) != contextComponent ||
+          event.getID() == FocusEvent.FOCUS_GAINED && !UIUtil.isAncestor(focusOwner, ((FocusEvent)event).getComponent()) ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
         promise.cancel();
