@@ -566,6 +566,11 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
           live = false;
           myFuture.cancel(false);
         }
+        catch (Throwable t) {
+          live = false;
+          myFuture.cancel(false);
+          LOG.error(t);
+        }
       }, IdeaWatchdog.PULSE_TIMEOUT, IdeaWatchdog.PULSE_TIMEOUT, TimeUnit.MILLISECONDS);
       Disposer.register(ApplicationManager.getApplication(), () -> myFuture.cancel(false));
     }
