@@ -16,7 +16,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.workspaceModel.ide.JpsFileEntitySource;
 import com.intellij.workspaceModel.ide.VirtualFileUrlManagerUtil;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.EntitySource;
@@ -108,12 +107,6 @@ public final class EclipseClasspathStorageProvider implements ClasspathStoragePr
       String classpathFileUrl = VfsUtilCore.pathToUrl(contentRoot) + "/" + EclipseXml.CLASSPATH_FILE;
       return new EclipseProjectFile(virtualFileUrlManager.fromUrl(classpathFileUrl), (JpsFileEntitySource)source);
     });
-  }
-
-  @NotNull
-  @Override
-  public ClasspathConverter createConverter(@NotNull Module module) {
-    return new EclipseClasspathConverter(module);
   }
 
   @Override
