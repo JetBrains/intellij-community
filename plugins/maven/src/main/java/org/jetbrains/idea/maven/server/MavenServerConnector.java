@@ -93,7 +93,7 @@ public abstract class MavenServerConnector implements @NotNull Disposable {
 
   @ApiStatus.Internal
   public void shutdown(boolean wait) {
-    myManager.unregisterConnector(this);
+    myManager.cleanUp(this);
   }
 
   protected <R, E extends Exception> R perform(RemoteObjectWrapper.Retriable<R, E> r) throws E {
