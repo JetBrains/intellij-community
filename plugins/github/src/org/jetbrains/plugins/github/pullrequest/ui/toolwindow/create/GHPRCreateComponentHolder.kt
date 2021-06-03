@@ -287,7 +287,7 @@ internal class GHPRCreateComponentHolder(private val actionManager: ActionManage
     directionModel.preFill()
   }
 
-  private fun GHPRCreateDirectionModel.preFill() {
+  private fun GHPRCreateDirectionModelImpl.preFill() {
     val repositoryDataService = dataContext.repositoryDataService
     val currentRemote = repositoryDataService.repositoryMapping.gitRemote
     val currentRepo = currentRemote.repository
