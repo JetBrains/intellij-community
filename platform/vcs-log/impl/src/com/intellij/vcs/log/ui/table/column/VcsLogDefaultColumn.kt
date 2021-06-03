@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table.column
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
@@ -72,25 +71,20 @@ internal object Commit : VcsLogDefaultColumn<GraphCommitCell>("Default.Subject",
     commitCellRenderer.setShowTagsNames(table.properties[CommonUiProperties.SHOW_TAG_NAMES])
     commitCellRenderer.setLeftAligned(table.properties[CommonUiProperties.LABELS_LEFT_ALIGNED])
 
-    val propertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
-      override fun <T : Any?> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) {
-        if (CommonUiProperties.COMPACT_REFERENCES_VIEW == property) {
-          commitCellRenderer.setCompactReferencesView(table.properties[CommonUiProperties.COMPACT_REFERENCES_VIEW])
-          table.repaint()
-        }
-        else if (CommonUiProperties.SHOW_TAG_NAMES == property) {
-          commitCellRenderer.setShowTagsNames(table.properties[CommonUiProperties.SHOW_TAG_NAMES])
-          table.repaint()
-        }
-        else if (CommonUiProperties.LABELS_LEFT_ALIGNED == property) {
-          commitCellRenderer.setLeftAligned(table.properties[CommonUiProperties.LABELS_LEFT_ALIGNED])
-          table.repaint()
-        }
+    doOnPropertyChange(table) { property ->
+      if (CommonUiProperties.COMPACT_REFERENCES_VIEW == property) {
+        commitCellRenderer.setCompactReferencesView(table.properties[CommonUiProperties.COMPACT_REFERENCES_VIEW])
+        table.repaint()
+      }
+      else if (CommonUiProperties.SHOW_TAG_NAMES == property) {
+        commitCellRenderer.setShowTagsNames(table.properties[CommonUiProperties.SHOW_TAG_NAMES])
+        table.repaint()
+      }
+      else if (CommonUiProperties.LABELS_LEFT_ALIGNED == property) {
+        commitCellRenderer.setLeftAligned(table.properties[CommonUiProperties.LABELS_LEFT_ALIGNED])
+        table.repaint()
       }
     }
-    table.properties.addChangeListener(propertiesChangeListener)
-    Disposer.register(table, Disposable { table.properties.removeChangeListener(propertiesChangeListener) })
-
     updateTableOnCommitDetailsLoaded(this, table)
 
     return commitCellRenderer
@@ -121,6 +115,11 @@ internal object Date : VcsLogDefaultColumn<String>("Default.Date", VcsLogBundle.
   }
 
   override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
+    doOnPropertyChange(table) { property ->
+      if (property == CommonUiProperties.PREFER_COMMIT_DATE && table.getTableColumn(this@Date) != null) {
+        table.repaint()
+      }
+    }
     updateTableOnCommitDetailsLoaded(this, table)
     return VcsLogStringCellRenderer(
       contentSampleProvider = {
@@ -160,5 +159,17 @@ private fun updateTableOnCommitDetailsLoaded(column: VcsLogColumn<*>, graphTable
   graphTable.logData.miniDetailsGetter.addDetailsLoadedListener(miniDetailsLoadedListener)
   Disposer.register(graphTable) {
     graphTable.logData.miniDetailsGetter.removeDetailsLoadedListener(miniDetailsLoadedListener)
+  }
+}
+
+private fun doOnPropertyChange(graphTable: VcsLogGraphTable, listener: (VcsLogUiProperties.VcsLogUiProperty<*>) -> Unit) {
+  val propertiesChangeListener = object : VcsLogUiProperties.PropertiesChangeListener {
+    override fun <T : Any?> onPropertyChanged(property: VcsLogUiProperties.VcsLogUiProperty<T>) {
+      listener(property)
+    }
+  }
+  graphTable.properties.addChangeListener(propertiesChangeListener)
+  Disposer.register(graphTable) {
+    graphTable.properties.removeChangeListener(propertiesChangeListener)
   }
 }

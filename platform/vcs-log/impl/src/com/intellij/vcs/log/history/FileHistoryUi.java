@@ -23,7 +23,6 @@ import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import com.intellij.vcs.log.ui.highlighters.CurrentBranchHighlighter;
 import com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter;
 import com.intellij.vcs.log.ui.table.VcsLogGraphTable;
-import com.intellij.vcs.log.ui.table.column.Date;
 import com.intellij.vcs.log.ui.table.column.TableColumnWidthProperty;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -224,9 +223,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       }
       else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
         getTable().rootColumnUpdated();
-      }
-      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(Date.INSTANCE) != null) {
-        getTable().repaint();
       }
     }
   }

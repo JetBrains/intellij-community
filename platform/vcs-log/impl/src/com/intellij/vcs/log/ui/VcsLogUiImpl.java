@@ -255,9 +255,6 @@ public class VcsLogUiImpl extends AbstractVcsLogUi implements MainVcsLogUi {
       else if (property instanceof TableColumnWidthProperty) {
         getTable().forceReLayout(((TableColumnWidthProperty)property).getColumn());
       }
-      else if (property.equals(CommonUiProperties.PREFER_COMMIT_DATE) && getTable().getTableColumn(Date.INSTANCE) != null) {
-        getTable().repaint();
-      }
     }
 
     private void onShowLongEdgesChanged() {
