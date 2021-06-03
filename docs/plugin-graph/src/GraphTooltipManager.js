@@ -1,11 +1,29 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import Tippy from "tippy.js"
+import "tippy.js/animations/scale.css"
 
-export class NodeTooltipManager {
+export class GraphTooltipManager {
   constructor(cy) {
     this.tippy = null
+    this.lastNode = null
     cy.on("tap", "node", function (event) {
       const node = event.target
+
+      if (this.lastNode === node) {
+        this.lastNode = null
+        if (this.tippy != null) {
+          this.tippy.hideWithInteractivity()
+        }
+        return
+      }
+
+      let data = node.data()
+      if (node.isParent()) {
+        data = node.children("[pluginId]").first().data()
+      }
+
+      this.lastNode = node
+
       const ref = node.popperRef()
 
       if (this.tippy == null) {
@@ -14,15 +32,22 @@ export class NodeTooltipManager {
           getReferenceClientRect: ref.getBoundingClientRect,
           trigger: "manual",
           appendTo: host,
+          animation: "scale",
           interactive: true,
           allowHTML: true,
-          content: buildTooltipContent(node.data()),
+          content: buildTooltipContent(data),
+          onHidden: instance => {
+            if (instance === this.tippy) {
+              this.lastNode = null
+            }
+          },
         })
       }
       else {
+        this.tippy.hide()
         this.tippy.setProps({
           getReferenceClientRect: ref.getBoundingClientRect,
-          content: buildTooltipContent(node.data()),
+          content: buildTooltipContent(data),
         })
       }
 

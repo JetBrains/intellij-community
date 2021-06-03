@@ -11,7 +11,7 @@ import fCose from "cytoscape-fcose"
 
 import {GraphTextSearch} from "./src/GraphTextSearch"
 import {GraphHighlighter} from "./src/GraphHighlighter"
-import {NodeTooltipManager} from "./src/NodeTooltipManager"
+import {GraphTooltipManager} from "./src/GraphTooltipManager"
 
 import popper from "cytoscape-popper"
 
@@ -19,8 +19,43 @@ cytoscape.use(fCose)
 cytoscape.use(popper)
 
 function listener() {
-  document.fonts.load("13px 'JetBrains Mono'", "a").then(function () {
+  Promise.all([
+    document.fonts.load("11px 'JetBrains Mono'"),
+    document.fonts.load("13px 'JetBrains Mono'"),
+    document.fonts.load("bold 13px 'JetBrains Mono'")
+  ]).then(function () {
+    const fileInput = document.getElementById("fileInput")
+    fileInput.addEventListener("change", event => {
+      handleFile(event.target.files[0])
+    })
+
+    const dropbox = document.body
+    dropbox.addEventListener("dragenter", preventDefault);
+    dropbox.addEventListener("dragover", preventDefault);
+    dropbox.addEventListener("drop", event => {
+      event.stopPropagation()
+      event.preventDefault()
+
+      const file = event.dataTransfer.files[0]
+      const timeFormat = new Intl.DateTimeFormat('default', {
+        timeStyle: "medium",
+      })
+      document.title = `${file.name} (${timeFormat.format(new Date())})`
+      handleFile(file)
+    });
+
     initGraph(graphData)
+  })
+}
+
+function preventDefault(e) {
+  e.stopPropagation();
+  e.preventDefault();
+}
+
+function handleFile(selectedFile) {
+  selectedFile.text().then(it => {
+    initGraph(JSON.parse(it))
   })
 }
 
@@ -68,6 +103,22 @@ function initGraph(graph) {
           "color": "#515151",
         },
       },
+
+      // compound node - smaller label font size
+      {
+        selector: "node[^sourceModule]",
+        style: {
+          "font-size": 11,
+          "color": "#515151",
+        },
+      },
+      {
+      	selector: ":parent",
+      	style: {
+      		"shape" : "roundrectangle",
+      	}
+      },
+
       {
         selector: "node[type=0]",
         style: getItemSizeStyle(1),
@@ -91,7 +142,6 @@ function initGraph(graph) {
         selector: "edge[type=0]",
         style: {
           "target-arrow-shape": "triangle-backcurve",
-          "arrow-scale": 0.8,
         },
       },
       {
@@ -99,7 +149,7 @@ function initGraph(graph) {
         style: {
           "target-arrow-shape": "square",
           // square is too big
-          "arrow-scale": 0.5,
+          "arrow-scale": 0.7,
         },
       },
 
@@ -147,5 +197,5 @@ function initGraph(graph) {
   }))
 
   new GraphHighlighter(cy, search)
-  new NodeTooltipManager(cy)
+  new GraphTooltipManager(cy)
 }

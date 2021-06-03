@@ -14,7 +14,7 @@
     "cytoscape": "^3.19.0",
     "cytoscape-fcose": "^2.0.0",
     "cytoscape-popper": "^2.0.0",
-    "flexsearch": "^0.6.32",
+    "fuse.js": "^6.4.6",
     "tippy.js": "^6.3.1"
   }
 }

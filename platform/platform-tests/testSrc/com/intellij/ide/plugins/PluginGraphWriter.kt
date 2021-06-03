@@ -11,6 +11,7 @@ import it.unimi.dsi.fastutil.bytes.ByteArrays
 import it.unimi.dsi.fastutil.objects.Object2IntOpenCustomHashMap
 import java.io.File
 import java.io.StringWriter
+import java.io.Writer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
@@ -33,12 +34,18 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
 
   fun write(outFile: Path) {
     val stringWriter = StringWriter()
-    val writer = JsonFactory().createGenerator(stringWriter)
-    writer.useDefaultPrettyPrinter()
+    writeTo(stringWriter)
+    Files.writeString(outFile, stringWriter.buffer)
+  }
+
+  fun writeTo(out: Writer, prettyPrint: Boolean = true) {
+    val writer = JsonFactory().createGenerator(out)
+    if (prettyPrint) {
+      writer.useDefaultPrettyPrinter()
+    }
     writer.use {
       writeGraph(writer)
     }
-    Files.writeString(outFile, stringWriter.buffer)
   }
 
   private fun writeGraph(writer: JsonGenerator) {
@@ -71,8 +78,19 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
     assert(!nodeInfoToId.containsKey(item))
 
     val nodeName = item.name ?: item.sourceModuleName
-
     val id = idGenerator.getId(nodeName)
+    var compoundId: String? = null
+    if (!item.content.isEmpty()) {
+      compoundId = "c$id"
+      writer.obj {
+        writer.writeStringField("group", "nodes")
+        writer.obj("data") {
+          writer.writeStringField("id", compoundId)
+          writer.writeStringField("n", item.pluginId!!)
+        }
+      }
+    }
+
     nodeInfoToId.put(item, id)
     writer.obj {
       // for us is very important to understand dependencies between source modules, that's why on graph source module name is used
@@ -88,8 +106,8 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
         item.pluginId?.let {
           writer.writeStringField("pluginId", it)
         }
-        parentId?.let {
-          //writer.writeStringField("parent", parentId)
+        (compoundId ?: parentId)?.let {
+          writer.writeStringField("parent", it)
         }
         writer.writeNumberField("type", getItemNodeType(item))
       }
@@ -97,7 +115,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
 
     if (!item.content.isEmpty()) {
       for (child in item.content) {
-        writeModuleInfo(writer = writer, item = child, parentId = id)
+        writeModuleInfo(writer = writer, item = child, parentId = compoundId)
       }
 
       for (child in item.content) {

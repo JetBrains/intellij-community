@@ -1,5 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import FlexSearch from "flexsearch"
+import Fuse from "fuse.js"
+import {GraphHighlighter} from "./GraphHighlighter"
 
 export class GraphTextSearch {
   constructor(graph, cy) {
@@ -7,20 +8,17 @@ export class GraphTextSearch {
     this.selectedNodes = new Set()
     this.totalUnion = cy.collection()
 
-    this.index = new FlexSearch({
-      tokenize: "strict",
-      depth: 3,
-      doc: {
-        id: "data:id",
-        field: [
-          "data:name",
-          "data:pluginId",
-          "data:sourceModule",
-          "data:package",
-        ]
-      }
+    this.index = new Fuse(graph, {
+      threshold: 0.0,
+      ignoreLocation: true,
+      ignoreFieldNorm: true,
+      keys: [
+        {name: "data.name", weight: 4},
+        {name: "data.pluginId", weight: 3},
+        {name: "data.sourceModule", weight: 2},
+        {name: "data.package", weight: 1},
+      ],
     })
-    this.index.add(graph)
   }
 
   searchNodes(text) {
@@ -28,7 +26,7 @@ export class GraphTextSearch {
 
     const newNodes = []
     if (text.length !== 0) {
-      for (const item of index.search(text)) {
+      for (const {item} of index.search(text)) {
         const node = cy.getElementById(item.data.id)
         if (node == null) {
           console.error(`Cannot find node by id ${item.data.id}`)
@@ -55,9 +53,8 @@ export class GraphTextSearch {
     for (const newNode of newNodes) {
       selectedNodes.add(newNode)
 
-      const union = newNode.outgoers().union(newNode.incomers())
+      const union = GraphHighlighter.computeToHighlight(newNode)
       totalUnion = totalUnion == null ? union : totalUnion.union(union)
-      totalUnion = totalUnion.union(newNode)
 
       newNode.addClass("found")
     }

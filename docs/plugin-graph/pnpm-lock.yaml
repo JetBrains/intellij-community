@@ -5,7 +5,7 @@ specifiers:
   cytoscape: ^3.19.0
   cytoscape-fcose: ^2.0.0
   cytoscape-popper: ^2.0.0
-  flexsearch: ^0.6.32
+  fuse.js: ^6.4.6
   tippy.js: ^6.3.1
   vite: ^2.3.6
 
@@ -14,7 +14,7 @@ dependencies:
   cytoscape: 3.19.0
   cytoscape-fcose: 2.0.0_cytoscape@3.19.0
   cytoscape-popper: 2.0.0_cytoscape@3.19.0
-  flexsearch: 0.6.32
+  fuse.js: 6.4.6
   tippy.js: 6.3.1
 
 devDependencies:
@@ -66,15 +66,11 @@ packages:
       lodash.debounce: 4.0.8
     dev: false
 
-  /esbuild/0.12.5:
-    resolution: {integrity: sha512-vcuP53pA5XiwUU4FnlXM+2PnVjTfHGthM7uP1gtp+9yfheGvFFbq/KyuESThmtoHPUrfZH5JpxGVJIFDVD1Egw==}
+  /esbuild/0.12.6:
+    resolution: {integrity: sha512-RDvVLvAjsq/kIZJoneMiUOH7EE7t2QaW7T3Q7EdQij14+bZbDq5sndb0tTanmHIFSqZVMBMMyqzVHkS3dJobeA==}
     hasBin: true
     requiresBuild: true
     dev: true
-
-  /flexsearch/0.6.32:
-    resolution: {integrity: sha512-EF1BWkhwoeLtbIlDbY/vDSLBen/E5l/f1Vg7iX5CDymQCamcx1vhlc3tIZxIDplPjgi0jhG37c67idFbjg+v+Q==}
-    dev: false
 
   /fsevents/2.3.2:
     resolution: {integrity: sha512-xiqMQR4xAeHTuB9uWm+fFRcIOgKBMiOBP+eXiyT7jsgVCq1bkVygt00oASowB7EdtpOHaaPgKt812P9ab+DDKA==}
@@ -86,6 +82,11 @@ packages:
   /function-bind/1.1.1:
     resolution: {integrity: sha512-yIovAzMX49sF8Yl58fSCWJ5svSLuaibPxXQJFLmBObTuCr0Mf1KiPopGM9NiFjiYBCbfaa2Fh6breQ6ANVTI0A==}
     dev: true
+
+  /fuse.js/6.4.6:
+    resolution: {integrity: sha512-/gYxR/0VpXmWSfZOIPS3rWwU8SHgsRTwWuXhyb2O6s7aRuVtHtxCkR33bNYu3wyLyNx/Wpv0vU7FZy8Vj53VNw==}
+    engines: {node: '>=10'}
+    dev: false
 
   /has/1.0.3:
     resolution: {integrity: sha512-f2dvO0VU6Oej7RkWJGrehjbzMAjFp5/VKPp5tTpWIV4JHHZK1/BxbFRtf/siA2SWTe09caDmVtYYzWEIbBS4zw==}
@@ -162,7 +163,7 @@ packages:
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
-      esbuild: 0.12.5
+      esbuild: 0.12.6
       postcss: 8.3.0
       resolve: 1.20.0
       rollup: 2.50.6

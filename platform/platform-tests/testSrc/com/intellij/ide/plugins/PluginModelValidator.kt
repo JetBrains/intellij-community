@@ -133,6 +133,10 @@ internal class PluginModelValidator {
     }
   }
 
+  fun writeGraph(outFile: Path) {
+    PluginGraphWriter(pluginIdToInfo).write(outFile)
+  }
+
   private fun checkDependencies(element: XmlElement,
                                 referencingModuleInfo: ModuleInfo,
                                 moduleNameToInfo: Map<String, ModuleInfo>,

@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.project.IntelliJProjectConfiguration
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.getErrorsAsString
 import org.jetbrains.jps.util.JpsPathUtil
 import org.junit.Assert
@@ -30,6 +32,12 @@ class PluginModelTest {
       System.err.println(getErrorsAsString(errors, includeStackTrace = false))
       Assert.fail()
     }
-    validator.printGraph()
+
+    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+      val out = Path.of(PlatformTestUtil.getCommunityPath(), "docs/plugin-graph/plugin-graph.local.json")
+      validator.writeGraph(out)
+      println("\nGraph is written to $out")
+      println("Drop file to https://ij-platform-flow.develar.org/plugin-graph to visualize.")
+    }
   }
 }

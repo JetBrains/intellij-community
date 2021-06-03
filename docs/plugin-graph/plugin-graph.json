@@ -1,6 +1,12 @@
 [ {
   "group" : "nodes",
   "data" : {
+    "id" : "gQZ",
+    "n" : "AngularJS"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "QZ",
     "name" : "intellij.angularJS",
     "n" : "i.angularJS",
@@ -8,6 +14,7 @@
     "sourceModule" : "intellij.angularJS",
     "descriptor" : "contrib/AngularJS/resources/META-INF/plugin.xml",
     "pluginId" : "AngularJS",
+    "parent" : "gQZ",
     "type" : 2
   }
 }, {
@@ -19,6 +26,7 @@
     "package" : "org.angularjs.diagram",
     "sourceModule" : "intellij.angularJS",
     "descriptor" : "contrib/AngularJS/resources/intellij.angularJS.diagram.xml",
+    "parent" : "gQZ",
     "type" : 0
   }
 }, {
@@ -36,6 +44,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "g7x",
+    "n" : "Docker"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "7x",
     "name" : "intellij.clouds.docker.impl",
     "n" : "i.clouds.docker.impl",
@@ -43,6 +57,7 @@
     "sourceModule" : "intellij.clouds.docker.impl",
     "descriptor" : "plugins/Docker/resources/META-INF/plugin.xml",
     "pluginId" : "Docker",
+    "parent" : "g7x",
     "type" : 2
   }
 }, {
@@ -54,6 +69,7 @@
     "package" : "com.intellij.docker.java",
     "sourceModule" : "intellij.clouds.docker.java",
     "descriptor" : "plugins/Docker/Docker-java-impl/resources/intellij.clouds.docker.java.xml",
+    "parent" : "g7x",
     "type" : 0
   }
 }, {
@@ -65,6 +81,7 @@
     "package" : "com.intellij.docker.composeFile",
     "sourceModule" : "intellij.clouds.docker.compose",
     "descriptor" : "plugins/Docker/Docker-compose/resources/intellij.clouds.docker.compose.xml",
+    "parent" : "g7x",
     "type" : 0
   }
 }, {
@@ -76,6 +93,7 @@
     "package" : "com.intellij.docker.dockerFile",
     "sourceModule" : "intellij.clouds.docker.file",
     "descriptor" : "plugins/Docker/Docker-file/resources/intellij.clouds.docker.file.xml",
+    "parent" : "g7x",
     "type" : 0
   }
 }, {
@@ -87,7 +105,14 @@
     "package" : "com.intellij.docker.remote",
     "sourceModule" : "intellij.clouds.docker.remoteRun",
     "descriptor" : "plugins/Docker/Docker-remote-run/resources/intellij.clouds.docker.remoteRun.xml",
+    "parent" : "g7x",
     "type" : 0
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
+    "id" : "gup",
+    "n" : "com.intellij.kubernetes"
   }
 }, {
   "group" : "nodes",
@@ -99,6 +124,7 @@
     "sourceModule" : "intellij.clouds.kubernetes",
     "descriptor" : "plugins/kubernetes/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.kubernetes",
+    "parent" : "gup",
     "type" : 2
   }
 }, {
@@ -110,6 +136,7 @@
     "package" : "com.intellij.kubernetes.helm.gotpl",
     "sourceModule" : "intellij.clouds.kubernetes.charts.gotpl",
     "descriptor" : "plugins/kubernetes/charts-gotpl/resources/intellij.clouds.kubernetes.charts.gotpl.xml",
+    "parent" : "gup",
     "type" : 0
   }
 }, {
@@ -151,6 +178,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gHS",
+    "n" : "com.intellij.sisyphus"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "HS",
     "name" : "intellij.exceptionAnalyzer",
     "n" : "i.exceptionAnalyzer",
@@ -158,6 +191,7 @@
     "sourceModule" : "intellij.exceptionAnalyzer",
     "descriptor" : "plugins/exception-analyzer/src/main/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.sisyphus",
+    "parent" : "gHS",
     "type" : 2
   }
 }, {
@@ -169,6 +203,7 @@
     "package" : "com.intellij.sisyphus.profiler",
     "sourceModule" : "intellij.exceptionAnalyzer",
     "descriptor" : "plugins/exception-analyzer/src/main/resources/intellij.exceptionAnalyzer.profiler.xml",
+    "parent" : "gHS",
     "type" : 0
   }
 }, {
@@ -180,6 +215,7 @@
     "package" : "com.intellij.sisyphus.git",
     "sourceModule" : "intellij.exceptionAnalyzer",
     "descriptor" : "plugins/exception-analyzer/src/main/resources/intellij.exceptionAnalyzer.git.xml",
+    "parent" : "gHS",
     "type" : 0
   }
 }, {
@@ -221,6 +257,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gae",
+    "n" : "org.jetbrains.plugins.go"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "ae",
     "name" : "intellij.go.plugin",
     "n" : "i.go.plugin",
@@ -228,6 +270,7 @@
     "sourceModule" : "intellij.go.plugin",
     "descriptor" : "goland/intellij-go/plugin/resources/META-INF/plugin.xml",
     "pluginId" : "org.jetbrains.plugins.go",
+    "parent" : "gae",
     "type" : 2
   }
 }, {
@@ -239,6 +282,7 @@
     "package" : "com.goide.template.integration",
     "sourceModule" : "intellij.go.template.integration",
     "descriptor" : "goland/intellij-go/template-integration/resources/intellij.go.template.integration.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -250,6 +294,7 @@
     "package" : "com.goide.terminal",
     "sourceModule" : "intellij.go.terminal",
     "descriptor" : "goland/intellij-go/go-terminal/resources/intellij.go.terminal.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -261,6 +306,7 @@
     "package" : "com.goide.sh",
     "sourceModule" : "intellij.go.shell",
     "descriptor" : "goland/intellij-go/go-shell/resources/intellij.go.shell.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -272,6 +318,7 @@
     "package" : "com.goide.execution.testing.coverage",
     "sourceModule" : "intellij.go.coverage",
     "descriptor" : "goland/intellij-go/go-coverage/resources/intellij.go.coverage.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -283,6 +330,7 @@
     "package" : "com.goide.copyright",
     "sourceModule" : "intellij.go.copyright",
     "descriptor" : "goland/intellij-go/go-copyright/resources/intellij.go.copyright.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -294,6 +342,7 @@
     "package" : "com.goide.watchers",
     "sourceModule" : "intellij.go.watchers",
     "descriptor" : "goland/intellij-go/go-watchers/resources/intellij.go.watchers.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -305,6 +354,7 @@
     "package" : "com.goide.training",
     "sourceModule" : "intellij.go.featuresTrainer",
     "descriptor" : "goland/intellij-go/go-features-trainer/resources/intellij.go.featuresTrainer.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -316,6 +366,7 @@
     "package" : "com.goide.grazie",
     "sourceModule" : "intellij.go.grazie",
     "descriptor" : "goland/intellij-go/go-grazie/resources/intellij.go.grazie.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -327,6 +378,7 @@
     "package" : "com.goide.completion.ml",
     "sourceModule" : "intellij.go.completionMlRanking",
     "descriptor" : "goland/intellij-go/go-completion-ml-ranking/resources/intellij.go.completionMlRanking.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -338,6 +390,7 @@
     "package" : "com.goide.index.shared",
     "sourceModule" : "intellij.go.sharedIndexes",
     "descriptor" : "goland/intellij-go/go-shared-indexes/resources/intellij.go.sharedIndexes.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -349,6 +402,7 @@
     "package" : "com.goide.diagram",
     "sourceModule" : "intellij.go.diagram",
     "descriptor" : "goland/intellij-go/go-diagram/resources/intellij.go.diagram.xml",
+    "parent" : "gae",
     "type" : 0
   }
 }, {
@@ -378,6 +432,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gFJ",
+    "n" : "org.jetbrains.idea.gradle.ext"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "FJ",
     "name" : "intellij.gradle.ext",
     "n" : "i.gradle.ext",
@@ -385,6 +445,7 @@
     "sourceModule" : "intellij.gradle.ext",
     "descriptor" : "plugins/gradle-ext/src/main/resources/META-INF/plugin.xml",
     "pluginId" : "org.jetbrains.idea.gradle.ext",
+    "parent" : "gFJ",
     "type" : 2
   }
 }, {
@@ -396,7 +457,14 @@
     "package" : "org.jetbrains.idea.gradle.ext.profiler",
     "sourceModule" : "intellij.gradle.ext",
     "descriptor" : "plugins/gradle-ext/src/main/resources/intellij.gradle.ext.profiler.xml",
+    "parent" : "gFJ",
     "type" : 0
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
+    "id" : "g05",
+    "n" : "com.intellij.javaee.gradle"
   }
 }, {
   "group" : "nodes",
@@ -408,6 +476,7 @@
     "sourceModule" : "intellij.gradle.javaee",
     "descriptor" : "plugins/javaee/gradle-integration/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.javaee.gradle",
+    "parent" : "g05",
     "type" : 2
   }
 }, {
@@ -419,6 +488,7 @@
     "package" : "com.intellij.javaee.gradle.javaee",
     "sourceModule" : "intellij.gradle.javaee",
     "descriptor" : "plugins/javaee/gradle-integration/resources/intellij.gradle.javaee.javaee.xml",
+    "parent" : "g05",
     "type" : 0
   }
 }, {
@@ -430,7 +500,14 @@
     "package" : "com.intellij.javaee.gradle.javaeeWeb",
     "sourceModule" : "intellij.gradle.javaee",
     "descriptor" : "plugins/javaee/gradle-integration/resources/intellij.gradle.javaee.javaee.web.xml",
+    "parent" : "g05",
     "type" : 0
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
+    "id" : "g49",
+    "n" : "tanvd.grazi"
   }
 }, {
   "group" : "nodes",
@@ -442,6 +519,7 @@
     "sourceModule" : "intellij.grazie",
     "descriptor" : "community/plugins/grazie/resources/META-INF/plugin.xml",
     "pluginId" : "tanvd.grazi",
+    "parent" : "g49",
     "type" : 2
   }
 }, {
@@ -453,6 +531,7 @@
     "package" : "com.intellij.grazie.ide.language.java",
     "sourceModule" : "intellij.grazie.java",
     "descriptor" : "community/plugins/grazie/java/src/main/resources/intellij.grazie.java.xml",
+    "parent" : "g49",
     "type" : 0
   }
 }, {
@@ -464,6 +543,7 @@
     "package" : "com.intellij.grazie.ide.language.json",
     "sourceModule" : "intellij.grazie.json",
     "descriptor" : "community/plugins/grazie/json/src/main/resources/intellij.grazie.json.xml",
+    "parent" : "g49",
     "type" : 0
   }
 }, {
@@ -475,6 +555,7 @@
     "package" : "com.intellij.grazie.ide.language.markdown",
     "sourceModule" : "intellij.grazie.markdown",
     "descriptor" : "community/plugins/grazie/markdown/src/main/resources/intellij.grazie.markdown.xml",
+    "parent" : "g49",
     "type" : 0
   }
 }, {
@@ -486,6 +567,7 @@
     "package" : "com.intellij.grazie.ide.language.properties",
     "sourceModule" : "intellij.grazie.properties",
     "descriptor" : "community/plugins/grazie/properties/src/main/resources/intellij.grazie.properties.xml",
+    "parent" : "g49",
     "type" : 0
   }
 }, {
@@ -497,6 +579,7 @@
     "package" : "com.intellij.grazie.ide.language.xml",
     "sourceModule" : "intellij.grazie.xml",
     "descriptor" : "community/plugins/grazie/xml/main/resources/intellij.grazie.xml.xml",
+    "parent" : "g49",
     "type" : 0
   }
 }, {
@@ -508,6 +591,7 @@
     "package" : "com.intellij.grazie.ide.language.yaml",
     "sourceModule" : "intellij.grazie.yaml",
     "descriptor" : "community/plugins/grazie/yaml/main/resources/intellij.grazie.yaml.xml",
+    "parent" : "g49",
     "type" : 0
   }
 }, {
@@ -585,6 +669,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gS9",
+    "n" : "com.intellij.java"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "S9",
     "name" : "intellij.java.plugin",
     "n" : "i.java.plugin",
@@ -592,6 +682,7 @@
     "sourceModule" : "intellij.java.plugin",
     "descriptor" : "community/java/plugin/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.java",
+    "parent" : "gS9",
     "type" : 2
   }
 }, {
@@ -603,6 +694,7 @@
     "package" : "com.intellij.profiler.ultimate",
     "sourceModule" : "intellij.profiler.ultimate",
     "descriptor" : "plugins/profiler/ultimate/resources/intellij.profiler.ultimate.xml",
+    "parent" : "gS9",
     "type" : 0
   }
 }, {
@@ -632,6 +724,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gSp",
+    "n" : "com.intellij.javaee.app.servers.integration"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "Sp",
     "name" : "intellij.javaee.app.servers.impl",
     "n" : "i.javaee.app.servers.impl",
@@ -639,6 +737,7 @@
     "sourceModule" : "intellij.javaee.app.servers.impl",
     "descriptor" : "plugins/javaee/core/javaee-app-server-integration/app-server-integration-impl/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.javaee.app.servers.integration",
+    "parent" : "gSp",
     "type" : 2
   }
 }, {
@@ -650,7 +749,14 @@
     "package" : "com.intellij.javaee.appServers.run.profiler",
     "sourceModule" : "intellij.javaee.app.servers.impl",
     "descriptor" : "plugins/javaee/core/javaee-app-server-integration/app-server-integration-impl/resources/intellij.javaee.app.servers.impl.profiler.xml",
+    "parent" : "gSp",
     "type" : 0
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
+    "id" : "gi7",
+    "n" : "Tomcat"
   }
 }, {
   "group" : "nodes",
@@ -662,6 +768,7 @@
     "sourceModule" : "intellij.javaee.appServers.tomcat",
     "descriptor" : "plugins/tomcat/resources/META-INF/plugin.xml",
     "pluginId" : "Tomcat",
+    "parent" : "gi7",
     "type" : 2
   }
 }, {
@@ -673,6 +780,7 @@
     "package" : "org.jetbrains.idea.tomcat.profiler",
     "sourceModule" : "intellij.javaee.appServers.tomcat",
     "descriptor" : "plugins/tomcat/resources/intellij.javaee.appServers.tomcat.profiler.xml",
+    "parent" : "gi7",
     "type" : 0
   }
 }, {
@@ -774,6 +882,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gPN",
+    "n" : "JavaScript"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "PN",
     "name" : "intellij.javascript.impl",
     "n" : "i.javascript.impl",
@@ -781,6 +895,7 @@
     "sourceModule" : "intellij.javascript.impl",
     "descriptor" : "plugins/JavaScriptLanguage/src/META-INF/plugin.xml",
     "pluginId" : "JavaScript",
+    "parent" : "gPN",
     "type" : 2
   }
 }, {
@@ -792,6 +907,7 @@
     "package" : "com.intellij.lang.javascript.modules.diagram",
     "sourceModule" : "intellij.javascript.impl",
     "descriptor" : "plugins/JavaScriptLanguage/src/intellij.javascript.impl.diagrams.xml",
+    "parent" : "gPN",
     "type" : 0
   }
 }, {
@@ -833,6 +949,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "g2z",
+    "n" : "org.jetbrains.idea.maven.ext"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "2z",
     "name" : "intellij.maven.ext",
     "n" : "i.maven.ext",
@@ -840,6 +962,7 @@
     "sourceModule" : "intellij.maven.ext",
     "descriptor" : "plugins/maven-ext/src/main/resources/META-INF/plugin.xml",
     "pluginId" : "org.jetbrains.idea.maven.ext",
+    "parent" : "g2z",
     "type" : 2
   }
 }, {
@@ -851,6 +974,7 @@
     "package" : "org.jetbrains.idea.maven.ext.profiler",
     "sourceModule" : "intellij.maven.ext",
     "descriptor" : "plugins/maven-ext/src/main/resources/intellij.maven.ext.profiler.xml",
+    "parent" : "g2z",
     "type" : 0
   }
 }, {
@@ -880,6 +1004,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gNn",
+    "n" : "org.jetbrains.plugins.node-remote-interpreter"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "Nn",
     "name" : "intellij.nodeJS.remoteInterpreter",
     "n" : "i.nodeJS.remoteInterpreter",
@@ -887,6 +1017,7 @@
     "sourceModule" : "intellij.nodeJS.remoteInterpreter",
     "descriptor" : "plugins/NodeJS/node-remote-interpreter/resources/META-INF/plugin.xml",
     "pluginId" : "org.jetbrains.plugins.node-remote-interpreter",
+    "parent" : "gNn",
     "type" : 2
   }
 }, {
@@ -898,7 +1029,14 @@
     "package" : "com.jetbrains.nodejs.remote.docker",
     "sourceModule" : "intellij.nodeJS.remoteInterpreter",
     "descriptor" : "plugins/NodeJS/node-remote-interpreter/resources/intellij.nodeJS.remoteInterpreter.docker.xml",
+    "parent" : "gNn",
     "type" : 0
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
+    "id" : "gT4",
+    "n" : "com.jetbrains.performancePlugin"
   }
 }, {
   "group" : "nodes",
@@ -910,6 +1048,7 @@
     "sourceModule" : "intellij.performanceTesting",
     "descriptor" : "plugins/performanceTesting/resources/META-INF/plugin.xml",
     "pluginId" : "com.jetbrains.performancePlugin",
+    "parent" : "gT4",
     "type" : 2
   }
 }, {
@@ -921,6 +1060,7 @@
     "package" : "com.jetbrains.performancePlugin.java",
     "sourceModule" : "intellij.performanceTesting",
     "descriptor" : "plugins/performanceTesting/resources/intellij.performanceTesting.java.xml",
+    "parent" : "gT4",
     "type" : 0
   }
 }, {
@@ -998,6 +1138,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "ghe",
+    "n" : "Pythonid"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "he",
     "name" : "intellij.python.plugin",
     "n" : "i.python.plugin",
@@ -1005,6 +1151,7 @@
     "sourceModule" : "intellij.python.plugin",
     "descriptor" : "python/pluginSrc/META-INF/plugin.xml",
     "pluginId" : "Pythonid",
+    "parent" : "ghe",
     "type" : 2
   }
 }, {
@@ -1016,7 +1163,14 @@
     "package" : "com.jetbrains.python.docker",
     "sourceModule" : "intellij.python.docker",
     "descriptor" : "python/python-docker/resources/intellij.python.docker.xml",
+    "parent" : "ghe",
     "type" : 0
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
+    "id" : "gQl",
+    "n" : "com.intellij.quarkus"
   }
 }, {
   "group" : "nodes",
@@ -1028,6 +1182,7 @@
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.quarkus",
+    "parent" : "gQl",
     "type" : 2
   }
 }, {
@@ -1039,6 +1194,7 @@
     "package" : "com.intellij.quarkus.config.yaml",
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.yaml.xml",
+    "parent" : "gQl",
     "type" : 0
   }
 }, {
@@ -1050,6 +1206,7 @@
     "package" : "com.intellij.quarkus.run.maven",
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.maven.xml",
+    "parent" : "gQl",
     "type" : 0
   }
 }, {
@@ -1061,6 +1218,7 @@
     "package" : "com.intellij.quarkus.run.gradle",
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.gradle.xml",
+    "parent" : "gQl",
     "type" : 0
   }
 }, {
@@ -1072,6 +1230,7 @@
     "package" : "com.intellij.quarkus.run.docker",
     "sourceModule" : "intellij.quarkus",
     "descriptor" : "plugins/frameworks/quarkus/quarkus-core/resources/intellij.quarkus.docker.xml",
+    "parent" : "gQl",
     "type" : 0
   }
 }, {
@@ -1101,6 +1260,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "g2K",
+    "n" : "org.jetbrains.plugins.ruby"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "2K",
     "name" : "intellij.ruby.plugin",
     "n" : "i.ruby.plugin",
@@ -1108,6 +1273,7 @@
     "sourceModule" : "intellij.ruby.plugin",
     "descriptor" : "ruby/pluginResources/META-INF/plugin.xml",
     "pluginId" : "org.jetbrains.plugins.ruby",
+    "parent" : "g2K",
     "type" : 2
   }
 }, {
@@ -1119,6 +1285,7 @@
     "package" : "org.jetbrains.plugins.ruby.remote.impl",
     "sourceModule" : "intellij.ruby.remoteInterpreter",
     "descriptor" : "ruby/remote-interpreter/resources/intellij.ruby.remoteInterpreter.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1130,6 +1297,7 @@
     "package" : "org.jetbrains.plugins.ruby.copyright",
     "sourceModule" : "intellij.ruby.copyright",
     "descriptor" : "ruby/ruby-copyright/resources/intellij.ruby.copyright.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1141,6 +1309,7 @@
     "package" : "org.jetbrains.plugins.ruby.coverage",
     "sourceModule" : "intellij.ruby.coverage",
     "descriptor" : "ruby/coverage/ruby-coverage-common/resources/intellij.ruby.coverage.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1152,6 +1321,7 @@
     "package" : "org.jetbrains.plugins.ruby.rails.database.impl",
     "sourceModule" : "intellij.ruby.database",
     "descriptor" : "ruby/ruby-database/resources/intellij.ruby.database.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1163,6 +1333,7 @@
     "package" : "com.intellij.lang.puppet.rubyShared",
     "sourceModule" : "intellij.ruby.puppet.shared",
     "descriptor" : "ruby/ruby-puppet-shared/src/intellij.ruby.puppet.shared.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1174,6 +1345,7 @@
     "package" : "org.jetbrains.plugins.ruby.java",
     "sourceModule" : "intellij.ruby.java",
     "descriptor" : "ruby/ruby-java/src/intellij.ruby.java.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1185,6 +1357,7 @@
     "package" : "com.intellij.lang.puppet.ruby.java.ide",
     "sourceModule" : "intellij.ruby.puppet.java",
     "descriptor" : "ruby/ruby-puppet-java/resources/intellij.ruby.puppet.java.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1196,6 +1369,7 @@
     "package" : "org.jetbrains.plugins.ruby.cucumber",
     "sourceModule" : "intellij.ruby.cucumber",
     "descriptor" : "ruby/ruby-cucumber/resources/intellij.ruby.cucumber.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1207,6 +1381,7 @@
     "package" : "org.jetbrains.plugins.ruby.cucumber.java.run",
     "sourceModule" : "intellij.ruby.cucumber.java",
     "descriptor" : "ruby/ruby-plugin-cucumber/resources/intellij.ruby.cucumber.java.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1218,6 +1393,7 @@
     "package" : "com.intellij.diagram.ruby",
     "sourceModule" : "intellij.ruby.uml",
     "descriptor" : "ruby/ruby-uml/resources/intellij.ruby.uml.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1229,6 +1405,7 @@
     "package" : "com.intellij.wsl.remote.ruby",
     "sourceModule" : "intellij.ruby.wsl",
     "descriptor" : "ruby/ruby-wsl/resources/intellij.ruby.wsl.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1240,6 +1417,7 @@
     "package" : "com.intellij.docker.remote.ruby",
     "sourceModule" : "intellij.ruby.docker",
     "descriptor" : "ruby/ruby-docker/resources/intellij.ruby.docker.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1251,6 +1429,7 @@
     "package" : "org.jetbrains.plugins.ruby.terminal",
     "sourceModule" : "intellij.ruby.terminal",
     "descriptor" : "ruby/ruby-terminal/resources/intellij.ruby.terminal.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1262,6 +1441,7 @@
     "package" : "com.intellij.lang.puppet.ruby",
     "sourceModule" : "intellij.ruby.puppet",
     "descriptor" : "ruby/ruby-puppet/resources/intellij.ruby.puppet.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1273,6 +1453,7 @@
     "package" : "org.jetbrains.ruby.performanceTesting",
     "sourceModule" : "intellij.ruby.performanceTesting",
     "descriptor" : "ruby/performanceTesting/src/intellij.ruby.performanceTesting.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1284,6 +1465,7 @@
     "package" : "org.jetbrains.plugins.ruby.ruby.intelliLang",
     "sourceModule" : "intellij.ruby.intelliLang",
     "descriptor" : "ruby/ruby-intelliLang/resources/intellij.ruby.intelliLang.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1295,6 +1477,7 @@
     "package" : "org.jetbrains.ruby.ift",
     "sourceModule" : "intellij.ruby.featuresTrainer",
     "descriptor" : "contrib/ide-features-trainer/ruby-features-trainer/resources/intellij.ruby.featuresTrainer.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1306,6 +1489,7 @@
     "package" : "org.jetbrains.plugins.haml.ruby",
     "sourceModule" : "intellij.ruby.haml",
     "descriptor" : "ruby/ruby-haml/resources/intellij.ruby.haml.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1317,6 +1501,7 @@
     "package" : "org.jetbrains.plugins.slim.ruby",
     "sourceModule" : "intellij.ruby.slim",
     "descriptor" : "ruby/ruby-slim/resources/intellij.ruby.slim.xml",
+    "parent" : "g2K",
     "type" : 0
   }
 }, {
@@ -1334,6 +1519,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gtR",
+    "n" : "com.intellij.selenium"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "tR",
     "name" : "intellij.selenium",
     "n" : "i.selenium",
@@ -1341,6 +1532,7 @@
     "sourceModule" : "intellij.selenium",
     "descriptor" : "plugins/frameworks/selenium/selenium/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.selenium",
+    "parent" : "gtR",
     "type" : 2
   }
 }, {
@@ -1352,6 +1544,7 @@
     "package" : "com.intellij.selenium.jvm",
     "sourceModule" : "intellij.selenium.jvm",
     "descriptor" : "plugins/frameworks/selenium/selenium-jvm/resources/intellij.selenium.jvm.xml",
+    "parent" : "gtR",
     "type" : 0
   }
 }, {
@@ -1363,6 +1556,7 @@
     "package" : "com.intellij.selenium.docker",
     "sourceModule" : "intellij.selenium.docker",
     "descriptor" : "plugins/frameworks/selenium/selenium-docker/resources/intellij.selenium.docker.xml",
+    "parent" : "gtR",
     "type" : 0
   }
 }, {
@@ -1374,6 +1568,7 @@
     "package" : "com.intellij.selenium.python",
     "sourceModule" : "intellij.selenium.python",
     "descriptor" : "plugins/frameworks/selenium/selenium-python/resources/intellij.selenium.python.xml",
+    "parent" : "gtR",
     "type" : 0
   }
 }, {
@@ -1403,6 +1598,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gmA",
+    "n" : "com.jetbrains.space"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "mA",
     "name" : "intellij.space",
     "n" : "i.space",
@@ -1410,6 +1611,7 @@
     "sourceModule" : "intellij.space",
     "descriptor" : "plugins/space/src/main/resources/META-INF/plugin.xml",
     "pluginId" : "com.jetbrains.space",
+    "parent" : "gmA",
     "type" : 2
   }
 }, {
@@ -1421,6 +1623,7 @@
     "package" : "com.intellij.space.kotlin",
     "sourceModule" : "intellij.space.kotlin",
     "descriptor" : "plugins/space/kotlin/resources/intellij.space.kotlin.xml",
+    "parent" : "gmA",
     "type" : 0
   }
 }, {
@@ -1432,7 +1635,14 @@
     "package" : "com.intellij.space.index",
     "sourceModule" : "intellij.space.index",
     "descriptor" : "plugins/space/index/resources/intellij.space.index.xml",
+    "parent" : "gmA",
     "type" : 0
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
+    "id" : "gcj",
+    "n" : "com.intellij.spring.batch"
   }
 }, {
   "group" : "nodes",
@@ -1444,6 +1654,7 @@
     "sourceModule" : "intellij.spring.batch",
     "descriptor" : "plugins/spring/spring-batch/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.spring.batch",
+    "parent" : "gcj",
     "type" : 2
   }
 }, {
@@ -1455,6 +1666,7 @@
     "package" : "com.intellij.spring.batch.el",
     "sourceModule" : "intellij.spring.batch",
     "descriptor" : "plugins/spring/spring-batch/resources/intellij.spring.batch.javaee-integration.xml",
+    "parent" : "gcj",
     "type" : 0
   }
 }, {
@@ -1472,6 +1684,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "g2Z",
+    "n" : "com.intellij.spring"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "2Z",
     "name" : "intellij.spring.core",
     "n" : "i.spring.core",
@@ -1479,6 +1697,7 @@
     "sourceModule" : "intellij.spring.core",
     "descriptor" : "plugins/spring/spring-framework/spring-core/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.spring",
+    "parent" : "g2Z",
     "type" : 2
   }
 }, {
@@ -1490,6 +1709,7 @@
     "package" : "com.intellij.spring.persistence.integration.hibernate",
     "sourceModule" : "intellij.spring.core",
     "descriptor" : "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.hibernate-integration.xml",
+    "parent" : "g2Z",
     "type" : 0
   }
 }, {
@@ -1501,7 +1721,14 @@
     "package" : "com.intellij.spring.el",
     "sourceModule" : "intellij.spring.core",
     "descriptor" : "plugins/spring/spring-framework/spring-core/resources/intellij.spring.core.el.xml",
+    "parent" : "g2Z",
     "type" : 0
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
+    "id" : "gG9",
+    "n" : "com.intellij.spring.data"
   }
 }, {
   "group" : "nodes",
@@ -1513,6 +1740,7 @@
     "sourceModule" : "intellij.spring.data",
     "descriptor" : "plugins/spring/spring-data/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.spring.data",
+    "parent" : "gG9",
     "type" : 2
   }
 }, {
@@ -1524,7 +1752,14 @@
     "package" : "com.intellij.spring.data.commons.ql",
     "sourceModule" : "intellij.spring.data",
     "descriptor" : "plugins/spring/spring-data/resources/intellij.spring.data.el.xml",
+    "parent" : "gG9",
     "type" : 0
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
+    "id" : "gnQ",
+    "n" : "com.intellij.spring.integration"
   }
 }, {
   "group" : "nodes",
@@ -1536,6 +1771,7 @@
     "sourceModule" : "intellij.spring.integration.core",
     "descriptor" : "plugins/spring/spring-integration/spring-integration-core/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.spring.integration",
+    "parent" : "gnQ",
     "type" : 2
   }
 }, {
@@ -1547,6 +1783,7 @@
     "package" : "com.intellij.spring.integration.injection.el",
     "sourceModule" : "intellij.spring.integration.core",
     "descriptor" : "plugins/spring/spring-integration/spring-integration-core/resources/intellij.spring.integration.core.integration-el.xml",
+    "parent" : "gnQ",
     "type" : 0
   }
 }, {
@@ -1564,6 +1801,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gik",
+    "n" : "com.intellij.spring.security"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "ik",
     "name" : "intellij.spring.security",
     "n" : "i.spring.security",
@@ -1571,6 +1814,7 @@
     "sourceModule" : "intellij.spring.security",
     "descriptor" : "plugins/spring/spring-security/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.spring.security",
+    "parent" : "gik",
     "type" : 2
   }
 }, {
@@ -1582,6 +1826,7 @@
     "package" : "com.intellij.spring.security.el",
     "sourceModule" : "intellij.spring.security",
     "descriptor" : "plugins/spring/spring-security/resources/intellij.spring.security.el.xml",
+    "parent" : "gik",
     "type" : 0
   }
 }, {
@@ -1623,6 +1868,12 @@
 }, {
   "group" : "nodes",
   "data" : {
+    "id" : "gnC",
+    "n" : "com.intellij.swagger"
+  }
+}, {
+  "group" : "nodes",
+  "data" : {
     "id" : "nC",
     "name" : "intellij.swagger",
     "n" : "i.swagger",
@@ -1630,6 +1881,7 @@
     "sourceModule" : "intellij.swagger",
     "descriptor" : "plugins/frameworks/swagger/swagger-core/resources/META-INF/plugin.xml",
     "pluginId" : "com.intellij.swagger",
+    "parent" : "gnC",
     "type" : 2
   }
 }, {
@@ -1641,6 +1893,7 @@
     "package" : "com.intellij.swagger.providers.endpoints",
     "sourceModule" : "intellij.swagger",
     "descriptor" : "plugins/frameworks/swagger/swagger-core/resources/intellij.swagger.endpoints.xml",
+    "parent" : "gnC",
     "type" : 0
   }
 }, {

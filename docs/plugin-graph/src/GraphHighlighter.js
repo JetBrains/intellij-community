@@ -19,9 +19,28 @@ export class GraphHighlighter {
       cy.elements().difference(this.graphTextSearch.totalUnion).removeClass("semiTransparent")
     }
 
-    const toHighlight = selection.outgoers().union(selection.incomers()).union(selection)
+    const toHighlight = GraphHighlighter.computeToHighlight(selection)
+
     cy.elements().difference(toHighlight).difference(this.graphTextSearch.totalUnion).addClass("semiTransparent")
     toHighlight.difference(this.graphTextSearch.totalUnion).addClass("highlight")
+  }
+
+  static computeToHighlight(selection) {
+    let result = null
+    if (selection.isParent()) {
+      for (const child of selection.children()) {
+        const partialResult = child.outgoers().union(child.incomers())
+        result = result === null ? partialResult : result.union(partialResult)
+      }
+    }
+    else {
+      result = selection.outgoers().union(selection.incomers())
+      const parent = selection.parent()
+      if (parent != null) {
+        result = result.union(parent)
+      }
+    }
+    return result.union(selection)
   }
 
   deselectNode(selection) {
@@ -31,6 +50,6 @@ export class GraphHighlighter {
       cy.elements().difference(this.graphTextSearch.totalUnion).addClass("semiTransparent")
     }
 
-    selection.outgoers().union(selection.incomers()).union(selection).difference(this.graphTextSearch.totalUnion).removeClass("highlight")
+    GraphHighlighter.computeToHighlight(selection).difference(this.graphTextSearch.totalUnion).removeClass("highlight")
   }
 }
