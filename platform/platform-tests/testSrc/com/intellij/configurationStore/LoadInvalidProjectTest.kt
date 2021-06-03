@@ -12,14 +12,11 @@ import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.loadProjectAndCheckResults
-import com.intellij.testFramework.rules.ProjectModelRule
 import com.intellij.util.io.assertMatches
 import com.intellij.util.io.directoryContentOf
 import com.intellij.workspaceModel.ide.WorkspaceModel
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import kotlinx.coroutines.runBlocking
 import org.assertj.core.api.Assertions.assertThat
-import org.junit.Assume.assumeTrue
 import org.junit.Before
 import org.junit.ClassRule
 import org.junit.Rule
@@ -63,6 +60,15 @@ class LoadInvalidProjectTest {
   @Test
   fun `malformed xml in iml`() {
     loadProjectAndCheckResults("malformed-xml-in-iml") { project ->
+      assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
+      assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
+      assertThat(errors.single().description).contains("foo.iml")
+    }
+  }
+
+  @Test
+  fun `unknown classpath provider in iml`() {
+    loadProjectAndCheckResults("unknown-classpath-provider-in-iml") { project ->
       assertThat(ModuleManager.getInstance(project).modules).hasSize(1)
       assertThat(WorkspaceModel.getInstance(project).entityStorage.current.entities(ModuleEntity::class.java).single().name).isEqualTo("foo")
       assertThat(errors.single().description).contains("foo.iml")

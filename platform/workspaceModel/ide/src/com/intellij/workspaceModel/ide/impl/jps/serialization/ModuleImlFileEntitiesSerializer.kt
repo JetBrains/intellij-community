@@ -11,6 +11,7 @@ import com.intellij.openapi.module.impl.ModulePath
 import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
 import com.intellij.openapi.util.JDOMUtil
+import com.intellij.projectModel.ProjectModelBundle
 import com.intellij.util.io.exists
 import com.intellij.util.isEmpty
 import com.intellij.workspaceModel.ide.*
@@ -110,7 +111,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       customRootsSerializer = moduleOptions[JpsProjectLoader.CLASSPATH_ATTRIBUTE]?.let { customSerializerId ->
         val serializer = CustomModuleRootsSerializer.EP_NAME.extensions().filter { it.id == customSerializerId }.findAny().orElse(null)
         if (serializer == null) {
-          LOG.warn("Classpath storage provider $customSerializerId not found")
+          errorReporter.reportError(ProjectModelBundle.message("error.message.unknown.classpath.provider", fileUrl.fileName, customSerializerId), fileUrl)
         }
         return@let serializer
       }
