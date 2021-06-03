@@ -20,11 +20,9 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil
 import com.intellij.openapi.roots.ModuleRootManager
@@ -191,16 +189,6 @@ fun Sdk.isAssociatedWithAnotherModule(module: Module?): Boolean {
 val Sdk.associatedModulePath: String?
   // TODO: Support .project associations
   get() = associatedPathFromAdditionalData /*?: associatedPathFromDotProject*/
-
-@Deprecated("Use Sdk.associatedModuleDir instead. There may be several Module objects opened in different projects for a single *.iml module file. To be removed in 2021.2")
-val Sdk.associatedModule: Module?
-  get() {
-    val associatedPath = associatedModulePath
-    return ProjectManager.getInstance().openProjects
-      .asSequence()
-      .flatMap { ModuleManager.getInstance(it).modules.asSequence() }
-      .firstOrNull { it?.basePath == associatedPath }
-  }
 
 val Sdk.associatedModuleDir: VirtualFile?
   get() = associatedModulePath?.let { StandardFileSystems.local().findFileByPath(it) }
