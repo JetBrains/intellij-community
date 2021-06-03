@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.service.ui
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.openapi.externalSystem.service.ui.tasks.and.arguments
 
 import com.intellij.execution.ui.CommonParameterFragments
 import com.intellij.execution.ui.FragmentedSettingsUtil
@@ -9,6 +9,7 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
+import com.intellij.openapi.externalSystem.service.ui.installJTextCompletionPopupTriggers
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
