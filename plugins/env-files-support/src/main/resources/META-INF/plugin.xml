@@ -66,6 +66,7 @@
     <depends>com.intellij.modules.platform</depends>
 
     <depends optional="true" config-file="java.xml">com.intellij.java</depends>
+    <depends optional="true" config-file="kotlin.xml">org.jetbrains.kotlin</depends>
     <depends optional="true" config-file="php.xml">com.jetbrains.php</depends>
     <depends optional="true" config-file="ruby.xml">com.intellij.modules.ruby</depends>
     <depends optional="true" config-file="python.xml">com.intellij.modules.python</depends>
