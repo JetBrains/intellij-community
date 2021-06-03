@@ -2,6 +2,7 @@
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,7 +21,7 @@ class ActivatedOnColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSave
   }
 
   @Override
-  protected @NotNull JComponent getCellComponent(@NotNull ActionOnSaveInfo info, boolean hovered) {
+  protected @NotNull JComponent getCellComponent(@NotNull TableView<?> table, @NotNull ActionOnSaveInfo info, boolean hovered) {
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(6, 8, 0, 0));
     panel.add(info.getActivatedOnComponent(), BorderLayout.NORTH);

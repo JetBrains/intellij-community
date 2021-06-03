@@ -3,6 +3,7 @@ package com.intellij.ide.actionsOnSave;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.hover.TableHoverListener;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import com.intellij.util.ui.ColumnInfo;
 import org.jetbrains.annotations.NotNull;
@@ -23,14 +24,14 @@ abstract class SameRendererAndEditorColumnInfo<T> extends ColumnInfo<T, T> {
     myCellRenderer = (table, value, selected, focused, row, column) -> {
       boolean hovered = TableHoverListener.getHoveredRow(table) == row;
       //noinspection unchecked
-      return getCellComponent((T)value, hovered);
+      return getCellComponent((TableView<?>)table, (T)value, hovered);
     };
 
     myTableCellEditor = new AbstractTableCellEditor() {
       @Override
       public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
         //noinspection unchecked
-        return getCellComponent((T)value, true);
+        return getCellComponent((TableView<?>)table, (T)value, true);
       }
 
       @Override
@@ -60,5 +61,5 @@ abstract class SameRendererAndEditorColumnInfo<T> extends ColumnInfo<T, T> {
     return myTableCellEditor;
   }
 
-  protected abstract @NotNull JComponent getCellComponent(@NotNull T value, boolean hovered);
+  protected abstract @NotNull JComponent getCellComponent(@NotNull TableView<?> table, @NotNull T value, boolean hovered);
 }

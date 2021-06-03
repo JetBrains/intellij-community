@@ -10,6 +10,7 @@ import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
@@ -27,7 +28,7 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
   }
 
   @Override
-  protected @NotNull JComponent getCellComponent(@NotNull ActionOnSaveInfo info, boolean hovered) {
+  protected @NotNull JComponent getCellComponent(@NotNull TableView<?> table, @NotNull ActionOnSaveInfo info, boolean hovered) {
     JPanel resultPanel = new JPanel(new GridBagLayout());
     resultPanel.setBorder(JBUI.Borders.empty(6, 8, 0, 0));
 
@@ -37,7 +38,7 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
     c.anchor = GridBagConstraints.NORTHWEST;
     c.fill = GridBagConstraints.NONE;
 
-    resultPanel.add(createActionNamePanel(info), c);
+    resultPanel.add(createActionNamePanel(table, info), c);
 
     c.weightx = 0.0;
     c.anchor = GridBagConstraints.NORTHEAST;
@@ -58,7 +59,7 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
     return resultPanel;
   }
 
-  private static @NotNull JPanel createActionNamePanel(@NotNull ActionOnSaveInfo info) {
+  private static @NotNull JPanel createActionNamePanel(@NotNull TableView<?> table, @NotNull ActionOnSaveInfo info) {
     if (info.isSaveActionApplicable()) {
       // This anchorCheckBox is not painted and doesn't appear in the UI component hierarchy. Its purpose is to make sure that the preferred
       // size of the real checkBox is calculated correctly. The problem is that com.intellij.ide.ui.laf.darcula.ui.DarculaCheckBoxBorder.getBorderInsets()
@@ -82,6 +83,13 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
         }
 
         info.setActionOnSaveEnabled(checkBox.isSelected());
+        int row = table.getEditingRow();
+        int column = table.getEditingColumn();
+        if (row >= 0 && column >= 0) {
+          // Comment under the check box may depend on the check box state. Need to re-create the cell editor component.
+          table.stopEditing();
+          table.editCellAt(row, column);
+        }
 
         if (info.myConfigurableId != null) {
           settings.checkModified(info.myConfigurableId);
