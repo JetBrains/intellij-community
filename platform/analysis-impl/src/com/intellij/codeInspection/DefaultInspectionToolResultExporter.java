@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -227,8 +227,9 @@ public class DefaultInspectionToolResultExporter implements InspectionToolResult
       }
       @NonNls final String template = descriptor.getDescriptionTemplate();
       String highlightedText = ProblemDescriptorUtil.extractHighlightedText(descriptor, psiElement);
-      @NonNls String problemText = StringUtil
-        .replace(StringUtil.replace(template, "#ref", psiElement != null ? highlightedText : ""), " #loc ", " ");
+      @NonNls String problemText = ProblemDescriptorUtil.removeLocReference(
+        StringUtil.replace(template, "#ref", psiElement != null ? highlightedText : "")
+      );
       Element descriptionElement = new Element(INSPECTION_RESULTS_DESCRIPTION_ELEMENT);
       descriptionElement.addContent(sanitizeIllegalXmlChars(problemText));
       element.addContent(descriptionElement);
