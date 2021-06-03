@@ -119,7 +119,6 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
    */
   private fun checkAndShowNotificationIfNeeded(needToLog: Boolean, notificationRequired: TaskRuntimeContext.() -> RestoreNotification?,
                                                setNotification: (RestoreNotification) -> Unit): Boolean {
-    val file = lessonExecutor.virtualFile
     val proposal = checkEditor() ?: notificationRequired(runtimeContext)
     if (proposal == null) {
       if (LessonManager.instance.shownRestoreNotification != null) {
@@ -129,7 +128,7 @@ internal class TaskContextImpl(private val lessonExecutor: LessonExecutor,
     }
     else {
       if (proposal.message != LessonManager.instance.shownRestoreNotification?.message) {
-        EditorNotifications.getInstance(runtimeContext.project).updateNotifications(file)
+        EditorNotifications.getInstance(runtimeContext.project).updateNotifications(lessonExecutor.virtualFile)
         setNotification(proposal)
         if(needToLog) {
           StatisticBase.logRestorePerformed(lessonExecutor.lesson, lessonExecutor.currentTaskIndex)
