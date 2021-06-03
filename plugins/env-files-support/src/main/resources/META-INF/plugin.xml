@@ -2,7 +2,7 @@
     <idea-version since-build="193"/>
     <id>ru.adelf.idea.dotenv</id>
     <name>.env files support</name>
-    <version>2020.1</version>
+    <version>2020.2</version>
     <vendor email="adel.faiz@gmail.com" url="https://adelf.tech">Adel F</vendor>
 
     <description><![CDATA[
@@ -27,13 +27,19 @@
     <br/>
     Features
     <ul>
-        <li>Environment variables completion for PHP, JavaScript, Python, Go and Ruby languages based on .env, Dockerfile and docker-compose.yml files.</li>
+        <li>Environment variables completion based on .env, Dockerfile and docker-compose.yml files.</li>
         <li>Go to declaration(in .env file) and usages(in code), by Ctrl(Cmd)+click or hot key(Ctrl(Cmd)-B, etc.)</li>
         <li>.env file syntax highlighter</li>
     </ul>
     ]]></description>
 
     <change-notes><![CDATA[
+      2021.2
+      <ul>
+        <li>Kotlin and Java support</li>
+        <li>.env syntax improvements</li>
+        <li>Configurable completion and values storing</li>
+      </ul>
       2021.1
       <ul>
         <li>Single quotes for environment variable values support</li>
@@ -46,13 +52,6 @@
       <ul>
         <li>phpunit.xml environment variables completion</li>
         <li>Fix incorrect syntax with slashes in quoted .env values</li>
-      </ul>
-      2020.2
-      <ul>
-        <li>2020.2 IDE versions support</li>
-        <li>Spaces inside non-quoted .env values inspection + quick fix</li>
-        <li>Case insensitive .env variables completions</li>
-        <li>Plugin icon!</li>
       </ul>
   ]]></change-notes>
 

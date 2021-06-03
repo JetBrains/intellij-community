@@ -1,12 +1,6 @@
 buildscript {
     repositories {
         mavenCentral()
-        maven {
-            url "https://oss.sonatype.org/content/repositories/snapshots/"
-        }
-        maven {
-            url 'https://dl.bintray.com/jetbrains/intellij-plugin-service'
-        }
     }
 }
 
@@ -51,7 +45,7 @@ intellij {
 
 patchPluginXml {
     sinceBuild '193'
-    untilBuild '211.*'
+    untilBuild '212.*'
 }
 
 buildSearchableOptions {
@@ -59,5 +53,5 @@ buildSearchableOptions {
 }
 
 group 'ru.adelf'
-version '2021.1' // Plugin version
+version '2021.2' // Plugin version
 sourceCompatibility = 1.8
