@@ -38,13 +38,12 @@ fun ReferenceType.isInKotlinSources(): Boolean {
 }
 
 fun ReferenceType.isInKotlinSourcesAsync(): CompletableFuture<Boolean> {
-    return DebuggerUtilsAsync.sourceName(this).thenCompose {
-        val fileExtension = it?.substringAfterLast('.')?.toLowerCase() ?: ""
-        if (fileExtension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS) {
-            containsKotlinStrataAsync()
+    return DebuggerUtilsAsync.sourceName(this)
+        .thenApply {
+            val fileExtension = it?.substringAfterLast('.')?.toLowerCase() ?: ""
+            fileExtension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
         }
-        CompletableFuture.completedFuture(false)
-    }
+        .thenCombine(containsKotlinStrataAsync()) { kotlinExt, kotlinStrata -> kotlinExt || kotlinStrata }
 }
 
 fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STRATA_NAME)
