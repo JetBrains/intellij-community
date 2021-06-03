@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.pom.Navigatable
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenParsingContext
 import org.jetbrains.idea.maven.externalSystemIntegration.output.MavenSpyLoggedEventParser
+import org.jetbrains.idea.maven.externalSystemIntegration.output.parsers.MavenEventType
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProject
 import org.jetbrains.idea.maven.project.MavenProjectBundle.message
@@ -20,6 +21,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.function.Consumer
 
 class TargetOptionQuickFix : MavenSpyLoggedEventParser {
+
+  override fun supportsType(type: MavenEventType) = type == MavenEventType.MOJO_FAILED
 
   override fun processLogLine(parentId: Any,
                               parsingContext: MavenParsingContext,
@@ -32,7 +35,9 @@ class TargetOptionQuickFix : MavenSpyLoggedEventParser {
       val mavenProject = MavenProjectsManager.getInstance(parsingContext.ideaProject).findProject(MavenId(failedProject)) ?: return false
 
       messageConsumer.accept(
-        BuildIssueEventImpl(parentId, TargetLevelBuildIssue("Invalid target release", mavenProject), MessageEvent.Kind.ERROR)
+        BuildIssueEventImpl(parentId,
+                            TargetLevelBuildIssue(logLine, mavenProject),
+                            MessageEvent.Kind.ERROR)
       )
       return true
     }
