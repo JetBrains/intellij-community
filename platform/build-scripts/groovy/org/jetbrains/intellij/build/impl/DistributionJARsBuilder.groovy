@@ -77,8 +77,10 @@ final class DistributionJARsBuilder {
     this.buildContext = buildContext
     this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish)
 
-    def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
-                      ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
+    def releaseDatePattern = "uuuuMMdd"
+    // cut off hours and minutes if any
+    def releaseDate = buildContext.applicationInfo.majorReleaseDate?.substring(0, releaseDatePattern.size()) ?:
+                      ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern(releaseDatePattern))
     if (releaseDate.startsWith('__')) {
       buildContext.messages.error("Unresolved release-date: $releaseDate")
     }
