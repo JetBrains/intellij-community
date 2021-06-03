@@ -220,6 +220,9 @@
         <element id="archive" name="kotlin-injection.jar">
           <element id="module-output" name="kotlin.injection" />
         </element>
+        <element id="archive" name="kotlin-coverage.jar">
+          <element id="module-output" name="kotlin.coverage" />
+        </element>
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.5.10-release-918/kotlin-dist-for-ide-1.5.10-release-918.jar" path-in-jar="/" />

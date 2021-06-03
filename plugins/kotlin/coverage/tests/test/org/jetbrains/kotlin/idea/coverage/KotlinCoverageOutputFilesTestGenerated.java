@@ -14,10 +14,10 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("idea/tests")
+@TestRoot("coverage/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/coverage/outputFiles")
+@TestMetadata("testData/outputFiles")
 public class KotlinCoverageOutputFilesTestGenerated extends AbstractKotlinCoverageOutputFilesTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
@@ -25,6 +25,6 @@ public class KotlinCoverageOutputFilesTestGenerated extends AbstractKotlinCovera
 
     @TestMetadata("NotInlinedLambda.kt")
     public void testNotInlinedLambda() throws Exception {
-        runTest("testData/coverage/outputFiles/NotInlinedLambda.kt");
+        runTest("testData/outputFiles/NotInlinedLambda.kt");
     }
 }

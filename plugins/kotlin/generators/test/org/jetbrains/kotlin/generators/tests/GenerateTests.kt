@@ -263,6 +263,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
+    testGroup("coverage/tests") {
+        testClass<AbstractKotlinCoverageOutputFilesTest> {
+            model("outputFiles")
+        }
+    }
+
     testGroup("idea/tests") {
         testClass<AbstractAdditionalResolveDescriptorRendererTest> {
             model("resolve/additionalLazyResolve")
@@ -840,10 +846,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("refactoring/pushDown/k2k", pattern = KT, flatten = true, testClassName = "K2K", testMethodName = "doKotlinTest")
             model("refactoring/pushDown/k2j", pattern = KT, flatten = true, testClassName = "K2J", testMethodName = "doKotlinTest")
             model("refactoring/pushDown/j2k", pattern = JAVA, flatten = true, testClassName = "J2K", testMethodName = "doJavaTest")
-        }
-
-        testClass<AbstractKotlinCoverageOutputFilesTest> {
-            model("coverage/outputFiles")
         }
 
         testClass<AbstractBytecodeToolWindowTest> {
