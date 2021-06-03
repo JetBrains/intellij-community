@@ -54,20 +54,20 @@ object SearchEverywhereFeaturesProvider {
                          matchedValue: GotoActionModel.MatchedValue,
                          contributorId: String): ItemInfo {
     val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
-    if (wrapper == null) { // an option (OptionDescriptor)
-      return ItemInfo(null, contributorId, hashMapOf(IS_ACTION_DATA_KEY to false))
-    }
-    val action = wrapper.action
-    val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
-
     val data = mutableMapOf(
-      IS_ACTION_DATA_KEY to true,
-      PRIORITY_DATA_KEY to priority,
-      IS_TOGGLE_ACTION_DATA_KEY to (action is ToggleAction),
-      MATCH_MODE_KEY to wrapper.mode,
-      IS_GROUP_KEY to wrapper.isGroupAction
+      IS_ACTION_DATA_KEY to (wrapper != null),
+      PRIORITY_DATA_KEY to priority
     )
 
+    if (wrapper == null) {
+      // item is an option (OptionDescriptor)
+      return ItemInfo(null, contributorId, data)
+    }
+
+    data[MATCH_MODE_KEY] = wrapper.mode
+    data[IS_GROUP_KEY] = wrapper.isGroupAction
+    val action = wrapper.action
+    data[IS_TOGGLE_ACTION_DATA_KEY] = action is ToggleAction
     wrapper.actionText?.let {
       data[TEXT_LENGTH_KEY] = withUpperBound(it.length)
     }
@@ -82,6 +82,7 @@ object SearchEverywhereFeaturesProvider {
     data[WEIGHT_KEY] = presentation.weight
 
 
+    val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
     localSummary.getActionsStats()[actionId]?.let {
       data[TIME_SINCE_LAST_USAGE_DATA_KEY] = currentTime - it.lastUsedTimestamp
       data[LOCAL_USAGE_COUNT_DATA_KEY] = it.usageCount
