@@ -1240,6 +1240,8 @@
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
+    <projectService serviceInterface="com.intellij.presentation.FilePresentationService"
+                    serviceImplementation="com.intellij.presentation.impl.FilePresentationServiceImpl"/>
 /  </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
