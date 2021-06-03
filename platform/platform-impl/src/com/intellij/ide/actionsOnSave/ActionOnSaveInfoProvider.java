@@ -9,12 +9,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+/**
+ * Please use `order` attribute when registering {@link ActionOnSaveInfoProvider}s and be as specific as possible. The order of the check
+ * boxes on the 'Actions on Save' page should reflect the real order of the performed actions.
+ */
 public abstract class ActionOnSaveInfoProvider {
 
-  /**
-   * Please use `order` attribute when registering {@link ActionOnSaveInfoProvider}s and be as specific as possible. The order of the check
-   * boxes on the 'Actions on Save' page should reflect the real order of the performed actions.
-   */
   private static final ExtensionPointName<ActionOnSaveInfoProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.actionOnSaveInfoProvider");
 
@@ -26,5 +26,5 @@ public abstract class ActionOnSaveInfoProvider {
     return infos;
   }
 
-  protected abstract @NotNull Collection<ActionOnSaveInfo> getActionOnSaveInfos(@NotNull Project project);
+  protected abstract @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull Project project);
 }
