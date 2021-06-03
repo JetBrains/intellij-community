@@ -31,7 +31,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class ActionsOnSaveConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  private final static Logger LOG = Logger.getInstance(ActionsOnSaveConfigurable.class);
+  private static final Logger LOG = Logger.getInstance(ActionsOnSaveConfigurable.class);
+  private static final String CONFIGURABLE_ID = "actions.on.save";
 
   private final @NotNull Project myProject;
 
@@ -48,7 +49,7 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
 
   @Override
   public @NotNull String getId() {
-    return "actions.on.save";
+    return CONFIGURABLE_ID;
   }
 
   @Override
@@ -144,6 +145,10 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
     if (configurable != null) {
       info.setConfigurableWithInitializedUiComponent(configurable);
     }
+  }
+
+  public static @NotNull ActionLink createGoToActionsOnSavePageLink() {
+    return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.all.actions.on.save"), CONFIGURABLE_ID);
   }
 
   public static @NotNull ActionLink createGoToPageInSettingsLink(@NotNull String configurableId) {
