@@ -1145,7 +1145,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup(
         "fir-low-level-api",
-        testDataPath = "../idea/tests/testData/compiler/fir/analysis-tests",
+        testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/fir/analysis-tests/testData"),
     ) {
         testClass<AbstractDiagnosisCompilerTestDataTest>(
             generatedClassName = "${AbstractDiagnosisCompilerTestDataTest::class.java.`package`.name}.DiagnosisCompilerFirTestdataTestGenerated"
@@ -1157,13 +1157,13 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup(
         "fir-low-level-api",
-        testDataPath = "../idea/tests/testData/compiler",
+        testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/testData"),
     ) {
         testClass<AbstractDiagnosisCompilerTestDataTest>(
-            generatedClassName = "${AbstractDiagnosisCompilerTestDataTest::class.java.`package`.name}.DiagnosisCompilerFirTestdataTestGenerated"
+            generatedClassName = "${AbstractDiagnosisCompilerTestDataTest::class.java.`package`.name}.DiagnosisCompilerTestFE10TestdataTestGenerated"
         ) {
-            model("diagnostics/tests")
-            model("diagnostics/testsWithStdLib")
+            model("diagnostics/tests", pattern = KT.withPrecondition(excludedFirPrecondition))
+            model("diagnostics/testsWithStdLib", pattern = KT.withPrecondition(excludedFirPrecondition))
         }
     }
 
