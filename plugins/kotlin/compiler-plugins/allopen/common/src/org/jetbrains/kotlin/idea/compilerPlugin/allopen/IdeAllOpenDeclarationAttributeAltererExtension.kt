@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.compilerPlugin.CachedAnnotationNames
 import org.jetbrains.kotlin.idea.compilerPlugin.getAnnotationNames
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 
-internal val ALL_OPEN_ANNOTATION_OPTION_PREFIX = "plugin:$PLUGIN_ID:${ANNOTATION_OPTION.optionName}="
+val ALL_OPEN_ANNOTATION_OPTION_PREFIX = "plugin:$PLUGIN_ID:${ANNOTATION_OPTION.optionName}="
 
 class IdeAllOpenDeclarationAttributeAltererExtension(val project: Project) :
     AbstractAllOpenDeclarationAttributeAltererExtension() {
