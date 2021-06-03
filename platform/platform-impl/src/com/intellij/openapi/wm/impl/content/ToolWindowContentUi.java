@@ -409,7 +409,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         if (!Registry.is("ide.new.tool.window.dnd")) return false;
         Component realMouseTarget = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
         Component decorator = ComponentUtil.findParentByCondition(realMouseTarget, c -> c instanceof InternalDecoratorImpl);
-        if (decorator == null) return false;
+        if (decorator == null || ui.window.getType() == ToolWindowType.FLOATING || ui.window.getType() == ToolWindowType.WINDOWED) return false;
         if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM) return true;
         if (SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() > ToolWindowsPane.HEADER_RESIZE_WIDTH) return true;//it's drag, not resize!
         return false;
