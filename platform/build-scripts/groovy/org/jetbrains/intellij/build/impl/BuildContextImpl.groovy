@@ -248,9 +248,9 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  void signFile(String path) {
+  void signFile(String path, Map<String, String> options) {
     if (proprietaryBuildTools.signTool != null) {
-      proprietaryBuildTools.signTool.signFile(path, this)
+      proprietaryBuildTools.signTool.signFile(path, this, options)
       messages.info("Signed $path")
     }
     else {
