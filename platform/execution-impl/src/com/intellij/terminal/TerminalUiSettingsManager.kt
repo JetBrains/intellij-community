@@ -3,27 +3,30 @@ package com.intellij.terminal
 
 import com.intellij.application.options.editor.EditorOptionsListener
 import com.intellij.execution.ui.ConsoleViewContentType
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.components.Service
-import com.intellij.openapi.components.service
+import com.intellij.openapi.components.*
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.util.Disposer
 import com.jediterm.terminal.emulator.ColorPalette
+import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.util.concurrent.CopyOnWriteArrayList
 
+@State(name = "TerminalUiSettingsManager", storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))])
 @Service(Service.Level.APP)
-class TerminalUiSettingsManager internal constructor() : Disposable {
+class TerminalUiSettingsManager internal constructor() : PersistentStateComponent<TerminalUiSettingsManager.State>, Disposable {
   var editorColorsScheme: EditorColorsScheme
     private set
   private var cachedColorPalette: JBTerminalSchemeColorPalette? = null
   private var fontSize = -1
   private val terminalPanels: MutableList<JBTerminalPanel> = CopyOnWriteArrayList()
+  private var state = State()
 
   init {
     editorColorsScheme = EditorColorsManager.getInstance().globalScheme
@@ -67,7 +70,14 @@ class TerminalUiSettingsManager internal constructor() : Disposable {
     Disposer.register(terminalPanel) { terminalPanels.remove(terminalPanel) }
   }
 
-  fun fireCursorUpdate() {
+  var cursorShape: CursorShape
+    get() = state.cursorShape
+    set(value) {
+      state.cursorShape = value
+      fireCursorUpdate()
+    }
+
+  private fun fireCursorUpdate() {
     for (panel in terminalPanels) {
       panel.setCursorShape(panel.settingsProvider.cursorShape)
       panel.repaint()
@@ -111,5 +121,21 @@ class TerminalUiSettingsManager internal constructor() : Disposable {
   companion object {
     @JvmStatic
     fun getInstance(): TerminalUiSettingsManager = service()
+  }
+
+  enum class CursorShape(val text: @Nls String) {
+    BLOCK(IdeBundle.message("terminal.cursor.shape.block.name")),
+    UNDERLINE(IdeBundle.message("terminal.cursor.shape.underline.name")),
+    VERTICAL(IdeBundle.message("terminal.cursor.shape.vertical.name"))
+  }
+
+  class State {
+    var cursorShape: CursorShape = CursorShape.BLOCK
+  }
+
+  override fun getState(): State = state
+
+  override fun loadState(state: State) {
+    this.state = state
   }
 }

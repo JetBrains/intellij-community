@@ -71,7 +71,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
     var myShellIntegration: Boolean = true
     var myHighlightHyperlinks: Boolean = true
     var useOptionAsMetaKey: Boolean = true
-    var cursorShape: CursorShape = CursorShape.BLOCK
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
@@ -128,18 +127,11 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
   var useOptionAsMetaKey: Boolean by myState::useOptionAsMetaKey
 
-  var cursorShape: CursorShape
-    get() = myState.cursorShape
+  var cursorShape: TerminalUiSettingsManager.CursorShape
+    get() = service<TerminalUiSettingsManager>().cursorShape
     set(value) {
-      myState.cursorShape = value
-      service<TerminalUiSettingsManager>().fireCursorUpdate()
+      service<TerminalUiSettingsManager>().cursorShape = value
     }
-
-  enum class CursorShape(val text: @Nls String) {
-    BLOCK(TerminalBundle.message("settings.cursor.shape.block.name")),
-    UNDERLINE(TerminalBundle.message("settings.cursor.shape.underline.name")),
-    VERTICAL(TerminalBundle.message("settings.cursor.shape.vertical.name"))
-  }
 
   companion object {
     val instance: TerminalOptionsProvider
