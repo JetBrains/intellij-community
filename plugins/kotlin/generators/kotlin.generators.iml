@@ -30,7 +30,7 @@
     <orderEntry type="module" module-name="kotlin.idea.tests" />
     <orderEntry type="module" module-name="kotlin.fir" />
     <orderEntry type="module" module-name="kotlin.scripting-support" />
-    <orderEntry type="module" module-name="kotlin.maven" />
+    <orderEntry type="module" module-name="kotlin.maven.tests" />
     <orderEntry type="module" module-name="kotlin.gradle.gradle-idea" />
     <orderEntry type="module" module-name="kotlin.project-wizard.cli" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" />

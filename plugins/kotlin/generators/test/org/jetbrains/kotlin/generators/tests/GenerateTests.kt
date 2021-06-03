@@ -1109,7 +1109,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("maven") {
+    testGroup("maven/tests") {
         testClass<AbstractMavenConfigureProjectByChangingFileTest> {
             model("configurator/jvm", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestWithMaven")
             model("configurator/js", pattern = DIRECTORY, isRecursive = false, testMethodName = "doTestWithJSMaven")
