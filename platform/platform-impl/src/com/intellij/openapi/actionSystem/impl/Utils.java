@@ -288,7 +288,7 @@ public final class Utils {
       final AnAction action = list.get(i);
       Presentation presentation = presentationFactory.getPresentation(action);
       if (!(action instanceof Separator) && presentation.isVisible() && StringUtil.isEmpty(presentation.getText())) {
-        String message = "Skipping empty menu item for action " + action + " of " + action.getClass();
+        String message = "Skipping empty menu item for action '" + action + "' (" + action.getClass()+")";
         if (action.getTemplatePresentation().getText() == null) {
           message += ". Please specify some default action text in plugin.xml or action constructor";
         }
