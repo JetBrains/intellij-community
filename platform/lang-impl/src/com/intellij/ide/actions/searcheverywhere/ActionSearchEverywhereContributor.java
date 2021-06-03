@@ -112,7 +112,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
       final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
       if (Registry.is("mlse.enable.ranking") /*&& TODO flag should be here */) {
-        descriptor = getMLWeightedItemDescriptor(element, this.getSearchProviderId(), myProject, pattern.length());
+        descriptor = getMLWeightedItemDescriptor(element, myProject, pattern.length());
       }
       else {
         descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
@@ -232,13 +232,12 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     });
   }
 
-  private static FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element,
-                                                                                               @NotNull String contributorId,
-                                                                                               @Nullable Project project,
-                                                                                               int patternLength) {
+  private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element,
+                                                                                        @Nullable Project project,
+                                                                                        int patternLength) {
     final SearchEverywhereSessionService service = ApplicationManager.getApplication().getService(SearchEverywhereSessionService.class);
     final double mlWeight = SearchEverywhereMLCache.getCache(service.getCurrentSessionId())
-      .getMLWeight(element, contributorId, project, "Actions", patternLength /*TODO Actions or All depending on the flag*/);
+      .getMLWeight(element, this, project, "Actions", patternLength /*TODO Actions or All depending on the flag*/);
     return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
   }
 

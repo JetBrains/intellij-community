@@ -1,10 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModel
-import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLStatisticsCollector.Companion.ML_WEIGHT_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModel
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
@@ -24,10 +25,10 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
   }
 
   @Suppress("UNCHECKED_CAST")
-  fun getMLWeight(element: Any, contributorId: String, project: Project?, seTabId: String, patternLength: Int): Double {
+  fun getMLWeight(element: Any, contributor: SearchEverywhereContributor<*>, project: Project?, seTabId: String, patternLength: Int): Double {
     val mlId = getMLId(element)
     return elementIdsToFeatures.computeIfAbsent(mlId) {
-      computeWeight(element, contributorId, project, seTabId, patternLength)
+      computeWeight(element, contributor, project, patternLength)
     }[ML_WEIGHT_KEY] as Double
   }
 
@@ -40,14 +41,19 @@ class SearchEverywhereMLCache private constructor(val seSessionId: Int) {
     return elementIds.computeIfAbsent(element) { idCounter++ }
   }
 
-  private fun computeWeight(element: Any, contributorId: String, project: Project?, seTabId: String, patternLength: Int): MutableMap<String, Any> {
+  private fun computeWeight(element: Any,
+                            contributor: SearchEverywhereContributor<*>,
+                            project: Project?,
+                            patternLength: Int): MutableMap<String, Any> {
     if (element !is GotoActionModel.MatchedValue) {
       throw NotImplementedError("Not supported for objects other than GotoActionModel.MatchedValue")
     }
 
     val features = mutableMapOf<String, Any>()
-    features.putAll(SearchEverywhereFeaturesProvider.buildCommonFeaturesMap(patternLength, seTabId, getLastTWId(project), project))
-    val itemInfo = SearchEverywhereFeaturesProvider.fillActionItemInfo(element.matchingDegree, System.nanoTime(), element, contributorId)
+    val contextFeaturesProvider = SearchEverywhereFeaturesProvider.getContextFeaturesProvider()
+    val elementFeaturesProvider = SearchEverywhereFeaturesProvider.getElementFeatureProvider()
+    features.putAll(contextFeaturesProvider.getContextFeatures(project, getLastTWId(project), patternLength))
+    val itemInfo = elementFeaturesProvider.getElementFeatures(element.matchingDegree, element, contributor, System.currentTimeMillis())
     features.putAll(itemInfo.additionalData)
 
     itemInfo.id?.let {

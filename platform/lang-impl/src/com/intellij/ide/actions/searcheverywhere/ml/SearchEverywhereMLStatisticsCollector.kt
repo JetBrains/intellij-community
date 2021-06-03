@@ -5,6 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.RebuildReason
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereLogger
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
@@ -72,13 +73,14 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                              seSessionId: Int) {
     val data = mutableMapOf<String, Any>()
     // put common data
-    data.putAll(buildContextData(seSessionId, indexes, closePopup, elements.size, symbolsTyped, backspacesTyped))
-    data.putAll(SearchEverywhereFeaturesProvider.buildCommonFeaturesMap(symbolsInQuery, tabId, myLastToolWindowId, myProject))
+    data.putAll(buildContextData(seSessionId, tabId, indexes, closePopup, elements.size, symbolsTyped, backspacesTyped))
+    data.putAll(SearchEverywhereContextFeaturesProvider.getContextFeatures(myProject, myLastToolWindowId, symbolsInQuery))
     val currentTime = System.currentTimeMillis()
-    
+
     // put data for every item
+    val elementFeatureProvider = SearchEverywhereFeaturesProvider.getElementFeatureProvider()
     data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-      SearchEverywhereFeaturesProvider.getListItemsNames(it, currentTime).toMap()
+      elementFeatureProvider.getElementFeatures(it.priority, it.element, it.contributor, currentTime).toMap()
     }
 
     SearchEverywhereLogger.log(SESSION_FINISHED, data)
@@ -90,7 +92,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                          keysTyped: Int,
                          backspacesTyped: Int,
                          textLength: Int,
-                         tabId: String, 
+                         tabId: String,
                          seSessionId: Int) {
     reportElements(indexes, closePopup, keysTyped, backspacesTyped, textLength, elementsProvider, tabId, seSessionId)
   }
@@ -103,7 +105,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                         seSessionId: Int) {
     reportElements(EMPTY, true, keysTyped, backspacesTyped, textLength, elementsProvider, tabId, seSessionId)
   }
-  
+
   fun recordListRebuilt(seSessionId: Int, tabId: String, reason: RebuildReason, elements: List<SearchEverywhereFoundElementInfo>) {
     if (isLoggingEnabled(tabId)) {
       NonUrgentExecutor.getInstance().execute {
@@ -112,8 +114,10 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data[REBUILD_REASON_KEY] = reason
         val currentTime = System.currentTimeMillis()
         data[CURRENT_TIME_KEY] = currentTime
+
+        val elementFeatureProvider = SearchEverywhereFeaturesProvider.getElementFeatureProvider()
         data[REBUILD_ELEMENTS] = elements.take(REPORTED_ITEMS_LIMIT).map {
-          SearchEverywhereFeaturesProvider.getListItemsNames(it, currentTime).toMap()
+          elementFeatureProvider.getElementFeatures(it.priority, it.element, it.contributor, currentTime).toMap()
         }
         SearchEverywhereLogger.log(LIST_REBUILT, data)
       }
@@ -122,11 +126,18 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
 
   private fun isLoggingEnabled(tabId: String): Boolean = myIsReporting && isActionOrAllTab(tabId)
 
-  fun buildContextData(seSessionId: Int, indexes: IntArray, closePopup: Boolean, size: Int, symbolsTyped: Int, backspacesTyped: Int): Map<String, Any> {
+  fun buildContextData(seSessionId: Int,
+                       tabId: String,
+                       indexes: IntArray,
+                       closePopup: Boolean,
+                       size: Int,
+                       symbolsTyped: Int,
+                       backspacesTyped: Int): Map<String, Any> {
     val data = hashMapOf<String, Any>()
     if (indexes.isNotEmpty()) {
       data[SELECTED_INDEXES_DATA_KEY] = indexes.map { it.toString() }
     }
+    data[SE_TAB_ID_KEY] = tabId
     data[SESSION_ID_LOG_DATA_KEY] = seSessionId
     data[CLOSE_POPUP_KEY] = closePopup
     data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = size
@@ -149,6 +160,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val TYPED_SYMBOL_KEYS = "typedSymbolKeys"
     private const val TYPED_BACKSPACES_DATA_KEY = "typedBackspaces"
     private const val SESSION_ID_LOG_DATA_KEY = "sessionId"
+    private const val SE_TAB_ID_KEY = "seTabId"
     private const val COLLECTED_RESULTS_DATA_KEY = "collectedItems"
     private const val REBUILD_ELEMENTS = "rebuildElements"
     private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
