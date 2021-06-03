@@ -360,29 +360,6 @@ class Stats(
     }
 
     private fun flush() {
-        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-        simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
-//        properties["buildTimestamp"] = simpleDateFormat.format(Date())
-//        properties["buildId"] = 87015694
-//        properties["buildBranch"] = "rr/perf/json-output"
-//        properties["agentName"] = "kotlin-linux-perf-unit879"
-
-        var buildId: Int? = null
-        var agentName: String? = null
-        var buildBranch: String? = null
-        var commit: String? = null
-
-        System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE")?.let { teamcityConfig ->
-            val buildProperties = Properties()
-            buildProperties.load(FileInputStream(teamcityConfig))
-
-            buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
-            agentName = buildProperties["agent.name"]?.toString()
-            buildBranch = (buildProperties["teamcity.build.branch"] ?: System.getProperty("teamcity.build.branch"))?.toString()
-            if (buildBranch == null || buildBranch == "<default>") buildBranch = "master"
-            commit = (buildProperties["build.vcs.number"] ?: System.getProperty("build.vcs.number"))?.toString()
-        }
-
         if (perfTestRawDataMs.isNotEmpty()) {
             val geomMeanMs = geomMean(perfTestRawDataMs.toList()).toLong()
             Metric(GEOM_MEAN, metricValue = geomMeanMs).writeTeamCityStats(name)
@@ -390,16 +367,11 @@ class Stats(
 
         try {
             metric?.let {
-                val benchmark = Benchmark(
-                    agentName = agentName,
-                    buildBranch = buildBranch,
-                    commit = commit,
-                    buildId = buildId,
+                val benchmark = BENCHMARK_STUB.copy(
                     benchmark = name,
                     name = it.metricName,
                     metricValue = it.metricValue,
                     metricError = it.metricError,
-                    buildTimestamp = simpleDateFormat.format(Date()),
                     metrics = it.metrics ?: emptyList()
                 )
 
@@ -420,6 +392,38 @@ class Stats(
         const val GEOM_MEAN = "geomMean"
 
         internal val extraMetricNames = setOf("", "_value", GEOM_MEAN, "mean", "stdDev")
+
+        @JvmStatic
+        private val BENCHMARK_STUB = run {
+            val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+            simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
+
+            var buildId: Int? = null
+            var agentName: String? = null
+            var buildBranch: String? = null
+            var commit: String? = null
+
+            System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE")?.let { teamcityConfig ->
+                val buildProperties = Properties()
+                buildProperties.load(FileInputStream(teamcityConfig))
+
+                buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
+                agentName = buildProperties["agent.name"]?.toString()
+                buildBranch = (buildProperties["teamcity.build.branch"] ?: System.getProperty("teamcity.build.branch"))?.toString()
+                if (buildBranch == null || buildBranch == "<default>") buildBranch = "master"
+                commit = (buildProperties["build.vcs.number"] ?: System.getProperty("build.vcs.number"))?.toString()
+            }
+
+            Benchmark(
+                agentName = agentName,
+                buildBranch = buildBranch,
+                commit = commit,
+                buildId = buildId,
+                benchmark = "",
+                buildTimestamp = simpleDateFormat.format(Date()),
+                metrics = emptyList()
+            )
+        }
 
         inline fun runAndMeasure(note: String, block: () -> Unit) {
             val openProjectMillis = measureTimeMillis {
