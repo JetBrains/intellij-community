@@ -85,7 +85,6 @@ public final class IdeEventQueue extends EventQueue {
   private static final boolean ourTypeAheadSearchEverywhereEnabled = Boolean.getBoolean("action.aware.typeAhead.searchEverywhere");
   private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
   private static TransactionGuardImpl ourTransactionGuard;
-  private static ProgressManager ourProgressManager;
   private static PerformanceWatcher ourPerformanceWatcher;
 
   /**
@@ -428,8 +427,12 @@ public final class IdeEventQueue extends EventQueue {
       Runnable runnable = extractRunnable(e);
       Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
       Runnable processEventRunnable = () -> {
+        Application application = ApplicationManager.getApplication();
+        ProgressManager progressManager = application != null && !application.isDisposed() ?
+                                          ProgressManager.getInstance() :
+                                          null;
+
         try (AccessToken ignored = startActivity(finalE1)) {
-          ProgressManager progressManager = obtainProgressManager();
           if (progressManager != null) {
             progressManager.computePrioritized(() -> {
               _dispatchEvent(myCurrentEvent);
@@ -556,17 +559,6 @@ public final class IdeEventQueue extends EventQueue {
         }
       }
     }
-  }
-
-  private static @Nullable ProgressManager obtainProgressManager() {
-    ProgressManager manager = ourProgressManager;
-    if (manager == null) {
-      Application app = ApplicationManager.getApplication();
-      if (app != null && !app.isDisposed()) {
-        ourProgressManager = manager = app.getService(ProgressManager.class);
-      }
-    }
-    return manager;
   }
 
   private static @Nullable PerformanceWatcher obtainPerformanceWatcher() {
