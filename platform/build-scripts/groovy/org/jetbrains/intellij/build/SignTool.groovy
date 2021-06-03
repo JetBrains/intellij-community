@@ -25,5 +25,5 @@ interface SignTool {
   /**
    * @param path absolute path (with '/' as a separator) to file to be signed
    */
-  void signFile(String path, BuildContext context)
+  void signFile(String path, BuildContext context, Map<String, String> options)
 }
