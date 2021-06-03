@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.configuration;
 
 import com.google.common.collect.Lists;
@@ -40,9 +40,8 @@ import com.jetbrains.python.packaging.PyPackageUtil;
 import com.jetbrains.python.packaging.PyRequirementsKt;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import com.jetbrains.python.sdk.pipenv.PipenvKt;
+import com.jetbrains.python.testing.PyTestRunConfigurationsModel;
 import com.jetbrains.python.testing.PyTestsSharedKt;
-import com.jetbrains.python.testing.PythonTestConfigurationsModel;
-import com.jetbrains.python.testing.TestRunnerService;
 import com.jetbrains.python.ui.PyUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +59,8 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
   private JPanel myMainPanel;
   private JComboBox myTestRunnerComboBox;
   private JComboBox<DocStringFormat> myDocstringFormatComboBox;
-  private PythonTestConfigurationsModel myModel;
-  private PyPackageRequirementsSettings myPackagingSettings;
+  private PyTestRunConfigurationsModel myModel;
+  private final PyPackageRequirementsSettings myPackagingSettings;
   @Nullable private final Module myModule;
   @NotNull private final Project myProject;
   private final PyDocumentationSettings myDocumentationSettings;
@@ -187,9 +186,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
   @Override
   public JComponent createComponent() {
-    List<String> configurations = TestRunnerService.getInstance(myModule).getConfigurations();
-    myModel = new PythonTestConfigurationsModel(configurations,
-                                                TestRunnerService.getInstance(myModule).getProjectConfiguration(), myModule);
+    myModel = PyTestRunConfigurationsModel.Companion.create(myModule);
 
     updateConfigurations();
     initErrorValidation();
@@ -203,7 +200,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
   @Override
   public boolean isModified() {
-    if (myTestRunnerComboBox.getSelectedItem() != myModel.getTestRunner()) {
+    if (myTestRunnerComboBox.getSelectedItem() != myModel.getTestRunnerName()) {
       return true;
     }
     if (myDocstringFormatComboBox.getSelectedItem() != myDocumentationSettings.getFormat()) {
@@ -278,7 +275,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
 
   @Override
   public void reset() {
-    myTestRunnerComboBox.setSelectedItem(myModel.getTestRunner());
+    myTestRunnerComboBox.setSelectedItem(myModel.getTestRunnerName());
     myTestRunnerComboBox.repaint();
     myModel.reset();
     myDocstringFormatComboBox.setSelectedItem(myDocumentationSettings.getFormat());

@@ -124,11 +124,6 @@ class PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
   override val onlyClassesSupported: Boolean = false
 
   override val packageRequired: String = "pytest"
-
-  /**
-   * py.test renamed to pytest long ago. See parent doc for more info
-   */
-  override val idForSettings: String = "pytest"
 }
 
 private const val PYTEST_RUN_CONFIG: String = "PYTEST_RUN_CONFIG"
