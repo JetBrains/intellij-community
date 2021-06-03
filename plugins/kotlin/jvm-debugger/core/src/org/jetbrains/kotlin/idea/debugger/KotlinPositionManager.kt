@@ -8,7 +8,7 @@ import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.engine.DebugProcessImpl
 import com.intellij.debugger.engine.DebuggerUtils.isSynthetic
-import com.intellij.debugger.engine.PositionManagerEx
+import com.intellij.debugger.engine.PositionManagerWithMultipleStackFrames
 import com.intellij.debugger.engine.evaluation.EvaluationContext
 import com.intellij.debugger.impl.DebuggerUtilsAsync
 import com.intellij.debugger.impl.DebuggerUtilsEx
@@ -18,6 +18,8 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Computable
+import com.intellij.openapi.util.Pair
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiFile
@@ -28,6 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XStackFrame
+import com.jetbrains.jdi.LocalVariableImpl
 import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
@@ -38,6 +41,7 @@ import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedLambdaName
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
+import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
 import org.jetbrains.kotlin.idea.debugger.stackFrame.KotlinStackFrame
 import org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto.isSamLambda
 import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
@@ -52,8 +56,9 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerEx() {
+class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerWithMultipleStackFrames {
     private val stackFrameInterceptor: StackFrameInterceptor = myDebugProcess.project.getServiceSafe()
 
     private val allKotlinFilesScope = object : DelegatingGlobalSearchScope(
@@ -84,11 +89,26 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
         return ThreeState.UNSURE
     }
 
-    override fun createStackFrame(frame: StackFrameProxyImpl, debugProcess: DebugProcessImpl, location: Location): XStackFrame? =
-        if (location.isInKotlinSources()) {
-            stackFrameInterceptor.createStackFrame(frame, debugProcess, location) ?: KotlinStackFrame(frame)
-        } else
-            null
+    override fun createStackFrames(frameProxy: StackFrameProxyImpl, debugProcess: DebugProcessImpl, location: Location): List<XStackFrame> {
+        if (!location.isInKotlinSources()) {
+            return emptyList()
+        }
+
+        // Don't provide inline stack trace for coroutine frames yet
+        val coroutineFrame = stackFrameInterceptor.createStackFrame(frameProxy, debugProcess, location)
+        if (coroutineFrame != null) {
+            return listOf(coroutineFrame)
+        }
+
+        if (Registry.get("debugger.kotlin.inline.stack.trace.enabled").asBoolean()) {
+            val inlineStackTrace = InlineStackTraceCalculator.calculateInlineStackTrace(frameProxy)
+            if (inlineStackTrace.isNotEmpty()) {
+                return inlineStackTrace
+            }
+        }
+
+        return listOf(KotlinStackFrame(frameProxy))
+    }
 
     override fun getSourcePosition(location: Location?): SourcePosition? {
         if (location == null) throw NoDataException.INSTANCE
@@ -441,19 +461,8 @@ private fun LocalVariable.isInlineFunctionLocalVariable(methodName: String) =
     name().substringAfter(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) != methodName
 
 private fun LocalVariable.getBorders(): Pair<Location, Location>? {
-    val scopeStart = getFieldValue<Location>("scopeStart") ?: return null
-    val scopeEnd = getFieldValue<Location>("scopeEnd") ?: return null
-    return Pair(scopeStart, scopeEnd)
-}
-
-private inline fun <reified T> Any.getFieldValue(fieldName: String): T? {
-    try {
-        val field = javaClass.declaredFields.firstOrNull { it.name == fieldName } ?: return null
-        field.isAccessible = true
-        return field.get(this) as? T
-    } catch (ex: Exception) {
-        return null
-    }
+    val variable = this.safeAs<LocalVariableImpl>() ?: return null
+    return Pair(variable.scopeStart, variable.scopeEnd)
 }
 
 inline fun <U, V> U.readAction(crossinline f: (U) -> V): V {

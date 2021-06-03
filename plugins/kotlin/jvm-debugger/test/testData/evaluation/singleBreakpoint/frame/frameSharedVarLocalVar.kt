@@ -13,6 +13,7 @@ inline fun foo(f: () -> Unit) {
 }
 
 // PRINT_FRAME
+// SHOW_KOTLIN_VARIABLES
 
 // EXPRESSION: var1
 // RESULT: 1: I

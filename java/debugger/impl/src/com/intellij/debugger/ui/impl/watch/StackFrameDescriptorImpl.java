@@ -162,6 +162,10 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     return myName;
   }
 
+  public void setName(@NotNull String name) {
+    myName = name;
+  }
+
   @Override
   protected String calcRepresentation(EvaluationContextImpl context, DescriptorLabelListener descriptorLabelListener) throws EvaluateException {
     DebuggerManagerThreadImpl.assertIsManagerThread();
@@ -175,7 +179,9 @@ public class StackFrameDescriptorImpl extends NodeDescriptorImpl implements Stac
     @NlsSafe StringBuilder label = new StringBuilder();
     Method method = myMethodOccurrence.getMethod();
     if (method != null) {
-      myName = method.name();
+      if (myName == null) {
+        myName = method.name();
+      }
       label.append(settings.SHOW_ARGUMENTS_TYPES ? DebuggerUtilsEx.methodNameWithArguments(method) : myName);
     }
     if (settings.SHOW_LINE_NUMBER) {
