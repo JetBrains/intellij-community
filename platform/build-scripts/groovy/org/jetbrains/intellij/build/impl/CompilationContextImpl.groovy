@@ -225,7 +225,9 @@ class CompilationContextImpl implements CompilationContext {
 
     suppressWarnings(project)
     exportModuleOutputProperties()
-    // FIXME shouldn't be called here
+    /**
+     * FIXME should be called lazily yet it breaks {@link org.jetbrains.intellij.build.TestingTasks#runTests}, needs investigation
+     */
     CompilationTasks.create(this).reuseCompiledClassesIfProvided()
   }
 
