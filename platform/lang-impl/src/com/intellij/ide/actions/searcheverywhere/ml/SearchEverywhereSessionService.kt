@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
+import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -23,9 +24,8 @@ internal class SearchEverywhereSessionService {
   }
 
   @Synchronized
-  fun onSessionStarted(): Int {
-    val session = SearchEverywhereMLSearchSession(sessionIdCounter.incrementAndGet())
-    return activeSession.updateAndGet { session }?.sessionId ?: 0
+  fun onSessionStarted(project: Project?) {
+    activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, sessionIdCounter.incrementAndGet()) }
   }
 
   fun onSearchRestart(tabId: String,

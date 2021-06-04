@@ -4,11 +4,16 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLPredictor
 import com.intellij.openapi.project.Project
 
-internal class SearchEverywhereMLSearchSession(val sessionId: Int, private var state: SearchEverywhereSearchState? = null) {
-  private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector(null)
-  private val cache: SearchEverywhereMLCache = SearchEverywhereMLCache(sessionId)
+internal class SearchEverywhereMLSearchSession(project: Project?,
+                                               private val sessionId: Int,
+                                               private var state: SearchEverywhereSearchState? = null) {
+  private val cache: SearchEverywhereMLCache = SearchEverywhereMLCache(project)
+  private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector(project)
+
+  private val predictor = SearchEverywhereMLPredictor()
 
   fun onSearchRestart(previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                       reason: SearchRestartReason,
@@ -21,6 +26,7 @@ internal class SearchEverywhereMLSearchSession(val sessionId: Int, private var s
       logger.onSearchRestarted(sessionId, it, previousElementsProvider)
     }
 
+    cache.clearCache()
     val searchReason = if (state == null) SearchRestartReason.SEARCH_STARTED else reason
     state = SearchEverywhereSearchState(System.currentTimeMillis(), searchReason, tabId, keysTyped, backspacesTyped, queryLength)
   }
@@ -37,7 +43,7 @@ internal class SearchEverywhereMLSearchSession(val sessionId: Int, private var s
     }
   }
 
-  fun getMLWeight(project: Project?, contributor: SearchEverywhereContributor<*>, element: Any, queryLength: Int): Double {
-    return cache.getMLWeight(element, contributor, project, queryLength)
+  fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any): Double {
+    return cache.getMLWeight(predictor, element, contributor)
   }
 }

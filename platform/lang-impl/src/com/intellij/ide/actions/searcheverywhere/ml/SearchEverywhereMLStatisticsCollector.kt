@@ -93,7 +93,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         val currentTime = System.currentTimeMillis()
         val elementFeatureProvider = SearchEverywhereFeaturesProvider.getElementFeatureProvider()
         data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-          elementFeatureProvider.getElementFeatures(it.priority, it.element, it.contributor, currentTime).toMap()
+          elementFeatureProvider.getElementFeatures(it.element, it.contributor, currentTime).toMap()
         }
 
         SearchEverywhereLogger.log(eventId, data)

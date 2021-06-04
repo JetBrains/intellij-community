@@ -6,8 +6,7 @@ import kotlin.math.round
 
 internal abstract class SearchEverywhereElementFeaturesProvider {
 
-  abstract fun getElementFeatures(priority: Int, element: Any,
-                                  contributor: SearchEverywhereContributor<*>?,
+  abstract fun getElementFeatures(element: Any, contributor: SearchEverywhereContributor<*>?,
                                   currentTime: Long): SearchEverywhereFeaturesProvider.ItemInfo
 
   protected fun withUpperBound(value: Int): Int {

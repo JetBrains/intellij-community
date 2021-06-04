@@ -166,7 +166,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     mySearchField.addKeyListener(mySearchTypingListener);
     myHintHelper = new HintHelper(mySearchField);
 
-    SearchEverywhereSessionService.getInstance().onSessionStarted();
+    SearchEverywhereSessionService.getInstance().onSessionStarted(myProject);
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, myProject));
   }
 

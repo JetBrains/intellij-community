@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache;
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereSessionService;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
@@ -112,7 +111,7 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
       final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
       if (Registry.is("mlse.enable.ranking") /*&& TODO flag should be here */) {
-        descriptor = getMLWeightedItemDescriptor(element, myProject, pattern.length());
+        descriptor = getMLWeightedItemDescriptor(element);
       }
       else {
         descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
@@ -232,12 +231,9 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     });
   }
 
-  private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element,
-                                                                                        @Nullable Project project,
-                                                                                        int patternLength) {
+  private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element) {
     //TODO: calculate ML weight only for "Actions" tab
-    final double mlWeight = SearchEverywhereSessionService.getInstance().getCurrentSession()
-      .getMLWeight(project, this, element, patternLength);
+    final double mlWeight = SearchEverywhereSessionService.getInstance().getCurrentSession().getMLWeight(this, element);
     return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
   }
 

@@ -24,8 +24,7 @@ internal object SearchEverywhereActionFeaturesProvider : SearchEverywhereElement
   private const val USERS_RATIO_DATA_KEY = "usersRatio"
   private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
 
-  override fun getElementFeatures(priority: Int,
-                                  element: Any,
+  override fun getElementFeatures(element: Any,
                                   contributor: SearchEverywhereContributor<*>?,
                                   currentTime: Long): SearchEverywhereFeaturesProvider.ItemInfo {
      val contributorId = contributor?.searchProviderId ?: "undefined"
@@ -33,7 +32,7 @@ internal object SearchEverywhereActionFeaturesProvider : SearchEverywhereElement
       // not an action/option
       return SearchEverywhereFeaturesProvider.ItemInfo(null, contributorId, emptyMap())
     }
-    return getActionsOrOptionsFeatures(priority, currentTime, element, contributorId)
+    return getActionsOrOptionsFeatures(element.matchingDegree, currentTime, element, contributorId)
   }
 
   private fun getActionsOrOptionsFeatures(priority: Int, currentTime: Long, matchedValue: GotoActionModel.MatchedValue, contributorId: String): SearchEverywhereFeaturesProvider.ItemInfo {

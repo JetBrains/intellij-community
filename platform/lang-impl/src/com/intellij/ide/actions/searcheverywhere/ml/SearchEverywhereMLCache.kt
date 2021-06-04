@@ -2,77 +2,72 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLStatisticsCollector.Companion.ML_WEIGHT_KEY
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModel
-import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider
-import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLPredictor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
-class SearchEverywhereMLCache internal constructor(val seSessionId: Int) {
-  private var idCounter = 0
+class SearchEverywhereMLCache internal constructor(project: Project?) {
+  private val startTime: Long = System.currentTimeMillis()
+  private var idCounter = AtomicInteger(1)
   private val elementIds = IdentityHashMap<Any, Int>()
-  private val elementIdsToFeatures = mutableMapOf<Int, Map<String, Any>>()
-  private val model: SearchEverywhereActionsRankingModel
-  private lateinit var lastToolwindowId: String //bound to the current session
 
-  init {
-    val provider = SearchEverywhereActionsRankingModelProvider()
-    model = SearchEverywhereActionsRankingModel(provider)
+  // context features are calculated once per Search Everywhere session
+  private val cachedContextInfo: SearchEverywhereMLFeatures by lazy { initContextInfo(project) }
+
+  // element features & ML score are re-calculated on each typing because some of them might change (e.g. matching degree)
+  private val cachedElementsInfo = mutableMapOf<Int, SearchEverywhereMLFeatures>()
+  private val cachedMLWeight = mutableMapOf<Int, Double>()
+
+  @Synchronized
+  fun getContextFeatures(): Map<String, Any> {
+    return cachedContextInfo.features
   }
 
-  @Suppress("UNCHECKED_CAST")
-  fun getMLWeight(element: Any, contributor: SearchEverywhereContributor<*>, project: Project?, patternLength: Int): Double {
-    val mlId = getMLId(element)
-    return elementIdsToFeatures.computeIfAbsent(mlId) {
-      computeWeight(element, contributor, project, patternLength)
-    }[ML_WEIGHT_KEY] as Double
+  @Synchronized
+  fun getElementFeatures(element: Any, contributor: SearchEverywhereContributor<*>): SearchEverywhereMLFeatures {
+    val id = getMLId(element)
+    return cachedElementsInfo.computeIfAbsent(id) {
+      val features = SearchEverywhereFeaturesProvider.getElementFeatureProvider().getElementFeatures(element, contributor, startTime)
+      SearchEverywhereMLFeatures(features.additionalData)
+    }
   }
 
-  fun getFeatures(element: Any): Map<String, Any>? {
-    val id = elementIds[element] ?: return null
-    return elementIdsToFeatures[id]
+  @Synchronized
+  fun getMLWeight(predictor: SearchEverywhereMLPredictor, element: Any, contributor: SearchEverywhereContributor<*>): Double {
+    val id = getMLId(element)
+    return cachedMLWeight.computeIfAbsent(id) {
+      predictor.predictMLWeight(element, contributor, this)
+    }
   }
 
-  fun getMLId(element: Any): Int {
-    return elementIds.computeIfAbsent(element) { idCounter++ }
+  private fun getMLId(element: Any): Int {
+    return elementIds.computeIfAbsent(element) { idCounter.getAndIncrement() }
   }
 
-  private fun computeWeight(element: Any,
-                            contributor: SearchEverywhereContributor<*>,
-                            project: Project?,
-                            patternLength: Int): MutableMap<String, Any> {
-    if (element !is GotoActionModel.MatchedValue) {
-      throw NotImplementedError("Not supported for objects other than GotoActionModel.MatchedValue")
+  private fun initContextInfo(project: Project?): SearchEverywhereMLFeatures {
+    val lastUsedToolwindow: String? = project?.let {
+      val twm = ToolWindowManager.getInstance(project)
+      var id: String? = null
+      ApplicationManager.getApplication().invokeAndWait {
+        id = twm.lastActiveToolWindowId
+      }
+      id
     }
 
-    val features = mutableMapOf<String, Any>()
-    val contextFeaturesProvider = SearchEverywhereFeaturesProvider.getContextFeaturesProvider()
-    val elementFeaturesProvider = SearchEverywhereFeaturesProvider.getElementFeatureProvider()
-    features.putAll(contextFeaturesProvider.getContextFeatures(project, getLastTWId(project), patternLength))
-    val itemInfo = elementFeaturesProvider.getElementFeatures(element.matchingDegree, element, contributor, System.currentTimeMillis())
-    features.putAll(itemInfo.additionalData)
-    features[ML_WEIGHT_KEY] = model.predict(features)
-    return features
+    //TODO: move query length to element features
+    val features = SearchEverywhereFeaturesProvider.getContextFeaturesProvider().getContextFeatures(project, lastUsedToolwindow, -1)
+    return SearchEverywhereMLFeatures(features)
   }
 
-  private fun getLastTWId(project: Project?): String? {
-    if (!this::lastToolwindowId.isInitialized) {
-      lastToolwindowId = if (project != null) {
-        val twm = ToolWindowManager.getInstance(project)
-        var id: String? = null
-        ApplicationManager.getApplication().invokeAndWait {
-          id = twm.lastActiveToolWindowId
-        }
-        id ?: ""
-      }
-      else {
-        ""
-      }
-    }
-    return lastToolwindowId.ifEmpty { null }
+  @Synchronized
+  fun clearCache() {
+    cachedElementsInfo.clear()
+    cachedMLWeight.clear()
   }
 }
+
+data class SearchEverywhereMLFeatures(val features: Map<String, Any>)
