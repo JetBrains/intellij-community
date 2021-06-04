@@ -72,6 +72,7 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
 
   private final LightDirectoryIndex<RootType> myIndex;
   private final MyLanguages myScratchMapping = new MyLanguages();
+  private final ConcurrentMap<String, String> myRootPaths = ConcurrentFactoryMap.createMap(ScratchFileServiceImpl::calcRootPath);
 
   private ScratchFileServiceImpl() {
     Disposer.register(this, myScratchMapping);
@@ -85,8 +86,17 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
   }
 
   @Override
-  public @NotNull String getRootPath(@NotNull RootType rootType) {
-    return getScratchesPath() + "/" + rootType.getId();
+  public @SystemIndependent @NotNull String getRootPath(@NotNull RootType rootType) {
+    return myRootPaths.get(rootType.getId());
+  }
+  
+  private static @SystemIndependent @NotNull String calcRootPath(@NotNull String rootId) {
+    String path = System.getProperty(PathManager.PROPERTY_SCRATCH_PATH + "/" + rootId);
+    if (path != null && path.length() > 2 && path.charAt(0) == '\"') {
+      path = StringUtil.unquoteString(path);
+    }
+    return path != null ? FileUtil.toSystemIndependentName(path) :
+           FileUtil.toSystemIndependentName(PathManager.getScratchPath()) + "/" + rootId;
   }
 
   @Override
@@ -161,10 +171,6 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
         }
       }
     }
-  }
-
-  static @NotNull @SystemIndependent String getScratchesPath() {
-    return FileUtil.toSystemIndependentName(PathManager.getScratchPath());
   }
 
   @Override
