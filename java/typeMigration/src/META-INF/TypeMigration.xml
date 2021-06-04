@@ -18,18 +18,22 @@
     <conversion.rule implementation="com.intellij.refactoring.typeMigration.rules.guava.IterableStreamConversionRule"/>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToAtomicIntention</className>
+      <bundleName>messages.JavaBundle</bundleName>
        <categoryKey>intention.category.concurrency</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertFieldToThreadLocalIntention</className>
+      <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.concurrency</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ChangeClassParametersIntention</className>
+      <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.declaration</categoryKey>
     </intentionAction>
     <intentionAction>
       <className>com.intellij.refactoring.typeMigration.intentions.ConvertAtomicToLongAdderIntention</className>
+      <bundleName>messages.JavaBundle</bundleName>
       <categoryKey>intention.category.concurrency</categoryKey>
     </intentionAction>
 
