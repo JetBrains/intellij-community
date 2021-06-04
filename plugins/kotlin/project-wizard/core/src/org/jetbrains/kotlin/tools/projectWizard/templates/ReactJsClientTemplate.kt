@@ -96,7 +96,7 @@ class ReactJsClientTemplate : JsClientTemplate() {
         }
 
     override fun Reader.getAdditionalSettings(module: Module): Map<String, Any> = withSettingsOf(module) {
-        mapOf("useStyledComponents" to (useStyledComponents.reference.settingValue))
+        jsSettings(module) + mapOf("useStyledComponents" to (useStyledComponents.reference.settingValue))
     }
 
     private object Dependencies {
@@ -132,9 +132,9 @@ class ReactJsClientTemplate : JsClientTemplate() {
 
         private fun wrapperDependency(artifact: String, version: Version) =
             ArtifactBasedLibraryDependencyIR(
-              MavenArtifact(Repositories.KOTLIN_JS_WRAPPERS, "org.jetbrains", artifact),
-              version,
-              DependencyType.MAIN
+                MavenArtifact(Repositories.KOTLIN_JS_WRAPPERS, "org.jetbrains.kotlin-wrappers", artifact),
+                version,
+                DependencyType.MAIN
             )
     }
 }
