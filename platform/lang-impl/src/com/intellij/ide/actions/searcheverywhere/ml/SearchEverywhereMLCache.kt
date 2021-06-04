@@ -5,18 +5,19 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLPredictor
+import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
 import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
-import java.util.*
+import com.intellij.util.containers.ObjectIntHashMap
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class SearchEverywhereMLCache internal constructor(project: Project?) {
   private val startTime: Long = System.currentTimeMillis()
   private var idCounter = AtomicInteger(1)
-  private val elementIds = IdentityHashMap<Any, Int>()
+  private val elementIds = ObjectIntHashMap<Any>()
 
   // context features are calculated once per Search Everywhere session
   private val cachedContextInfo: SearchEverywhereMLContextInfo by lazy { initContextInfo(project) }
@@ -35,7 +36,7 @@ internal class SearchEverywhereMLCache internal constructor(project: Project?) {
   }
 
   @Synchronized
-  fun getElementFeatures(element: Any,
+  fun getElementFeatures(element: GotoActionModel.MatchedValue,
                          contributor: SearchEverywhereContributor<*>,
                          state: SearchEverywhereSearchState?): SearchEverywhereMLItemInfo {
     val id = getMLId(element)
@@ -46,21 +47,27 @@ internal class SearchEverywhereMLCache internal constructor(project: Project?) {
   }
 
   @Synchronized
-  fun getMLWeightIfDefined(element: Any): Double? {
+  fun getMLWeightIfDefined(element: GotoActionModel.MatchedValue): Double? {
     val id = getMLId(element)
     return cachedMLWeight[id]
   }
 
   @Synchronized
-  fun getMLWeight(element: Any, contributor: SearchEverywhereContributor<*>, state: SearchEverywhereSearchState?): Double {
+  fun getMLWeight(element: GotoActionModel.MatchedValue, contributor: SearchEverywhereContributor<*>, state: SearchEverywhereSearchState?): Double {
     val id = getMLId(element)
     return cachedMLWeight.computeIfAbsent(id) {
       predictor.predictMLWeight(element, contributor, this, state)
     }
   }
 
-  private fun getMLId(element: Any): Int {
-    return elementIds.computeIfAbsent(element) { idCounter.getAndIncrement() }
+  private fun getMLId(element: GotoActionModel.MatchedValue): Int {
+    val key = if (element.value is GotoActionModel.ActionWrapper) element.value.action else element.value
+    var id = elementIds[key]
+    if (id < 0) {
+      id = idCounter.getAndIncrement()
+      elementIds.put(key, id)
+    }
+    return id
   }
 
   private fun initContextInfo(project: Project?): SearchEverywhereMLContextInfo {

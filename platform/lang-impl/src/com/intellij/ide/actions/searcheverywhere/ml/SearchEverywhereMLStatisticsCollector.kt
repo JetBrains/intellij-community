@@ -5,7 +5,9 @@ import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContribut
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereLogger
+import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
@@ -92,22 +94,30 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data.putAll(additional)
         data.putAll(cache.getContextFeatures().features)
 
+        val actionManager = ActionManager.getInstance()
         data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-          val itemInfo = cache.getElementFeatures(it.element, it.contributor, state)
           val result: HashMap<String, Any> = hashMapOf(
-            CONTRIBUTOR_ID_KEY to itemInfo.contributorId,
+            CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
           )
 
-          if (itemInfo.features.isNotEmpty()) {
-            result[FEATURES_DATA_KEY] = itemInfo.features
-          }
+          if (it.element is GotoActionModel.MatchedValue) {
+            val itemInfo = cache.getElementFeatures(it.element, it.contributor, state)
+            if (itemInfo.features.isNotEmpty()) {
+              result[FEATURES_DATA_KEY] = itemInfo.features
+            }
 
-          cache.getMLWeightIfDefined(it.element)?.let { score ->
-            result[ML_WEIGHT_KEY] = score
-          }
+            cache.getMLWeightIfDefined(it.element)?.let { score ->
+              result[ML_WEIGHT_KEY] = score
+            }
 
-          itemInfo.id.let { id ->
-            result[ID_KEY] = id
+            itemInfo.id.let { id ->
+              result[ID_KEY] = id
+            }
+
+            if (it.element.value is GotoActionModel.ActionWrapper) {
+              val action = it.element.value.action
+              result[ACTION_ID_KEY] = actionManager.getId(action) ?: action.javaClass.name
+            }
           }
           result
         }
@@ -139,6 +149,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
 
     // item fields
     internal const val ID_KEY = "id"
+    internal const val ACTION_ID_KEY = "actionId"
     internal const val FEATURES_DATA_KEY = "features"
     internal const val CONTRIBUTOR_ID_KEY = "contributorId"
     internal const val ML_WEIGHT_KEY = "mlWeight"
