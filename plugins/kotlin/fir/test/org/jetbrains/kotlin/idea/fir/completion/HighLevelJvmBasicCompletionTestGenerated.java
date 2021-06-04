@@ -647,7 +647,7 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
 
         @TestMetadata("SecondTypeArg.kt")
         public void testSecondTypeArg() throws Exception {
-            runTest("idea/idea-completion/testData/basic/common/SecondTypeArg.kt");
+            runTest("../completion/tests/testData/basic/common/SecondTypeArg.kt");
         }
 
         @TestMetadata("SetPrefixForProperties.kt")
@@ -3020,132 +3020,9 @@ public abstract class HighLevelJvmBasicCompletionTestGenerated extends AbstractH
         }
     }
 
-    @TestMetadata("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common")
-    @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
-    public static class CommonFir extends AbstractHighLevelJvmBasicCompletionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
+    @TestMetadata("../completion/idea-fir/testData/completion/basic/common")
+    public abstract static class CommonFir extends AbstractHighLevelJvmBasicCompletionTest {
 
-        public void testAllFilesPresentInCommonFir() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common"), Pattern.compile("^(.+)\\.kt$"), null, true);
-        }
-
-        @TestMetadata("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when")
-        @TestDataPath("$PROJECT_ROOT")
-        @RunWith(JUnit3RunnerWithInners.class)
-        public static class When extends AbstractHighLevelJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            public void testAllFilesPresentInWhen() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when"), Pattern.compile("^(.+)\\.kt$"), null, true);
-            }
-
-            @TestMetadata("enumInEmptyWhen.kt")
-            public void testEnumInEmptyWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/enumInEmptyWhen.kt");
-            }
-
-            @TestMetadata("enumInWhen.kt")
-            public void testEnumInWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/enumInWhen.kt");
-            }
-
-            @TestMetadata("enumInWhenWithOtherConditions.kt")
-            public void testEnumInWhenWithOtherConditions() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/enumInWhenWithOtherConditions.kt");
-            }
-
-            @TestMetadata("enumInWhenWithPackage.kt")
-            public void testEnumInWhenWithPackage() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/enumInWhenWithPackage.kt");
-            }
-
-            @TestMetadata("nestedSealedClassInWhen.kt")
-            public void testNestedSealedClassInWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/nestedSealedClassInWhen.kt");
-            }
-
-            @TestMetadata("nestedSealedClassInWhenWithPackage.kt")
-            public void testNestedSealedClassInWhenWithPackage() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/nestedSealedClassInWhenWithPackage.kt");
-            }
-
-            @TestMetadata("nonSealedClassInWhen.kt")
-            public void testNonSealedClassInWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/nonSealedClassInWhen.kt");
-            }
-
-            @TestMetadata("nonSealedClassWithTypeArgs.kt")
-            public void testNonSealedClassWithTypeArgs() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/nonSealedClassWithTypeArgs.kt");
-            }
-
-            @TestMetadata("nullableEnumInWhen.kt")
-            public void testNullableEnumInWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/nullableEnumInWhen.kt");
-            }
-
-            @TestMetadata("nullableSealedClassInWhen.kt")
-            public void testNullableSealedClassInWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/nullableSealedClassInWhen.kt");
-            }
-
-            @TestMetadata("sealedClassInWhen.kt")
-            public void testSealedClassInWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/sealedClassInWhen.kt");
-            }
-
-            @TestMetadata("sealedClassInWhenWithOtherConditions.kt")
-            public void testSealedClassInWhenWithOtherConditions() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/sealedClassInWhenWithOtherConditions.kt");
-            }
-
-            @TestMetadata("sealedClassWithAbstractInheritorsInWhen.kt")
-            public void testSealedClassWithAbstractInheritorsInWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/sealedClassWithAbstractInheritorsInWhen.kt");
-            }
-
-            @TestMetadata("sealedClassWithTypeArgs.kt")
-            public void testSealedClassWithTypeArgs() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/sealedClassWithTypeArgs.kt");
-            }
-
-            @TestMetadata("sealedInterfaceInWhen.kt")
-            public void testSealedInterfaceInWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/when/sealedInterfaceInWhen.kt");
-            }
-        }
-
-        @TestMetadata("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/where")
-        @TestDataPath("$PROJECT_ROOT")
-        @RunWith(JUnit3RunnerWithInners.class)
-        public static class Where extends AbstractHighLevelJvmBasicCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            public void testAllFilesPresentInWhere() throws Exception {
-                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/where"), Pattern.compile("^(.+)\\.kt$"), null, true);
-            }
-
-            @TestMetadata("noCompletionAfterDotInWhen.kt")
-            public void testNoCompletionAfterDotInWhen() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/where/noCompletionAfterDotInWhen.kt");
-            }
-
-            @TestMetadata("whereInClass.kt")
-            public void testWhereInClass() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/where/whereInClass.kt");
-            }
-
-            @TestMetadata("whereInFunction.kt")
-            public void testWhereInFunction() throws Exception {
-                runTest("idea/idea-completion/testData/../../idea-fir/testData/completion/basic/common/where/whereInFunction.kt");
-            }
-        }
     }
 }
