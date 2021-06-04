@@ -366,9 +366,10 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
   public VirtualFile findFile(@NotNull RootType rootType, @NotNull String pathName, @NotNull Option option) throws IOException {
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
+    LocalFileSystem fileSystem = LocalFileSystem.getInstance();
     String fullPath = getRootPath(rootType) + "/" + pathName;
     if (option != Option.create_new_always) {
-      VirtualFile file = LocalFileSystem.getInstance().findFileByPath(fullPath);
+      VirtualFile file = fileSystem.findFileByPath(fullPath);
       if (file != null && !file.isDirectory()) {
         return file;
       }
@@ -382,10 +383,10 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
     return WriteAction.compute(() -> {
       VirtualFile dir = VfsUtil.createDirectories(PathUtil.getParentPath(fullPath));
       if (option == Option.create_new_always) {
-        return VfsUtil.createChildSequent(LocalFileSystem.getInstance(), dir, fileName, StringUtil.notNullize(ext));
+        return dir.createChildData(fileSystem, ScratchImplUtil.getNextAvailableName(dir, fileName, StringUtil.notNullize(ext)));
       }
       else {
-        return dir.findOrCreateChildData(LocalFileSystem.getInstance(), fileNameExt);
+        return dir.findOrCreateChildData(fileSystem, fileNameExt);
       }
     });
   }
