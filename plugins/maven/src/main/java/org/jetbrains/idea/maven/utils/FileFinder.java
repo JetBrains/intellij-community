@@ -5,15 +5,17 @@ import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class FileFinder {
   public static List<VirtualFile> findPomFiles(VirtualFile[] roots,
                                                boolean lookForNested,
-                                               @NotNull MavenProgressIndicator indicator,
-                                               @NotNull List<VirtualFile> result) throws MavenProcessCanceledException {
+                                               @NotNull MavenProgressIndicator indicator) throws MavenProcessCanceledException {
+    ArrayList<VirtualFile> result = new ArrayList<>();
     // TODO locate pom files using maven embedder?
     for (VirtualFile f : roots) {
       VfsUtilCore.visitChildrenRecursively(f, new VirtualFileVisitor<Void>() {
@@ -48,7 +50,7 @@ public final class FileFinder {
         }
       }, MavenProcessCanceledException.class);
     }
-
-    return result;
+    List<VirtualFile> originalPoms = ContainerUtil.filter(result, vf -> MavenUtil.isPomFileName(vf.getName()));
+    return originalPoms.isEmpty() ? result : originalPoms;
   }
 }
