@@ -86,8 +86,8 @@ class ReactJsClientTemplate : JsClientTemplate() {
                 if (!hasKtorServNeighbourTarget) {
                     +(FileTemplateDescriptor("jsClient/index.html.vm") asResourceOf SourcesetType.main)
                 }
-                +(FileTemplateDescriptor("$id/reactClient.kt.vm", "client.kt".asPath()) asSrcOf SourcesetType.main)
-                +(FileTemplateDescriptor("$id/reactComponent.kt.vm", "welcome.kt".asPath()) asSrcOf SourcesetType.main)
+                +(FileTemplateDescriptor("$id/reactClient.kt.vm", "Client.kt".asPath()) asSrcOf SourcesetType.main)
+                +(FileTemplateDescriptor("$id/reactComponent.kt.vm", "Welcome.kt".asPath()) asSrcOf SourcesetType.main)
 
                 if (useStyledComponents.reference.settingValue) {
                     +(FileTemplateDescriptor("$id/WelcomeStyles.kt.vm") asSrcOf SourcesetType.main)
