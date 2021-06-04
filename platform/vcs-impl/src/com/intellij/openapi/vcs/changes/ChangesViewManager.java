@@ -2,7 +2,6 @@
 
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.diff.util.DiffPlaces;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
@@ -456,8 +455,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
       if (myChangeProcessor != null) Disposer.dispose(myChangeProcessor);
 
-      String place = isEditorPreview ? DiffPlaces.DEFAULT : DiffPlaces.CHANGES_VIEW;
-      myChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, place);
+      myChangeProcessor = new ChangesViewDiffPreviewProcessor(myView, isEditorPreview);
       Disposer.register(this, myChangeProcessor);
 
       myDiffPreview = isEditorPreview ? installEditorPreview(myChangeProcessor) : installSplitterPreview(myChangeProcessor);

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes
 
+import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
@@ -11,6 +12,8 @@ import com.intellij.openapi.vcs.changes.actions.diff.ShowDiffFromLocalChangesAct
 import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT
 import com.intellij.openapi.vcs.changes.ui.ChangesListView
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
+import com.intellij.ui.IdeBorderFactory
+import com.intellij.ui.SideBorder
 import com.intellij.util.ui.tree.TreeUtil
 import one.util.streamex.StreamEx
 import java.util.stream.Stream
@@ -22,10 +25,13 @@ private fun wrap(changes: Stream<Change>, unversioned: Stream<FilePath>): Stream
   )
 
 private class ChangesViewDiffPreviewProcessor(private val changesView: ChangesListView,
-                                              place : String) :
-  ChangeViewDiffRequestProcessor(changesView.project, place) {
+                                              isInEditor : Boolean) :
+  ChangeViewDiffRequestProcessor(changesView.project, if (isInEditor) DiffPlaces.DEFAULT else DiffPlaces.CHANGES_VIEW) {
 
   init {
+    if (!isInEditor) {
+      myContentPanel.border = IdeBorderFactory.createBorder(SideBorder.TOP)
+    }
     putContextUserData(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, true)
   }
 
