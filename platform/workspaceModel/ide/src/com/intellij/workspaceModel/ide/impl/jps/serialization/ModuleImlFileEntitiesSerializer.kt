@@ -307,6 +307,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
 
     val inheritedCompilerOutput = rootManagerElement.getAttributeAndDetach(INHERIT_COMPILER_OUTPUT_ATTRIBUTE)
+    val languageLevel = rootManagerElement.getAttributeAndDetach(MODULE_LANGUAGE_LEVEL_ATTRIBUTE)
     val excludeOutput = rootManagerElement.getChildAndDetach(EXCLUDE_OUTPUT_TAG) != null
     val compilerOutput = rootManagerElement.getChildAndDetach(OUTPUT_TAG)?.getAttributeValue(URL_ATTRIBUTE)
     val compilerOutputForTests = rootManagerElement.getChildAndDetach(TEST_OUTPUT_TAG)?.getAttributeValue(URL_ATTRIBUTE)
@@ -316,6 +317,7 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
       excludeOutput = excludeOutput,
       compilerOutput = compilerOutput?.let { virtualFileManager.fromUrl(it) },
       compilerOutputForTests = compilerOutputForTests?.let { virtualFileManager.fromUrl(it) },
+      languageLevelId = languageLevel,
       module = moduleEntity,
       source = entitySource
     )
@@ -489,6 +491,9 @@ internal open class ModuleImlFileEntitiesSerializer(internal val modulePath: Mod
     }
     if (javaSettings.excludeOutput) {
       rootManagerElement.addContent(Element(EXCLUDE_OUTPUT_TAG))
+    }
+    javaSettings.languageLevelId?.let {
+      rootManagerElement.setAttribute(MODULE_LANGUAGE_LEVEL_ATTRIBUTE, it)
     }
   }
 

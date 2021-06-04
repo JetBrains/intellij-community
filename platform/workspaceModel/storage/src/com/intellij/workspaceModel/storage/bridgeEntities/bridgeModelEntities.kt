@@ -147,9 +147,10 @@ class JavaModuleSettingsEntityData : WorkspaceEntityData<JavaModuleSettingsEntit
   var excludeOutput: Boolean = false
   var compilerOutput: VirtualFileUrl? = null
   var compilerOutputForTests: VirtualFileUrl? = null
+  var languageLevelId: String? = null
 
   override fun createEntity(snapshot: WorkspaceEntityStorage): JavaModuleSettingsEntity {
-    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, compilerOutput, compilerOutputForTests)
+    return JavaModuleSettingsEntity(inheritedCompilerOutput, excludeOutput, compilerOutput, compilerOutputForTests, languageLevelId)
       .also { addMetaData(it, snapshot) }
   }
 }
@@ -158,7 +159,8 @@ class JavaModuleSettingsEntity(
   val inheritedCompilerOutput: Boolean,
   val excludeOutput: Boolean,
   val compilerOutput: VirtualFileUrl?,
-  val compilerOutputForTests: VirtualFileUrl?
+  val compilerOutputForTests: VirtualFileUrl?,
+  val languageLevelId: String?
 ) : WorkspaceEntityBase() {
   val module: ModuleEntity by moduleDelegate
 

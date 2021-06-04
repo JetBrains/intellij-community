@@ -557,8 +557,6 @@
     <bundledKeymap file="NetBeans 6.5.xml"/>
     <keymapExtension implementation="com.intellij.debugger.actions.DebuggerKeymapExtension"/>
 
-    <moduleExtension implementation="com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl"/>
-
     <orderRootType implementation="com.intellij.openapi.roots.NativeLibraryOrderRootType"/>
 
     <codeUsageScopeOptimizer implementation="com.intellij.compiler.JavaCompilerReferencesCodeUsageScopeOptimizer"/>
