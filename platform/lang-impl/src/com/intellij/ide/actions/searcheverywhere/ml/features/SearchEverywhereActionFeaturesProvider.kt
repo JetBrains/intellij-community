@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereSearchState
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
@@ -29,31 +28,28 @@ internal object SearchEverywhereActionFeaturesProvider : SearchEverywhereElement
 
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,
-                                  state: SearchEverywhereSearchState?,
+                                  queryLength: Int,
                                   localSummary: ActionsLocalSummary,
                                   globalSummary: ActionsGlobalSummaryManager): Map<String, Any> {
     if (element !is GotoActionModel.MatchedValue) {
       // not an action/option
       return emptyMap()
     }
-    return getActionsOrOptionsFeatures(element.matchingDegree, currentTime, element, state, localSummary, globalSummary)
+    return getActionsOrOptionsFeatures(element.matchingDegree, currentTime, element, queryLength, localSummary, globalSummary)
   }
 
   private fun getActionsOrOptionsFeatures(priority: Int,
                                           currentTime: Long,
                                           matchedValue: GotoActionModel.MatchedValue,
-                                          state: SearchEverywhereSearchState?,
+                                          queryLength: Int,
                                           localSummary: ActionsLocalSummary?,
                                           globalSummary: ActionsGlobalSummaryManager?): Map<String, Any> {
     val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
     val data = mutableMapOf(
+      TOTAL_SYMBOLS_AMOUNT_DATA_KEY to queryLength,
       IS_ACTION_DATA_KEY to (wrapper != null),
       PRIORITY_DATA_KEY to priority
     )
-
-    if (state != null) {
-      data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = state.queryLength
-    }
 
     if (wrapper == null) {
       // item is an option (OptionDescriptor)

@@ -4,13 +4,26 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.project.Project
+import com.intellij.util.containers.ContainerUtil
+import java.util.concurrent.atomic.AtomicInteger
 
-internal class SearchEverywhereMLSearchSession(project: Project?,
-                                               private val sessionId: Int,
-                                               private var state: SearchEverywhereSearchState? = null) {
-  private val cache: SearchEverywhereMLCache = SearchEverywhereMLCache(project)
+internal class SearchEverywhereMLSearchSession(project: Project?, private val sessionId: Int) {
+  private val searchIndex = AtomicInteger(1)
+
+  private val itemIdProvider = SearchEverywhereMlItemIdProvider()
+  private val sessionStartTime: Long = System.currentTimeMillis()
+
+  // context features are calculated once per Search Everywhere session
+  private val cachedContextInfo: SearchEverywhereMLContextInfo by lazy {
+    return@lazy SearchEverywhereMLContextInfo(SearchEverywhereContextFeaturesProvider.getContextFeatures(project))
+  }
+
+  // element features & ML score are re-calculated on each typing because some of them might change (e.g. matching degree)
+  private val cachedSearchState = mutableMapOf<Int, SearchEverywhereMlSearchState>()
+
   private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector(project)
 
   fun onSearchRestart(previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
@@ -19,28 +32,49 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
                       keysTyped: Int,
                       backspacesTyped: Int,
                       queryLength: Int) {
+    val state = cachedSearchState.remove(searchIndex.get())
     state?.let {
-      logger.onSearchRestarted(sessionId, cache, it, previousElementsProvider)
+      logger.onSearchRestarted(sessionId, itemIdProvider, cachedContextInfo, it, previousElementsProvider)
     }
 
-    cache.clearCache()
+    val startTime = System.currentTimeMillis()
+    val nextSearchIndex = searchIndex.incrementAndGet()
     val searchReason = if (state == null) SearchRestartReason.SEARCH_STARTED else reason
-    state = SearchEverywhereSearchState(System.currentTimeMillis(), searchReason, tabId, keysTyped, backspacesTyped, queryLength)
+    cachedSearchState[nextSearchIndex] = SearchEverywhereMlSearchState(
+      sessionStartTime, startTime, searchReason, tabId, keysTyped, backspacesTyped, queryLength
+    )
   }
 
   fun onItemSelected(indexes: IntArray, closePopup: Boolean, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+    val state = cachedSearchState[searchIndex.get()]
     state?.let {
-      logger.onItemSelected(sessionId, cache, it, indexes, closePopup, elementsProvider)
+      logger.onItemSelected(sessionId, itemIdProvider, cachedContextInfo, it, indexes, closePopup, elementsProvider)
     }
   }
 
   fun onSearchFinished(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+    val state = cachedSearchState.remove(searchIndex.get())
     state?.let {
-      logger.onSearchFinished(sessionId, cache, it, elementsProvider)
+      logger.onSearchFinished(sessionId, itemIdProvider, cachedContextInfo, it, elementsProvider)
     }
   }
 
   fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {
-    return cache.getMLWeight(element, contributor, state)
+    val state = cachedSearchState[searchIndex.get()]
+    state?.let {
+      val id = itemIdProvider.getId(element)
+      return state.getMLWeight(id, element, contributor, cachedContextInfo)
+    }
+    return -1.0
+  }
+}
+
+class SearchEverywhereMlItemIdProvider {
+  private var idCounter = AtomicInteger(1)
+  private val itemToId = ContainerUtil.createWeakMap<Any, Int>()
+
+  fun getId(element: GotoActionModel.MatchedValue): Int {
+    val key = if (element.value is GotoActionModel.ActionWrapper) element.value.action else element.value
+    return itemToId.computeIfAbsent(key) { idCounter.getAndIncrement() }
   }
 }

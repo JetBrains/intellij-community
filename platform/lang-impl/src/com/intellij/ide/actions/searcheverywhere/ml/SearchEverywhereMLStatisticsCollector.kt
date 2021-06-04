@@ -48,8 +48,9 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
                                                          SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == tabId
 
   fun onItemSelected(seSessionId: Int,
-                     cache: SearchEverywhereMLCache,
-                     state: SearchEverywhereSearchState,
+                     elementIdProvider: SearchEverywhereMlItemIdProvider,
+                     context: SearchEverywhereMLContextInfo,
+                     cache: SearchEverywhereMlSearchState,
                      selectedIndices: IntArray,
                      closePopup: Boolean,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
@@ -57,27 +58,31 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     if (selectedIndices.isNotEmpty()) {
       data.add(SELECTED_INDEXES_DATA_KEY to selectedIndices.map { it.toString() })
     }
-    reportElements(SESSION_FINISHED, seSessionId, cache, state, data, elementsProvider)
+    reportElements(SESSION_FINISHED, seSessionId, elementIdProvider, context, cache, data, elementsProvider)
   }
 
   fun onSearchFinished(seSessionId: Int,
-                       cache: SearchEverywhereMLCache,
-                       state: SearchEverywhereSearchState,
+                       elementIdProvider: SearchEverywhereMlItemIdProvider,
+                       context: SearchEverywhereMLContextInfo,
+                       cache: SearchEverywhereMlSearchState,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(SESSION_FINISHED, seSessionId, cache, state, listOf(CLOSE_POPUP_KEY to true), elementsProvider)
+    val additional = listOf(CLOSE_POPUP_KEY to true)
+    reportElements(SESSION_FINISHED, seSessionId, elementIdProvider, context, cache, additional, elementsProvider)
   }
 
   fun onSearchRestarted(seSessionId: Int,
-                        cache: SearchEverywhereMLCache,
-                        state: SearchEverywhereSearchState,
+                        elementIdProvider: SearchEverywhereMlItemIdProvider,
+                        context: SearchEverywhereMLContextInfo,
+                        cache: SearchEverywhereMlSearchState,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(SEARCH_RESTARTED, seSessionId, cache, state, emptyList(), elementsProvider)
+    reportElements(SEARCH_RESTARTED, seSessionId, elementIdProvider, context, cache, emptyList(), elementsProvider)
   }
 
   private fun reportElements(eventId: String,
                              seSessionId: Int,
-                             cache: SearchEverywhereMLCache,
-                             state: SearchEverywhereSearchState,
+                             elementIdProvider: SearchEverywhereMlItemIdProvider,
+                             context: SearchEverywhereMLContextInfo,
+                             state: SearchEverywhereMlSearchState,
                              additional: List<Pair<String, Any>>,
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (isLoggingEnabled(state.tabId)) {
@@ -87,12 +92,12 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data[SESSION_ID_LOG_DATA_KEY] = seSessionId
         data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
         data[SE_TAB_ID_KEY] = state.tabId
-        data[SEARCH_START_TIME_KEY] = state.startTime
+        data[SEARCH_START_TIME_KEY] = state.searchStartTime
         data[TYPED_SYMBOL_KEYS] = state.keysTyped
         data[TYPED_BACKSPACES_DATA_KEY] = state.backspacesTyped
         data[REBUILD_REASON_KEY] = state.searchStartReason
         data.putAll(additional)
-        data.putAll(cache.getContextFeatures().features)
+        data.putAll(context.features)
 
         val actionManager = ActionManager.getInstance()
         data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
@@ -101,12 +106,13 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
           )
 
           if (it.element is GotoActionModel.MatchedValue) {
-            val itemInfo = cache.getElementFeatures(it.element, it.contributor, state)
+            val elementId = elementIdProvider.getId(it.element)
+            val itemInfo = state.getElementFeatures(elementId, it.element, it.contributor, state.queryLength)
             if (itemInfo.features.isNotEmpty()) {
               result[FEATURES_DATA_KEY] = itemInfo.features
             }
 
-            cache.getMLWeightIfDefined(it.element)?.let { score ->
+            state.getMLWeightIfDefined(elementId)?.let { score ->
               result[ML_WEIGHT_KEY] = score
             }
 
