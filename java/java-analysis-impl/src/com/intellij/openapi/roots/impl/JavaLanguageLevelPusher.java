@@ -5,7 +5,7 @@ import com.intellij.FileIntPropertyPusher;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -57,7 +57,7 @@ public class JavaLanguageLevelPusher implements FileIntPropertyPusher<LanguageLe
 
   @Override
   public LanguageLevel getImmediateValue(@NotNull Module module) {
-    return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+    return LanguageLevelUtil.getEffectiveLanguageLevel(module);
   }
 
   @Override

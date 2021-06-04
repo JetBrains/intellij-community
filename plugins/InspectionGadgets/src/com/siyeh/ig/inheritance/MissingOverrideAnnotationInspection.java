@@ -5,7 +5,7 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.impl.scopes.ModulesScope;
@@ -273,7 +273,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
       Map<LanguageLevel, GlobalSearchScope> result = ConcurrentFactoryMap.createMap(minimal -> {
         Set<Module> modules = StreamEx
           .of(ModuleManager.getInstance(project).getModules())
-          .filter(m -> EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(m).isAtLeast(minimal))
+          .filter(m -> LanguageLevelUtil.getEffectiveLanguageLevel(m).isAtLeast(minimal))
           .toSet();
         return modules == null ? null : new ModulesScope(modules, project);
       });

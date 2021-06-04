@@ -3,7 +3,6 @@ package com.intellij.java.configurationStore
 
 import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.application.runReadAction
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil
 import com.intellij.openapi.module.LanguageLevelUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl
@@ -37,10 +36,10 @@ class LoadJavaProjectTest {
       assertThat(foo.name).isEqualTo("foo")
       assertThat(bar.name).isEqualTo("bar")
       runReadAction {
-        assertThat(EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(bar)).isEqualTo(LanguageLevel.JDK_11)
+        assertThat(LanguageLevelUtil.getEffectiveLanguageLevel(bar)).isEqualTo(LanguageLevel.JDK_11)
         assertThat(LanguageLevelUtil.getCustomLanguageLevel(bar)).isNull()
         assertThat(LanguageLevelModuleExtensionImpl.getInstance(bar).languageLevel).isNull()
-        assertThat(EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(foo)).isEqualTo(LanguageLevel.JDK_1_8)
+        assertThat(LanguageLevelUtil.getEffectiveLanguageLevel(foo)).isEqualTo(LanguageLevel.JDK_1_8)
         assertThat(LanguageLevelUtil.getCustomLanguageLevel(foo)).isEqualTo(LanguageLevel.JDK_1_8)
         assertThat(LanguageLevelModuleExtensionImpl.getInstance(foo).languageLevel).isEqualTo(LanguageLevel.JDK_1_8)
       }

@@ -23,7 +23,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.unnecessaryModuleDependency.UnnecessaryModuleDependencyInspection;
 import com.intellij.java.analysis.JavaAnalysisBundle;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -54,12 +54,12 @@ public class InconsistentLanguageLevelInspection extends GlobalInspectionTool {
     if (refEntity instanceof RefModule) {
       Module module = ((RefModule)refEntity).getModule();
       if (module.isDisposed() || !scope.containsModule(module)) return null;
-      LanguageLevel languageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      LanguageLevel languageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
       for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
         if (!(entry instanceof ModuleOrderEntry)) continue;
         final Module dependantModule = ((ModuleOrderEntry)entry).getModule();
         if (dependantModule == null) continue;
-        LanguageLevel dependantLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(dependantModule);
+        LanguageLevel dependantLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(dependantModule);
         if (languageLevel.compareTo(dependantLanguageLevel) < 0) {
           final CommonProblemDescriptor problemDescriptor = manager.createProblemDescriptor(
             JavaAnalysisBundle

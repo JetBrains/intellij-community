@@ -15,17 +15,16 @@
  */
 package com.intellij.openapi.module;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 public class EffectiveLanguageLevelUtil {
+  /**
+   * @deprecated use {@link LanguageLevelUtil#getEffectiveLanguageLevel(Module)} directly instead
+   */
+  @Deprecated
   @NotNull
   public static LanguageLevel getEffectiveLanguageLevel(@NotNull final Module module) {
-    ApplicationManager.getApplication().assertReadAccessAllowed();
-    LanguageLevel level = LanguageLevelUtil.getCustomLanguageLevel(module);
-    if (level != null) return level;
-    return LanguageLevelProjectExtension.getInstance(module.getProject()).getLanguageLevel();
+    return LanguageLevelUtil.getEffectiveLanguageLevel(module);
   }
 }

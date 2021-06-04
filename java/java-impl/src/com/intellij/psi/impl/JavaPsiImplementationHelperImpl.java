@@ -11,7 +11,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -166,7 +166,7 @@ public class JavaPsiImplementationHelperImpl extends JavaPsiImplementationHelper
     ProjectFileIndex index = ProjectRootManager.getInstance(myProject).getFileIndex();
     Module module = index.getModuleForFile(virtualFile);
     if (module != null && index.isInSourceContent(virtualFile)) {
-      return EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+      return LanguageLevelUtil.getEffectiveLanguageLevel(module);
     }
 
     if (virtualFile instanceof LightVirtualFile) {
