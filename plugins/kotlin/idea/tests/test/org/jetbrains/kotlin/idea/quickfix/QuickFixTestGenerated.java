@@ -11192,12 +11192,12 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("augmentedAssignmentAvailable.kt")
         public void testAugmentedAssignmentAvailable() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/augmentedAssignmentAvailable.kt");
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/augmentedAssignmentAvailable.kt");
         }
 
         @TestMetadata("augmentedAssignmentNotAvailable.kt")
         public void testAugmentedAssignmentNotAvailable() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/augmentedAssignmentNotAvailable.kt");
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/augmentedAssignmentNotAvailable.kt");
         }
 
         @TestMetadata("binaryOperator.kt")
