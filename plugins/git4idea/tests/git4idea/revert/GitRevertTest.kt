@@ -150,9 +150,14 @@ class GitRevertTest : GitSingleRepoTest() {
 
     revertAutoCommit(commitToRevert)
 
-    assertWarningNotification(GitBundle.message("apply.changes.operation.performed.with.conflicts", "Revert"), """
+    val notification = assertWarningNotification(GitBundle.message("apply.changes.operation.performed.with.conflicts", "Revert"), """
       ${commitToRevert.id.toShortString()} ${commitToRevert.subject}
-      There are unresolved conflicts in the working tree. <a href='resolve'>Resolve them.<a/>""")
+      There are unresolved conflicts in the working tree.""")
+    assertEquals(2, notification.actions.size)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text"),
+                 notification.actions[0].templateText)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.abort.action.text", "Revert"),
+                 notification.actions[1].templateText)
   }
 
   fun `test revert with conflicts resolve in chain`() {

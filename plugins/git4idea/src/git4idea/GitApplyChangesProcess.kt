@@ -388,7 +388,7 @@ internal class GitApplyChangesProcess(private val project: Project,
     description += UIUtil.BR + GitBundle.message("apply.changes.unresolved.conflicts.text")
     description += getSuccessfulCommitDetailsIfAny(successfulCommits)
 
-    VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
+    val notification = VcsNotifier.IMPORTANT_ERROR_NOTIFICATION
       .createNotification(title, description, NotificationType.WARNING)
       .addAction(NotificationAction.createSimple(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text")) {
         val hash = commit.id.toShortString()
@@ -402,7 +402,7 @@ internal class GitApplyChangesProcess(private val project: Project,
           notification.expire()
         }
       })
-      .notify(project)
+    VcsNotifier.getInstance(project).notify(notification)
   }
 
   private fun notifyCommitCancelled(commit: VcsFullCommitDetails, successfulCommits: List<VcsFullCommitDetails>) {

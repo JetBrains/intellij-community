@@ -76,10 +76,15 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     if (vcsAppSettings.CREATE_CHANGELISTS_AUTOMATICALLY) {
       changeListManager.assertChangeListExists("on_master")
     }
-    assertWarningNotification(GitBundle.message("apply.changes.operation.performed.with.conflicts", "Cherry-pick"), """
+    val notification = assertWarningNotification(GitBundle.message("apply.changes.operation.performed.with.conflicts", "Cherry-pick"), """
       ${shortHash(commit)} on_master
-      There are unresolved conflicts in the working tree. <a>Resolve them.<a/>
+      There are unresolved conflicts in the working tree.
       """)
+    assertEquals(2, notification.actions.size)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.resolve.action.text"),
+                 notification.actions[0].templateText)
+    assertEquals(GitBundle.message("apply.changes.unresolved.conflicts.notification.abort.action.text", "Cherry-pick"),
+                 notification.actions[1].templateText)
   }
 
   @Test
@@ -184,7 +189,7 @@ class GitCherryPickAutoCommitTest(private val createChangelistAutomatically: Boo
     cherryPick(commit1, emptyCommit, commit3)
 
     assertLogMessages("fix #2", "fix #1")
-    assertSuccessfulNotification("Applied 2 commits from 3","""
+    assertSuccessfulNotification("Applied 2 commits from 3", """
       ${shortHash(commit1)} fix #1
       ${shortHash(commit3)} fix #2
       ${shortHash(emptyCommit)} was skipped, because all changes have already been applied.""")

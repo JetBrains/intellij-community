@@ -197,8 +197,8 @@ abstract class VcsPlatformTest : HeavyPlatformTestCase() {
     return assertSuccessfulNotification("", message)
   }
 
-  protected fun assertWarningNotification(title: String, message: String) {
-    assertHasNotification(NotificationType.WARNING, title, message, vcsNotifier.notifications)
+  protected fun assertWarningNotification(title: String, message: String): Notification {
+    return assertHasNotification(NotificationType.WARNING, title, message, vcsNotifier.notifications)
   }
 
   protected fun assertErrorNotification(title: String, message: String): Notification {
