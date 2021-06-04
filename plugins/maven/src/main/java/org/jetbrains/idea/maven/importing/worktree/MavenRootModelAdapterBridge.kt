@@ -14,7 +14,6 @@ import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.roots.ModuleRootComponentBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
-import com.intellij.workspaceModel.ide.legacyBridge.impl.java.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
@@ -156,11 +155,7 @@ class MavenRootModelAdapterBridge(private val myMavenProject: MavenProject,
   }
 
   override fun useModuleOutput(production: String, test: String) {
-    CompilerModuleExtensionBridge(module, module.entityStorage, builder).apply {
-      inheritCompilerOutputPath(false);
-      setCompilerOutputPath(toUrl(production).getUrl());
-      setCompilerOutputPathForTests(toUrl(test).getUrl());
-    }
+    TODO("not implemented")
   }
 
   override fun addModuleDependency(moduleName: String,
