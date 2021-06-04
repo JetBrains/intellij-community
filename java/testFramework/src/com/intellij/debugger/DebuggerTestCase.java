@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.JavaTestUtil;
@@ -182,7 +182,12 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
     GenericDebuggerRunnerSettings debuggerRunnerSettings = new GenericDebuggerRunnerSettings();
     debuggerRunnerSettings.LOCAL = true;
 
-    final RemoteConnection debugParameters = DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerRunnerSettings, false);
+    RemoteConnection debugParameters = new RemoteConnectionBuilder(
+      debuggerRunnerSettings.LOCAL, debuggerRunnerSettings.getTransport(), debuggerRunnerSettings.getDebugPort())
+      .project(myProject)
+      .asyncAgent(true)
+      .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
+      .create(javaParameters);
 
     ExecutionEnvironment environment = new ExecutionEnvironmentBuilder(myProject, DefaultDebugExecutor.getDebugExecutorInstance())
       .runnerSettings(debuggerRunnerSettings)
@@ -269,7 +274,14 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
       }
     };
 
-    final RemoteConnection debugParameters = DebuggerManagerImpl.createDebugParameters(javaParameters, debuggerRunnerSettings, true);
+    RemoteConnection debugParameters =
+      new RemoteConnectionBuilder(debuggerRunnerSettings.LOCAL,
+                                  debuggerRunnerSettings.getTransport(),
+                                  debuggerRunnerSettings.getDebugPort())
+        .project(myProject)
+        .checkValidity(true)
+        .asyncAgent(true)
+        .create(javaParameters);
 
     final DebuggerSession[] debuggerSession = {null};
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {

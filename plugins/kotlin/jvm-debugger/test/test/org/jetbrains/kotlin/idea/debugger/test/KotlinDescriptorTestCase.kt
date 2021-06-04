@@ -15,7 +15,6 @@ import com.intellij.execution.process.ProcessAdapter
 import com.intellij.execution.process.ProcessEvent
 import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder
-import com.intellij.execution.target.TargetEnvironmentConfiguration
 import com.intellij.execution.target.TargetEnvironmentRequest
 import com.intellij.execution.target.TargetedCommandLineBuilder
 import com.intellij.openapi.application.runWriteAction
@@ -177,7 +176,16 @@ abstract class KotlinDescriptorTestCase : DescriptorTestCase() {
             }
         }
 
-        val debugParameters = DebuggerManagerImpl.createDebugParameters(javaCommandLineState.javaParameters, debuggerRunnerSettings, true)
+        val debugParameters =
+            RemoteConnectionBuilder(
+                debuggerRunnerSettings.LOCAL,
+                debuggerRunnerSettings.getTransport(),
+                debuggerRunnerSettings.getDebugPort()
+            )
+                .checkValidity(true)
+                .asyncAgent(true)
+                .create(javaCommandLineState.javaParameters)
+
         lateinit var debuggerSession: DebuggerSession
 
         UIUtil.invokeAndWaitIfNeeded(Runnable {
