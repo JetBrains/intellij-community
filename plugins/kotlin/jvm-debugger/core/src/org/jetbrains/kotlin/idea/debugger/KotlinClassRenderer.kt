@@ -24,7 +24,7 @@ class KotlinClassRenderer : ClassRenderer() {
     init {
         setIsApplicableChecker(Function { type: Type? ->
             if (type is ReferenceType && type !is ArrayType) {
-                type.isInKotlinSourcesAsync()
+                return@Function type.isInKotlinSourcesAsync()
             }
             CompletableFuture.completedFuture(false)
         })
