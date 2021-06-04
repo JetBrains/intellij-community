@@ -134,7 +134,9 @@ class CompilationTasksImpl extends CompilationTasks {
   }
 
   private static boolean areCompiledClassesReusedOrNotProvided
-  private void reuseCompiledClassesIfProvided() {
+
+  @Override
+  void reuseCompiledClassesIfProvided() {
     synchronized (CompilationTasksImpl) {
       if (areCompiledClassesReusedOrNotProvided) {
         return

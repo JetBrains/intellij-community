@@ -225,6 +225,8 @@ class CompilationContextImpl implements CompilationContext {
 
     suppressWarnings(project)
     exportModuleOutputProperties()
+    // FIXME shouldn't be called here
+    CompilationTasks.create(this).reuseCompiledClassesIfProvided()
   }
 
   private overrideProjectOutputDirectory() {
