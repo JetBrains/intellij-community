@@ -1072,76 +1072,71 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
-    @TestMetadata("idea/testData/quickfix/nullables/unsafeInfixCall")
-    @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/nullables/unsafeInfixCall")
     public static class UnsafeInfixCall extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        public void testAllFilesPresentInUnsafeInfixCall() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/quickfix/nullables/unsafeInfixCall"), Pattern.compile("^([\\w\\-_]+)\\.kt$"), null, true);
-        }
-
         @TestMetadata("noComparison.kt")
         public void testNoComparison() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/noComparison.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/noComparison.kt");
         }
 
         @TestMetadata("unsafeComparisonInCondition.kt")
         public void testUnsafeComparisonInCondition() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeComparisonInCondition.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeComparisonInCondition.kt");
         }
 
         @TestMetadata("unsafeComparisonInLogic.kt")
         public void testUnsafeComparisonInLogic() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeComparisonInLogic.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeComparisonInLogic.kt");
         }
 
         @TestMetadata("unsafeComparisonInWhen.kt")
         public void testUnsafeComparisonInWhen() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeComparisonInWhen.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeComparisonInWhen.kt");
         }
 
         @TestMetadata("unsafeComparisonInWhile.kt")
         public void testUnsafeComparisonInWhile() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeComparisonInWhile.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeComparisonInWhile.kt");
         }
 
         @TestMetadata("unsafeGet.kt")
         public void testUnsafeGet() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeGet.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeGet.kt");
         }
 
         @TestMetadata("unsafeInfixCall.kt")
         public void testUnsafeInfixCall() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeInfixCall.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeInfixCall.kt");
         }
 
         @TestMetadata("unsafeInvoke.kt")
         public void testUnsafeInvoke() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeInvoke.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeInvoke.kt");
         }
 
         @TestMetadata("unsafeInvokeWithImplicitReceiver.kt")
         public void testUnsafeInvokeWithImplicitReceiver() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeInvokeWithImplicitReceiver.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeInvokeWithImplicitReceiver.kt");
         }
 
         @TestMetadata("unsafeInvokeWithReceiver.kt")
         public void testUnsafeInvokeWithReceiver() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeInvokeWithReceiver.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeInvokeWithReceiver.kt");
         }
 
         @TestMetadata("unsafePlus.kt")
         public void testUnsafePlus() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafePlus.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafePlus.kt");
         }
 
         @TestMetadata("unsafeSet.kt")
         public void testUnsafeSet() throws Exception {
-            runTest("idea/testData/quickfix/nullables/unsafeInfixCall/unsafeSet.kt");
+            runTest("../idea/tests/testData/quickfix/nullables/unsafeInfixCall/unsafeSet.kt");
         }
     }
 
@@ -1253,76 +1248,71 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
         }
     }
 
-    @TestMetadata("idea/testData/quickfix/replaceInfixOrOperatorCall")
-    @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall")
     public static class ReplaceInfixOrOperatorCall extends AbstractHighLevelQuickFixTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        public void testAllFilesPresentInReplaceInfixOrOperatorCall() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/quickfix/replaceInfixOrOperatorCall"), Pattern.compile("^([\\w\\-_]+)\\.kt$"), null, true);
-        }
-
         @TestMetadata("array.kt")
         public void testArray() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/array.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/array.kt");
         }
 
         @TestMetadata("arraySet.kt")
         public void testArraySet() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/arraySet.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/arraySet.kt");
         }
 
         @TestMetadata("assignmentArray.kt")
         public void testAssignmentArray() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/assignmentArray.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/assignmentArray.kt");
         }
 
         @TestMetadata("assignmentBinaryOperator.kt")
         public void testAssignmentBinaryOperator() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/assignmentBinaryOperator.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/assignmentBinaryOperator.kt");
         }
 
         @TestMetadata("assignmentCallExpression.kt")
         public void testAssignmentCallExpression() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/assignmentCallExpression.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/assignmentCallExpression.kt");
         }
 
         @TestMetadata("assignmentList.kt")
         public void testAssignmentList() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/assignmentList.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/assignmentList.kt");
         }
 
         @TestMetadata("augmentedAssignmentAvailable.kt")
         public void testAugmentedAssignmentAvailable() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/augmentedAssignmentAvailable.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/augmentedAssignmentAvailable.kt");
         }
 
         @TestMetadata("augmentedAssignmentNotAvailable.kt")
         public void testAugmentedAssignmentNotAvailable() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/augmentedAssignmentNotAvailable.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/augmentedAssignmentNotAvailable.kt");
         }
 
         @TestMetadata("binaryOperator.kt")
         public void testBinaryOperator() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/binaryOperator.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/binaryOperator.kt");
         }
 
         @TestMetadata("callExpression.kt")
         public void testCallExpression() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/callExpression.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/callExpression.kt");
         }
 
         @TestMetadata("hasElvis.kt")
         public void testHasElvis() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/hasElvis.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/hasElvis.kt");
         }
 
         @TestMetadata("list.kt")
         public void testList() throws Exception {
-            runTest("idea/testData/quickfix/replaceInfixOrOperatorCall/list.kt");
+            runTest("../idea/tests/testData/quickfix/replaceInfixOrOperatorCall/list.kt");
         }
     }
 
