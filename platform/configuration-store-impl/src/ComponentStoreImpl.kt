@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
@@ -715,15 +715,4 @@ internal suspend inline fun <T> withEdtContext(disposable: ComponentManager?, cr
 
 private fun getComponentName(component: Any): String {
   return if (component is NamedComponent) component.componentName else component.javaClass.name
-}
-
-internal fun getOsDependentStorage(storagePathSpec: String) = getOsFolderName() + "/" + storagePathSpec
-
-fun getOsFolderName() = when {
-  SystemInfo.isMac -> "mac"
-  SystemInfo.isWindows -> "windows"
-  SystemInfo.isLinux -> "linux"
-  SystemInfo.isFreeBSD -> "freebsd"
-  SystemInfo.isUnix -> "unix"
-  else -> "other_os"
 }
