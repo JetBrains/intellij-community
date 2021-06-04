@@ -152,6 +152,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       // no reasonable directory -> create new temp one or use parent
       if (baseDirCandidate == null) {
         LOG.info("No project directory found")
+        if (LightEditUtil.isLightEditEnabled()) {
+          val lightEditProject = LightEditUtil.openFile(file)
+          if (lightEditProject != null) {
+            return lightEditProject
+          }
+        }
         if (Registry.`is`("ide.open.file.in.temp.project.dir")) {
           return createTempProjectAndOpenFile(file, options)
         }
