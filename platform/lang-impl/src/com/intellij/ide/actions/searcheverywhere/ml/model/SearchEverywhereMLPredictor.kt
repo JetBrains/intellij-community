@@ -5,7 +5,7 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLCache
 import com.intellij.ide.util.gotoByName.GotoActionModel
 
-class SearchEverywhereMLPredictor {
+internal class SearchEverywhereMLPredictor {
   private val model: SearchEverywhereActionsRankingModel
 
   init {

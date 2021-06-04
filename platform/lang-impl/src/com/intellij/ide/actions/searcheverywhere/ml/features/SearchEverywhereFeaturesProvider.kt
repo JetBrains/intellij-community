@@ -9,10 +9,6 @@ internal object SearchEverywhereFeaturesProvider {
   val localSummary: ActionsLocalSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
   val globalSummary: ActionsGlobalSummaryManager = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
 
-  internal const val ADDITIONAL_DATA_KEY = "additionalData"
-  internal const val CONTRIBUTOR_ID_KEY = "contributorId"
-  internal const val ACTION_ID_KEY = "id"
-
   internal fun getElementFeatureProvider(): SearchEverywhereElementFeaturesProvider {
     return SearchEverywhereActionFeaturesProvider
   }
@@ -21,18 +17,6 @@ internal object SearchEverywhereFeaturesProvider {
     return SearchEverywhereContextFeaturesProvider
   }
 
-  data class ItemInfo(val id: String?, val contributorId: String, val additionalData: Map<String, Any>) {
-    fun toMap(): Map<String, Any> {
-      val result: HashMap<String, Any> = hashMapOf(
-        CONTRIBUTOR_ID_KEY to contributorId
-      )
-      if (additionalData.isNotEmpty()) {
-        result[ADDITIONAL_DATA_KEY] = additionalData
-      }
-      id?.let {
-        result += ACTION_ID_KEY to it
-      }
-      return result
-    }
-  }
+  data class ItemInfo(val id: String?, val contributorId: String, val features: Map<String, Any>)
+  data class ContextInfo(val features: Map<String, Any>)
 }

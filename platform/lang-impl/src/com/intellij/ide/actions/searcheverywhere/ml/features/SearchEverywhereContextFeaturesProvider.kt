@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 
-object SearchEverywhereContextFeaturesProvider {
+internal object SearchEverywhereContextFeaturesProvider {
   private const val TOTAL_SYMBOLS_AMOUNT_DATA_KEY = "totalSymbolsAmount"
   private const val LOCAL_MAX_USAGE_COUNT_KEY = "maxUsage"
   private const val LOCAL_MIN_USAGE_COUNT_KEY = "minUsage"
@@ -16,7 +16,7 @@ object SearchEverywhereContextFeaturesProvider {
   private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
   private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
 
-  fun getContextFeatures(project: Project?, lastToolwindowId: String?, symbolsInQuery: Int): Map<String, Any> {
+  fun getContextFeatures(project: Project?, lastToolwindowId: String?, symbolsInQuery: Int): SearchEverywhereFeaturesProvider.ContextInfo {
     val data = hashMapOf<String, Any>()
     data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = symbolsInQuery
 
@@ -37,6 +37,6 @@ object SearchEverywhereContextFeaturesProvider {
       val fem = FileEditorManager.getInstance(it)
       data[OPEN_FILE_TYPES_KEY] = fem.openFiles.map { file -> file.fileType.name }.distinct()
     }
-    return data
+    return SearchEverywhereFeaturesProvider.ContextInfo(data)
   }
 }

@@ -4,8 +4,6 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereLogger
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.application.ApplicationManager
@@ -47,32 +45,36 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
   private fun isActionOrAllTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId ||
                                                          SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == tabId
 
-  fun onItemSelected(selectedIndices: IntArray,
-                     closePopup: Boolean,
-                     elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+  fun onItemSelected(seSessionId: Int,
+                     cache: SearchEverywhereMLCache,
                      state: SearchEverywhereSearchState,
-                     seSessionId: Int) {
+                     selectedIndices: IntArray,
+                     closePopup: Boolean,
+                     elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val data = arrayListOf<Pair<String, Any>>(CLOSE_POPUP_KEY to closePopup)
     if (selectedIndices.isNotEmpty()) {
       data.add(SELECTED_INDEXES_DATA_KEY to selectedIndices.map { it.toString() })
     }
-    reportElements(SESSION_FINISHED, seSessionId, state, data, elementsProvider)
+    reportElements(SESSION_FINISHED, seSessionId, cache, state, data, elementsProvider)
   }
 
-  fun onSearchFinished(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+  fun onSearchFinished(seSessionId: Int,
+                       cache: SearchEverywhereMLCache,
                        state: SearchEverywhereSearchState,
-                       seSessionId: Int) {
-    reportElements(SESSION_FINISHED, seSessionId, state, listOf(CLOSE_POPUP_KEY to true), elementsProvider)
+                       elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+    reportElements(SESSION_FINISHED, seSessionId, cache, state, listOf(CLOSE_POPUP_KEY to true), elementsProvider)
   }
 
   fun onSearchRestarted(seSessionId: Int,
+                        cache: SearchEverywhereMLCache,
                         state: SearchEverywhereSearchState,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(SEARCH_RESTARTED, seSessionId, state, emptyList(), elementsProvider)
+    reportElements(SEARCH_RESTARTED, seSessionId, cache, state, emptyList(), elementsProvider)
   }
 
   private fun reportElements(eventId: String,
                              seSessionId: Int,
+                             cache: SearchEverywhereMLCache,
                              state: SearchEverywhereSearchState,
                              additional: List<Pair<String, Any>>,
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
@@ -88,12 +90,26 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data[TYPED_BACKSPACES_DATA_KEY] = state.backspacesTyped
         data[REBUILD_REASON_KEY] = state.searchStartReason
         data.putAll(additional)
-        data.putAll(SearchEverywhereContextFeaturesProvider.getContextFeatures(myProject, myLastToolWindowId, state.queryLength))
+        data.putAll(cache.getContextFeatures())
 
-        val currentTime = System.currentTimeMillis()
-        val elementFeatureProvider = SearchEverywhereFeaturesProvider.getElementFeatureProvider()
         data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-          elementFeatureProvider.getElementFeatures(it.element, it.contributor, currentTime).toMap()
+          val itemInfo = cache.getElementFeatures(it.element, it.contributor)
+          val result: HashMap<String, Any> = hashMapOf(
+            CONTRIBUTOR_ID_KEY to itemInfo.contributorId,
+          )
+
+          if (itemInfo.features.isNotEmpty()) {
+            result[FEATURES_DATA_KEY] = itemInfo.features
+          }
+
+          cache.getMLWeightIfDefined(it.element)?.let { score ->
+            result[ML_WEIGHT_KEY] = score
+          }
+
+          itemInfo.id?.let { id ->
+            result[ACTION_ID_KEY] = id
+          }
+          result
         }
 
         SearchEverywhereLogger.log(eventId, data)
@@ -122,6 +138,9 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
 
     // item fields
+    internal const val ACTION_ID_KEY = "id"
+    internal const val FEATURES_DATA_KEY = "features"
+    internal const val CONTRIBUTOR_ID_KEY = "contributorId"
     internal const val ML_WEIGHT_KEY = "mlWeight"
   }
 }

@@ -13,8 +13,6 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
   private val cache: SearchEverywhereMLCache = SearchEverywhereMLCache(project)
   private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector(project)
 
-  private val predictor = SearchEverywhereMLPredictor()
-
   fun onSearchRestart(previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                       reason: SearchRestartReason,
                       tabId: String,
@@ -22,8 +20,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
                       backspacesTyped: Int,
                       queryLength: Int) {
     state?.let {
-      //TODO: load features from cache if they are already calculated
-      logger.onSearchRestarted(sessionId, it, previousElementsProvider)
+      logger.onSearchRestarted(sessionId, cache, it, previousElementsProvider)
     }
 
     cache.clearCache()
@@ -33,17 +30,17 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
 
   fun onItemSelected(indexes: IntArray, closePopup: Boolean, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     state?.let {
-      logger.onItemSelected(indexes, closePopup, elementsProvider, it, sessionId)
+      logger.onItemSelected(sessionId, cache, it, indexes, closePopup, elementsProvider)
     }
   }
 
   fun onSearchFinished(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     state?.let {
-      logger.onSearchFinished(elementsProvider, it, sessionId)
+      logger.onSearchFinished(sessionId, cache, it, elementsProvider)
     }
   }
 
   fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any): Double {
-    return cache.getMLWeight(predictor, element, contributor)
+    return cache.getMLWeight(element, contributor)
   }
 }

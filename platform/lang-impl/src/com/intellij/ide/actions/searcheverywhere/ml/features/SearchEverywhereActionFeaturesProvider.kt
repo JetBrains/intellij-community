@@ -35,7 +35,10 @@ internal object SearchEverywhereActionFeaturesProvider : SearchEverywhereElement
     return getActionsOrOptionsFeatures(element.matchingDegree, currentTime, element, contributorId)
   }
 
-  private fun getActionsOrOptionsFeatures(priority: Int, currentTime: Long, matchedValue: GotoActionModel.MatchedValue, contributorId: String): SearchEverywhereFeaturesProvider.ItemInfo {
+  private fun getActionsOrOptionsFeatures(priority: Int,
+                                          currentTime: Long,
+                                          matchedValue: GotoActionModel.MatchedValue,
+                                          contributorId: String): SearchEverywhereFeaturesProvider.ItemInfo {
     val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
     val data = mutableMapOf(
       IS_ACTION_DATA_KEY to (wrapper != null),
