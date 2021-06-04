@@ -331,8 +331,9 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
     collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), myTree);
     group.add(collapseAllAction);
 
-    panel.add(ActionManager.getInstance().createActionToolbar("MemberChooser", group, true).getComponent(),
-              BorderLayout.NORTH);
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("MemberChooser", group, true);
+    toolbar.setTargetComponent(myTree);
+    panel.add(toolbar.getComponent(), BorderLayout.NORTH);
 
     // Tree
     expandFirst();
