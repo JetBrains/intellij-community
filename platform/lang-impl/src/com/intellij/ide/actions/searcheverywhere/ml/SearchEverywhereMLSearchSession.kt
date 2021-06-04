@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
-import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.ide.actions.searcheverywhere.*
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.openapi.project.Project
@@ -81,12 +79,14 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 
   fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: GotoActionModel.MatchedValue): Double {
     val state = cachedSearchState[searchIndex.get()]
-    state?.let {
+    if (state != null && isActionsTab(state.tabId)) {
       val id = itemIdProvider.getId(element)
       return state.getMLWeight(id, element, contributor, cachedContextInfo)
     }
     return -1.0
   }
+
+  private fun isActionsTab(tabId: String) = ActionSearchEverywhereContributor::class.java.simpleName == tabId
 }
 
 class SearchEverywhereMlItemIdProvider {
