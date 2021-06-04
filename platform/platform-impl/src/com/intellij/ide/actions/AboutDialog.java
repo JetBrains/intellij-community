@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.HyperlinkAdapter;
@@ -47,8 +48,7 @@ public class AboutDialog extends DialogWrapper {
     super(project, false);
     String appName = ApplicationNamesInfo.getInstance().getFullProductName();
     setResizable(false);
-    //noinspection HardCodedStringLiteral
-    setTitle("About " + appName);
+    setTitle(IdeBundle.message("about.popup.about.app", appName));
 
     init();
   }
@@ -59,8 +59,8 @@ public class AboutDialog extends DialogWrapper {
     Box box = getText();
     JLabel icon = new JLabel(appIcon);
     icon.setVerticalAlignment(SwingConstants.TOP);
-    icon.setBorder(JBUI.Borders.empty(20, 12, 0, 40));
-    box.setBorder(JBUI.Borders.emptyRight(20));
+    icon.setBorder(JBUI.Borders.empty(20, 12, 0, 24));
+    box.setBorder(JBUI.Borders.empty(20,0,0,20));
 
     return JBUI.Panels.simplePanel()
       .addToLeft(icon)
@@ -87,19 +87,18 @@ public class AboutDialog extends DialogWrapper {
   }
 
   private String getExtendedAboutText() {
-    return StringUtil.join(myInfo, "\n") + AboutPopup.getExtraInfo();
+    return StringUtil.join(myInfo, "\n") + "\n" + AboutPopup.getExtraInfo();
   }
 
   @NonNls
   private Box getText() {
-    Box html = Box.createVerticalBox();
+    Box lines = Box.createVerticalBox();
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
     String appName = appInfo.getFullApplicationName(); //NON-NLS
     String edition = ApplicationNamesInfo.getInstance().getEditionName();
     if (edition != null) appName += " (" + edition + ")";
-    html.add(new JBLabel(appName).withFont(JBFont.h3().asBold()));
-    myInfo.add(appName);
-    html.add(Box.createVerticalStrut(20));
+    addLine(lines, appName, JBFont.h3().asBold());
+    lines.add(Box.createVerticalStrut(10));
 
     String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
     Date timestamp = appInfo.getBuildDate().getTime();
@@ -109,39 +108,32 @@ public class AboutDialog extends DialogWrapper {
     else {
       buildInfo += IdeBundle.message("about.box.build.date", DateFormatUtil.formatAboutDialogDate(timestamp));
     }
-    html.add(new JBLabel(buildInfo));
-    html.add(Box.createVerticalStrut(20));
-    myInfo.add(buildInfo);
+    addLine(lines, buildInfo);
+    addEmptyLine(lines);
 
     LicensingFacade la = LicensingFacade.getInstance();
     if (la != null) {
       final String licensedTo = la.getLicensedToMessage(); //NON-NLS
       if (licensedTo != null) {
-        html.add(new JBLabel(licensedTo).withFont(JBFont.regular().asBold()));
-        myInfo.add(licensedTo);
+        addLine(lines, licensedTo, getDefaultTextFont().asBold());
       }
-      for (String message : la.getLicenseRestrictionsMessages()) {
-        html.add(new JBLabel(message)); //NON-NLS
-        myInfo.add(message);
-      }
-    }
 
-    html.add(Box.createVerticalStrut(20));
+      la.getLicenseRestrictionsMessages()
+        .forEach(text -> addLine(lines, text)); //NON-NLS
+    }
+    addEmptyLine(lines);
 
     Properties properties = System.getProperties();
     String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
     String arch = properties.getProperty("os.arch", "");
     String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch);
-    html.add(new JBLabel(jreInfo));
-    myInfo.add(jreInfo);
+    addLine(lines, jreInfo);
 
     String vmVersion = properties.getProperty("java.vm.name", "unknown");
     String vmVendor = properties.getProperty("java.vendor", "unknown");
     String vmVendorInfo = IdeBundle.message("about.box.vm", vmVersion, vmVendor);
-    html.add(new JBLabel(vmVendorInfo));
-    myInfo.add(vmVendorInfo);
-
-    html.add(Box.createVerticalStrut(20));
+    addLine(lines, vmVendorInfo);
+    addEmptyLine(lines);
 
     HyperlinkLabel openSourceSoftware = new HyperlinkLabel();
     //noinspection DialogTitleCapitalization
@@ -152,15 +144,43 @@ public class AboutDialog extends DialogWrapper {
         AboutPopup.showOpenSoftwareSources(ObjectUtils.notNull(AboutPopup.loadThirdPartyLibraries(), ""));
       }
     });
-    JBLabel poweredBy = new JBLabel(IdeBundle.message("about.box.powered.by") + " ");
+    openSourceSoftware.setFont(getDefaultTextFont());
+    JBLabel poweredBy = new JBLabel(IdeBundle.message("about.box.powered.by") + " ").withFont(getDefaultTextFont());
     BorderLayoutPanel panel = JBUI.Panels.simplePanel(openSourceSoftware).addToLeft(poweredBy);
     panel.setAlignmentX(Component.LEFT_ALIGNMENT);
-    html.add(panel);
+    lines.add(panel);
 
-    html.add(new JBLabel(AboutPopup.getCopyrightText()));
-    html.add(Box.createVerticalStrut(20));
-    html.add(Box.createVerticalStrut(20));
+    addLineWithoutLog(lines, AboutPopup.getCopyrightText());
+    addEmptyLine(lines);
 
-    return html;
+    return lines;
+  }
+
+  private static JBFont getDefaultTextFont() {
+    return JBFont.medium();
+  }
+
+  private static void addEmptyLine(Box box) {
+    box.add(Box.createVerticalStrut(18));
+  }
+
+  private void addLine(JComponent panel, @NlsContexts.Label String text, JBFont font) {
+    addLine(panel, text, font, true);
+  }
+  private void addLine(JComponent panel, @NlsContexts.Label String text, JBFont font, boolean log) {
+    JBLabel label = new JBLabel(text).withFont(font);
+    panel.add(label);
+
+    if (log) {
+      myInfo.add(text);
+    }
+  }
+
+  private void addLineWithoutLog(JComponent panel, @NlsContexts.Label String text) {
+    addLine(panel, text, getDefaultTextFont(), false);
+  }
+
+  private void addLine(JComponent panel, @NlsContexts.Label String text) {
+    addLine(panel, text, getDefaultTextFont());
   }
 }
