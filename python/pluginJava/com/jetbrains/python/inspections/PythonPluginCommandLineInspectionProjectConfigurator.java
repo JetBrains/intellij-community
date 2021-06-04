@@ -4,13 +4,16 @@ package com.jetbrains.python.inspections;
 import com.intellij.facet.FacetManager;
 import com.intellij.ide.CommandLineInspectionProgressReporter;
 import com.intellij.ide.CommandLineInspectionProjectConfigurator;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.psi.search.FileTypeIndex;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.facet.PythonFacet;
 import com.jetbrains.python.facet.PythonFacetType;
 import com.jetbrains.python.sdk.PyDetectedSdk;
@@ -115,6 +118,14 @@ public class PythonPluginCommandLineInspectionProjectConfigurator implements Com
 
     final PythonFacetType facetType = PythonFacetType.getInstance();
     for (Module m : ModuleManager.getInstance(project).getModules()) {
+      if (ReadAction.compute(() -> !FileTypeIndex.containsFileOfType(PythonFileType.INSTANCE, m.getModuleContentScope()))) {
+        logger.reportMessage(
+          3,
+          "Skipping Python interpreter configuration for " + m.getName() + " because the module doesn't contain any Python files"
+        );
+        continue;
+      }
+
       final FacetManager facetManager = FacetManager.getInstance(m);
 
       final var facet = facetManager.getFacetByType(facetType.getId());
