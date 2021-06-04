@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import java.util.concurrent.CompletableFuture
-import java.util.concurrent.CompletableFuture.completedFuture
 
 fun Location.isInKotlinSources(): Boolean {
     return declaringType().isInKotlinSources()
@@ -44,12 +43,7 @@ fun ReferenceType.isInKotlinSourcesAsync(): CompletableFuture<Boolean> {
             val fileExtension = it?.substringAfterLast('.')?.toLowerCase() ?: ""
             fileExtension in KotlinFileTypeFactoryUtils.KOTLIN_EXTENSIONS
         }
-        .thenCompose {
-            if (it) {
-                return@thenCompose completedFuture(true)
-            }
-            containsKotlinStrataAsync()
-        }
+        .thenCombine(containsKotlinStrataAsync()) { kotlinExt, kotlinStrata -> kotlinExt || kotlinStrata }
 }
 
 fun ReferenceType.containsKotlinStrata() = availableStrata().contains(KOTLIN_STRATA_NAME)
