@@ -266,7 +266,8 @@ private const val DEFAULT_PATH = ""
  * Target depends on target type. It could be path to file/folder or python target
  */
 data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target") override var target: String,
-                               @ConfigField("runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
+                               @ConfigField(
+                                 "runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -650,6 +651,10 @@ abstract class PyAbstractTestConfiguration(project: Project,
 abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
   PythonTestConfigurationType.getInstance()) {
   abstract override fun createTemplateConfiguration(project: Project): CONF_T
+
+  // Several insances of the same class point to the same factory
+  override fun equals(other: Any?): Boolean = ((other as? PyAbstractTestFactory<*>))?.id == id
+  override fun hashCode(): Int = id.hashCode()
 
   /**
    * Only UnitTest inheritors are supported
