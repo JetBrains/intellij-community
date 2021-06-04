@@ -69,21 +69,3 @@ abstract class AbstractTestWithCoreEnvironment : TestCase() {
         myEnvironment = null
     }
 }
-
-private fun String.trimTrailingWhitespacesAndAddNewlineAtEOF(): String = this.split('\n')
-    .joinToString(separator = "\n", transform = String::trimEnd).let { result ->
-        if (result.endsWith("\n")) result else result + "\n"
-    }
-
-fun assertEqualsToFile(description: String, expected: File, actual: String) {
-    if (!expected.exists()) {
-        expected.writeText(actual)
-        TestCase.fail("File didn't exist. New file was created (${expected.canonicalPath}).")
-    }
-
-    val expectedText = StringUtil.convertLineSeparators(expected.readText().trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
-    val actualText = StringUtil.convertLineSeparators(actual.trim()).trimTrailingWhitespacesAndAddNewlineAtEOF()
-    if (expectedText != actualText) {
-        throw FileComparisonFailure(description, expectedText, actualText, expected.absolutePath)
-    }
-}

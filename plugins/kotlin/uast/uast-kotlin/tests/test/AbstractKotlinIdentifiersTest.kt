@@ -3,8 +3,8 @@ package org.jetbrains.uast.test.kotlin
 
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.IdentifiersTestBase
-import org.jetbrains.uast.test.common.kotlin.asRefNames
 import com.intellij.testFramework.assertEqualsToFile
+import org.jetbrains.uast.test.common.asRefNames
 import java.io.File
 
 abstract class AbstractKotlinIdentifiersTest : AbstractKotlinUastTest(), IdentifiersTestBase {
