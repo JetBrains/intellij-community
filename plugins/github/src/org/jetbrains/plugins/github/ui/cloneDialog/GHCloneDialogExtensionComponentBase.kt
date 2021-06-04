@@ -5,9 +5,9 @@ import com.intellij.collaboration.auth.AccountsListener
 import com.intellij.collaboration.messages.CollaborationToolsBundle
 import com.intellij.collaboration.ui.CollaborationToolsUIUtil
 import com.intellij.dvcs.repo.ClonePathProvider
+import com.intellij.dvcs.ui.FilePathDocumentChildPathHandle
 import com.intellij.dvcs.ui.CloneDvcsValidationUtils
 import com.intellij.dvcs.ui.DvcsBundle.message
-import com.intellij.dvcs.ui.SelectChildTextFieldWithBrowseButton
 import com.intellij.icons.AllIcons
 import com.intellij.ide.BrowserUtil
 import com.intellij.openapi.actionSystem.IdeActions
@@ -21,6 +21,7 @@ import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
@@ -106,8 +107,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
   }
 
   private val searchField: SearchTextField
-  private val directoryField = SelectChildTextFieldWithBrowseButton(
-    ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance())).apply {
+  private val directoryField = TextFieldWithBrowseButton().apply {
     val fcd = FileChooserDescriptorFactory.createSingleFolderDescriptor()
     fcd.isShowFileSystemRoots = true
     fcd.isHideIgnored = false
@@ -116,6 +116,8 @@ internal abstract class GHCloneDialogExtensionComponentBase(
                             project,
                             fcd)
   }
+  private val cloneDirectoryChildHandle = FilePathDocumentChildPathHandle
+    .install(directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, GitRememberedInputs.getInstance()))
 
   // state
   private val userDetailsByAccount = hashMapOf<GithubAccount, GithubAuthenticatedUser>()
@@ -463,7 +465,7 @@ internal abstract class GHCloneDialogExtensionComponentBase(
     dialogStateListener.onOkActionEnabled(urlSelected)
     if (urlSelected) {
       val path = StringUtil.trimEnd(ClonePathProvider.relativeDirectoryPathForVcsUrl(project, selectedUrl!!), GitUtil.DOT_GIT)
-      directoryField.trySetChildPath(path)
+      cloneDirectoryChildHandle.trySetChildPath(path)
     }
   }
 

@@ -7,6 +7,7 @@ import com.intellij.dvcs.ui.CloneDvcsValidationUtils.sanitizeCloneUrl
 import com.intellij.dvcs.ui.DvcsBundle.message
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.CheckoutProvider
@@ -31,8 +32,9 @@ abstract class DvcsCloneDialogComponent(var project: Project,
                                         private val dialogStateListener: VcsCloneDialogComponentStateListener) : VcsCloneComponent {
   protected val mainPanel: JPanel
   private val urlEditor = TextFieldWithHistory()
-  private val directoryField = SelectChildTextFieldWithBrowseButton(
-    ClonePathProvider.defaultParentDirectoryPath(project, rememberedInputs))
+  private val directoryField = TextFieldWithBrowseButton()
+  private val cloneDirectoryChildHandle = FilePathDocumentChildPathHandle
+    .install(directoryField.textField.document, ClonePathProvider.defaultParentDirectoryPath(project, rememberedInputs))
 
   protected lateinit var errorComponent: BorderLayoutPanel
 
@@ -60,7 +62,7 @@ abstract class DvcsCloneDialogComponent(var project: Project,
     urlEditor.history = rememberedInputs.visitedUrls
     urlEditor.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
-        directoryField.trySetChildPath(defaultDirectoryPath(urlEditor.text.trim()))
+        cloneDirectoryChildHandle.trySetChildPath(defaultDirectoryPath(urlEditor.text.trim()))
         updateOkActionState(dialogStateListener)
       }
     })
