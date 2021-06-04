@@ -1,7 +1,5 @@
 pluginManagement {
     repositories {
-        //mavenCentral()
-        //mavenLocal()
         { { kts_kotlin_plugin_repositories } }
     }
 }
