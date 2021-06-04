@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.editor" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.psi.impl" />
     <orderEntry type="library" name="Trove4j" level="project" />

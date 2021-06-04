@@ -26,15 +26,6 @@ internal fun getResolveResultVariants(ktExpression: KtExpression?): Iterable<Res
     return referenceVariants.mapNotNull {CandidateInfo(it, PsiSubstitutor.EMPTY) }.asIterable()
 }
 
-
-internal fun KtElement.multiResolveResults(): Sequence<ResolveResult> =
-    references.asSequence().flatMap { ref ->
-        when (ref) {
-            is PsiPolyVariantReference -> ref.multiResolve(false).asSequence()
-            else -> (ref.resolve()?.let { sequenceOf(CandidateInfo(it, PsiSubstitutor.EMPTY)) }).orEmpty()
-        }
-    }
-
 class TypedResolveResult<T : PsiElement>(element: T) : CandidateInfo(element, PsiSubstitutor.EMPTY) {
     @Suppress("UNCHECKED_CAST")
     override fun getElement(): T = super.getElement() as T

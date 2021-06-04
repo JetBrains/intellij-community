@@ -10,7 +10,6 @@ import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.test.common.kotlin.IndentedPrintingVisitor
-import org.jetbrains.uast.test.common.kotlin.visitUFileAndGetResult
 import org.jetbrains.uast.test.env.kotlin.assertEqualsToFile
 import java.io.File
 
