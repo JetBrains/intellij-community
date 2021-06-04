@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -172,7 +171,8 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
 
   @Override
   public boolean canRepresent(final Object element) {
-    return SlowOperations.allowSlowOperations(() -> canRepresentInner(element));
+    if (!isValid()) return false;
+    return super.canRepresent(element) || canRepresent(getValue(), element);
   }
 
   private boolean canRepresentInner(final Object element) {
