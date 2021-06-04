@@ -68,7 +68,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   private volatile UpdateSession myUpdateSession;
 
   private final ActionManager myActionManager = ActionManager.getInstance();
-  private final GotoActionOrderStrategy myOrderStrategy = new GotoActionOrderStrategy();
 
   private final Map<AnAction, GroupMapping> myActionGroups = new ConcurrentHashMap<>();
 
@@ -285,10 +284,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
   @Override
   public ListCellRenderer<?> getListCellRenderer() {
     return new GotoActionListCellRenderer(this::getGroupName);
-  }
-
-  private int compareActions(@NotNull AnAction first, @NotNull AnAction second) {
-    return myOrderStrategy.compare(first, second);
   }
 
   @NotNull
@@ -654,9 +649,6 @@ public final class GotoActionModel implements ChooseByNameModel, Comparator<Obje
     public int compareWeights(@NotNull ActionWrapper o) {
       int compared = myMode.compareTo(o.getMode());
       if (compared != 0) return compared;
-
-      int byStat = myModel.compareActions(getAction(), o.getAction());
-      if (byStat != 0) return byStat;
 
       Presentation myPresentation = myAction.getTemplatePresentation();
       Presentation oPresentation = o.getAction().getTemplatePresentation();

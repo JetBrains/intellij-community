@@ -46,19 +46,36 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     )
   }
 
-  fun onItemSelected(indexes: IntArray, closePopup: Boolean, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+  fun onItemSelected(experimentStrategy: SearchEverywhereExperimentStrategy,
+                     indexes: IntArray, closePopup: Boolean,
+                     elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val currentSearchIndex = searchIndex.get()
     val state = cachedSearchState[currentSearchIndex]
     state?.let {
-      logger.onItemSelected(sessionId, currentSearchIndex, itemIdProvider, cachedContextInfo, it, indexes, closePopup, elementsProvider)
+      val orderByMl = experimentStrategy.shouldOrderByMl()
+      val experimentGroup = experimentStrategy.experimentGroup
+      logger.onItemSelected(
+        sessionId, currentSearchIndex,
+        experimentGroup, orderByMl,
+        itemIdProvider, cachedContextInfo, it,
+        indexes, closePopup, elementsProvider
+      )
     }
   }
 
-  fun onSearchFinished(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+  fun onSearchFinished(experimentStrategy: SearchEverywhereExperimentStrategy,
+                       elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val currentSearchIndex = searchIndex.get()
     val state = cachedSearchState[currentSearchIndex]
     state?.let {
-      logger.onSearchFinished(sessionId, currentSearchIndex, itemIdProvider, cachedContextInfo, it, elementsProvider)
+      val orderByMl = experimentStrategy.shouldOrderByMl()
+      val experimentGroup = experimentStrategy.experimentGroup
+      logger.onSearchFinished(
+        sessionId, currentSearchIndex,
+        experimentGroup, orderByMl,
+        itemIdProvider, cachedContextInfo, it,
+        elementsProvider
+      )
     }
   }
 

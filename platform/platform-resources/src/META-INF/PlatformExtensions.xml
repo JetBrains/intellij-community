@@ -749,8 +749,6 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <postStartupActivity implementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl$EventLogSubscribeActivity"/>
     <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider" order="first"/>
-    <applicationService serviceImplementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereSessionService"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.featureStatistics.fusCollectors.SystemStateMonitor"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.WSLInstallationsCollector"/>
@@ -1199,7 +1197,6 @@
     <backgroundPostStartupActivity implementation="com.intellij.accessibility.AccessibilityUsageTrackerCollector$CollectStatisticsTask"/>
     <registryKey key="statistics.mlse.report.percentage" defaultValue="100"
                  description="Percent of data reported by machine learning for search everywhere logger. 0 to disable"/>
-    <registryKey key="mlse.enable.ranking" defaultValue="true" description="Enable ML ranking in Search Everywhere" />
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>

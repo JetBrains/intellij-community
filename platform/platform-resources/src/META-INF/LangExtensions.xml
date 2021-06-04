@@ -1264,6 +1264,9 @@
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.ActionsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.OptionEqualityProvider"/>
 
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider" order="first"/>
+    <applicationService serviceImplementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService"/>
+
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingContextRecentDirectoryCache"/>
     <actionConfigurationCustomizer implementation="com.intellij.ide.actions.runAnything.RunAnythingAction$ShortcutTracker"/>

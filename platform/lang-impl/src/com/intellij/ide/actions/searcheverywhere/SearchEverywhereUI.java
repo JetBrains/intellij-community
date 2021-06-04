@@ -10,7 +10,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.SearchTopHitProvider;
 import com.intellij.ide.actions.BigPopupUI;
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereHeader.SETab;
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereSessionService;
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector;
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchFieldStatisticsCollector;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
@@ -166,7 +166,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     mySearchField.addKeyListener(mySearchTypingListener);
     myHintHelper = new HintHelper(mySearchField);
 
-    SearchEverywhereSessionService.getInstance().onSessionStarted(myProject);
+    SearchEverywhereMlSessionService.getInstance().onSessionStarted(myProject);
     Disposer.register(this, SearchFieldStatisticsCollector.createAndStart(mySearchField, myProject));
   }
 
@@ -271,7 +271,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   public void dispose() {
     stopSearching();
     myListModel.clear();
-    SearchEverywhereSessionService.getInstance().onDialogClose();
+    SearchEverywhereMlSessionService.getInstance().onDialogClose();
   }
 
   @Nullable
@@ -459,7 +459,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     String tabId = myHeader.getSelectedTab().getID();
-    SearchEverywhereSessionService.getInstance().onSearchRestart(
+    SearchEverywhereMlSessionService.getInstance().onSearchRestart(
       tabId, reason,
       mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, mySearchField.getText().length(),
       () -> myListModel.getFoundElementsInfo()
@@ -791,7 +791,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
       closePopup |= contributor.processSelectedItem(value, modifiers, searchText);
     }
 
-    SearchEverywhereSessionService.getInstance().onItemSelected(
+    SearchEverywhereMlSessionService.getInstance().onItemSelected(
       indexes, closePopup, () -> myListModel.getFoundElementsInfo()
     );
 
@@ -843,7 +843,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
   private void sendStatisticsAndClose() {
     if (isShowing()) {
-      SearchEverywhereSessionService.getInstance().onSearchFinished(
+      SearchEverywhereMlSessionService.getInstance().onSearchFinished(
         () -> myListModel.getFoundElementsInfo()
       );
     }

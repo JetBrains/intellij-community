@@ -8,15 +8,19 @@ import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-internal class SearchEverywhereSessionService {
+internal class SearchEverywhereMlSessionService {
   companion object {
     @JvmStatic
-    fun getInstance(): SearchEverywhereSessionService =
-      ApplicationManager.getApplication().getService(SearchEverywhereSessionService::class.java)
+    fun getInstance(): SearchEverywhereMlSessionService =
+      ApplicationManager.getApplication().getService(SearchEverywhereMlSessionService::class.java)
   }
 
   private val sessionIdCounter = AtomicInteger()
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
+
+  private val experimentStrategy: SearchEverywhereExperimentStrategy = SearchEverywhereExperimentStrategy()
+
+  fun shouldOrderByML(): Boolean = experimentStrategy.shouldOrderByMl()
 
   @Synchronized
   fun getCurrentSession(): SearchEverywhereMLSearchSession? {
@@ -38,11 +42,11 @@ internal class SearchEverywhereSessionService {
   }
 
   fun onItemSelected(indexes: IntArray, closePopup: Boolean, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onItemSelected(indexes, closePopup, elementsProvider)
+    getCurrentSession()?.onItemSelected(experimentStrategy, indexes, closePopup, elementsProvider)
   }
 
   fun onSearchFinished(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onSearchFinished(elementsProvider)
+    getCurrentSession()?.onSearchFinished(experimentStrategy, elementsProvider)
   }
 
   @Synchronized

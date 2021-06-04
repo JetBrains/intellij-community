@@ -29,13 +29,18 @@ internal class SearchEverywhereMLStatisticsCollector {
                                                          SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == tabId
 
   fun onItemSelected(seSessionId: Int, searchIndex: Int,
+                     experimentGroup: Int, orderByMl: Boolean,
                      elementIdProvider: SearchEverywhereMlItemIdProvider,
                      context: SearchEverywhereMLContextInfo,
                      cache: SearchEverywhereMlSearchState,
                      selectedIndices: IntArray,
                      closePopup: Boolean,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    val data = arrayListOf<Pair<String, Any>>(CLOSE_POPUP_KEY to closePopup)
+    val data = arrayListOf<Pair<String, Any>>(
+      CLOSE_POPUP_KEY to closePopup,
+      EXPERIMENT_GROUP to experimentGroup,
+      ORDER_BY_ML_GROUP to orderByMl
+    )
     if (selectedIndices.isNotEmpty()) {
       data.add(SELECTED_INDEXES_DATA_KEY to selectedIndices.map { it.toString() })
     }
@@ -43,11 +48,16 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   fun onSearchFinished(seSessionId: Int, searchIndex: Int,
+                       experimentGroup: Int, orderByMl: Boolean,
                        elementIdProvider: SearchEverywhereMlItemIdProvider,
                        context: SearchEverywhereMLContextInfo,
                        cache: SearchEverywhereMlSearchState,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    val additional = listOf(CLOSE_POPUP_KEY to true)
+    val additional = listOf(
+      CLOSE_POPUP_KEY to true,
+      EXPERIMENT_GROUP to experimentGroup,
+      ORDER_BY_ML_GROUP to orderByMl
+    )
     reportElements(SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, additional, elementsProvider)
   }
 
@@ -122,6 +132,9 @@ internal class SearchEverywhereMLStatisticsCollector {
     // events
     private const val SESSION_FINISHED = "sessionFinished"
     private const val SEARCH_RESTARTED = "searchRestarted"
+
+    private const val ORDER_BY_ML_GROUP = "orderByMl"
+    private const val EXPERIMENT_GROUP = "experimentGroup"
 
     // context fields
     private const val SE_TAB_ID_KEY = "seTabId"

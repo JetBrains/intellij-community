@@ -5,7 +5,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLSearchSession;
-import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereSessionService;
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.util.Processor;
@@ -111,8 +110,9 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
       }
 
       final FoundItemDescriptor<GotoActionModel.MatchedValue> descriptor;
-      if (Registry.is("mlse.enable.ranking") /*&& TODO flag should be here */) {
-        descriptor = getMLWeightedItemDescriptor(element);
+      SearchEverywhereMlSessionService mlService = SearchEverywhereMlSessionService.getInstance();
+      if (mlService.shouldOrderByML()) {
+        descriptor = getMLWeightedItemDescriptor(mlService, element);
       }
       else {
         descriptor = new FoundItemDescriptor<>(element, element.getMatchingDegree());
@@ -232,9 +232,10 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
     });
   }
 
-  private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element) {
+  private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull SearchEverywhereMlSessionService service,
+                                                                                        @NotNull GotoActionModel.MatchedValue element) {
     //TODO: calculate ML weight only for "Actions" tab
-    SearchEverywhereMLSearchSession session = SearchEverywhereSessionService.getInstance().getCurrentSession();
+    SearchEverywhereMLSearchSession session = service.getCurrentSession();
     if (session != null) {
       final double mlWeight = session.getMLWeight(this, element);
       return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
