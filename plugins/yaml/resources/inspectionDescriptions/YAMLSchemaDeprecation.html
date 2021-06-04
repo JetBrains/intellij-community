@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports deprecated keys in YAML files
-<p>Deprecation is checked only if there exists a JSON schema associated with corresponding YAML file.</p>
-<p>Note that deprecation mechanism is not defined in the JSON Schema specification yet,
-and this inspection uses a non-standard extension 'deprecationMessage'.</p>
+Reports deprecated keys in YAML files.
+<p>Deprecation is checked only if there exists a JSON schema associated with the corresponding YAML file.</p>
+<p>Note that the deprecation mechanism is not defined in the JSON Schema specification yet,
+and this inspection uses a non-standard <code>deprecationMessage</code> extension.</p>
 <p><b>Scheme deprecation example:</b></p>
 <pre><code>
   {
@@ -15,7 +15,7 @@ and this inspection uses a non-standard extension 'deprecationMessage'.</p>
     }
   }
 </code></pre>
-<p><b>And example with corresponding warning:</b></p>
+<p><b>The following is an example with the corresponding warning:</b></p>
 <pre><code>
   SomeDeprecatedProperty: some value
 </code></pre>
