@@ -29,8 +29,9 @@ import java.util.*
 class LanguageToolChecker : TextChecker() {
   override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
-    val lang = GrazieConfig.get().enabledLanguages.find { language == it.jLanguage } ?: return emptyList()
-    return getRules(lang)
+    val state = GrazieConfig.get();
+    val lang = state.enabledLanguages.find { language == it.jLanguage } ?: return emptyList()
+    return getRules(lang, state)
   }
 
   override fun check(extracted: TextContent): @NotNull List<TextProblem> {
@@ -61,8 +62,8 @@ class LanguageToolChecker : TextChecker() {
     private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
     private val interner = Interner.createWeakInterner<String>()
 
-    internal fun getRules(lang: Lang): List<LanguageToolRule> {
-      return LangTool.getTool(lang).allRules.asSequence()
+    internal fun getRules(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): List<LanguageToolRule> {
+      return LangTool.getTool(lang, state).allRules.asSequence()
         .distinctBy { it.id }
         .filter { r -> !r.isDictionaryBasedSpellingRule }
         .map { LanguageToolRule(lang, it) }
