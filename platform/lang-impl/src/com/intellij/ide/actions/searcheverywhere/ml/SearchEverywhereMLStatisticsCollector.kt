@@ -4,8 +4,10 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
-import com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereLogger
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
@@ -13,9 +15,11 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
 
 internal class SearchEverywhereMLStatisticsCollector {
+  private val loggerProvider = StatisticsEventLogProviderUtil.getEventLogProvider(RECORDER_CODE)
   private val myIsReporting: Boolean = isEnabled()
 
   private fun isEnabled(): Boolean {
+    val isExperimentModeEnabled = ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()
     if (isExperimentModeEnabled) {
       val percentage = Registry.get("statistics.mlse.report.percentage").asInteger() / 100.0
       return percentage >= 1 || Math.random() < percentage // only report a part of cases
@@ -120,13 +124,13 @@ internal class SearchEverywhereMLStatisticsCollector {
           result
         }
 
-        SearchEverywhereLogger.log(eventId, data)
+        loggerProvider.logger.logAsync(GROUP, eventId, data, false)
       }
     }
   }
 
   companion object {
-    private val isExperimentModeEnabled: Boolean = ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()
+    private val GROUP = EventLogGroup("mlse.log", 2)
     private const val REPORTED_ITEMS_LIMIT = 100
 
     // events

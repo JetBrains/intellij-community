@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicInteger
@@ -10,6 +11,8 @@ import java.util.concurrent.atomic.AtomicReference
 
 internal class SearchEverywhereMlSessionService {
   companion object {
+    internal const val RECORDER_CODE = "MLSE"
+
     @JvmStatic
     fun getInstance(): SearchEverywhereMlSessionService =
       ApplicationManager.getApplication().getService(SearchEverywhereMlSessionService::class.java)
@@ -18,7 +21,8 @@ internal class SearchEverywhereMlSessionService {
   private val sessionIdCounter = AtomicInteger()
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 
-  private val experimentStrategy: SearchEverywhereExperimentStrategy = SearchEverywhereExperimentStrategy()
+  private val experimentStrategy: SearchEverywhereExperimentStrategy =
+    SearchEverywhereExperimentStrategy(EventLogConfiguration.getInstance().getOrCreate(RECORDER_CODE).bucket)
 
   fun shouldOrderByML(): Boolean = experimentStrategy.shouldOrderByMl()
 
