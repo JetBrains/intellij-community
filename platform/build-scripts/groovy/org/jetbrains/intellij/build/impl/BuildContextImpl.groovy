@@ -301,6 +301,8 @@ final class BuildContextImpl extends BuildContext {
     LinuxDistributionCustomizer linuxDistributionCustomizer = productProperties.createLinuxCustomizer(projectHomeForCustomizers)
     MacDistributionCustomizer macDistributionCustomizer = productProperties.createMacCustomizer(projectHomeForCustomizers)
 
+    def options = new BuildOptions()
+    options.useCompiledClassesFromProjectOutput = true
     def compilationContextCopy =
       compilationContext.createCopy(ant, messages, options, createBuildOutputRootEvaluator(paths.projectHome, productProperties))
     def copy = new BuildContextImpl(compilationContextCopy, productProperties,

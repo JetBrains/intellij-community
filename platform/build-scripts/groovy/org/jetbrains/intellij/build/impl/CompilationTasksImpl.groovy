@@ -18,7 +18,6 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
-import org.jetbrains.intellij.build.BuildOptions
 import org.jetbrains.intellij.build.CompilationContext
 import org.jetbrains.intellij.build.CompilationTasks
 import org.jetbrains.intellij.build.impl.compilation.CompilationPartsUtil
@@ -37,7 +36,6 @@ class CompilationTasksImpl extends CompilationTasks {
 
   @Override
   void compileModules(List<String> moduleNames, List<String> includingTestsInModules) {
-    reuseCompiledClassesIfProvided()
     if (context.options.useCompiledClassesFromProjectOutput) {
       context.messages.info("Compilation skipped, the compiled classes from the project output will be used")
       resolveProjectDependencies()
@@ -97,7 +95,7 @@ class CompilationTasksImpl extends CompilationTasks {
   void buildProjectArtifacts(Collection<String> artifactNames) {
     if (!artifactNames.isEmpty()) {
       try {
-        def buildIncludedModules = !areCompiledClassesProvided(context.options)
+        def buildIncludedModules = !areCompiledClassesProvided()
         if (buildIncludedModules && jpsCache.canBeUsed) {
           jpsCache.downloadCacheAndCompileProject()
           buildIncludedModules = false
@@ -127,37 +125,24 @@ class CompilationTasksImpl extends CompilationTasks {
     compileAllModulesAndTests()
   }
 
-  static boolean areCompiledClassesProvided(BuildOptions options) {
-    return options.useCompiledClassesFromProjectOutput ||
-           options.pathToCompiledClassesArchive != null ||
-           options.pathToCompiledClassesArchivesMetadata != null
+  @Override
+  boolean areCompiledClassesProvided() {
+    return !context.kotlinBinaries.isCompilerRequired()
   }
 
-  private static boolean areCompiledClassesReusedOrNotProvided
-  private void reuseCompiledClassesIfProvided() {
-    synchronized (CompilationTasksImpl) {
-      if (areCompiledClassesReusedOrNotProvided) {
-        return
-      }
-      if (context.options.cleanOutputFolder) {
-        cleanOutput()
-      }
-      else {
-        context.messages.info("cleanOutput step was skipped")
-      }
-      if (context.options.useCompiledClassesFromProjectOutput) {
-        context.messages.info("Compiled classes reused from project output")
-      }
-      else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
-        CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
-      }
-      else if (context.options.pathToCompiledClassesArchive != null) {
-        unpackCompiledClasses(context.projectOutputDirectory)
-      }
-      else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
-        jpsCache.downloadCacheAndCompileProject()
-      }
-      areCompiledClassesReusedOrNotProvided = true
+  @Override
+  void reuseCompiledClassesIfProvided() {
+    if (context.options.useCompiledClassesFromProjectOutput) {
+      context.messages.info("Compiled classes reused from project output")
+    }
+    else if (context.options.pathToCompiledClassesArchivesMetadata != null) {
+      CompilationPartsUtil.fetchAndUnpackCompiledClasses(context.messages, context.projectOutputDirectory, context.options)
+    }
+    else if (context.options.pathToCompiledClassesArchive != null) {
+      unpackCompiledClasses(context.projectOutputDirectory)
+    }
+    else if (jpsCache.canBeUsed && !jpsCache.isCompilationRequired()) {
+      jpsCache.downloadCacheAndCompileProject()
     }
   }
 
@@ -166,32 +151,6 @@ class CompilationTasksImpl extends CompilationTasks {
     context.messages.block("Unpack compiled classes archive") {
       FileUtil.delete(classesOutput)
       context.ant.unzip(src: context.options.pathToCompiledClassesArchive, dest: classesOutput.absolutePath)
-    }
-  }
-
-  private void cleanOutput() {
-    List<String> outputDirectoriesToKeep = ["log"]
-    if (areCompiledClassesProvided(context.options)) {
-      outputDirectoriesToKeep.add("classes")
-    }
-    if (context.options.incrementalCompilation) {
-      System.setProperty("kotlin.incremental.compilation", "true")
-      outputDirectoriesToKeep.add(context.compilationData.dataStorageRoot.name)
-      outputDirectoriesToKeep.add("classes")
-      outputDirectoriesToKeep.add("project-artifacts")
-    }
-    context.messages.block("Clean output") {
-      def outputPath = context.paths.buildOutputRoot
-      context.messages.progress("Cleaning output directory $outputPath")
-      new File(outputPath).listFiles()?.each { File file ->
-        if (outputDirectoriesToKeep.contains(file.name)) {
-          context.messages.info("Skipped cleaning for $file.absolutePath")
-        }
-        else {
-          context.messages.info("Deleting $file.absolutePath")
-          FileUtil.delete(file)
-        }
-      }
     }
   }
 }
