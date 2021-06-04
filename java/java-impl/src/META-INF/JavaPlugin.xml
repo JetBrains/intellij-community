@@ -508,6 +508,10 @@
                     key="rmi.compiler.description" bundle="messages.JavaCompilerBundle"/>
     </projectConfigurable>
 
+    <actionOnSaveInfoProvider id="BuildOnSaveInfoProvider"
+                              implementation="com.intellij.compiler.options.CompilerConfigurable$BuildOnSaveInfoProvider"
+                              order="after PrettierOnSaveInfoProvider, after EsLintOnSaveInfoProvider"/>
+
     <advancedSetting id="compiler.automake.allow.when.app.running" groupKey="advanced.settings.group.compiler" default="false"
                      bundle="messages.JavaBundle"/>
 
