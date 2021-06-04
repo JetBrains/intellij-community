@@ -9,16 +9,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.HyperlinkAdapter;
+import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.HyperlinkEvent;
+import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.text.SimpleDateFormat;
@@ -31,7 +37,7 @@ import java.util.Properties;
  * @author Konstantin Bulenkov
  */
 public class AboutDialog extends DialogWrapper {
-  private List<String> myInfo = new ArrayList<>();
+  private final List<String> myInfo = new ArrayList<>();
 
   public AboutDialog(Project project) {
     this(project, false);
@@ -40,7 +46,6 @@ public class AboutDialog extends DialogWrapper {
   public AboutDialog(Project project, boolean showDebugInfo) {
     super(project, false);
     String appName = ApplicationNamesInfo.getInstance().getFullProductName();
-    //setSize(600, 400);
     setResizable(false);
     //noinspection HardCodedStringLiteral
     setTitle("About " + appName);
@@ -50,11 +55,11 @@ public class AboutDialog extends DialogWrapper {
 
   @Override
   protected @Nullable JComponent createCenterPanel() {
-    Icon appIcon = AppUIUtil.loadApplicationIcon(ScaleContext.create(), 100);
+    Icon appIcon = AppUIUtil.loadApplicationIcon(ScaleContext.create(), 60);
     Box box = getText();
     JLabel icon = new JLabel(appIcon);
     icon.setVerticalAlignment(SwingConstants.TOP);
-    icon.setBorder(JBUI.Borders.empty(0, 10, 0, 40));
+    icon.setBorder(JBUI.Borders.empty(20, 12, 0, 40));
     box.setBorder(JBUI.Borders.emptyRight(20));
 
     return JBUI.Panels.simplePanel()
@@ -89,11 +94,12 @@ public class AboutDialog extends DialogWrapper {
   private Box getText() {
     Box html = Box.createVerticalBox();
     ApplicationInfoEx appInfo = ApplicationInfoEx.getInstanceEx();
-    String appName = appInfo.getFullApplicationName();
+    String appName = appInfo.getFullApplicationName(); //NON-NLS
     String edition = ApplicationNamesInfo.getInstance().getEditionName();
     if (edition != null) appName += " (" + edition + ")";
-    html.add(new JBLabel(appName).withFont(JBFont.h2()));
+    html.add(new JBLabel(appName).withFont(JBFont.h3().asBold()));
     myInfo.add(appName);
+    html.add(Box.createVerticalStrut(20));
 
     String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
     Date timestamp = appInfo.getBuildDate().getTime();
@@ -109,13 +115,13 @@ public class AboutDialog extends DialogWrapper {
 
     LicensingFacade la = LicensingFacade.getInstance();
     if (la != null) {
-      final String licensedTo = la.getLicensedToMessage();
+      final String licensedTo = la.getLicensedToMessage(); //NON-NLS
       if (licensedTo != null) {
         html.add(new JBLabel(licensedTo).withFont(JBFont.regular().asBold()));
         myInfo.add(licensedTo);
       }
       for (String message : la.getLicenseRestrictionsMessages()) {
-        html.add(new JBLabel(message));
+        html.add(new JBLabel(message)); //NON-NLS
         myInfo.add(message);
       }
     }
@@ -125,38 +131,36 @@ public class AboutDialog extends DialogWrapper {
     Properties properties = System.getProperties();
     String javaVersion = properties.getProperty("java.runtime.version", properties.getProperty("java.version", "unknown"));
     String arch = properties.getProperty("os.arch", "");
-    html.add(new JBLabel(IdeBundle.message("about.box.jre", javaVersion, arch)));
+    String jreInfo = IdeBundle.message("about.box.jre", javaVersion, arch);
+    html.add(new JBLabel(jreInfo));
+    myInfo.add(jreInfo);
 
     String vmVersion = properties.getProperty("java.vm.name", "unknown");
     String vmVendor = properties.getProperty("java.vendor", "unknown");
-    html.add(new JBLabel(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
+    String vmVendorInfo = IdeBundle.message("about.box.vm", vmVersion, vmVendor);
+    html.add(new JBLabel(vmVendorInfo));
+    myInfo.add(vmVendorInfo);
 
     html.add(Box.createVerticalStrut(20));
 
+    HyperlinkLabel openSourceSoftware = new HyperlinkLabel();
+    //noinspection DialogTitleCapitalization
+    openSourceSoftware.setTextWithHyperlink(IdeBundle.message("about.box.powered.by.open.source"));
+    openSourceSoftware.addHyperlinkListener(new HyperlinkAdapter() {
+      @Override
+      protected void hyperlinkActivated(HyperlinkEvent e) {
+        AboutPopup.showOpenSoftwareSources(ObjectUtils.notNull(AboutPopup.loadThirdPartyLibraries(), ""));
+      }
+    });
+    JBLabel poweredBy = new JBLabel(IdeBundle.message("about.box.powered.by") + " ");
+    BorderLayoutPanel panel = JBUI.Panels.simplePanel(openSourceSoftware).addToLeft(poweredBy);
+    panel.setAlignmentX(Component.LEFT_ALIGNMENT);
+    html.add(panel);
 
-    //HyperlinkLabel label = new HyperlinkLabel();
-    //label.setTextWithHyperlink(IdeBundle.message("about.box.powered.by.open.source"));
-    //label.addHyperlinkListener(new HyperlinkAdapter() {
-    //  @Override
-    //  protected void hyperlinkActivated(HyperlinkEvent e) {
-    //    AboutPopup.showOpenSoftwareSources(ObjectUtils.notNull(AboutPopup.loadThirdPartyLibraries(), ""));
-    //  }
-    //});
-    //html.add(label);
-    JBLabel link = new JBLabel(IdeBundle.message("about.box.open.source.software"));
-    link.setForeground(JBUI.CurrentTheme.Link.Foreground.ENABLED);
-
-    //html.add(JBUI.Panels.simplePanel()
-    //  .addToLeft(new JBLabel(IdeBundle.message("about.box.powered.by") + " "))
-    //  .addToCenter(link));
-    html.add(new JBLabel("Powered by open-source software"));
     html.add(new JBLabel(AboutPopup.getCopyrightText()));
     html.add(Box.createVerticalStrut(20));
     html.add(Box.createVerticalStrut(20));
-    //SimpleColoredComponent text = new SimpleColoredComponent();
-    //text.append(IdeBundle.message("about.box.powered.by"), SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    //text.append(IdeBundle.message("about.box.open.source.software"), SimpleTextAttributes.LINK_ATTRIBUTES);
-    //html.add(text);
+
     return html;
   }
 }
