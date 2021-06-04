@@ -1,10 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereSearchState
 import com.intellij.ide.actions.searcheverywhere.statistics.SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY
 import com.intellij.ide.util.gotoByName.GotoActionModel
+import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
+import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 
@@ -27,22 +28,23 @@ internal object SearchEverywhereActionFeaturesProvider : SearchEverywhereElement
   private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
 
   override fun getElementFeatures(element: Any,
-                                  contributor: SearchEverywhereContributor<*>?,
                                   currentTime: Long,
-                                  state: SearchEverywhereSearchState?): SearchEverywhereFeaturesProvider.ItemInfo {
-     val contributorId = contributor?.searchProviderId ?: "undefined"
+                                  state: SearchEverywhereSearchState?,
+                                  localSummary: ActionsLocalSummary,
+                                  globalSummary: ActionsGlobalSummaryManager): Map<String, Any> {
     if (element !is GotoActionModel.MatchedValue) {
       // not an action/option
-      return SearchEverywhereFeaturesProvider.ItemInfo(null, contributorId, emptyMap())
+      return emptyMap()
     }
-    return getActionsOrOptionsFeatures(element.matchingDegree, currentTime, element, contributorId, state)
+    return getActionsOrOptionsFeatures(element.matchingDegree, currentTime, element, state, localSummary, globalSummary)
   }
 
   private fun getActionsOrOptionsFeatures(priority: Int,
                                           currentTime: Long,
                                           matchedValue: GotoActionModel.MatchedValue,
-                                          contributorId: String,
-                                          state: SearchEverywhereSearchState?): SearchEverywhereFeaturesProvider.ItemInfo {
+                                          state: SearchEverywhereSearchState?,
+                                          localSummary: ActionsLocalSummary?,
+                                          globalSummary: ActionsGlobalSummaryManager?): Map<String, Any> {
     val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
     val data = mutableMapOf(
       IS_ACTION_DATA_KEY to (wrapper != null),
@@ -55,7 +57,7 @@ internal object SearchEverywhereActionFeaturesProvider : SearchEverywhereElement
 
     if (wrapper == null) {
       // item is an option (OptionDescriptor)
-      return SearchEverywhereFeaturesProvider.ItemInfo(null, contributorId, data)
+      return data
     }
 
     data[MATCH_MODE_KEY] = wrapper.mode
@@ -77,18 +79,16 @@ internal object SearchEverywhereActionFeaturesProvider : SearchEverywhereElement
 
 
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
-    SearchEverywhereFeaturesProvider.localSummary.getActionsStats()[actionId]?.let {
+    localSummary?.getActionsStats()?.get(actionId)?.let {
       data[TIME_SINCE_LAST_USAGE_DATA_KEY] = currentTime - it.lastUsedTimestamp
       data[LOCAL_USAGE_COUNT_DATA_KEY] = it.usageCount
     }
 
-    val globalSummary = SearchEverywhereFeaturesProvider.globalSummary.getActionStatistics(actionId)
-    globalSummary?.let {
+    globalSummary?.getActionStatistics(actionId)?.let {
       data[GLOBAL_USAGE_COUNT_KEY] = it.usagesCount
       data[USERS_RATIO_DATA_KEY] = roundDouble(it.usersRatio)
-      data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(
-        it.usagesPerUserRatio)
+      data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(it.usagesPerUserRatio)
     }
-    return SearchEverywhereFeaturesProvider.ItemInfo(actionId, contributorId, data)
+    return data
   }
 }

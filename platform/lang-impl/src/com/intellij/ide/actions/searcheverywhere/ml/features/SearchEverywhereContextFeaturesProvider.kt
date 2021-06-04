@@ -16,7 +16,7 @@ internal object SearchEverywhereContextFeaturesProvider {
   private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
   private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
 
-  fun getContextFeatures(project: Project?, lastToolwindowId: String?): SearchEverywhereFeaturesProvider.ContextInfo {
+  fun getContextFeatures(project: Project?, lastToolwindowId: String?): Map<String, Any> {
     val data = hashMapOf<String, Any>()
     val localTotalStats = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java).getTotalStats()
     val globalTotalStats = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java).totalSummary
@@ -35,6 +35,6 @@ internal object SearchEverywhereContextFeaturesProvider {
       val fem = FileEditorManager.getInstance(it)
       data[OPEN_FILE_TYPES_KEY] = fem.openFiles.map { file -> file.fileType.name }.distinct()
     }
-    return SearchEverywhereFeaturesProvider.ContextInfo(data)
+    return data
   }
 }

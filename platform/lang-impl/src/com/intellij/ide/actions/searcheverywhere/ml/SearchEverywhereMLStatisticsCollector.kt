@@ -106,8 +106,8 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
             result[ML_WEIGHT_KEY] = score
           }
 
-          itemInfo.id?.let { id ->
-            result[ACTION_ID_KEY] = id
+          itemInfo.id.let { id ->
+            result[ID_KEY] = id
           }
           result
         }
@@ -138,7 +138,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     private const val SELECTED_INDEXES_DATA_KEY = "selectedIndexes"
 
     // item fields
-    internal const val ACTION_ID_KEY = "id"
+    internal const val ID_KEY = "id"
     internal const val FEATURES_DATA_KEY = "features"
     internal const val CONTRIBUTOR_ID_KEY = "contributorId"
     internal const val ML_WEIGHT_KEY = "mlWeight"

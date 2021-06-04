@@ -2,10 +2,11 @@
 package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFeaturesProvider
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFeaturesProvider.ContextInfo
-import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereFeaturesProvider.ItemInfo
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereContextFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLPredictor
+import com.intellij.internal.statistic.local.ActionsGlobalSummaryManager
+import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
@@ -18,24 +19,29 @@ internal class SearchEverywhereMLCache internal constructor(project: Project?) {
   private val elementIds = IdentityHashMap<Any, Int>()
 
   // context features are calculated once per Search Everywhere session
-  private val cachedContextInfo: ContextInfo by lazy { initContextInfo(project) }
+  private val cachedContextInfo: SearchEverywhereMLContextInfo by lazy { initContextInfo(project) }
 
   // element features & ML score are re-calculated on each typing because some of them might change (e.g. matching degree)
-  private val cachedElementsInfo = mutableMapOf<Int, ItemInfo>()
+  private val cachedElementsInfo = mutableMapOf<Int, SearchEverywhereMLItemInfo>()
   private val cachedMLWeight = mutableMapOf<Int, Double>()
 
   private val predictor = SearchEverywhereMLPredictor()
+  private val localSummary: ActionsLocalSummary by lazy { ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java) }
+  private val globalSummary: ActionsGlobalSummaryManager by lazy { ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java) }
 
   @Synchronized
-  fun getContextFeatures(): ContextInfo {
+  fun getContextFeatures(): SearchEverywhereMLContextInfo {
     return cachedContextInfo
   }
 
   @Synchronized
-  fun getElementFeatures(element: Any, contributor: SearchEverywhereContributor<*>, state: SearchEverywhereSearchState?): ItemInfo {
+  fun getElementFeatures(element: Any,
+                         contributor: SearchEverywhereContributor<*>,
+                         state: SearchEverywhereSearchState?): SearchEverywhereMLItemInfo {
     val id = getMLId(element)
     return cachedElementsInfo.computeIfAbsent(id) {
-      SearchEverywhereFeaturesProvider.getElementFeatureProvider().getElementFeatures(element, contributor, startTime, state)
+      val features = SearchEverywhereActionFeaturesProvider.getElementFeatures(element, startTime, state, localSummary, globalSummary)
+      return@computeIfAbsent SearchEverywhereMLItemInfo(id, contributor.searchProviderId, features)
     }
   }
 
@@ -57,7 +63,7 @@ internal class SearchEverywhereMLCache internal constructor(project: Project?) {
     return elementIds.computeIfAbsent(element) { idCounter.getAndIncrement() }
   }
 
-  private fun initContextInfo(project: Project?): ContextInfo {
+  private fun initContextInfo(project: Project?): SearchEverywhereMLContextInfo {
     val lastUsedToolwindow: String? = project?.let {
       val twm = ToolWindowManager.getInstance(project)
       var id: String? = null
@@ -66,7 +72,8 @@ internal class SearchEverywhereMLCache internal constructor(project: Project?) {
       }
       id
     }
-    return SearchEverywhereFeaturesProvider.getContextFeaturesProvider().getContextFeatures(project, lastUsedToolwindow)
+    val features = SearchEverywhereContextFeaturesProvider.getContextFeatures(project, lastUsedToolwindow)
+    return SearchEverywhereMLContextInfo(features)
   }
 
   @Synchronized
@@ -75,3 +82,7 @@ internal class SearchEverywhereMLCache internal constructor(project: Project?) {
     cachedMLWeight.clear()
   }
 }
+
+internal data class SearchEverywhereMLItemInfo(val id: Int, val contributorId: String, val features: Map<String, Any>)
+
+internal data class SearchEverywhereMLContextInfo(val features: Map<String, Any>)
