@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.sun.management.OperatingSystemMXBean;
-import org.jetbrains.annotations.NotNull;
 
 import java.lang.management.GarbageCollectorMXBean;
 import java.lang.management.ManagementFactory;
@@ -50,38 +49,42 @@ public class SamplingTask {
       if (myThreadInfos.size() >= myMaxDumps) {
         stop();
       }
-      dumpedThreads(ThreadDumper.getThreadDumpInfo(infos));
+      dumpedThreads(infos);
     }
   }
 
-  protected void dumpedThreads(@NotNull ThreadDump threadDump) {
+  protected void dumpedThreads(ThreadInfo[] infos) {
   }
 
   private static long currentGcTime() {
     return GC_MX_BEANS.stream().mapToLong(GarbageCollectorMXBean::getCollectionTime).sum();
   }
 
-  public final int getDumpInterval() {
+  public int getDumpInterval() {
     return myDumpInterval;
   }
 
-  public final List<ThreadInfo[]> getThreadInfos() {
+  public List<ThreadInfo[]> getThreadInfos() {
     return myThreadInfos;
   }
 
-  public final long getTotalTime() {
+  public long getSampledTime() {
+    return (long)myThreadInfos.size() * myDumpInterval;
+  }
+
+  public long getTotalTime() {
     return TimeUnit.NANOSECONDS.toMillis(myCurrentTime - myStartTime);
   }
 
-  public final long getGcTime() {
+  public long getGcTime() {
     return myGcCurrentTime - myGcStartTime;
   }
 
-  public final double getProcessCpuLoad() {
+  public double getProcessCpuLoad() {
     return myProcessCpuLoad;
   }
 
-  public final boolean isValid(long dumpingDuration) {
+  public boolean isValid(long dumpingDuration) {
     return myThreadInfos.size() >= Math.max(10, Math.min(myMaxDumps, dumpingDuration / myDumpInterval / 2));
   }
 
