@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.gradle.highlighting.GradleHighlightingBaseTest
+import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
