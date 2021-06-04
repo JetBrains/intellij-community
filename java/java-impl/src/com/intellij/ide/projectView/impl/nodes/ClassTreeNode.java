@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.projectView.impl.nodes;
 
 import com.intellij.ide.highlighter.JavaClassFileType;
@@ -172,9 +172,12 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
 
   @Override
   public boolean canRepresent(final Object element) {
-    if (!isValid()) return false;
+    return SlowOperations.allowSlowOperations(() -> canRepresentInner(element));
+  }
 
-    return super.canRepresent(element) || SlowOperations.allowSlowOperations(() -> canRepresent(getValue(), element));
+  private boolean canRepresentInner(final Object element) {
+    if (!isValid()) return false;
+    return super.canRepresent(element) || canRepresent(getValue(), element);
   }
 
   private boolean canRepresent(final PsiClass psiClass, final Object element) {
