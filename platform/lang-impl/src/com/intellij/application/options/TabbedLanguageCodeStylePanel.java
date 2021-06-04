@@ -403,9 +403,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
     public int compare(Object o1, Object o2) {
       double w1 = o1 instanceof Weighted ? ((Weighted)o1).getWeight() : Double.POSITIVE_INFINITY;
       double w2 = o2 instanceof Weighted ? ((Weighted)o2).getWeight() : Double.POSITIVE_INFINITY;
-      if (w1 < w2) return -1;
-      if (w1 > w2) return +1;
-      return 0;
+      return Double.compare(w1, w2);
     }
   }
 
