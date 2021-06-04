@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
 import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereActionFeaturesProvider
+import com.intellij.ide.actions.searcheverywhere.ml.features.SearchEverywhereElementFeaturesProvider
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModel
 import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereActionsRankingModelProvider
 import com.intellij.ide.util.gotoByName.GotoActionModel
@@ -22,6 +23,8 @@ internal class SearchEverywhereMlSearchState(
 
   private val model: SearchEverywhereActionsRankingModel =
     SearchEverywhereActionsRankingModel(SearchEverywhereActionsRankingModelProvider())
+  private val featuresProvider: SearchEverywhereElementFeaturesProvider = SearchEverywhereActionFeaturesProvider()
+
   private val localSummary: ActionsLocalSummary by lazy {
     ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
   }
@@ -35,8 +38,7 @@ internal class SearchEverywhereMlSearchState(
                          contributor: SearchEverywhereContributor<*>,
                          queryLength: Int): SearchEverywhereMLItemInfo {
     return cachedElementsInfo.computeIfAbsent(elementId) {
-      val features = SearchEverywhereActionFeaturesProvider
-        .getElementFeatures(element, sessionStartTime, queryLength, localSummary, globalSummary)
+      val features = featuresProvider.getElementFeatures(element, sessionStartTime, queryLength, localSummary, globalSummary)
       return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributor.searchProviderId, features)
     }
   }

@@ -8,23 +8,25 @@ import com.intellij.internal.statistic.local.ActionsLocalSummary
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ToggleAction
 
-internal object SearchEverywhereActionFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
-  private const val IS_ACTION_DATA_KEY = "isAction"
-  private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
-  private const val PRIORITY_DATA_KEY = "priority"
-  private const val MATCH_MODE_KEY = "matchMode"
-  private const val TEXT_LENGTH_KEY = "textLength"
-  private const val IS_GROUP_KEY = "isGroup"
-  private const val GROUP_LENGTH_KEY = "groupLength"
-  private const val HAS_ICON_KEY = "withIcon"
-  private const val IS_ENABLED_KEY = "isEnabled"
-  private const val WEIGHT_KEY = "weight"
+internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementFeaturesProvider() {
+  companion object {
+    private const val IS_ACTION_DATA_KEY = "isAction"
+    private const val IS_TOGGLE_ACTION_DATA_KEY = "isToggleAction"
+    private const val PRIORITY_DATA_KEY = "priority"
+    private const val MATCH_MODE_KEY = "matchMode"
+    private const val TEXT_LENGTH_KEY = "textLength"
+    private const val IS_GROUP_KEY = "isGroup"
+    private const val GROUP_LENGTH_KEY = "groupLength"
+    private const val HAS_ICON_KEY = "withIcon"
+    private const val IS_ENABLED_KEY = "isEnabled"
+    private const val WEIGHT_KEY = "weight"
 
-  private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
-  private const val LOCAL_USAGE_COUNT_DATA_KEY = "usage"
-  private const val GLOBAL_USAGE_COUNT_KEY = "globalUsage"
-  private const val USERS_RATIO_DATA_KEY = "usersRatio"
-  private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
+    private const val TIME_SINCE_LAST_USAGE_DATA_KEY = "timeSinceLastUsage"
+    private const val LOCAL_USAGE_COUNT_DATA_KEY = "usage"
+    private const val GLOBAL_USAGE_COUNT_KEY = "globalUsage"
+    private const val USERS_RATIO_DATA_KEY = "usersRatio"
+    private const val USAGES_PER_USER_RATIO_DATA_KEY = "usagesPerUserRatio"
+  }
 
   override fun getElementFeatures(element: Any,
                                   currentTime: Long,

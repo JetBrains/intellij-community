@@ -8,14 +8,16 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.wm.ToolWindowManager
 
-internal object SearchEverywhereContextFeaturesProvider {
-  private const val LOCAL_MAX_USAGE_COUNT_KEY = "maxUsage"
-  private const val LOCAL_MIN_USAGE_COUNT_KEY = "minUsage"
-  private const val GLOBAL_MAX_USAGE_COUNT_KEY = "globalMaxUsage"
-  private const val GLOBAL_MIN_USAGE_COUNT_KEY = "globalMinUsage"
+internal class SearchEverywhereContextFeaturesProvider {
+  companion object {
+    private const val LOCAL_MAX_USAGE_COUNT_KEY = "maxUsage"
+    private const val LOCAL_MIN_USAGE_COUNT_KEY = "minUsage"
+    private const val GLOBAL_MAX_USAGE_COUNT_KEY = "globalMaxUsage"
+    private const val GLOBAL_MIN_USAGE_COUNT_KEY = "globalMinUsage"
 
-  private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
-  private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
+    private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
+    private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
+  }
 
   fun getContextFeatures(project: Project?): Map<String, Any> {
     val data = hashMapOf<String, Any>()

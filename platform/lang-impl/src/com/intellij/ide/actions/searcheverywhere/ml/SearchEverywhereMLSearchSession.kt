@@ -18,7 +18,8 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 
   // context features are calculated once per Search Everywhere session
   private val cachedContextInfo: SearchEverywhereMLContextInfo by lazy {
-    return@lazy SearchEverywhereMLContextInfo(SearchEverywhereContextFeaturesProvider.getContextFeatures(project))
+    val featuresProvider = SearchEverywhereContextFeaturesProvider()
+    return@lazy SearchEverywhereMLContextInfo(featuresProvider.getContextFeatures(project))
   }
 
   // element features & ML score are re-calculated on each typing because some of them might change (e.g. matching degree)
