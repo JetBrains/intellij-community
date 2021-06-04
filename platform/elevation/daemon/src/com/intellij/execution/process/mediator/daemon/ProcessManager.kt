@@ -32,7 +32,7 @@ internal class ProcessManager : Closeable {
 
   suspend fun createProcess(handleId: Long,
                             command: List<String>, workingDir: File, environVars: Map<String, String>,
-                            inFile: File?, outFile: File?, errFile: File?): Pid {
+                            inFile: File?, outFile: File?, errFile: File?, redirectErrorStream: Boolean): Pid {
     val handle = getHandle(handleId)
 
     val processBuilder = ProcessBuilder().apply {
@@ -45,6 +45,7 @@ internal class ProcessManager : Closeable {
       inFile?.let { redirectInput(it) }
       outFile?.let { redirectOutput(it) }
       errFile?.let { redirectError(it) }
+      redirectErrorStream(redirectErrorStream)
     }
     val process = handle.startProcess(processBuilder)
 

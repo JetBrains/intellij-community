@@ -81,11 +81,17 @@ public interface CommandLineOrBuilder extends
       getErrFileBytes();
 
   /**
-   * <code>map&lt;string, string&gt; environ = 6;</code>
+   * <code>bool redirect_error_stream = 6;</code>
+   * @return The redirectErrorStream.
+   */
+  boolean getRedirectErrorStream();
+
+  /**
+   * <code>map&lt;string, string&gt; environ = 7;</code>
    */
   int getEnvironCount();
   /**
-   * <code>map&lt;string, string&gt; environ = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 7;</code>
    */
   boolean containsEnviron(
       java.lang.String key);
@@ -96,19 +102,19 @@ public interface CommandLineOrBuilder extends
   java.util.Map<java.lang.String, java.lang.String>
   getEnviron();
   /**
-   * <code>map&lt;string, string&gt; environ = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 7;</code>
    */
   java.util.Map<java.lang.String, java.lang.String>
   getEnvironMap();
   /**
-   * <code>map&lt;string, string&gt; environ = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 7;</code>
    */
 
   java.lang.String getEnvironOrDefault(
       java.lang.String key,
       java.lang.String defaultValue);
   /**
-   * <code>map&lt;string, string&gt; environ = 6;</code>
+   * <code>map&lt;string, string&gt; environ = 7;</code>
    */
 
   java.lang.String getEnvironOrThrow(
