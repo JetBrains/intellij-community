@@ -11,7 +11,6 @@ import com.intellij.openapi.roots.impl.RootModelBase
 import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.CompilerModuleExtensionBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge.Companion.findModuleEntity
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
@@ -79,19 +78,7 @@ internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
 
   override fun getModule(): ModuleBridge = module
 
-  // TODO Deduplicate this code with other two root model implementations
-  private val compilerModuleExtension by lazy {
-    CompilerModuleExtensionBridge(module, entityStorage = VersionedEntityStorageOnStorage(storage), diff = null)
-  }
-
-  private val compilerModuleExtensionClass = CompilerModuleExtension::class.java
-
   override fun <T : Any?> getModuleExtension(klass: Class<T>): T? {
-    if (compilerModuleExtensionClass.isAssignableFrom(klass)) {
-      @Suppress("UNCHECKED_CAST")
-      return compilerModuleExtension as T
-    }
-
     return extensions.filterIsInstance(klass).firstOrNull()
   }
 

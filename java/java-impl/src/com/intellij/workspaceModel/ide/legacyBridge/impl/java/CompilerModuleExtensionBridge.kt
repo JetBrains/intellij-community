@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.workspaceModel.ide.impl.legacyBridge.module
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.workspaceModel.ide.legacyBridge.impl.java
 
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.CompilerProjectExtension
@@ -13,21 +13,21 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerCom
 import com.intellij.workspaceModel.ide.impl.toVirtualFileUrl
 import com.intellij.workspaceModel.ide.impl.virtualFile
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridge
+import com.intellij.workspaceModel.ide.legacyBridge.ModuleExtensionBridgeFactory
 import com.intellij.workspaceModel.storage.VersionedEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.addJavaModuleSettingsEntity
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
-import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 
 class CompilerModuleExtensionBridge(
   private val module: ModuleBridge,
   private val entityStorage: VersionedEntityStorage,
   private val diff: WorkspaceEntityStorageDiffBuilder?
-) : CompilerModuleExtension() {
+) : CompilerModuleExtension(), ModuleExtensionBridge {
 
   private var changed = false
-  private val virtualFileManager = VirtualFileUrlManager.getInstance(module.project)
+  private val virtualFileManager = com.intellij.workspaceModel.storage.url.VirtualFileUrlManager.getInstance(module.project)
 
   private val javaSettings
     get() = entityStorage.current.findModuleEntity(module)?.javaSettings
@@ -76,7 +76,7 @@ class CompilerModuleExtensionBridge(
   override fun isChanged(): Boolean = changed
   override fun dispose() = Unit
 
-  private fun updateJavaSettings(updater: ModifiableJavaModuleSettingsEntity.() -> Unit) {
+  private fun updateJavaSettings(updater: com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity.() -> Unit) {
     if (diff == null) {
       error("Read-only $javaClass")
     }
@@ -94,7 +94,7 @@ class CompilerModuleExtensionBridge(
       source = moduleSource
     )
 
-    diff.modifyEntity(ModifiableJavaModuleSettingsEntity::class.java, oldJavaSettings, updater)
+    diff.modifyEntity(com.intellij.workspaceModel.storage.bridgeEntities.ModifiableJavaModuleSettingsEntity::class.java, oldJavaSettings, updater)
     changed = true
   }
 
@@ -157,5 +157,13 @@ class CompilerModuleExtensionBridge(
     }
 
     return ArrayUtilRt.toStringArray(result)
+  }
+
+  companion object : ModuleExtensionBridgeFactory<CompilerModuleExtensionBridge> {
+    override fun createExtension(module: ModuleBridge,
+                                 entityStorage: VersionedEntityStorage,
+                                 diff: WorkspaceEntityStorageDiffBuilder?): CompilerModuleExtensionBridge {
+      return CompilerModuleExtensionBridge(module, entityStorage, diff)
+    }
   }
 }
