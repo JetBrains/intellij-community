@@ -540,6 +540,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                                               SSRBundle.messagePointer("history.button.description"),
                                                               AllIcons.Actions.SearchWithHistory) {
       @Override
+      public void update(@NotNull AnActionEvent e) {
+        e.getPresentation().setEnabled(!ConfigurationManager.getInstance(getProject()).getHistoryConfigurations().isEmpty());
+      }
+
+      @Override
       public void actionPerformed(@NotNull AnActionEvent e) {
         final Object source = e.getInputEvent().getSource();
         if (!(source instanceof Component)) return;
@@ -661,6 +666,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final DefaultActionGroup templateActionGroup = new DefaultActionGroup();
     templateActionGroup.add(
       new DumbAwareAction(SSRBundle.message("save.template.text.button")) {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
+        }
 
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
@@ -669,6 +678,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       });
     templateActionGroup.add(
       new DumbAwareAction(SSRBundle.message("save.inspection.action.text")) {
+        @Override
+        public void update(@NotNull AnActionEvent e) {
+          e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
+        }
+
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           StructuralSearchProfileActionProvider.createNewInspection(getConfiguration(), getProject());
@@ -1347,6 +1361,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     CopyConfigurationAction() {
       super(SSRBundle.messagePointer("export.template.action"));
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      e.getPresentation().setEnabled(!StringUtil.isEmptyOrSpaces(mySearchCriteriaEdit.getText()));
     }
 
     @Override
