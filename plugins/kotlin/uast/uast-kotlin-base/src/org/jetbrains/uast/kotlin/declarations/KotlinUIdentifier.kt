@@ -5,6 +5,8 @@ package org.jetbrains.uast.kotlin
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
+import org.jetbrains.uast.kotlin.createKDocNameSimpleNameReference
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
 import org.jetbrains.uast.UElement
