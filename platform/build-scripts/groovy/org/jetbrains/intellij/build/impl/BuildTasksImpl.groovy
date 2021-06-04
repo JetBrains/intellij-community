@@ -981,7 +981,7 @@ idea.fatal.error.notification=disabled
       OsSpecificDistributionBuilder builder
       switch (currentOs) {
         case OsFamily.WINDOWS:
-          builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile, patchedApplicationInfo)
+          builder = new WindowsDistributionBuilder(buildContext, buildContext.windowsDistributionCustomizer, propertiesFile, "$buildContext.applicationInfo")
           break
         case OsFamily.LINUX:
           builder = new LinuxDistributionBuilder(buildContext, buildContext.linuxDistributionCustomizer, propertiesFile)
