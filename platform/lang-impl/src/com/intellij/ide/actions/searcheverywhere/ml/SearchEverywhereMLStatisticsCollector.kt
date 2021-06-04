@@ -9,30 +9,11 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
-import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.util.concurrency.NonUrgentExecutor
 
-internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
-  private val myIsReporting: Boolean
-  private val myLastToolWindowId: String?
-
-  init {
-    myIsReporting = isEnabled()
-    // report tool windows' ids
-    myLastToolWindowId = if (myProject != null) {
-      val twm = ToolWindowManager.getInstance(myProject)
-      var id: String? = null
-      ApplicationManager.getApplication().invokeAndWait {
-        id = twm.lastActiveToolWindowId
-      }
-      id
-    }
-    else {
-      null
-    }
-  }
+internal class SearchEverywhereMLStatisticsCollector {
+  private val myIsReporting: Boolean = isEnabled()
 
   private fun isEnabled(): Boolean {
     if (isExperimentModeEnabled) {
@@ -42,7 +23,7 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
     return false
   }
 
-  private fun isLoggingEnabled(tabId: String?): Boolean = myIsReporting && (tabId == null || isActionOrAllTab(tabId))
+  private fun isLoggingEnabled(tabId: String): Boolean = myIsReporting && isActionOrAllTab(tabId)
 
   private fun isActionOrAllTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId ||
                                                          SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == tabId

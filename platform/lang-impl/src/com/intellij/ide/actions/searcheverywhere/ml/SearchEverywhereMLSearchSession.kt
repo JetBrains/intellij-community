@@ -23,8 +23,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
 
   // element features & ML score are re-calculated on each typing because some of them might change (e.g. matching degree)
   private val cachedSearchState = mutableMapOf<Int, SearchEverywhereMlSearchState>()
-
-  private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector(project)
+  private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector()
 
   fun onSearchRestart(previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                       reason: SearchRestartReason,
