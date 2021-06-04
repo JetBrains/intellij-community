@@ -99,11 +99,11 @@ internal class GitStageDisplayNameSupplier : Supplier<String> {
 @RequiresEdt
 fun showStagingArea(project: Project, commitMessage: String) {
   showStagingArea(project) {
-    it.setCommitMessage(commitMessage)
+    it.commitMessage.setCommitMessage(commitMessage)
   }
 }
 
-private fun showStagingArea(project: Project, consumer: (GitStagePanel) -> Unit) {
+internal fun showStagingArea(project: Project, consumer: (GitStagePanel) -> Unit) {
   val toolWindow = ChangesViewContentManager.getToolWindowFor(project, STAGING_AREA_TAB_NAME) ?: return
   toolWindow.activate({
                         val contentManager = ChangesViewContentManager.getInstance(project) as ChangesViewContentManager

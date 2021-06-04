@@ -96,6 +96,8 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private var hasPendingUpdates = false
 
+  internal val commitMessage get() = commitPanel.commitMessage
+
   init {
     _tree = MyChangesTree(project)
 
@@ -227,10 +229,6 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
       editorTabPreview = null
       commitDiffSplitter.secondComponent = diffPreviewProcessor!!.component
     }
-  }
-
-  internal fun setCommitMessage(commitMessage: String) {
-    commitPanel.commitMessage.setCommitMessage(commitMessage)
   }
 
   override fun dispose() {
