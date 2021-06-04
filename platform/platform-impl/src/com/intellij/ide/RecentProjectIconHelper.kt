@@ -2,6 +2,7 @@
 package com.intellij.ide
 
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
@@ -35,15 +36,17 @@ private val LOG = logger<RecentProjectIconHelper>()
 
 internal class RecentProjectIconHelper {
   companion object {
+    private const val ideaDir = Project.DIRECTORY_STORE_FOLDER
+
     fun getDotIdeaPath(path: Path): Path {
-      if (path.isDirectory()) return path.resolve(".idea")
+      if (path.isDirectory()) return path.resolve(ideaDir)
 
       val fileName = path.fileName.toString()
-      val dotIndex = fileName.lastIndexOf('.')
 
+      val dotIndex = fileName.lastIndexOf('.')
       val fileNameWithoutExt = if (dotIndex == -1) fileName else fileName.substring(0, dotIndex)
 
-      return path.parent.resolve(".idea/.idea.$fileNameWithoutExt/.idea")
+      return path.parent.resolve("$ideaDir/$ideaDir.$fileNameWithoutExt/$ideaDir")
     }
 
     fun getDotIdeaPath(path: String) = getDotIdeaPath(Paths.get(path))
