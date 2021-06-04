@@ -99,7 +99,7 @@ class ModuleRootComponentBridge(
   override fun getModifiableModel(accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(
     WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
     moduleBridge,
-    moduleBridge.entityStorage.current, accessor)
+    accessor)
 
   /**
    * This method is used in Project Structure dialog to ensure that changes made in {@link ModifiableModuleModel} after creation
@@ -109,12 +109,12 @@ class ModuleRootComponentBridge(
     (moduleBridge.diff as? WorkspaceEntityStorageBuilder) ?: (accessor as? RootConfigurationAccessorForWorkspaceModel)?.actualDiffBuilder
                                                                ?: WorkspaceEntityStorageBuilder.from(moduleBridge.entityStorage.current),
     moduleBridge,
-    moduleBridge.entityStorage.current, accessor)
+    accessor)
 
   fun getModifiableModel(diff: WorkspaceEntityStorageBuilder,
                          initialStorage: WorkspaceEntityStorage,
                          accessor: RootConfigurationAccessor): ModifiableRootModel = ModifiableRootModelBridgeImpl(diff, moduleBridge,
-                                                                                                                   initialStorage, accessor,
+                                                                                                                   accessor,
                                                                                                                    false)
 
 

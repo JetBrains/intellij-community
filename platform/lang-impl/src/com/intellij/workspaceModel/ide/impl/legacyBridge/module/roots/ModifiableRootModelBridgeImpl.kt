@@ -46,7 +46,6 @@ import java.util.concurrent.ConcurrentHashMap
 class ModifiableRootModelBridgeImpl(
   diff: WorkspaceEntityStorageBuilder,
   override val moduleBridge: ModuleBridge,
-  private val initialStorage: WorkspaceEntityStorage,
   override val accessor: RootConfigurationAccessor,
   cacheStorageResult: Boolean = true
 ) : LegacyBridgeModifiableBase(diff, cacheStorageResult), ModifiableRootModelBridge, ModuleRootModelBridge {
