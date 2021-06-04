@@ -180,7 +180,8 @@ public class JavaExecutionStack extends XExecutionStack {
         if (status == ThreadReference.THREAD_STATUS_ZOMBIE) {
           container.errorOccurred(JavaDebuggerBundle.message("frame.panel.thread.finished"));
         }
-        else if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
+        // isCollected is not needed as ObjectCollectedException was handled in status call
+        else if (/*!myThreadProxy.isCollected() && */myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
           if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) && !(status == ThreadReference.THREAD_STATUS_NOT_STARTED)) {
             try {
               int added = 0;
