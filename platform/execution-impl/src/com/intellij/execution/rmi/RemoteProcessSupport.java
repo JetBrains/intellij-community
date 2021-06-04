@@ -24,6 +24,7 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
@@ -575,6 +576,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
       Disposer.register(ApplicationManager.getApplication(), () -> myFuture.cancel(false));
     }
 
+    @TestOnly
     public void kill(int exitCode){
       try {
         getWatchdog().dieNow(exitCode);

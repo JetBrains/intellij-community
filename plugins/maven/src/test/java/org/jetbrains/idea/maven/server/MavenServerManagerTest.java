@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.EdtTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.WaitFor;
 import org.jetbrains.idea.maven.MavenTestCase;
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 
@@ -92,11 +93,12 @@ public class MavenServerManagerTest extends MavenTestCase {
     AtomicReference<RemoteProcessSupport.Heartbeat> heartbeat =
       ReflectionUtil.getField(RemoteProcessSupport.class, support, AtomicReference.class, "myHeartbeatRef");
     heartbeat.get().kill(1);
-    long now = System.currentTimeMillis();
-    while (System.currentTimeMillis() - now < 10_000) {
-      if (!connector.checkConnected()) break;
-      Uninterruptibles.sleepUninterruptibly(1, TimeUnit.MILLISECONDS);
-    }
+    new WaitFor(10_000){
+      @Override
+      protected boolean condition() {
+        return !connector.checkConnected();
+      }
+    };
     assertFalse(connector.checkConnected());
     MavenServerConnector newConnector = MavenServerManager.getInstance().getConnector(myProject, myProjectRoot.getPath());
     ensureConnected(newConnector);
