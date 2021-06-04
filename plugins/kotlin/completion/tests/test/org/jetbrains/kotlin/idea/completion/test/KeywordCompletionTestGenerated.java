@@ -63,6 +63,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/AfterIf.kt");
     }
 
+    @TestMetadata("AfterIf.fir.kt")
+    public void testAfterIf_fir() throws Exception {
+        runTest("testData/keywords/AfterIf.fir.kt");
+    }
+
     @TestMetadata("AfterSafeDot.kt")
     public void testAfterSafeDot() throws Exception {
         runTest("testData/keywords/AfterSafeDot.kt");
@@ -83,9 +88,19 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/AfterTryCatch.kt");
     }
 
+    @TestMetadata("AfterTryCatch.fir.kt")
+    public void testAfterTryCatch_fir() throws Exception {
+        runTest("testData/keywords/AfterTryCatch.fir.kt");
+    }
+
     @TestMetadata("AfterTryFinally.kt")
     public void testAfterTryFinally() throws Exception {
         runTest("testData/keywords/AfterTryFinally.kt");
+    }
+
+    @TestMetadata("AfterTryFinally.fir.kt")
+    public void testAfterTryFinally_fir() throws Exception {
+        runTest("testData/keywords/AfterTryFinally.fir.kt");
     }
 
     @TestMetadata("AfterTryInAssignment.kt")
@@ -153,9 +168,19 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/Else1.kt");
     }
 
+    @TestMetadata("Else1.fir.kt")
+    public void testElse1_fir() throws Exception {
+        runTest("testData/keywords/Else1.fir.kt");
+    }
+
     @TestMetadata("Else2.kt")
     public void testElse2() throws Exception {
         runTest("testData/keywords/Else2.kt");
+    }
+
+    @TestMetadata("Else2.fir.kt")
+    public void testElse2_fir() throws Exception {
+        runTest("testData/keywords/Else2.fir.kt");
     }
 
     @TestMetadata("FileKeyword.kt")
@@ -173,6 +198,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/GlobalPropertyAccessors.kt");
     }
 
+    @TestMetadata("GlobalPropertyAccessors.fir.kt")
+    public void testGlobalPropertyAccessors_fir() throws Exception {
+        runTest("testData/keywords/GlobalPropertyAccessors.fir.kt");
+    }
+
     @TestMetadata("IfTry.kt")
     public void testIfTry() throws Exception {
         runTest("testData/keywords/IfTry.kt");
@@ -183,6 +213,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/IfTryCatch.kt");
     }
 
+    @TestMetadata("IfTryCatch.fir.kt")
+    public void testIfTryCatch_fir() throws Exception {
+        runTest("testData/keywords/IfTryCatch.fir.kt");
+    }
+
     @TestMetadata("InAnnotationClassScope.kt")
     public void testInAnnotationClassScope() throws Exception {
         runTest("testData/keywords/InAnnotationClassScope.kt");
@@ -191,6 +226,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("InArgumentList.kt")
     public void testInArgumentList() throws Exception {
         runTest("testData/keywords/InArgumentList.kt");
+    }
+
+    @TestMetadata("InArgumentList.fir.kt")
+    public void testInArgumentList_fir() throws Exception {
+        runTest("testData/keywords/InArgumentList.fir.kt");
     }
 
     @TestMetadata("InBlockComment.kt")
@@ -233,9 +273,19 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/InCodeBlock.kt");
     }
 
+    @TestMetadata("InCodeBlock.fir.kt")
+    public void testInCodeBlock_fir() throws Exception {
+        runTest("testData/keywords/InCodeBlock.fir.kt");
+    }
+
     @TestMetadata("InElse.kt")
     public void testInElse() throws Exception {
         runTest("testData/keywords/InElse.kt");
+    }
+
+    @TestMetadata("InElse.fir.kt")
+    public void testInElse_fir() throws Exception {
+        runTest("testData/keywords/InElse.fir.kt");
     }
 
     @TestMetadata("InEnumScope1.kt")
@@ -251,6 +301,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("InFunctionExpressionBody.kt")
     public void testInFunctionExpressionBody() throws Exception {
         runTest("testData/keywords/InFunctionExpressionBody.kt");
+    }
+
+    @TestMetadata("InFunctionExpressionBody.fir.kt")
+    public void testInFunctionExpressionBody_fir() throws Exception {
+        runTest("testData/keywords/InFunctionExpressionBody.fir.kt");
     }
 
     @TestMetadata("InFunctionName.kt")
@@ -273,9 +328,19 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/InGetterExpressionBody.kt");
     }
 
+    @TestMetadata("InGetterExpressionBody.fir.kt")
+    public void testInGetterExpressionBody_fir() throws Exception {
+        runTest("testData/keywords/InGetterExpressionBody.fir.kt");
+    }
+
     @TestMetadata("InIf.kt")
     public void testInIf() throws Exception {
         runTest("testData/keywords/InIf.kt");
+    }
+
+    @TestMetadata("InIf.fir.kt")
+    public void testInIf_fir() throws Exception {
+        runTest("testData/keywords/InIf.fir.kt");
     }
 
     @TestMetadata("InInterfaceScope.kt")
@@ -308,6 +373,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/InParameterDefaultValue.kt");
     }
 
+    @TestMetadata("InParameterDefaultValue.fir.kt")
+    public void testInParameterDefaultValue_fir() throws Exception {
+        runTest("testData/keywords/InParameterDefaultValue.fir.kt");
+    }
+
     @TestMetadata("InPrimaryConstructorParametersList.kt")
     public void testInPrimaryConstructorParametersList() throws Exception {
         runTest("testData/keywords/InPrimaryConstructorParametersList.kt");
@@ -316,6 +386,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("InPropertyInitializer.kt")
     public void testInPropertyInitializer() throws Exception {
         runTest("testData/keywords/InPropertyInitializer.kt");
+    }
+
+    @TestMetadata("InPropertyInitializer.fir.kt")
+    public void testInPropertyInitializer_fir() throws Exception {
+        runTest("testData/keywords/InPropertyInitializer.fir.kt");
     }
 
     @TestMetadata("InPropertyTypeReference.kt")
