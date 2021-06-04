@@ -192,29 +192,3 @@ class KotlinClassViaConstructorUSimpleReferenceExpression(
         return if (this is NewResolvedCallImpl) candidateDescriptor else resultingDescriptor
     }
 }
-
-class KotlinStringUSimpleReferenceExpression(
-    override val identifier: String,
-    givenParent: UElement?,
-    override val sourcePsi: PsiElement? = null,
-    private val referenceAnchor: KtElement? = null
-) : KotlinAbstractUExpression(givenParent), USimpleNameReferenceExpression, UMultiResolvable {
-    override val psi: PsiElement?
-        get() = null
-
-    private val resolved by lz { referenceAnchor?.references?.singleOrNull()?.resolve() }
-
-    override fun resolve() = resolved
-
-    override val resolvedName: String
-        get() = (resolved as? PsiNamedElement)?.name ?: identifier
-
-    override fun multiResolve(): Iterable<ResolveResult> = referenceAnchor?.multiResolveResults().orEmpty().asIterable()
-}
-
-internal fun createKDocNameSimpleNameReference(parentKDocName: KDocName, givenParent: UElement?): USimpleNameReferenceExpression? =
-    parentKDocName.lastChild?.let { psiIdentifier ->
-        parentKDocName.getQualifiedName().lastOrNull()?.let { qualifierText ->
-            KotlinStringUSimpleReferenceExpression(qualifierText, givenParent, psiIdentifier, parentKDocName)
-        }
-    }

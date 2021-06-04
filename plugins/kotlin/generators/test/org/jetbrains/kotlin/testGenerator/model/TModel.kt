@@ -49,6 +49,7 @@ object Patterns {
     val KT_OR_KTS: ModelMatcher = forRegex("^(.+)\\.(kt|kts)$")
     val KT_WITHOUT_DOTS: ModelMatcher = forRegex("^([^.]+)\\.kt$")
     val KT_OR_KTS_WITHOUT_DOTS: ModelMatcher = forRegex("^([^.]+)\\.(kt|kts)$")
+    val KT_WITHOUT_FIR_PREFIX: ModelMatcher = forRegex("""^(.+)(?<!\.fir)\.kt$""")
 }
 
 fun MutableTSuite.model(

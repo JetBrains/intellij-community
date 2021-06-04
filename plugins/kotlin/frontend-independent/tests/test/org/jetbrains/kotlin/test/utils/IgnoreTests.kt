@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.test.utils
 
 import com.intellij.openapi.util.io.FileUtil
+import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
 import org.junit.Assert
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
 import java.io.File
