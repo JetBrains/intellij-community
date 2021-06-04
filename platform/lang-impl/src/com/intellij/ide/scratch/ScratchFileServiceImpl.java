@@ -7,6 +7,7 @@ import com.intellij.ide.navigationToolbar.AbstractNavBarModelExtension;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.projectView.ProjectViewNode;
 import com.intellij.ide.projectView.ProjectViewNodeDecorator;
+import com.intellij.ide.util.DeleteHandler;
 import com.intellij.lang.*;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -16,12 +17,14 @@ import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.fileEditor.impl.EditorTabTitleProvider;
+import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension;
 import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,9 +40,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.ui.PackageDependenciesNode;
-import com.intellij.psi.LanguageSubstitutor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.search.UseScopeEnlarger;
@@ -123,18 +124,29 @@ public final class ScratchFileServiceImpl extends ScratchFileService implements 
       .subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
       public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
-        if (!isEditable(file)) {
-          return;
-        }
-
         RootType rootType = getRootType(file);
-        if (rootType != null) {
-          rootType.fileOpened(file, source);
-        }
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document == null || rootType == null || rootType.isHidden()) return;
+        rootType.fileOpened(file, source);
       }
 
-      boolean isEditable(@NotNull VirtualFile file) {
-        return FileDocumentManager.getInstance().getDocument(file) != null;
+      @Override
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
+        if (Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) return;
+        if (ApplicationManager.getApplication().isUnitTestMode()) return;
+        RootType rootType = getRootType(file);
+        Document document = FileDocumentManager.getInstance().getDocument(file);
+        if (document == null || rootType == null || rootType.isHidden()) return;
+        if (document.getTextLength() < 1024 && StringUtil.isEmptyOrSpaces(document.getText())) {
+          Project project = source.getProject();
+          ApplicationManager.getApplication().invokeLater(() -> {
+            if (!file.isValid() || source.isFileOpen(file)) return;
+            PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+            if (psiFile != null) {
+              DeleteHandler.deletePsiElement(new PsiElement[]{psiFile}, project, false);
+            }
+          }, project.getDisposed());
+        }
       }
     });
 
