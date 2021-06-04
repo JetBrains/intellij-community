@@ -647,7 +647,7 @@ public abstract class JvmBasicCompletionTestGenerated extends AbstractJvmBasicCo
 
         @TestMetadata("SecondTypeArg.kt")
         public void testSecondTypeArg() throws Exception {
-            runTest("idea/idea-completion/testData/basic/common/SecondTypeArg.kt");
+            runTest("testData/basic/common/SecondTypeArg.kt");
         }
 
         @TestMetadata("SetPrefixForProperties.kt")

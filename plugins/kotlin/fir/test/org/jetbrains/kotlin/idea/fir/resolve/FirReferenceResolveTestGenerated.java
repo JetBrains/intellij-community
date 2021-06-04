@@ -665,61 +665,56 @@ public class FirReferenceResolveTestGenerated extends AbstractFirReferenceResolv
         }
     }
 
-    @TestMetadata("idea/testData/resolve/references/inImport")
-    @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/resolve/references/inImport")
     public static class InImport extends AbstractFirReferenceResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        public void testAllFilesPresentInInImport() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/resolve/references/inImport"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
-        }
-
         @TestMetadata("javaClass.kt")
         public void testJavaClass() throws Exception {
-            runTest("idea/testData/resolve/references/inImport/javaClass.kt");
+            runTest("../idea/tests/testData/resolve/references/inImport/javaClass.kt");
         }
 
         @TestMetadata("javaPackageFirstQualifier.kt")
         public void testJavaPackageFirstQualifier() throws Exception {
-            runTest("idea/testData/resolve/references/inImport/javaPackageFirstQualifier.kt");
+            runTest("../idea/tests/testData/resolve/references/inImport/javaPackageFirstQualifier.kt");
         }
 
         @TestMetadata("javaPackageSecondQualifier.kt")
         public void testJavaPackageSecondQualifier() throws Exception {
-            runTest("idea/testData/resolve/references/inImport/javaPackageSecondQualifier.kt");
+            runTest("../idea/tests/testData/resolve/references/inImport/javaPackageSecondQualifier.kt");
         }
 
         @TestMetadata("kotlinClass.kt")
         public void testKotlinClass() throws Exception {
-            runTest("idea/testData/resolve/references/inImport/kotlinClass.kt");
+            runTest("../idea/tests/testData/resolve/references/inImport/kotlinClass.kt");
         }
 
         @TestMetadata("kotlinPackageFirstQualifier.kt")
         public void testKotlinPackageFirstQualifier() throws Exception {
-            runTest("idea/testData/resolve/references/inImport/kotlinPackageFirstQualifier.kt");
+            runTest("../idea/tests/testData/resolve/references/inImport/kotlinPackageFirstQualifier.kt");
         }
 
         @TestMetadata("kotlinPackageSecondQualifier.kt")
         public void testKotlinPackageSecondQualifier() throws Exception {
-            runTest("idea/testData/resolve/references/inImport/kotlinPackageSecondQualifier.kt");
+            runTest("../idea/tests/testData/resolve/references/inImport/kotlinPackageSecondQualifier.kt");
         }
 
         @TestMetadata("kotlinTopLevelFunction.kt")
         public void testKotlinTopLevelFunction() throws Exception {
-            runTest("idea/testData/resolve/references/inImport/kotlinTopLevelFunction.kt");
+            runTest("../idea/tests/testData/resolve/references/inImport/kotlinTopLevelFunction.kt");
         }
 
         @TestMetadata("staticMethodFromJavaClass.kt")
         public void testStaticMethodFromJavaClass() throws Exception {
-            runTest("idea/testData/resolve/references/inImport/staticMethodFromJavaClass.kt");
+            runTest("../idea/tests/testData/resolve/references/inImport/staticMethodFromJavaClass.kt");
         }
 
         @TestMetadata("staticMethodFromJavaClassJavaClass.kt")
         public void testStaticMethodFromJavaClassJavaClass() throws Exception {
-            runTest("idea/testData/resolve/references/inImport/staticMethodFromJavaClassJavaClass.kt");
+            runTest("../idea/tests/testData/resolve/references/inImport/staticMethodFromJavaClassJavaClass.kt");
         }
     }
 
@@ -864,36 +859,31 @@ public class FirReferenceResolveTestGenerated extends AbstractFirReferenceResolv
         }
     }
 
-    @TestMetadata("idea/testData/resolve/references/packageReference")
-    @TestDataPath("$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../idea/tests/testData/resolve/references/packageReference")
     public static class PackageReference extends AbstractFirReferenceResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        public void testAllFilesPresentInPackageReference() throws Exception {
-            KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("idea/testData/resolve/references/packageReference"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
-        }
-
         @TestMetadata("javaPackageFirstQualifier.kt")
         public void testJavaPackageFirstQualifier() throws Exception {
-            runTest("idea/testData/resolve/references/packageReference/javaPackageFirstQualifier.kt");
+            runTest("../idea/tests/testData/resolve/references/packageReference/javaPackageFirstQualifier.kt");
         }
 
         @TestMetadata("javaPackageSecondQualifier.kt")
         public void testJavaPackageSecondQualifier() throws Exception {
-            runTest("idea/testData/resolve/references/packageReference/javaPackageSecondQualifier.kt");
+            runTest("../idea/tests/testData/resolve/references/packageReference/javaPackageSecondQualifier.kt");
         }
 
         @TestMetadata("kotlinPackageFirstQualifier.kt")
         public void testKotlinPackageFirstQualifier() throws Exception {
-            runTest("idea/testData/resolve/references/packageReference/kotlinPackageFirstQualifier.kt");
+            runTest("../idea/tests/testData/resolve/references/packageReference/kotlinPackageFirstQualifier.kt");
         }
 
         @TestMetadata("kotlinPackageSecondQualifier.kt")
         public void testKotlinPackageSecondQualifier() throws Exception {
-            runTest("idea/testData/resolve/references/packageReference/kotlinPackageSecondQualifier.kt");
+            runTest("../idea/tests/testData/resolve/references/packageReference/kotlinPackageSecondQualifier.kt");
         }
     }
 }
