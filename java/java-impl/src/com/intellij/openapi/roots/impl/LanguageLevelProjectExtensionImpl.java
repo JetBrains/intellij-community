@@ -36,7 +36,7 @@ public class LanguageLevelProjectExtensionImpl extends LanguageLevelProjectExten
   public LanguageLevelProjectExtensionImpl(final Project project) {
     myProject = project;
     setDefault(project.isDefault() ? true : null);
-    WorkspaceModelTopics.Companion.getInstance(project).subscribeAfterModuleLoading(
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(
       project.getMessageBus().connect(),
       new WorkspaceModelChangeListener() {
         @Override
