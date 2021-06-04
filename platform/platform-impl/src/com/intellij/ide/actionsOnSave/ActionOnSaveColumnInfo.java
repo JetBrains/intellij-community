@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionsOnSave;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.diagnostic.Logger;
@@ -97,9 +98,12 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
       });
 
       ComponentPanelBuilder builder = UI.PanelFactory.panel(checkBox);
-      if (info.getComment() != null) {
-        builder.withComment(info.getComment().getCommentText(), false);
-        // TODO add warning icon to the comment if needed
+      ActionOnSaveComment comment = info.getComment();
+      if (comment != null) {
+        builder.withComment(comment.getCommentText(), false);
+        if (comment.isWarning()) {
+          builder.withCommentIcon(AllIcons.General.Warning);
+        }
       }
 
       return builder.createPanel();
@@ -117,9 +121,13 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
     // disabled label looks just the same as its comment on Windows, so `setEnabled(false)` is not called for this `label`
     panel.add(label);
 
-    if (info.getComment() != null) {
-      panel.add(ComponentPanelBuilder.createCommentComponent(info.getComment().getCommentText(), true, -1, false));
-      // TODO add warning icon to the comment if needed
+    ActionOnSaveComment comment = info.getComment();
+    if (comment != null) {
+      JLabel commentComponent = ComponentPanelBuilder.createCommentComponent(comment.getCommentText(), true, -1, false);
+      if (comment.isWarning()) {
+        commentComponent.setIcon(AllIcons.General.Warning);
+      }
+      panel.add(commentComponent);
     }
 
     return panel;

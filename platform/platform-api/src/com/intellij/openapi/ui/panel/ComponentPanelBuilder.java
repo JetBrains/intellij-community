@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.panel;
 
 import com.intellij.icons.AllIcons;
@@ -40,6 +40,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
   private @NlsContexts.Label String myLabelText;
   private boolean myLabelOnTop;
   private @NlsContexts.DetailedDescription String myCommentText;
+  private Icon myCommentIcon;
   private HyperlinkListener myHyperlinkListener = BrowserHyperlinkListener.INSTANCE;
   private boolean myCommentBelow = true;
   private boolean myCommentAllowAutoWrapping = true;
@@ -119,6 +120,11 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
     myCommentText = comment;
     myCommentAllowAutoWrapping = allowAutoWrapping;
     valid = StringUtil.isEmpty(comment) || StringUtil.isEmpty(myHTDescription);
+    return this;
+  }
+
+  public ComponentPanelBuilder withCommentIcon(@NotNull Icon icon) {
+    myCommentIcon = icon;
     return this;
   }
 
@@ -378,6 +384,11 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
           return myHyperlinkListener;
         }
       }, myCommentText, myCommentBelow, 70, myCommentAllowAutoWrapping);
+
+      if (myCommentIcon != null) {
+        comment.setIcon(myCommentIcon);
+      }
+
       comment.setBorder(getCommentBorder());
     }
 
