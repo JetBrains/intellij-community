@@ -28,7 +28,7 @@ internal class SearchEverywhereMLStatisticsCollector {
   private fun isActionOrAllTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId ||
                                                          SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == tabId
 
-  fun onItemSelected(seSessionId: Int,
+  fun onItemSelected(seSessionId: Int, searchIndex: Int,
                      elementIdProvider: SearchEverywhereMlItemIdProvider,
                      context: SearchEverywhereMLContextInfo,
                      cache: SearchEverywhereMlSearchState,
@@ -39,28 +39,28 @@ internal class SearchEverywhereMLStatisticsCollector {
     if (selectedIndices.isNotEmpty()) {
       data.add(SELECTED_INDEXES_DATA_KEY to selectedIndices.map { it.toString() })
     }
-    reportElements(SESSION_FINISHED, seSessionId, elementIdProvider, context, cache, data, elementsProvider)
+    reportElements(SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, data, elementsProvider)
   }
 
-  fun onSearchFinished(seSessionId: Int,
+  fun onSearchFinished(seSessionId: Int, searchIndex: Int,
                        elementIdProvider: SearchEverywhereMlItemIdProvider,
                        context: SearchEverywhereMLContextInfo,
                        cache: SearchEverywhereMlSearchState,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val additional = listOf(CLOSE_POPUP_KEY to true)
-    reportElements(SESSION_FINISHED, seSessionId, elementIdProvider, context, cache, additional, elementsProvider)
+    reportElements(SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, additional, elementsProvider)
   }
 
-  fun onSearchRestarted(seSessionId: Int,
+  fun onSearchRestarted(seSessionId: Int, searchIndex: Int,
                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                         context: SearchEverywhereMLContextInfo,
                         cache: SearchEverywhereMlSearchState,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(SEARCH_RESTARTED, seSessionId, elementIdProvider, context, cache, emptyList(), elementsProvider)
+    reportElements(SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, emptyList(), elementsProvider)
   }
 
   private fun reportElements(eventId: String,
-                             seSessionId: Int,
+                             seSessionId: Int, searchIndex: Int,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              context: SearchEverywhereMLContextInfo,
                              state: SearchEverywhereMlSearchState,
@@ -71,6 +71,7 @@ internal class SearchEverywhereMLStatisticsCollector {
       NonUrgentExecutor.getInstance().execute {
         val data = hashMapOf<String, Any>()
         data[SESSION_ID_LOG_DATA_KEY] = seSessionId
+        data[SEARCH_INDEX_DATA_KEY] = searchIndex
         data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
         data[SE_TAB_ID_KEY] = state.tabId
         data[SEARCH_START_TIME_KEY] = state.searchStartTime
@@ -128,6 +129,7 @@ internal class SearchEverywhereMLStatisticsCollector {
     private const val SEARCH_START_TIME_KEY = "startTime"
     private const val REBUILD_REASON_KEY = "rebuildReason"
     private const val SESSION_ID_LOG_DATA_KEY = "sessionId"
+    private const val SEARCH_INDEX_DATA_KEY = "searchIndex"
     private const val TYPED_SYMBOL_KEYS = "typedSymbolKeys"
     private const val TOTAL_NUMBER_OF_ITEMS_DATA_KEY = "totalItems"
     private const val TYPED_BACKSPACES_DATA_KEY = "typedBackspaces"

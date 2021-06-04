@@ -11,7 +11,7 @@ import com.intellij.util.containers.ContainerUtil
 import java.util.concurrent.atomic.AtomicInteger
 
 internal class SearchEverywhereMLSearchSession(project: Project?, private val sessionId: Int) {
-  private val searchIndex = AtomicInteger(1)
+  private val searchIndex = AtomicInteger(0)
 
   private val itemIdProvider = SearchEverywhereMlItemIdProvider()
   private val sessionStartTime: Long = System.currentTimeMillis()
@@ -31,9 +31,10 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                       keysTyped: Int,
                       backspacesTyped: Int,
                       queryLength: Int) {
-    val state = cachedSearchState.remove(searchIndex.get())
+    val currentSearchIndex = searchIndex.get()
+    val state = cachedSearchState.remove(currentSearchIndex)
     state?.let {
-      logger.onSearchRestarted(sessionId, itemIdProvider, cachedContextInfo, it, previousElementsProvider)
+      logger.onSearchRestarted(sessionId, currentSearchIndex, itemIdProvider, cachedContextInfo, it, previousElementsProvider)
     }
 
     val startTime = System.currentTimeMillis()
@@ -45,16 +46,18 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   }
 
   fun onItemSelected(indexes: IntArray, closePopup: Boolean, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    val state = cachedSearchState[searchIndex.get()]
+    val currentSearchIndex = searchIndex.get()
+    val state = cachedSearchState[currentSearchIndex]
     state?.let {
-      logger.onItemSelected(sessionId, itemIdProvider, cachedContextInfo, it, indexes, closePopup, elementsProvider)
+      logger.onItemSelected(sessionId, currentSearchIndex, itemIdProvider, cachedContextInfo, it, indexes, closePopup, elementsProvider)
     }
   }
 
   fun onSearchFinished(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    val state = cachedSearchState.remove(searchIndex.get())
+    val currentSearchIndex = searchIndex.get()
+    val state = cachedSearchState[currentSearchIndex]
     state?.let {
-      logger.onSearchFinished(sessionId, itemIdProvider, cachedContextInfo, it, elementsProvider)
+      logger.onSearchFinished(sessionId, currentSearchIndex, itemIdProvider, cachedContextInfo, it, elementsProvider)
     }
   }
 
