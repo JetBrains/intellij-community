@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorKind;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -196,7 +197,7 @@ public class ExecutionPointHighlighter {
       myRangeHighlighter = markupModel.addLineHighlighter(attributesKey, line, DebuggerColors.EXECUTION_LINE_HIGHLIGHTERLAYER);
     }
     myRangeHighlighter.putUserData(EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY, !myNotTopFrame);
-    myRangeHighlighter.setEditorFilter(MarkupEditorFilterFactory.createIsNotDiffFilter());
+    myRangeHighlighter.setEditorFilter(editor -> editor.getEditorKind() == EditorKind.MAIN_EDITOR);
     myRangeHighlighter.setGutterIconRenderer(myGutterIconRenderer);
   }
 
