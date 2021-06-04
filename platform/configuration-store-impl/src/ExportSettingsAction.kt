@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.AbstractBundle
@@ -224,7 +224,7 @@ fun looksLikeDirectory(storage: Storage): Boolean {
 private fun looksLikeDirectory(fileSpec: String) = !fileSpec.endsWith(PathManager.DEFAULT_EXT)
 
 private fun getRelativePath(storage: Storage, storageManager: StateStorageManager): String {
-  val storagePath = storageManager.expandMacro(storage.path)
+  val storagePath = storageManager.expandMacro(getStoragePathSpec(storage))
   val fileSpec = getRelativePathOrNull(storagePath)
   return fileSpec ?: storagePath.toString()
 }
