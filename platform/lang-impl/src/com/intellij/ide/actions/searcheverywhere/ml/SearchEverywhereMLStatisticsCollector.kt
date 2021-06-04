@@ -13,6 +13,7 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
+import kotlin.math.round
 
 internal class SearchEverywhereMLStatisticsCollector {
   private val loggerProvider = StatisticsEventLogProviderUtil.getEventLogProvider(RECORDER_CODE)
@@ -109,7 +110,7 @@ internal class SearchEverywhereMLStatisticsCollector {
             }
 
             state.getMLWeightIfDefined(elementId)?.let { score ->
-              result[ML_WEIGHT_KEY] = score
+              result[ML_WEIGHT_KEY] = roundDouble(score)
             }
 
             itemInfo.id.let { id ->
@@ -159,5 +160,10 @@ internal class SearchEverywhereMLStatisticsCollector {
     internal const val FEATURES_DATA_KEY = "features"
     internal const val CONTRIBUTOR_ID_KEY = "contributorId"
     internal const val ML_WEIGHT_KEY = "mlWeight"
+
+    private fun roundDouble(value: Double): Double {
+      if (!value.isFinite()) return -1.0
+      return round(value * 100000) / 100000
+    }
   }
 }
