@@ -1,5 +1,26 @@
 <html>
 <body>
 Reports calls to Java <code>get</code> and <code>set</code> methods that can be replaced with the use of Kotlin synthetic properties.
+<p>'Use property access syntax' quick-fix can be used to amen the code automatically.</p>
+<p>Example:</p>
+<pre><code>
+// Java:
+public class JavaClassWithGetter {
+    private final String expr = "result";
+
+    // ...
+
+    public String getExpr() {
+        return expr;
+    }
+}
+</code></pre>
+<pre><code>
+// Kotlin:
+fun test(j: JavaClassWithGetter) {
+    // ...
+    j.getExpr() // &lt;== quick-fix simplifies the expression to 'j.expr'
+}
+</code></pre>
 </body>
 </html>
