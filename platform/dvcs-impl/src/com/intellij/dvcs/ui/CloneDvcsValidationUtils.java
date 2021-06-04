@@ -55,7 +55,7 @@ public final class CloneDvcsValidationUtils {
    * @return null if destination directory is OK.
    */
   @Nullable
-  public static ValidationInfo checkDirectory(String directoryPath, JTextField component) {
+  public static ValidationInfo checkDirectory(@NotNull String directoryPath, @NotNull JComponent component) {
     if (directoryPath.length() == 0) {
       return new ValidationInfo("");
     }
