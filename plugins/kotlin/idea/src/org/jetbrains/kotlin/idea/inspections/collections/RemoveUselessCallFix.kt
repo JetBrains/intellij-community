@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.psi.KtQualifiedExpression
 
 class RemoveUselessCallFix : LocalQuickFix {
 
-    override fun getName() = KotlinBundle.message("remove.useless.call.fix.text")
+    override fun getName() = KotlinBundle.message("remove.redundant.call.fix.text")
 
     override fun getFamilyName() = name
 

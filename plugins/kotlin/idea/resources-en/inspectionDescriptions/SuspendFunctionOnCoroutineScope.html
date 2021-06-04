@@ -2,16 +2,11 @@
 <body>
 Reports calls & accesses of <code>CoroutineScope</code> extensions or members
 inside suspend functions with <code>CoroutineScope</code> receiver.
+<p>When a function is <code>suspend</code> and has <code>CoroutineScope</code> receiver,
+    it has ambiguous access to <code>CoroutineContext</code> via <code>kotlin.coroutines.coroutineContext</code> and via <code>CoroutineScope.coroutineContext</code>,
+    and two these contexts are different in general.</p>
 
-Both suspend functions and <code>CoroutineScope</code> members & extensions have access to <code>coroutineContext</code>.
-When some function is simultaneously suspend <b>and</b> has <code>CoroutineScope</code> receiver,
-it has ambiguous access to <code>CoroutineContext</code>:
-first via <code>kotlin.coroutines.coroutineContext</code> and second via <code>CoroutineScope.coroutineContext</code>,
-and two these contexts are different in general case.
-So when we call some <code>CoroutineScope</code> extension or access <code>coroutineContext</code> from such a function,
-it's unclear which from these two context do we have in mind.
-
-Normal ways to fix this are to wrap suspicious call inside <code>coroutineScope { ... }</code> or
-to get rid of <code>CoroutineScope</code> function receiver.
+<p>To improve this situation, one can wrap suspicious call inside <code>coroutineScope { ... }</code> or
+    get rid of <code>CoroutineScope</code> function receiver.</p>
 </body>
 </html>
