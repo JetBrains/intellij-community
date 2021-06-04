@@ -2,12 +2,15 @@
 package com.intellij.ide.actions.searcheverywhere.ml.features
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereSearchState
 import kotlin.math.round
 
 internal abstract class SearchEverywhereElementFeaturesProvider {
 
-  abstract fun getElementFeatures(element: Any, contributor: SearchEverywhereContributor<*>?,
-                                  currentTime: Long): SearchEverywhereFeaturesProvider.ItemInfo
+  abstract fun getElementFeatures(element: Any,
+                                  contributor: SearchEverywhereContributor<*>?,
+                                  currentTime: Long,
+                                  state: SearchEverywhereSearchState?): SearchEverywhereFeaturesProvider.ItemInfo
 
   protected fun withUpperBound(value: Int): Int {
     if (value > 100) return 101

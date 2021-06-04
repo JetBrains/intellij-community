@@ -4,7 +4,6 @@ package com.intellij.ide.actions.searcheverywhere.ml
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
-import com.intellij.ide.actions.searcheverywhere.ml.model.SearchEverywhereMLPredictor
 import com.intellij.openapi.project.Project
 
 internal class SearchEverywhereMLSearchSession(project: Project?,
@@ -41,6 +40,6 @@ internal class SearchEverywhereMLSearchSession(project: Project?,
   }
 
   fun getMLWeight(contributor: SearchEverywhereContributor<*>, element: Any): Double {
-    return cache.getMLWeight(element, contributor)
+    return cache.getMLWeight(element, contributor, state)
   }
 }

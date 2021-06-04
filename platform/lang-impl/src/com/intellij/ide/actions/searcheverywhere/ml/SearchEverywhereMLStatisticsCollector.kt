@@ -90,10 +90,10 @@ internal class SearchEverywhereMLStatisticsCollector(val myProject: Project?) {
         data[TYPED_BACKSPACES_DATA_KEY] = state.backspacesTyped
         data[REBUILD_REASON_KEY] = state.searchStartReason
         data.putAll(additional)
-        data.putAll(cache.getContextFeatures())
+        data.putAll(cache.getContextFeatures().features)
 
         data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-          val itemInfo = cache.getElementFeatures(it.element, it.contributor)
+          val itemInfo = cache.getElementFeatures(it.element, it.contributor, state)
           val result: HashMap<String, Any> = hashMapOf(
             CONTRIBUTOR_ID_KEY to itemInfo.contributorId,
           )

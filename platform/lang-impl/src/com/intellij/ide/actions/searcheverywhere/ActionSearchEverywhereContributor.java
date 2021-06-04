@@ -4,6 +4,7 @@ package com.intellij.ide.actions.searcheverywhere;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
 import com.intellij.ide.actions.SetShortcutAction;
+import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMLSearchSession;
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereSessionService;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.ide.ui.UISettings;
@@ -233,8 +234,12 @@ public class ActionSearchEverywhereContributor implements WeightedSearchEverywhe
 
   private FoundItemDescriptor<GotoActionModel.MatchedValue> getMLWeightedItemDescriptor(@NotNull GotoActionModel.MatchedValue element) {
     //TODO: calculate ML weight only for "Actions" tab
-    final double mlWeight = SearchEverywhereSessionService.getInstance().getCurrentSession().getMLWeight(this, element);
-    return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
+    SearchEverywhereMLSearchSession session = SearchEverywhereSessionService.getInstance().getCurrentSession();
+    if (session != null) {
+      final double mlWeight = session.getMLWeight(this, element);
+      return new FoundItemDescriptor<>(element, element.getMatchingDegree(), mlWeight);
+    }
+    return new FoundItemDescriptor<>(element, element.getMatchingDegree());
   }
 
   public static class Factory implements SearchEverywhereContributorFactory<GotoActionModel.MatchedValue> {

@@ -8,18 +8,16 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
 
 internal object SearchEverywhereContextFeaturesProvider {
-  private const val TOTAL_SYMBOLS_AMOUNT_DATA_KEY = "totalSymbolsAmount"
   private const val LOCAL_MAX_USAGE_COUNT_KEY = "maxUsage"
   private const val LOCAL_MIN_USAGE_COUNT_KEY = "minUsage"
   private const val GLOBAL_MAX_USAGE_COUNT_KEY = "globalMaxUsage"
   private const val GLOBAL_MIN_USAGE_COUNT_KEY = "globalMinUsage"
-  private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
+
   private const val OPEN_FILE_TYPES_KEY = "openFileTypes"
+  private const val LAST_ACTIVE_TOOL_WINDOW_KEY = "lastOpenToolWindow"
 
-  fun getContextFeatures(project: Project?, lastToolwindowId: String?, symbolsInQuery: Int): SearchEverywhereFeaturesProvider.ContextInfo {
+  fun getContextFeatures(project: Project?, lastToolwindowId: String?): SearchEverywhereFeaturesProvider.ContextInfo {
     val data = hashMapOf<String, Any>()
-    data[TOTAL_SYMBOLS_AMOUNT_DATA_KEY] = symbolsInQuery
-
     val localTotalStats = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java).getTotalStats()
     val globalTotalStats = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java).totalSummary
     data[LOCAL_MAX_USAGE_COUNT_KEY] = localTotalStats.maxUsageCount

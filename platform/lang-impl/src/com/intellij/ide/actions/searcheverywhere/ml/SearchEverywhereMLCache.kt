@@ -27,15 +27,15 @@ internal class SearchEverywhereMLCache internal constructor(project: Project?) {
   private val predictor = SearchEverywhereMLPredictor()
 
   @Synchronized
-  fun getContextFeatures(): Map<String, Any> {
-    return cachedContextInfo.features
+  fun getContextFeatures(): ContextInfo {
+    return cachedContextInfo
   }
 
   @Synchronized
-  fun getElementFeatures(element: Any, contributor: SearchEverywhereContributor<*>): ItemInfo {
+  fun getElementFeatures(element: Any, contributor: SearchEverywhereContributor<*>, state: SearchEverywhereSearchState?): ItemInfo {
     val id = getMLId(element)
     return cachedElementsInfo.computeIfAbsent(id) {
-      SearchEverywhereFeaturesProvider.getElementFeatureProvider().getElementFeatures(element, contributor, startTime)
+      SearchEverywhereFeaturesProvider.getElementFeatureProvider().getElementFeatures(element, contributor, startTime, state)
     }
   }
 
@@ -46,10 +46,10 @@ internal class SearchEverywhereMLCache internal constructor(project: Project?) {
   }
 
   @Synchronized
-  fun getMLWeight(element: Any, contributor: SearchEverywhereContributor<*>): Double {
+  fun getMLWeight(element: Any, contributor: SearchEverywhereContributor<*>, state: SearchEverywhereSearchState?): Double {
     val id = getMLId(element)
     return cachedMLWeight.computeIfAbsent(id) {
-      predictor.predictMLWeight(element, contributor, this)
+      predictor.predictMLWeight(element, contributor, this, state)
     }
   }
 
@@ -66,9 +66,7 @@ internal class SearchEverywhereMLCache internal constructor(project: Project?) {
       }
       id
     }
-
-    //TODO: move query length to element features
-    return SearchEverywhereFeaturesProvider.getContextFeaturesProvider().getContextFeatures(project, lastUsedToolwindow, -1)
+    return SearchEverywhereFeaturesProvider.getContextFeaturesProvider().getContextFeatures(project, lastUsedToolwindow)
   }
 
   @Synchronized
