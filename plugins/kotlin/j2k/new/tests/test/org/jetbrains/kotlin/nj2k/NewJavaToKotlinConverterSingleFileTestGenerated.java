@@ -139,6 +139,36 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("fieldUsageInInitBlockBeforeDeclaration.java")
+        public void testFieldUsageInInitBlockBeforeDeclaration() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/fieldUsageInInitBlockBeforeDeclaration.java");
+        }
+
+        @TestMetadata("fieldUsageInInitBlockBeforeDeclarationWithInitializer.java")
+        public void testFieldUsageInInitBlockBeforeDeclarationWithInitializer() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/fieldUsageInInitBlockBeforeDeclarationWithInitializer.java");
+        }
+
+        @TestMetadata("fieldUsageInInitBlockBeforeDeclarationWithInitializer2.java")
+        public void testFieldUsageInInitBlockBeforeDeclarationWithInitializer2() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/fieldUsageInInitBlockBeforeDeclarationWithInitializer2.java");
+        }
+
+        @TestMetadata("fieldUsageInInitBlockBeforeDeclarationWithInitializerInRow.java")
+        public void testFieldUsageInInitBlockBeforeDeclarationWithInitializerInRow() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/fieldUsageInInitBlockBeforeDeclarationWithInitializerInRow.java");
+        }
+
+        @TestMetadata("fieldUsageInInitBlockBeforeDeclarationWithInitializerWithStaticMixed.java")
+        public void testFieldUsageInInitBlockBeforeDeclarationWithInitializerWithStaticMixed() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/fieldUsageInInitBlockBeforeDeclarationWithInitializerWithStaticMixed.java");
+        }
+
+        @TestMetadata("KTIJ-15768.java")
+        public void testKTIJ_15768() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/KTIJ-15768.java");
+        }
+
         @TestMetadata("oneAnonBlock.java")
         public void testOneAnonBlock() throws Exception {
             runTest("testData/newJ2k/anonymousBlock/oneAnonBlock.java");
@@ -147,6 +177,16 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
         @TestMetadata("oneStaticAnonBlock.java")
         public void testOneStaticAnonBlock() throws Exception {
             runTest("testData/newJ2k/anonymousBlock/oneStaticAnonBlock.java");
+        }
+
+        @TestMetadata("staticFieldUsageInInitBlockBeforeDeclaration.java")
+        public void testStaticFieldUsageInInitBlockBeforeDeclaration() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/staticFieldUsageInInitBlockBeforeDeclaration.java");
+        }
+
+        @TestMetadata("staticFieldUsageInInitBlockBeforeDeclarationWithInitializer.java")
+        public void testStaticFieldUsageInInitBlockBeforeDeclarationWithInitializer() throws Exception {
+            runTest("testData/newJ2k/anonymousBlock/staticFieldUsageInInitBlockBeforeDeclarationWithInitializer.java");
         }
     }
 

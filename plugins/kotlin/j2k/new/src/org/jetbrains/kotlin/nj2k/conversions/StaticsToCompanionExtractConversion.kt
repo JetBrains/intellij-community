@@ -14,12 +14,18 @@ class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : Rec
         if (element.classKind == JKClass.ClassKind.COMPANION || element.classKind == JKClass.ClassKind.OBJECT) return element
         val statics = element.declarationList.filter { declaration ->
             declaration is JKOtherModifiersOwner && declaration.hasOtherModifier(OtherModifier.STATIC)
+                    || declaration is JKJavaStaticInitDeclaration
         }
         if (statics.isEmpty()) return recurse(element)
         val companion = element.getOrCreateCompanionObject()
 
         element.classBody.declarations -= statics
-        companion.classBody.declarations += statics.onEach { declaration ->
+        companion.classBody.declarations += statics.map { declaration ->
+            when (declaration) {
+                is JKJavaStaticInitDeclaration -> declaration.toKtInitDeclaration()
+                else -> declaration
+            }
+        }.onEach { declaration ->
             if (declaration is JKOtherModifiersOwner) {
                 declaration.otherModifierElements -= declaration.elementByModifier(OtherModifier.STATIC)!!
             }
@@ -29,4 +35,7 @@ class StaticsToCompanionExtractConversion(context: NewJ2kConverterContext) : Rec
         }
         return recurse(element)
     }
+
+    private fun JKJavaStaticInitDeclaration.toKtInitDeclaration() =
+        JKKtInitDeclaration(::block.detached()).withFormattingFrom(this)
 }

@@ -31,7 +31,7 @@ object ConversionsRunner {
         JetbrainsNullableAnnotationsConverter(context),
         DefaultArgumentsConversion(context),
         ConstructorConversion(context),
-        StaticInitDeclarationConversion(context),
+        MoveConstructorsAfterFieldsConversion(context),
         ImplicitInitializerConversion(context),
         ParameterModificationInMethodCallsConversion(context),
         BlockToRunConversion(context),
@@ -69,7 +69,6 @@ object ConversionsRunner {
         FunctionalInterfacesConverter(context),
 
         FilterImportsConversion(context),
-        MoveInitBlocksToTheEndConversion(context),
         AddElementsInfoConversion(context)
     )
 
