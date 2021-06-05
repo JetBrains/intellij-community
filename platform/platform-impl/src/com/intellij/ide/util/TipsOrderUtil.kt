@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util
 
 import com.fasterxml.jackson.databind.ObjectMapper
@@ -52,7 +52,6 @@ internal class TipsOrderUtil {
   }
 
   companion object {
-    @JvmStatic
     private fun sync() {
       LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread)
       LOG.debug { "Fetching tips order from the server: ${TIPS_SERVER_URL}" }
@@ -61,7 +60,7 @@ internal class TipsOrderUtil {
       val startTimestamp = System.currentTimeMillis()
       HttpRequests.post(TIPS_SERVER_URL, HttpRequests.JSON_CONTENT_TYPE)
         .connect(HttpRequests.RequestProcessor { request ->
-          val bucket = EventLogConfiguration.bucket
+          val bucket = EventLogConfiguration.getInstance().bucket
           val tipsRequest = TipsRequest(allTips, actionsSummary, PlatformUtils.getPlatformPrefix(), bucket)
           val objectMapper = ObjectMapper()
           request.write(objectMapper.writeValueAsBytes(tipsRequest))

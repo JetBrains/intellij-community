@@ -1,10 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.fus
 
-import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration
+import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.FeatureUsageData
+import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 
 object SearchEverywhereLogger {
-  internal val recorderId = "MLSE"
+  internal const val recorderId = "MLSE"
 
   /**
    * [com.intellij.internal.statistic.eventLog.fus.SearchEverywhereEventLoggerProvider]
@@ -24,6 +27,6 @@ object SearchEverywhereLogger {
 
   @JvmStatic
   fun getBucket(): Int {
-    return EventLogConfiguration.getOrCreate(recorderId).bucket
+    return EventLogConfiguration.getInstance().getOrCreate(recorderId).bucket
   }
 }

@@ -41,7 +41,7 @@ internal fun newSendService(container: ApacheContainer,
                             sendEnabled: Boolean = true,
                             machineId: MachineId? = null): EventLogStatisticsService {
   val applicationInfo = TestEventLogApplicationInfo(RECORDER_ID, container.getBaseUrl(settingsResponseFile).toString())
-  val config = EventLogConfiguration.getOrCreate(RECORDER_ID)
+  val config = EventLogConfiguration.getInstance().getOrCreate(RECORDER_ID)
   return EventLogStatisticsService(
     DeviceConfiguration(config.deviceId, config.bucket, machineId ?: config.machineId),
     TestEventLogRecorderConfig(RECORDER_ID, logFiles, sendEnabled),
