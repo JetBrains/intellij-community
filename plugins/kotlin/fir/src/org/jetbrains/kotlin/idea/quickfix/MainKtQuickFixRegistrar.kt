@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesList
 import org.jetbrains.kotlin.idea.fir.api.fixes.KtQuickFixesListBuilder
 import org.jetbrains.kotlin.idea.frontend.api.fir.diagnostics.KtFirDiagnostic
 import org.jetbrains.kotlin.idea.quickfix.fixes.*
-import org.jetbrains.kotlin.idea.quickfix.fixes.InitializePropertyQuickFixFactory
 
 class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
     private val keywords = KtQuickFixesListBuilder.registerPsiQuickFix {
@@ -71,7 +70,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
             KtFirDiagnostic.MustBeInitializedOrBeAbstract::class,
             AddModifierFix.addAbstractModifier,
         )
-        registerApplicator(InitializePropertyQuickFixFactory.initializePropertyFactory)
+        registerApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
         registerApplicator(AddLateInitFactory.addLateInitFactory)
         registerApplicator(AddAccessorsFactories.addAccessorsToUninitializedProperty)
     }
