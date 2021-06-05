@@ -3,7 +3,6 @@ package com.intellij.ide.actions.searcheverywhere.ml
 
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
 import com.intellij.ide.actions.searcheverywhere.SearchRestartReason
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.project.Project
 import java.util.concurrent.atomic.AtomicInteger
@@ -21,17 +20,21 @@ internal class SearchEverywhereMlSessionService {
   private val sessionIdCounter = AtomicInteger()
   private var activeSession: AtomicReference<SearchEverywhereMLSearchSession?> = AtomicReference()
 
-  private val experimentStrategy: SearchEverywhereExperimentStrategy =
-    SearchEverywhereExperimentStrategy(EventLogConfiguration.getInstance().getOrCreate(RECORDER_CODE).bucket)
+  private val experiment: SearchEverywhereMlExperiment = SearchEverywhereMlExperiment()
 
-  fun shouldOrderByML(): Boolean = experimentStrategy.shouldOrderByMl()
+  fun shouldOrderByML(): Boolean = experiment.shouldOrderByMl()
 
   fun getCurrentSession(): SearchEverywhereMLSearchSession? {
-    return activeSession.get()
+    if (experiment.isAllowed) {
+      return activeSession.get()
+    }
+    return null
   }
 
   fun onSessionStarted(project: Project?) {
-    activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, sessionIdCounter.incrementAndGet()) }
+    if (experiment.isAllowed) {
+      activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, sessionIdCounter.incrementAndGet()) }
+    }
   }
 
   fun onSearchRestart(tabId: String,
@@ -40,15 +43,21 @@ internal class SearchEverywhereMlSessionService {
                       backspacesTyped: Int,
                       textLength: Int,
                       previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onSearchRestart(previousElementsProvider, reason, tabId, keysTyped, backspacesTyped, textLength)
+    if (experiment.isAllowed) {
+      getCurrentSession()?.onSearchRestart(previousElementsProvider, reason, tabId, keysTyped, backspacesTyped, textLength)
+    }
   }
 
   fun onItemSelected(indexes: IntArray, closePopup: Boolean, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onItemSelected(experimentStrategy, indexes, closePopup, elementsProvider)
+    if (experiment.isAllowed) {
+      getCurrentSession()?.onItemSelected(experiment, indexes, closePopup, elementsProvider)
+    }
   }
 
   fun onSearchFinished(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    getCurrentSession()?.onSearchFinished(experimentStrategy, elementsProvider)
+    if (experiment.isAllowed) {
+      getCurrentSession()?.onSearchFinished(experiment, elementsProvider)
+    }
   }
 
   fun onDialogClose() {

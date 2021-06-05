@@ -45,7 +45,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     }
   }
 
-  fun onItemSelected(experimentStrategy: SearchEverywhereExperimentStrategy,
+  fun onItemSelected(experimentStrategy: SearchEverywhereMlExperiment,
                      indexes: IntArray, closePopup: Boolean,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = currentSearchState.get()
@@ -60,7 +60,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     }
   }
 
-  fun onSearchFinished(experimentStrategy: SearchEverywhereExperimentStrategy,
+  fun onSearchFinished(experimentStrategy: SearchEverywhereMlExperiment,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = currentSearchState.get()
     state?.let {
@@ -83,7 +83,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     return -1.0
   }
 
-  private fun orderedByMl(experimentStrategy: SearchEverywhereExperimentStrategy, tabId: String): Boolean {
+  private fun orderedByMl(experimentStrategy: SearchEverywhereMlExperiment, tabId: String): Boolean {
     return isActionsTab(tabId) && experimentStrategy.shouldOrderByMl()
   }
 
