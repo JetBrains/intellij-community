@@ -225,6 +225,9 @@ class FontFamilyCombo extends AbstractFontCombo<FontFamilyCombo.MyFontItem> {
           for (MyFontItem item : myItems) {
             item.myIsMonospaced = myMonospacedFamilies.contains(item.myFamilyName);
           }
+          if (myNoFontItem == null) { // Primary font
+            myItems.removeIf(item -> !item.myFontCanDisplayName);
+          }
           myMonospacedSeparatorItem.isUpdating = false;
           myProportionalSeparatorItem.isUpdating = false;
           Collections.sort(myItems, new MyFontItemComparator());
