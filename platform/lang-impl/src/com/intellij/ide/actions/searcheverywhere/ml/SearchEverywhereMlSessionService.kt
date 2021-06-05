@@ -26,12 +26,10 @@ internal class SearchEverywhereMlSessionService {
 
   fun shouldOrderByML(): Boolean = experimentStrategy.shouldOrderByMl()
 
-  @Synchronized
   fun getCurrentSession(): SearchEverywhereMLSearchSession? {
     return activeSession.get()
   }
 
-  @Synchronized
   fun onSessionStarted(project: Project?) {
     activeSession.updateAndGet { SearchEverywhereMLSearchSession(project, sessionIdCounter.incrementAndGet()) }
   }
@@ -53,7 +51,6 @@ internal class SearchEverywhereMlSessionService {
     getCurrentSession()?.onSearchFinished(experimentStrategy, elementsProvider)
   }
 
-  @Synchronized
   fun onDialogClose() {
     activeSession.updateAndGet { null }
   }
