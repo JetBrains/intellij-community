@@ -47,7 +47,7 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereElementF
                                           localSummary: ActionsLocalSummary?,
                                           globalSummary: ActionsGlobalSummaryManager?): Map<String, Any> {
     val wrapper = matchedValue.value as? GotoActionModel.ActionWrapper
-    val data = mutableMapOf(
+    val data = hashMapOf(
       TOTAL_SYMBOLS_AMOUNT_DATA_KEY to queryLength,
       IS_ACTION_DATA_KEY to (wrapper != null),
       PRIORITY_DATA_KEY to priority

@@ -17,20 +17,11 @@ internal class SearchEverywhereMlSearchState(
   val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
   val keysTyped: Int, val backspacesTyped: Int, val queryLength: Int
 ) {
+  private val cachedElementsInfo: MutableMap<Int, SearchEverywhereMLItemInfo> = hashMapOf()
+  private val cachedMLWeight: MutableMap<Int, Double> = hashMapOf()
 
-  private val cachedElementsInfo = mutableMapOf<Int, SearchEverywhereMLItemInfo>()
-  private val cachedMLWeight = mutableMapOf<Int, Double>()
-
-  private val model: SearchEverywhereActionsRankingModel =
-    SearchEverywhereActionsRankingModel(SearchEverywhereActionsRankingModelProvider())
+  private val model: SearchEverywhereActionsRankingModel = SearchEverywhereActionsRankingModel(SearchEverywhereActionsRankingModelProvider())
   private val featuresProvider: SearchEverywhereElementFeaturesProvider = SearchEverywhereActionFeaturesProvider()
-
-  private val localSummary: ActionsLocalSummary by lazy {
-    ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
-  }
-  private val globalSummary: ActionsGlobalSummaryManager by lazy {
-    ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
-  }
 
   @Synchronized
   fun getElementFeatures(elementId: Int,
@@ -38,6 +29,8 @@ internal class SearchEverywhereMlSearchState(
                          contributor: SearchEverywhereContributor<*>,
                          queryLength: Int): SearchEverywhereMLItemInfo {
     return cachedElementsInfo.computeIfAbsent(elementId) {
+      val localSummary = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java)
+      val globalSummary = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java)
       val features = featuresProvider.getElementFeatures(element, sessionStartTime, queryLength, localSummary, globalSummary)
       return@computeIfAbsent SearchEverywhereMLItemInfo(elementId, contributor.searchProviderId, features)
     }
@@ -54,7 +47,7 @@ internal class SearchEverywhereMlSearchState(
                   contributor: SearchEverywhereContributor<*>,
                   context: SearchEverywhereMLContextInfo): Double {
     return cachedMLWeight.computeIfAbsent(elementId) {
-      val features = mutableMapOf<String, Any>()
+      val features = hashMapOf<String, Any>()
       features.putAll(context.features)
       features.putAll(getElementFeatures(elementId, element, contributor, queryLength).features)
       model.predict(features)
