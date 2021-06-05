@@ -13,7 +13,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
-import com.intellij.facet.FacetManagerAdapter;
+import com.intellij.facet.FacetManagerListener;
 import com.intellij.ide.AppLifecycleListener;
 import com.intellij.ide.PowerSaveMode;
 import com.intellij.ide.plugins.DynamicPluginListener;
@@ -60,7 +60,6 @@ import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderEx;
@@ -165,25 +164,22 @@ public final class DaemonListeners implements Disposable {
       }, this);
     }
 
-    connection.subscribe(EditorTrackerListener.TOPIC, new EditorTrackerListener() {
-      @Override
-      public void activeEditorsChanged(@NotNull List<? extends Editor> activeEditors) {
-        if (myActiveEditors.equals(activeEditors)) {
-          return;
-        }
+    connection.subscribe(EditorTrackerListener.TOPIC, activeEditors -> {
+      if (myActiveEditors.equals(activeEditors)) {
+        return;
+      }
 
-        myActiveEditors = new ArrayList<>(activeEditors);
-        // do not stop daemon if idea loses/gains focus
-        DaemonListeners.this.stopDaemon(true, "Active editor change");
-        if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
-          // editor appear in modal context, re-enable the daemon
-          myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
-        }
+      myActiveEditors = new ArrayList<>(activeEditors);
+      // do not stop daemon if idea loses/gains focus
+      DaemonListeners.this.stopDaemon(true, "Active editor change");
+      if (ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext()) {
+        // editor appear in modal context, re-enable the daemon
+        myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
+      }
 
-        ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
-        for (Editor editor : activeEditors) {
-          errorStripeUpdateManager.repaintErrorStripePanel(editor);
-        }
+      ErrorStripeUpdateManager errorStripeUpdateManager = ErrorStripeUpdateManager.getInstance(myProject);
+      for (Editor editor : activeEditors) {
+        errorStripeUpdateManager.repaintErrorStripePanel(editor);
       }
     });
 
@@ -231,9 +227,7 @@ public final class DaemonListeners implements Disposable {
         stopDaemonAndRestartAllFiles("Project roots changed");
       }
     });
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
-      stopDaemonAndRestartAllFiles("Additional libraries changed");
-    });
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (_1, _2, _3, _4) -> stopDaemonAndRestartAllFiles("Additional libraries changed"));
 
     connection.subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
       @Override
@@ -335,7 +329,7 @@ public final class DaemonListeners implements Disposable {
 
     connection.subscribe(SeverityRegistrar.SEVERITIES_CHANGED_TOPIC, () -> stopDaemonAndRestartAllFiles("Severities changed"));
 
-    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
+    connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerListener() {
       @Override
       public void facetRenamed(@NotNull Facet facet, @NotNull String oldName) {
         stopDaemonAndRestartAllFiles("facet renamed: " + oldName + " -> " + facet.getName());
@@ -362,8 +356,6 @@ public final class DaemonListeners implements Disposable {
     restartOnExtensionChange(ExternalLanguageAnnotators.EP_NAME, "external annotators list changed");
 
     connection.subscribe(DynamicPluginListener.TOPIC, new DynamicPluginListener() {
-      private Disposable mySuspendUpdateOnTimerDisposable;
-
       @Override
       public void pluginLoaded(@NotNull IdeaPluginDescriptor pluginDescriptor) {
         PsiManager.getInstance(myProject).dropPsiCaches();
@@ -373,9 +365,7 @@ public final class DaemonListeners implements Disposable {
       @Override
       public void beforePluginUnload(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
         PsiManager.getInstance(myProject).dropPsiCaches();
-        mySuspendUpdateOnTimerDisposable = Disposer.newDisposable();
         myDaemonCodeAnalyzer.cancelSubmittedPasses();
-        myDaemonCodeAnalyzer.disableUpdateByTimer(mySuspendUpdateOnTimerDisposable);
         removeHighlightersOnPluginUnload(pluginDescriptor);
         myDaemonCodeAnalyzer.clearProgressIndicator();
         myDaemonCodeAnalyzer.cleanAllFileLevelHighlights();
@@ -384,8 +374,6 @@ public final class DaemonListeners implements Disposable {
 
       @Override
       public void pluginUnloaded(@NotNull IdeaPluginDescriptor pluginDescriptor, boolean isUpdate) {
-        Disposer.dispose(mySuspendUpdateOnTimerDisposable);
-        mySuspendUpdateOnTimerDisposable = null;
         stopDaemonAndRestartAllFiles("Plugin unloaded");
       }
     });
@@ -569,7 +557,7 @@ public final class DaemonListeners implements Disposable {
 
   private class MyProfileChangeListener implements ProfileChangeAdapter {
     @Override
-    public void profileChanged(InspectionProfile profile) {
+    public void profileChanged(@NotNull InspectionProfile profile) {
       stopDaemonAndRestartAllFiles("Profile changed");
     }
 
@@ -675,7 +663,7 @@ public final class DaemonListeners implements Disposable {
     }
   }
 
-  private static boolean isHighlighterFromPlugin(RangeHighlighter highlighter, ClassLoader pluginClassLoader) {
+  private static boolean isHighlighterFromPlugin(@NotNull RangeHighlighter highlighter, @NotNull ClassLoader pluginClassLoader) {
     CustomHighlighterRenderer renderer = highlighter.getCustomRenderer();
     if (renderer != null && renderer.getClass().getClassLoader() == pluginClassLoader) {
       return true;
@@ -694,10 +682,6 @@ public final class DaemonListeners implements Disposable {
     }
 
     LineMarkerInfo<?> info = LineMarkersUtil.getLineMarkerInfo(highlighter);
-    if (info != null && info.getClass().getClassLoader() == pluginClassLoader) {
-      return true;
-    }
-
-    return false;
+    return info != null && info.getClass().getClassLoader() == pluginClassLoader;
   }
 }

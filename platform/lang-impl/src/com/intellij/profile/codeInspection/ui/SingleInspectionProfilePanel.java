@@ -306,7 +306,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     reset();
     getProject().getMessageBus().connect(myDisposable).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
-      public void profileChanged(@Nullable InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         if (myProfile == profile) {
           initToolStates();
           filterTree();
