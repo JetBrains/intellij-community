@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-import Fuse from "fuse.js"
 import {GraphHighlighter} from "./GraphHighlighter"
+import {wrap} from "comlink"
+// noinspection ES6CheckImport
+import SearchWorker from "./SearchWorker?worker"
 
 export class GraphTextSearch {
   constructor(graph, cy) {
@@ -8,28 +10,21 @@ export class GraphTextSearch {
     this.selectedNodes = new Set()
     this.totalUnion = cy.collection()
 
-    this.index = new Fuse(graph, {
-      threshold: 0.0,
-      ignoreLocation: true,
-      ignoreFieldNorm: true,
-      keys: [
-        {name: "data.name", weight: 4},
-        {name: "data.pluginId", weight: 3},
-        {name: "data.sourceModule", weight: 2},
-        {name: "data.package", weight: 1},
-      ],
-    })
+    this.index = wrap(new SearchWorker())
+    this.index.add(graph
+      .filter(it => it.group === "nodes" && "type" in it.data /* not a compound node */)
+      .map(it => it.data))
   }
 
-  searchNodes(text) {
+  async searchNodes(text) {
     const {selectedNodes, cy, index} = this
 
     const newNodes = []
     if (text.length !== 0) {
-      for (const {item} of index.search(text)) {
-        const node = cy.getElementById(item.data.id)
+      for (const item of await index.search(text)) {
+        const node = cy.getElementById(item.id)
         if (node == null) {
-          console.error(`Cannot find node by id ${item.data.id}`)
+          console.error(`Cannot find node by id ${item.id}`)
         }
         selectedNodes.delete(node)
         newNodes.push(node)

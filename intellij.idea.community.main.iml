@@ -6,7 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/android/android-uitests" />
       <excludeFolder url="file://$MODULE_DIR$/config" />
       <excludeFolder url="file://$MODULE_DIR$/system" />
-      <excludeFolder url="file://$MODULE_DIR$/docs/out/plugin-graph" />
+      <excludeFolder url="file://$MODULE_DIR$/docs/plugin-graph/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />

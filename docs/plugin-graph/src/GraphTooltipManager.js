@@ -1,9 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import Tippy from "tippy.js"
 import "tippy.js/animations/scale.css"
+import cytoscape from "cytoscape"
+import popper from "cytoscape-popper"
 
 export class GraphTooltipManager {
   constructor(cy) {
+    cytoscape.use(popper)
+
     this.tippy = null
     this.lastNode = null
     cy.on("tap", "node", function (event) {
@@ -12,7 +16,7 @@ export class GraphTooltipManager {
       if (this.lastNode === node) {
         this.lastNode = null
         if (this.tippy != null) {
-          this.tippy.hideWithInteractivity()
+          this.tippy.hide()
         }
         return
       }

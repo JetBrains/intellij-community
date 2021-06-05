@@ -37,7 +37,7 @@ class PluginModelTest {
       val out = Path.of(PlatformTestUtil.getCommunityPath(), "docs/plugin-graph/plugin-graph.local.json")
       validator.writeGraph(out)
       println("\nGraph is written to $out")
-      println("Drop file to https://ij-platform-flow.develar.org/plugin-graph to visualize.")
+      println("Drop file to https://plugingraph.ij.pages.jetbrains.team/ to visualize.")
     }
   }
 }
