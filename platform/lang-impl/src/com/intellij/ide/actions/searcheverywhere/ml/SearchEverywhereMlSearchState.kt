@@ -14,7 +14,7 @@ import com.intellij.openapi.application.ApplicationManager
 
 internal class SearchEverywhereMlSearchState(
   val sessionStartTime: Long, val searchStartTime: Long,
-  val searchStartReason: SearchRestartReason, val tabId: String,
+  val searchIndex: Int, val searchStartReason: SearchRestartReason, val tabId: String,
   val keysTyped: Int, val backspacesTyped: Int, val queryLength: Int
 ) {
 
