@@ -485,6 +485,7 @@
     <checkinHandlerFactory implementation="git4idea.checkin.GitSkipHooksCommitHandlerFactory" order="last"/>
     <unresolvedMergeCheckProvider implementation="git4idea.checkin.GitUnresolvedMergeCheckProvider"/>
     <logProvider implementation="git4idea.log.GitLogProvider"/>
+    <vcsLogCustomColumn implementation="git4idea.log.GitCommitSignatureLogColumn"/>
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     <vcs.branchStateProvider implementation="git4idea.branch.GitBranchStateProvider"/>
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
