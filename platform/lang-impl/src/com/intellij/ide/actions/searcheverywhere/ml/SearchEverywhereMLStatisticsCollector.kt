@@ -1,37 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions.searcheverywhere.ml
 
-import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInfo
-import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService.Companion.RECORDER_CODE
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
-import com.intellij.internal.statistic.utils.StatisticsUploadAssistant
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.concurrency.NonUrgentExecutor
 import kotlin.math.round
 
 internal class SearchEverywhereMLStatisticsCollector {
   private val loggerProvider = StatisticsEventLogProviderUtil.getEventLogProvider(RECORDER_CODE)
-  private val myIsReporting: Boolean = isEnabled()
-
-  private fun isEnabled(): Boolean {
-    val isExperimentModeEnabled = ApplicationManager.getApplication().isEAP && StatisticsUploadAssistant.isSendAllowed()
-    if (isExperimentModeEnabled) {
-      val percentage = Registry.get("statistics.mlse.report.percentage").asInteger() / 100.0
-      return percentage >= 1 || Math.random() < percentage // only report a part of cases
-    }
-    return false
-  }
-
-  private fun isLoggingEnabled(tabId: String): Boolean = myIsReporting && isActionOrAllTab(tabId)
-
-  private fun isActionOrAllTab(tabId: String): Boolean = ActionSearchEverywhereContributor::class.java.simpleName == tabId ||
-                                                         SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID == tabId
 
   fun onItemSelected(seSessionId: Int, searchIndex: Int,
                      experimentGroup: Int, orderByMl: Boolean,
@@ -81,52 +61,50 @@ internal class SearchEverywhereMLStatisticsCollector {
                              state: SearchEverywhereMlSearchState,
                              additional: List<Pair<String, Any>>,
                              elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    if (isLoggingEnabled(state.tabId)) {
-      val elements = elementsProvider.invoke()
-      NonUrgentExecutor.getInstance().execute {
-        val data = hashMapOf<String, Any>()
-        data[SESSION_ID_LOG_DATA_KEY] = seSessionId
-        data[SEARCH_INDEX_DATA_KEY] = searchIndex
-        data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
-        data[SE_TAB_ID_KEY] = state.tabId
-        data[SEARCH_START_TIME_KEY] = state.searchStartTime
-        data[TYPED_SYMBOL_KEYS] = state.keysTyped
-        data[TYPED_BACKSPACES_DATA_KEY] = state.backspacesTyped
-        data[REBUILD_REASON_KEY] = state.searchStartReason
-        data.putAll(additional)
-        data.putAll(context.features)
+    val elements = elementsProvider.invoke()
+    NonUrgentExecutor.getInstance().execute {
+      val data = hashMapOf<String, Any>()
+      data[SESSION_ID_LOG_DATA_KEY] = seSessionId
+      data[SEARCH_INDEX_DATA_KEY] = searchIndex
+      data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
+      data[SE_TAB_ID_KEY] = state.tabId
+      data[SEARCH_START_TIME_KEY] = state.searchStartTime
+      data[TYPED_SYMBOL_KEYS] = state.keysTyped
+      data[TYPED_BACKSPACES_DATA_KEY] = state.backspacesTyped
+      data[REBUILD_REASON_KEY] = state.searchStartReason
+      data.putAll(additional)
+      data.putAll(context.features)
 
-        val actionManager = ActionManager.getInstance()
-        data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
-          val result: HashMap<String, Any> = hashMapOf(
-            CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
-          )
+      val actionManager = ActionManager.getInstance()
+      data[COLLECTED_RESULTS_DATA_KEY] = elements.take(REPORTED_ITEMS_LIMIT).map {
+        val result: HashMap<String, Any> = hashMapOf(
+          CONTRIBUTOR_ID_KEY to it.contributor.searchProviderId
+        )
 
-          if (it.element is GotoActionModel.MatchedValue) {
-            val elementId = elementIdProvider.getId(it.element)
-            val itemInfo = state.getElementFeatures(elementId, it.element, it.contributor, state.queryLength)
-            if (itemInfo.features.isNotEmpty()) {
-              result[FEATURES_DATA_KEY] = itemInfo.features
-            }
-
-            state.getMLWeightIfDefined(elementId)?.let { score ->
-              result[ML_WEIGHT_KEY] = roundDouble(score)
-            }
-
-            itemInfo.id.let { id ->
-              result[ID_KEY] = id
-            }
-
-            if (it.element.value is GotoActionModel.ActionWrapper) {
-              val action = it.element.value.action
-              result[ACTION_ID_KEY] = actionManager.getId(action) ?: action.javaClass.name
-            }
+        if (it.element is GotoActionModel.MatchedValue) {
+          val elementId = elementIdProvider.getId(it.element)
+          val itemInfo = state.getElementFeatures(elementId, it.element, it.contributor, state.queryLength)
+          if (itemInfo.features.isNotEmpty()) {
+            result[FEATURES_DATA_KEY] = itemInfo.features
           }
-          result
-        }
 
-        loggerProvider.logger.logAsync(GROUP, eventId, data, false)
+          state.getMLWeightIfDefined(elementId)?.let { score ->
+            result[ML_WEIGHT_KEY] = roundDouble(score)
+          }
+
+          itemInfo.id.let { id ->
+            result[ID_KEY] = id
+          }
+
+          if (it.element.value is GotoActionModel.ActionWrapper) {
+            val action = it.element.value.action
+            result[ACTION_ID_KEY] = actionManager.getId(action) ?: action.javaClass.name
+          }
+        }
+        result
       }
+
+      loggerProvider.logger.logAsync(GROUP, eventId, data, false)
     }
   }
 

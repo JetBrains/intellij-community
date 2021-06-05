@@ -8,7 +8,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.util.PlatformUtils
 import java.util.concurrent.TimeUnit
 
-class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider("MLSE", 3, TimeUnit.MINUTES.toMillis(10), "50KB") {
+class SearchEverywhereEventLoggerProvider : StatisticsEventLoggerProvider("MLSE", 4, TimeUnit.MINUTES.toMillis(10), "100KB") {
   override fun isRecordEnabled(): Boolean {
     return !ApplicationManager.getApplication().isUnitTestMode &&
            StatisticsUploadAssistant.isCollectAllowed() &&

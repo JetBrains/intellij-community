@@ -40,8 +40,8 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
       SearchEverywhereMlSearchState(sessionStartTime, startTime, nextSearchIndex, searchReason, tabId, keysTyped, backspacesTyped, queryLength)
     }
 
-    prevState?.let {
-      logger.onSearchRestarted(sessionId, it.searchIndex, itemIdProvider, cachedContextInfo, it, previousElementsProvider)
+    if (prevState != null && isActionsTab(prevState.tabId)) {
+      logger.onSearchRestarted(sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState, previousElementsProvider)
     }
   }
 
@@ -49,12 +49,12 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
                      indexes: IntArray, closePopup: Boolean,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = currentSearchState.get()
-    state?.let {
-      val orderByMl = orderedByMl(experimentStrategy, it.tabId)
+    if (state != null && isActionsTab(state.tabId)) {
+      val orderByMl = orderedByMl(experimentStrategy, state.tabId)
       logger.onItemSelected(
-        sessionId, it.searchIndex,
+        sessionId, state.searchIndex,
         experimentStrategy.experimentGroup, orderByMl,
-        itemIdProvider, cachedContextInfo, it,
+        itemIdProvider, cachedContextInfo, state,
         indexes, closePopup, elementsProvider
       )
     }
@@ -63,12 +63,12 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   fun onSearchFinished(experimentStrategy: SearchEverywhereMlExperiment,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = currentSearchState.get()
-    state?.let {
-      val orderByMl = orderedByMl(experimentStrategy, it.tabId)
+    if (state != null && isActionsTab(state.tabId)) {
+      val orderByMl = orderedByMl(experimentStrategy, state.tabId)
       logger.onSearchFinished(
-        sessionId, it.searchIndex,
+        sessionId, state.searchIndex,
         experimentStrategy.experimentGroup, orderByMl,
-        itemIdProvider, cachedContextInfo, it,
+        itemIdProvider, cachedContextInfo, state,
         elementsProvider
       )
     }
