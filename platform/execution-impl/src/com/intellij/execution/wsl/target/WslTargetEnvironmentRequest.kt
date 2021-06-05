@@ -6,11 +6,13 @@ import com.intellij.execution.process.PtyCommandLineOptions
 import com.intellij.execution.target.*
 import com.intellij.execution.target.TargetEnvironment.*
 import com.intellij.execution.target.value.TargetValue
+import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.ide.IdeBundle
 
 class WslTargetEnvironmentRequest : BaseTargetEnvironmentRequest {
   override val configuration: WslTargetEnvironmentConfiguration
   var ptyOptions: PtyCommandLineOptions? = null
+  val wslOptions: WSLCommandLineOptions = WSLCommandLineOptions()
 
   constructor(config: WslTargetEnvironmentConfiguration) {
     this.configuration = config

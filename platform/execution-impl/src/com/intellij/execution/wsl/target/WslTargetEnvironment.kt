@@ -6,7 +6,6 @@ import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine
 import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.target.*
-import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -112,8 +111,8 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
       GeneralCommandLine(commandLine.collectCommandsSynchronously())
     }
     generalCommandLine.environment.putAll(commandLine.environmentVariables)
-    val options = WSLCommandLineOptions().setRemoteWorkingDirectory(commandLine.workingDirectory)
-    distribution.patchCommandLine(generalCommandLine, null, options)
+    request.wslOptions.remoteWorkingDirectory = commandLine.workingDirectory
+    distribution.patchCommandLine(generalCommandLine, null, request.wslOptions)
     val process = generalCommandLine.createProcess()
     localPortBindingsSession.stopWhenProcessTerminated(process)
     return process
