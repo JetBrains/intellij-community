@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object ReplaceCallFixFactories {
     val unsafeCallFactory =
-        diagnosticFixFactory<KtFirDiagnostic.UnsafeCall> { diagnostic ->
+        diagnosticFixFactory(KtFirDiagnostic.UnsafeCall::class) { diagnostic ->
             val psi = diagnostic.psi
             val target = if (psi is KtBinaryExpression && psi.operationToken in KtTokens.ALL_ASSIGNMENTS) {
                 // UNSAFE_CALL for assignments (e.g., `foo.bar = value`) is reported on the entire statement (KtBinaryExpression).
@@ -45,14 +45,14 @@ object ReplaceCallFixFactories {
         }
 
     val unsafeInfixCallFactory =
-        diagnosticFixFactory<KtFirDiagnostic.UnsafeInfixCall> { diagnostic ->
+        diagnosticFixFactory(KtFirDiagnostic.UnsafeInfixCall::class) { diagnostic ->
             val psi = diagnostic.psi
             val target = psi.parent as? KtBinaryExpression ?: return@diagnosticFixFactory emptyList()
             listOf(ReplaceInfixOrOperatorCallFix(target, shouldHaveNotNullType(target), diagnostic.operator))
         }
 
     val unsafeOperatorCallFactory =
-        diagnosticFixFactory<KtFirDiagnostic.UnsafeOperatorCall> { diagnostic ->
+        diagnosticFixFactory(KtFirDiagnostic.UnsafeOperatorCall::class) { diagnostic ->
             val psi = diagnostic.psi
             val operationToken = psi.safeAs<KtOperationReferenceExpression>()?.getReferencedNameElementType()
             if (operationToken == KtTokens.EQ || operationToken in OperatorConventions.COMPARISON_OPERATIONS) {
@@ -65,7 +65,7 @@ object ReplaceCallFixFactories {
         }
 
     val unsafeImplicitInvokeCallFactory =
-        diagnosticFixFactory<KtFirDiagnostic.UnsafeImplicitInvokeCall> { diagnostic ->
+        diagnosticFixFactory(KtFirDiagnostic.UnsafeImplicitInvokeCall::class) { diagnostic ->
             val target = diagnostic.psi as? KtNameReferenceExpression ?: return@diagnosticFixFactory emptyList()
 
             val callExpression = target.parent as? KtCallExpression ?: return@diagnosticFixFactory emptyList()

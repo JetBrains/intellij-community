@@ -137,12 +137,12 @@ object WrapWithSafeLetCallFixFactories {
         }
     }
 
-    val forUnsafeCall = diagnosticFixFactory<KtFirDiagnostic.UnsafeCall> { diagnostic ->
+    val forUnsafeCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeCall::class) { diagnostic ->
         val nullableExpression = diagnostic.receiverExpression
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(nullableExpression)
     }
 
-    val forUnsafeImplicitInvokeCall = diagnosticFixFactory<KtFirDiagnostic.UnsafeImplicitInvokeCall> { diagnostic ->
+    val forUnsafeImplicitInvokeCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeImplicitInvokeCall::class) { diagnostic ->
         val callExpression = diagnostic.psi.parentOfType<KtCallExpression>(withSelf = true) ?: return@diagnosticFixFactory emptyList()
         val callingFunctionalVariableInLocalScope =
             isCallingFunctionalTypeVariableInLocalScope(callExpression) ?: return@diagnosticFixFactory emptyList()
@@ -161,15 +161,15 @@ object WrapWithSafeLetCallFixFactories {
         return localScope.scopes.getCallableSymbols { it.identifierOrNullIfSpecial == calleeName }.any { it == functionalVariableSymbol }
     }
 
-    val forUnsafeInfixCall = diagnosticFixFactory<KtFirDiagnostic.UnsafeInfixCall> { diagnostic ->
+    val forUnsafeInfixCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeInfixCall::class) { diagnostic ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forUnsafeOperatorCall = diagnosticFixFactory<KtFirDiagnostic.UnsafeOperatorCall> { diagnostic ->
+    val forUnsafeOperatorCall = diagnosticFixFactory(KtFirDiagnostic.UnsafeOperatorCall::class) { diagnostic ->
         createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(diagnostic.receiverExpression)
     }
 
-    val forArgumentTypeMismatch = diagnosticFixFactory<KtFirDiagnostic.ArgumentTypeMismatch> { diagnostic ->
+    val forArgumentTypeMismatch = diagnosticFixFactory(KtFirDiagnostic.ArgumentTypeMismatch::class) { diagnostic ->
         if (diagnostic.isMismatchDueToNullability) createWrapWithSafeLetCallInputForNullableExpression(diagnostic.psi.wrappingExpressionOrSelf)
         else emptyList()
     }
