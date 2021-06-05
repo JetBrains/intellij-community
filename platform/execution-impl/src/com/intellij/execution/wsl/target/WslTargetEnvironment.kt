@@ -4,6 +4,7 @@ package com.intellij.execution.wsl.target
 import com.intellij.execution.ExecutionException
 import com.intellij.execution.Platform
 import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.configurations.PtyCommandLine
 import com.intellij.execution.target.*
 import com.intellij.execution.wsl.WSLCommandLineOptions
 import com.intellij.execution.wsl.WSLDistribution
@@ -16,8 +17,8 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.TimeUnit
 
-class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
-                           private val distribution: WSLDistribution) : TargetEnvironment(wslRequest) {
+class WslTargetEnvironment constructor(override val request: WslTargetEnvironmentRequest,
+                                       private val distribution: WSLDistribution) : TargetEnvironment(request) {
 
   private val myUploadVolumes: MutableMap<UploadRoot, UploadableVolume> = HashMap()
   private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
@@ -38,20 +39,20 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
     get() = TargetPlatform(Platform.UNIX)
 
   init {
-    for (uploadRoot in wslRequest.uploadVolumes) {
+    for (uploadRoot in request.uploadVolumes) {
       val targetRoot: String? = toLinuxPath(uploadRoot.localRootPath.toAbsolutePath().toString())
       if (targetRoot != null) {
         myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot)
       }
     }
-    for (downloadRoot in wslRequest.downloadVolumes) {
+    for (downloadRoot in request.downloadVolumes) {
       val localRootPath = downloadRoot.localRootPath ?: FileUtil.createTempDirectory("intellij-target.", "").toPath()
       val targetRoot: String? = toLinuxPath(localRootPath.toAbsolutePath().toString())
       if (targetRoot != null) {
         myDownloadVolumes[downloadRoot] = Volume(localRootPath, targetRoot)
       }
     }
-    for (targetPortBinding in wslRequest.targetPortBindings) {
+    for (targetPortBinding in request.targetPortBindings) {
       val theOnlyPort = targetPortBinding.target
       if (targetPortBinding.local != null && targetPortBinding.local != theOnlyPort) {
         throw UnsupportedOperationException("Local target's TCP port forwarder is not implemented")
@@ -59,10 +60,10 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
       myTargetPortBindings[targetPortBinding] = theOnlyPort
     }
 
-    localPortBindingsSession = WslTargetLocalPortBindingsSession(distribution, wslRequest.localPortBindings)
+    localPortBindingsSession = WslTargetLocalPortBindingsSession(distribution, request.localPortBindings)
     localPortBindingsSession.start()
 
-    for (localPortBinding in wslRequest.localPortBindings) {
+    for (localPortBinding in request.localPortBindings) {
       val targetHostPortFuture = localPortBindingsSession.getTargetHostPortFuture(localPortBinding)
       val localHostPort = HostPort("localhost", localPortBinding.local)
       var targetHostPort = localHostPort
@@ -101,11 +102,19 @@ class WslTargetEnvironment(wslRequest: WslTargetEnvironmentRequest,
 
   @Throws(ExecutionException::class)
   override fun createProcess(commandLine: TargetedCommandLine, indicator: ProgressIndicator): Process {
-    var line = GeneralCommandLine(commandLine.collectCommandsSynchronously())
-    line.environment.putAll(commandLine.environmentVariables)
+    val ptyOptions = request.ptyOptions
+    val generalCommandLine = if (ptyOptions != null) {
+      PtyCommandLine(commandLine.collectCommandsSynchronously()).also {
+        it.withOptions(ptyOptions)
+      }
+    }
+    else {
+      GeneralCommandLine(commandLine.collectCommandsSynchronously())
+    }
+    generalCommandLine.environment.putAll(commandLine.environmentVariables)
     val options = WSLCommandLineOptions().setRemoteWorkingDirectory(commandLine.workingDirectory)
-    line = distribution.patchCommandLine(line, null, options)
-    val process = line.createProcess()
+    distribution.patchCommandLine(generalCommandLine, null, options)
+    val process = generalCommandLine.createProcess()
     localPortBindingsSession.stopWhenProcessTerminated(process)
     return process
   }
