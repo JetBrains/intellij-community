@@ -44,4 +44,17 @@ class FileFinderTest : MavenTestCase() {
     assertTrue(findPomFiles.size == 2)
     assertContainsElements(findPomFiles, pom1, pom2)
   }
+
+  fun `test find pom file - recursion poms`() {
+    val mainPom = createProjectSubFile("pom.xml", pomContent)
+    createProjectSubFile("pom-template.xml", pomContent)
+    val mainPomA = createProjectSubFile("a/pom.xml", pomContent)
+    createProjectSubFile("a/pom-template.xml", pomContent)
+    val pomB1 = createProjectSubFile("b/pom-template.xml", pomContent)
+    val pomB2 = createProjectSubFile("b/.flatten-pom.xml", pomContent)
+    val root = mainPom.parent
+    val findPomFiles = FileFinder.findPomFiles(Array(1) { root }, true, mavenProgressIndicator)
+    assertTrue(findPomFiles.size == 4)
+    assertContainsElements(findPomFiles, mainPom, mainPomA, pomB1, pomB2)
+  }
 }
