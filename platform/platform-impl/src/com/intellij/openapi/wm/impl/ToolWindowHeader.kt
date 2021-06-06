@@ -63,7 +63,7 @@ abstract class ToolWindowHeader internal constructor(
       object : ActionGroup(), DumbAware {
         private val children by lazy<Array<AnAction>> {
           val tabListAction = ActionManager.getInstance().getAction("TabList")
-          arrayOf(tabListAction, actionGroup, ShowOptionsAction(), HideAction())
+          arrayOf(tabListAction, actionGroup, DockToolWindowAction(), ShowOptionsAction(), HideAction())
         }
 
         override fun getChildren(e: AnActionEvent?) = children
