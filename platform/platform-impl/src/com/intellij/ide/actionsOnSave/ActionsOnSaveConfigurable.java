@@ -7,8 +7,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.options.UnnamedConfigurable;
-import com.intellij.openapi.options.ex.ConfigurableWrapper;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -110,8 +108,8 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
   @Override
   public void reset() {
     if (!myTable.isShowing()) {
-      // The table will be updated in the next UI cycle, when this method is called from the AncestorListener registered in the createTable() method above.
-      // Settings.KEY.getData(...) is null at this point so we'd rather return and initialize a bit later.
+      // Settings.KEY.getData(...) is null at this point, so we'd rather initialize a bit later.
+      // This method will be called again in the next UI cycle from the AncestorListener registered in the createTable() method above.
       return;
     }
 
@@ -124,27 +122,10 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
 
     List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myProject);
     for (ActionOnSaveInfo info : infos) {
-      updateInfoIfConfigurableUiComponentInitialized(settings, info, false);
+      info.onActionsOnSaveConfigurableReset(settings);
     }
 
     myTable.getListTableModel().setItems(infos);
-  }
-
-  static void updateInfoIfConfigurableUiComponentInitialized(@NotNull Settings settings,
-                                                             @NotNull ActionOnSaveInfo info,
-                                                             boolean initializeUiComponentIfNotYet) {
-    if (info.myConfigurableId == null) return;
-
-    UnnamedConfigurable configurable =
-      settings.getConfigurableWithInitializedUiComponent(info.myConfigurableId, initializeUiComponentIfNotYet);
-
-    if (configurable instanceof ConfigurableWrapper) {
-      configurable = ((ConfigurableWrapper)configurable).getRawConfigurable();
-    }
-
-    if (configurable != null) {
-      info.setConfigurableWithInitializedUiComponent(configurable);
-    }
   }
 
   public static @NotNull ActionLink createGoToActionsOnSavePageLink() {
