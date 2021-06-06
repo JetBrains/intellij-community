@@ -14,7 +14,6 @@ import com.intellij.util.io.sizeOrNull
 import java.io.IOException
 import java.nio.file.Path
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 class WslTargetEnvironment constructor(override val request: WslTargetEnvironmentRequest,
                                        private val distribution: WSLDistribution) : TargetEnvironment(request) {
@@ -23,7 +22,6 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
   private val myDownloadVolumes: MutableMap<DownloadRoot, DownloadableVolume> = HashMap()
   private val myTargetPortBindings: MutableMap<TargetPortBinding, Int> = HashMap()
   private val myLocalPortBindings: MutableMap<LocalPortBinding, ResolvedPortBinding> = HashMap()
-  private val localPortBindingsSession : WslTargetLocalPortBindingsSession
 
   override val uploadVolumes: Map<UploadRoot, UploadableVolume>
     get() = Collections.unmodifiableMap(myUploadVolumes)
@@ -59,20 +57,17 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
       myTargetPortBindings[targetPortBinding] = theOnlyPort
     }
 
-    localPortBindingsSession = WslTargetLocalPortBindingsSession(distribution, request.localPortBindings)
-    localPortBindingsSession.start()
-
     for (localPortBinding in request.localPortBindings) {
-      val targetHostPortFuture = localPortBindingsSession.getTargetHostPortFuture(localPortBinding)
-      val localHostPort = HostPort("localhost", localPortBinding.local)
-      var targetHostPort = localHostPort
-      try {
-        targetHostPort = targetHostPortFuture.get(10, TimeUnit.SECONDS)
+      val host = if (distribution.version == 1) {
+        // Ports bound on localhost in Windows can be accessed by linux apps running in WSL1, but not in WSL2:
+        //   https://docs.microsoft.com/en-US/windows/wsl/compare-versions#accessing-network-applications
+        "127.0.0.1"
       }
-      catch (e: Exception) {
-        LOG.info("Cannot get target host and port for $localPortBinding")
+      else {
+        distribution.hostIp
       }
-      myLocalPortBindings[localPortBinding] = ResolvedPortBinding(localHostPort, targetHostPort)
+      val hostPort = HostPort(host, localPortBinding.local)
+      myLocalPortBindings[localPortBinding] = ResolvedPortBinding(hostPort, hostPort)
     }
   }
 
@@ -113,9 +108,7 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
     generalCommandLine.environment.putAll(commandLine.environmentVariables)
     request.wslOptions.remoteWorkingDirectory = commandLine.workingDirectory
     distribution.patchCommandLine(generalCommandLine, null, request.wslOptions)
-    val process = generalCommandLine.createProcess()
-    localPortBindingsSession.stopWhenProcessTerminated(process)
-    return process
+    return generalCommandLine.createProcess()
   }
 
   override fun shutdown() {}
