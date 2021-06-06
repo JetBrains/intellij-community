@@ -9,13 +9,13 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.DialogWrapper.DoNotAskOption
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.ui.messages.AlertMessagesManager
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.mac.MacMessages
 import com.intellij.ui.mac.foundation.Foundation
 import com.intellij.ui.mac.foundation.ID
@@ -43,6 +43,9 @@ internal class MacMessageManagerProviderImpl : MacMessages.MacMessageManagerProv
 }
 
 fun getLocalMacMessages(): MacMessages {
+  if (AlertMessagesManager.isEnabled()) {
+    return service<AlertMessagesManager>()
+  }
   if (SystemInfo.isJetBrainsJvm && SystemInfo.isMacOSBigSur && Registry.`is`("ide.mac.bigsur.alerts.enabled", false)) {
     return service<NativeMacMessageManager>()
   }

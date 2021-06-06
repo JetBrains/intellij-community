@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.NlsContexts;
@@ -150,16 +151,28 @@ public class TestMacMessagesAction extends AnAction {
         });
         panel.add(ok);
 
+        JButton warn = new JButton("Show Warning Alert");
+        warn.addActionListener(event -> {
+          Messages.showWarningDialog((Project)null, MESSAGE, TITLE);
+        });
+        panel.add(warn);
+
         JButton error = new JButton("Show Error Alert");
         error.addActionListener(event -> {
           Messages.showErrorDialog((Project)null, MESSAGE, TITLE);
         });
         panel.add(error);
 
-        alertWithButtons(panel, "Show Buttons Alert", new String[]{"Button1", "Button2", "Button3", "Button4", "Button5"});
-        alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Cancel", "Button3", "Button4", "Button5"});
-        alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Button2", "Button3", "Cancel", "Button5"});
-        alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Button2", "Button3", "Button4", "Cancel"});
+        JButton help = new JButton("Show Alert with help button");
+        help.addActionListener(event -> {
+          new MessageDialogBuilder.YesNoCancel(TITLE, MESSAGE).help("my.help.id").show(project);
+        });
+        panel.add(help);
+
+
+        alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Cancel", "Button3", "Button4", "Button5"}, 1);
+        alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Button2", "Button3", "Cancel", "Button5"}, 2);
+        alertWithButtons(panel, "Show Buttons with Cancel Alert", new String[]{"Button1", "Button2", "Button3", "Button4", "Cancel"}, 4);
 
         JButton dialogAlert = new JButton("Dialog -> YesNo Alert");
         dialogAlert.addActionListener(event -> new DialogWrapper(project) {
@@ -302,7 +315,7 @@ public class TestMacMessagesAction extends AnAction {
         decompiler.addActionListener(event -> {
           System.out.println(Messages.showDialog(decompiler,
                                                  "IMPORTANT: BY ACCESSING AND USING JETBRAINS DECOMPILER, YOU AGREE TO THE CERTAIN TERMS AND CONDITIONS SET FORTH IN THE END-USER LICENSE AGREEMENT AND QUOTED BELOW. IF YOU DO NOT AGREE WITH THESE TERMS OR CONDITIONS, DO NOT ACCESS OR USE JETBRAINS DECOMPILER. The Software includes decompiling functionality (\"\"JetBrains Decompiler\"\") that enables reproducing source code from the original binary code. Licensee aknowledges that binary code and source code might be protected by copyright and trademark laws. Before using JetBrains Decompiler, Licensee should make sure that decompilation of binary code is not prohibited by the applicable license agreement (except to the extent that Licensee may be expressly permitted under applicable law) or that Licensee has obtained permission to decompile the binary code from the copyright owner. Using JetBrains Decompiler is entirely optional. Licensor does neither encourage nor condone the use of JetBrains Decompiler, and disclaims any liability for Licensee's use of  JetBrains Decompiler in violation of applicable laws.",
-                                                 "\n\n\n\n\nDecompiler Legal Notice — Accept", new String[]{"Yes", "No"}, 0, null));
+                                                 "Decompiler Legal Notice — Accept", new String[]{"Yes", "No"}, 0, null));
         });
         panel.add(decompiler);
 
@@ -362,10 +375,10 @@ public class TestMacMessagesAction extends AnAction {
     }.show();
   }
 
-  private static void alertWithButtons(JPanel panel, String title, String[] buttons) {
+  private static void alertWithButtons(JPanel panel, String title, String[] buttons, int index) {
     JButton button = new JButton(title);
     button.addActionListener(event -> {
-      System.out.println(Messages.showDialog(button, MESSAGE, TITLE, buttons, 0, null));
+      System.out.println(Messages.showDialog(button, MESSAGE, TITLE, buttons, index, null));
     });
     panel.add(button);
   }
