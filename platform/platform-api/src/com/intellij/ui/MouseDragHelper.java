@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +33,6 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
   private IdeGlassPane myGlassPane;
   @NotNull
   private final Disposable myParentDisposable;
-  private Dimension myDelta;
-
   private boolean myDetachPostponed;
   private boolean myDetachingMode;
   private boolean myCancelled;
@@ -124,13 +123,6 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
     myPressPointScreen = new RelativePoint(e).getScreenPoint();
     myPressedOnScreenPoint = new Point(myPressPointScreen);
     processMousePressed(e);
-
-    myDelta = new Dimension();
-    if (myDragComponent.isShowing()) {
-      final Point delta = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myDragComponent);
-      myDelta.width = delta.x;
-      myDelta.height = delta.y;
-    }
   }
 
   @Override
@@ -268,9 +260,7 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
   }
 
   private boolean isWithinDeadZone(@NotNull MouseEvent e) {
-    final Point screen = new RelativePoint(e).getScreenPoint();
-    return Math.abs(myPressPointScreen.x - screen.x - myDelta.width) < DRAG_START_DEADZONE &&
-           Math.abs(myPressPointScreen.y - screen.y - myDelta.height) < DRAG_START_DEADZONE;
+    return myPressPointScreen.distance(e.getLocationOnScreen()) < JBUI.scale(DRAG_START_DEADZONE);
   }
 
   @Override

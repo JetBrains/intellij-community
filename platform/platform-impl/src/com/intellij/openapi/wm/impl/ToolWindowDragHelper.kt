@@ -89,7 +89,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
 
   override fun processMousePressed(event: MouseEvent) {
     val relativePoint = RelativePoint(event)
-    val toolWindow = getToolWindow(relativePoint);
+    val toolWindow = getToolWindow(relativePoint)
     if (toolWindow == null) {
       return
     }
@@ -148,6 +148,10 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
     if (willDragOutStart) {
       setDragOut(true)
+      return
+    }
+    if (!willDragOutStart && isWithinInitialHeader(event.locationOnScreen)) {
+      cancelDragging()
       return
     }
     val window = getToolWindow()
@@ -296,12 +300,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     dialog.setLocation(screenPoint.x - myInitialOffset.x, screenPoint.y - myInitialOffset.y)
     setDragOut(dragOut)
 
-    var stripe = myPane.getStripeFor(Rectangle(screenPoint, /*Dimension(dialog.width, dialog.height)*/Dimension(1, 1)),
-                                     myPane.getStripeFor(myInitialAnchor!!))
-    val fallbackBounds = toolWindow.getBoundsOnScreen(myInitialAnchor!!)
-    if (stripe == null && fallbackBounds.contains(screenPoint)) {
-      stripe = myPane.getStripeFor(myInitialAnchor!!) //fallback
-    }
+    val stripe = getStripe(screenPoint)
 
     if (myLastStripe != null && myLastStripe != stripe) {
       myLastStripe!!.resetDrop()
@@ -337,7 +336,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
             bounds.height -= half
             if (dropToSide) {
               bounds.y += half
-            };
+            }
           } else {
             bounds.width -= half
             if (dropToSide) {
@@ -349,6 +348,17 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       })
     }
     myLastStripe = stripe
+  }
+
+  private fun getStripe(screenPoint: Point): Stripe? {
+    if (isWithinInitialHeader(screenPoint)) return myPane.getStripeFor(myInitialAnchor!!)
+    return myPane.getStripeFor(screenPoint, myPane.getStripeFor(myInitialAnchor!!))
+  }
+
+  private fun isWithinInitialHeader(screenPoint: Point): Boolean {
+    val toolWindow = getToolWindow()
+    val headerBounds = toolWindow?.decorator?.headerScreenBounds
+    return (headerBounds != null && headerBounds.contains(screenPoint))
   }
 
   private fun setDragOut(dragOut: Boolean) {

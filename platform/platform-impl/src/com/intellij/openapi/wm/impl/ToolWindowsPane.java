@@ -420,17 +420,17 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   @Nullable
-  Stripe getStripeFor(@NotNull Rectangle screenRectangle, @NotNull Stripe preferred) {
-    if (!new Rectangle(getLocationOnScreen(), getSize()).intersects(screenRectangle)) {
+  Stripe getStripeFor(@NotNull Point screenPoint, @NotNull Stripe preferred) {
+    if (!new Rectangle(getLocationOnScreen(), getSize()).contains(screenPoint)) {
       return null;
     }
 
-    if (preferred.containsScreen(screenRectangle)) {
+    if (preferred.containsPoint(screenPoint)) {
       return preferred;
     }
 
     for (Stripe stripe : stripes) {
-      if (stripe.containsScreen(screenRectangle)) {
+      if (stripe.containsPoint(screenPoint)) {
         return stripe;
       }
     }

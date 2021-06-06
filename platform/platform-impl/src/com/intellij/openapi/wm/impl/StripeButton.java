@@ -201,7 +201,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
       myDragButtonImage = new JLabel(IconUtil.createImageIcon((Image)image)) {
         @Override
         public String toString() {
-          return "Image for: " + StripeButton.this.toString();
+          return "Image for: " + StripeButton.this;
         }
       };
 
@@ -235,7 +235,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
 
     SwingUtilities.convertPointToScreen(xy, myDragPane);
 
-    Stripe stripe = pane.getStripeFor(new Rectangle(xy, myDragButtonImage.getSize()), (Stripe)getParent());
+    Stripe stripe = pane.getStripeFor(xy, (Stripe)getParent());
     if (stripe == null) {
       if (myLastStripe != null) {
         myLastStripe.resetDrop();
