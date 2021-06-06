@@ -44,6 +44,8 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
         fun introduceBackingProperty(property: KtProperty) {
             createBackingProperty(property)
 
+            property.removeModifier(KtTokens.LATEINIT_KEYWORD)
+
             if (property.typeReference == null) {
                 val type = SpecifyTypeExplicitlyIntention.getTypeForDeclaration(property)
                 SpecifyTypeExplicitlyIntention.addTypeAnnotation(null, property, type)
@@ -98,6 +100,10 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
                     appendFixedText(" = ")
                     appendExpression(property.initializer)
                 }
+            }
+
+            if (property.hasModifier(KtTokens.LATEINIT_KEYWORD)) {
+                backingProperty.addModifier(KtTokens.LATEINIT_KEYWORD)
             }
 
             property.parent.addBefore(backingProperty, property)
