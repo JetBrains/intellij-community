@@ -1,6 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.configurationStore.StoreUtilKt;
 import com.intellij.diagnostic.VMOptions;
 import com.intellij.ide.BootstrapBundle;
 import com.intellij.ide.actions.ImportSettingsFilenameFilter;
@@ -17,6 +18,8 @@ import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
+import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -952,7 +955,8 @@ public final class ConfigImportHelper {
       return;
     }
 
-    Path keymapOptionFile = newConfigDir.resolve("options/keymap.xml");
+    String keymapFileSpec = StoreUtilKt.getDefaultStoragePathSpec(KeymapManagerImpl.class);
+    Path keymapOptionFile = newConfigDir.resolve(OPTIONS_DIRECTORY).resolve(keymapFileSpec);
     if (Files.exists(keymapOptionFile)) {
       return;
     }
