@@ -15,23 +15,35 @@ public class SearchEverywhereMlExperiment {
   private final int myExperimentGroup;
   private final boolean myPerformExperiment;
 
-  private final boolean myIsExperimentalModel;
+  private final boolean myIsExperimentalMode;
 
   public SearchEverywhereMlExperiment() {
-    myIsExperimentalModel = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP();
-    myExperimentGroup = myIsExperimentalModel ? EventLogConfiguration.getInstance().getOrCreate(RECORDER_CODE).getBucket() % NUMBER_OF_GROUPS : -1;
+    myIsExperimentalMode = StatisticsUploadAssistant.isSendAllowed() && ApplicationManager.getApplication().isEAP();
+    myExperimentGroup = myIsExperimentalMode ? EventLogConfiguration.getInstance().getOrCreate(RECORDER_CODE).getBucket() % NUMBER_OF_GROUPS : -1;
     myPerformExperiment = myExperimentGroup == EXPERIMENT_GROUP;
   }
 
   public boolean isAllowed() {
-    return myIsExperimentalModel && !Registry.is("search.everywhere.force.disable.logging.ml");
+    if (isOrderByMlEnabled()) return true;
+    return !isDisableLoggingAndExperiments();
   }
 
   public boolean shouldOrderByMl() {
-    if (!isAllowed()) return false;
-    if (Registry.is("search.everywhere.sort.actions.by.ml")) return true;
-    if (Registry.is("search.everywhere.force.disable.experiment.action.ml")) return false;
+    if (isOrderByMlEnabled()) return true;
+    if (isDisableLoggingAndExperiments() || isDisableExperiments()) return false;
     return myPerformExperiment;
+  }
+
+  private boolean isDisableLoggingAndExperiments() {
+    return !myIsExperimentalMode || Registry.is("search.everywhere.force.disable.logging.ml");
+  }
+
+  private static boolean isDisableExperiments() {
+    return Registry.is("search.everywhere.force.disable.experiment.action.ml");
+  }
+
+  private static boolean isOrderByMlEnabled() {
+    return Registry.is("search.everywhere.sort.actions.by.ml");
   }
 
   public int getExperimentGroup() {
