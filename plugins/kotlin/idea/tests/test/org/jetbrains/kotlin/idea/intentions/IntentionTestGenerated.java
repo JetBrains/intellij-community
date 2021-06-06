@@ -10067,6 +10067,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/introduceBackingProperty/jvmField.kt");
         }
 
+        @TestMetadata("lateinitVar.kt")
+        public void testLateinitVar() throws Exception {
+            runTest("testData/intentions/introduceBackingProperty/lateinitVar.kt");
+        }
+
         @TestMetadata("semicolon.kt")
         public void testSemicolon() throws Exception {
             runTest("testData/intentions/introduceBackingProperty/semicolon.kt");
