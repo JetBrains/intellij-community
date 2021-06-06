@@ -47,7 +47,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control E",                "RecentFiles", "SwitcherIterateItems", "SwitcherRecentEditedChangedToggleCheckBox", "Vcs.ShowMessageHistory"},
     { "control I",                "ImplementMethods", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
     { "control INSERT",           "$Copy", "Terminal.CopySelectedText"},
-    { "control K",                "CheckinProject", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
     { "control M",                "EditorScrollToCenter", "Vcs.ShowMessageHistory"},
     { "control N",                "Console.TableResult.AddRow", "FileChooser.NewFolder", "GotoClass"},
     { "control P",                "FileChooser.TogglePathShowing", "ParameterInfo"},
@@ -103,7 +102,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift control RIGHT",      "EditorNextWordWithSelection", "ResizeToolWindowRight"},
     { "shift control T",          "GotoTest", "ServiceView.ShowServices"},
     { "shift control UP",         "ResizeToolWindowUp", "MoveStatementUp"},
-    { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase"},
+    { "shift control U",          "ShelveChanges.UnshelveWithDialog", "EditorToggleCase", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
     { "shift control alt D",      "UML.ShowChanges", "Console.TableResult.CloneColumn"},
     { "shift control alt P",      "IntroduceFunctionalParameter", "ReformatWithPrettierAction" },
     { "shift control alt ENTER",  "Console.Jpa.GenerateDDL", "Console.TableResult.SubmitAndCommit", "Console.Transaction.Commit", "NotebookRunAllAction", "org.jetbrains.r.actions.RDebugAction"},
@@ -154,7 +153,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt DOWN",                 "EditorUnSelectWord", "MethodOverloadSwitchDown", "ShowSearchHistory"},
     { "alt UP",                   "EditorSelectWord", "MethodOverloadSwitchUp"},
     { "meta L",                   "GotoLine", "Terminal.ClearBuffer"},
-    { "meta K",                   "CheckinProject", "Terminal.ClearBuffer", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
+    { "meta K",                   "CheckinProject", "Terminal.ClearBuffer"},
     });
     put("Mac OS X", new String[][] {
     { "Force touch",              "GotoDeclaration", "RunToCursor"},
@@ -177,7 +176,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta RIGHT",         "EditorLineEndWithSelection", "ResizeToolWindowRight"},
     { "alt R",                    "Django.RunManageTaskAction", "org.jetbrains.plugins.ruby.tasks.rake.actions.RakeTasksPopupAction"},
     { "ctrl SPACE",               "ChangesView.SetDefault", "CodeCompletion"},
-    { "meta K",                   "CheckinProject", "Terminal.ClearBuffer", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
+    { "meta K",                   "CheckinProject", "Terminal.ClearBuffer"},
     });
     put("Emacs", new String[][] {
     { "TAB",                      "EditorChooseLookupItemReplace", "NextTemplateVariable", "NextParameter", "EditorIndentSelection",
@@ -186,7 +185,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "alt SLASH",                "CodeCompletion", "HippieCompletion"},
     { "control B",                "EditorLeft", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
     { "control D",                "$Delete", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop", "org.jetbrains.r.console.RConsoleView.REofAction"},
-    { "control K",                "EditorCutLineEnd", "CheckinProject", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
+    { "control K",                "EditorCutLineEnd", "CheckinProject"},
     { "control M",                "EditorEnter", "EditorChooseLookupItem", "NextTemplateVariable", "Console.Execute"},
     { "control N",                "Console.TableResult.AddRow", "EditorDown", "FileChooser.NewFolder"},
     { "control P",                "EditorUp", "FileChooser.TogglePathShowing"},
@@ -276,7 +275,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "control B",                "CompileDirty", "org.intellij.plugins.markdown.ui.actions.styling.ToggleBoldAction"},
     { "control D",                "EditorDeleteLine", "Diff.ShowDiff", "CompareTwoFiles", "SendEOF", "FileChooser.GotoDesktop", "org.jetbrains.r.console.RConsoleView.REofAction"},
     { "control I",                "AutoIndentLines", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
-    { "control K",                "FindNext", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
     { "control N",                "Console.TableResult.AddRow", "ShowPopupMenu", "FileChooser.NewFolder"},
     { "control P",                "FileChooser.TogglePathShowing", "Print"},
     { "control R",                "RunToCursor", "org.jetbrains.plugins.ruby.rails.console.ReloadSources"},
@@ -367,10 +365,10 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta G",             "ClassTemplateNavigation", "GoToClass", "FindUsages"},
     { "shift meta K",             "Vcs.Push", "FindPrevious"},
     { "shift meta X",             "EditorToggleCase", "com.jetbrains.php.framework.FrameworkRunConsoleAction"},
-    { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog"},
+    { "shift meta U",             "FindUsagesInFile", "ShelveChanges.UnshelveWithDialog", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
     { "shift meta F6",            "Diff.PrevChange", "PreviousTab"},
     { "control shift alt Z",      "Vcs.RollbackChangedLines", "ChangesView.Revert"},
-    { "meta K",                   "FindNext", "Terminal.ClearBuffer", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
+    { "meta K",                   "FindNext", "Terminal.ClearBuffer"},
     { "shift ctrl DOWN",          "EditorUnSelectWord", "ShowContent"},
     });
     put("Sublime Text", new String[][] {
@@ -382,7 +380,6 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "ctrl I",                   "IncrementalSearch", "org.intellij.plugins.markdown.ui.actions.styling.ToggleItalicAction"},
     { "ctrl ENTER",               "Console.Execute.Multiline", "DirDiffMenu.SynchronizeDiff.All", "EditorStartNewLine", "NotebookRunCellAction", "PyExecuteCellAction", "ViewSource", "org.jetbrains.r.actions.RunSelection", "Terminal.SmartCommandExecution.Run", "SplitChooser.Duplicate"},
     { "ctrl EQUALS",              "EditorIncreaseFontSize", "ExpandAll", "ExpandExpandableComponent"},
-    { "ctrl K",                   "SECOND_STROKE_SHORTCUT", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
     { "ctrl M",                   "EditorMatchBrace", "Vcs.ShowMessageHistory"},
     { "ctrl MINUS",               "CollapseAll", "CollapseExpandableComponent", "EditorDecreaseFontSize"},
     { "ctrl N",                   "Console.TableResult.AddRow", "FileChooser.NewFolder", "NewElement"},
@@ -423,7 +420,7 @@ public abstract class KeymapsTestCase extends KeymapsTestCaseBase {
     { "shift meta ENTER",         "Console.Jpa.GenerateSql", "EditorStartNewLineBefore",  "org.jetbrains.r.actions.RRunAction", "Terminal.SmartCommandExecution.Debug"},
     { "shift meta T",             "ReopenClosedTab", "ServiceView.ShowServices"},
     { "meta L",                   "EditorSelectLine", "Terminal.ClearBuffer"},
-    { "meta K",                   "SECOND_STROKE_SHORTCUT", "Terminal.ClearBuffer", "org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"},
+    { "meta K",                   "SECOND_STROKE_SHORTCUT", "Terminal.ClearBuffer"},
     { "shift ctrl DOWN",          "EditorCloneCaretBelow", "ShowContent"},
     });
     put("macOS System Shortcuts", new String[][] {
