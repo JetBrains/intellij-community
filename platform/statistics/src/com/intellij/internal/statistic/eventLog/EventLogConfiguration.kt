@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.prefs.Preferences
 
 @ApiStatus.Internal
-@Service(Service.Level.PROJECT)
+@Service(Service.Level.APP)
 class EventLogConfiguration {
   companion object {
     internal val LOG = Logger.getInstance(EventLogConfiguration::class.java)
