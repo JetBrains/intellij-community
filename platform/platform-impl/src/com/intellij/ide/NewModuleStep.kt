@@ -44,34 +44,6 @@ abstract class NewModuleStep<T> : ModuleWizardStep() {
     }
   }
 
-  fun LayoutBuilder.advancedModuleSettings() {
-    hideableRow(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
-      row {
-        cell { label(UIBundle.message("label.project.wizard.new.project.module.name")) }
-        cell {
-          textField(baseSettings::moduleName)
-        }
-      }
-
-      row{
-        cell { label(UIBundle.message("label.project.wizard.new.project.content.root")) }
-        cell {
-          textFieldWithBrowseButton(baseSettings::contentRoot, UIBundle.message("label.project.wizard.new.project.content.root"), null,
-                                    FileChooserDescriptorFactory.createSingleFolderDescriptor())
-        }
-      }
-
-      row{
-        cell { label(UIBundle.message("label.project.wizard.new.project.module.file.location")) }
-        cell {
-          textFieldWithBrowseButton(baseSettings::moduleFileLocation,
-                                    UIBundle.message("label.project.wizard.new.project.module.file.location"), null,
-                                    FileChooserDescriptorFactory.createSingleFolderDescriptor())
-        }
-      }
-    }
-  }
-
   companion object {
     fun RowBuilder.twoColumnRow(column1: InnerCell.() -> Unit, column2: InnerCell.() -> Unit): Row = row {
       cell {
@@ -100,8 +72,4 @@ class BaseNewProjectSettings(initPath: String) {
   var path: String = initPath
   var name: String = NewModuleStep.findNonExistingFileName(initPath, "untitled", "")
   var git: Boolean = false
-
-  var moduleName: String = ""
-  var contentRoot: String = ""
-  var moduleFileLocation: String = ""
 }
