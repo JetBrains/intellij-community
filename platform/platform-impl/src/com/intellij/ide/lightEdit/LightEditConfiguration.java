@@ -8,10 +8,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 class LightEditConfiguration {
+  enum PreferredMode {
+    LightEdit,
+    Project
+  }
+
   public boolean      autosaveMode = false;
   public List<String> sessionFiles = new ArrayList<>();
 
   public List<String> supportedFilePatterns = null;
 
   public @Nullable FrameInfo frameInfo;
+
+  public PreferredMode preferredMode;
 }
