@@ -50,9 +50,6 @@ public abstract class WslDistributionManager implements Disposable {
    * @see #getInstalledDistributionsFuture
    */
   public @NotNull List<WSLDistribution> getInstalledDistributions() {
-    final int releaseId = WSLUtil.getWindowsReleaseId();
-    if (releaseId > 0 && releaseId  < 1903) return WSLUtil.getAvailableDistributions();
-
     CachedDistributions cachedDistributions = myInstalledDistributions;
     if (cachedDistributions != null && cachedDistributions.isUpToDate()) {
       return cachedDistributions.myInstalledDistributions;
@@ -109,6 +106,9 @@ public abstract class WslDistributionManager implements Disposable {
   }
 
   private @NotNull List<WSLDistribution> loadInstalledDistributions() {
+    final int releaseId = WSLUtil.getWindowsReleaseId();
+    if (releaseId > 0 && releaseId  < 1903) return WSLUtil.getAvailableDistributions();
+
     if (Registry.is("wsl.list.prefer.verbose.output", true)) {
       try {
         final var result = loadInstalledDistributionsWithVersions();

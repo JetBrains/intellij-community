@@ -232,7 +232,7 @@ public final class WSLUtil {
       }
     }
     catch (Throwable e) {
-      LOG.warn(e);
+      LOG.warn("Cannot read Windows version", e);
     }
     return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId");
   }
