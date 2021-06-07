@@ -13,8 +13,8 @@ var foo: String = ""
     }
 
 // SEARCH_TEXT: renamed
-// REF: @JvmName("renamedFooGetter")
-// REF: @JvmName("renamedFooSetter")
-// REF: @get:JvmName("renamedBarSetter")
-// REF: @set:JvmName("renamedBarGetter")
+// REF: (foo.bar).renamedBarGetter
+// REF: (foo.bar).renamedBarSetter
+// REF: (foo.bar).renamedFooGetter
+// REF: (foo.bar).renamedFooSetter
 
