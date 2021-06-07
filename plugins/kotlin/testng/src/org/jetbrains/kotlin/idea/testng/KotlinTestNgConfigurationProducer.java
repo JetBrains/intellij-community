@@ -11,10 +11,8 @@ import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.theoryinpractice.testng.configuration.TestNGConfiguration;
 import com.theoryinpractice.testng.configuration.TestNGConfigurationProducer;
@@ -23,14 +21,13 @@ import kotlin.collections.CollectionsKt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.asJava.LightClassUtilsKt;
+import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider.JavaTestEntity;
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector;
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil;
 import org.jetbrains.kotlin.platform.jvm.JvmPlatformKt;
 import org.jetbrains.kotlin.psi.*;
 
 import java.util.List;
-
-import static org.jetbrains.kotlin.asJava.LightClassUtilsKt.toLightClass;
 
 public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProducer {
     @Override
@@ -105,14 +102,12 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
             return false;
         }
 
-        Pair<PsiClass, PsiMethod> classAndMethod = getTestClassAndMethod(leaf);
-        if (classAndMethod == null) return false;
+        JavaTestEntity testEntity = TestNgKotlinTestFrameworkProvider.INSTANCE.getJavaTestEntity(leaf, true);
+        if (testEntity == null) {
+            return false;
+        }
 
-        PsiClass testClass = classAndMethod.getFirst();
-        if (testClass == null) return false;
-        PsiMethod testMethod = classAndMethod.getSecond();
-
-        return configure(configuration, location, context, project, testClass, testMethod);
+        return configure(configuration, location, context, project, testEntity.getTestClass(), testEntity.getTestMethod());
     }
 
     @Override
@@ -200,10 +195,6 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
         return true;
     }
 
-    private static boolean isTestNGClass(PsiClass psiClass) {
-        return psiClass != null && PsiClassUtil.isRunnableClass(psiClass, true, false) && TestNGUtil.hasTest(psiClass);
-    }
-
     @Nullable
     static KtClass getClassDeclarationInFile(KtFile ktFile) {
         KtClass tempSingleDeclaration = null;
@@ -223,39 +214,5 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
         }
 
         return tempSingleDeclaration;
-    }
-
-    @Nullable
-    public static Pair<PsiClass, PsiMethod> getTestClassAndMethod(@NotNull PsiElement leaf) {
-        KtNamedDeclaration declarationToRun = getDeclarationToRun(leaf);
-
-        if (declarationToRun instanceof KtNamedFunction) {
-            KtNamedFunction function = (KtNamedFunction) declarationToRun;
-
-            KtElement owner = PsiTreeUtil.getParentOfType(function, KtFunction.class, KtClass.class);
-
-            if (owner instanceof KtClass) {
-                PsiClass delegate = toLightClass((KtClass) owner);
-                if (delegate != null) {
-                    for (PsiMethod method : delegate.getMethods()) {
-                        if (method.getNavigationElement() == function) {
-                            if (TestNGUtil.hasTest(method)) {
-                                return new Pair<>(delegate, method);
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        if (declarationToRun instanceof KtClass) {
-            PsiClass delegate = toLightClass((KtClassOrObject) declarationToRun);
-            if (isTestNGClass(delegate)) {
-                return new Pair<>(delegate, null);
-            }
-        }
-
-        return null;
     }
 }

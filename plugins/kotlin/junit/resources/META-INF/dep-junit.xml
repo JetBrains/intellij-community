@@ -4,4 +4,7 @@
     <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer"/>
     <junitRecognizer implementation="org.jetbrains.kotlin.idea.junit.KotlinMultiplatformJUnitRecognizer"/>
   </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
+    <testFrameworkProvider implementation="org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider"/>
+  </extensions>
 </idea-plugin>

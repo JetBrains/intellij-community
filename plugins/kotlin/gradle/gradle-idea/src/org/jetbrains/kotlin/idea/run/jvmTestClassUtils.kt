@@ -6,56 +6,37 @@ import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationFromContext
 import com.intellij.execution.junit.JUnitConfigurationProducer
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer
-import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.openapi.extensions.PluginId.getId
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer
-import org.jetbrains.kotlin.idea.testng.KotlinTestNgConfigurationProducer
-
-private val isJUnitEnabled by lazy { isPluginEnabled("JUnit") }
-private val isTestNgEnabled by lazy { isPluginEnabled("TestNG-J") }
-
-private fun isPluginEnabled(id: String): Boolean {
-    return PluginManagerCore.isPluginInstalled(getId(id)) && !PluginManagerCore.isDisabled(id)
-}
+import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 
 internal fun ConfigurationFromContext.isJpsJunitConfiguration(): Boolean {
     return isProducedBy(JUnitConfigurationProducer::class.java)
             || isProducedBy(AbstractPatternBasedConfigurationProducer::class.java)
 }
 
-internal fun canRunJvmTests() = isJUnitEnabled || isTestNgEnabled
+internal fun canRunJvmTests(): Boolean {
+    return KotlinTestFrameworkProvider.EP_NAME.extensionList.any { it.canRunJvmTests }
+}
 
 internal fun getTestClassForJvm(location: Location<*>): PsiClass? {
-    val leaf = location.psiElement ?: return null
+    val element = location.psiElement?.takeIf { it.language == KotlinLanguage.INSTANCE } ?: return null
 
-    if (leaf.language != KotlinLanguage.INSTANCE) return null
+    for (extension in KotlinTestFrameworkProvider.EP_NAME.extensionList) {
+        val testEntity = extension.getJavaTestEntity(element, checkMethod = false) ?: continue
+        return testEntity.testClass
+    }
 
-    if (isJUnitEnabled) {
-        KotlinJUnitRunConfigurationProducer.getTestClass(leaf)?.let { return it }
-    }
-    if (isTestNgEnabled) {
-        KotlinTestNgConfigurationProducer.getTestClassAndMethod(leaf)?.let { (testClass, testMethod) ->
-            return if (testMethod == null) testClass else null
-        }
-    }
     return null
 }
 
 internal fun getTestMethodForJvm(location: Location<*>): PsiMethod? {
-    val leaf = location.psiElement ?: return null
+    val element = location.psiElement?.takeIf { it.language == KotlinLanguage.INSTANCE } ?: return null
 
-    if (leaf.language != KotlinLanguage.INSTANCE) return null
+    for (extension in KotlinTestFrameworkProvider.EP_NAME.extensionList) {
+        return extension.getJavaTestEntity(element, checkMethod = true)?.testMethod ?: continue
+    }
 
-    if (isJUnitEnabled) {
-        KotlinJUnitRunConfigurationProducer.getTestMethod(leaf)?.let { return it }
-    }
-    if (isTestNgEnabled) {
-        KotlinTestNgConfigurationProducer.getTestClassAndMethod(leaf)?.second?.let { return it }
-    }
     return null
 }

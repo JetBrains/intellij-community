@@ -76,8 +76,12 @@
         <extensionPoint qualifiedName="org.jetbrains.kotlin.foreignUsagesRenameProcessor"
                         interface="org.jetbrains.kotlin.idea.refactoring.rename.ForeignUsagesRenameProcessor" dynamic="true"/>
 
-      <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.kotlin"
-                      interface="org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType" dynamic="true"/>
+        <extensionPoint qualifiedName="com.intellij.newProjectWizard.buildSystem.kotlin"
+                        interface="org.jetbrains.kotlin.tools.projectWizard.KotlinBuildSystemType" dynamic="true"/>
+
+        <extensionPoint qualifiedName="org.jetbrains.kotlin.idea.testFrameworkProvider"
+                        interface="org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider"
+                        dynamic="true"/>
     </extensionPoints>
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
