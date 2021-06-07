@@ -26,7 +26,8 @@ internal class GrazieRulesTreeNode(userObject: Any? = null) : CheckedTreeNode(us
 
   private fun differsFromDefault(): Boolean {
     val meta = userObject
-    return if (meta is Rule) meta.isEnabledByDefault != isChecked else children.any { (it as GrazieRulesTreeNode).differsFromDefault() }
+    if (meta is Rule) return meta.isEnabledByDefault != isChecked
+    return children.orEmpty().any { (it as GrazieRulesTreeNode).differsFromDefault() }
   }
 
   fun resetMark(state: GrazieConfig.State): Boolean {
