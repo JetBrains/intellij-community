@@ -2,9 +2,12 @@
 package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.NlsContexts;
@@ -21,6 +24,7 @@ import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -51,6 +55,14 @@ public class AboutDialog extends DialogWrapper {
     setTitle(IdeBundle.message("about.popup.about.app", appName));
 
     init();
+
+    new DumbAwareAction() {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e) {
+        copyAboutInfoToClipboard();
+        close(OK_EXIT_CODE);
+      }
+    }.registerCustomShortcutSet(CustomShortcutSet.fromString("meta C", "control C"), getContentPanel(), getDisposable());
   }
 
   @Override
@@ -77,13 +89,17 @@ public class AboutDialog extends DialogWrapper {
 
       @Override
       protected void doAction(ActionEvent e) {
-        try {
-          CopyPasteManager.getInstance().setContents(new StringSelection(getExtendedAboutText()));
-        }
-        catch (Exception ignore) { }
+        copyAboutInfoToClipboard();
         close(OK_EXIT_CODE);
       }
     };
+  }
+
+  private void copyAboutInfoToClipboard() {
+    try {
+      CopyPasteManager.getInstance().setContents(new StringSelection(getExtendedAboutText()));
+    }
+    catch (Exception ignore) { }
   }
 
   private String getExtendedAboutText() {
