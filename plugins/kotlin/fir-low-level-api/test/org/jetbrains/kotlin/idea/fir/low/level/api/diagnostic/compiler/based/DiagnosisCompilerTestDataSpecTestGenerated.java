@@ -423,7 +423,7 @@ public abstract class DiagnosisCompilerTestDataSpecTestGenerated extends Abstrac
             public abstract static class Built_in_types_and_their_semantics extends AbstractDiagnosisCompilerTestDataSpecTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/expressions/built-in-types-and-their-semantics/kotlin.nothing-1")
-                public abstract static class Kotlin extends AbstractDiagnosisCompilerTestDataSpecTest {
+                public abstract static class Kotlin_nothing_1 extends AbstractDiagnosisCompilerTestDataSpecTest {
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/expressions/built-in-types-and-their-semantics/kotlin.nothing-1/p-1")
                     public abstract static class P_1 extends AbstractDiagnosisCompilerTestDataSpecTest {
@@ -444,7 +444,7 @@ public abstract class DiagnosisCompilerTestDataSpecTestGenerated extends Abstrac
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/expressions/built-in-types-and-their-semantics/kotlin.unit")
-                public abstract static class Kotlin extends AbstractDiagnosisCompilerTestDataSpecTest {
+                public abstract static class Kotlin_unit extends AbstractDiagnosisCompilerTestDataSpecTest {
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/expressions/built-in-types-and-their-semantics/kotlin.unit/p-1")
                     public abstract static class P_1 extends AbstractDiagnosisCompilerTestDataSpecTest {
@@ -3765,8 +3765,34 @@ public abstract class DiagnosisCompilerTestDataSpecTestGenerated extends Abstrac
                 @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types")
                 public abstract static class Built_in_types extends AbstractDiagnosisCompilerTestDataSpecTest {
                     @RunWith(JUnit3RunnerWithInners.class)
+                    @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any")
+                    public abstract static class Kotlin_any extends AbstractDiagnosisCompilerTestDataSpecTest {
+                        @RunWith(JUnit3RunnerWithInners.class)
+                        @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any/p-1")
+                        public abstract static class P_1 extends AbstractDiagnosisCompilerTestDataSpecTest {
+                            @RunWith(JUnit3RunnerWithInners.class)
+                            @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any/p-1/pos")
+                            public static class Pos extends AbstractDiagnosisCompilerTestDataSpecTest {
+                                private void runTest(String testDataFilePath) throws Exception {
+                                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                                }
+
+                                @TestMetadata("1.1.kt")
+                                public void test1_1() throws Exception {
+                                    runTest(compilerTestData("compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any/p-1/pos/1.1.kt"));
+                                }
+
+                                @TestMetadata("1.2.kt")
+                                public void test1_2() throws Exception {
+                                    runTest(compilerTestData("compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any/p-1/pos/1.2.kt"));
+                                }
+                            }
+                        }
+                    }
+
+                    @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.nothing")
-                    public abstract static class Kotlin extends AbstractDiagnosisCompilerTestDataSpecTest {
+                    public abstract static class Kotlin_nothing extends AbstractDiagnosisCompilerTestDataSpecTest {
                         @RunWith(JUnit3RunnerWithInners.class)
                         @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.nothing/p-1")
                         public abstract static class P_1 extends AbstractDiagnosisCompilerTestDataSpecTest {
@@ -3798,32 +3824,6 @@ public abstract class DiagnosisCompilerTestDataSpecTestGenerated extends Abstrac
                                 @TestMetadata("1.2.kt")
                                 public void test1_2() throws Exception {
                                     runTest(compilerTestData("compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.nothing/p-1/pos/1.2.kt"));
-                                }
-                            }
-                        }
-                    }
-
-                    @RunWith(JUnit3RunnerWithInners.class)
-                    @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any")
-                    public abstract static class Kotlin extends AbstractDiagnosisCompilerTestDataSpecTest {
-                        @RunWith(JUnit3RunnerWithInners.class)
-                        @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any/p-1")
-                        public abstract static class P_1 extends AbstractDiagnosisCompilerTestDataSpecTest {
-                            @RunWith(JUnit3RunnerWithInners.class)
-                            @TestMetadata("../../intellij/out/kotlinc-testdata/testData/compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any/p-1/pos")
-                            public static class Pos extends AbstractDiagnosisCompilerTestDataSpecTest {
-                                private void runTest(String testDataFilePath) throws Exception {
-                                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-                                }
-
-                                @TestMetadata("1.1.kt")
-                                public void test1_1() throws Exception {
-                                    runTest(compilerTestData("compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any/p-1/pos/1.1.kt"));
-                                }
-
-                                @TestMetadata("1.2.kt")
-                                public void test1_2() throws Exception {
-                                    runTest(compilerTestData("compiler/tests-spec/testData/diagnostics/linked/type-system/type-kinds/built-in-types/kotlin.any/p-1/pos/1.2.kt"));
                                 }
                             }
                         }
