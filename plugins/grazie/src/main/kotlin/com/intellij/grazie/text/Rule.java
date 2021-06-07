@@ -82,8 +82,8 @@ public abstract class Rule {
   }
 
   public final boolean isEnabledInState(GrazieConfig.State state) {
-    return enabledByDefault ? !state.getUserDisabledRules().contains(globalId)
-                            : state.getUserEnabledRules().contains(globalId);
+    return isEnabledByDefault() ? !state.getUserDisabledRules().contains(globalId)
+                                : state.getUserEnabledRules().contains(globalId);
   }
 
   @Override
