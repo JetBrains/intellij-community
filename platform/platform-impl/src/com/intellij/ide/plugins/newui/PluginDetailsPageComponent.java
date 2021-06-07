@@ -12,7 +12,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
-import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
@@ -73,7 +73,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private InstallButton myInstallButton;
   private JButton myUpdateButton;
   private JComponent myGearButton;
-  private JComponent myErrorComponent;
+  private ErrorComponent myErrorComponent;
   private JTextField myVersion;
   private JLabel myEnabledForProject;
   private JLabel myVersionSize;
@@ -177,7 +177,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
     createButtons();
     centerPanel.add(myNameAndButtons, VerticalLayout.FILL_HORIZONTAL);
     if (!myMarketplace) {
-      myErrorComponent = ErrorComponent.create(centerPanel, VerticalLayout.FILL_HORIZONTAL);
+      myErrorComponent = new ErrorComponent();
+      centerPanel.add(myErrorComponent, VerticalLayout.FILL_HORIZONTAL);
     }
     createMetricsPanel(centerPanel);
 
@@ -730,26 +731,26 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myGearButton.setVisible(!uninstalled);
 
       updateEnableForNameAndIcon();
-      updateIcon();
       updateErrors();
     }
   }
 
   private void updateIcon() {
-    boolean errors = !myMarketplace && myPluginModel.hasErrors(myPlugin);
+    updateIcon(myPluginModel.getErrors(myPlugin));
+  }
+
+  private void updateIcon(@NotNull List<? extends HtmlChunk> errors) {
+    boolean hasErrors = !myMarketplace && !errors.isEmpty();
 
     myIconLabel.setEnabled(myMarketplace || myPluginModel.isEnabled(myPlugin));
-    myIconLabel.setIcon(myPluginModel.getIcon(myPlugin, true, errors, false));
-    myIconLabel.setDisabledIcon(myPluginModel.getIcon(myPlugin, true, errors, true));
+    myIconLabel.setIcon(myPluginModel.getIcon(myPlugin, true, hasErrors, false));
+    myIconLabel.setDisabledIcon(myPluginModel.getIcon(myPlugin, true, hasErrors, true));
   }
 
   private void updateErrors() {
-    Ref<@Nls String> enableAction = new Ref<>();
-    String message = myPluginModel.getErrorMessage(myPlugin, enableAction);
-    if (message != null) {
-      ErrorComponent.show(myErrorComponent, message, enableAction.get(), enableAction.isNull() ? null : () -> handleErrors());
-    }
-    myErrorComponent.setVisible(message != null);
+    @NotNull List<? extends HtmlChunk> errors = myPluginModel.getErrors(myPlugin);
+    updateIcon(errors);
+    myErrorComponent.setErrors(errors, this::handleErrors);
   }
 
   private void handleErrors() {
@@ -803,7 +804,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
       return;
     }
 
-    updateIcon();
     updateEnableForNameAndIcon();
     updateErrors();
     updateEnabledForProject();

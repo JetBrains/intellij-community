@@ -4,73 +4,67 @@ package com.intellij.ide.plugins.newui;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
-final class ErrorComponent {
+final class ErrorComponent extends JEditorPane {
+
   private static final String KEY = "EnableCallback";
 
-  static @NotNull JComponent create(@NotNull JPanel panel, @Nullable Object constraints) {
-    JEditorPane editorPane = new JEditorPane();
-    panel.add(editorPane, constraints);
+  ErrorComponent() {
+    UIUtil.convertToLabel(this);
+    setCaret(EmptyCaret.INSTANCE);
 
-    UIUtil.convertToLabel(editorPane);
-    editorPane.setCaret(EmptyCaret.INSTANCE);
-
-    StyleSheet sheet = ((HTMLEditorKit)editorPane.getEditorKit()).getStyleSheet();
+    StyleSheet sheet = ((HTMLEditorKit)getEditorKit()).getStyleSheet();
     sheet.addRule("span {color: " + ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR) + "}");
     sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}");
 
-    editorPane.addHyperlinkListener(new HyperlinkAdapter() {
+    addHyperlinkListener(new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
-        Object callback = editorPane.getClientProperty(KEY);
+        Object callback = getClientProperty(KEY);
         if (callback instanceof Runnable) {
           ApplicationManager.getApplication().invokeLater((Runnable)callback, ModalityState.any());
         }
       }
     });
-
-    return editorPane;
   }
 
-  static void show(@NotNull JComponent errorComponent,
-                   @NotNull @Nls String message,
-                   @Nullable @Nls String action,
-                   @Nullable Runnable enableCallback) {
-    JEditorPane editorPane = (JEditorPane)errorComponent;
+  void setErrors(@NotNull List<? extends HtmlChunk> errors,
+                 @NotNull Runnable enableCallback) {
+    setVisible(!errors.isEmpty());
 
-    HtmlChunk.Element html = HtmlChunk.html().children(HtmlChunk.span().addText(message));
-    if (enableCallback != null) {
-      html = html.children(HtmlChunk.nbsp(), HtmlChunk.link("link", action));
+    if (isVisible()) {
+      setText(toHtml(errors));
+      putClientProperty(KEY, enableCallback);
     }
-    editorPane.setText(html.toString());
-
-    editorPane.putClientProperty(KEY, enableCallback);
   }
 
-  static @NotNull JComponent show(@NotNull JPanel panel,
-                                  @Nullable Object constraints,
-                                  @Nullable JComponent errorComponent,
-                                  @NotNull @Nls String message,
-                                  @Nullable @Nls String action,
-                                  @Nullable Runnable enableCallback) {
-    JComponent component = errorComponent == null ? create(panel, constraints) : errorComponent;
-    show(component, message, action, enableCallback);
-    return component;
+  private static @NotNull @NlsSafe String toHtml(@NotNull List<? extends HtmlChunk> chunks) {
+    List<HtmlChunk> newChunks = new ArrayList<>();
+    for (Iterator<? extends HtmlChunk> iterator = chunks.iterator(); iterator.hasNext(); ) {
+      newChunks.add(iterator.next());
+      if (iterator.hasNext()) {
+        newChunks.add(HtmlChunk.nbsp());
+      }
+    }
+
+    return HtmlChunk.html().children(newChunks).toString();
   }
 }

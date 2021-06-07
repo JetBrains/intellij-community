@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.ide.IdeBundle;
@@ -56,13 +56,12 @@ public class InstalledPluginsTableModel {
     return myProject;
   }
 
-  protected @NotNull List<IdeaPluginDescriptor> getAllPlugins() {
+  protected final @NotNull List<IdeaPluginDescriptor> getAllPlugins() {
     return new ArrayList<>(view);
   }
 
-  @Nullable
-  public Set<PluginId> getRequiredPlugins(PluginId pluginId) {
-    return myDependentToRequiredListMap.get(pluginId);
+  protected final @NotNull Set<PluginId> getRequiredPluginIds(@NotNull PluginId pluginId) {
+    return myDependentToRequiredListMap.getOrDefault(pluginId, Set.of());
   }
 
   public final boolean isLoaded(@NotNull PluginId pluginId) {
@@ -90,8 +89,31 @@ public class InstalledPluginsTableModel {
     myEnabled.put(pluginId, enabled);
   }
 
-  public Map<PluginId, Set<PluginId>> getDependentToRequiredListMap() {
-    return myDependentToRequiredListMap;
+  protected final @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> getDependentToRequiredListMap() {
+    HashMap<PluginId, IdeaPluginDescriptor> result = new HashMap<>();
+    for (Map.Entry<PluginId, Set<PluginId>> entry : myDependentToRequiredListMap.entrySet()) {
+      PluginId pluginId = entry.getKey();
+
+      if (!isLoaded(pluginId)) {
+        continue;
+      }
+
+      for (PluginId dependencyPluginId : entry.getValue()) {
+        if (PluginManagerCore.isModuleDependency(dependencyPluginId)) {
+          continue;
+        }
+
+        IdeaPluginDescriptor descriptor = PluginManagerCore.getPlugin(pluginId);
+        boolean isHidden = descriptor instanceof IdeaPluginDescriptorImpl &&
+                           (((IdeaPluginDescriptorImpl)descriptor).isDeleted() || descriptor.isImplementationDetail());
+        if (!isHidden) {
+          result.put(pluginId, descriptor);
+        }
+        break;
+      }
+    }
+
+    return Collections.unmodifiableMap(result);
   }
 
   protected void updatePluginDependencies() {
@@ -101,7 +123,7 @@ public class InstalledPluginsTableModel {
     for (final IdeaPluginDescriptor rootDescriptor : view) {
       final PluginId pluginId = rootDescriptor.getPluginId();
       myDependentToRequiredListMap.remove(pluginId);
-      if (rootDescriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl) rootDescriptor).isDeleted()) {
+      if (rootDescriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)rootDescriptor).isDeleted()) {
         continue;
       }
 

@@ -545,14 +545,8 @@ public final class PluginManagerCore {
     }
   }
 
-  public static @Nullable @NlsContexts.Label String getShortLoadingErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    PluginLoadingError error = pluginLoadingErrors.get(pluginDescriptor.getPluginId());
-    return error == null ? null : error.getShortMessage();
-  }
-
-  public static @Nullable PluginId getFirstDisabledDependency(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    PluginLoadingError error = pluginLoadingErrors.get(pluginDescriptor.getPluginId());
-    return error == null ? null : error.disabledDependency;
+  public static @Nullable PluginLoadingError getLoadingError(@NotNull PluginId pluginId) {
+    return pluginLoadingErrors.get(pluginId);
   }
 
   private static void checkPluginCycles(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
