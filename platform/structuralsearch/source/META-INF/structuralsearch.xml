@@ -30,7 +30,7 @@
     <codeInsight.linkHandler prefix="#ssr_edit_filters/" handlerClass="com.intellij.structuralsearch.plugin.ui.filters.FilterTooltipLinkHandler"/>
     <daemon.highlightInfoFilter implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchHighlightInfoFilter"/>
     <inspectionProfileActionProvider implementation="com.intellij.structuralsearch.inspection.StructuralSearchProfileActionProvider"/>
-    <emptyInspectionTreeLinkProvider implementation="com.intellij.structuralsearch.inspection.InspectionTreeAdvertiser"/>
+    <emptyInspectionTreeActionProvider implementation="com.intellij.structuralsearch.inspection.InspectionTreeAdvertiser"/>
 
     <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.ContextFilter"/>
     <structuralsearch.filter implementation="com.intellij.structuralsearch.plugin.ui.filters.CountFilter"/>

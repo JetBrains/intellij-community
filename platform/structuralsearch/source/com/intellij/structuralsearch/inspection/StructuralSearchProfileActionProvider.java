@@ -16,6 +16,7 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.ValidationInfo;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -49,10 +50,9 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
   @Override
   public List<AnAction> getActions(@NotNull SingleInspectionProfilePanel panel) {
     enableSSIfDisabled(panel.getProfile(), panel.getProject());
-
     final DefaultActionGroup actionGroup = new DefaultActionGroup(
-      new AddInspectionAction(panel, false),
-      new AddInspectionAction(panel, true)
+      new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.search.template.button"), false),
+      new AddInspectionAction(panel, SSRBundle.message("SSRInspection.add.replace.template.button"), true)
     );
     actionGroup.setPopup(true);
     actionGroup.registerCustomShortcutSet(CommonShortcuts.getNew(), panel);
@@ -104,14 +104,12 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
   }
 
-  protected static final class AddInspectionAction extends DumbAwareAction {
+  static final class AddInspectionAction extends DumbAwareAction {
     private final SingleInspectionProfilePanel myPanel;
     private final boolean myReplace;
 
-    private AddInspectionAction(@NotNull SingleInspectionProfilePanel panel, boolean replace) {
-      super(replace
-            ? SSRBundle.message("SSRInspection.add.replace.template.button")
-            : SSRBundle.message("SSRInspection.add.search.template.button"));
+    AddInspectionAction(@NotNull SingleInspectionProfilePanel panel, @NlsActions.ActionText String text, boolean replace) {
+      super(text);
       myPanel = panel;
       myReplace = replace;
     }
@@ -119,24 +117,15 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final SearchContext context = new SearchContext(e.getDataContext());
-      final Project project = e.getData(CommonDataKeys.PROJECT);
-      assert project != null;
-      createAndFocusInspection(myPanel, myReplace, context, project);
-    }
 
-    public static void createAndFocusInspection(SingleInspectionProfilePanel panel,
-                                                Boolean replace, SearchContext context,
-                                                @NotNull Project project) {
-      final StructuralSearchDialog dialog = new StructuralSearchDialog(context, replace, true);
-      if (!dialog.showAndGet()) {
-        return;
-      }
-      final InspectionProfileModifiableModel profile = panel.getProfile();
+      final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
+      if (!dialog.showAndGet()) return;
+
+      final InspectionProfileModifiableModel profile = myPanel.getProfile();
       final Configuration configuration = dialog.getConfiguration();
-      if (!createNewInspection(configuration, project, profile)) {
-        return;
-      }
-      panel.selectInspectionTool(configuration.getUuid().toString());
+      if (!createNewInspection(configuration, context.getProject(), profile)) return;
+
+      myPanel.selectInspectionTool(configuration.getUuid().toString());
     }
   }
 

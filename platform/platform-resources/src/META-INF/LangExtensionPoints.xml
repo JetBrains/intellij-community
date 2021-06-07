@@ -190,7 +190,7 @@
     <extensionPoint name="patternDialectProvider" interface="com.intellij.packageDependencies.ui.PatternDialectProvider"/>
 
     <extensionPoint name="inspectionProfileActionProvider" interface="com.intellij.profile.codeInspection.ui.InspectionProfileActionProvider" dynamic="true"/>
-    <extensionPoint name="emptyInspectionTreeLinkProvider" interface="com.intellij.profile.codeInspection.ui.EmptyInspectionTreeLinkProvider" dynamic="true"/>
+    <extensionPoint name="emptyInspectionTreeActionProvider" interface="com.intellij.profile.codeInspection.ui.EmptyInspectionTreeActionProvider" dynamic="true"/>
 
     <extensionPoint name="liveTemplateSubstitutor" interface="com.intellij.codeInsight.template.TemplateSubstitutor" dynamic="true"/>
     <extensionPoint name="customLiveTemplate" interface="com.intellij.codeInsight.template.CustomLiveTemplate" dynamic="true"/>

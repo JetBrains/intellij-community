@@ -26,6 +26,7 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
@@ -108,6 +109,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   private InspectionsConfigTreeTable myTreeTable;
   private TreeExpander myTreeExpander;
   private boolean myIsInRestore;
+  private DefaultActionGroup myCreateInspectionActions;
 
   private List<String> myInitialScopesOrder;
   private Disposable myDisposable = Disposer.newDisposable();
@@ -550,6 +552,11 @@ public class SingleInspectionProfilePanel extends JPanel {
     }, myDisposable);
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
+
+    myCreateInspectionActions = new DefaultActionGroup();
+    for (EmptyInspectionTreeActionProvider provider : EmptyInspectionTreeActionProvider.EP_NAME.getExtensionList()) {
+      myCreateInspectionActions.addAll(provider.getActions(this));
+    }
     updateEmptyText();
 
     final TreeTableTree tree = myTreeTable.getTree();
@@ -1241,18 +1248,25 @@ public class SingleInspectionProfilePanel extends JPanel {
     emptyText.setText(AnalysisBundle.message("inspections.settings.empty.text"));
     if (!myInspectionsFilter.isEmptyFilter()) {
       emptyText.appendLine(
-        AnalysisBundle.message("inspections.settings.empty.text.link"),
+        AnalysisBundle.message("inspections.settings.empty.text.filters.link"),
         SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
         e -> { myInspectionsFilter.reset(); }
       );
     } else {
-      for (EmptyInspectionTreeLinkProvider provider : EmptyInspectionTreeLinkProvider.EP_NAME.getExtensionList()) {
-        emptyText.appendLine(
-          provider.getText(),
-          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
-          provider.getActionListener(this)
-        );
-      }
+      emptyText.appendLine(
+        AnalysisBundle.message("inspections.settings.empty.text.inspection.link"),
+        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+        e -> {
+          JBPopupFactory.getInstance()
+            .createActionGroupPopup(
+              AnalysisBundle.message("inspections.settings.popup.title.create.inspection"),
+              myCreateInspectionActions,
+              DataManager.getInstance().getDataContext(this),
+              null,
+              true)
+            .showInCenterOf(myTreeTable);
+        }
+      );
     }
   }
 
