@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.types.KtClassType
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
 
 internal open class FirClassifierCompletionContributor(
@@ -18,6 +20,9 @@ internal open class FirClassifierCompletionContributor(
 ) : FirContextCompletionContributorBase<FirNameReferencePositionContext>(basicContext) {
 
     protected open fun KtAnalysisSession.filterClassifiers(classifierSymbol: KtClassifierSymbol): Boolean = true
+
+    protected open fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
+        detectImportStrategy(classifierSymbol)
 
     override fun KtAnalysisSession.complete(positionContext: FirNameReferencePositionContext) {
         val visibilityChecker = CompletionVisibilityChecker.create(basicContext, positionContext)
@@ -42,7 +47,7 @@ internal open class FirClassifierCompletionContributor(
             .getClassifierSymbols(scopeNameFilter)
             .filter { filterClassifiers(it) }
             .filter { with(visibilityChecker) { isVisible(it) } }
-            .forEach { addClassifierSymbolToCompletion(it, insertFqName = false) }
+            .forEach { addClassifierSymbolToCompletion(it, ImportStrategy.DoNothing) }
     }
 
     private fun KtAnalysisSession.completeWithoutReceiver(
@@ -57,7 +62,9 @@ internal open class FirClassifierCompletionContributor(
             visibilityChecker
         )
             .filter { filterClassifiers(it) }
-            .forEach { addClassifierSymbolToCompletion(it, insertFqName = true) }
+            .forEach { classifierSymbol ->
+                addClassifierSymbolToCompletion(classifierSymbol, getImportingStrategy(classifierSymbol))
+            }
     }
 }
 
@@ -84,4 +91,12 @@ internal class FirAnnotationCompletionContributor(
             expendedClass?.let { filterClassifiers(it) } == true
         }
     }
+}
+
+internal class FirClassifierReferenceCompletionContributor(
+    basicContext: FirBasicCompletionContext
+) : FirClassifierCompletionContributor(basicContext) {
+
+    override fun KtAnalysisSession.getImportingStrategy(classifierSymbol: KtClassifierSymbol): ImportStrategy =
+        ImportStrategy.DoNothing
 }

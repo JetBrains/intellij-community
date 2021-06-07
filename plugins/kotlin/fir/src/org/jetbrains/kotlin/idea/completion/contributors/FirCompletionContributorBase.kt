@@ -3,15 +3,15 @@
 package org.jetbrains.kotlin.idea.completion.contributors
 
 import com.intellij.codeInsight.completion.CompletionParameters
-import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.completion.PrefixMatcher
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
-import org.jetbrains.kotlin.idea.completion.lookups.CallableImportStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionStrategy
+import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
@@ -47,16 +47,18 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         if (symbol !is KtNamedSymbol) return
         with(lookupElementFactory) {
             createLookupElement(symbol)
-                .let { applyWeighers(it, symbol, expectedType) }
                 .let(sink::addElement)
         }
     }
 
-    protected fun KtAnalysisSession.addClassifierSymbolToCompletion(symbol: KtClassifierSymbol, insertFqName: Boolean) {
+    protected fun KtAnalysisSession.addClassifierSymbolToCompletion(
+        symbol: KtClassifierSymbol,
+        importingStrategy: ImportStrategy = detectImportStrategy(symbol)
+    ) {
         if (symbol !is KtNamedSymbol) return
         val lookup = with(lookupElementFactory) {
             when (symbol) {
-                is KtClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, insertFqName)
+                is KtClassLikeSymbol -> createLookupElementForClassLikeSymbol(symbol, importingStrategy)
                 is KtTypeParameterSymbol -> createLookupElement(symbol)
             }
         } ?: return
@@ -64,14 +66,16 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
     }
 
     protected fun KtAnalysisSession.addCallableSymbolToCompletion(
+        expectedType: KtType?,
         symbol: KtCallableSymbol,
-        importingStrategy: CallableImportStrategy,
+        importingStrategy: ImportStrategy = detectImportStrategy(symbol),
         insertionStrategy: CallableInsertionStrategy,
     ) {
         if (symbol !is KtNamedSymbol) return
         val lookup = with(lookupElementFactory) {
             createCallableLookupElement(symbol, importingStrategy, insertionStrategy)
-        } ?: return
+        }
+        applyWeighers(lookup, symbol, expectedType)
         sink.addElement(lookup)
     }
 
