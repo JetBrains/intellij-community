@@ -225,9 +225,10 @@ class ClassLoaderConfigurator(
 
     for (item in module.dependencies.modules) {
       // Module dependency is always optional. If the module depends on an unavailable plugin, it will not be loaded.
-      val descriptor = (pluginSet.findEnabledModule(item.name) ?: return).requireDescriptor()
-      if (descriptor.classLoader !== coreLoader) {
-        loaders.add(descriptor.classLoader ?: throw IllegalStateException("Class loader is not configured (module=$descriptor)"))
+      val descriptor = (pluginSet.findEnabledModule(item.name) ?: return)
+      val classLoader = descriptor.classLoader
+      if (classLoader != null && classLoader !== coreLoader) {
+        loaders.add(classLoader)
       }
     }
     for (item in module.dependencies.plugins) {
@@ -268,15 +269,12 @@ class ClassLoaderConfigurator(
       }
     }
 
-    m@ for (item in rootDescriptor.content.modules) {
+    for (item in rootDescriptor.content.modules) {
       val module = item.requireDescriptor()
-
       // skip if some dependency is not available
-      for (dependency in module.dependencies.modules) {
-        pluginSet.findEnabledModule(dependency.name) ?: continue@m
-      }
-      for (dependency in module.dependencies.plugins) {
-        pluginSet.findEnabledPlugin(dependency.id) ?: continue@m
+      if (module.dependencies.modules.any { !pluginSet.isModuleEnabled(it.name) } ||
+          module.dependencies.plugins.any { !pluginSet.isPluginEnabled(it.id) }) {
+        continue
       }
 
       setPluginClassLoaderForMainAndSubPlugins(module, classLoader)
@@ -463,7 +461,7 @@ private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl, p
 
   val result = ArrayList<String>(dependencies.size)
   for (item in dependencies) {
-    val packagePrefix = (pluginSet.findEnabledModule(item.name) ?: continue).requireDescriptor().packagePrefix
+    val packagePrefix = (pluginSet.findEnabledModule(item.name) ?: continue).packagePrefix
     // intellij.platform.commercial.verifier is injected
     if (packagePrefix != null && item.name != "intellij.platform.commercial.verifier") {
       result.add("$packagePrefix.")

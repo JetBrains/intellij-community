@@ -6,7 +6,7 @@ import com.intellij.openapi.extensions.PluginId
 import org.jetbrains.annotations.ApiStatus
 import java.util.*
 
-class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleReference>, @JvmField val plugins: List<PluginItem>) {
+class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleReference>, @JvmField val plugins: List<PluginReference>) {
   companion object {
     @JvmField val EMPTY = ModuleDependenciesDescriptor(Collections.emptyList(), Collections.emptyList())
   }
@@ -15,8 +15,8 @@ class ModuleDependenciesDescriptor(@JvmField val modules: List<ModuleReference>,
     override fun toString() = "ModuleItem(name=$name)"
   }
 
-  class PluginItem(@JvmField val id: PluginId) {
-    override fun toString() = "PluginItem(id=$id)"
+  class PluginReference(@JvmField val id: PluginId) {
+    override fun toString() = "PluginReference(id=$id)"
   }
 
   override fun toString() = "ModuleDependenciesDescriptor(modules=$modules, plugins=$plugins)"
