@@ -6,15 +6,15 @@ Reports <code>for</code> loops iterating over a collection using <code>withIndex
 <pre><code>
   fun foo(bar: List&lt;String&gt;) {
      for ((index : Int, value: String) in bar.withIndex()) { // &lt;== 'index' is unused
-
+         println(value)
      }
   }
 </code></pre>
-<p>After quick-fix:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
   fun foo(bar: List&lt;String&gt;) {
       for (value: String in bar) { // &lt;== '.withIndex()' and 'index' are removed
-
+          println(value)
       }
   }
 </code></pre>

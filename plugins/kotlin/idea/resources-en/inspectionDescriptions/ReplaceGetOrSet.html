@@ -5,8 +5,8 @@ Reports explicit calls of <code>get</code> or <code>set</code> functions which c
     Kotlin allows to provide custom implementations for the predefined set of operators on types.
     To overload an operator one can mark the corresponding function with the <code>operator</code> modifier:
     <pre><code>
-  operator fun get(index: Int)
-  operator fun set(index: Int, value: Int)
+  operator fun get(index: Int) {}
+  operator fun set(index: Int, value: Int) {}
     </code></pre>
 
 Since operators have predefined symbolic representation the functions above correspond to the indexing one.

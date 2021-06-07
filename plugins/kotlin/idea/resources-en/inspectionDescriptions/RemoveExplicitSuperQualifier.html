@@ -16,7 +16,7 @@ Reports <code>super</code> member calls with redundant supertype qualification.
 
   class A : B() {
       override fun foo() {
-         super&lt;B&gt;.foo() // &lt;== redundant since 'B' is the single supertype
+         super&lt;B&gt;.foo() // &lt;== redundant since 'B' is the only supertype
       }
   }
 

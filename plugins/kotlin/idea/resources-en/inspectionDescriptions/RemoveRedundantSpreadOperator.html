@@ -5,21 +5,21 @@ Reports the use of a redundant spread operator for a family of <code>arrayOf</co
 <p>Examples:</p>
 
 <pre><code>
-  fun foo(vararg xs: String) { }
+  fun foo(vararg s: String) { }
 
-  fun bar(ys: Array&lt;String&gt;) {
+  fun bar(ss: Array&lt;String&gt;) {
       foo(*arrayOf("abc"))       // for the both calls of 'foo' array creation
-      foo(*arrayOf(*ys, "zzz"))  // and its subsequent "spreading" is redundant
+      foo(*arrayOf(*ss, "zzz"))  // and its subsequent "spreading" is redundant
   }
 </code></pre>
 
 <p>After the quick-fix is applied:</p>
 <pre><code>
-  fun foo(vararg xs: String) { }
+  fun foo(vararg s: String) { }
 
-  fun bar(ys: Array&lt;String&gt;) {
+  fun bar(ss: Array&lt;String&gt;) {
       foo("abc")
-      foo(*ys, "zzz")
+      foo(*ss, "zzz")
   }
 </code></pre>
 </body>
