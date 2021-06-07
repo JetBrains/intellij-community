@@ -804,9 +804,7 @@ object DynamicPlugins {
     return loadPlugin(pluginDescriptor, checkImplementationDetailDependencies = true)
   }
 
-  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl,
-                 checkImplementationDetailDependencies: Boolean = true,
-                 classLoaderForTest: ClassLoader? = null): Boolean {
+  fun loadPlugin(pluginDescriptor: IdeaPluginDescriptorImpl, checkImplementationDetailDependencies: Boolean = true): Boolean {
     if (classloadersFromUnloadedPlugins[pluginDescriptor.pluginId] != null) {
       LOG.info("Requiring restart for loading plugin ${pluginDescriptor.pluginId}" +
                " because previous version of the plugin wasn't fully unloaded")
@@ -817,7 +815,7 @@ object DynamicPlugins {
     val app = ApplicationManager.getApplication() as ApplicationImpl
     val pluginSet = PluginManagerCore.getPluginSet().concat(pluginDescriptor)
     val classLoaderConfigurator = ClassLoaderConfigurator(pluginSet)
-    classLoaderConfigurator.configure(pluginDescriptor, classLoaderForTest)
+    classLoaderConfigurator.configure(pluginDescriptor)
 
     app.messageBus.syncPublisher(DynamicPluginListener.TOPIC).beforePluginLoaded(pluginDescriptor)
     app.runWriteAction {

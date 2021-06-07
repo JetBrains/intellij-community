@@ -932,7 +932,7 @@ public final class PluginManagerCore {
     }
     PluginSet pluginSet = new PluginSet(allPlugins, enabledPlugins);
 
-    ClassLoaderConfigurator classLoaderConfigurator = new ClassLoaderConfigurator(pluginSet, coreLoader, context.usePluginClassLoader);
+    ClassLoaderConfigurator classLoaderConfigurator = new ClassLoaderConfigurator(pluginSet, coreLoader);
     pluginSet.loadedPlugins.forEach(classLoaderConfigurator::configure);
 
     if (checkEssentialPlugins) {

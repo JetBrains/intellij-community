@@ -37,8 +37,6 @@ import kotlin.test.assertFalse
 private fun loadDescriptors(dir: Path, buildNumber: BuildNumber, disabledPlugins: Set<PluginId> = emptySet()): DescriptorListLoadingContext {
   val context = DescriptorListLoadingContext(disabledPlugins = disabledPlugins,
                                              result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
-  context.usePluginClassLoader = true
-
   // constant order in tests
   val paths: List<Path> = dir.directoryStreamIfExists { it.sorted() }!!
   context.use {

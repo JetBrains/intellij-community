@@ -11,11 +11,9 @@ import com.intellij.util.lang.ClassPath
 import com.intellij.util.lang.ResourceFile
 import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
 import java.util.function.Function
@@ -26,9 +24,7 @@ private val DEFAULT_CLASSLOADER_CONFIGURATION = UrlClassLoader.build().useCache(
 class ClassLoaderConfigurator(
   val pluginSet: PluginSet,
   private val coreLoader: ClassLoader = ClassLoaderConfigurator::class.java.classLoader,
-  private val usePluginClassLoader: Boolean = true, /* grab classes from platform loader only if nothing is found in any of plugin dependencies */
 ) {
-
   companion object {
 
     @ApiStatus.Internal
@@ -96,16 +92,12 @@ class ClassLoaderConfigurator(
     loaders.clear()
   }
 
-  @JvmOverloads
-  fun configure(plugin: IdeaPluginDescriptorImpl, fallbackClassLoader: ClassLoader? = null) {
+  fun configure(plugin: IdeaPluginDescriptorImpl) {
     checkPackagePrefixUniqueness(plugin)
 
     if (plugin.pluginId == PluginManagerCore.CORE_ID || plugin.isUseCoreClassLoader) {
       setPluginClassLoaderForMainAndSubPlugins(plugin, coreLoader)
       return
-    }
-    if (!usePluginClassLoader) {
-      setPluginClassLoaderForMainAndSubPlugins(plugin, fallbackClassLoader)
     }
 
     loaders.clear()
@@ -124,10 +116,8 @@ class ClassLoaderConfigurator(
 
     var files = plugin.jarFiles
     if (files == null) {
-      files = collectClassPath(plugin)
-    }
-    else {
-      plugin.jarFiles = null
+      log.error("jarFiles is not set for $plugin")
+      files = Collections.emptyList()!!
     }
 
     var oldActiveSubModules: MutableList<IdeaPluginDescriptorImpl>? = null
@@ -174,23 +164,18 @@ class ClassLoaderConfigurator(
     }
 
     // second, set class loaders for sub descriptors
-    if (usePluginClassLoader) {
-      plugin.classLoader = mainDependentClassLoader
-      for (module in plugin.content.modules) {
-        configureModule(module = module.requireDescriptor(),
-                        mainDependentClassLoader = mainDependentClassLoader,
-                        files = files,
-                        libDirectories = libDirectories,
-                        classPath = pluginClassPath)
-      }
-
-      for (subDescriptor in (oldActiveSubModules ?: Collections.emptyList())) {
-        // classLoader must be set - otherwise sub descriptor considered as inactive
-        subDescriptor.classLoader = mainDependentClassLoader
-      }
+    plugin.classLoader = mainDependentClassLoader
+    for (module in plugin.content.modules) {
+      configureModule(module = module.requireDescriptor(),
+                      mainDependentClassLoader = mainDependentClassLoader,
+                      files = files,
+                      libDirectories = libDirectories,
+                      classPath = pluginClassPath)
     }
-    else {
-      setPluginClassLoaderForMainAndSubPlugins(plugin, mainDependentClassLoader)
+
+    for (subDescriptor in (oldActiveSubModules ?: Collections.emptyList())) {
+      // classLoader must be set - otherwise sub descriptor considered as inactive
+      subDescriptor.classLoader = mainDependentClassLoader
     }
 
     // reset to ensure that stalled data will be not reused somehow later
@@ -297,46 +282,6 @@ class ClassLoaderConfigurator(
       setPluginClassLoaderForMainAndSubPlugins(module, classLoader)
     }
   }
-
-  private fun collectClassPath(descriptor: IdeaPluginDescriptorImpl): List<Path> {
-    val pluginPath = descriptor.path
-    if (!Files.isDirectory(pluginPath)) {
-      return Collections.singletonList(pluginPath)
-    }
-
-    val result = ArrayList<Path>()
-    val classesDir = pluginPath.resolve("classes")
-    if (Files.exists(classesDir)) {
-      result.add(classesDir)
-    }
-    if (usePluginClassLoader) {
-      val productionDirectory = pluginPath.parent
-      if (productionDirectory.endsWith("production")) {
-        result.add(pluginPath)
-      }
-    }
-    try {
-      Files.newDirectoryStream(pluginPath.resolve("lib")).use { childStream ->
-        for (f in childStream) {
-          if (Files.isRegularFile(f)) {
-            val name = f.fileName.toString()
-            if (name.endsWith(".jar", ignoreCase = true) || name.endsWith(".zip", ignoreCase = true)) {
-              result.add(f)
-            }
-          }
-          else {
-            result.add(f)
-          }
-        }
-      }
-    }
-    catch (ignore: NoSuchFileException) {
-    }
-    catch (e: IOException) {
-      PluginManagerCore.getLogger().debug(e)
-    }
-    return result
-  }
 }
 
 // do not use class reference here
@@ -412,7 +357,7 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
                                      coreLoader = coreLoader,
                                      classPath = classPath,
                                      libDirectories = libDirectories) { name, packagePrefix, _ ->
-        // force flag is ignored for module - e.g. RailsViewLineMarkerProvider is referenced
+        // force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced
         // as extension implementation in several modules
         !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier")
       }
@@ -533,15 +478,15 @@ private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl):
     packagePrefixes.add("${item.requireDescriptor().packagePrefix!!}.")
   }
 
-  // force flag is ignored for module - e.g. RailsViewLineMarkerProvider is referenced as extension implementation in several modules
+  // force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced as extension implementation in several modules
   return PluginClassLoader.ResolveScopeManager { name, packagePrefix, _ ->
     if (name.startsWith(packagePrefix!!) || name.startsWith("com.intellij.ultimate.PluginVerifier")) {
       return@ResolveScopeManager false
     }
 
-    // for a module, the referenced module doesn't have own classloader and is added directly to classpath,
-    // so, if name doesn't pass standard package prefix filter,
-    // check that it is not in content - if in content, then it means that class is not alien
+    // For a module, the referenced module doesn't have own classloader and is added directly to classpath,
+    // so, if name doesn't pass standard package prefix filter.
+    // Check that it is not in content - if in content, then it means that class is not alien.
     for (prefix in packagePrefixes) {
       if (name.startsWith(prefix)) {
         return@ResolveScopeManager false
