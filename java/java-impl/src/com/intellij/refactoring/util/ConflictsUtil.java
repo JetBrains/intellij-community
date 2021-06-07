@@ -91,7 +91,7 @@ public final class ConflictsUtil {
         for (PsiMethod method1 : methods) {
           conflicts.putValue(method1, JavaBundle.message("conflict.message.method.will.override.method.base.class",
                                                          RefactoringUIUtil.getDescription(method1, true),
-                                                         RefactoringUIUtil.getDescription(aClass1, false)));
+                                                         RefactoringUIUtil.getDescription(aClass, false)));
         }
         return true;
       });
