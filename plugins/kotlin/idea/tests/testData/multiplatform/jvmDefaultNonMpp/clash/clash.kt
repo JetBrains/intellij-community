@@ -1,6 +1,6 @@
 import base.*
 
-interface <!LINE_MARKER("descr='Is implemented by SubCheckClass'")!>SubCheck<!> : Check {
+interface <!LINE_MARKER("descr='Is implemented by SubCheckClass  Click or press ... to navigate'")!>SubCheck<!> : Check {
     override fun <!LINE_MARKER("descr='Overrides function in 'Check''")!>test<!>(): String {
         return "OK"
     }

@@ -1,4 +1,4 @@
-expect sealed class <!LINE_MARKER("descr='Is subclassed by CommonAImplTestClass CommonImplTestClass PlatformAXImplTestClass PlatformAYImplTestClass'")!>TestClass<!>()
+expect sealed class <!LINE_MARKER("descr='Is subclassed by CommonAImplTestClass CommonImplTestClass PlatformAXImplTestClass PlatformAYImplTestClass  Click or press ... to navigate'")!>TestClass<!>()
 class CommonImplTestClass: TestClass()
 
 
