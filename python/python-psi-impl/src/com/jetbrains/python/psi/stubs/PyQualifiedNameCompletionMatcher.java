@@ -16,7 +16,6 @@ import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.IdFilter;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
@@ -45,8 +44,6 @@ public class PyQualifiedNameCompletionMatcher {
     Set<QualifiedName> alreadySuggestedAttributes = new HashSet<>();
     IndexLookupStats stats = new IndexLookupStats();
     try {
-      IdFilter idFilter = IdFilter.getProjectIdFilter(project, true);
-
       List<String> matchingAttributeNames = new ArrayList<>();
       stubIndex.processAllKeys(PyExportedModuleAttributeIndex.KEY, attributeName -> {
         ProgressManager.checkCanceled();
@@ -55,11 +52,11 @@ public class PyQualifiedNameCompletionMatcher {
         stats.matchingKeys++;
         matchingAttributeNames.add(attributeName);
         return true;
-      }, moduleMatchingScope, idFilter);
+      }, moduleMatchingScope);
 
       for (String attributeName : matchingAttributeNames) {
         stubIndex.processElements(PyExportedModuleAttributeIndex.KEY,
-                                  attributeName, project, moduleMatchingScope, idFilter, PyElement.class, element -> {
+                                  attributeName, project, moduleMatchingScope, null, PyElement.class, element -> {
             ProgressManager.checkCanceled();
             VirtualFile vFile = element.getContainingFile().getVirtualFile();
             QualifiedName moduleQualifiedName = findQualifiedNameInClosestRoot(vFile, project);

@@ -9,7 +9,6 @@ import com.intellij.psi.impl.CompositeShortNamesCache
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.stubs.StringStubIndexExtension
-import com.intellij.util.indexing.IdFilter
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
@@ -470,14 +469,13 @@ class KotlinIndicesHelper(
         nameFilter: (String) -> Boolean,
         processor: (DeclarationDescriptor) -> Unit
     ) {
-        val idFilter = IdFilter.getProjectIdFilter(resolutionFacade.project, false)
         val shortNamesCache = PsiShortNamesCache.getInstance(project)
 
         val allMethodNames = hashSetOf<String>()
         shortNamesCache.processAllMethodNames(
             { name -> if (nameFilter(name)) allMethodNames.add(name); true },
             scopeWithoutKotlin,
-            idFilter
+            null
         )
         for (name in allMethodNames) {
             ProgressManager.checkCanceled()
@@ -505,7 +503,7 @@ class KotlinIndicesHelper(
         }
 
         val allFieldNames = hashSetOf<String>()
-        shortNamesCache.processAllFieldNames({ name -> if (nameFilter(name)) allFieldNames.add(name); true }, scopeWithoutKotlin, idFilter)
+        shortNamesCache.processAllFieldNames({ name -> if (nameFilter(name)) allFieldNames.add(name); true }, scopeWithoutKotlin, null)
         for (name in allFieldNames) {
             ProgressManager.checkCanceled()
 
