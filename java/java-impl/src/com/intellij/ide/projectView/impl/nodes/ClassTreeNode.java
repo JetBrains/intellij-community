@@ -171,11 +171,7 @@ public class ClassTreeNode extends BasePsiMemberNode<PsiClass> {
 
   @Override
   public boolean canRepresent(final Object element) {
-    if (!isValid()) return false;
-    return super.canRepresent(element) || canRepresent(getValue(), element);
-  }
-
-  private boolean canRepresentInner(final Object element) {
+    if (!mayContain(element)) return false;
     if (!isValid()) return false;
     return super.canRepresent(element) || canRepresent(getValue(), element);
   }
