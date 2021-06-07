@@ -15,6 +15,7 @@
  */
 package com.intellij.internal.validation;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.newItemPopup.NewItemPopupUtil;
 import com.intellij.ide.ui.newItemPopup.NewItemSimplePopupPanel;
@@ -165,7 +166,7 @@ public class TestMacMessagesAction extends AnAction {
 
         JButton help = new JButton("Show Alert with help button");
         help.addActionListener(event -> {
-          new MessageDialogBuilder.YesNoCancel(TITLE, MESSAGE).help("my.help.id").show(project);
+          MessageDialogBuilder.yesNoCancel(TITLE, MESSAGE).help("my.help.id").show(project);
         });
         panel.add(help);
 
@@ -315,7 +316,7 @@ public class TestMacMessagesAction extends AnAction {
         decompiler.addActionListener(event -> {
           System.out.println(Messages.showDialog(decompiler,
                                                  "IMPORTANT: BY ACCESSING AND USING JETBRAINS DECOMPILER, YOU AGREE TO THE CERTAIN TERMS AND CONDITIONS SET FORTH IN THE END-USER LICENSE AGREEMENT AND QUOTED BELOW. IF YOU DO NOT AGREE WITH THESE TERMS OR CONDITIONS, DO NOT ACCESS OR USE JETBRAINS DECOMPILER. The Software includes decompiling functionality (\"\"JetBrains Decompiler\"\") that enables reproducing source code from the original binary code. Licensee aknowledges that binary code and source code might be protected by copyright and trademark laws. Before using JetBrains Decompiler, Licensee should make sure that decompilation of binary code is not prohibited by the applicable license agreement (except to the extent that Licensee may be expressly permitted under applicable law) or that Licensee has obtained permission to decompile the binary code from the copyright owner. Using JetBrains Decompiler is entirely optional. Licensor does neither encourage nor condone the use of JetBrains Decompiler, and disclaims any liability for Licensee's use of  JetBrains Decompiler in violation of applicable laws.",
-                                                 "Decompiler Legal Notice — Accept", new String[]{"Yes", "No"}, 0, null));
+                                                 "Decompiler Legal Notice — Accept", new String[]{"Yes", "No"}, 0, AllIcons.General.Tip));
         });
         panel.add(decompiler);
 

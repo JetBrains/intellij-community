@@ -14,6 +14,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.InplaceButton
+import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.MacMessages
@@ -23,6 +24,7 @@ import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
+import java.awt.event.MouseEvent
 import javax.swing.*
 import javax.swing.border.Border
 
@@ -102,8 +104,11 @@ class AlertMessagesManager : MacMessages() {
 }
 
 private fun getIcon(icon: Icon?): Icon {
-  if (icon == UIUtil.getInformationIcon() || icon == UIUtil.getQuestionIcon()) {
+  if (icon == UIUtil.getInformationIcon() || icon == null) {
     return AllIcons.General.InformationDialog
+  }
+  if (icon == UIUtil.getQuestionIcon()) {
+    return AllIcons.General.QuestionDialog
   }
   if (icon == UIUtil.getWarningIcon()) {
     return AllIcons.General.WarningDialog
@@ -111,7 +116,7 @@ private fun getIcon(icon: Icon?): Icon {
   if (icon == UIUtil.getErrorIcon()) {
     return AllIcons.General.ErrorDialog
   }
-  return icon ?: AllIcons.General.InformationDialog
+  return icon
 }
 
 private class AlertDialog(project: Project?,
@@ -138,7 +143,6 @@ private class AlertDialog(project: Project?,
     setUndecorated(myTitleComponent)
     title = myTitle
     setDoNotAskOption(doNotAskOption)
-    //isModal = false // XXX
 
     if (myTitleComponent && !SystemInfoRt.isMac) {
       myCloseButton = InplaceButton(IconButton(null, AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover, null)) {
@@ -159,6 +163,46 @@ private class AlertDialog(project: Project?,
 
     if (myCloseButton != null) {
       contentPane.add(myCloseButton, 0)
+    }
+
+    if (myTitleComponent) {
+      object : MouseDragHelper<JComponent>(myDisposable, contentPane as JComponent) {
+        var myLocation: Point? = null
+
+        override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
+          val target = dragComponent.findComponentAt(dragComponentPoint)
+          return target == null || target == dragComponent || target is JPanel
+        }
+
+        override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
+          if (myLocation == null) {
+            myLocation = window.location
+          }
+          window.location = Point(myLocation!!.x + dragToScreenPoint.x - startScreenPoint.x,
+                                  myLocation!!.y + dragToScreenPoint.y - startScreenPoint.y)
+        }
+
+        override fun processDragCancel() {
+          myLocation = null
+        }
+
+        override fun processDragFinish(event: MouseEvent, willDragOutStart: Boolean) {
+          myLocation = null
+        }
+
+        override fun processDragOutFinish(event: MouseEvent) {
+          myLocation = null
+        }
+
+        override fun processDragOutCancel() {
+          myLocation = null
+        }
+
+        override fun processDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point, justStarted: Boolean) {
+          super.processDragOut(event, dragToScreenPoint, startScreenPoint, justStarted)
+          myLocation = null
+        }
+      }.start()
     }
   }
 
