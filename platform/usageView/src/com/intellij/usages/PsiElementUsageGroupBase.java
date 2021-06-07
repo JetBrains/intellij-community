@@ -35,7 +35,7 @@ public class PsiElementUsageGroupBase<T extends PsiElement & NavigationItem> imp
   }
 
   @Override
-  public Icon getIcon(boolean isOpen) {
+  public Icon getIcon() {
     return myIcon;
   }
 

@@ -106,7 +106,7 @@ public class MethodGroupingRule extends SingleParentUsageGroupingRule {
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 

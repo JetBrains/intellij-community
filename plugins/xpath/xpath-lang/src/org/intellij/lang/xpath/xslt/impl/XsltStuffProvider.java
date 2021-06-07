@@ -70,7 +70,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
 
         @Override
-        public Icon getIcon(boolean isOpen) {
+        public Icon getIcon() {
             return myTemplate.getIcon(0);
         }
 

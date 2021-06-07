@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -133,7 +133,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           Icon tagIcon = TagManager.appendTags(element, this);
           append(group.getText(myView),
                  patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
-          Icon icon = group.getIcon(expanded);
+          Icon icon = group.getIcon();
           if (tagIcon != null) {
             icon = new RowIcon(tagIcon, icon);
           }

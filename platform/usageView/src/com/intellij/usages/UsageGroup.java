@@ -4,6 +4,7 @@ package com.intellij.usages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -11,8 +12,17 @@ import javax.swing.*;
 
 public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
 
-  default @Nullable Icon getIcon(boolean isOpen) {
+  /**
+   * @deprecated implement {@link #getIcon()} instead
+   */
+  @ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated
+  default @Nullable Icon getIcon(@SuppressWarnings("unused") boolean isOpen) {
     return null;
+  }
+
+  default @Nullable Icon getIcon() {
+    return getIcon(true);
   }
 
   @NlsContexts.ListItem @NotNull String getText(@Nullable UsageView view);

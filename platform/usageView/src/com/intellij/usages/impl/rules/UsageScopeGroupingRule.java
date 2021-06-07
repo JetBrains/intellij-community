@@ -58,7 +58,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
 
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return AllIcons.Nodes.TestSourceFolder;
     }
 
@@ -70,7 +70,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
   };
   private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(1) {
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return PlatformIcons.SOURCE_FOLDERS_ICON;
     }
 
@@ -82,7 +82,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
   };
   private static final UsageScopeGroup LIBRARY = new UsageScopeGroup(2) {
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return PlatformIcons.LIBRARY_ICON;
     }
 

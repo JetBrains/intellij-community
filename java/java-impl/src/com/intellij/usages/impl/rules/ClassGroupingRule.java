@@ -110,7 +110,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
     }
 
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return myIcon;
     }
 
