@@ -52,7 +52,7 @@ public class JavaExecutionStack extends XExecutionStack {
     myDebugProcess = debugProcess;
   }
 
-  private JavaExecutionStack(@NotNull String displayName,
+  private JavaExecutionStack(@NlsContexts.ListItem @NotNull String displayName,
                              @Nullable Icon icon,
                              @NotNull ThreadReferenceProxyImpl threadProxy,
                              @NotNull DebugProcessImpl debugProcess) {
@@ -64,9 +64,11 @@ public class JavaExecutionStack extends XExecutionStack {
   public static CompletableFuture<JavaExecutionStack> create(@NotNull ThreadReferenceProxyImpl threadProxy,
                                                              @NotNull DebugProcessImpl debugProcess,
                                                              boolean current) {
-    return calcRepresentationAsync(threadProxy).thenCombine(calcIconAsync(threadProxy, current), (text, icon) -> {
-      return new JavaExecutionStack(text, icon, threadProxy, debugProcess);
-    });
+    return calcRepresentationAsync(threadProxy)
+      .thenCombine(calcIconAsync(threadProxy, current),
+                   (@NlsContexts.ListItem var text, var icon) -> {
+                     return new JavaExecutionStack(text, icon, threadProxy, debugProcess);
+                   });
   }
 
   private static Icon calcIcon(ThreadReferenceProxyImpl threadProxy, boolean current) {
