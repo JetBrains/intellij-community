@@ -53,7 +53,7 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
                     val locationHash = Integer.toHexString((presentableUrl).hashCode())
                     val projectHash =
                         "${name.trimMiddle(name.length.coerceAtMost(254 - locationHash.length), useEllipsisSymbol = false)}.$locationHash"
-                    EventLogConfiguration.anonymize(projectHash)
+                    EventLogConfiguration.getInstance().anonymize(projectHash)
                 })
         }
 

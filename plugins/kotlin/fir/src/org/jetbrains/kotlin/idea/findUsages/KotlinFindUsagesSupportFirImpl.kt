@@ -47,7 +47,11 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         return false
     }
 
-    override fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, actionString: String): List<PsiElement> {
+    override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
+        return emptyList()
+    }
+
+    private fun checkSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?, actionString: String): List<PsiElement> {
 
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
 
