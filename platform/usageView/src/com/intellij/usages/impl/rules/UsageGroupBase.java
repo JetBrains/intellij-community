@@ -2,10 +2,8 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usages.UsageGroup;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public abstract class UsageGroupBase implements UsageGroup {
   private final int myOrder;
@@ -16,12 +14,6 @@ public abstract class UsageGroupBase implements UsageGroup {
 
   @Override
   public void update() {
-  }
-
-  @Nullable
-  @Override
-  public FileStatus getFileStatus() {
-    return null;
   }
 
   @Override

@@ -18,7 +18,6 @@ package org.intellij.lang.xpath.xslt.impl;
 
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.util.MoveRenameUsageInfo;
@@ -89,12 +88,6 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
                 sb.append("mode='").append(mode.toString()).append("'");
             }
             return XPathBundle.message("list.item.template", sb);
-        }
-
-        @Override
-        @Nullable
-        public FileStatus getFileStatus() {
-            return null;
         }
 
         @Override

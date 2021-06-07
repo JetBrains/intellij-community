@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -93,11 +92,6 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
     @NotNull
     public String getText(@Nullable UsageView view) {
       return myUsageType.toString();
-    }
-
-    @Override
-    public FileStatus getFileStatus() {
-      return null;
     }
 
     @Override

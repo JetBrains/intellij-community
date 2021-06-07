@@ -17,7 +17,9 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
 
   @NlsContexts.ListItem @NotNull String getText(@Nullable UsageView view);
 
-  @Nullable FileStatus getFileStatus();
+  default @Nullable FileStatus getFileStatus() {
+    return null;
+  }
 
   boolean isValid();
 

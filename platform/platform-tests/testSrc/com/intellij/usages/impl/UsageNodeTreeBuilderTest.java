@@ -10,7 +10,6 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -144,11 +143,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     public String getText(UsageView view) { return String.valueOf(myPower); }
 
     @Override
-    public FileStatus getFileStatus() {
-      return null;
-    }
-
-    @Override
     public boolean isValid() {
       return false;
     }
@@ -192,11 +186,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       }
 
       @Override
-      public FileStatus getFileStatus() {
-        return null;
-      }
-
-      @Override
       public boolean isValid() {
         return false;
       }
@@ -224,11 +213,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
       @Override
       public void update() {
-      }
-
-      @Override
-      public FileStatus getFileStatus() {
-        return null;
       }
 
       @Override
