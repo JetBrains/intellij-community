@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.psi.*
@@ -19,9 +20,8 @@ class ExpandBooleanExpressionIntention : SelfTargetingRangeIntention<KtExpressio
     KotlinBundle.lazyMessage("expand.boolean.expression.to.if.else")
 ) {
     override fun applicabilityRange(element: KtExpression): TextRange? {
-        val target = element.parents.takeWhile {
-            it is KtCallExpression || it is KtQualifiedExpression || it is KtOperationExpression || it is KtParenthesizedExpression
-        }.lastOrNull() ?: element
+        if (!element.isTargetExpression()) return null
+        val target = element.parents.takeWhile { it.isTargetExpression() }.lastOrNull() ?: element
         if (element != target) return null
         if (element.deparenthesize() is KtConstantExpression) return null
         val parent = element.parent
@@ -30,6 +30,9 @@ class ExpandBooleanExpressionIntention : SelfTargetingRangeIntention<KtExpressio
         if (context[BindingContext.EXPRESSION_TYPE_INFO, element]?.type?.isBoolean() != true) return null
         return element.textRange
     }
+
+    private fun PsiElement.isTargetExpression() = this is KtSimpleNameExpression || this is KtCallExpression ||
+            this is KtQualifiedExpression || this is KtOperationExpression || this is KtParenthesizedExpression
 
     override fun applyTo(element: KtExpression, editor: Editor?) {
         val ifExpression = KtPsiFactory(element).createExpressionByPattern("if ($0) {\ntrue\n} else {\nfalse\n}", element)
