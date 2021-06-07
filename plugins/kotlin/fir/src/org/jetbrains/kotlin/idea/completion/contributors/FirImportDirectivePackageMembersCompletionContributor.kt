@@ -29,7 +29,7 @@ internal class FirImportDirectivePackageMembersCompletionContributor(
                     expectedType = null,
                     it,
                     importingStrategy = ImportStrategy.DoNothing,
-                    insertionStrategy = CallableInsertionStrategy.AS_IDENTIFIER
+                    insertionStrategy = CallableInsertionStrategy.AsIdentifier
                 )
             }
     }
