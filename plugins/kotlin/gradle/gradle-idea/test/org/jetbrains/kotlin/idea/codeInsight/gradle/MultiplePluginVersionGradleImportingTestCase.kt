@@ -7,9 +7,11 @@
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.rd.attach
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
+import org.jetbrains.kotlin.util.compareTo
 import org.jetbrains.kotlin.util.matches
 import org.jetbrains.kotlin.util.parseKotlinVersion
 import org.jetbrains.kotlin.util.parseKotlinVersionRequirement
@@ -25,9 +27,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     sealed class KotlinVersionRequirement {
         data class Exact(val version: KotlinVersion) : KotlinVersionRequirement()
         data class Range(val lowestIncludedVersion: KotlinVersion?, val highestIncludedVersion: KotlinVersion?) : KotlinVersionRequirement()
-        companion object {
-            fun fromString(versionRequirement: String): KotlinVersionRequirement = parseKotlinVersionRequirement(versionRequirement)
-        }
     }
 
     data class KotlinVersion(
@@ -38,10 +37,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     ) {
         override fun toString(): String {
             return "$major.$minor.$patch" + if (classifier != null) "-$classifier" else ""
-        }
-
-        companion object {
-            fun fromString(version: String): KotlinVersion = parseKotlinVersion(version)
         }
     }
 
@@ -57,25 +52,37 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     open val kotlinPluginVersionString: String get() = if (kotlinPluginParameter == "master") masterKotlinPluginVersion else kotlinPluginParameter
 
-    private val orgGradleNativePropertyKey: String = "org.gradle.native"
-    private var initialOrgGradleNativePropertyValue: String? = null
 
     override fun setUp() {
         if (kotlinPluginVersionString == masterKotlinPluginVersion) {
             assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
         }
         super.setUp()
-        initialOrgGradleNativePropertyValue = System.getProperty(orgGradleNativePropertyKey, "false")
-        System.setProperty("org.gradle.native", "false")
+        setupSystemProperties()
     }
 
-    override fun tearDown() {
-        super.tearDown()
-        val initialOrgGradleNativePropertyValue = initialOrgGradleNativePropertyValue
-        if (initialOrgGradleNativePropertyValue == null) {
-            System.clearProperty(orgGradleNativePropertyKey)
-        } else {
-            System.setProperty(orgGradleNativePropertyKey, initialOrgGradleNativePropertyValue)
+    private fun setupSystemProperties() {
+        /*
+        Commonizer runner forwarded this property and failed, because IntelliJ might set a custom
+        ClassLoader, which will not be available for the Commonizer.
+        */
+        if (kotlinPluginVersion < parseKotlinVersion("1.5.20")) {
+            val classLoaderKey = "java.system.class.loader"
+            System.getProperty(classLoaderKey)?.let { configuredClassLoader ->
+                System.clearProperty(classLoaderKey)
+                testRootDisposable.attach {
+                    System.setProperty(classLoaderKey, configuredClassLoader)
+                }
+            }
+        }
+
+        val gradleNativeKey = "org.gradle.native"
+        System.getProperty(gradleNativeKey).let { configuredGradleNative ->
+            System.setProperty(gradleNativeKey, "false")
+            testRootDisposable.attach {
+                if (configuredGradleNative == null) System.clearProperty(gradleNativeKey)
+                else System.setProperty(gradleNativeKey, configuredGradleNative)
+            }
         }
     }
 
