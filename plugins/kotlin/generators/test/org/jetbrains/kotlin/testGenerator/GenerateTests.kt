@@ -1174,17 +1174,15 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    /*
     testGroup("fir-low-level-api", testDataPath = AdditionalKotlinArtifacts.compilerTestData(GeneralConfiguration.SPEC_TESTDATA_PATH)) {
-        testClass<AbstractDiagnosisCompilerTestDataSpecTest> {
+        testClass<AbstractDiagnosisCompilerTestDataSpecTest>(suiteTestClassName = "FirIdeSpecTest") {
             model(
                 "diagnostics",
                 excludedDirectories = listOf("helpers") + detectDirsWithTestsMapFileOnly("diagnostics", baseDir = AdditionalKotlinArtifacts.compilerTestDataDir.canonicalPath),
-                pattern = KT.withPrecondition(excludedFirPrecondition)
+                pattern = KT.withPrecondition(excludedFirPrecondition),
             )
         }
     }
-    */
 
     testGroup("fir", testDataPath = "../idea/tests/testData") {
         testClass<AbstractFirReferenceResolveTest> {
