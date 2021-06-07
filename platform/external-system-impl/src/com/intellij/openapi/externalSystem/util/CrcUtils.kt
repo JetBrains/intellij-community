@@ -7,6 +7,8 @@ import com.intellij.lang.LanguageParserDefinitions
 import com.intellij.lang.ParserDefinition
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFileCrcCalculator
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.LanguageFileType
@@ -19,16 +21,20 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import java.util.zip.CRC32
 
-fun Document.calculateCrc(project: Project, file: VirtualFile): Long {
+fun Document.calculateCrc(project: Project, file: VirtualFile): Long = this.calculateCrc(project, null, file)
+
+fun Document.calculateCrc(project: Project, systemId: ProjectSystemId?, file: VirtualFile): Long {
   file.getCachedCrc(modificationStamp)?.let { return it }
   return findOrCalculateCrc(modificationStamp) {
-    doCalculateCrc(project, file.fileType)
+    doCalculateCrc(project, systemId, file)
   }
 }
 
-fun VirtualFile.calculateCrc(project: Project) =
+fun VirtualFile.calculateCrc(project: Project) = calculateCrc(project, null)
+
+fun VirtualFile.calculateCrc(project: Project, systemId: ProjectSystemId?) =
   findOrCalculateCrc(modificationStamp) {
-    doCalculateCrc(project)
+    doCalculateCrc(project, systemId)
   }
 
 private fun <T : UserDataHolder> T.findOrCalculateCrc(modificationStamp: Long, calculate: () -> Long?): Long {
@@ -40,8 +46,14 @@ private fun <T : UserDataHolder> T.findOrCalculateCrc(modificationStamp: Long, c
   return crc
 }
 
-private fun doCalculateCrc(project: Project, charSequence: CharSequence, fileType: FileType): Long? {
-  val parserDefinition = getParserDefinition(fileType) ?: return null
+private fun doCalculateCrc(project: Project, charSequence: CharSequence, systemId: ProjectSystemId?, file: VirtualFile): Long? {
+  if (systemId != null) {
+    val crcCalculator = ExternalSystemSettingsFileCrcCalculator.getInstance(systemId, file)
+    if (crcCalculator != null) {
+      return crcCalculator.calculateCrc(project, file, charSequence)
+    }
+  }
+  val parserDefinition = getParserDefinition(file.fileType) ?: return null
   val lexer = parserDefinition.createLexer(project)
   val whiteSpaceTokens = parserDefinition.whitespaceTokens
   val commentTokens = parserDefinition.commentTokens
@@ -79,17 +91,17 @@ private fun getParserDefinition(fileType: FileType): ParserDefinition? {
   }
 }
 
-private fun Document.doCalculateCrc(project: Project, fileType: FileType) =
+private fun Document.doCalculateCrc(project: Project, systemId: ProjectSystemId?, file: VirtualFile) =
   when {
-    fileType.isBinary -> null
-    else -> doCalculateCrc(project, immutableCharSequence, fileType)
+    file.fileType.isBinary -> null
+    else -> doCalculateCrc(project, immutableCharSequence, systemId, file)
   }
 
-private fun VirtualFile.doCalculateCrc(project: Project) =
+private fun VirtualFile.doCalculateCrc(project: Project, systemId: ProjectSystemId?) =
   when {
     isDirectory -> null
     fileType.isBinary -> null
-    else -> doCalculateCrc(project, LoadTextUtil.loadText(this), fileType)
+    else -> doCalculateCrc(project, LoadTextUtil.loadText(this), systemId, this)
   }
 
 private fun UserDataHolder.getCachedCrc(modificationStamp: Long): Long? {

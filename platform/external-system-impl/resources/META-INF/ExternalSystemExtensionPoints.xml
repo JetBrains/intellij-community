@@ -78,5 +78,8 @@
     <extensionPoint name="untrustedModeProvider"
                     interface="com.intellij.openapi.externalSystem.service.project.UntrustedProjectModeProvider"
                     dynamic="true" />
+    <extensionPoint qualifiedName="com.intellij.externalSystemSettingsFileCrcCalculator"
+                    interface="com.intellij.openapi.externalSystem.autoimport.ExternalSystemSettingsFileCrcCalculator"
+                    dynamic="true" />
   </extensionPoints>
 </idea-plugin>
