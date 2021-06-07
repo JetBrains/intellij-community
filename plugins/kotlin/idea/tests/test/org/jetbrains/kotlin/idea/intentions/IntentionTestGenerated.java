@@ -9328,6 +9328,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/expandBooleanExpression/call.kt");
         }
 
+        @TestMetadata("caretOnBrace.kt")
+        public void testCaretOnBrace() throws Exception {
+            runTest("testData/intentions/expandBooleanExpression/caretOnBrace.kt");
+        }
+
         @TestMetadata("constant.kt")
         public void testConstant() throws Exception {
             runTest("testData/intentions/expandBooleanExpression/constant.kt");
