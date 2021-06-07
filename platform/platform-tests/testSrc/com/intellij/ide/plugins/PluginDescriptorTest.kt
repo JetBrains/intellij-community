@@ -195,7 +195,7 @@ class PluginDescriptorTest {
       </idea-plugin>""")
 
     val pluginSet = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).pluginSet
-    val plugins = pluginSet.loadedPlugins
+    val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("2.0")
@@ -285,7 +285,7 @@ class PluginDescriptorTest {
 
     val pluginSet = loadAndInitDescriptors(pluginDir, BuildNumber.fromString("3.12")!!).pluginSet
 
-    val plugins = pluginSet.loadedPlugins
+    val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("2.0")
@@ -303,7 +303,7 @@ class PluginDescriptorTest {
     PluginBuilder().noDepends().id("foo").version("1.0").build(pluginDir.resolve("foo_another"))
 
     val pluginSet = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).pluginSet
-    val plugins = pluginSet.loadedPlugins
+    val plugins = pluginSet.enabledPlugins
     assertThat(plugins).hasSize(1)
     val foo = plugins[0]
     assertThat(foo.version).isEqualTo("1.0")
@@ -352,7 +352,7 @@ class PluginDescriptorTest {
   }
 
   private fun checkClassLoader(pluginDir: Path) {
-    val list = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).pluginSet.loadedPlugins
+    val list = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber()).pluginSet.enabledPlugins
     assertThat(list).hasSize(2)
 
     val bar = list[0]
@@ -453,7 +453,7 @@ class PluginDescriptorTest {
     PluginBuilder().noDepends().id("bar").build(pluginDir.resolve("bar"))
 
     val pluginSet = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("bar"))).pluginSet
-    assertThat(pluginSet.loadedPlugins).isEmpty()
+    assertThat(pluginSet.enabledPlugins).isEmpty()
   }
 
   @Test
@@ -477,7 +477,7 @@ class PluginDescriptorTest {
       .build(pluginDir.resolve("intellij.gradle"))
 
     val result = loadAndInitDescriptors(pluginDir, PluginManagerCore.getBuildNumber(), setOf(PluginId.getId("com.intellij.gradle"))).pluginSet
-    assertThat(result.loadedPlugins).isEmpty()
+    assertThat(result.enabledPlugins).isEmpty()
   }
 }
 

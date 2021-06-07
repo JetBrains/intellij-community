@@ -9,26 +9,36 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Internal
 class PluginSet(
   @JvmField val allPlugins: List<IdeaPluginDescriptorImpl>,
-  loadedPlugins: List<IdeaPluginDescriptorImpl>,
+  enabledPlugins: List<IdeaPluginDescriptorImpl>,
+  checkModulesDependencies: Boolean = true,
 ) {
-  @JvmField val loadedPlugins: List<IdeaPluginDescriptorImpl> = Java11Shim.INSTANCE.copyOf(loadedPlugins)
-
+  @JvmField val enabledPlugins: List<IdeaPluginDescriptorImpl> = Java11Shim.INSTANCE.copyOf(enabledPlugins)
   private val enabledPluginAndV1ModuleMap: Map<PluginId, IdeaPluginDescriptorImpl>
-  //private val allPluginAndV1ModuleMap: Map<PluginId, IdeaPluginDescriptorImpl>
-
   // module map in a new v2 format
   private val moduleMap: Map<String, PluginContentDescriptor.ModuleItem>
 
   init {
-    val enabledPluginAndV1ModuleMap = HashMap<PluginId, IdeaPluginDescriptorImpl>(loadedPlugins.size)
-    //val allPluginAndV1ModuleMap = HashMap<PluginId, IdeaPluginDescriptorImpl>(allPlugins.size)
+    val enabledPluginAndV1ModuleMap = HashMap<PluginId, IdeaPluginDescriptorImpl>(enabledPlugins.size)
     val moduleMap = HashMap<String, PluginContentDescriptor.ModuleItem>()
-    for (descriptor in loadedPlugins) {
+    for (descriptor in enabledPlugins) {
       addWithV1Modules(enabledPluginAndV1ModuleMap, descriptor)
 
-      for (module in descriptor.content.modules) {
-        moduleMap.putIfAbsent(module.name, module)?.let {
-          throw RuntimeException("Duplicated module name (first=$it, second=$module)")
+      m@ for (item in descriptor.content.modules) {
+        if (checkModulesDependencies) {
+          for (ref in item.requireDescriptor().dependencies.modules) {
+            if (!moduleMap.containsKey(ref.name)) {
+              continue@m
+            }
+          }
+          for (ref in item.requireDescriptor().dependencies.plugins) {
+            if (!enabledPluginAndV1ModuleMap.containsKey(ref.id)) {
+              continue@m
+            }
+          }
+        }
+
+        moduleMap.putIfAbsent(item.name, item)?.let {
+          throw RuntimeException("Duplicated module name (first=$it, second=$item)")
         }
       }
 
@@ -39,28 +49,22 @@ class PluginSet(
       }
     }
 
-    //for (descriptor in allPlugins) {
-    //  addWithV1Modules(allPluginAndV1ModuleMap, descriptor)
-    //}
-
     val java11Shim = Java11Shim.INSTANCE
     this.enabledPluginAndV1ModuleMap = java11Shim.copyOf(enabledPluginAndV1ModuleMap)
-    //this.allPluginAndV1ModuleMap = java11Shim.copyOf(allPluginAndV1ModuleMap)
     this.moduleMap = java11Shim.copyOf(moduleMap)
   }
 
-  fun isPluginEnabled(id: PluginId): Boolean = enabledPluginAndV1ModuleMap.containsKey(id)
+  fun isPluginEnabled(id: PluginId) = enabledPluginAndV1ModuleMap.containsKey(id)
 
   fun findEnabledPlugin(id: PluginId): IdeaPluginDescriptorImpl? = enabledPluginAndV1ModuleMap.get(id)
 
-  //fun findPlugin(id: PluginId): IdeaPluginDescriptorImpl? = allPluginAndV1ModuleMap.get(id)
+  fun findEnabledModule(id: String): IdeaPluginDescriptorImpl? = moduleMap.get(id)?.requireDescriptor()
 
-  // module in term of v2 model
-  fun findEnabledModule(id: String): PluginContentDescriptor.ModuleItem? = moduleMap.get(id)
+  fun isModuleEnabled(id: String) = moduleMap.containsKey(id)
 
   fun concat(descriptor: IdeaPluginDescriptorImpl): PluginSet {
     return PluginSet(allPlugins = allPlugins.plus(descriptor),
-                     loadedPlugins = Java11Shim.INSTANCE.copyOf(loadedPlugins.plus(descriptor)))
+                     enabledPlugins = Java11Shim.INSTANCE.copyOf(enabledPlugins.plus(descriptor)))
   }
 
   private fun addWithV1Modules(result: MutableMap<PluginId, IdeaPluginDescriptorImpl>, descriptor: IdeaPluginDescriptorImpl) {

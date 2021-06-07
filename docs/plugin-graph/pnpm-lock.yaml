@@ -1,7 +1,7 @@
 lockfileVersion: 5.3
 
 specifiers:
-  '@fontsource/jetbrains-mono': ^4.4.2
+  '@fontsource/jetbrains-mono': ^4.4.5
   comlink: ^4.3.1
   cytoscape: ^3.19.0
   cytoscape-fcose: ^2.0.0
@@ -13,7 +13,7 @@ specifiers:
   vite: ^2.3.6
 
 dependencies:
-  '@fontsource/jetbrains-mono': 4.4.2
+  '@fontsource/jetbrains-mono': 4.4.5
   comlink: 4.3.1
   cytoscape: 3.19.0
   cytoscape-fcose: 2.0.0_cytoscape@3.19.0
@@ -28,8 +28,8 @@ devDependencies:
 
 packages:
 
-  /@fontsource/jetbrains-mono/4.4.2:
-    resolution: {integrity: sha512-5kDjpcnQFogrgGulmES5xX80cDd628+69zSE0ClTqzOAYI43yTyH3MeAH4mxohN6MR7v7AQ9bn+OOFvUuuYwBA==}
+  /@fontsource/jetbrains-mono/4.4.5:
+    resolution: {integrity: sha512-/xBExp46j7LF0v3mVSy46gEL4NICOyTW8zLKEJegMd5pRBprTwcPY1xpDnAbsljiq9gMSvUyoV4aJ+D61wjjCw==}
     dev: false
 
   /@popperjs/core/2.9.2:
@@ -243,8 +243,8 @@ packages:
       path-parse: 1.0.7
     dev: true
 
-  /rollup/2.50.6:
-    resolution: {integrity: sha512-6c5CJPLVgo0iNaZWWliNu1Kl43tjP9LZcp6D/tkf2eLH2a9/WeHxg9vfTFl8QV/2SOyaJX37CEm9XuGM0rviUg==}
+  /rollup/2.51.1:
+    resolution: {integrity: sha512-8xfDbAtBleXotb6qKEHWuo/jkn94a9dVqGc7Rwl3sqspCVlnCfbRek7ldhCARSi7h32H0xR4QThm1t9zHN+3uw==}
     engines: {node: '>=10.0.0'}
     hasBin: true
     optionalDependencies:
@@ -285,7 +285,7 @@ packages:
       esbuild: 0.12.6
       postcss: 8.3.0
       resolve: 1.20.0
-      rollup: 2.50.6
+      rollup: 2.51.1
     optionalDependencies:
       fsevents: 2.3.2
     dev: true

@@ -8,7 +8,7 @@
     "serve": "vite preview"
   },
   "dependencies": {
-    "@fontsource/jetbrains-mono": "^4.4.2",
+    "@fontsource/jetbrains-mono": "^4.4.5",
     "comlink": "^4.3.1",
     "cytoscape": "^3.19.0",
     "cytoscape-fcose": "^2.0.0",

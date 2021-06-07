@@ -7,45 +7,46 @@ import graphData from "../plugin-graph.json"
 import cytoscape from "cytoscape"
 // noinspection SpellCheckingInspection
 import fCose from "cytoscape-fcose"
-import pDebounce from "p-debounce"
 
 cytoscape.use(fCose)
 
 let cy = null
 
-function init() {
-  Promise.all([
+async function init() {
+  await Promise.all([
     document.fonts.load("11px 'JetBrains Mono'"),
     document.fonts.load("13px 'JetBrains Mono'"),
-  ]).then(function () {
-    const fileInput = document.getElementById("fileInput")
-    fileInput.addEventListener("change", event => {
-      handleFile(event.target.files[0])
-    })
+  ])
 
-    // https://stackoverflow.com/a/31205873
-    document.fonts.load("bold 13px 'JetBrains Mono'")
-
-    const dropbox = document.body
-    dropbox.addEventListener("dragenter", preventDefault)
-    dropbox.addEventListener("dragover", preventDefault)
-    dropbox.addEventListener("drop", event => {
-      event.stopPropagation()
-      event.preventDefault()
-
-      const file = event.dataTransfer.files[0]
-      // noinspection JSCheckFunctionSignatures
-      const timeFormat = new Intl.DateTimeFormat("default", {
-        timeStyle: "medium",
-      })
-      document.title = `${file.name} (${timeFormat.format(new Date())})`
-      handleFile(file)
-    })
-
-    initGraph(graphData).catch(e => {
-      console.error("Init failed", e)
-    })
+  const fileInput = document.getElementById("fileInput")
+  fileInput.addEventListener("change", event => {
+    handleFile(event.target.files[0])
   })
+
+  // https://stackoverflow.com/a/31205873
+  document.fonts.load("bold 13px 'JetBrains Mono'")
+
+  const dropbox = document.body
+  dropbox.addEventListener("dragenter", preventDefault)
+  dropbox.addEventListener("dragover", preventDefault)
+  dropbox.addEventListener("drop", event => {
+    event.stopPropagation()
+    event.preventDefault()
+
+    const file = event.dataTransfer.files[0]
+    // noinspection JSCheckFunctionSignatures
+    const timeFormat = new Intl.DateTimeFormat("default", {
+      timeStyle: "medium",
+    })
+    document.title = `${file.name} (${timeFormat.format(new Date())})`
+    handleFile(file)
+  })
+
+  initGraph(graphData)
+
+  // dynamic import - load after graph showing
+  const interactionModule = await import("./interaction")
+  interactionModule.init(graphData, cy)
 }
 
 function preventDefault(e) {
@@ -71,7 +72,7 @@ function getItemSizeStyle(factor) {
   }
 }
 
-async function initGraph(graph) {
+function initGraph(graph) {
   // noinspection SpellCheckingInspection
   const layoutOptions = {
     name: "fcose",
@@ -175,15 +176,8 @@ async function initGraph(graph) {
   // ensure that dragging of element causes panning and not selecting
   // https://github.com/cytoscape/cytoscape.js/issues/1905
   cy.elements().panify()
-
-  const search = new (await import("./GraphTextSearch")).GraphTextSearch(graph, cy)
-  // noinspection JSCheckFunctionSignatures
-  document.getElementById("searchField").addEventListener("input", pDebounce(function (event) {
-    return search.searchNodes(event.target.value.trim())
-  }, 300))
-
-  new (await import("./GraphHighlighter")).GraphHighlighter(cy, search)
-  new (await import("./GraphTooltipManager")).GraphTooltipManager(cy)
 }
 
-init()
+init().catch(e => {
+  console.error(e)
+})

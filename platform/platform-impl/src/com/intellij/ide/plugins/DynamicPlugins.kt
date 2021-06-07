@@ -1102,7 +1102,7 @@ private fun processOptionalDependenciesOnPlugin(dependencyPlugin: IdeaPluginDesc
     wantedIds.add(module.name)
   }
 
-  for (plugin in pluginSet.loadedPlugins) {
+  for (plugin in pluginSet.enabledPlugins) {
     if (!processOptionalDependenciesInOldFormatOnPlugin(dependencyPlugin.id, plugin, isLoaded, processor)) {
       return
     }
