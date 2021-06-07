@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -110,7 +110,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
     return document.getLineNumber(startOffset);
   }
 
-  private TextChunk @NotNull [] initChunks() {
+  private TextChunk @NotNull [] computeText() {
     TextChunk[] chunks;
     VirtualFile file = getFile();
     boolean isNullOrBinary = file == null || file.getFileType().isBinary();
@@ -141,7 +141,6 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
         chunks = ChunkExtractor.extractChunks(psiFile, this);
       }
     }
-    myTextChunks = new SoftReference<>(chunks);
     return chunks;
   }
 
@@ -399,7 +398,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   public void reset() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myMergedUsageInfos = myUsageInfo;
-    initChunks();
+    myTextChunks = new SoftReference<>(computeText());
   }
 
   @Override
@@ -473,15 +472,19 @@ public class UsageInfo2UsageAdapter implements UsageInModule, UsageInfoAdapter,
   }
 
   private TextChunk @NotNull [] doUpdateCachedText() {
-    TextChunk[] chunks = SoftReference.dereference(myTextChunks);
-    final long currentModificationStamp = getCurrentModificationStamp();
+    TextChunk[] cachedText = getCachedText();
+    long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;
-    if (chunks == null || isValid() && isModified) {
+    if (cachedText == null || isModified && isValid()) {
       // the check below makes sense only for valid PsiElement
-      chunks = initChunks();
+      TextChunk[] text = computeText();
+      myTextChunks = new SoftReference<>(text);
       myModificationStamp = currentModificationStamp;
+      return text;
     }
-    return chunks;
+    else {
+      return cachedText;
+    }
   }
 
   @NotNull
