@@ -4,7 +4,6 @@ package com.intellij.usages.impl;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.find.FindManager;
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.application.AppUIExecutor;
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,10 +50,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.util.*;
-import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -301,18 +300,20 @@ final class SearchForUsagesRunnable implements Runnable {
         openView(usageView);
       }
       else if (myListener != null) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          UsageViewEx uv = myUsageViewRef.get();
-          if (uv != null) {
-            myListener.usageViewCreated(uv);
+        SwingUtilities.invokeLater(() -> {
+          if (!myProject.isDisposed()) {
+            UsageViewEx uv = myUsageViewRef.get();
+            if (uv != null) {
+              myListener.usageViewCreated(uv);
+            }
           }
-        }, myProject.getDisposed());
+        });
       }
 
       Usage firstUsage = myFirstUsage.get();
       if (firstUsage != null) {
         UsageViewEx finalUsageView = usageView;
-        ReadAction.run(() -> finalUsageView.appendUsage(firstUsage));
+        ApplicationManager.getApplication().runReadAction(() -> finalUsageView.appendUsage(firstUsage));
       }
     }
     else {
@@ -325,13 +326,14 @@ final class SearchForUsagesRunnable implements Runnable {
   }
 
   private void openView(@NotNull final UsageViewEx usageView) {
-    ApplicationManager.getApplication().invokeLater(() -> {
+    SwingUtilities.invokeLater(() -> {
+      if (myProject.isDisposed()) return;
       myUsageViewManager.showUsageView(usageView, myPresentation);
       if (myListener != null) {
         myListener.usageViewCreated(usageView);
       }
       myUsageViewManager.showToolWindow(false);
-    }, myProject.getDisposed());
+    });
   }
 
   @Override
@@ -353,26 +355,13 @@ final class SearchForUsagesRunnable implements Runnable {
       CoreProgressManager.assertUnderProgress(indicator);
     }
     TooManyUsagesStatus.createFor(indicator);
-    AtomicBoolean started = new AtomicBoolean(false);
-    ScheduledFuture<?>[] future = {null};
-    Disposable disposable = () -> {
-      if (!started.get()) {
-        ScheduledFuture<?> f = future[0];
-        if (f != null) {
-          f.cancel(false);
-        }
-      }
-    };
-    future[0] = EdtScheduledExecutorService.getInstance().schedule(() -> {
-      started.set(true);
-      Disposer.dispose(disposable);
+    EdtScheduledExecutorService.getInstance().schedule(() -> {
       if (!myProject.isDisposed()) {
         notifyByFindBalloon(null, MessageType.WARNING,
                             Collections.singletonList(StringUtil.escapeXmlEntities(UsageViewManagerImpl.getProgressTitle(myPresentation))));
       }
       findStartedBalloonShown.set(true);
     }, ModalityState.NON_MODAL, 300, TimeUnit.MILLISECONDS);
-    Disposer.register(myProject, disposable);
     UsageSearcher usageSearcher = mySearcherFactory.create();
     long startSearchStamp = System.currentTimeMillis();
     usageSearcher.generate(usage -> {
@@ -402,7 +391,7 @@ final class SearchForUsagesRunnable implements Runnable {
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
         if (usageView != null) {
-          ReadAction.run(() -> usageView.appendUsage(usage));
+          ApplicationManager.getApplication().runReadAction(() -> usageView.appendUsage(usage));
         }
       }
       return true;
