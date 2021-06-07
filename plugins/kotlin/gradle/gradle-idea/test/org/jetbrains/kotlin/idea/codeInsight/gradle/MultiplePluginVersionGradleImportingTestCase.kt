@@ -98,10 +98,10 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                 arrayOf("5.6.4", "1.3.72"),
                 arrayOf("6.7.1", "1.4.0"),
                 arrayOf("6.8.2", "1.4.32"),
-                arrayOf("6.8.2", "1.5.0"),
-                arrayOf("7.0", "1.5.0"),
+                arrayOf("7.0.2", "1.5.10"),
+                arrayOf("7.0.2", "1.5.20-RC-238"),
                 arrayOf("6.8.2", "master"),
-                arrayOf("7.0", "master")
+                arrayOf("7.0.2", "master")
             )
         }
     }
@@ -122,6 +122,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
             repositories += if (useKts) "maven(\"$url\")" else "maven { url '$url' }"
         }
 
+        addCustomRepository("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
         addCustomRepository("https://dl.bintray.com/kotlin/kotlin-dev")
         addCustomRepository("https://kotlin.bintray.com/kotlinx")
 
