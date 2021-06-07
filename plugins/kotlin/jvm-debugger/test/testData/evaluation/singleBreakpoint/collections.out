@@ -5,7 +5,7 @@ Connected to the target VM
 collections.kt:6
 Compile bytecode for arrayListOf(1, 2).map { it.toString() }
 Compile bytecode for arrayListOf(1, 2, 101, 102).filter { it > 100 }
-Compile bytecode for arrayListOf(1, 2).max()
+Compile bytecode for arrayListOf(1, 2).maxOrNull()
 Compile bytecode for arrayListOf(1, 2).count()
 Compile bytecode for arrayListOf(1, 2).size
 Compile bytecode for arrayListOf(1, 2, 3).drop(1)
