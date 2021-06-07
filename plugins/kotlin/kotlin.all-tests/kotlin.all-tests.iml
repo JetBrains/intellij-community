@@ -75,5 +75,6 @@
     <orderEntry type="module" module-name="kotlin.refIndex" />
     <orderEntry type="module" module-name="kotlin.refIndex.tests" />
     <orderEntry type="module" module-name="kotlin.coverage" />
+    <orderEntry type="module" module-name="kotlin.testng" />
   </component>
 </module>

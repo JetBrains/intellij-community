@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.run;
+package org.jetbrains.kotlin.idea.testng;
 
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -160,7 +160,7 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
                                                           psiMethod,
                                                           containingClass,
                                                           aClass -> aClass.hasModifierProperty(PsiModifier.ABSTRACT) &&
-                                                                 TestNGUtil.hasTest(aClass))) return;
+                                                                    TestNGUtil.hasTest(aClass))) return;
         }
 
         super.onFirstRun(configuration, context, startRunnable);
