@@ -95,8 +95,6 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    public boolean isValid() { return true; }
-    @Override
     public void navigate(boolean focus) { }
     @Override
     public boolean canNavigate() { return false; }

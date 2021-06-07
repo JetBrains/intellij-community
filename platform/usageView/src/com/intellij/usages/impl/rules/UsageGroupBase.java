@@ -17,11 +17,6 @@ public abstract class UsageGroupBase implements UsageGroup {
   }
 
   @Override
-  public boolean isValid() {
-    return true;
-  }
-
-  @Override
   public void navigate(boolean focus) {
   }
 

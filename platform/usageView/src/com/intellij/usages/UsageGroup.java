@@ -21,7 +21,9 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
     return null;
   }
 
-  boolean isValid();
+  default boolean isValid() {
+    return true;
+  }
 
   void update();
 }
