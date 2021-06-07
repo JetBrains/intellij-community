@@ -1,15 +1,15 @@
 <html>
 <body>
 Reports <code>public</code> fields.
-Constants (i.e. fields that are marked <code>static</code> and <code>final</code>) are not reported.
-<p>Example:</p>
-<pre>
+Constants (fields marked with <code>static</code> and <code>final</code>) are not reported.
+<p><b>Example:</b></p>
+<pre><code>
   class Main {
     public String name;
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   class Main {
     private String name;
 
@@ -21,12 +21,14 @@ Constants (i.e. fields that are marked <code>static</code> and <code>final</code
         this.name = name;
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-  Use the list below to specify special annotations. Fields annotated with one of these annotations will be ignored by this inspection.
-<p>
-  Use the checkbox below to ignore <code>public</code> <code>final</code> fields of an <code>enum</code> type.
-<p>
+<p>Configure the inspection:</p>
+<ul>
+  <li>Use the <b>Ignore If Annotated By</b> list to specify annotations to ignore. The inspection will ignore fields with
+    any of these annotations.</li>
+  <li>Use the <b>Ignore 'public final' fields of an enum</b> option to ignore <code>public final</code> fields
+    of the <code>enum</code> type.</li>
+</ul>
 </body>
 </html>

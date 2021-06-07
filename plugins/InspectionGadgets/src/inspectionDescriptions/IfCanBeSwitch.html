@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports any <code>if</code> statements that can be replaced with a <code>switch</code> statement.
-The result of transformation is usually shorter and clearer.
-<p>Example:</p>
-<pre>
+Reports <code>if</code> statements that can be replaced with <code>switch</code> statements.
+<p>The replacement result is usually shorter and clearer.</p>
+<p><b>Example:</b></p>
+<pre><code>
   void test(String str) {
     if (str.equals("1")) {
       System.out.println(1);
@@ -15,9 +15,9 @@ The result of transformation is usually shorter and clearer.
       System.out.println(4);
     }
   }
-</pre>
-<p>After quick-fix is applied, the result will be:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   void test(String str) {
     switch (str) {
       case "1" -&gt; System.out.println(1);
@@ -26,21 +26,19 @@ The result of transformation is usually shorter and clearer.
       default -&gt; System.out.println(4);
     }
   }
-</pre>
+  </code></pre>
 <!-- tooltip end -->
-<p>This inspection only reports if the language level of the project or module is 7 or higher.</p>
+<p>The inspection is applicable if the language level of a project or module is seven or higher.</p>
+<p>Use the <b>Minimum number of 'if' condition branches</b> field to specify the minimum number of <code>if</code> condition branches
+  for an <code>if</code> statement to have to be reported. Note that the terminal <code>else</code> branch (without <code>if</code>) is not counted.</p>
 <p>
-Use the text field below to indicate the minimum number of <code>if</code> branches with condition
-an <code>if</code> statement should have to be reported.
-A terminal <code>else</code> branch (without <code>if</code>) is not counted.
-<p>
-Use the first checkbox below to have this inspection suggest <code>switch</code> statements on
+Use the <b>Suggest switch on numbers</b> option to enable the suggestion of <code>switch</code> statements on
 primitive and boxed numbers and characters.
 <p>
-Use the second checkbox below to have this inspection suggest <code>switch</code> statements on
+Use the <b>Suggest switch on enums</b> option to enable the suggestion of <code>switch</code> statements on
 <code>enum</code> constants.
 <p>
-Use the third checkbox below to only suggest <code>switch</code> statements which can't introduce a <code>NullPointerException</code>.
-<p>
+  Use the <b>Only suggest on null-safe expressions</b> option to suggest <code>switch</code> statements that can't introduce a <code>NullPointerException</code> only.
+</p>
 </body>
 </html>

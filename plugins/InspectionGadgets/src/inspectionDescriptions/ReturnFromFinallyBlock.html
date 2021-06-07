@@ -1,16 +1,16 @@
 <html>
 <body>
 Reports <code>return</code> statements inside of <code>finally</code> blocks.
-While occasionally intended, such <code>return</code> statements may mask thrown exceptions,
-and tremendously complicate debugging.
+<p>While occasionally intended, such <code>return</code> statements may mask thrown exceptions
+and complicate debugging.</p>
 <!-- tooltip end -->
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   try {
     foo();
   } finally {
     if (bar()) return;
   }
-</pre>
+</code></pre>
 </body>
 </html>
