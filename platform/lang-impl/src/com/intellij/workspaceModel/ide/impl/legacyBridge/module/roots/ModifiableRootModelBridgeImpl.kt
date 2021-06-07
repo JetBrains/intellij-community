@@ -602,7 +602,7 @@ class ModifiableRootModelBridgeImpl(
   private val modelValue = CachedValue { storage ->
     RootModelBridgeImpl(
       moduleEntity = storage.findModuleEntity(moduleBridge),
-      storage = storage,
+      storage = entityStorageOnDiff,
       itemUpdater = null,
       rootModel = this,
       updater = { transformer -> transformer(diff) }

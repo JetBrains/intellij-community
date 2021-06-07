@@ -35,7 +35,7 @@ class ModuleRootComponentBridge(
     CachedValue { storage ->
       RootModelBridgeImpl(
         moduleEntity = storage.findModuleEntity(moduleBridge),
-        storage = storage,
+        storage = moduleBridge.entityStorage,
         itemUpdater = null,
         // TODO
         rootModel = this,

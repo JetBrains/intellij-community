@@ -27,14 +27,14 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 internal class RootModelBridgeImpl(internal val moduleEntity: ModuleEntity?,
-                                   val storage: WorkspaceEntityStorage,
+                                   private val storage: VersionedEntityStorage,
                                    private val itemUpdater: ((Int, (ModuleDependencyItem) -> ModuleDependencyItem) -> Unit)?,
                                    private val rootModel: ModuleRootModelBridge,
                                    internal val updater: (((WorkspaceEntityStorageDiffBuilder) -> Unit) -> Unit)?) : RootModelBase(), Disposable {
   private val module: ModuleBridge = rootModel.moduleBridge
 
   private val extensions by lazy {
-    loadExtensions(storage = VersionedEntityStorageOnStorage(storage), module = module, writable = false, diff = null, parentDisposable = this)
+    loadExtensions(storage = storage, module = module, writable = false, diff = null, parentDisposable = this)
   }
 
   private val orderEntriesArray: Array<OrderEntry> by lazy {
