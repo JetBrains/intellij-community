@@ -57,7 +57,7 @@ abstract class ToolWindowHeader internal constructor(
     westPanel.add(contentUi.tabComponent, CC().growY())
     @Suppress("LeakingThis")
     add(westPanel, CC().grow())
-    ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true)
+    ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)
     toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
       object : ActionGroup(), DumbAware {

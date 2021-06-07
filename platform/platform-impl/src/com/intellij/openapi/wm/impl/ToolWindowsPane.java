@@ -28,7 +28,9 @@ import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.MathUtil;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -55,8 +57,11 @@ import static com.intellij.util.ui.UIUtil.useSafely;
 public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance(ToolWindowsPane.class);
   @NonNls public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
-  //The width of topmost 'resize' area when toolwindow caption is used for both resize and drag
-  public static final int HEADER_RESIZE_WIDTH = 8;
+
+  //The size of topmost 'resize' area when toolwindow caption is used for both resize and drag
+  public static int getHeaderResizeArea() {
+    return JBUI.scale(MathUtil.clamp(Registry.intValue("ide.new.tool.window.resize.area.height", 14), 1, 26));
+  }
 
   private final JFrame frame;
 
