@@ -7,6 +7,7 @@ import com.intellij.openapi.compiler.JavaCompilerBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.ActionLink;
 import org.jetbrains.annotations.NotNull;
@@ -80,7 +81,7 @@ public class CompilerConfigurable implements SearchableConfigurable.Parent, Conf
 
   public static class BuildOnSaveInfoProvider extends ActionOnSaveInfoProvider {
     @Override
-    protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull Project project) {
+    protected @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull Project project, @NotNull Settings settings) {
       for (CompilerOptionsFilter filter : CompilerOptionsFilter.EP_NAME.getExtensionList()) {
         if (!filter.isAvailable(CompilerOptionsFilter.Setting.AUTO_MAKE, project)) return Collections.emptyList();
       }

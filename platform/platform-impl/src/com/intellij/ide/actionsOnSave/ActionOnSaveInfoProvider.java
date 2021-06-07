@@ -2,6 +2,7 @@
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -19,13 +20,14 @@ public abstract class ActionOnSaveInfoProvider {
   private static final ExtensionPointName<ActionOnSaveInfoProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.actionOnSaveInfoProvider");
 
-  static List<ActionOnSaveInfo> getAllActionOnSaveInfos(@NotNull Project project) {
+  static List<ActionOnSaveInfo> getAllActionOnSaveInfos(@NotNull Project project, @NotNull Settings settings) {
     ArrayList<ActionOnSaveInfo> infos = new ArrayList<>();
     for (ActionOnSaveInfoProvider provider : EP_NAME.getExtensionList()) {
-      infos.addAll(provider.getActionOnSaveInfos(project));
+      infos.addAll(provider.getActionOnSaveInfos(project, settings));
     }
     return infos;
   }
 
-  protected abstract @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull Project project);
+  protected abstract @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull Project project,
+                                                                                          @NotNull Settings settings);
 }

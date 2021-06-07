@@ -120,7 +120,7 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
       return;
     }
 
-    List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myProject);
+    List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myProject, settings);
     for (ActionOnSaveInfo info : infos) {
       info.onActionsOnSaveConfigurableReset(settings);
     }
