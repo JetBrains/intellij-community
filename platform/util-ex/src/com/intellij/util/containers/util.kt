@@ -315,3 +315,8 @@ fun <Node> generateRecursiveSequence(initialSequence: Sequence<Node>, children: 
     }
   }
 }
+
+/**
+ * Returns a new sequence either of single given element, if it is not null, or empty sequence if the element is null.
+ */
+fun <T : Any> sequenceOfNotNull(element: T?): Sequence<T> = if (element != null) sequenceOf(element) else emptySequence()
