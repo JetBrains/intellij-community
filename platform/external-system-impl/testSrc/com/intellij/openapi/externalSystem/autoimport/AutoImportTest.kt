@@ -172,6 +172,24 @@ class AutoImportTest : AutoImportTestCase() {
   }
 
   @Test
+  fun `test directory deletion tracking`() {
+    simpleModificationTest {
+      val directory = findOrCreateDirectory("directory")
+      createSettingsVirtualFile("directory/settings.txt")
+      assertState(refresh = 0, notified = true, event = "settings created")
+      refreshProject()
+      assertState(refresh = 1, notified = false, event = "project reloaded")
+
+      directory.delete()
+      assertState(refresh = 1, notified = true, event = "deleted directory with settings")
+      findOrCreateDirectory("directory")
+      assertState(refresh = 1, notified = true, event = "deleted directory created without settings")
+      createSettingsVirtualFile("directory/settings.txt")
+      assertState(refresh = 1, notified = false, event = "reverted deleted settings")
+    }
+  }
+
+  @Test
   fun `test modification tracking with several settings files`() {
     simpleTest("settings.groovy", "println 'hello'") { settingsFile ->
       assertState(refresh = 1, notified = false, event = "register project without cache")
