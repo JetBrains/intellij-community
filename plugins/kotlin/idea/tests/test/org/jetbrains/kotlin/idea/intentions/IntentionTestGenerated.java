@@ -2842,6 +2842,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                     runTest("testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse3.kt");
                 }
 
+                @TestMetadata("whenTrueOrFalse4.kt")
+                public void testWhenTrueOrFalse4() throws Exception {
+                    runTest("testData/intentions/branched/ifWhen/whenToIf/whenTrueOrFalse4.kt");
+                }
+
                 @TestMetadata("whenWithDotQualifiedExpression.kt")
                 public void testWhenWithDotQualifiedExpression() throws Exception {
                     runTest("testData/intentions/branched/ifWhen/whenToIf/whenWithDotQualifiedExpression.kt");
