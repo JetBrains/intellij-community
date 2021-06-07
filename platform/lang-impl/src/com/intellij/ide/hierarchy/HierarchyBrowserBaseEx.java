@@ -49,7 +49,6 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -68,6 +67,8 @@ import java.util.function.Supplier;
 
 public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implements OccurenceNavigator {
   private static final Logger LOG = Logger.getInstance(HierarchyBrowserBaseEx.class);
+
+  public static final DataKey<HierarchyBrowserBaseEx> HIERARCHY_BROWSER = DataKey.create("HIERARCHY_BROWSER");
 
   public static final String SCOPE_PROJECT = "Production";
   public static final String SCOPE_ALL = "All";
@@ -539,6 +540,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   @Override
   public Object getData(@NotNull String dataId) {
+    if (HIERARCHY_BROWSER.is(dataId)) {
+      return this;
+    }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
     }
@@ -635,31 +639,17 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   }
 
   protected static class BaseOnThisElementAction extends AnAction {
-    private final Class<? extends HierarchyBrowserBaseEx> myBrowserClass;
     private final LanguageExtension<HierarchyProvider> myProviderLanguageExtension;
 
-    protected BaseOnThisElementAction(@NotNull String text,
-                                      @NotNull Class<? extends HierarchyBrowserBaseEx> browserClass,
-                                      @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
-      this(() -> text, browserClass, providerLanguageExtension);
-    }
-
     protected BaseOnThisElementAction(@NotNull Supplier<String> text,
-                                      @NotNull Class<? extends HierarchyBrowserBaseEx> browserClass,
                                       @NotNull LanguageExtension<HierarchyProvider> providerLanguageExtension) {
       super(text);
-      myBrowserClass = browserClass;
       myProviderLanguageExtension = providerLanguageExtension;
-    }
-
-    @Nullable
-    private HierarchyBrowserBaseEx getHierarchyBrowser(@NotNull AnActionEvent event) {
-      return UIUtil.getParentOfType(myBrowserClass, event.getData(PlatformDataKeys.CONTEXT_COMPONENT));
     }
 
     @Override
     public final void actionPerformed(@NotNull AnActionEvent event) {
-      HierarchyBrowserBaseEx browser = getHierarchyBrowser(event);
+      HierarchyBrowserBaseEx browser = event.getData(HIERARCHY_BROWSER);
       if (browser == null) return;
 
       PsiElement selectedElement = browser.getSelectedElement();
@@ -684,7 +674,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     public final void update(@NotNull AnActionEvent event) {
       Presentation presentation = event.getPresentation();
 
-      HierarchyBrowserBaseEx browser = getHierarchyBrowser(event);
+      HierarchyBrowserBaseEx browser = event.getData(HIERARCHY_BROWSER);
       if (browser == null) {
         presentation.setEnabledAndVisible(false);
         return;
