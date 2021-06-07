@@ -245,7 +245,6 @@ class ExternalSystemProjectPathField(
       }
     }
     val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor)
-    installJTextCompletionPopupTriggers(textCompletionPopup)
     textCompletionContributor.whenVariantChosen { _, _ ->
       mode = Mode.NAME
     }

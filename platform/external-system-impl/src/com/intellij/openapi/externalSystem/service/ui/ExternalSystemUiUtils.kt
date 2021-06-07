@@ -91,28 +91,3 @@ fun JComponent.whenFirstFocusGained(listener: () -> Unit) {
     }
   })
 }
-
-fun JTextComponent.installJTextCompletionPopupTriggers(textCompletionPopup: TextCompletionPopup<JTextComponent>) {
-  addCaretListener {
-    textCompletionPopup.updatePopup(UPDATE)
-  }
-  whenFocusGained {
-    if (text.isEmpty()) {
-      textCompletionPopup.updatePopup(SHOW_IF_HAS_VARIANCES)
-    }
-  }
-  whenFirstFocusGained {
-    textCompletionPopup.updatePopup(SHOW_IF_HAS_VARIANCES)
-  }
-  addKeyboardAction(getKeyStrokes(IdeActions.ACTION_CODE_COMPLETION)) {
-    textCompletionPopup.updatePopup(SHOW)
-  }
-  whenTextModified {
-    // Listener for caret update is invoked after all of other modification listeners
-    // But we needed crop text completion by updated caret position
-    // So invokeLater is here to postpone our completion popup update
-    invokeLater {
-      textCompletionPopup.updatePopup(SHOW_IF_HAS_VARIANCES)
-    }
-  }
-}

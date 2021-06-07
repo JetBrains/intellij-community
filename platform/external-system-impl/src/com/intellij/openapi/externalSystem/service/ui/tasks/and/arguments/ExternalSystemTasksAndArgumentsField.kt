@@ -9,7 +9,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
-import com.intellij.openapi.externalSystem.service.ui.installJTextCompletionPopupTriggers
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -72,7 +71,6 @@ class ExternalSystemTasksAndArgumentsField(
       tasksAndArguments.arguments.mapNotNull { it.shortName?.let { n -> TextCompletionInfo(n, it.description) } } +
       tasksAndArguments.arguments.map { TextCompletionInfo(it.name, it.description) }
     }
-    val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor)
-    installJTextCompletionPopupTriggers(textCompletionPopup)
+    TextCompletionPopup(project, this, textCompletionContributor)
   }
 }
