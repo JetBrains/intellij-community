@@ -41,8 +41,8 @@ class KotlinReferenceImporter : ReferenceImporter {
             if (mainReference.resolveToDescriptors(bindingContext).isNotEmpty()) return false
 
             val suggestions = ImportFix(this).collectSuggestions()
-            if (suggestions.size != 1) return false
-            val descriptors = file.resolveImportReference(suggestions.single())
+            val suggestion = suggestions.singleOrNull() ?: return false
+            val descriptors = file.resolveImportReference(suggestion)
 
             // we do not auto-import nested classes because this will probably add qualification into the text and this will confuse the user
             if (descriptors.any { it is ClassDescriptor && it.containingDeclaration is ClassDescriptor }) return false
