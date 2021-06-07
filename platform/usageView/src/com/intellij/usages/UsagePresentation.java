@@ -21,12 +21,12 @@ public interface UsagePresentation {
    * If the implementation caches or lazy-loades the text chunks internally, this method gives it a chance to avoid
    * re-calculating it synchronously on EDT and return the possibly obsolete data.
    * <p>
-   * The component using this presentation might call {@link UsagePresentation#updateCachedText()} in a background
-   * thread and then use {@link UsagePresentation#getCachedText()} to draw the text.
+   * The component using this presentation might call {@link UsagePresentation#updateCachedPresentation()} in a background
+   * thread and then use {@link UsagePresentation#getCachedPresentation()} to draw the text.
    */
-  default TextChunk @Nullable [] getCachedText() {
-    return getText();
+  default UsageNodePresentation getCachedPresentation() {
+    return new UsageNodePresentation(getIcon(), getText());
   }
 
-  default void updateCachedText() { }
+  default void updateCachedPresentation() { }
 }
