@@ -11,7 +11,9 @@ import javax.swing.*;
 
 public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
 
-  @Nullable Icon getIcon(boolean isOpen);
+  default @Nullable Icon getIcon(boolean isOpen) {
+    return null;
+  }
 
   @NlsContexts.ListItem @NotNull String getText(@Nullable UsageView view);
 
