@@ -4,19 +4,21 @@ Reports assignment operations which can be replaced by operator-assignment. Code
 using operator assignment is shorter and may be clearer.
 <p>
 Example:
-<pre>
+<pre><code>
   x = x + 3;
   x = x / 3;
-</pre>
-<p>After the quick fix is applied the result looks like:
-<pre>
+</code></pre>
+<p>After the quick fix is applied:
+<pre><code>
   x += 3;
   x /= 3;
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore the conditional operators <code>&amp;&amp;</code>
+Use the first checkbox below to ignore the conditional operators <code>&amp;&amp;</code>
 and <code>||</code>. Replacing conditional operators with operator
-assignment modifies the semantics of the expression.
+assignment would change the evaluation from lazy to eager, which may change the semantics of the expression.
+<p>
+Use the second checkbox below to ignore the operators <code>^</code> and <code>%</code>, which are less well known.
 </body>
 </html>
