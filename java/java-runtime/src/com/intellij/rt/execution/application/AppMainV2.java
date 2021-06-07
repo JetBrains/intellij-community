@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.execution.application;
 
 import java.io.BufferedReader;
@@ -14,7 +14,7 @@ import java.util.Locale;
 
 /**
  * @author ven
- * @noinspection UseOfSystemOutOrSystemErr
+ * @noinspection UseOfSystemOutOrSystemErr, CharsetObjectCanBeUsed
  */
 public final class AppMainV2 {
   public static final String LAUNCHER_PORT_NUMBER = "idea.launcher.port";
@@ -26,7 +26,7 @@ public final class AppMainV2 {
     String osName = System.getProperty("os.name").toLowerCase(Locale.ENGLISH);
     if (osName.startsWith("windows")) {
       String arch = System.getProperty("os.arch").toLowerCase(Locale.ENGLISH);
-      File libFile = new File(binPath, arch.equals("amd64") ? "breakgen64.dll" : "breakgen.dll");
+      File libFile = new File(binPath, "x86_64".equals(arch) || "amd64".equals(arch) ? "breakgen64.dll" : "breakgen.dll");
       if (libFile.isFile()) {
         System.load(libFile.getAbsolutePath());
         return true;
@@ -38,6 +38,7 @@ public final class AppMainV2 {
 
   private static void startMonitor(final int portNumber, final boolean helperLibLoaded) {
     Thread t = new Thread("Monitor Ctrl-Break") {
+      @Override
       public void run() {
         try {
           Socket client = new Socket("127.0.0.1", portNumber);
