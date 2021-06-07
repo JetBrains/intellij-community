@@ -7,16 +7,16 @@ Reports a redundant <code>with</code> function call that doesn't access anything
       fun f(): String = ""
   }
 
+  fun testRedundant() {
+      with (c) { // &lt;== 'with' is redundant since 'c' isn't used
+          println("1")
+      }
+  }
+
   fun testOk() {
       val c = MyClass()
       with(c) { // &lt;== it's ok since 'f()' is effectively 'c.f()'
           println(f())
-      }
-  }
-
-  fun testRedundant() {
-      with (c) { // &lt;== 'with' is redundant since 'c' isn't used
-          println("1")
       }
   }
 </code></pre>
