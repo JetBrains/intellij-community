@@ -13,6 +13,7 @@ import com.intellij.openapi.util.component2
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer
 import org.jetbrains.kotlin.idea.testng.KotlinTestNgConfigurationProducer
 
 private val isJUnitEnabled by lazy { isPluginEnabled("JUnit") }

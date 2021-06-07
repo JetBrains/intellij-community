@@ -46,6 +46,7 @@
     <orderEntry type="module" module-name="kotlin.jvm-debugger.coroutines" />
     <orderEntry type="module" module-name="kotlin.native" />
     <orderEntry type="module" module-name="kotlin.testng" />
+    <orderEntry type="module" module-name="kotlin.junit" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kapt" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.scripting" scope="RUNTIME" />
     <orderEntry type="module" module-name="kotlin.project-wizard.idea" scope="RUNTIME" />

@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinJUnitRunConfigurationProducer"/>
+    <runConfigurationProducer implementation="org.jetbrains.kotlin.idea.junit.KotlinPatternConfigurationProducer"/>
+    <junitRecognizer implementation="org.jetbrains.kotlin.idea.junit.KotlinMultiplatformJUnitRecognizer"/>
+  </extensions>
+</idea-plugin>

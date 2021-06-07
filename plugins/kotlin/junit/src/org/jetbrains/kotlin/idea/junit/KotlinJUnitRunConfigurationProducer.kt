@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.run
+package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.ConfigurationContext
@@ -18,6 +18,8 @@ import com.intellij.psi.PsiMethod
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
+import org.jetbrains.kotlin.idea.run.asJvmModule
+import org.jetbrains.kotlin.idea.run.forceGradleRunnerInMPP
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtFile

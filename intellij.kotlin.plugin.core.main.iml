@@ -61,6 +61,7 @@
     <orderEntry type="module" module-name="kotlin.refIndex" exported="" />
     <orderEntry type="module" module-name="kotlin.coverage" exported="" />
     <orderEntry type="module" module-name="kotlin.testng" exported="" />
+    <orderEntry type="module" module-name="kotlin.junit" exported="" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-script-util" level="project" />
