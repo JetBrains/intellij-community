@@ -435,9 +435,6 @@
       <action id="ExpressionStatistics" internal="true" class="com.intellij.internal.ExpressionStatisticsAction"/>
 
       <action id="StaticIconFields" internal="true" class="com.intellij.internal.StaticIconFieldsAction"/>
-
-      <action id="InspectStubIndex" internal="true" class="com.intellij.internal.InspectStubIndexAction"/>
-
       <add-to-group group-id="Internal"/>
     </group>
 
