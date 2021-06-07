@@ -3,13 +3,16 @@ package com.intellij.openapi.vcs.checkin
 
 import com.intellij.CommonBundle.getCancelButtonText
 import com.intellij.codeInsight.CodeSmellInfo
+import com.intellij.codeInsight.actions.VcsFacadeImpl
 import com.intellij.codeInspection.ex.InspectionProfileImpl
+import com.intellij.codeInspection.ex.InspectionProfileWrapper
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.nls.NlsMessages.formatAndList
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.application.ApplicationNamesInfo
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -44,6 +47,9 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiManager
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ExceptionUtil.rethrowUnchecked
@@ -54,6 +60,7 @@ import com.intellij.util.ui.UIUtil.getWarningIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.PropertyKey
+import java.util.function.Function
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
@@ -119,8 +126,20 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT
     if (isDumb(project)) return if (confirmCommitInDumbMode(project)) ReturnResult.COMMIT else ReturnResult.CANCEL
+    val files = filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
+
+    val analyzeOnlyChangedProperties = Registry.intValue("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", 0)
+    val psiFiles = runReadAction {
+      files.mapNotNull { PsiManager.getInstance(project).findFile(it) }
+    }
 
     return try {
+      if (analyzeOnlyChangedProperties != 0) {
+        for (file in psiFiles) {
+          file.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
+                           Function { getBeingCommittedPsiElements(it) })
+        }
+      }
       val codeSmells = findCodeSmells()
       if (codeSmells.isEmpty()) ReturnResult.COMMIT else processFoundCodeSmells(codeSmells, executor)
     }
@@ -131,6 +150,29 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
       LOG.error(e)
       if (confirmCommitWithCodeAnalysisFailure(project, e)) ReturnResult.COMMIT else ReturnResult.CANCEL
     }
+    finally {
+      if (analyzeOnlyChangedProperties != 0) {
+        for (it in psiFiles) {
+          it.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED, null)
+        }
+      }
+    }
+  }
+
+  /**
+   * Returns a set of PsiElements that are being committed
+   */
+  private fun getBeingCommittedPsiElements(clazz: Class<out PsiElement>): Set<PsiElement> {
+    val vcs = VcsFacadeImpl.getVcsInstance()
+    val changes = commitPanel.selectedChanges.toTypedArray()
+    val elementsExtractor = { virtualFile : VirtualFile ->
+      val psiFile = runReadAction {
+        PsiManager.getInstance(project).findFile(virtualFile)
+      }
+      PsiTreeUtil.findChildrenOfType(psiFile, clazz).toList()
+    }
+    val beingCommittedPsiElements = vcs.getChangedElements(project, changes, elementsExtractor)
+    return beingCommittedPsiElements.toSet()
   }
 
   private fun findCodeSmells(): List<CodeSmellInfo> {
