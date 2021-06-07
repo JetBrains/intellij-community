@@ -10,6 +10,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.util.containers.ContainerUtil
 import org.languagetool.JLanguageTool
 import org.languagetool.ResultCache
+import org.languagetool.Tag
 import org.languagetool.rules.CategoryId
 import java.net.Authenticator
 import java.util.concurrent.ConcurrentHashMap
@@ -83,6 +84,12 @@ internal object LangTool : GrazieStateLifecycle {
       }
 
       allSpellingCheckRules.forEach { rule -> disableRule(rule.id) }
+
+      for (rule in allActiveRules) {
+        if (rule.hasTag(Tag.picky) && rule.id !in enabledRules) {
+          disableRule(rule.id)
+        }
+      }
 
       //Fix problem with Authenticator installed by LT
       this.language.disambiguator
