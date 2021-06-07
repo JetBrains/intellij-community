@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
+import com.intellij.openapi.progress.util.PingProgress;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
@@ -616,6 +617,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
         IndexConfiguration state = getState();
         for (ID<?, ?> indexId : state.getIndexIDs()) {
+          PingProgress.interactWithEdtProgress();
           try {
             UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
             if (!RebuildStatus.isOk(indexId)) {
