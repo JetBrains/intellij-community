@@ -3,14 +3,10 @@ package com.intellij.ide.lightEdit.menuBar;
 
 import com.intellij.ide.RecentProjectListActionProvider;
 import com.intellij.ide.actions.RecentProjectsGroup;
-import com.intellij.ide.lightEdit.LightEdit;
-import com.intellij.ide.lightEdit.LightEditCompatible;
-import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
-import com.intellij.ide.lightEdit.LightEditUtil;
+import com.intellij.ide.lightEdit.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileEditor.UniqueVFilePathBuilder;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.DumbAware;
@@ -62,7 +58,7 @@ class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, A
   private static List<VirtualFile> getRecentFiles(@NotNull Project project) {
     List<VirtualFile> historyFiles = EditorHistoryManager.getInstance(project).getFileList();
     LinkedHashSet<VirtualFile> result = new LinkedHashSet<>(historyFiles);
-    result.removeAll(Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()));
+    Arrays.asList(FileEditorManager.getInstance(project).getOpenFiles()).forEach(result::remove);
     return ContainerUtil.reverse(new ArrayList<>(result));
   }
 
@@ -92,7 +88,7 @@ class LightEditRecentFileActionGroup extends ActionGroup implements DumbAware, A
       if (project != null) {
         LightEditUtil.markUnknownFileTypeAsPlainTextIfNeeded(project, myFile);
         LightEditFeatureUsagesUtil.logFileOpen(project, RecentFiles);
-        new OpenFileDescriptor(project, myFile).navigate(true);
+        LightEditService.getInstance().openFile(myFile);
       }
     }
   }
