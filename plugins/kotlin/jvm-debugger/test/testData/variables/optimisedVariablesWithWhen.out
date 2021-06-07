@@ -49,18 +49,18 @@ KotlinStackFrame (optimisedVariablesWithWhen.kt:36)
 optimisedVariablesWithWhen.kt:42
 CoroutinePreflightFrame (optimisedVariablesWithWhen.kt:42)
     JavaValue[local] $result: java.lang.Object = null
-    JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
-    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
     JavaValue[local] f: java.lang.String = f (optimisedVariablesWithWhen.kt:28)
     JavaValue[local] i: java.lang.String = i (optimisedVariablesWithWhen.kt:40)
+    DummyMessageValueNode = 'a' was optimised out
+    DummyMessageValueNode = 'b' was optimised out
     DummyMessageValueNode = 'c' was optimised out
     DummyMessageValueNode = 'e' was optimised out
     DummyMessageValueNode = 'g' was optimised out
 optimisedVariablesWithWhen.kt:47
 CoroutinePreflightFrame (optimisedVariablesWithWhen.kt:47)
     JavaValue[local] $result: java.lang.Object = null
-    JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
-    JavaValue[local] b: java.lang.String = b (optimisedVariablesWithWhen.kt:11)
+    DummyMessageValueNode = 'a' was optimised out
+    DummyMessageValueNode = 'b' was optimised out
     DummyMessageValueNode = 'c' was optimised out
     DummyMessageValueNode = 'e' was optimised out
     DummyMessageValueNode = 'f' was optimised out
@@ -83,14 +83,14 @@ CoroutinePreflightFrame (optimisedVariablesWithWhen.kt:60)
 optimisedVariablesWithWhen.kt:66
 CoroutinePreflightFrame (optimisedVariablesWithWhen.kt:66)
     JavaValue[local] $result: java.lang.Object = null
-    JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
+    DummyMessageValueNode = 'a' was optimised out
     DummyMessageValueNode = 'b' was optimised out
     DummyMessageValueNode = 'c' was optimised out
     DummyMessageValueNode = 'e' was optimised out
 optimisedVariablesWithWhen.kt:72
 CoroutinePreflightFrame (optimisedVariablesWithWhen.kt:72)
     JavaValue[local] $result: java.lang.Object = null
-    JavaValue[local] a: java.lang.String = a (optimisedVariablesWithWhen.kt:9)
+    DummyMessageValueNode = 'a' was optimised out
 optimisedVariablesWithWhen.kt:77
 CoroutinePreflightFrame (optimisedVariablesWithWhen.kt:77)
     JavaValue[local] $result: java.lang.Object = null
