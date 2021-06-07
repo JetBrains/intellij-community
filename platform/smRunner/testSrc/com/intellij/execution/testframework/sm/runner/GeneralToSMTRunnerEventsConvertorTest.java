@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -620,9 +620,10 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
 
     mySuite.addChild(mySimpleTest);
     for (int i = 0; i < 550; i++) {
-      String message = "line" + i + "\u0000\n";
+      String message = "line" + i + "\u0000 a < b \n";
       mySimpleTest.addLast(printer -> printer.print(message, ConsoleViewContentType.NORMAL_OUTPUT));
     }
+    mySimpleTest.setTestComparisonFailed("empty", null, "\u0000", "a < b");
     mySimpleTest.setFinished();
     mySuite.setFinished();
 
@@ -649,7 +650,9 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
       SMTestProxy testProxy = children.get(0);
       MockPrinter mockPrinter = new MockPrinter();
       testProxy.printOn(mockPrinter);
-      assertSize(550, mockPrinter.getAllOut().split("\n"));
+      String allOut = mockPrinter.getAllOut();
+      assertSize(559, allOut.split("\n"));
+      assertTrue(allOut.contains("a < b"));
     }
     finally {
       FileUtil.delete(output);
