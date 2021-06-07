@@ -82,10 +82,9 @@ abstract class ProductProperties {
   List<String> additionalIdeJvmArguments = []
 
   /**
-   * If not null the specified options will be used instead the default memory options in JVM command line (for 64-bit JVM) in IDE launchers
-   * for all operating systems.
+   * The specified options will be used instead of/in addition to the default JVM memory options for all operating systems.
    */
-  String customJvmMemoryOptionsX64 = null
+  Map<String, String> customJvmMemoryOptions = [:]
 
   /**
    * An identifier which will be used to form names for directories where configuration and caches will be stored, usually a product name

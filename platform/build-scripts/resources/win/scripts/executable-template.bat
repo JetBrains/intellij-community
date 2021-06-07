@@ -12,7 +12,7 @@ FOR /F "delims=" %%i in ("%IDE_BIN_DIR%\..") DO SET IDE_HOME=%%~fi
 
 :: ---------------------------------------------------------------------
 :: Locate a JRE installation directory which will be used to run the IDE.
-:: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jbr[-x86], JDK_HOME, JAVA_HOME.
+:: Try (in order): @@product_uc@@_JDK, @@vm_options@@.jdk, ..\jbr, JDK_HOME, JAVA_HOME.
 :: ---------------------------------------------------------------------
 SET JRE=
 
@@ -39,9 +39,6 @@ IF "%JRE%" == "" (
 IF "%JRE%" == "" (
   IF "%PROCESSOR_ARCHITECTURE%" == "AMD64" IF EXIST "%IDE_HOME%\jbr" SET JRE=%IDE_HOME%\jbr
 )
-IF "%JRE%" == "" (
-  IF EXIST "%IDE_HOME%\jbr-x86" SET JRE=%IDE_HOME%\jbr-x86
-)
 
 IF "%JRE%" == "" (
   IF EXIST "%JDK_HOME%" (
@@ -58,17 +55,12 @@ IF NOT EXIST "%JAVA_EXE%" (
   EXIT /B
 )
 
-SET BITS=
-FINDSTR /B /C:"OS_ARCH=\"x86_64\"" "%JRE%\release" > NUL
-IF NOT ERRORLEVEL 1 SET BITS=64
-FINDSTR /B /C:"OS_ARCH=\"amd64\"" "%JRE%\release" > NUL
-IF NOT ERRORLEVEL 1 SET BITS=64
-
 :: ---------------------------------------------------------------------
 :: Collect JVM options and properties.
 :: ---------------------------------------------------------------------
 IF NOT "%@@product_uc@@_PROPERTIES%" == "" SET IDE_PROPERTIES_PROPERTY="-Didea.properties.file=%@@product_uc@@_PROPERTIES%"
 
+SET BITS=64
 SET VM_OPTIONS_FILE=
 SET USER_VM_OPTIONS_FILE=
 IF NOT "%@@product_uc@@_VM_OPTIONS%" == "" (

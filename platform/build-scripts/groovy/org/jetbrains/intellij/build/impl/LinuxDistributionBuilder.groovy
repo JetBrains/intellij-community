@@ -73,12 +73,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
       if (customizer.buildOnlyBareTarGz) return
 
-      if (customizer.includeX86Files) {
-        buildContext.executeStep("Packaging x86 JRE for $OsFamily.LINUX", BuildOptions.LINUX_JRE_FOR_X86_STEP) {
-          buildContext.bundledJreManager.repackageX86Jre(OsFamily.LINUX)
-        }
-      }
-
       Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(OsFamily.LINUX)
       buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "")
 
@@ -104,8 +98,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       classPath += "\nCLASSPATH=\"\$CLASSPATH:\$JDK/lib/tools.jar\""
     }
 
-    String linkToX86Jre = (customizer.includeX86Files ? buildContext.bundledJreManager.x86JreDownloadUrl(OsFamily.LINUX) : null) ?: ""
-
     buildContext.ant.copy(todir: distBinDir.toString()) {
       fileset(dir: "$buildContext.paths.communityHome/platform/build-scripts/resources/linux/scripts")
 
@@ -118,7 +110,6 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         filter(token: "ide_jvm_args", value: buildContext.additionalJvmArguments.join(' '))
         filter(token: "class_path", value: classPath)
         filter(token: "script_name", value: scriptName)
-        filter(token: "x86_jre_url", value: linkToX86Jre)
       }
     }
 
@@ -129,13 +120,11 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
-  private void generateVMOptions(@NotNull Path distBinDir) {
-    [JvmArchitecture.x32, JvmArchitecture.x64].each {
-      def fileName = "${buildContext.productProperties.baseFileName}${it.fileSuffix}.vmoptions"
-      def vmOptions = VmOptionsGenerator.computeVmOptions(it, buildContext.applicationInfo.isEAP, buildContext.productProperties) +
-                      ['-Dsun.tools.attach.tmp.only=true'] //todo
-      Files.writeString(distBinDir.resolve(fileName), String.join('\n', vmOptions) + '\n', StandardCharsets.US_ASCII)
-    }
+  private void generateVMOptions(Path distBinDir) {
+    String fileName = "${buildContext.productProperties.baseFileName}64.vmoptions"
+    List<String> vmOptions = VmOptionsGenerator.computeVmOptions(buildContext.applicationInfo.isEAP, buildContext.productProperties) +
+                             ['-Dsun.tools.attach.tmp.only=true']
+    Files.writeString(distBinDir.resolve(fileName), String.join('\n', vmOptions) + '\n', StandardCharsets.US_ASCII)
   }
 
   private void generateReadme(Path unixDistPath) {
