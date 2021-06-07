@@ -86,7 +86,7 @@ Includes the following features:</p>
     <breadcrumbsInfoProvider implementation="org.intellij.plugins.markdown.breadcrumbs.MarkdownBreadcrumbsProvider"/>
 
     <applicationService serviceImplementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthService"/>
-    <filePasteProvider implementation="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportPasteProvider" order="first"/>
+    <filePasteProvider implementation="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportPasteProvider"/>
 
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.pandoc.PandocApplicationSettings"/>
     <applicationConfigurable id="Settings.Pandoc"
