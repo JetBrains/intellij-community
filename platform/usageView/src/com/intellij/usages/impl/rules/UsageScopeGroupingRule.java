@@ -100,10 +100,6 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
     }
 
     @Override
-    public void update() {
-    }
-
-    @Override
     public void navigate(boolean focus) { }
     @Override
     public boolean canNavigate() { return false; }

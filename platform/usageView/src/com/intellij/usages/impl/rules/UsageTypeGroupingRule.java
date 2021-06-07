@@ -85,10 +85,6 @@ public class UsageTypeGroupingRule extends SingleParentUsageGroupingRule impleme
     }
 
     @Override
-    public void update() {
-    }
-
-    @Override
     @NotNull
     public String getText(@Nullable UsageView view) {
       return myUsageType.toString();

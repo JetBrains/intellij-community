@@ -25,5 +25,6 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
     return true;
   }
 
-  void update();
+  default void update() {
+  }
 }

@@ -96,10 +96,6 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         }
 
         @Override
-        public void update() {
-        }
-
-        @Override
         public int compareTo(@NotNull UsageGroup usageGroup) {
             final TemplateUsageGroup myUsageGroup = ((TemplateUsageGroup)usageGroup);
             return myTemplate.getTextOffset() - myUsageGroup.myTemplate.getTextOffset();

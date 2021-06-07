@@ -13,10 +13,6 @@ public abstract class UsageGroupBase implements UsageGroup {
   }
 
   @Override
-  public void update() {
-  }
-
-  @Override
   public void navigate(boolean focus) {
   }
 

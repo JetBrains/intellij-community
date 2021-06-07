@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -97,10 +97,6 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
       myText = createText(aClass);
       myClassPointer = SmartPointerManager.getInstance(aClass.getProject()).createSmartPsiElementPointer(aClass);
       myIcon = aClass.getIcon(Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS);
-    }
-
-    @Override
-    public void update() {
     }
 
     private static @NlsSafe String createText(PsiClass aClass) {

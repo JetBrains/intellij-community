@@ -135,10 +135,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     }
 
     @Override
-    public void update() {
-    }
-
-    @Override
     @NotNull
     public String getText(UsageView view) { return String.valueOf(myPower); }
 
@@ -177,10 +173,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       public String getText(UsageView view) { return "Even"; }
 
       @Override
-      public void update() {
-      }
-
-      @Override
       public void navigate(boolean focus) throws UnsupportedOperationException { }
       @Override
       public boolean canNavigate() { return false; }
@@ -200,10 +192,6 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       @Override
       @NotNull
       public String getText(UsageView view) { return "Odd"; }
-
-      @Override
-      public void update() {
-      }
 
       @Override
       public void navigate(boolean focus) throws UnsupportedOperationException { }
