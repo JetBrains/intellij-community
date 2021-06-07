@@ -3,6 +3,9 @@ package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.KeyboardShortcut;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
@@ -98,7 +101,7 @@ public abstract class ActionOnSaveInfo {
 
   /**
    * If this 'action on save' doesn't allow changing 'Activated on' mode (i.e., this implementation doesn't override
-   * {@link #getActivatedOnDropDownLink()}), then the returned text appears as a label in the 'Activated on' column.
+   * {@link #getActivatedOnDropDownLink()}, then the returned text appears as a label in the 'Activated on' column.
    * The default value is <code>"Any save"</code>.
    * <br/><br/>
    * If the implementation overrides {@link #getActivatedOnDropDownLink()}) then this method is not used.
@@ -107,15 +110,33 @@ public abstract class ActionOnSaveInfo {
    * @see #getActivatedOnComponent()
    */
   protected @NotNull @NlsContexts.Label String getActivatedOnDefaultText() {
-    return IdeBundle.message("actions.on.save.label.activated.on.any.save");
+    return getAnySaveText();
   }
 
   /**
    * The returned {@link DropDownLink} is shown in the 'Activated on' column. It allows to choose on what kind of 'save' this 'actions on save' should work.
-   * Typical use case is to give options like 'Any save' and 'Explicit save (Ctrl+S)'.
+   * Typical use case is to give options like 'Any save (including autosave)' and 'Explicit save (Ctrl+S)'.
    *
    * @see #getActivatedOnDefaultText()
    * @see #getActivatedOnComponent()
    */
   public @Nullable DropDownLink<?> getActivatedOnDropDownLink() { return null; }
+
+  public static @NotNull @NlsContexts.Label String getAnySaveText() {
+    return IdeBundle.message("actions.on.save.label.activated.on.any.save");
+  }
+
+  public static @NotNull @NlsContexts.Label String getAnySaveTextForDropDownOption() {
+    return IdeBundle.message("actions.on.save.label.activated.on.any.save.including.autosave");
+  }
+
+  public static @NotNull @NlsContexts.Label String getExplicitSaveText() {
+    KeyboardShortcut shortcut = ActionManager.getInstance().getKeyboardShortcut("SaveAll");
+    if (shortcut != null) {
+      return IdeBundle.message("actions.on.save.label.activated.on.explicit.save.with.0.shortcut", KeymapUtil.getShortcutText(shortcut));
+    }
+    else {
+      return IdeBundle.message("actions.on.save.label.activated.on.explicit.save");
+    }
+  }
 }

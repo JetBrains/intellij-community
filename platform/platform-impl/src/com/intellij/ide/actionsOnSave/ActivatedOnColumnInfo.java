@@ -16,8 +16,8 @@ class ActivatedOnColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSave
 
   @Override
   public String getMaxStringValue() {
-    // Affects column width
-    return "Explicit save (Ctrl + S)  []";
+    // Affects column width. Use the longest label + space for drop-down arrow + insets
+    return ActionOnSaveInfo.getExplicitSaveText() + "xxxxxx";
   }
 
   @Override

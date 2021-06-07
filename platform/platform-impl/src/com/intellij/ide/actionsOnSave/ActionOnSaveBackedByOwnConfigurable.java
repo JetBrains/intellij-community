@@ -185,14 +185,14 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
    * @see ActionOnSaveInfo#isActionOnSaveEnabled()
    */
   protected boolean isActionOnSaveEnabledAccordingToStoredState() {
-    return true;
+    return false;
   }
 
   /**
    * @see ActionOnSaveInfo#isActionOnSaveEnabled()
    */
   protected boolean isActionOnSaveEnabledAccordingToUiState(@NotNull Conf configurable) {
-    return true;
+    return false;
   }
 
   @Override
