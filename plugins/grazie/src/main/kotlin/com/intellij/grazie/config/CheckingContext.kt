@@ -8,6 +8,6 @@ data class CheckingContext(
   @Property val isCheckInCommentsEnabled: Boolean = true,
   @Property val isCheckInDocumentationEnabled: Boolean = true,
 
-  /** The IDs of the programming languages in whose literals/comments/documentation is explicitly disabled */
+  /** The IDs of the programming languages where the grammar checking is explicitly disabled */
   @Property val disabledLanguages: Set<String> = HashSet()
 )
