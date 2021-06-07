@@ -5,7 +5,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowAnchor.*
 import com.intellij.openapi.wm.ToolWindowType
-import com.intellij.openapi.wm.WindowManager
 import com.intellij.ui.ComponentUtil
 import com.intellij.ui.JBColor
 import com.intellij.ui.MouseDragHelper
@@ -377,8 +376,10 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
 
     init {
       isUndecorated = true
-      if (WindowManager.getInstance().isAlphaModeSupported) {
+      try {
         opacity = THUMB_OPACITY
+      }
+      catch (ignored: Exception) {
       }
       isAlwaysOnTop = true
       contentPane = JLabel()
