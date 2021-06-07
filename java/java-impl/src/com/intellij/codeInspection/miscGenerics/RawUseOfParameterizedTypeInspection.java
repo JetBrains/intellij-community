@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -149,7 +149,7 @@ public class RawUseOfParameterizedTypeInspection extends BaseInspection {
       }
       final PsiElement parent = PsiTreeUtil.skipParentsOfType(
         typeElement, PsiTypeElement.class, PsiReferenceParameterList.class, PsiJavaCodeReferenceElement.class);
-      if (parent instanceof PsiTypeTestPattern || parent instanceof PsiClassObjectAccessExpression) {
+      if (parent instanceof PsiInstanceOfExpression || parent instanceof PsiClassObjectAccessExpression) {
         return;
       }
       if (ignoreTypeCasts && parent instanceof PsiTypeCastExpression) {
