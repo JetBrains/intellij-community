@@ -1,11 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.execution.junit.codeInsight
+package com.intellij.codeInspection
 
 import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
-import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.isAncestor
 import com.siyeh.ig.junit.JUnitCommonClassNames
+import org.jetbrains.uast.UMethod
 
 internal fun processArrayInAnnotationParameter(attributeValue: PsiAnnotationMemberValue?,
                                                checker: (value: PsiAnnotationMemberValue) -> Unit) {
@@ -33,6 +34,6 @@ internal fun hasMultipleParameters(method: PsiMethod): Boolean {
 }
 
 internal fun getElementToHighlight(attributeValue: PsiElement,
-                                  method: PsiMethod,
-                                  default: PsiNameIdentifierOwner = method): PsiElement =
-  if (PsiTreeUtil.isAncestor(method, attributeValue, true)) attributeValue else default.nameIdentifier ?: default
+                                   method: UMethod,
+                                   default: PsiNameIdentifierOwner = method.javaPsi): PsiElement {
+  return if (method.javaPsi.isAncestor(attributeValue, true)) attributeValue else default.nameIdentifier ?: default}

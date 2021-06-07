@@ -5,11 +5,11 @@ import org.junit.jupiter.params.provider.MethodSource;
 import java.util.stream.Stream;
 
 class Test {
-    private static Stream<Arguments> parmeters() {
+    public static Stream<Arguments> parameters() {
         return null;
     }
 
-    @MethodSource("parmeters")
+    @MethodSource("parameters")
   @ParameterizedTest
   void foo(String param) {}
 }

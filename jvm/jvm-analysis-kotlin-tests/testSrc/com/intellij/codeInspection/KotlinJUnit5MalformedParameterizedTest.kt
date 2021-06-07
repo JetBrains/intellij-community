@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection
 
-import com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
 import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
 import com.intellij.testFramework.LightProjectDescriptor
