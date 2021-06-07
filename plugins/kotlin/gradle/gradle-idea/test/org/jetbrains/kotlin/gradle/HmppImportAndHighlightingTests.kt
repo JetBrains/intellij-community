@@ -744,6 +744,14 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
         }
     }
 
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.5.30+")
+    fun kt46625SupportedAndUnsupportedPlatform() {
+        configureByFiles()
+        importProject()
+        checkHighligthingOnAllModules()
+    }
+
     private fun configureAndImportProject() {
         configureByFiles()
         importProject()
