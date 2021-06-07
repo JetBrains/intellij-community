@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.structureView.symbol;
 
 import com.intellij.ide.structureView.StructureViewTreeElement;
@@ -130,5 +130,11 @@ public class PsiSymbolTreeElement extends PsiTreeElementBase<PsiElement> {
   public @NotNull Collection<StructureViewTreeElement> getChildrenBase() {
     var declarationElement = getElement();
     return declarationElement == null ? Collections.emptyList() : myStructureViewModel.collectClosestChildrenSymbols(declarationElement);
+  }
+
+  @Override
+  public PsiElement getValue() {
+    var declarationElement = super.getValue();
+    return declarationElement == null ? null : new DelegatingPsiElementWithSymbolPointer(declarationElement, mySymbolPointer);
   }
 }
