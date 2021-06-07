@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.intentions.branchedTransformations
 
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isFalseConstant
 import org.jetbrains.kotlin.idea.intentions.loopToCallChain.isTrueConstant
@@ -11,8 +12,12 @@ import org.jetbrains.kotlin.idea.util.CommentSaver
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.matches
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.types.isNullable
 
-fun KtWhenCondition.toExpression(subject: KtExpression?): KtExpression {
+fun KtWhenCondition.toExpression(subject: KtExpression?, subjectContext: BindingContext? = null): KtExpression {
     val factory = KtPsiFactory(this)
     return when (this) {
         is KtWhenConditionIsPattern -> {
@@ -27,9 +32,11 @@ fun KtWhenCondition.toExpression(subject: KtExpression?): KtExpression {
 
         is KtWhenConditionWithExpression -> {
             if (subject != null) {
+                val subjectType = subject.getType(subjectContext ?: subject.analyze(BodyResolveMode.PARTIAL))
+                val isNullableSubject = subjectType?.isNullable() == true
                 when {
-                    expression?.isTrueConstant() == true -> subject
-                    expression?.isFalseConstant() == true -> subject.negate()
+                    expression?.isTrueConstant() == true && !isNullableSubject -> subject
+                    expression?.isFalseConstant() == true && !isNullableSubject -> subject.negate()
                     else -> factory.createExpressionByPattern("$0 == $1", subject, expression ?: "")
                 }
             } else {
@@ -172,6 +179,7 @@ fun KtPsiFactory.combineWhenConditions(conditions: Array<KtWhenCondition>, subje
     0 -> null
     1 -> conditions[0].toExpression(subject)
     else -> buildExpression {
-        appendExpressions(conditions.map { it.toExpression(subject) }, separator = "||")
+        val subjectContext = subject?.analyze(BodyResolveMode.PARTIAL)
+        appendExpressions(conditions.map { it.toExpression(subject, subjectContext) }, separator = "||")
     }
 }
