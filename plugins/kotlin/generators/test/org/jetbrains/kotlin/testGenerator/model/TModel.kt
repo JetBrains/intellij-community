@@ -75,4 +75,4 @@ fun makeJavaIdentifier(text: String): String {
     }
 }
 
-fun File.toJavaIdentifier() = makeJavaIdentifier(nameWithoutExtension)
+fun File.toJavaIdentifier() = makeJavaIdentifier(name)
