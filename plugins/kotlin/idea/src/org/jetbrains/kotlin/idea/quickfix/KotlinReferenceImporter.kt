@@ -30,10 +30,8 @@ class KotlinReferenceImporter : ReferenceImporter {
     override fun autoImportReferenceAtCursor(editor: Editor, file: PsiFile): Boolean {
         if (file !is KtFile || !DaemonListeners.canChangeFileSilently(file)) return false
 
-        fun hasUnresolvedImportWhichCanImport(name: String): Boolean {
-            return file.importDirectives.any {
-                it.targetDescriptors().isEmpty() && (it.isAllUnder || it.importPath?.importedName?.asString() == name)
-            }
+        fun hasUnresolvedImportWhichCanImport(name: String): Boolean = file.importDirectives.any {
+            (it.isAllUnder || it.importPath?.importedName?.asString() == name) && it.targetDescriptors().isEmpty()
         }
 
         fun KtSimpleNameExpression.autoImport(): Boolean {
