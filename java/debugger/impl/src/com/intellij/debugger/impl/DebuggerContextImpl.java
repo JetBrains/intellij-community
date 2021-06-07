@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Interface DebuggerContextImpl
@@ -131,10 +131,15 @@ public final class DebuggerContextImpl implements DebuggerContext {
     myInitialized = true;
     if(myFrameProxy == null) {
       if(myThreadProxy != null) {
-        try {
-          myFrameProxy = myThreadProxy.frameCount() > 0 ? myThreadProxy.frame(0) : null;
+        if (mySuspendContext != null && myThreadProxy.equals(mySuspendContext.getThread())) {
+          myFrameProxy = mySuspendContext.getFrameProxy();
         }
-        catch (EvaluateException ignored) {
+        else {
+          try {
+            myFrameProxy = myThreadProxy.frameCount() > 0 ? myThreadProxy.frame(0) : null;
+          }
+          catch (EvaluateException ignored) {
+          }
         }
       }
     }
