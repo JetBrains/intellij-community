@@ -12,7 +12,7 @@ import java.util.concurrent.CopyOnWriteArrayList
 /**
  * @param isBlockPropagation if true then property changes propagation will be blocked through modified properties
  */
-class PropertyGraph(debugName: String? = null, private val isBlockPropagation: Boolean = false) {
+class PropertyGraph(debugName: String? = null, private val isBlockPropagation: Boolean = true) {
   @Deprecated("Please recompile code", level = DeprecationLevel.HIDDEN)
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   constructor(debugName: String? = null) : this(debugName, true)
