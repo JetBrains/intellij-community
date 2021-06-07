@@ -61,7 +61,8 @@ public final class FileFinder {
       .collect(toList());
   }
 
-  private static List<VirtualFile> getOriginalPoms(List<VirtualFile> pomFiles) {
+  private static List<VirtualFile> getOriginalPoms(@NotNull List<VirtualFile> pomFiles) {
+    if (pomFiles.size() < 2) return pomFiles;
     List<VirtualFile> originalPoms = ContainerUtil.filter(pomFiles, vf -> MavenUtil.isPomFileName(vf.getName()));
     return originalPoms.isEmpty() ? pomFiles : originalPoms;
   }
