@@ -41,7 +41,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
 public final class IdeaLogger extends Log4jBasedLogger {
-  private static final String REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY = "idea.logger.report.every.nth.exception";
   @SuppressWarnings("StaticNonFinalField") public static String ourLastActionId = "";
   // when not null, holds the first of errors that occurred
   @SuppressWarnings("StaticNonFinalField") public static Exception ourErrorsOccurred;
@@ -57,6 +56,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
    *
    *  To disable this "mute frequent exceptions" feature completely specify "-Didea.logger.exception.expiration.minutes=0"
    */
+  private static final String REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY = "idea.logger.report.every.nth.exception";
   final int REPORT_EVERY_NTH_FREQUENT_EXCEPTION = Integer.getInteger(REPORT_EVERY_NTH_FREQUENT_EXCEPTION_PROPERTY, 10);
   private static final int EXPIRE_FREQUENT_EXCEPTIONS_AFTER_MINUTES = Integer.getInteger("idea.logger.exception.expiration.minutes", 5);
 
