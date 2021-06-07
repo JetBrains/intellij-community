@@ -4,23 +4,29 @@ package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInspection.blockingCallsDetection.BlockingMethodInNonBlockingContextInspection
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.TestRoot
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.instance as KotlinArtifacts
 
 @TestRoot("idea/tests")
 @TestMetadata("testData/inspections/blockingCallsDetection")
 @RunWith(JUnit38ClassRunner::class)
 class CoroutineNonBlockingContextDetectionTest : KotlinLightCodeInsightFixtureTestCase() {
-    override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
+    override fun getProjectDescriptor(): LightProjectDescriptor = object : KotlinWithJdkAndRuntimeLightProjectDescriptor(
+        listOf(KotlinArtifacts.instance.kotlinStdlib), listOf(KotlinArtifacts.instance.kotlinStdlibSources)
+    ) {
+        override fun configureModule(module: Module, model: ModifiableRootModel) {
+            super.configureModule(module, model)
+            MavenDependencyUtil.addFromMaven(model, "org.jetbrains.kotlinx:kotlinx-coroutines-core:1.4.2")
+        }
+    }
 
     override fun setUp() {
         super.setUp()
