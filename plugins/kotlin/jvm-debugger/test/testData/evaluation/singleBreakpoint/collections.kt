@@ -12,7 +12,7 @@ fun main(args: Array<String>) {
 // EXPRESSION: arrayListOf(1, 2, 101, 102).filter { it > 100 }
 // RESULT: instance of java.util.ArrayList(id=ID): Ljava/util/ArrayList;
 
-// EXPRESSION: arrayListOf(1, 2).max()
+// EXPRESSION: arrayListOf(1, 2).maxOrNull()
 // RESULT: instance of java.lang.Integer(id=ID): Ljava/lang/Integer;
 
 // EXPRESSION: arrayListOf(1, 2).count()

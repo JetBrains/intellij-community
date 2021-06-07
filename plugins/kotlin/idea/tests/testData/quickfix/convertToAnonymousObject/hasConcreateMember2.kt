@@ -1,4 +1,5 @@
 // "Convert to anonymous object" "true"
+// ERROR: Interfaces cannot initialize supertypes
 interface I0 {
     fun x() {}
 }
