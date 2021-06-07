@@ -4,19 +4,19 @@ Reports <code>for</code> loops iterating over a collection using <code>withIndex
 <p>Paired "Remove indices in 'for' loop" quick-fix allows to amend highlighted code snippet.</p>
 <p>Examples:</p>
 <pre><code>
-fun foo(bar: List&lt;String&gt;) {
-  for ((index : Int, value: String) in bar.withIndex()) { // &lt;== 'index' is unused
+  fun foo(bar: List&lt;String&gt;) {
+     for ((index : Int, value: String) in bar.withIndex()) { // &lt;== 'index' is unused
 
+     }
   }
-}
 </code></pre>
 <p>After quick-fix:</p>
 <pre><code>
-fun foo(bar: List&lt;String&gt;) {
-   for (value: String in bar) { // &lt;== '.withIndex()' and 'index' are removed
+  fun foo(bar: List&lt;String&gt;) {
+      for (value: String in bar) { // &lt;== '.withIndex()' and 'index' are removed
 
-   }
-}
+      }
+  }
 </code></pre>
 
 </body>

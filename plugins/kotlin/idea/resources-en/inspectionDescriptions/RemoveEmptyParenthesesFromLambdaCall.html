@@ -5,9 +5,9 @@ Reports unnecessary parentheses of function calls where the only parameter is a 
 
 <p>Examples:</p>
 <pre><code>
-fun foo() {
-    listOf(1).forEach() {  } // &lt;== can be replaced with 'forEach {  }'
-}
+  fun foo() {
+      listOf(1).forEach() {  } // &lt;== can be replaced with 'forEach {  }'
+  }
 </code></pre>
 </body>
 </html>

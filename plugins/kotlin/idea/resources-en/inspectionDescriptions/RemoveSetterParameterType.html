@@ -7,9 +7,9 @@ Reports explicitly given parameter types in property setters.
 </p>
 <p>Examples:</p>
 <pre><code>
-   fun process(x: Int) {}
+  fun process(x: Int) {}
 
-   var x: Int = 0
+  var x: Int = 0
       set(value: Int) = process(value) // &lt;== 'Int' specification can be safely omitted
 </code></pre>
 </body>

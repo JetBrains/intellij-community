@@ -3,18 +3,17 @@
 Reports redundant <code>Unit</code> expression which can be omitted.
 <p>Examples:</p>
 <pre><code>
-    fun redundantUnitExp(b: Boolean): Unit = if (b) {
-        class A
-        Unit // &lt;= is redundant here
-    } else {
-    }
+  fun redundantUnitExp(b: Boolean): Unit = if (b) {
+      class A
+      Unit // &lt;= is redundant here
+  } else {
+  }
 
-    fun neededUnitExp(b: Boolean): Unit = if (b) {
-        1
-        Unit // &lt;= while here it's needed
-    } else {
-    }
-
+  fun neededUnitExp(b: Boolean): Unit = if (b) {
+      1
+      Unit // &lt;= while here it's needed
+  } else {
+  }
 </code></pre>
 </body>
 </html>

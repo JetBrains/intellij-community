@@ -8,28 +8,28 @@ Setter is considered to be redundant in one of the following cases:
     <li>
         Setter has no body. Accessor visibility isn't changed, declaration isn't 'external' and has no annotations.
         <pre><code>
-    var myPropA: Int = 0
-        private set // it's ok - property visibility is changed to private
+  var myPropA: Int = 0
+      private set // it's ok - property visibility is changed to private
 
-    var myPropB: Int = 0
-        external set // it's ok - implemented not in Kotlin (external)
+  var myPropB: Int = 0
+      external set // it's ok - implemented not in Kotlin (external)
 
-    var myPropC: Int = 0
-        @Inject set // it's ok - accessor is annotated
+  var myPropC: Int = 0
+      @Inject set // it's ok - accessor is annotated
 
 
-    var myPropWithRedundantSetter: Int = 0
-        set // redundant
+  var myPropWithRedundantSetter: Int = 0
+      set // redundant
         </code></pre>
     </li>
 
     <li>
         Setter body is a block with a single statement assigning parameter to the backing field.
         <pre><code>
-    var prop: Int = 0
-        set(value) { // redundant
-            field = value
-        }
+  var prop: Int = 0
+      set(value) { // redundant
+          field = value
+      }
        </code></pre>
     </li>
 </ol>
