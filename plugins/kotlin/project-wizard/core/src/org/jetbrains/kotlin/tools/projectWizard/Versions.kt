@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.tools.projectWizard.settings.version.Version
 object Versions {
     val KOTLIN = version("1.4.10") // used as fallback version
     val GRADLE = version("7.0.2")
-    val KTOR = version("1.5.2")
+    val KTOR = version("1.6.0")
     val JUNIT = version("4.13")
     val JUNIT5 = version("5.6.0")
     val JETBRAINS_COMPOSE = version("1.0.0")
