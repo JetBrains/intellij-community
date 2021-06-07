@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 
 @Suppress("MemberVisibilityCanBePrivate")
 object MarkdownPsiUtils {
-  private fun ASTNode.isMarkdownLinkType() = when (elementType) {
+  internal fun ASTNode.isMarkdownLinkType() = when (elementType) {
     MarkdownElementTypes.LINK_DEFINITION,
     MarkdownElementTypes.LINK_LABEL,
     MarkdownElementTypes.LINK_DESTINATION,
@@ -26,21 +26,17 @@ object MarkdownPsiUtils {
     else -> false
   }
 
-  private fun ASTNode.isMarkdownCodeType() = when (elementType) {
+  internal fun ASTNode.isMarkdownCodeType() = when (elementType) {
     MarkdownElementTypes.CODE_FENCE,
     MarkdownElementTypes.CODE_BLOCK,
     MarkdownElementTypes.CODE_SPAN -> true
     else -> false
   }
 
-  private fun ASTNode.isMarkdownInlineType() = isMarkdownLinkType() || isMarkdownCodeType()
-
-
   fun isParagraph(element: PsiElement) = element.node?.hasType(MarkdownElementTypes.PARAGRAPH) ?: false
   fun isHeaderContent(element: PsiElement) = element.node?.hasType(MarkdownTokenTypes.ATX_CONTENT, MarkdownTokenTypes.SETEXT_CONTENT)
                                              ?: false
 
-  fun isInline(element: PsiElement) = element.node?.isMarkdownInlineType() ?: false
   fun isOuterListItem(element: PsiElement) = element.node?.hasType(MarkdownElementTypes.LIST_ITEM) ?: false
                                              && element.node?.noParentOfTypes(TokenSet.create(MarkdownElementTypes.LIST_ITEM)) ?: false
 
