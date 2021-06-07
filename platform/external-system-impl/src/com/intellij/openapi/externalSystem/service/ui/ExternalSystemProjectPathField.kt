@@ -4,6 +4,7 @@ package com.intellij.openapi.externalSystem.service.ui
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor
+import com.intellij.openapi.externalSystem.service.ui.completetion.JTextCompletionContributor.CompletionType
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionContributor.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup
 import com.intellij.openapi.externalSystem.service.ui.completetion.TextCompletionPopup.UpdatePopupType.SHOW_IF_HAS_VARIANCES
@@ -226,7 +227,7 @@ class ExternalSystemProjectPathField(
   }
 
   init {
-    val textCompletionContributor = JTextCompletionContributor.create { textToComplete ->
+    val textCompletionContributor = JTextCompletionContributor.create(CompletionType.REPLACE) { textToComplete ->
       when (mode) {
         Mode.NAME -> {
           externalProjects
