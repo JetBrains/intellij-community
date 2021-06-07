@@ -2,7 +2,7 @@ expect class <!LINE_MARKER("descr='Has actuals in JVM'")!>Expect<!>
 
 class Box<out T>(val x: T)
 
-interface <!LINE_MARKER("descr='Is implemented by Derived'")!>Base<!> {
+interface <!LINE_MARKER("descr='Is implemented by Derived  Click or press ... to navigate'")!>Base<!> {
     fun <!LINE_MARKER("descr='Is implemented in Derived'")!>expectInReturnType<!>(): Box<Expect>
 
     fun expectInArgument(e: Box<Expect>)

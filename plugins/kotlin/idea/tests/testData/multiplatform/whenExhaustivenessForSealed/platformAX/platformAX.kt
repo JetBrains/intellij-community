@@ -1,4 +1,4 @@
-actual sealed class <!LINE_MARKER("descr='Is subclassed by PlatformAXImplTestClass'")!>TestClass<!> actual constructor() {}
+actual sealed class <!LINE_MARKER("descr='Is subclassed by PlatformAXImplTestClass  Click or press ... to navigate'")!>TestClass<!> actual constructor() {}
 class PlatformAXImplTestClass: TestClass()
 
 fun checkCommonAX(t: TestClass): Int = when (t) {
