@@ -151,6 +151,8 @@ object CacheForCompilerErrorMessages {
   }
 
   private val DEFAULT_CHECK = listOf<MessagePredicate>(
+    { it.contains("warning: source release") && it.contains("requires target release") },
+    { it.contains("error: invalid target release") },
     { it.contains("release version") && it.contains("not supported") }, //en
     {
       it.contains("\u30EA\u30EA\u30FC\u30B9\u30FB\u30D0\u30FC\u30B8\u30E7\u30F3")

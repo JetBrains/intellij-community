@@ -53,7 +53,7 @@ class TargetLevelBuildIssue(
   override val quickFixes: List<UpdateTargetLevelQuickFix> = Collections.singletonList(UpdateTargetLevelQuickFix(mavenProject))
   override val description = createDescription()
 
-  private fun createDescription() = quickFixes.map { message("maven.target.level.not.supported.update", it.id) }
+  private fun createDescription() = "$title\n<br/>" + quickFixes.map { message("maven.target.level.not.supported.update", it.id) }
     .joinToString("\n<br/>")
 
 

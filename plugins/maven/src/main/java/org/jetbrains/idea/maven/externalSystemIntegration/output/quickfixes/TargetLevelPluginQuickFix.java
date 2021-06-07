@@ -16,6 +16,8 @@ import org.jetbrains.idea.maven.importing.MavenProjectModelModifier;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
+import java.util.Optional;
+
 public class TargetLevelPluginQuickFix extends LanguageLevelQuickFix{
 
   public TargetLevelPluginQuickFix(@NotNull Project project, @NotNull MavenProject mavenProject) {
@@ -29,11 +31,15 @@ public class TargetLevelPluginQuickFix extends LanguageLevelQuickFix{
     XmlTag tag = MavenProjectModelModifier.getCompilerPlugin(model).getConfiguration().ensureTagExists();
     String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
     String prevTargetValue = setChildTagIfAbsent(tag, LanguageLevelPluginQuickFix.COMPILER_TARGET, option);
+    String targetValue = Optional.ofNullable(tag.findFirstSubTag(LanguageLevelPluginQuickFix.COMPILER_SOURCE))
+      .map(sourceTag -> sourceTag.getValue())
+      .map(t -> t.getText())
+      .orElse(option);
 
     PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
 
     tag = MavenProjectModelModifier.getCompilerPlugin(model).getConfiguration().ensureTagExists();
-    Template template = getTemplate(tag, prevTargetValue, option);
+    Template template = getTemplate(tag, prevTargetValue, targetValue);
     runTemplate(template, tag);
   }
 
