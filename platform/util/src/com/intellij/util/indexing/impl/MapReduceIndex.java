@@ -283,6 +283,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
     return new IndexUpdateComputable(updateData, data);
   }
 
+  @ApiStatus.Internal
+  protected void checkNonCancellableSection() {
+
+  }
+
   protected void updateForwardIndex(int inputId, @NotNull InputData<Key, Value> data) throws IOException {
     if (myForwardIndex != null) {
       if (myUseIntForwardIndex) {
@@ -400,6 +405,7 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
 
     @Override
     public Boolean compute() {
+      checkNonCancellableSection();
       try {
         MapReduceIndex.this.updateWithMap(myUpdateData);
       }

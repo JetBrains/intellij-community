@@ -1005,7 +1005,6 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
            documentsToProcessForProject.size() == documents.size() &&
            !hasActiveTransactions()
         ) {
-          ProgressManager.checkCanceled();
           myUpToDateIndicesForUnsavedOrTransactedDocuments.add(indexId);
         }
       }
