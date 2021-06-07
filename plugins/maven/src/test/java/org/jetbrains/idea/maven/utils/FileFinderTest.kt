@@ -52,6 +52,7 @@ class FileFinderTest : MavenTestCase() {
     createProjectSubFile("a/pom-template.xml", pomContent)
     val pomB1 = createProjectSubFile("b/pom-template.xml", pomContent)
     val pomB2 = createProjectSubFile("b/.flatten-pom.xml", pomContent)
+    createProjectSubFile("c/test.xml", "<test/>")
     val root = mainPom.parent
     val findPomFiles = FileFinder.findPomFiles(Array(1) { root }, true, mavenProgressIndicator)
     assertTrue(findPomFiles.size == 4)
