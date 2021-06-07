@@ -10,8 +10,13 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.nio.file.Paths
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
+import java.io.File
 
 abstract class AbstractHighLevelMultiFileJvmBasicCompletionTest : KotlinFixtureCompletionBaseTestCase() {
+
+    override val testDataDirectory: File
+        get() = super.testDataDirectory.resolve(getTestName(false))
+
     override val captureExceptions: Boolean = false
 
     override fun executeTest(test: () -> Unit) {
