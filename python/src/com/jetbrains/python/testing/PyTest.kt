@@ -72,6 +72,7 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
   override fun getCustomRawArgumentsString(forRerun: Boolean): String = mutableListOf<String>().apply {
     if (keywords.isNotEmpty()) add("-k $keywords")
     if (AdvancedSettings.getBoolean("python.pytest.swapdiff")) add("--jb-swapdiff")
+    if (AdvancedSettings.getBoolean("python.pytest.show_summary")) add("--jb-show-summary")
   }.joinToString(" ")
 
   override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> =
