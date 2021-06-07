@@ -774,8 +774,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   /**
    * @return tool button for the window with specified `ID`.
    */
-  @TestOnly
-  fun getStripeButton(id: String) = idToEntry[id]!!.stripeButton
+  @ApiStatus.Internal
+  fun getStripeButton(id: String) = idToEntry[id]?.stripeButton
 
   override fun getIdsOn(anchor: ToolWindowAnchor) = getVisibleToolWindowsOn(anchor).map { it.id }.toList()
 
