@@ -60,12 +60,12 @@ class ExternalSystemProjectPathField(
     projectUiPathProperty.dependsOn(textProperty) {
       when (mode) {
         Mode.PATH -> text
-        Mode.NAME -> resolveProjectPathByName(text)
+        Mode.NAME -> resolveProjectPathByName(text) ?: text
       }
     }
     projectNameProperty.dependsOn(textProperty) {
       when (mode) {
-        Mode.PATH -> resolveProjectNameByPath(text)
+        Mode.PATH -> resolveProjectNameByPath(text) ?: text
         Mode.NAME -> text
       }
     }
@@ -78,13 +78,27 @@ class ExternalSystemProjectPathField(
     textProperty.dependsOn(projectUiPathProperty) {
       when (mode) {
         Mode.PATH -> projectUiPath
-        Mode.NAME -> resolveProjectNameByPath(projectPath)
+        Mode.NAME -> resolveProjectNameByPath(projectUiPath) ?: projectUiPath
       }
     }
     textProperty.dependsOn(projectNameProperty) {
       when (mode) {
-        Mode.PATH -> resolveProjectPathByName(projectName)
+        Mode.PATH -> resolveProjectPathByName(projectName) ?: projectName
         Mode.NAME -> projectName
+      }
+    }
+    modeProperty.dependsOn(projectUiPathProperty) {
+      when {
+        projectUiPath.isEmpty() -> Mode.NAME
+        resolveProjectNameByPath(projectUiPath) != null -> mode
+        else -> Mode.PATH
+      }
+    }
+    modeProperty.dependsOn(projectNameProperty) {
+      when {
+        projectName.isEmpty() -> Mode.NAME
+        resolveProjectPathByName(projectName) != null -> mode
+        else -> Mode.PATH
       }
     }
     bind(textProperty)
@@ -103,14 +117,17 @@ class ExternalSystemProjectPathField(
     getValue: E.() -> String,
     keyDelimiter: String,
     valueDelimiter: String
-  ): String {
+  ): String? {
     val entry = entries.asSequence()
       .filter { it.getKey().startsWith(key) && key.isNotEmpty() }
       .sortedBy { it.getKey().length }
       .firstOrNull()
     if (entry != null) {
       val suffix = entry.getKey().removePrefix(key)
-      return entry.getValue().removeSuffix(suffix)
+        .replace(keyDelimiter, valueDelimiter)
+      if (entry.getValue().endsWith(suffix)) {
+        return entry.getValue().removeSuffix(suffix)
+      }
     }
     val parentEntry = entries.asSequence()
       .filter { key.startsWith(it.getKey()) }
@@ -118,9 +135,10 @@ class ExternalSystemProjectPathField(
       .firstOrNull()
     if (parentEntry != null) {
       val suffix = key.removePrefix(parentEntry.getKey())
-      return parentEntry.getValue() + suffix.replace(keyDelimiter, valueDelimiter)
+        .replace(keyDelimiter, valueDelimiter)
+      return parentEntry.getValue() + suffix
     }
-    return key
+    return null
   }
 
   init {
@@ -211,9 +229,9 @@ class ExternalSystemProjectPathField(
     val title = ExternalSystemBundle.message("settings.label.select.project", externalSystemId.readableName)
     val fileChooserDescriptor = ExternalSystemApiUtil.getExternalProjectConfigDescriptor(externalSystemId)
     val fileBrowseAccessor = object : TextComponentAccessor<ExternalSystemProjectPathField> {
-      override fun getText(component: ExternalSystemProjectPathField) = projectUiPath
+      override fun getText(component: ExternalSystemProjectPathField) = projectPath
       override fun setText(component: ExternalSystemProjectPathField, text: String) {
-        projectUiPath = text
+        projectPath = text
       }
     }
     val browseFolderRunnable = object : BrowseFolderRunnable<ExternalSystemProjectPathField>(
@@ -245,9 +263,6 @@ class ExternalSystemProjectPathField(
       }
     }
     val textCompletionPopup = TextCompletionPopup(project, this, textCompletionContributor)
-    textCompletionContributor.whenVariantChosen { _, _ ->
-      mode = Mode.NAME
-    }
     modeProperty.afterChange {
       textCompletionPopup.updatePopup(SHOW_IF_HAS_VARIANCES)
     }
