@@ -18,7 +18,17 @@ Since operators have predefined symbolic representation the functions above corr
   }
 
   fun test() {
-      Test().get(0) // can be replaced with 'Test()[0]'
+      Test().get(0) // replaceable 'get()'
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  class Test {
+      operator fun get(i: Int): Int = 0
+  }
+
+  fun test() {
+      Test()[0]
   }
 </code></pre>
 </body>

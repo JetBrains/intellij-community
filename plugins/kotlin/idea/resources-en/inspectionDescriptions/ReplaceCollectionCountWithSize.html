@@ -11,7 +11,14 @@ Reports usages of collection <code>Collection&lt;T&gt;.count()</code>. This func
 <pre><code>
   fun foo() {
       var list = listOf(1,2,3)
-      list.count() // 'list.size' could be used instead
+      list.count() // replaceable 'count()'
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun foo() {
+      var list = listOf(1,2,3)
+      list.size
   }
 </code></pre>
 </body>

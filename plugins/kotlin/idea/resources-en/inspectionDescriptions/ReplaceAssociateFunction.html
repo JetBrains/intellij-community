@@ -13,10 +13,21 @@ Reports <code>associate() and associateTo()</code> calls that can be replaced wi
 <p>Examples:</p>
 <pre><code>
   fun getKey(i: Int) = 1L
+  fun getValue(i: Int) = 1L
 
   fun test() {
-      arrayOf(1).associate { getKey(it) to it }  // can be replaced with 'associateBy { getKey(it) }'
-      listOf(1).associate { it to getValue(it) } // can be replaced with 'listOf(1).associateWith { getValue(it) }'
+      arrayOf(1).associate { getKey(it) to it }  // replaceable 'associate()'
+      listOf(1).associate { it to getValue(it) } // replaceable 'associate()'
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun getKey(i: Int) = 1L
+  fun getValue(i: Int) = 1L
+
+  fun test() {
+      arrayOf(1).associateBy { getKey(it) }
+      listOf(1).associateWith { getValue(it) }
   }
 </code></pre>
 </body>
