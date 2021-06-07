@@ -97,7 +97,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
     reportToFus(t);
 
     if (occurrences % REPORT_EVERY_NTH_FREQUENT_EXCEPTION == 0 && occurrences > 1) {
-      error(false, getExceptionWasAlreadyReportedNTimesMessage(t, occurrences), null);
+      doLogError(getExceptionWasAlreadyReportedNTimesMessage(t, occurrences), null);
     }
 
     return true;
@@ -177,10 +177,11 @@ public final class IdeaLogger extends Log4jBasedLogger {
   @Override
   public void error(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (isTooFrequentException(t)) return;
-    error(true, message, t, details);
+    doLogError(message, t, details);
+    logErrorHeader(t);
   }
 
-  private void error(boolean addErrorHeader, String message, @Nullable Throwable t, String @NotNull ... details) {
+  private void doLogError(String message, @Nullable Throwable t, String @NotNull ... details) {
     if (t instanceof ControlFlowException) {
       myLogger.error(message, ensureNotControlFlow(t));
       ExceptionUtil.rethrow(t);
@@ -198,9 +199,6 @@ public final class IdeaLogger extends Log4jBasedLogger {
       ourErrorsOccurred = new Exception(mess + detailString, t);
     }
     myLogger.error(message + detailString, t);
-    if (addErrorHeader) {
-      logErrorHeader(t);
-    }
   }
 
   private void logErrorHeader(@Nullable Throwable t) {
