@@ -95,7 +95,7 @@
       <category>Kotlin</category>
     </intentionAction>
     <codeInsight.unresolvedReferenceQuickFixProvider
-        implementation="org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenUnresolvedReferenceQuickFixProvider" />
+            implementation="org.jetbrains.kotlin.idea.maven.inspections.KotlinMavenUnresolvedReferenceQuickFixProvider" />
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.maven.MavenImportListener"/>
 
@@ -121,5 +121,5 @@
       <add-to-group group-id="GenerateGroup" anchor="last" />
     </group>
   </actions>
-    <resource-bundle>messages.KotlinBundle</resource-bundle>
+  <resource-bundle>messages.KotlinBundle</resource-bundle>
 </idea-plugin>
