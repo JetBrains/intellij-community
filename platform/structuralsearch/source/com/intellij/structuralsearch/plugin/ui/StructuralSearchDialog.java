@@ -600,15 +600,13 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
       @Override
       public boolean isSelected(@NotNull AnActionEvent e) {
-        return myConfiguration instanceof SearchConfiguration && myConfiguration.getMatchOptions().isRecursiveSearch();
+        return myConfiguration.getMatchOptions().isRecursiveSearch();
       }
 
       @Override
       public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        if (myConfiguration instanceof SearchConfiguration) {
-          myConfiguration.getMatchOptions().setRecursiveSearch(state);
-          initValidation();
-        }
+        myConfiguration.getMatchOptions().setRecursiveSearch(state);
+        initValidation();
       }
     };
     final CheckboxAction matchCase = new CheckboxAction(FindBundle.message("find.popup.case.sensitive")) {
