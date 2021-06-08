@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.actions.styling
 
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.ToggleAction
@@ -20,6 +21,7 @@ import com.intellij.refactoring.suggested.startOffset
 import com.intellij.util.LocalFileUrl
 import com.intellij.util.Urls
 import com.intellij.util.io.exists
+import icons.MarkdownIcons
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
@@ -27,7 +29,6 @@ import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil
 import java.nio.file.Path
 
 class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
-
   override fun isSelected(e: AnActionEvent): Boolean {
     val editor = MarkdownActionUtil.findMarkdownTextEditor(e)
     val file = e.getData(CommonDataKeys.PSI_FILE)
@@ -82,6 +83,15 @@ class MarkdownCreateLinkAction : ToggleAction(), DumbAware {
           if (element == null) return@forEach
           unwrapLink(element, caret, editor, file.project)
         }
+    }
+  }
+
+  override fun update(e: AnActionEvent) {
+    val originalIcon = e.presentation.icon
+    super.update(e)
+    if (ActionPlaces.isPopupPlace(e.place)) {
+      // Restore original icon, as it will be disabled in popups, and we still want to show in GeneratePopup
+      e.presentation.icon = originalIcon
     }
   }
 

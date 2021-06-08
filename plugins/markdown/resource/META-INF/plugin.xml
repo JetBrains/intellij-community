@@ -246,6 +246,7 @@ Includes the following features:</p>
               id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
               icon="MarkdownIcons.EditorActions.Link">
         <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
+        <add-to-group group-id="GenerateGroup" anchor="last"/>
       </action>
 
       <separator/>
@@ -270,6 +271,7 @@ Includes the following features:</p>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
               icon="AllIcons.General.LayoutPreviewOnly">
+        <add-to-group group-id="GenerateGroup" anchor="last"/>
       </action>
     </group>
 
