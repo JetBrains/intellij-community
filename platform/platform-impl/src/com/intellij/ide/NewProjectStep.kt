@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide
 
 import com.intellij.ide.NewProjectWizard.Companion.EP_WIZARD
@@ -40,7 +40,9 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
         it.value.map { lc ->
           row(lc.label) {
             component(lc.component)
-          }.apply { visible = false }
+          }
+          .onGlobalApply { if (lc.component is DialogPanel) lc.component.apply() }
+          .apply { visible = false }
             .apply { largeGapAfter() }
         }
     }
