@@ -812,6 +812,10 @@
       <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
       <category>Other</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.ide.scratch.ScratchFromSelectionIntention</className>
+      <category>Other</category>
+    </intentionAction>
 
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.DoNotShowInspectionIntentionMenuContributor"/>
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor"/>
