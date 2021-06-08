@@ -131,7 +131,7 @@ public class AboutDialog extends DialogWrapper {
     if (la != null) {
       final String licensedTo = la.getLicensedToMessage(); //NON-NLS
       if (licensedTo != null) {
-        addLine(lines, licensedTo, getDefaultTextFont().asBold());
+        addLine(lines, licensedTo);
       }
 
       la.getLicenseRestrictionsMessages()

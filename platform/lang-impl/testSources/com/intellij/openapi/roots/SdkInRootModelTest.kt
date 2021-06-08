@@ -99,6 +99,7 @@ class SdkInRootModelTest {
     val model = createModifiableModel(module)
     val sdk = projectModel.createSdk("my sdk")
     model.sdk = sdk
+    runWriteActionAndWait { ProjectJdkTable.getInstance().addJdk(sdk, projectModel.project) }
     assertThat(model.isSdkInherited).isFalse()
     assertThat(model.sdk).isEqualTo(sdk)
     assertThat(model.sdkName).isEqualTo("my sdk")

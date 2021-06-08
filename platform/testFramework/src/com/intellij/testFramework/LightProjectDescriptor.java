@@ -142,6 +142,7 @@ public class LightProjectDescriptor {
       Sdk sdk = getSdk();
       if (sdk != null) {
         model.setSdk(sdk);
+        ProjectJdkTable.getInstance().addJdk(sdk, module.getProject());
       }
 
       ContentEntry contentEntry = model.addContentEntry(srcRoot);
