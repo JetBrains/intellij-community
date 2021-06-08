@@ -24,15 +24,14 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     }
 
     val allRules by lazy { allRules().values.flatten().groupBy { it.globalId } }
-    fun mayLogRule(id: String) = allRules[id].orEmpty().all { getPluginInfo(it.javaClass).isSafeToReport() }
-
-    for (id in state.userEnabledRules.filter { mayLogRule(it) }) {
-      metrics.add(newMetric("rule", FeatureUsageData().addData("id", id).addData("enabled", true)))
-    }
-    for (id in state.userDisabledRules.filter { mayLogRule(it) }) {
-      metrics.add(newMetric("rule", FeatureUsageData().addData("id", id).addData("enabled", false)))
+    fun logRule(id: String, enabled: Boolean) {
+      val rule = allRules[id]?.firstOrNull() ?: return
+      val pluginId = getPluginInfo(rule.javaClass).id ?: return
+      metrics.add(newMetric("rule", FeatureUsageData().addData("id", id).addData("plugin_id", pluginId).addData("enabled", enabled)))
     }
 
+    state.userEnabledRules.forEach { logRule(it, enabled = true) }
+    state.userDisabledRules.forEach { logRule(it, enabled = false) }
 
     for (id in state.checkingContext.disabledLanguages) {
       metrics.add(newMetric("checkingContext", FeatureUsageData().addData("disabled_language", id)))
