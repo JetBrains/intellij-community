@@ -74,5 +74,6 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.gradle" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.parcelize.tests" />
     <orderEntry type="module" module-name="kotlin.idea.tests" />
+    <orderEntry type="module" module-name="kotlin.jps-plugin.tests" />
   </component>
 </module>

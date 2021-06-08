@@ -11,7 +11,7 @@ abstract class AbstractMultiplatformJpsTestWithGeneratedContent : AbstractIncrem
         get() = File(testDataDir.parent, "dependencies.txt").also {
             check(it.exists()) {
                 "`dependencies.txt` should be in parent dir. " +
-                        "See `jps-plugin/testData/incremental/multiModule/multiplatform/withGeneratedContent/README.md` for details"
+                        "See `jps-plugin/tests/testData/incremental/multiModule/multiplatform/withGeneratedContent/README.md` for details"
             }
         }
 

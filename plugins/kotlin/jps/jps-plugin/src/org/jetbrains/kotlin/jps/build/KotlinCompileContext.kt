@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicBoolean
  *  It is initialized lazily, and only before building of first chunk with kotlin code,
  *  and will be disposed on build finish.
  */
-internal val CompileContext.kotlin: KotlinCompileContext
+/*internal */val CompileContext.kotlin: KotlinCompileContext
     get() {
         val userData = getUserData(kotlinCompileContextKey)
         if (userData != null) return userData

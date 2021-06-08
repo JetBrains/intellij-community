@@ -14,57 +14,42 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("jps/jps-plugin")
+@TestRoot("jps/jps-plugin/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/incremental/lookupTracker/jvm")
-public class JvmLookupTrackerTestGenerated extends AbstractJvmLookupTrackerTest {
+@TestMetadata("testData/incremental/lookupTracker/js")
+public class JsLookupTrackerTestGenerated extends AbstractJsLookupTrackerTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
     @TestMetadata("classifierMembers")
     public void testClassifierMembers() throws Exception {
-        runTest("testData/incremental/lookupTracker/jvm/classifierMembers/");
+        runTest("testData/incremental/lookupTracker/js/classifierMembers/");
     }
 
     @TestMetadata("conventions")
     public void testConventions() throws Exception {
-        runTest("testData/incremental/lookupTracker/jvm/conventions/");
+        runTest("testData/incremental/lookupTracker/js/conventions/");
     }
 
     @TestMetadata("expressionType")
     public void testExpressionType() throws Exception {
-        runTest("testData/incremental/lookupTracker/jvm/expressionType/");
-    }
-
-    @TestMetadata("java")
-    public void testJava() throws Exception {
-        runTest("testData/incremental/lookupTracker/jvm/java/");
+        runTest("testData/incremental/lookupTracker/js/expressionType/");
     }
 
     @TestMetadata("localDeclarations")
     public void testLocalDeclarations() throws Exception {
-        runTest("testData/incremental/lookupTracker/jvm/localDeclarations/");
+        runTest("testData/incremental/lookupTracker/js/localDeclarations/");
     }
 
     @TestMetadata("packageDeclarations")
     public void testPackageDeclarations() throws Exception {
-        runTest("testData/incremental/lookupTracker/jvm/packageDeclarations/");
-    }
-
-    @TestMetadata("SAM")
-    public void testSAM() throws Exception {
-        runTest("testData/incremental/lookupTracker/jvm/SAM/");
+        runTest("testData/incremental/lookupTracker/js/packageDeclarations/");
     }
 
     @TestMetadata("simple")
     public void testSimple() throws Exception {
-        runTest("testData/incremental/lookupTracker/jvm/simple/");
-    }
-
-    @TestMetadata("syntheticProperties")
-    public void testSyntheticProperties() throws Exception {
-        runTest("testData/incremental/lookupTracker/jvm/syntheticProperties/");
+        runTest("testData/incremental/lookupTracker/js/simple/");
     }
 }

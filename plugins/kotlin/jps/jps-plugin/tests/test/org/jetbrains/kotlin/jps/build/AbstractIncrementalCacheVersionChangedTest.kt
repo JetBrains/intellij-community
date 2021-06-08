@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.jps.incremental.CacheVersionManager
 import org.jetbrains.kotlin.jps.targets.KotlinModuleBuildTarget
 
 /**
- * @see [jps-plugin/testData/incremental/cacheVersionChanged/README.md]
+ * @see [jps-plugin/tests/testData/incremental/cacheVersionChanged/README.md]
  */
 abstract class AbstractIncrementalCacheVersionChangedTest : AbstractIncrementalJvmJpsTest(allowNoFilesWithSuffixInTestData = true) {
     override fun performAdditionalModifications(modifications: List<Modification>) {

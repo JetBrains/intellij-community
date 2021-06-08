@@ -42,7 +42,7 @@ abstract class AbstractKotlinJpsBuildTestCase : BaseKotlinJpsBuildTestCase() {
     }
 
     companion object {
-        val TEST_DATA_PATH = KotlinRoot.DIR.absolutePath + "/jps/jps-plugin/testData/"
+        val TEST_DATA_PATH = KotlinRoot.DIR.absolutePath + "/jps/jps-plugin/tests/testData/"
 
         @JvmStatic
         protected fun addKotlinStdlibDependency(modules: Collection<JpsModule>, exported: Boolean = false): JpsLibrary {

@@ -1342,7 +1342,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("jps/jps-plugin") {
+    testGroup("jps/jps-plugin/tests") {
         testClass<AbstractIncrementalJvmJpsTest> {
             model("incremental/multiModule/common", pattern = DIRECTORY)
             model("incremental/multiModule/jvm", pattern = DIRECTORY)
@@ -1389,9 +1389,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractDataContainerVersionChangedTest> {
             model("incremental/cacheVersionChanged", pattern = DIRECTORY)
         }
-    }
 
-    testGroup("jps/jps-plugin") {
         fun MutableTSuite.commonProtoComparisonTests() {
             model("comparison/classSignatureChange", pattern = DIRECTORY)
             model("comparison/classPrivateOnlyChange", pattern = DIRECTORY)

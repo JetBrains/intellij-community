@@ -7,27 +7,27 @@ import org.jetbrains.kotlin.test.util.slashedPath
 
 class IncrementalConstantSearchTest : AbstractIncrementalJpsTest() {
     fun testJavaConstantChangedUsedInKotlin() {
-        doTest("jps/jps-plugin/testData/incremental/custom/javaConstantChangedUsedInKotlin")
+        doTest("jps/jps-plugin/tests/testData/incremental/custom/javaConstantChangedUsedInKotlin")
     }
 
     fun testJavaConstantUnchangedUsedInKotlin() {
-        doTest("jps/jps-plugin/testData/incremental/custom/javaConstantUnchangedUsedInKotlin")
+        doTest("jps/jps-plugin/tests/testData/incremental/custom/javaConstantUnchangedUsedInKotlin")
     }
 
     fun testKotlinConstantChangedUsedInJava() {
-        doTest("jps/jps-plugin/testData/incremental/custom/kotlinConstantChangedUsedInJava")
+        doTest("jps/jps-plugin/tests/testData/incremental/custom/kotlinConstantChangedUsedInJava")
     }
 
     fun testKotlinJvmFieldChangedUsedInJava() {
-        doTest("jps/jps-plugin/testData/incremental/custom/kotlinJvmFieldChangedUsedInJava")
+        doTest("jps/jps-plugin/tests/testData/incremental/custom/kotlinJvmFieldChangedUsedInJava")
     }
 
     fun testKotlinConstantUnchangedUsedInJava() {
-        doTest("jps/jps-plugin/testData/incremental/custom/kotlinConstantUnchangedUsedInJava")
+        doTest("jps/jps-plugin/tests/testData/incremental/custom/kotlinConstantUnchangedUsedInJava")
     }
 
     fun testKotlinJvmFieldUnchangedUsedInJava() {
-        doTest("jps/jps-plugin/testData/incremental/custom/kotlinJvmFieldUnchangedUsedInJava")
+        doTest("jps/jps-plugin/tests/testData/incremental/custom/kotlinJvmFieldUnchangedUsedInJava")
     }
 
     override fun doTest(testDataPath: String) {

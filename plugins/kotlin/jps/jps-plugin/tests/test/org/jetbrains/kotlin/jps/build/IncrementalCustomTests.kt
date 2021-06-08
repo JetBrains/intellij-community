@@ -7,7 +7,7 @@ import org.jetbrains.kotlin.test.KotlinRoot
 
 class IncrementalRenameModuleTest : AbstractIncrementalJpsTest() {
     fun testRenameModule() {
-        doTest(KotlinRoot.DIR.path + "/jps/jps-plugin/testData/incremental/custom/renameModule/")
+        doTest(KotlinRoot.DIR.path + "/jps/jps-plugin/tests/testData/incremental/custom/renameModule/")
     }
 
     override fun performAdditionalModifications(modifications: List<Modification>) {
