@@ -29,7 +29,7 @@ import java.awt.Graphics2D
 import javax.swing.Icon
 
 class GitProjectHistoryLesson : GitLesson("Git.ProjectHistory", GitLessonsBundle.message("git.project.history.lesson.name")) {
-  override val existedFile = "src/git/sphinx_cat.yml"
+  override val existedFile = "git/sphinx_cat.yml"
   private val branchName = "feature"
   private val textToFind = "sphinx"
 

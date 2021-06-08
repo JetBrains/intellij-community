@@ -29,7 +29,7 @@ import java.util.concurrent.CompletableFuture
 import javax.swing.JEditorPane
 
 class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("git.annotate.lesson.name")) {
-  override val existedFile = "src/git/martian_cat.yml"
+  override val existedFile = "git/martian_cat.yml"
   private val branchName = "main"
   private val propertyName = "ears_number"
   private val editedPropertyName = "ear_number"

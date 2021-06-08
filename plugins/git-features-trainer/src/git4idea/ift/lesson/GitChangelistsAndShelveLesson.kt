@@ -32,7 +32,7 @@ import java.awt.Rectangle
 import javax.swing.JButton
 
 class GitChangelistsAndShelveLesson : GitLesson("Git.ChangelistsAndShelf", GitLessonsBundle.message("git.changelists.shelf.lesson.name")) {
-  override val existedFile = "src/git/martian_cat.yml"
+  override val existedFile = "git/martian_cat.yml"
   private val branchName = "main"
   private val commentingLineText = "fur_type: long haired"
   private val commentText = "# debug: check another types (short haired, hairless)"

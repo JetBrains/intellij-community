@@ -15,12 +15,17 @@ object GitProjectUtil {
     val learningProjectPath = ProjectUtils.getProjectRoot(project).toNioPath()
     val learningProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(learningProjectPath)
                               ?: error("Learning project not found")
-    invokeAndWaitIfNeeded {
-      runWriteAction { learningProjectRoot.findChild(".git")?.delete(this) }
+    val gitProjectRoot = invokeAndWaitIfNeeded {
+      runWriteAction {
+        learningProjectRoot.findChild("git")?.apply {
+          findChild(".git")?.delete(this)
+        } ?: learningProjectRoot.createChildDirectory(this, "git")
+      }
     }
-    copyGitProject(learningProjectPath.toFile()).also {
+
+    copyGitProject(gitProjectRoot.toNioPath().toFile()).also {
       if (it) {
-        GitInit.refreshAndConfigureVcsMappings(project, learningProjectRoot, learningProjectRoot.path)
+        GitInit.refreshAndConfigureVcsMappings(project, gitProjectRoot, gitProjectRoot.path)
       }
       else error("Failed to copy git project")
     }

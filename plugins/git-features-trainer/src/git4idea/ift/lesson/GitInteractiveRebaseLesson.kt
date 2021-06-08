@@ -37,7 +37,7 @@ import javax.swing.JDialog
 import javax.swing.KeyStroke
 
 class GitInteractiveRebaseLesson : GitLesson("Git.InteractiveRebase", GitLessonsBundle.message("git.interactive.rebase.lesson.name")) {
-  override val existedFile = "src/git/martian_cat.yml"
+  override val existedFile = "git/martian_cat.yml"
   private val branchName = "fixes"
 
   private var backupRebaseDialogLocation: Point? = null
