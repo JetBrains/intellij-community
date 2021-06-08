@@ -22,8 +22,8 @@ import java.util.function.Supplier;
  * Getter implementations (like {@link #isActionOnSaveEnabled()} or {@link #getActionOnSaveName()}) must call
  * {@link #getValueFromSavedStateOrFromUiState(Supplier, Function)}.
  * <br/><br/>
- * Setter implementations ({@link #setActionOnSaveEnabled(boolean)}), and also handlers of {@link #getActivatedOnDropDownLink()} and
- * {@link #getInPlaceConfigDropDownLink()} must call {@link #updateUiOnOwnPage(Consumer)}.
+ * Setter implementations ({@link #setActionOnSaveEnabled(boolean)}), as well as handlers of {@link #getActivatedOnDropDownLink()},
+ * {@link #getInPlaceConfigDropDownLink()}, and {@link #getActivatedOnDropDownLink()} must call {@link #updateUiOnOwnPage(Consumer)}.
  *
  * @see #getValueFromSavedStateOrFromUiState(Supplier, Function)
  * @see #updateUiOnOwnPage(Consumer)
