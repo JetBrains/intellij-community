@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="kotlin.common" />
     <orderEntry type="module" module-name="kotlin.core" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-fir" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
     <orderEntry type="module" module-name="kotlin.fir.frontend-independent" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea-base" />
