@@ -858,6 +858,10 @@ public class FileUtil extends FileUtilRt {
     else if (StringUtil.startsWithChar(normalizedPath, '/')) {
       return "/";
     }
+    int sc = normalizedPath.indexOf(URLUtil.SCHEME_SEPARATOR);
+    if (sc != -1) {
+      return normalizedPath.substring(0, sc + URLUtil.SCHEME_SEPARATOR.length());
+    }
 
     return null;
   }
