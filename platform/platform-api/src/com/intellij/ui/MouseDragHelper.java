@@ -260,7 +260,11 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
   }
 
   private boolean isWithinDeadZone(@NotNull MouseEvent e) {
-    return myPressPointScreen.distance(e.getLocationOnScreen()) < JBUI.scale(DRAG_START_DEADZONE);
+    return myPressPointScreen.distance(e.getLocationOnScreen()) < getDragStartDeadzone();
+  }
+
+  protected int getDragStartDeadzone() {
+    return JBUI.scale(DRAG_START_DEADZONE);
   }
 
   @Override

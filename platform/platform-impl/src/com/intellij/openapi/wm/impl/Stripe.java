@@ -43,7 +43,7 @@ class Stripe extends JPanel implements UISettingsListener {
   private JComponent myDragButtonImage;
   private LayoutData myLastLayoutData;
   private boolean myFinishingDrop;
-  private static final int DROP_DISTANCE_SENSITIVITY = 200;
+  static final int DROP_DISTANCE_SENSITIVITY = 200;
 
   Stripe(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int anchor) {
     super(new GridBagLayout());
