@@ -48,6 +48,11 @@ class LinkComboBox extends ActionLink {
     }
   }
 
+  @Override
+  public int getDisplayedMnemonicIndex() {
+    return -1;
+  }
+
   public String getSelectedItem() {
     return mySelectedItem;
   }

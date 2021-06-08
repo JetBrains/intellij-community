@@ -19,6 +19,7 @@ import com.intellij.lang.Language;
 import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -54,6 +55,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.TextWithMnemonic;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -72,10 +74,7 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.OnePixelSplitter;
+import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
@@ -400,8 +399,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       }
       initValidation();
     });
-    final JLabel searchTargetLabel = new JLabel(SSRBundle.message("search.target.label"));
+    final String text = SSRBundle.message("search.target.label");
+    final JLabel searchTargetLabel = new JLabel(text);
     searchTargetLabel.setLabelFor(myTargetComboBox);
+    myTargetComboBox.setMnemonic(TextWithMnemonic.parse(text).getMnemonic());
 
     final JPanel centerPanel = new JPanel(null);
     final GroupLayout layout = new GroupLayout(centerPanel);
@@ -536,9 +537,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @Nullable
   @Override
   protected JComponent createNorthPanel() {
-    final DumbAwareAction historyAction = new DumbAwareAction(SSRBundle.messagePointer("history.button"),
-                                                              SSRBundle.messagePointer("history.button.description"),
-                                                              AllIcons.Actions.SearchWithHistory) {
+    final DumbAwareAction historyAction = new DumbAwareAction() {
       @Override
       public void update(@NotNull AnActionEvent e) {
         e.getPresentation().setEnabled(!ConfigurationManager.getInstance(getProject()).getHistoryConfigurations().isEmpty());
@@ -563,6 +562,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
           .showUnderneathOf((Component)source);
       }
     };
+    ActionUtil.copyFrom(historyAction, "ShowSearchHistory");
     final ToolbarLabel searchTemplateLabel = new ToolbarLabel(SSRBundle.message("search.template"));
     final DefaultActionGroup historyActionGroup = new DefaultActionGroup(historyAction, searchTemplateLabel);
     final ActionManager actionManager = ActionManager.getInstance();
