@@ -1370,7 +1370,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(myConfiguration)));
+      CopyPasteManager.getInstance().setContents(new TextTransferable(ConfigurationUtil.toXml(getConfiguration())));
     }
   }
 
