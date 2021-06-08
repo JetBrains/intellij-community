@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMapper;
-import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.EnvironmentController;
 import com.jetbrains.python.run.PlainEnvironmentController;
 import com.jetbrains.python.run.PythonCommandLineState;
@@ -23,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
@@ -170,24 +168,7 @@ public class PydevConsoleRunnerFactory extends PythonConsoleRunnerFactory {
     }
     String selfPathAppend = PydevConsoleRunner.constructPyPathAndWorkingDirCommand(pythonPath, workingDir, customStartScript);
 
-    BuildoutFacet facet = null;
-    if (module != null) {
-      facet = BuildoutFacet.getInstance(module);
-    }
-    String[] setupFragment;
-    if (facet != null) {
-      List<String> path = facet.getAdditionalPythonPath();
-      if (pathMapper != null) {
-        path = pathMapper.convertToRemote(path);
-      }
-      String prependStatement = facet.getPathPrependStatement(path);
-      setupFragment = new String[]{prependStatement, selfPathAppend};
-    }
-    else {
-      setupFragment = new String[]{selfPathAppend};
-    }
-
-    return setupFragment;
+    return new String[]{selfPathAppend};
   }
 
   @NotNull

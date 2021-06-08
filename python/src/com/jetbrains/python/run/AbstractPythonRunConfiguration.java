@@ -365,13 +365,12 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
     if (sdk != null && interpreterPath != null) {
       patchCommandLineFirst(commandLine, interpreterPath);
       patchCommandLineForVirtualenv(commandLine, sdk);
-      patchCommandLineForBuildout(commandLine, interpreterPath);
       patchCommandLineLast(commandLine, interpreterPath);
     }
   }
 
   /**
-   * Patches command line before virtualenv and buildout patchers.
+   * Patches command line before virtualenv patchers.
    * Default implementation does nothing.
    *
    * @param commandLine
@@ -382,7 +381,7 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
   }
 
   /**
-   * Patches command line after virtualenv and buildout patchers.
+   * Patches command line after virtualenv patchers.
    * Default implementation does nothing.
    *
    * @param commandLine
@@ -390,16 +389,6 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractPythonRun
    */
   protected void patchCommandLineLast(GeneralCommandLine commandLine, String sdkHome) {
     // override
-  }
-
-  /**
-   * Gets called after {@link #patchCommandLineForVirtualenv(GeneralCommandLine, Sdk)}
-   * Does nothing here, real implementations should use alter running script name or use engulfer.
-   *
-   * @param commandLine
-   * @param sdkHome
-   */
-  protected void patchCommandLineForBuildout(GeneralCommandLine commandLine, String sdkHome) {
   }
 
   /**
