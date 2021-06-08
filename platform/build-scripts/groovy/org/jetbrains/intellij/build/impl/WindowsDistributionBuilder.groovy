@@ -207,9 +207,9 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         IDS_JDK_ONLY=$buildContext.productProperties.toolsJarRequired
         IDS_JDK_ENV_VAR=${envVarBaseName}_JDK
         IDS_APP_TITLE=$productName Launcher
-        IDS_VM_OPTIONS_PATH=%APPDATA%\\\\${buildContext.applicationInfo.shortCompanyName}\\\\${buildContext.systemSelector}
-        IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\\\java_error_in_${executableBaseName}_%p.log
-        IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\\\java_error_in_${executableBaseName}.hprof
+        IDS_VM_OPTIONS_PATH=%APPDATA%\\${buildContext.applicationInfo.shortCompanyName}\\${buildContext.systemSelector}
+        IDS_VM_OPTION_ERRORFILE=-XX:ErrorFile=%USERPROFILE%\\java_error_in_${executableBaseName}_%p.log
+        IDS_VM_OPTION_HEAPDUMPPATH=-XX:HeapDumpPath=%USERPROFILE%\\java_error_in_${executableBaseName}.hprof
         IDC_WINLAUNCHER=${upperCaseProductName}_LAUNCHER
         IDS_PROPS_ENV_VAR=${envVarBaseName}_PROPERTIES
         IDS_VM_OPTIONS_ENV_VAR=${envVarBaseName}_VM_OPTIONS
