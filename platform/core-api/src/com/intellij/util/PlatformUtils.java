@@ -40,6 +40,7 @@ public final class PlatformUtils {
   public static final String GOIDE_PREFIX = "GoLand";
   public static final String FLEET_PREFIX = "FleetBackend";
   public static final String CWM_GUEST_PREFIX = "CodeWithMeGuest";
+  public static final String GATEWAY_PREFIX = "Gateway";
 
   @SuppressWarnings("SSBasedInspection") private static final Set<String> COMMERCIAL_EDITIONS = new HashSet<>(Arrays.asList(
     IDEA_PREFIX, APPCODE_PREFIX, CLION_PREFIX, MOBILE_IDE_PREFIX, PYCHARM_PREFIX, PYCHARM_DS_PREFIX, RUBY_PREFIX, PHP_PREFIX, WEB_PREFIX,
