@@ -39,16 +39,7 @@ private class SimpleConstructorRequest(
   override fun getExpectedParameters() = expectedParameters
 }
 
-fun methodRequest(project: Project, methodName: String, modifier: JvmModifier, returnType: JvmType): CreateMethodRequest {
-  return SimpleMethodRequest(
-    methodName = methodName,
-    modifiers = listOf(modifier),
-    returnType = listOf(expectedType(returnType)),
-    targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
-  )
-}
-
-fun methodRequestSample(project: Project, methodName: String, modifiers: List<JvmModifier>, returnType: JvmType): CreateMethodRequest {
+fun methodRequest(project: Project, methodName: String, modifiers: List<JvmModifier>, returnType: JvmType): CreateMethodRequest {
   return SimpleMethodRequest(
     methodName = methodName,
     modifiers = modifiers,
@@ -56,6 +47,7 @@ fun methodRequestSample(project: Project, methodName: String, modifiers: List<Jv
     targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   )
 }
+
 fun constructorRequest(project: Project, parameters: List<JBPair<String, PsiType>>): CreateConstructorRequest {
   return SimpleConstructorRequest(
     expectedParameters = parameters.map { expectedParameter(it.second, it.first) },

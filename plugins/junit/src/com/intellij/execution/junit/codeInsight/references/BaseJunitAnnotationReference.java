@@ -11,6 +11,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
@@ -100,7 +101,7 @@ public abstract class BaseJunitAnnotationReference extends PsiReferenceBase<PsiL
     }
     final String finalMethodName = methodName;
     PsiMethod[] clazzMethods = psiClazz.findMethodsByName(methodName, true);
-    ArrayList<JvmMethod> methodsInner = new ArrayList<>(1);
+    SmartList<JvmMethod> methodsInner = new SmartList<>();
     if (clazzMethods.length == 0) {
       PsiClass[] classes = psiClazz.getInnerClasses();
       for (PsiClass cl : classes) {

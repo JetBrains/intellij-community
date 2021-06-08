@@ -33,7 +33,7 @@ class ValueSourcesTest {
   <warning descr="No value source is defined">@ValueSource()</warning>
   void testWithNoValues(int i) { }
 
-  <warning descr="Multiple parameters are not supported by this source">@ParameterizedTest</warning>
+  @<warning descr="Multiple parameters are not supported by this source">ParameterizedTest</warning>
   @ValueSource(ints = 1)
   void testWithValuesMultipleParams(int i, int j) { }
 
@@ -61,7 +61,7 @@ class ValueSourcesWithCustomProvider extends AbstractValueSource {
 
 class ParameterizedTestsDemo {
 
-  <warning descr="No sources are provided, the suite would be empty">@ParameterizedTest</warning>
+  @<warning descr="No sources are provided, the suite would be empty">ParameterizedTest</warning>
   void testWithParamsNoSource(int i) { }
 
   @ParameterizedTest
@@ -95,7 +95,7 @@ class ArgSources {
   @org.junit.jupiter.params.provider.ArgumentsSources({@org.junit.jupiter.params.provider.ArgumentsSource})
   void args(String param) { }
 
-  <warning descr="No sources are provided, the suite would be empty">@ParameterizedTest</warning>
+  @<warning descr="No sources are provided, the suite would be empty">ParameterizedTest</warning>
   @org.junit.jupiter.params.provider.ArgumentsSources({})
   void emptyArgs(String param) { }
 }

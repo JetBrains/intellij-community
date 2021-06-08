@@ -1,25 +1,18 @@
 package com.intellij.codeInspection.tests
 
 import com.intellij.codeInspection.JUnit5MalformedParameterizedInspection
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.roots.JavaProjectModelModificationService
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
 abstract class JUnitMalformedInspectionTestBaseKt : JavaCodeInsightFixtureTestCase() {
 
-  private fun setLanguageLevel(level: LanguageLevel) {
-    invokeAndWaitIfNeeded {
-      runWriteAction {
-        JavaProjectModelModificationService.getInstance(project).changeLanguageLevel(module, level)
-      }
-    }
+  override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
   }
 
   override fun setUp() {
     super.setUp()
-    setLanguageLevel(LanguageLevel.JDK_1_8)
     myFixture.enableInspections(inspection)
 
     myFixture.addFileToProject("kotlin/jvm/JvmStatic.kt",
