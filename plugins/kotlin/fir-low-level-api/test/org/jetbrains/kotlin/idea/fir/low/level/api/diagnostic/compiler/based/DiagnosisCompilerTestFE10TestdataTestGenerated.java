@@ -9621,6 +9621,11 @@ public abstract class DiagnosisCompilerTestFE10TestdataTestGenerated extends Abs
                 runTest(compilerTestData("compiler/testData/diagnostics/tests/imports/importFunctionWithAllUnderImportAfterNamedImport.kt"));
             }
 
+            @TestMetadata("ImportFunctionWithPackageName.kt")
+            public void testImportFunctionWithPackageName() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/imports/ImportFunctionWithPackageName.kt");
+            }
+
             @TestMetadata("ImportHidingDefinitionInTheSameFile.kt")
             public void testImportHidingDefinitionInTheSameFile() throws Exception {
                 runTest(compilerTestData("compiler/testData/diagnostics/tests/imports/ImportHidingDefinitionInTheSameFile.kt"));
