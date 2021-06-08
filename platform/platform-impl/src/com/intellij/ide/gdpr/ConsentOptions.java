@@ -81,7 +81,7 @@ public final class ConsentOptions {
 
     private static @NotNull @NonNls String getBundledResourcePath() {
       final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
-      return appInfo.isVendorJetBrains() ? "/consents.json" : "/consents-" + appInfo.getShortCompanyName() + ".json";
+      return appInfo.isVendorJetBrains() ? "consents.json" : "consents-" + appInfo.getShortCompanyName() + ".json";
     }
   }
 
