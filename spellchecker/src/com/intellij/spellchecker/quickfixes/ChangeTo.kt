@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.quickfixes
 
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
@@ -63,6 +64,8 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
       if (myText != typo) return
 
       myEditor.document.replaceString(myRange.startOffset, myRange.endOffset, suggestion)
+
+      UpdateHighlightersUtil.removeHighlightersWithRange(myEditor.document, project, myRange)
     }
 
     override fun getFileModifierForPreview(target: PsiFile): FileModifier? {

@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
+import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.choice.ChoiceTitleIntentionAction
@@ -13,7 +14,6 @@ import com.intellij.grazie.ide.ui.components.dsl.msg
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiFile
 import com.intellij.psi.SmartPsiFileRange
 
@@ -53,7 +53,7 @@ internal class GrazieReplaceTypoQuickFix(
       val replacementRange = this@GrazieReplaceTypoQuickFix.replacementRange.range ?: return
       val document = file.viewProvider.document ?: return
 
-      underlineRange.range?.let { document.invalidateHighlighter(project, TextRange.create(it)) }
+      UpdateHighlightersUtil.removeHighlightersWithRange(document, project, underlineRange.range)
 
       document.replaceString(replacementRange.startOffset, replacementRange.endOffset, suggestion)
     }
