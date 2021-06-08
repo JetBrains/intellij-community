@@ -22,7 +22,6 @@ EXCLUDED_PACKAGES = {
     'django',
     'jinja2',
     'appengine',
-    'buildout',
     'cython'
 }
 

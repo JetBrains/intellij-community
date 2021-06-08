@@ -14584,19 +14584,6 @@
     <option name="delimiter" hit="Text block delimiter" />
     <option name="text" hit="Text block delimiter" />
   </configurable>
-  <configurable id="reference.settingsdialog.IDE.editor.colors.Buildout config" configurable_name="Buildout config">
-    <option name="" hit="" />
-    <option name="buildout" hit="Buildout config" />
-    <option name="config" hit="Buildout config" />
-    <option name="comment" hit="Comment" />
-    <option name="key" hit="Key" />
-    <option name="key" hit="Key value separator" />
-    <option name="separator" hit="Key value separator" />
-    <option name="value" hit="Key value separator" />
-    <option name="name" hit="Section name" />
-    <option name="section" hit="Section name" />
-    <option name="value" hit="Value" />
-  </configurable>
   <configurable id="reference.settingsdialog.IDE.editor.colors.CFML" configurable_name="CFML">
     <option name="" hit="" />
     <option name="cfml" hit="CFML" />
