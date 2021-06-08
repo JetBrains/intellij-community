@@ -558,7 +558,7 @@ public final class StartupUtil {
     if (document != null) {
       Agreements.showEndUserAndDataSharingAgreements(document);
     }
-    else if (ConsentOptions.getInstance().getConsents().getValue()) {
+    else if (ConsentOptions.getInstance().getConsents().getSecond()) {
       Agreements.showDataSharingAgreement();
     }
     activity.end();

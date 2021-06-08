@@ -155,10 +155,7 @@ public class LightProjectDescriptor {
   }
 
   private static void registerJdk(Sdk jdk, Disposable parentDisposable) {
-    WriteAction.run(() -> {
-      ProjectJdkTable jdkTable = ProjectJdkTable.getInstance();
-      ((ProjectJdkTableImpl)jdkTable).addTestJdk(jdk, parentDisposable);
-    });
+    WriteAction.run(() -> ProjectJdkTable.getInstance().addJdk(jdk, parentDisposable));
   }
 
   @NotNull

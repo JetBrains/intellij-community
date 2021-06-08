@@ -68,7 +68,7 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
 }
 
 private fun applyDataSharing(ui: AgreementUi, bundle: ResourceBundle): AgreementUi {
-  val dataSharingConsent = ConsentOptions.getInstance().consents.key[0]
+  val dataSharingConsent = ConsentOptions.getInstance().consents.first[0] // todo: select consent by its ID and don't take just the first one
   ui.setText(prepareConsentsHtmlText(dataSharingConsent, bundle))
     .setTitle(bundle.getString("dataSharing.dialog.title"))
     .clearBottomPanel()

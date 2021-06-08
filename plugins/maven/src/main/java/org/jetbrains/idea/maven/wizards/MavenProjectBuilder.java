@@ -119,7 +119,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
   }
 
   @Nullable
-  public Sdk suggestProjectSdk(@NotNull Project project) {
+  public static Sdk suggestProjectSdk(@NotNull Project project) {
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     ProjectRootManager defaultProjectManager = ProjectRootManager.getInstance(defaultProject);
     Sdk defaultProjectSdk = defaultProjectManager.getProjectSdk();
