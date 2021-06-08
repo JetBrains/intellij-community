@@ -1,7 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
     <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
-    <startupActivity implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$InitializationActivity"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService$InitializationActivity"/>
     <advancedSetting id="kotlin.compiler.ref.index" default="true" groupKey="group.advanced.settings.kotlin" bundle="messages.KotlinReferenceIndexBundle"/>
   </extensions>
   <resource-bundle>messages.KotlinReferenceIndexBundle</resource-bundle>
