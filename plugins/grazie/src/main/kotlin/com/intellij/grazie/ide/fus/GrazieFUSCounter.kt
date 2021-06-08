@@ -18,11 +18,9 @@ internal object GrazieFUSCounter {
   }
 
   fun typoFound(problem: TextProblem) {
-    val pluginId = getPluginInfo(problem.rule.javaClass).id ?: return
-
     log("typo.found") {
       addData("id", problem.rule.globalId)
-      addData("plugin_id", pluginId)
+      addPluginInfo(getPluginInfo(problem.rule.javaClass))
       addData("fixes", problem.corrections.size)
       addProject(problem.text.commonParent.project)
     }

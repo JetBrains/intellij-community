@@ -26,8 +26,10 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     val allRules by lazy { allRules().values.flatten().groupBy { it.globalId } }
     fun logRule(id: String, enabled: Boolean) {
       val rule = allRules[id]?.firstOrNull() ?: return
-      val pluginId = getPluginInfo(rule.javaClass).id ?: return
-      metrics.add(newMetric("rule", FeatureUsageData().addData("id", id).addData("plugin_id", pluginId).addData("enabled", enabled)))
+      metrics.add(newMetric("rule", FeatureUsageData()
+        .addPluginInfo(getPluginInfo(rule.javaClass))
+        .addData("id", id)
+        .addData("enabled", enabled)))
     }
 
     state.userEnabledRules.forEach { logRule(it, enabled = true) }
