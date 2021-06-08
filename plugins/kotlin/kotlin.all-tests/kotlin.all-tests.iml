@@ -78,5 +78,6 @@
     <orderEntry type="module" module-name="kotlin.testng" />
     <orderEntry type="module" module-name="kotlin.junit" />
     <orderEntry type="module" module-name="kotlin.grazie" />
+    <orderEntry type="module" module-name="kotlin.ml-completion" />
   </component>
 </module>
