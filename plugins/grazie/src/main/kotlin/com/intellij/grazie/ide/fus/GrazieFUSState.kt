@@ -8,11 +8,10 @@ import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
-import com.intellij.lang.Language
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
   override fun getGroupId(): String = "grazie.state"
-  override fun getVersion(): Int = 1
+  override fun getVersion(): Int = 2
 
   override fun getMetrics(): Set<MetricEvent> {
     val metrics = HashSet<MetricEvent>()
