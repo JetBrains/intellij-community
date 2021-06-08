@@ -11634,6 +11634,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/indexInLvalue.kt");
         }
 
+        @TestMetadata("map.kt")
+        public void testMap() throws Exception {
+            runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/map.kt");
+        }
+
         @TestMetadata("multidimensionalArray.kt")
         public void testMultidimensionalArray() throws Exception {
             runTest("testData/inspectionsLocal/replaceManualRangeWithIndicesCalls/multidimensionalArray.kt");
