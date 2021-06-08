@@ -13785,6 +13785,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/removeBraces/doWhile.kt");
         }
 
+        @TestMetadata("doWhileWithLocalClass.kt")
+        public void testDoWhileWithLocalClass() throws Exception {
+            runTest("testData/intentions/removeBraces/doWhileWithLocalClass.kt");
+        }
+
         @TestMetadata("doWhileWithLocalVariable.kt")
         public void testDoWhileWithLocalVariable() throws Exception {
             runTest("testData/intentions/removeBraces/doWhileWithLocalVariable.kt");
@@ -13823,6 +13828,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("for.kt")
         public void testFor() throws Exception {
             runTest("testData/intentions/removeBraces/for.kt");
+        }
+
+        @TestMetadata("forWithLocalClass.kt")
+        public void testForWithLocalClass() throws Exception {
+            runTest("testData/intentions/removeBraces/forWithLocalClass.kt");
         }
 
         @TestMetadata("forWithLocalVariable.kt")
@@ -13893,6 +13903,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("ifWithComment.kt")
         public void testIfWithComment() throws Exception {
             runTest("testData/intentions/removeBraces/ifWithComment.kt");
+        }
+
+        @TestMetadata("ifWithLocalClass.kt")
+        public void testIfWithLocalClass() throws Exception {
+            runTest("testData/intentions/removeBraces/ifWithLocalClass.kt");
         }
 
         @TestMetadata("ifWithLocalVariable.kt")
@@ -13978,6 +13993,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("whileOutsideBlock.kt")
         public void testWhileOutsideBlock() throws Exception {
             runTest("testData/intentions/removeBraces/whileOutsideBlock.kt");
+        }
+
+        @TestMetadata("whileWithLocalClass.kt")
+        public void testWhileWithLocalClass() throws Exception {
+            runTest("testData/intentions/removeBraces/whileWithLocalClass.kt");
         }
 
         @TestMetadata("whileWithLocalVariable.kt")
