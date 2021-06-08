@@ -33,8 +33,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-@ApiStatus.NonExtendable
-public class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
+public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
   private static final boolean isParallelCapable = registerAsParallelCapable();

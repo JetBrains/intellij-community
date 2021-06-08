@@ -23,6 +23,7 @@ import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
@@ -358,7 +359,17 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return classLoadingLocks == null ? this : classLoadingLocks.getOrCreateLock(className);
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @Nullable BiPredicate<String, Boolean> resolveScopeManager;
+
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
+    // isDefinitelyAlienClass
+    BiPredicate<String, Boolean> resolveScopeManager = this.resolveScopeManager;
+    if (resolveScopeManager != null && resolveScopeManager.test(name, forceLoadFromSubPluginClassloader)) {
+      return null;
+    }
+
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null) {

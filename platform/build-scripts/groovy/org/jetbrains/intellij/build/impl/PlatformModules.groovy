@@ -3,9 +3,20 @@ package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.module.JpsModule
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot
+import org.jetbrains.jps.util.JpsPathUtil
+import org.w3c.dom.Element
+import org.w3c.dom.NodeList
+
+import javax.xml.parsers.DocumentBuilderFactory
+import java.nio.file.Files
+import java.nio.file.Path
 
 import static org.jetbrains.intellij.build.impl.BaseLayout.PLATFORM_JAR
 
@@ -200,6 +211,16 @@ final class PlatformModules {
         withProjectLibraryUnpackedIntoJar(libraryName, productLayout.mainJarName)
       }
 
+      String productPluginSourceModuleName = buildContext.productProperties.applicationInfoModule
+      if (productPluginSourceModuleName != null) {
+        List<String> modules = getProductPluginContentModules(buildContext, productPluginSourceModuleName)
+        if (modules != null) {
+          for (String name : modules) {
+            withModule(name, PLATFORM_JAR)
+          }
+        }
+      }
+
       layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
         "JDOM",
         "Trove4j",
@@ -225,5 +246,47 @@ final class PlatformModules {
         removeVersionFromProjectLibraryJarNames(toRemoveVersion)
       }
     }
+  }
+
+  private static @Nullable List<String> getProductPluginContentModules(@NotNull BuildContext buildContext,
+                                                                       @NotNull String productPluginSourceModuleName) {
+    JpsModule productPluginSourceModule = buildContext.findRequiredModule(productPluginSourceModuleName)
+
+    Path file = findProductPluginDescriptorFile(productPluginSourceModule, buildContext)
+    if (file == null) {
+      buildContext.messages.warning("Cannot find product plugin descriptor in '$productPluginSourceModule.name' module")
+      return null
+    }
+
+    Files.newInputStream(file).withCloseable {
+      NodeList contentList = DocumentBuilderFactory.newDefaultInstance().newDocumentBuilder()
+        .parse(it, file.toString()).getDocumentElement().getElementsByTagName("content")
+      if (contentList.length != 0) {
+        NodeList modules = ((Element)contentList.item(0)).getElementsByTagName("module")
+        List<String> result = new ArrayList<>(modules.length)
+        for (int i = 0; i < modules.length; i++) {
+          Element module = (Element)modules.item(i)
+          result.add(module.getAttribute("name"))
+        }
+        return result
+      }
+      return null
+    }
+  }
+
+  private static @Nullable Path findProductPluginDescriptorFile(JpsModule productPluginSourceModule, BuildContext buildContext) {
+    for (JpsModuleSourceRoot sourceRoot : productPluginSourceModule.sourceRoots) {
+      Path metaInfDir = Path.of(JpsPathUtil.urlToPath(sourceRoot.getUrl()), "META-INF")
+      Path file = metaInfDir.resolve("plugin.xml")
+      if (Files.exists(file)) {
+        return file
+      }
+
+      file = metaInfDir.resolve(buildContext.productProperties.platformPrefix + "Plugin.xml")
+      if (Files.exists(file)) {
+        return file
+      }
+    }
+    return null
   }
 }
