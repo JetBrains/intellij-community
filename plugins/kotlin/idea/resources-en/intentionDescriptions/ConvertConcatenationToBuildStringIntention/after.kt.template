@@ -1,0 +1,8 @@
+val s = buildString {
+    append("foo=")
+    append(foo)
+    append(",bar=")
+    append(bar)
+    append(",baz=")
+    append(baz)
+}
