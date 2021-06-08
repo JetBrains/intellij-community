@@ -48,6 +48,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.components.labels.LinkLabel
@@ -126,20 +127,8 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
     if (!isEnabled()) return ReturnResult.COMMIT
     if (isDumb(project)) return if (confirmCommitInDumbMode(project)) ReturnResult.COMMIT else ReturnResult.CANCEL
-    val files = filterOutGeneratedAndExcludedFiles(commitPanel.virtualFiles, project)
-
-    val analyzeOnlyChangedProperties = Registry.intValue("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", 0)
-    val psiFiles = runReadAction {
-      files.mapNotNull { PsiManager.getInstance(project).findFile(it) }
-    }
-
+    val psiFiles = processPsiFiles(commitPanel.virtualFiles)
     return try {
-      if (analyzeOnlyChangedProperties != 0) {
-        for (file in psiFiles) {
-          file.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
-                           Function { getBeingCommittedPsiElements(it) })
-        }
-      }
       val codeSmells = findCodeSmells()
       if (codeSmells.isEmpty()) ReturnResult.COMMIT else processFoundCodeSmells(codeSmells, executor)
     }
@@ -151,12 +140,31 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
       if (confirmCommitWithCodeAnalysisFailure(project, e)) ReturnResult.COMMIT else ReturnResult.CANCEL
     }
     finally {
-      if (analyzeOnlyChangedProperties != 0) {
-        for (it in psiFiles) {
-          it.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED, null)
-        }
+      for (it in psiFiles) {
+        it.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED, null)
       }
     }
+  }
+
+  /**
+   * Extracts PsiFile elements from the VirtualFile elements in commitPanel and puts a closure in their user data
+   * that extracts PsiElement elements that are being committed.
+   * The closure accepts a class instance and returns a set of PsiElement elements that are changed or added.
+   * The PsiFile elements are returned as a result.
+   */
+  private fun processPsiFiles(virtualFiles: Collection<VirtualFile>): List<PsiFile> {
+    val files = filterOutGeneratedAndExcludedFiles(virtualFiles, project)
+
+    val analyzeOnlyChangedProperties = Registry.intValue("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", 0)
+    val psiFiles =
+      if (analyzeOnlyChangedProperties == 0) emptyList()
+      else runReadAction { files.mapNotNull { PsiManager.getInstance(project).findFile(it) } }
+
+    for (file in psiFiles) {
+      file.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
+                       Function { getBeingCommittedPsiElements(it) })
+    }
+    return psiFiles
   }
 
   /**
