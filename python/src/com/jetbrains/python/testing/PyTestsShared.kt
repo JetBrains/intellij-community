@@ -12,10 +12,12 @@ import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties
 import com.intellij.execution.testframework.sm.runner.SMTestLocator
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.module.impl.scopes.ModuleWithDependenciesScope
 import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.util.JDOMExternalizerUtil.readField
 import com.intellij.openapi.util.JDOMExternalizerUtil.writeField
 import com.intellij.openapi.util.Pair
@@ -26,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.psi.PsiManager
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.QualifiedName
 import com.intellij.refactoring.listeners.RefactoringElementListener
@@ -53,6 +56,7 @@ import jetbrains.buildServer.messages.serviceMessages.ServiceMessage
 import jetbrains.buildServer.messages.serviceMessages.TestStdErr
 import jetbrains.buildServer.messages.serviceMessages.TestStdOut
 import org.jetbrains.annotations.PropertyKey
+import org.jetbrains.jps.model.java.JavaSourceRootType
 import java.util.regex.Matcher
 
 /**
@@ -94,15 +98,32 @@ internal fun getAdditionalArgumentsProperty() = PyAbstractTestConfiguration::add
  */
 fun isTestElement(element: PsiElement, testCaseClassRequired: ThreeState, typeEvalContext: TypeEvalContext): Boolean = when (element) {
   is PyFile -> PythonUnitTestDetectorsBasedOnSettings.isTestFile(element, testCaseClassRequired, typeEvalContext)
-  is com.intellij.psi.PsiDirectory -> element.name.contains("test", true) || element.children.any {
-    it is PyFile && PythonUnitTestDetectorsBasedOnSettings.isTestFile(it, testCaseClassRequired, typeEvalContext)
-  }
+  is PsiDirectory -> isTestFolder(element, testCaseClassRequired, typeEvalContext)
   is PyFunction -> PythonUnitTestDetectorsBasedOnSettings.isTestFunction(element,
                                                                          testCaseClassRequired, typeEvalContext)
   is com.jetbrains.python.psi.PyClass -> {
     PythonUnitTestDetectorsBasedOnSettings.isTestClass(element, testCaseClassRequired, typeEvalContext)
   }
   else -> false
+}
+
+/**
+ * If element is a subelement of the folder excplicitly marked as test root -- use it
+ */
+private fun getExplicitlyConfiguredTestRoot(element: PsiFileSystemItem): VirtualFile? {
+  val vfDirectory = element.virtualFile
+  val module = ModuleUtil.findModuleForPsiElement(element) ?: return null
+  return ModuleRootManager.getInstance(module).getSourceRoots(JavaSourceRootType.TEST_SOURCE).firstOrNull {
+    VfsUtil.isAncestor(it, vfDirectory, false)
+  }
+}
+
+private fun isTestFolder(element: PsiDirectory,
+                         testCaseClassRequired: ThreeState,
+                         typeEvalContext: TypeEvalContext): Boolean {
+  return (getExplicitlyConfiguredTestRoot(element) != null) || element.name.contains("test", true) || element.children.any {
+    it is PyFile && PythonUnitTestDetectorsBasedOnSettings.isTestFile(it, testCaseClassRequired, typeEvalContext)
+  }
 }
 
 
@@ -734,9 +755,14 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
     }
 
     /**
-     * Inspects file relative imports, finds farthest and returns folder with imported file
+     * Returns test root for this file. Either it is specified explicitly or calculated using following strategy:
+     * Inspect file relative imports, find farthest and return folder with imported file
      */
     private fun getDirectoryForFileToBeImportedFrom(file: PyFile): PsiDirectory? {
+      getExplicitlyConfiguredTestRoot(file)?.let {
+        return PsiManager.getInstance(file.project).findDirectory(it)
+      }
+
       val maxRelativeLevel = file.fromImports.map { it.relativeLevel }.maxOrNull() ?: 0
       var elementFolder = file.parent ?: return null
       for (i in 1..maxRelativeLevel) {
@@ -794,8 +820,7 @@ internal class PyTestsConfigurationProducer : AbstractPythonTestConfigurationPro
       location.metainfo?.let { configuration.setMetaInfo(it) }
     }
     else {
-      val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
-                                                                            element) ?: return false
+      val targetForConfig = getTargetForConfig(configuration, element) ?: return false
       targetForConfig.configurationTarget.copyTo(configuration.target)
       // Directory may be set in Default configuration. In that case no need to rewrite it.
       if (configuration.workingDirectory.isNullOrEmpty()) {
