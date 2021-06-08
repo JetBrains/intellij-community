@@ -115,8 +115,8 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
     val moduleName = moduleNames.firstOrNull() ?: return null
     val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName)
     val failedId = extractFailedMavenId(project, moduleName) ?: return null;
-    val mavenProject = MavenProjectsManager.getInstance(project).findProject(failedId) ?: return null
-    val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), mavenProject) ?: return null
+    val mavenProject = manager.findProject(failedId) ?: return null
+    val moduleJdk = MavenUtil.getModuleJdk(manager, mavenProject) ?: return null
 
     if (predicates.any { it(message) }) return SourceLevelBuildIssue(title, message, mavenProject, moduleJdk)
     return null
@@ -151,8 +151,8 @@ object CacheForCompilerErrorMessages {
   }
 
   private val DEFAULT_CHECK = listOf<MessagePredicate>(
-    { it.contains("warning: source release") && it.contains("requires target release") },
-    { it.contains("error: invalid target release") },
+    { it.contains("source release") && it.contains("requires target release") },
+    { it.contains("invalid target release") },
     { it.contains("release version") && it.contains("not supported") }, //en
     {
       it.contains("\u30EA\u30EA\u30FC\u30B9\u30FB\u30D0\u30FC\u30B8\u30E7\u30F3")
