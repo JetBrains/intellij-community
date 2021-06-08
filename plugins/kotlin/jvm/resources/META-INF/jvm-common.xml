@@ -126,6 +126,8 @@
         <runLineMarkerContributor language="kotlin"
                                   implementationClass="org.jetbrains.kotlin.idea.scratch.actions.ScratchRunLineMarkerContributor"/>
 
+        <writingAccessProvider implementation="org.jetbrains.kotlin.idea.internal.DecompiledFileWritingAccessProvider"/>
+
         <projectService serviceInterface="org.jetbrains.uast.kotlin.KotlinUastResolveProviderService"
                         serviceImplementation="org.jetbrains.uast.kotlin.internal.IdeaKotlinUastResolveProviderService"/>
 
@@ -136,6 +138,9 @@
         <applicationService
             serviceInterface="org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrar"
             serviceImplementation="org.jetbrains.kotlin.idea.j2k.J2KPostProcessingRegistrarImpl"/>
+
+        <applicationService serviceInterface="org.jetbrains.kotlin.idea.internal.KotlinDecompilerService"
+            serviceImplementation="org.jetbrains.kotlin.idea.internal.KotlinDecompilerServiceImpl"/>
 
       <registryKey key="kotlin.use.ultra.light.classes"
                    description="Whether to use an experimental implementation of Kotlin-as-Java classes"
