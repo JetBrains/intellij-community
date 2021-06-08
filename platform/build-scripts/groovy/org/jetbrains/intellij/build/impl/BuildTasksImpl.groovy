@@ -645,15 +645,33 @@ idea.fatal.error.notification=disabled
   }
 
   static void addProjectorServer(BuildContext buildContext, @NotNull Path distDir) {
-    JpsLibrary projectorServerLibrary = buildContext.project.libraryCollection.findLibrary("projector-server")
     Path destLibDir = distDir.resolve("lib")
     Path destProjectorLibDir = destLibDir.resolve("projector")
     List<String> extraJars = new ArrayList<>()
     Files.createDirectories(destProjectorLibDir)
-    for (File file : projectorServerLibrary.getFiles(JpsOrderRootType.COMPILED)) {
+
+    def libNamesToCopy = new ArrayList<String>()
+    libNamesToCopy.addAll("projector-server", "kotlinx-serialization-protobuf", "Java-WebSocket", "projector-common", "projector-common-jvm", "projector-util-logging-jvm")
+
+    ArrayList<File> projectorLibsToCopy = new ArrayList<>()
+    ArrayList<String> failedLibs = new ArrayList<>()
+    for (String libName : libNamesToCopy) {
+      try {
+        projectorLibsToCopy.addAll(buildContext.project.libraryCollection.findLibrary(libName).getFiles(JpsOrderRootType.COMPILED))
+      } catch (Throwable ignored) {
+        failedLibs.add(libName)
+      }
+    }
+
+    if (!failedLibs.isEmpty()) {
+      buildContext.messages.error("Failed to get projector libraries: ${failedLibs.join(", ")}")
+    }
+
+    for (File file : projectorLibsToCopy) {
       Files.copy(file.toPath(), destProjectorLibDir.resolve(file.name), StandardCopyOption.REPLACE_EXISTING)
       extraJars += "projector/" + file.name
     }
+
     def srcClassPathTxt = Paths.get("$buildContext.paths.distAll/lib/classpath.txt")
     //no file in fleet
     if (Files.exists(srcClassPathTxt)) {
@@ -661,8 +679,7 @@ idea.fatal.error.notification=disabled
       Files.copy(srcClassPathTxt, classPathTxt, StandardCopyOption.REPLACE_EXISTING)
       Files.writeString(classPathTxt, "\n" + extraJars.join("\n"), StandardOpenOption.APPEND)
       buildContext.messages.warning("added projector-server to classpath.txt")
-    }
-    else {
+    } else {
       buildContext.messages.warning("no classpath.txt - no patching")
     }
   }

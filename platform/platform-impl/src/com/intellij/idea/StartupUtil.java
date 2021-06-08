@@ -139,9 +139,8 @@ public final class StartupUtil {
     activity = activity.endAndStart("log4j configuration");
     configureLog4j();
 
-    activity = activity.endAndStart("Cwm Host init");
-
     if (args.length > 0 && Main.CWM_HOST_COMMAND.equals(args[0])) {
+      activity = activity.endAndStart("Cwm Host init");
       try {
         Class<?> projectorMainClass = StartupUtil.class.getClassLoader().loadClass(PROJECTOR_LAUNCHER_CLASS_NAME);
         MethodHandles.lookup().findStatic(projectorMainClass, "runProjectorServer", MethodType.methodType(boolean.class)).invoke();
@@ -152,12 +151,12 @@ public final class StartupUtil {
       }
     }
 
+    activity = activity.endAndStart("Check graphics environment");
     if (!Main.isHeadless() && !checkGraphics()) {
       System.exit(Main.NO_GRAPHICS);
     }
 
     activity = activity.endAndStart("LaF init scheduling");
-
     Thread busyThread = Thread.currentThread();
     // EndUserAgreement.Document type is not specified to avoid class loading
     CompletableFuture<?> initUiTask = scheduleInitUi(busyThread);
