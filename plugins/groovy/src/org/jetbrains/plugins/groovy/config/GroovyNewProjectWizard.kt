@@ -16,6 +16,7 @@ import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.components.JBRadioButton
 import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -34,10 +35,11 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
           label(GroovyBundle.message("label.groovy.library"))
         }
         row {
+          lateinit var fromUrlCheckbox: CellBuilder<JBRadioButton>
+          lateinit var fromFilesystemCheckbox: CellBuilder<JBRadioButton>
           twoColumnRow(
-            { radioButton(GroovyBundle.message("radio.use.version.from.maven")) },
-            {
-              val downloadableType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType::class.java)!!
+            { fromUrlCheckbox = radioButton(GroovyBundle.message("radio.use.version.from.maven")) },
+            { val downloadableType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType::class.java)!!
               val groovyLibraryDescription = downloadableType.libraryDescription
               comboBox(DefaultComboBoxModel(emptyArray()),
                        settings::version,
@@ -50,13 +52,19 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
                       }
                     }
                   })
-                }
+                }.enableIf(fromUrlCheckbox.selected)
+            })
+          twoColumnRow(
+            { fromFilesystemCheckbox = radioButton(GroovyBundle.message("radio.use.sdk.from.disk")) },
+            {
+              textFieldWithBrowseButton(
+                settings::jarPath,
+                GroovyBundle.message("dialog.title.select.groovy.sdk"),
+                fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor()).enableIf(fromFilesystemCheckbox.selected)
             }
           )
-          twoColumnRow(
-            { radioButton(GroovyBundle.message("radio.use.sdk.from.disk")) },
-            { textFieldWithBrowseButton(settings::jarPath, GroovyBundle.message("dialog.title.select.groovy.sdk"), fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor())  }
-          )
+          fromFilesystemCheckbox.applyToComponent { addChangeListener { if (fromFilesystemCheckbox.selected()) fromUrlCheckbox.applyToComponent { isSelected = false } } }
+          fromUrlCheckbox.applyToComponent { addChangeListener { if (fromUrlCheckbox.selected()) fromFilesystemCheckbox.applyToComponent { isSelected = false } } }
         }
       }
     }
