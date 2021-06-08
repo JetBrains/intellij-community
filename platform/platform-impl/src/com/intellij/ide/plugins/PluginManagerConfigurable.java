@@ -1183,12 +1183,12 @@ public final class PluginManagerConfigurable
     CopyProvider copyProvider = new CopyProvider() {
       @Override
       public void performCopy(@NotNull DataContext dataContext) {
-        StringBuilder result = new StringBuilder();
-        for (ListPluginComponent pluginComponent : component.getSelection()) {
-          IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
-          result.append(descriptor.getName()).append(" (").append(descriptor.getVersion()).append(")\n");
-        }
-        CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
+        String text = StringUtil.join(component.getSelection(),
+                                      pluginComponent -> {
+                                        IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
+                                        return String.format("%s (%s)", descriptor.getName(), descriptor.getVersion());
+                                      }, "\n");
+        CopyPasteManager.getInstance().setContents(new TextTransferable(text));
       }
 
       @Override
