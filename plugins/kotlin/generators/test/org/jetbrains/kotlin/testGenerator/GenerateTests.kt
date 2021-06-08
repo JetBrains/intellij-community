@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateTestSuppor
 import org.jetbrains.kotlin.idea.codeInsight.generate.AbstractGenerateToStringActionTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinArgumentsHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinLambdasHintsProvider
+import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinReferenceTypeHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.hints.AbstractKotlinRangesHintsProviderTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveLeftRightTest
 import org.jetbrains.kotlin.idea.codeInsight.moveUpDown.AbstractMoveStatementTest
@@ -950,6 +951,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractKotlinArgumentsHintsProviderTest> {
             model("codeInsight/hints/arguments")
         }
+
+        testClass<AbstractKotlinReferenceTypeHintsProviderTest> {
+            model("codeInsight/hints/types")
+        }
+
         testClass<AbstractKotlinLambdasHintsProvider> {
             model("codeInsight/hints/lambda")
         }
@@ -1083,6 +1089,12 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractFirLazyResolveTest> {
             model("fir/lazyResolve", pattern = TEST, isRecursive = false)
+        }
+    }
+
+    testGroup("fir-low-level-api", testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/fir/raw-fir/psi2fir/testData")) {
+        testClass<AbstractFirLazyBodiesCalculatorTest> {
+            model("rawBuilder", testMethodName = "doTest")
         }
     }
 
@@ -1408,6 +1420,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("weighers/basic", pattern = KT_OR_KTS_WITHOUT_DOTS)
         }
 
+        testClass<AbstractSmartCompletionWeigherTest> {
+            model("weighers/smart", pattern = KT_OR_KTS_WITHOUT_DOTS)
+        }
+
         testClass<AbstractJSBasicCompletionTest> {
             model("basic/common")
             model("basic/js")
@@ -1448,10 +1464,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractMultiFileJvmBasicCompletionTest> {
             model("basic/multifile", pattern = DIRECTORY, isRecursive = false)
-        }
-
-        testClass<AbstractMultiFileJvmBasicCompletionTest>("MultiFilePrimitiveJvmBasicCompletionTestGenerated") {
-            model("basic/multifilePrimitive", pattern = DIRECTORY, extension = null, recursive = false)
         }
 
         testClass<AbstractMultiFileSmartCompletionTest> {
