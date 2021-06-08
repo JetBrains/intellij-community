@@ -2,7 +2,7 @@
 <body>
 Reports any chains of <code>if</code>-<code>else</code> statements all of whose conditions are <code>instanceof</code> expressions
 or class equality expressions (e.g. comparison with <code>String.class</code>).
-Such constructions usually indicate a failure of object-oriented design, which
+Such constructions usually indicate a failure in object-oriented design which
 dictates that such type-based dispatch should be done via polymorphic method calls rather than explicit chains
 of type tests.
 <p>Example:</p>
@@ -28,7 +28,7 @@ of type tests.
 </code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to ignore instanceof expressions on library classes.
+  Use the checkbox below to ignore <code>instanceof</code> expressions on library classes.
 <p>
 
 </body>

@@ -5,7 +5,7 @@ casting an object to <code>ArrayList</code> when casting it to
 <code>List</code> would do just as well.
 <p>
   <b>Note:</b> much like the <i>Redundant type cast</i>
-  inspection, applying the fix for this inspection may change the semantics of your program, if you are
+  inspection, applying the fix for this inspection may change the semantics of your program if you are
   intentionally using an overly strong cast to cause a <code>ClassCastException</code> to be generated.
 </p>
 <p>Example:</p>
@@ -22,6 +22,6 @@ casting an object to <code>ArrayList</code> when casting it to
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to ignore casts when there's a matching instanceof check in the code.
+  Use the checkbox below to ignore casts when there's a matching <code>instanceof</code> check in the code.
 </body>
 </html>
