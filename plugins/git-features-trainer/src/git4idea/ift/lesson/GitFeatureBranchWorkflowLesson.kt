@@ -38,7 +38,7 @@ import java.io.File
 import javax.swing.JDialog
 
 class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessonsBundle.message("git.feature.branch.lesson.name")) {
-  override val existedFile = "src/git/simple_cat.yml"
+  override val existedFile = "git/simple_cat.yml"
   private val remoteName = "origin"
   private val branchName = "feature"
   private val main = "main"
