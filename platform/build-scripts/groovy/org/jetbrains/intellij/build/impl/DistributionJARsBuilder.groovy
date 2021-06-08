@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -283,17 +283,21 @@ final class DistributionJARsBuilder {
     })
   }
 
-  static List<String> getModulesToCompile(BuildContext buildContext) {
-    def productLayout = buildContext.productProperties.productLayout
-    def modulesToInclude = productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
-                           PlatformModules.PLATFORM_API_MODULES +
-                           PlatformModules.PLATFORM_IMPLEMENTATION_MODULES +
-                           productLayout.productApiModules +
-                           productLayout.productImplementationModules +
-                           productLayout.additionalPlatformJars.values() +
-                           toolModules + buildContext.productProperties.additionalModulesToCompile +
-                           ["intellij.idea.community.build.tasks", "intellij.platform.images.build"]
-    modulesToInclude - productLayout.excludedModuleNames
+  static Set<String> getModulesToCompile(BuildContext buildContext) {
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    Set<String> modulesToInclude = new LinkedHashSet<>()
+    modulesToInclude.addAll(productLayout.getIncludedPluginModules(Set.copyOf(productLayout.bundledPluginModules)))
+    modulesToInclude.addAll(PlatformModules.PLATFORM_API_MODULES)
+    modulesToInclude.addAll(PlatformModules.PLATFORM_IMPLEMENTATION_MODULES)
+    modulesToInclude.addAll(productLayout.productApiModules)
+    modulesToInclude.addAll(productLayout.productImplementationModules)
+    modulesToInclude.addAll(productLayout.additionalPlatformJars.values())
+    modulesToInclude.addAll(toolModules)
+    modulesToInclude.addAll(buildContext.productProperties.additionalModulesToCompile)
+    modulesToInclude.add("intellij.idea.community.build.tasks")
+    modulesToInclude.add("intellij.platform.images.build")
+    modulesToInclude.removeAll(productLayout.excludedModuleNames)
+    return modulesToInclude
   }
 
   List<String> getModulesForPluginsToPublish() {

@@ -172,13 +172,13 @@ final class BuildTasksImpl extends BuildTasks {
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
-  private void buildProvidedModulesList(Path targetFile, List<String> modules) {
+  private void buildProvidedModulesList(Path targetFile, Collection<String> modules) {
     buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
       buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
       buildContext.messages.debug("Building provided modules list for the following modules: $modules")
       FileUtil.delete(targetFile)
       // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules, ["listBundledPlugins", targetFile.toString()])
+      runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules, List.of("listBundledPlugins", targetFile.toString()))
       if (!Files.exists(targetFile)) {
         buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
       }
@@ -188,7 +188,7 @@ final class BuildTasksImpl extends BuildTasks {
 
   static void runApplicationStarter(@NotNull BuildContext context,
                                     @NotNull Path tempDir,
-                                    List<String> modules,
+                                    @NotNull Collection<String> modules,
                                     List<String> arguments,
                                     Map<String, Object> systemProperties = Collections.emptyMap(),
                                     List<String> vmOptions = List.of("-Xmx512m"),
@@ -378,22 +378,28 @@ idea.fatal.error.notification=disabled
   }
 
   private DistributionJARsBuilder compileModulesForDistribution() {
-    def productLayout = buildContext.productProperties.productLayout
-    List<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
-    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
-    compileModules(moduleNames + ((buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: Collections.emptyList()) as List<String>) +
-                   productLayout.mainModules + mavenArtifacts.additionalModules + mavenArtifacts.proprietaryModules,
-                   buildContext.productProperties.modulesToCompileTests)
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    Collection<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
+    MavenArtifactsProperties mavenArtifacts = buildContext.productProperties.mavenArtifacts
+
+    Set<String> toCompile = new LinkedHashSet<>()
+    toCompile.addAll(moduleNames)
+    toCompile.addAll(buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: Collections.<String>emptyList())
+    toCompile.addAll(productLayout.mainModules)
+    toCompile.addAll(mavenArtifacts.additionalModules)
+    toCompile.addAll(mavenArtifacts.proprietaryModules)
+    toCompile.addAll(buildContext.productProperties.modulesToCompileTests)
+    compileModules(toCompile)
 
     def pluginsToPublish = new LinkedHashSet<>(
       DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish))
 
     if (buildContext.shouldBuildDistributions()) {
-      Path providedModulesFile = Paths.get(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-builtinModules.json")
+      Path providedModulesFile = Path.of(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-builtinModules.json")
       buildProvidedModulesList(providedModulesFile, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          final PluginsCollector collector = new PluginsCollector(buildContext)
+          PluginsCollector collector = new PluginsCollector(buildContext)
           pluginsToPublish.addAll(collector.collectCompatiblePluginsToPublish(providedModulesFile.toString()))
         }
         else {
@@ -426,16 +432,14 @@ idea.fatal.error.notification=disabled
     def mavenArtifacts = buildContext.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
       buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
-        def mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
-        List<String> ideModuleNames
+        MavenArtifactsBuilder mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
+        List<String> moduleNames = new ArrayList<>()
         if (mavenArtifacts.forIdeModules) {
-          def bundledPlugins = buildContext.productProperties.productLayout.bundledPluginModules as Set<String>
-          ideModuleNames = distributionJARsBuilder.platformModules + buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins)
+          Set<String> bundledPlugins = Set.copyOf(buildContext.productProperties.productLayout.bundledPluginModules)
+          moduleNames.addAll(distributionJARsBuilder.platformModules)
+          moduleNames.addAll(buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins))
         }
-        else {
-          ideModuleNames = []
-        }
-        def moduleNames = ideModuleNames + mavenArtifacts.additionalModules
+        moduleNames.addAll(mavenArtifacts.additionalModules)
         if (!moduleNames.isEmpty()) {
           mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
         }
@@ -821,7 +825,7 @@ idea.fatal.error.notification=disabled
   }
 
   @Override
-  void compileModules(List<String> moduleNames, List<String> includingTestsInModules = []) {
+  void compileModules(Collection<String> moduleNames, List<String> includingTestsInModules = []) {
     CompilationTasks.create(buildContext).compileModules(moduleNames, includingTestsInModules)
   }
 
