@@ -5,6 +5,7 @@ import com.intellij.grazie.detector.model.Language
 import com.intellij.grazie.text.TextProblem
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger
+import com.intellij.internal.statistic.utils.getPluginInfo
 
 internal object GrazieFUSCounter {
   fun languagesSuggested(languages: Collection<Language>, isEnabled: Boolean) {
@@ -16,10 +17,15 @@ internal object GrazieFUSCounter {
     }
   }
 
-  fun typoFound(problem: TextProblem) = log("typo.found") {
-    addData("id", problem.rule.globalId)
-    addData("fixes", problem.corrections.size)
-    addProject(problem.text.commonParent.project)
+  fun typoFound(problem: TextProblem) {
+    val pluginId = getPluginInfo(problem.rule.javaClass).id ?: return
+
+    log("typo.found") {
+      addData("id", problem.rule.globalId)
+      addData("plugin_id", pluginId)
+      addData("fixes", problem.corrections.size)
+      addProject(problem.text.commonParent.project)
+    }
   }
 
   private fun log(eventId: String, body: FeatureUsageData.() -> Unit) {
