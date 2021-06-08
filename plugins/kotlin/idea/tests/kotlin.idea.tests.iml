@@ -65,8 +65,6 @@
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.formatter" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.jps-common" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-idea" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.jvm-debugger.util" />
     <orderEntry type="module" module-name="kotlin.jvm-debugger.evaluation" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.j2k.services" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.i18n" scope="TEST" />
