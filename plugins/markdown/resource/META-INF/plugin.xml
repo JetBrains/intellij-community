@@ -271,6 +271,7 @@ Includes the following features:</p>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
               icon="AllIcons.General.LayoutPreviewOnly">
+        <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
         <add-to-group group-id="GenerateGroup" anchor="last"/>
       </action>
     </group>
