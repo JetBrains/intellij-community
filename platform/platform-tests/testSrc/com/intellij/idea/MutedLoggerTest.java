@@ -3,9 +3,11 @@ package com.intellij.idea;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
+import org.apache.log4j.Priority;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
 import org.junit.AfterClass;
@@ -68,7 +70,7 @@ public class MutedLoggerTest extends BareTestFixtureTestCase {
   }
 
   @Test
-  public void testLogsRecurringException() {
+  public void testErrorLogsRecurringException() {
     List<Pair<String, Throwable>> errors = ContainerUtil.createConcurrentList();
     List<Pair<String, Throwable>> warns = ContainerUtil.createConcurrentList();
     Throwable t = new Throwable();
@@ -80,11 +82,36 @@ public class MutedLoggerTest extends BareTestFixtureTestCase {
 
     // exception, "exception was reported x times" message
     assertEquals("Too many errors posted: " + errors, 2, errors.size());
+    UsefulTestCase.assertEmpty(warns);
 
     Pair<String, Throwable> firstError = errors.get(0);
     assertSame("Second error doesn't contain throwable: " + firstError, t, firstError.second);
 
     Pair<String, Throwable> thirdError = errors.get(1);
+    assertEquals("Third error doesn't contain message and occurrences: " + thirdError, thirdError.first,
+                 IdeaLogger.getExceptionWasAlreadyReportedNTimesMessage(t, FREQUENCY));
+    assertNull("Third error contains throwable: " + thirdError, thirdError.second);
+  }
+
+  @Test
+  public void testWarningLogsRecurringException() {
+    List<Pair<String, Throwable>> errors = ContainerUtil.createConcurrentList();
+    List<Pair<String, Throwable>> warns = ContainerUtil.createConcurrentList();
+    Throwable t = new Throwable();
+    Logger logger = getDelegate(errors, warns);
+
+    for (int i = 0; i < FREQUENCY; i++) {
+      logger.warn(t);
+    }
+
+    // exception, "exception was reported x times" message
+    UsefulTestCase.assertEmpty(errors);
+    assertEquals("Too many warns posted: " + warns, 2, warns.size());
+
+    Pair<String, Throwable> firstError = warns.get(0);
+    assertSame("Second error doesn't contain throwable: " + firstError, t, firstError.second);
+
+    Pair<String, Throwable> thirdError = warns.get(1);
     assertEquals("Third error doesn't contain message and occurrences: " + thirdError, thirdError.first,
                  IdeaLogger.getExceptionWasAlreadyReportedNTimesMessage(t, FREQUENCY));
     assertNull("Third error contains throwable: " + thirdError, thirdError.second);
@@ -100,7 +127,7 @@ public class MutedLoggerTest extends BareTestFixtureTestCase {
 
       @Override
       public void error(Object message) {
-        // error header
+        // ignore error header
       }
 
       @Override
@@ -110,7 +137,14 @@ public class MutedLoggerTest extends BareTestFixtureTestCase {
 
       @Override
       public void warn(Object message) {
-        // warn header
+        // ignore warn header
+      }
+
+      @Override
+      public void log(Priority priority, Object message) {
+        if (priority == Level.ERROR) error(message, null);
+        else if (priority == Level.WARN) warn(message, null);
+        else throw new IllegalArgumentException(priority.toString());
       }
     };
     log4j.setLevel(Level.WARN);
