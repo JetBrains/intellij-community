@@ -945,7 +945,6 @@
                         serviceImplementation="com.intellij.ide.browsers.impl.WebBrowserServiceImpl"/>
 
     <!-- Actions on Save -->
-    <!--
     <projectConfigurable groupId="tools"
                          groupWeight="170"
                          instance="com.intellij.ide.actionsOnSave.ActionsOnSaveConfigurable"
@@ -953,7 +952,6 @@
                          bundle="messages.IdeBundle"
                          key="actions.on.save.page.title"
                          nonDefaultProject="true"/>
-    -->
 
     <!--troubleshooting-->
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.AboutTroubleInfoCollector"/>
