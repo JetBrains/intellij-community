@@ -50,8 +50,6 @@
     <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSState$ContextLanguageValidator"/>
-
     <statistics.counterUsagesCollector groupId="grazie.count" version="3"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
