@@ -19,7 +19,6 @@ fun createAggregateHtml(
   diagnostics: List<IndexDiagnosticDumper.ExistingDiagnostic>,
   sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>
 ): String {
-  val appInfo = JsonIndexDiagnosticAppInfo.create()
   val runtimeInfo = JsonRuntimeInfo.create()
   return html {
     head {
@@ -33,41 +32,53 @@ fun createAggregateHtml(
 
         div {
           h1("Indexing history")
-          table {
+          table(className = "centered-text") {
             thead {
               tr {
-                th("IDE")
-                th("Reason")
+                th("Time", colspan = "6")
+                th("Files", colspan = "6")
+                th("IDE", rowspan = "2")
+                th("Details", rowspan = "2")
+              }
+              tr {
                 th("Started")
-                th("Total time")
-                th("Scanning time")
-                th("Indexing time")
-                th("Content loading time")
-                th("Cancelled?")
-                th(TITLE_NUMBER_OF_FILE_PROVIDERS)
-                th(TITLE_NUMBER_OF_SCANNED_FILES)
-                th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRA_EXTENSIONS_DURING_SCAN)
-                th(TITLE_NUMBER_OF_FILES_SCHEDULED_FOR_INDEXING_AFTER_SCAN)
-                th(TITLE_NUMBER_OF_FILES_INDEXED_BY_INFRASTRUCTURE_EXTENSIONS_DURING_INDEXING)
-                th(TITLE_NUMBER_OF_FILES_INDEXED_WITH_LOADING_CONTENT)
-                th("Details")
+                th("Total")
+                th("Scanning")
+                th("Indexing")
+                th("Content loading")
+                th("Finished")
+                th("Providers")
+                th("Scanned")
+                th("Shared indexes (w/o content loading)")
+                th("Scheduled for indexing")
+                th("Shared indexes (content loaded)")
+                th("Total indexed (shared indexes included)")
               }
             }
             tbody {
               for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
                 tr {
-                  td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build + ", " +
-                     StringUtil.formatFileSize(runtimeInfo.maxMemory) + ", " +
-                     runtimeInfo.maxNumberOfIndexingThreads + " CPU"
-                  )
-                  td(diagnostic.indexingTimes.indexingReason ?: NOT_APPLICABLE)
-                  td(diagnostic.indexingTimes.updatingStart.presentableDateTime())
+                  // Time section.
+                  td {
+                    if (diagnostic.indexingTimes.indexingReason != null) {
+                      strong(diagnostic.indexingTimes.indexingReason)
+                      br()
+                    }
+                    text(diagnostic.indexingTimes.updatingStart.presentableDateTime())
+                  }
                   td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
                   td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
                   td(diagnostic.indexingTimes.indexingTime.presentableDuration())
                   td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
-                  td(if (diagnostic.indexingTimes.wasInterrupted) "Yes" else "No")
+                  td {
+                    if (diagnostic.indexingTimes.wasInterrupted) {
+                      strong("Cancelled")
+                      br()
+                    }
+                    text(diagnostic.indexingTimes.updatingEnd.presentableDateTime())
+                  }
 
+                  // Files section.
                   val fileCount = diagnostic.fileCount
                   td(fileCount?.numberOfFileProviders?.toString() ?: NOT_APPLICABLE)
                   td(fileCount?.numberOfScannedFiles?.toString() ?: NOT_APPLICABLE)
@@ -76,6 +87,8 @@ fun createAggregateHtml(
                   td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: NOT_APPLICABLE)
                   td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: NOT_APPLICABLE)
 
+                  // IDE + Details section.
+                  td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
                   td {
                     link(diagnostic.htmlFile.fileName.toString(), "details")
                   }
@@ -596,6 +609,10 @@ private val CSS_STYLE = """
     position: absolute;
     left: 20%;
   }
+  
+  .centered-text {
+    text-align: center;
+  }
 """.trimIndent()
 
 @Language("JavaScript")
@@ -642,6 +659,7 @@ private fun createTag(body: HtmlBuilder.() -> Unit, tag: Element): Element {
 private fun HtmlBuilder.text(@Nls text: String) = append(text)
 private fun HtmlBuilder.rawText(@Nls text: String) = appendRaw(text)
 private fun HtmlBuilder.title(@Nls title: String) = append(HtmlChunk.text(title).wrapWith(tag("title")))
+private fun HtmlBuilder.strong(@Nls text: String) = append(HtmlChunk.text(text).wrapWith(tag("strong")))
 
 private fun HtmlBuilder.style(@Nls style: String) = append(styleTag(style))
 private fun HtmlBuilder.script(@Nls script: String) = append(tag("script").addRaw(script))
@@ -662,8 +680,11 @@ private fun HtmlBuilder.tbody(body: HtmlBuilder.() -> Unit) = append(createTag(b
 private fun HtmlBuilder.tr(className: String = "", body: HtmlBuilder.() -> Unit) = append(
   createTag(body, tag("tr").addAttrIfNotEmpty("class", className)))
 
-private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("th")))
-private fun HtmlBuilder.th(@Nls text: String) = th { text(text) }
+private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit, colspan: String = "", rowspan: String = "") = append(createTag(body, tag("th")
+  .addAttrIfNotEmpty("colspan", colspan).addAttrIfNotEmpty("rowspan", rowspan))
+)
+
+private fun HtmlBuilder.th(@Nls text: String, colspan: String = "", rowspan: String = "") = th({ text(text) }, colspan, rowspan)
 private fun HtmlBuilder.td(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("td")))
 private fun HtmlBuilder.td(@Nls text: String) = td { text(text) }
 
