@@ -36,7 +36,7 @@ import javax.swing.border.Border
 class AlertMessagesManager : MacMessages() {
   companion object {
     @JvmStatic
-    fun isEnabled(): Boolean = Registry.`is`("ide.message.dialogs.as.swing.alert", false)
+    fun isEnabled(): Boolean = Registry.`is`("ide.message.dialogs.as.swing.alert", true)
 
     @JvmStatic
     fun instance(): AlertMessagesManager = ApplicationManager.getApplication().getService(AlertMessagesManager::class.java)
@@ -151,6 +151,14 @@ private class AlertDialog(project: Project?,
     }
     else {
       myCloseButton = null
+    }
+
+    if (SystemInfoRt.isMac) {
+      setInitialLocationCallback {
+        val rootPane = SwingUtilities.getRootPane(window.parent) ?: SwingUtilities.getRootPane(window.owner)
+        val location = rootPane.locationOnScreen
+        Point(location.x + (rootPane.width - window.width) / 2, (location.y + rootPane.height * 0.25).toInt())
+      }
     }
 
     init()
