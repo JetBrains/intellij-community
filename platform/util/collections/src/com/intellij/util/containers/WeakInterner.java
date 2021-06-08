@@ -23,11 +23,11 @@ public class WeakInterner<T> extends Interner<T> {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public WeakInterner() {
-    myMap = new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), HashingStrategy.canonical());
+    myMap = CollectionFactory.createConcurrentWeakKeyWeakValueMap();
   }
 
   public WeakInterner(@NotNull HashingStrategy<? super T> strategy) {
-    myMap = new ConcurrentWeakKeyWeakValueHashMap<>(100, 0.75f, Runtime.getRuntime().availableProcessors(), strategy);
+    myMap = CollectionFactory.createConcurrentWeakKeyWeakValueMap(strategy);
   }
 
   @Override
