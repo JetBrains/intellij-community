@@ -951,7 +951,8 @@
                          instance="com.intellij.ide.actionsOnSave.ActionsOnSaveConfigurable"
                          id="actions.on.save"
                          bundle="messages.IdeBundle"
-                         key="actions.on.save.page.title"/>
+                         key="actions.on.save.page.title"
+                         nonDefaultProject="true"/>
     -->
 
     <!--troubleshooting-->
