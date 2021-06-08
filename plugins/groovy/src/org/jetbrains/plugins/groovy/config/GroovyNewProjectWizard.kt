@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.config
 
+import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings
 import com.intellij.framework.library.FrameworkLibraryVersion
+import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.ide.LabelAndComponent
 import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.NewProjectWizard
@@ -11,6 +13,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.roots.libraries.LibraryType
+import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions
@@ -67,10 +70,18 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     builder.contentEntryPath = project.basePath
     builder.name = project.name
     val groovyModuleBuilder = GroovyAwareModuleBuilder()
+    val compositionSettings = LibraryCompositionSettings(GroovyLibraryDescription(), { project.basePath ?: "./" },
+                                                         FrameworkLibraryVersionFilter.ALL, listOf(settings.version.get()))
+    compositionSettings.setDownloadLibraries(true)
     groovyModuleBuilder.updateFrom(builder)
     builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
       override fun update(module: Module, rootModel: ModifiableRootModel) {
+        val librariesContainer = if (context.modulesProvider == null)
+          LibrariesContainerFactory.createContainer(context.project)
+        else LibrariesContainerFactory.createContainer(context, context.modulesProvider)
         groovyModuleBuilder.setupRootModel(rootModel)
+        compositionSettings.downloadFiles(context.wizard.contentComponent)
+        compositionSettings.addLibraries(rootModel, mutableListOf(), librariesContainer)
       }
     })
   }
