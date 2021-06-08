@@ -4540,6 +4540,19 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/convertConcatenationToBuildString")
+    public static class ConvertConcatenationToBuildString extends AbstractIntentionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("basic.kt")
+        public void testBasic() throws Exception {
+            runTest("testData/intentions/convertConcatenationToBuildString/basic.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/convertEnumToSealedClass")
     public static class ConvertEnumToSealedClass extends AbstractIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
