@@ -134,7 +134,7 @@ private class AlertDialog(project: Project?,
 
   private val myIconComponent = JLabel(myIcon)
   private val mySouthPanel = JPanel(BorderLayout(0, JBUI.scale(20)))
-  private val myButtonsPanel = JPanel(HorizontalLayout(JBUI.scale(12)))
+  private val myButtonsPanel = JPanel()
   private val myCloseButton: JComponent?
   private val myButtons = ArrayList<JButton>()
   private var myHelpButton: JButton? = null
@@ -298,6 +298,13 @@ private class AlertDialog(project: Project?,
       mySouthPanel.add(wrapper, BorderLayout.NORTH)
     }
 
+    var gap = 12
+    if (myButtons.size > 1) {
+      val insets = myButtons[0].insets
+      gap -= insets.left + insets.right
+    }
+    myButtonsPanel.layout = HorizontalLayout(JBUI.scale(gap))
+
     for (button in myButtons) {
       button.parent.remove(button)
       myButtonsPanel.add(button, HorizontalLayout.RIGHT)
@@ -357,14 +364,18 @@ private class AlertDialog(project: Project?,
     val size = button.preferredSize
     val width100 = JBUI.scale(100)
     if (size.width < width100) {
-      button.preferredSize = Dimension(width100, size.height)
+      size.width = width100
     }
     else {
       val diffWidth = JBUI.scale(20) - UIUtil.getButtonTextHorizontalOffset(button, size, null)
       if (diffWidth > 0) {
-        button.preferredSize = Dimension(size.width + 2 * diffWidth, size.height)
+        size.width += 2 * diffWidth
       }
     }
+    val insets = button.insets
+    size.width += insets.left + insets.right
+    size.height += insets.top + insets.bottom
+    button.preferredSize = size
     myButtons.add(button)
     return button
   }
