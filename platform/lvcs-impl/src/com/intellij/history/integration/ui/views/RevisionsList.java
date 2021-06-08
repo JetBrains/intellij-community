@@ -27,7 +27,6 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
-import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jetbrains.annotations.NotNull;
 
 import javax.accessibility.AccessibleContext;
@@ -47,7 +46,7 @@ import java.util.*;
 public final class RevisionsList {
   public static final int RECENT_PERIOD = 12;
   private final JBTable table;
-  private volatile LongSet filteredRevisions;
+  private volatile Set<Long> filteredRevisions;
 
   public RevisionsList(SelectionListener l) {
     table = new JBTable();
@@ -148,12 +147,11 @@ public final class RevisionsList {
 
   private boolean filterRevision(RevisionItem r) {
     if (filteredRevisions == null) return true;
-    Long cs = r.revision.getChangeSetId();
-    return cs != null && filteredRevisions.contains(cs);
+    return filteredRevisions.contains(r.revision.getChangeSetId());
   }
 
-  public void setFilteredRevisions(LongSet fr) {
-    filteredRevisions = fr;
+  public void setFilteredRevisions(Set<Long> filtered) {
+    filteredRevisions = filtered;
     List<Object> sel = storeSelection();
     getFilteringModel().refilter();
     restoreSelection(sel);

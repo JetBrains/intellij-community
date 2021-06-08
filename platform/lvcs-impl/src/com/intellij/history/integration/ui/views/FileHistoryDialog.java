@@ -11,12 +11,10 @@ import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.SearchTextArea;
 import com.intellij.history.core.LocalHistoryFacade;
-import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
-import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
@@ -35,8 +33,6 @@ import com.intellij.ui.components.ProgressBarLoadingDecorator;
 import com.intellij.util.Alarm;
 import com.intellij.util.AlarmFactory;
 import com.intellij.util.ui.UIUtil;
-import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
-import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,6 +40,8 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import java.awt.*;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffRequestPanel myDiffPanel;
@@ -104,15 +102,15 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
       decorator.startLoading(false);
       updateEditorSearch();
       myAlarm.addRequest(() -> {
-        LongSet revisions = new LongOpenHashSet();
-        for (RevisionItem r: getRevisions()) {
-          Entry entry = r.revision.findEntry();
-          if (entry == null) continue;
-          String text = entry.getContent().getString(entry, new IdeaGateway());
-          Long csId = r.revision.getChangeSetId();
-          if (csId != null && text != null && text.contains(filter)) {
-            revisions.add(csId.longValue());
-          }
+        Set<Long> revisions = new HashSet<>();
+        FileHistoryDialogModel model = myModel;
+        if (myModel != null) {
+          myModel.processContents((r, c) -> {
+            if (c != null && c.contains(filter)) {
+              revisions.add(r.getChangeSetId());
+            }
+            return true;
+          });
         }
         decorator.stopLoading();
         UIUtil.invokeLaterIfNeeded(() -> applyFilteredRevisions(revisions));
@@ -120,7 +118,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     }
   }
 
-  private void applyFilteredRevisions(LongSet revisions) {
+  private void applyFilteredRevisions(Set<Long> revisions) {
     myRevisionsList.setFilteredRevisions(revisions);
     updateEditorSearch();
   }

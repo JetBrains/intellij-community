@@ -72,7 +72,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private JBLoadingPanel myDiffView;
   private ActionToolbar myToolBar;
 
-  private T myModel;
+  protected T myModel;
 
   private MergingUpdateQueue myUpdateQueue;
   private boolean isUpdating;
