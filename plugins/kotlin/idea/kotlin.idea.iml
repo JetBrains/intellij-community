@@ -85,7 +85,5 @@
     <orderEntry type="library" name="intellij-markdown" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="module" module-name="intellij.grazie" />
-    <orderEntry type="module" module-name="kotlin.jps-plugin" />
-    <orderEntry type="module" module-name="intellij.platform.jps.build" />
   </component>
 </module>

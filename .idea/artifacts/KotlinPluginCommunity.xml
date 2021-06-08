@@ -159,6 +159,9 @@
         <element id="archive" name="kotlin-maven.jar">
           <element id="module-output" name="kotlin.maven" />
         </element>
+        <element id="archive" name="kotlin-compiler-reference-index.jar">
+          <element id="module-output" name="kotlin.refIndex" />
+        </element>
         <element id="archive" name="kotlin-native.jar">
           <element id="module-output" name="kotlin.native" />
         </element>
