@@ -18,119 +18,116 @@ fun createAggregateHtml(
   projectName: String,
   diagnostics: List<IndexDiagnosticDumper.ExistingDiagnostic>,
   sharedIndexEvents: List<JsonSharedIndexDiagnosticEvent>
-): String {
-  val runtimeInfo = JsonRuntimeInfo.create()
-  return html {
-    head {
-      title("Indexing diagnostics of '$projectName'")
-      style(CSS_STYLE)
-    }
-    body {
-      div(className = "aggregate-report-content") {
-        h1("Project name")
-        text(projectName)
+): String = html {
+  head {
+    title("Indexing diagnostics of '$projectName'")
+    style(CSS_STYLE)
+  }
+  body {
+    div(className = "aggregate-report-content") {
+      h1("Project name")
+      text(projectName)
 
-        div {
-          h1("Indexing history")
-          table(className = "centered-text") {
-            thead {
-              tr {
-                th("Time", colspan = "6")
-                th("Files", colspan = "6")
-                th("IDE", rowspan = "2")
-                th("Details", rowspan = "2")
-              }
-              tr {
-                th("Started")
-                th("Total")
-                th("Scanning")
-                th("Indexing")
-                th("Content loading")
-                th("Finished")
-                th("Providers")
-                th("Scanned")
-                th("Shared indexes (w/o content loading)")
-                th("Scheduled for indexing")
-                th("Shared indexes (content loaded)")
-                th("Total indexed (shared indexes included)")
-              }
+      div {
+        h1("Indexing history")
+        table(className = "centered-text") {
+          thead {
+            tr {
+              th("Time", colspan = "6")
+              th("Files", colspan = "6")
+              th("IDE", rowspan = "2")
+              th("Details", rowspan = "2")
             }
-            tbody {
-              for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
-                tr {
-                  // Time section.
-                  td {
-                    if (diagnostic.indexingTimes.indexingReason != null) {
-                      strong(diagnostic.indexingTimes.indexingReason)
-                      br()
-                    }
-                    text(diagnostic.indexingTimes.updatingStart.presentableDateTime())
+            tr {
+              th("Started")
+              th("Total")
+              th("Scanning")
+              th("Indexing")
+              th("Content loading")
+              th("Finished")
+              th("Providers")
+              th("Scanned")
+              th("Shared indexes (w/o content loading)")
+              th("Scheduled for indexing")
+              th("Shared indexes (content loaded)")
+              th("Total indexed (shared indexes included)")
+            }
+          }
+          tbody {
+            for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
+              tr {
+                // Time section.
+                td {
+                  if (diagnostic.indexingTimes.indexingReason != null) {
+                    strong(diagnostic.indexingTimes.indexingReason)
+                    br()
                   }
-                  td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
-                  td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
-                  td(diagnostic.indexingTimes.indexingTime.presentableDuration())
-                  td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
-                  td {
-                    if (diagnostic.indexingTimes.wasInterrupted) {
-                      strong("Cancelled")
-                      br()
-                    }
-                    text(diagnostic.indexingTimes.updatingEnd.presentableDateTime())
+                  text(diagnostic.indexingTimes.updatingStart.presentableDateTime())
+                }
+                td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
+                td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
+                td(diagnostic.indexingTimes.indexingTime.presentableDuration())
+                td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
+                td {
+                  if (diagnostic.indexingTimes.wasInterrupted) {
+                    strong("Cancelled")
+                    br()
                   }
+                  text(diagnostic.indexingTimes.updatingEnd.presentableDateTime())
+                }
 
-                  // Files section.
-                  val fileCount = diagnostic.fileCount
-                  td(fileCount?.numberOfFileProviders?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfScannedFiles?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: NOT_APPLICABLE)
-                  td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: NOT_APPLICABLE)
+                // Files section.
+                val fileCount = diagnostic.fileCount
+                td(fileCount?.numberOfFileProviders?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfScannedFiles?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringScan?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfFilesScheduledForIndexingAfterScan?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: NOT_APPLICABLE)
+                td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: NOT_APPLICABLE)
 
-                  // IDE + Details section.
-                  td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
-                  td {
-                    link(diagnostic.htmlFile.fileName.toString(), "details")
-                  }
+                // IDE + Details section.
+                td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
+                td {
+                  link(diagnostic.htmlFile.fileName.toString(), "details")
                 }
               }
             }
           }
         }
+      }
 
-        if (sharedIndexEvents.isNotEmpty()) {
-          val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
-          div {
-            h1("Shared Indexes")
-            table {
-              thead {
-                tr {
-                  th("Time")
-                  th("Kind")
-                  th("Name")
-                  th("Size")
-                  th("Download time")
-                  th("Download speed")
-                  th("Status")
-                  th("ID")
-                }
+      if (sharedIndexEvents.isNotEmpty()) {
+        val indexIdToEvents = sharedIndexEvents.groupBy { it.chunkUniqueId }
+        div {
+          h1("Shared Indexes")
+          table {
+            thead {
+              tr {
+                th("Time")
+                th("Kind")
+                th("Name")
+                th("Size")
+                th("Download time")
+                th("Download speed")
+                th("Status")
+                th("ID")
               }
-              tbody {
-                for (event in sharedIndexEvents.filterIsInstance<JsonSharedIndexDiagnosticEvent.Downloaded>().sortedByDescending { it.time.instant }) {
-                  val events = indexIdToEvents.getOrDefault(event.chunkUniqueId, emptyList())
-                  val lastAttach = events.filterIsInstance<JsonSharedIndexDiagnosticEvent.Attached>().maxByOrNull { it.time.instant } ?: continue
-                  tr {
-                    td(event.time.presentableDateTime())
-                    td(lastAttach.kind)
-                    td((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.indexName ?: NOT_APPLICABLE)
-                    td(event.packedSize.presentableSize())
-                    td(event.downloadTime.presentableDuration())
-                    td(event.downloadSpeed.presentableSpeed())
-                    td(event.finishType + ((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.let {
-                      " FB: ${it.fbMatch.presentablePercentages()}, Stub: ${it.stubMatch.presentablePercentages()}"
-                    } ?: " Incompatible"))
-                    td(event.chunkUniqueId)
-                  }
+            }
+            tbody {
+              for (event in sharedIndexEvents.filterIsInstance<JsonSharedIndexDiagnosticEvent.Downloaded>().sortedByDescending { it.time.instant }) {
+                val events = indexIdToEvents.getOrDefault(event.chunkUniqueId, emptyList())
+                val lastAttach = events.filterIsInstance<JsonSharedIndexDiagnosticEvent.Attached>().maxByOrNull { it.time.instant } ?: continue
+                tr {
+                  td(event.time.presentableDateTime())
+                  td(lastAttach.kind)
+                  td((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.indexName ?: NOT_APPLICABLE)
+                  td(event.packedSize.presentableSize())
+                  td(event.downloadTime.presentableDuration())
+                  td(event.downloadSpeed.presentableSpeed())
+                  td(event.finishType + ((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.let {
+                    " FB: ${it.fbMatch.presentablePercentages()}, Stub: ${it.stubMatch.presentablePercentages()}"
+                  } ?: " Incompatible"))
+                  td(event.chunkUniqueId)
                 }
               }
             }
@@ -138,8 +135,8 @@ fun createAggregateHtml(
         }
       }
     }
-  }.toString()
-}
+  }
+}.toString()
 
 private const val NOT_APPLICABLE = "N/A"
 
