@@ -161,7 +161,8 @@ private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors:
       .use { scanResult ->
         val lightServices = scanResult.getClassesWithAnnotation(Service::class.java.name)
         for (lightService in lightServices) {
-          if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole") {
+          if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole" ||
+              lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService") {
             // wants EDT in constructor
              continue
           }

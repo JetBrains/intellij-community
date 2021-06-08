@@ -5,8 +5,13 @@ Reports single-expression string templates that can be safely removed.
 
 <p>Examples:</p>
 <pre><code>
-   val x = "Hello"
-   val y = "$x"    // can be replaced with 'val y = x'
+  val x = "Hello"
+  val y = "$x"
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  val x = "Hello"
+  val y = x // <== Updated
 </code></pre>
 </body>
 </html>

@@ -245,7 +245,7 @@ Includes the following features:</p>
       <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
               id="org.intellij.plugins.markdown.ui.actions.styling.MarkdownCreateLinkAction"
               icon="MarkdownIcons.EditorActions.Link">
-        <keyboard-shortcut first-keystroke="control K" keymap="$default"/>
+        <keyboard-shortcut first-keystroke="control shift U" keymap="$default"/>
       </action>
 
       <separator/>

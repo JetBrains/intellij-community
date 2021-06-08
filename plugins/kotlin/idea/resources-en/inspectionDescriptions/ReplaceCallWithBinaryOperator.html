@@ -3,9 +3,15 @@
 Reports function calls that can be replaced with binary operators, especially comparison-related.
 <p>Example:</p>
 <pre><code>
-   fun test() {
-      2.compareTo(1) > 0 // can be replaced by '2 > 1'
-   }
+  fun test(): Boolean {
+      return 2.compareTo(1) > 0 // replaceable 'compareTo()'
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test(): Boolean {
+      return 2 > 1
+  }
 </code></pre>
 </body>
 </html>

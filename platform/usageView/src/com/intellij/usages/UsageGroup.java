@@ -4,6 +4,7 @@ package com.intellij.usages;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,10 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
   @ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   default @Nullable Icon getIcon(@SuppressWarnings("unused") boolean isOpen) {
-    return null;
+    if (ReflectionUtil.getMethodDeclaringClass(getClass(), "getIcon") == UsageGroup.class) {
+      return null;
+    }
+    return getIcon(); // getIcon() is implemented
   }
 
   default @Nullable Icon getIcon() {

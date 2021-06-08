@@ -4,11 +4,18 @@ Reports function calls with type arguments that can be automatically inferred an
 <p>Inspection is paired with 'Remove explicit type arguments' quick-fix allowing to amend the code.</p>
 <p>Examples:</p>
 <pre><code>
-   // 'String' type can be inferred here
-   fun foo(): MutableList&lt;String&gt; = mutableListOf&lt;String&gt;() &lt;== 'mutableListOf()' is suggested as a replacement
+  // 'String' type can be inferred here
+  fun foo(): MutableList&lt;String&gt; = mutableListOf&lt;String&gt;()
 
-   // Here 'String' cannot be inferred, type argument is required.
-   fun bar() = mutableListOf&lt;String&gt;()
+  // Here 'String' cannot be inferred, type argument is required.
+  fun bar() = mutableListOf&lt;String&gt;()
 </code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun foo(): MutableList&lt;String&gt; = mutableListOf() &lt;== Updated
+
+  fun bar() = mutableListOf&lt;String&gt;()
+</code></pre>
+
 </body>
 </html>

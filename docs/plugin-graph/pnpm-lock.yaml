@@ -10,7 +10,7 @@ specifiers:
   p-debounce: ^4.0.0
   sass: ^1.34.1
   tippy.js: ^6.3.1
-  vite: ^2.3.6
+  vite: ^2.3.7
 
 dependencies:
   '@fontsource/jetbrains-mono': 4.4.5
@@ -24,7 +24,7 @@ dependencies:
 
 devDependencies:
   sass: 1.34.1
-  vite: 2.3.6
+  vite: 2.3.7
 
 packages:
 
@@ -111,8 +111,8 @@ packages:
       lodash.debounce: 4.0.8
     dev: false
 
-  /esbuild/0.12.6:
-    resolution: {integrity: sha512-RDvVLvAjsq/kIZJoneMiUOH7EE7t2QaW7T3Q7EdQij14+bZbDq5sndb0tTanmHIFSqZVMBMMyqzVHkS3dJobeA==}
+  /esbuild/0.12.7:
+    resolution: {integrity: sha512-vxENKWBo928ErLiT/uUv8Sl2EoC5cF3cZzCTc8hDEh9ZAZ75xblJCr72NeJo74lxWaGopIePZPIWq1qDpLUHQQ==}
     hasBin: true
     requiresBuild: true
     dev: true
@@ -277,12 +277,12 @@ packages:
       is-number: 7.0.0
     dev: true
 
-  /vite/2.3.6:
-    resolution: {integrity: sha512-fsEpNKDHgh3Sn66JH06ZnUBnIgUVUtw6ucDhlOj1CEqxIkymU25yv1/kWDPlIjyYHnalr0cN6V+zzUJ+fmWHYw==}
+  /vite/2.3.7:
+    resolution: {integrity: sha512-Y0xRz11MPYu/EAvzN94+FsOZHbSvO6FUvHv127CyG7mV6oDoay2bw+g5y9wW3Blf8OY3chaz3nc/DcRe1IQ3Nw==}
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
-      esbuild: 0.12.6
+      esbuild: 0.12.7
       postcss: 8.3.0
       resolve: 1.20.0
       rollup: 2.51.1

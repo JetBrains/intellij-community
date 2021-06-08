@@ -7,12 +7,12 @@ Reports an empty primary constructor when it would be implicitly available anywa
 </p>
 <p>Examples:</p>
 <pre><code>
-    class MyClassA constructor() //  redundant, can be replaced with 'class MyClassA'
+  class MyClassA constructor() //  redundant, can be replaced with 'class MyClassA'
 
-    annotation class MyAnnotation
-    class MyClassB @MyAnnotation constructor() //  required because of annotation
+  annotation class MyAnnotation
+  class MyClassB @MyAnnotation constructor() //  required because of annotation
 
-    class MyClassC private constructor() // required because of visibility modifier
+  class MyClassC private constructor() // required because of visibility modifier
 </code></pre>
 
 </body>
