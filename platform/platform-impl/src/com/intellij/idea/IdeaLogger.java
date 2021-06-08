@@ -109,7 +109,7 @@ public final class IdeaLogger extends Log4jBasedLogger {
 
   private static void reportToFus(@NotNull Throwable t) {
     Application application = ApplicationManager.getApplication();
-    if (application != null && !application.isUnitTestMode() && !application.isDisposed()) {
+    if (application != null && !application.isUnitTestMode() && !application.isDisposed() && PluginUtil.getInstance() != null) {
       PluginId pluginId = PluginUtil.getInstance().findPluginId(t);
       VMOptions.MemoryKind kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
       LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
