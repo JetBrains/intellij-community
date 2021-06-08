@@ -459,7 +459,7 @@ public class StatementParser {
     builder.advanceLexer();
 
     if (isCase) {
-      boolean patternsAllowed = getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_X);
+      boolean patternsAllowed = getLanguageLevel(builder).isAtLeast(LanguageLevel.JDK_17);
       PsiBuilder.Marker list = builder.mark();
       boolean isExpressionList = true;
       do {
