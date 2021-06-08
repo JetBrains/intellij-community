@@ -375,9 +375,9 @@ FunctionEnd
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
 
-  StrCpy $R0 "${MUI_PRODUCT} launcher"
   Call getInstallationOptionsPositions
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" $R0
+
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" "${MUI_PRODUCT}"
 
   Call customPreInstallActions
 
