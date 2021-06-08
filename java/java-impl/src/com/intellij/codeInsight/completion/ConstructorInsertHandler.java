@@ -333,11 +333,16 @@ public final class ConstructorInsertHandler implements InsertHandler<LookupEleme
         else {
           ApplicationManagerEx.getApplicationEx()
             .runWriteActionWithCancellableProgressInDispatchThread(getCommandName(), project, editor.getComponent(), indicator -> {
-              List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
-              List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
-              List<PsiGenerationInfo<PsiMethod>> resultMembers =
-                GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
-              resultMembers.get(0).positionCaret(editor, true);
+              try {
+                List<PsiMethod> methods = OverrideImplementUtil.overrideOrImplementMethodCandidates(aClass, candidatesToImplement, false);
+                List<PsiGenerationInfo<PsiMethod>> prototypes = OverrideImplementUtil.convert2GenerationInfos(methods);
+                List<PsiGenerationInfo<PsiMethod>> resultMembers =
+                  GenerateMembersUtil.insertMembersBeforeAnchor(aClass, null, prototypes);
+                resultMembers.get(0).positionCaret(editor, true);
+              }
+              catch (IncorrectOperationException ioe) {
+                LOG.error(ioe);
+              }
             });
         }
       }), getCommandName(), getCommandName(), UndoConfirmationPolicy.DEFAULT, editor.getDocument());
