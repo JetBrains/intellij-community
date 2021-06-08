@@ -16,6 +16,7 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -79,6 +80,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
 
         sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), annotationsRoot);
         model.setSdk(sdk);
+        ProjectJdkTable.getInstance().addJdk(sdk);
       }
 
       Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(true, module);
