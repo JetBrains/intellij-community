@@ -129,8 +129,8 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task("Vcs.UpdateProject") {
-      text(GitLessonsBundle.message("git.feature.branch.open.update.dialog", strong(main), action(it)))
       val updateProjectDialogTitle = VcsBundle.message("action.display.name.update.scope", VcsBundle.message("update.project.scope.name"))
+      text(GitLessonsBundle.message("git.feature.branch.open.update.dialog", strong(main), action(it), strong(updateProjectDialogTitle)))
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
         ui.title?.contains(updateProjectDialogTitle) == true
       }
@@ -176,15 +176,16 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       }
     }
 
+    val pushText = DvcsBundle.message("action.push").dropMnemonic()
     task("Vcs.Push") {
-      text(GitLessonsBundle.message("git.feature.branch.open.push.dialog", strong(branchName), action(it)))
+      text(GitLessonsBundle.message("git.feature.branch.open.push.dialog", strong(branchName), action(it), strong(pushText)))
       triggerByUiComponentAndHighlight(false, false) { _: PushLog -> true }
     }
 
     val forcePushText = DvcsBundle.message("action.force.push").dropMnemonic()
     task {
       text(GitLessonsBundle.message("git.feature.branch.choose.force.push",
-                                    strong(branchName), strong(forcePushText), strong(DvcsBundle.message("action.push").dropMnemonic())))
+                                    strong(branchName), strong(forcePushText), strong(pushText)))
       triggerByUiComponentAndHighlight(usePulsation = true) { _: BasicOptionButtonUI.ArrowButton -> true }
       val forcePushDialogTitle = DvcsBundle.message("force.push.dialog.title")
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->

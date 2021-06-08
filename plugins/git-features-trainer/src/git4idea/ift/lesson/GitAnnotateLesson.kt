@@ -89,7 +89,7 @@ class GitAnnotateLesson : GitLesson("Git.Annotate", GitLessonsBundle.message("gi
     task {
       before { LearningUiHighlightingManager.clearHighlights() }
       openFirstDiffTaskId = taskId
-      text(GitLessonsBundle.message("git.annotate.feature.explanation", strong("Jonny Catsville")))
+      text(GitLessonsBundle.message("git.annotate.feature.explanation", strong(annotateActionName),strong("Johnny Catsville")))
       highlightAnnotation(null, firstStateText, highlightRight = true)
       highlightShowDiffMenuItem()
     }
