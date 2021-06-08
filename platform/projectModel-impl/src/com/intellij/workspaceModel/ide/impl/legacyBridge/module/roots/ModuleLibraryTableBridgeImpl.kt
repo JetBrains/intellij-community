@@ -14,13 +14,19 @@ import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryT
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
+import org.jetbrains.annotations.ApiStatus
 
-internal class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : ModuleLibraryTableBase(), ModuleLibraryTableBridge {
+/**
+ * This class mwthods [registerModuleLibraryInstances], [addLibrary] should be marked as internal after [ModuleManagerComponentBridge]
+ * migration to the `intellij.platform.projectModel.impl` module
+ */
+@ApiStatus.Internal
+class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBridge) : ModuleLibraryTableBase(), ModuleLibraryTableBridge {
   init {
     Disposer.register(moduleBridge, this)
   }
 
-  internal fun registerModuleLibraryInstances(builder: WorkspaceEntityStorageDiffBuilder?) {
+  fun registerModuleLibraryInstances(builder: WorkspaceEntityStorageDiffBuilder?) {
     libraryEntities().forEach { addLibrary(it, builder) }
   }
 
@@ -47,7 +53,7 @@ internal class ModuleLibraryTableBridgeImpl(private val moduleBridge: ModuleBrid
     return false
   }
 
-  internal fun addLibrary(entity: LibraryEntity, storageBuilder: WorkspaceEntityStorageDiffBuilder?): LibraryBridgeImpl {
+  fun addLibrary(entity: LibraryEntity, storageBuilder: WorkspaceEntityStorageDiffBuilder?): LibraryBridgeImpl {
     val library = LibraryBridgeImpl(
       libraryTable = this,
       project = module.project,
