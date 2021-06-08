@@ -1627,10 +1627,10 @@ FunctionEnd
 
 Function un.checkIfIDEInUse
 remove_previous_installation:
-  StrCpy $R0 "$INSTDIR\IdeaWin32.dll"
+  StrCpy $R0 "$INSTDIR\${PRODUCT_EXE_FILE}"
   Call un.isIDEInUse
   IfErrors remove_dialog 0
-  StrCpy $R0 "$INSTDIR\IdeaWin64.dll"
+  StrCpy $R0 "$INSTDIR\jbr\bin\java.exe"
   Call un.isIDEInUse
   IfErrors remove_dialog done
 remove_dialog:
