@@ -35,20 +35,24 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
             {
               val downloadableType = LibraryType.EP_NAME.findExtension(GroovyDownloadableLibraryType::class.java)!!
               val groovyLibraryDescription = downloadableType.libraryDescription
-              val box = comboBox(DefaultComboBoxModel(emptyArray()), settings::version, SimpleListCellRenderer.create("") { it?.get()?.versionString ?: "<unknown>"})
-              groovyLibraryDescription.fetchVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
-                override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
-                  for (item in versions) {
-                    box.component.addItem(Optional.of(item))
-                  }
+              comboBox(DefaultComboBoxModel(emptyArray()),
+                       settings::version,
+                       SimpleListCellRenderer.create("") { it?.get()?.versionString ?: "<unknown>" })
+                .applyToComponent {
+                  groovyLibraryDescription.fetchVersions(object : DownloadableFileSetVersions.FileSetVersionsCallback<FrameworkLibraryVersion>() {
+                    override fun onSuccess(versions: List<FrameworkLibraryVersion>) = SwingUtilities.invokeLater {
+                      for (item in versions) {
+                        addItem(Optional.of(item))
+                      }
+                    }
+                  })
                 }
-              })
             }
           )
-          twoColumnRow(
-            { radioButton(GroovyBundle.message("radio.use.jar.file.from.disk")) },
-            { comboBox(DefaultComboBoxModel(), settings::jarPath) }
-          )
+          //twoColumnRow(
+          //  { radioButton(GroovyBundle.message("radio.use.jar.file.from.disk")) },
+          //  { comboBox(DefaultComboBoxModel(), settings::jarPath) }
+          //)
         }
       }
     }
@@ -63,7 +67,6 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
     builder.contentEntryPath = project.basePath
     builder.name = project.name
     val groovyModuleBuilder = GroovyAwareModuleBuilder()
-
     groovyModuleBuilder.updateFrom(builder)
     builder.addModuleConfigurationUpdater(object : ModuleBuilder.ModuleConfigurationUpdater() {
       override fun update(module: Module, rootModel: ModifiableRootModel) {
