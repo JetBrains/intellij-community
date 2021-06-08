@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.ActionLink;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ class LinkComboBox extends ActionLink {
   private NullableConsumer<? super String> myConsumer;
 
   LinkComboBox(@NlsContexts.Label String defaultItem) {
+    setAutoHideOnDisable(false);
     setDefaultItem(defaultItem);
     setDropDownLinkIcon();
     addActionListener(e -> showPopup());
@@ -77,6 +79,6 @@ class LinkComboBox extends ActionLink {
       }
     };
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(list);
-    popup.show(new RelativePoint(this, new Point(-2, 0)));
+    popup.show(new RelativePoint(this, new Point(JBUIScale.scale(-2), getHeight() + JBUIScale.scale(2))));
   }
 }
