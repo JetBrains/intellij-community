@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -92,7 +92,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileTypes = LanguageCompilerRefAdapter.EP_NAME.getExtensionList().stream().flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
-    myDirtyScopeHolder = new DirtyScopeHolder(this, FileDocumentManager.getInstance(), PsiDocumentManager.getInstance(project), compilationAffectedModulesSubscription);
+    myDirtyScopeHolder = new DirtyScopeHolder(project,
+                                              myFileTypes,
+                                              myProjectFileIndex,
+                                              this,
+                                              this,
+                                              FileDocumentManager.getInstance(),
+                                              PsiDocumentManager.getInstance(project),
+                                              compilationAffectedModulesSubscription);
 
     if (!CompilerReferenceService.isEnabled()) {
       LOG.error("CompilerReferenceService is disabled, but service was requested");
