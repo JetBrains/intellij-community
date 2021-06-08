@@ -249,7 +249,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
       g2.translate(r.x, r.y);
 
-      float bw = BW.getFloat();
+      float bw = isBorderless(c) ? LW.getFloat() : BW.getFloat();
 
       g2.setColor(getBackgroundColor());
       g2.fill(getOuterShape(r, bw, myArc));
@@ -453,11 +453,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           paintOutlineBorder(g2, r.width, r.height, myArc, true, hasFocus, Outline.valueOf(op.toString()));
         }
         else {
-          if (hasFocus) {
+          if (hasFocus && !isBorderless(c)) {
             paintOutlineBorder(g2, r.width, r.height, myArc, true, true, Outline.focus);
           }
 
-          paintBorder(c, g2, bw, r, lw, myArc);
+          paintBorder(c, g2, isBorderless(c) ? lw : bw, r, lw, myArc);
         }
       }
       else {
@@ -511,7 +511,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return DarculaUIUtil.isTableCellEditor(c) || isCompact(c) ? JBInsets.create(2, 3) : getDefaultComboBoxInsets();
+    return DarculaUIUtil.isTableCellEditor(c) || isCompact(c) ? JBInsets.create(2, 3) :
+           isBorderless(c) ? JBUI.emptyInsets() : getDefaultComboBoxInsets();
   }
 
   @Override

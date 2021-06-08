@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.SearchScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Set;
+import java.util.List;
 
 /**
  * @author peter
@@ -56,7 +56,7 @@ public class JavaPackageFindUsagesOptions extends JavaFindUsagesOptions {
   }
 
   @Override
-  protected void addUsageTypes(@NotNull Set<? super String> to) {
+  protected void addUsageTypes(@NotNull List<? super String> to) {
     if (this.isUsages || this.isClassesUsages) {
       to.add(AnalysisBundle.message("find.usages.panel.title.usages"));
     }
