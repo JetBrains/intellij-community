@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.intellij.util.io.Base62
 import com.intellij.util.io.DigestUtil
+import com.intellij.util.io.jackson.IntelliJPrettyPrinter
 import com.intellij.util.io.jackson.array
 import com.intellij.util.io.jackson.obj
 import it.unimi.dsi.fastutil.bytes.ByteArrays
@@ -41,7 +42,7 @@ internal class PluginGraphWriter(private val pluginIdToInfo: Map<String, ModuleI
   fun writeTo(out: Writer, prettyPrint: Boolean = true) {
     val writer = JsonFactory().createGenerator(out)
     if (prettyPrint) {
-      writer.useDefaultPrettyPrinter()
+      writer.prettyPrinter = IntelliJPrettyPrinter()
     }
     writer.use {
       writeGraph(writer)
