@@ -57,10 +57,12 @@ class ProjectInfo(
         allModulesAsserter = body
     }
 
-    fun module(name: String, body: ModuleInfo.() -> Unit = {}) {
+    fun module(name: String, isOptional: Boolean = false, body: ModuleInfo.() -> Unit = {}) {
         val module = moduleManager.findModuleByName(name)
         if (module == null) {
-            messageCollector.report("No module found: '$name' in ${moduleManager.modules.map { it.name }}")
+            if (!isOptional) {
+                messageCollector.report("No module found: '$name' in ${moduleManager.modules.map { it.name }}")
+            }
             return
         }
 
@@ -166,11 +168,11 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         checkReport("Additional arguments", arguments, actualArguments)
     }
 
-    fun libraryDependency(libraryName: String, scope: DependencyScope) {
-        libraryDependency(Regex.fromLiteral(libraryName), scope)
+    fun libraryDependency(libraryName: String, scope: DependencyScope, isOptional: Boolean = false) {
+        libraryDependency(Regex.fromLiteral(libraryName), scope, isOptional)
     }
 
-    fun libraryDependency(libraryName: Regex, scope: DependencyScope) {
+    fun libraryDependency(libraryName: Regex, scope: DependencyScope, isOptional: Boolean = false) {
         val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
             .filter { it.libraryName?.matches(libraryName) == true }
 
@@ -178,7 +180,7 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
             report("Multiple root entries for library $libraryName")
         }
 
-        if (libraryEntries.isEmpty()) {
+        if (!isOptional && libraryEntries.isEmpty()) {
             val candidate = rootModel.orderEntries
                 .filterIsInstance<LibraryOrderEntry>()
                 .sortedWith(Comparator { o1, o2 ->
@@ -191,7 +193,7 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
             report("Expected library dependency $libraryName, found nothing. Most probably candidate: $candidateName")
         }
 
-        checkLibrary(libraryEntries.singleOrNull(), libraryName.toString(), scope)
+        checkLibrary(libraryEntries.firstOrNull() ?: return, scope)
     }
 
     fun libraryDependencyByUrl(classesUrl: String, scope: DependencyScope) {
@@ -207,15 +209,14 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
             report("Multiple entries for library $classesUrl")
         }
 
-        checkLibrary(libraryEntries.singleOrNull(), classesUrl.toString(), scope)
-    }
-
-    private fun checkLibrary(libraryEntry: LibraryOrderEntry?, id: String, scope: DependencyScope) {
-        if (libraryEntry == null) {
-            report("No library dependency found for $id")
-            return
+        if (libraryEntries.isEmpty()) {
+            report("No library dependency found for $classesUrl")
         }
 
+        checkLibrary(libraryEntries.firstOrNull() ?: return, scope)
+    }
+
+    private fun checkLibrary(libraryEntry: LibraryOrderEntry, scope: DependencyScope) {
         checkDependencyScope(libraryEntry, scope)
         expectedDependencies += libraryEntry
         expectedDependencyNames += libraryEntry.debugText
