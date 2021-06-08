@@ -48,7 +48,7 @@ class RemoveBracesIntention : SelfTargetingIntention<KtElement>(KtElement::class
             if (singleStatement is KtLambdaExpression && singleStatement.functionLiteral.arrow == null) return false
             when (val container = block.parent) {
                 is KtContainerNode -> {
-                    if (singleStatement is KtProperty) return false
+                    if (singleStatement is KtProperty || singleStatement is KtClass) return false
                     if (singleStatement is KtIfExpression) {
                         val elseExpression = (container.parent as? KtIfExpression)?.`else`
                         if (elseExpression != null && elseExpression != block) return false
