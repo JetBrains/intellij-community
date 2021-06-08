@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.accessibility;
 
 import com.intellij.ide.GeneralSettings;
@@ -46,7 +46,7 @@ public final class AccessibilityUtils {
   /*
    * get MacOS NSWorkspace.shared.isVoiceOverEnabled property
    * https://developer.apple.com/documentation/devicemanagement/accessibility
-  */
+   */
   private static boolean isMacVoiceOverEnabled() {
     Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
     ID universalAccess = null;
@@ -66,12 +66,10 @@ public final class AccessibilityUtils {
   }
 
   /*
-  * get Windows SPI_GETSCREENREADER system parameter
-  * https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa#SPI_GETSCREENREADER
-  */
+   * get Windows SPI_GETSCREENREADER system parameter
+   * https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa#SPI_GETSCREENREADER
+   */
   private static boolean isWindowsScreenReaderEnabled() {
-    //get Windows SPI_GETSCREENREADER system parameter
-    //https://docs.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-systemparametersinfoa#SPI_GETSCREENREADER
     BOOLByReference isActive = new BOOLByReference();
     boolean retValue = User32Ex.INSTANCE.SystemParametersInfo(new UINT(0x0046), new UINT(0), isActive, new UINT(0));
     return retValue && isActive.getValue().booleanValue();
