@@ -14,7 +14,7 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    val GROUP = EventLogGroup("run.configuration.ui.interactions", 8)
+    val GROUP = EventLogGroup("run.configuration.ui.interactions", 9)
 
     val optionId = EventFields.String("option_id", listOf("before.launch.editSettings", "before.launch.openToolWindow", "beforeRunTasks", "commandLineParameters", "coverage", "doNotBuildBeforeRun", "environmentVariables", "jrePath", "log.monitor", "mainClass", "module.classpath", "redirectInput", "runParallel", "shorten.command.line", "target.project.path", "vmParameters", "workingDirectory",
                                                                 "count", "junit.test.kind", "repeat", "testScope", // junit
@@ -34,18 +34,38 @@ class RunConfigurationOptionUsagesCollector: CounterUsagesCollector() {
     val remove = GROUP.registerEvent("remove", ID_FIELD, EventFields.ActionPlace)
     val hintsShown = GROUP.registerEvent("hints.shown", ID_FIELD, EventFields.Int("hint_number"), EventFields.DurationMs)
 
-    @JvmStatic
-    fun logAddNew(project: Project?, config: String?, place: String?) {
-      addNew.log(project, config, place)
-    }
-
-    fun logCopy(project: Project?, config: String?, place: String?) {
-      copy.log(project, config, place)
-    }
+    val addBeforeRunTask = GROUP.registerEvent("before.run.task.add", ID_FIELD, EventFields.Class("providerClass"))
+    val editBeforeRunTask = GROUP.registerEvent("before.run.task.edit", ID_FIELD, EventFields.Class("providerClass"))
+    val removeBeforeRunTask = GROUP.registerEvent("before.run.task.remove", ID_FIELD, EventFields.Class("providerClass"))
 
     @JvmStatic
-    fun logRemove(project: Project?, config: String?, place: String?) {
-      remove.log(project, config, place)
+    fun logAddBeforeRunTask(project: Project?, configurationTypeId: String?, providerClass: Class<*>) {
+      addBeforeRunTask.log(project, configurationTypeId, providerClass)
+    }
+
+    @JvmStatic
+    fun logEditBeforeRunTask(project: Project?, configurationTypeId: String?, providerClass: Class<*>) {
+      editBeforeRunTask.log(project, configurationTypeId, providerClass)
+    }
+
+    @JvmStatic
+    fun logRemoveBeforeRunTask(project: Project?, configurationTypeId: String?, providerClass: Class<*>) {
+      removeBeforeRunTask.log(project, configurationTypeId, providerClass)
+    }
+
+    @JvmStatic
+    fun logAddNew(project: Project?, configurationTypeId: String?, place: String?) {
+      addNew.log(project, configurationTypeId, place)
+    }
+
+    @JvmStatic
+    fun logCopy(project: Project?, configurationTypeId: String?, place: String?) {
+      copy.log(project, configurationTypeId, place)
+    }
+
+    @JvmStatic
+    fun logRemove(project: Project?, configurationTypeId: String?, place: String?) {
+      remove.log(project, configurationTypeId, place)
     }
 
     @JvmStatic
