@@ -92,7 +92,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     ExtensionPoint<UsageGroupingRuleProvider> point = UsageGroupingRuleProvider.EP_NAME.getPoint();
     UsageGroupingRuleProvider provider = new UsageGroupingRuleProvider() {
       @Override
-      public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
+      public @NotNull UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return rules;
       }
     };

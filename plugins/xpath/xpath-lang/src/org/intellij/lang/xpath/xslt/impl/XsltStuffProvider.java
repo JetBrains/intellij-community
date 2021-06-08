@@ -58,7 +58,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
     }
 
   @Override
-  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
+  public @NotNull UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
     }
 
