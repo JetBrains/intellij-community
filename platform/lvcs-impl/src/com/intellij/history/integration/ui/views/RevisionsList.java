@@ -2,8 +2,6 @@
 package com.intellij.history.integration.ui.views;
 
 import com.intellij.history.core.revisions.Revision;
-import com.intellij.history.core.tree.Entry;
-import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
 import com.intellij.history.integration.ui.models.RevisionItem;
@@ -29,8 +27,8 @@ import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.TextTransferable;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.accessibility.AccessibleContext;
 import javax.accessibility.AccessibleRole;
@@ -49,7 +47,7 @@ import java.util.*;
 public final class RevisionsList {
   public static final int RECENT_PERIOD = 12;
   private final JBTable table;
-  private String filterText;
+  private volatile LongSet filteredRevisions;
 
   public RevisionsList(SelectionListener l) {
     table = new JBTable();
@@ -149,15 +147,13 @@ public final class RevisionsList {
   }
 
   private boolean filterRevision(RevisionItem r) {
-    if (filterText == null) return true;
-    Entry entry = r.revision.findEntry();
-    if (entry == null) return false;
-    String text = entry.getContent().getString(entry, new IdeaGateway());
-    return text != null && text.contains(filterText);
+    if (filteredRevisions == null) return true;
+    Long cs = r.revision.getChangeSetId();
+    return cs != null && filteredRevisions.contains(cs);
   }
 
-  public void setFilterText(@Nullable String filter) {
-    filterText = filter;
+  public void setFilteredRevisions(LongSet fr) {
+    filteredRevisions = fr;
     List<Object> sel = storeSelection();
     getFilteringModel().refilter();
     restoreSelection(sel);
@@ -193,10 +189,6 @@ public final class RevisionsList {
 
   private FilteringTableModel<?> getFilteringModel() {
     return (FilteringTableModel<?>)table.getModel();
-  }
-
-  public String getFilterText() {
-    return filterText;
   }
 
   private static MyModel getMyModel(JTable table) {

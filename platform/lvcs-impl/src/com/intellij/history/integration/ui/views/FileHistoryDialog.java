@@ -11,23 +11,32 @@ import com.intellij.diff.tools.util.DiffSplitter;
 import com.intellij.find.EditorSearchSession;
 import com.intellij.find.SearchTextArea;
 import com.intellij.history.core.LocalHistoryFacade;
+import com.intellij.history.core.tree.Entry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.FileHistoryDialogModel;
+import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.EditorComponentImpl;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.LoadingDecorator;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.ExcludingTraversalPolicy;
+import com.intellij.ui.components.ProgressBarLoadingDecorator;
+import com.intellij.util.Alarm;
+import com.intellij.util.AlarmFactory;
 import com.intellij.util.ui.UIUtil;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
+import it.unimi.dsi.fastutil.longs.LongSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,6 +48,7 @@ import java.awt.*;
 public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   private DiffRequestPanel myDiffPanel;
   private SearchTextArea mySearchTextArea;
+  private final Alarm myAlarm = AlarmFactory.getInstance().create(Alarm.ThreadToUse.POOLED_THREAD, this);
 
   public FileHistoryDialog(@NotNull Project p, IdeaGateway gw, VirtualFile f) {
     this(p, gw, f, true);
@@ -63,14 +73,18 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
   @Override
   protected void addExtraToolbar(JPanel toolBarPanel) {
     mySearchTextArea = new SearchTextArea(new JTextArea(), true);
+    Ref<LoadingDecorator> decorator = Ref.create();
     mySearchTextArea.getTextArea().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(@NotNull DocumentEvent e) {
-        myRevisionsList.setFilterText(StringUtil.nullize(mySearchTextArea.getTextArea().getText()));
-        updateEditorSearch();
+        applyFilterText(StringUtil.nullize(mySearchTextArea.getTextArea().getText()), decorator.get());
       }
     });
-    toolBarPanel.add(mySearchTextArea, BorderLayout.CENTER);
+    decorator.set(new ProgressBarLoadingDecorator(mySearchTextArea, this, 500) {
+      @Override
+      protected boolean isOnTop() { return false; }
+    });
+    toolBarPanel.add(decorator.get().getComponent(), BorderLayout.CENTER);
   }
 
   @Override
@@ -80,10 +94,42 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
     return request;
   }
 
+  private void applyFilterText(@Nullable String filter, LoadingDecorator decorator) {
+    decorator.stopLoading();
+    myAlarm.cancelAllRequests();
+    if (StringUtil.isEmpty(filter)) {
+      applyFilteredRevisions(null);
+    }
+    else {
+      decorator.startLoading(false);
+      updateEditorSearch();
+      myAlarm.addRequest(() -> {
+        LongSet revisions = new LongOpenHashSet();
+        for (RevisionItem r: getRevisions()) {
+          Entry entry = r.revision.findEntry();
+          if (entry == null) continue;
+          String text = entry.getContent().getString(entry, new IdeaGateway());
+          Long csId = r.revision.getChangeSetId();
+          if (csId != null && text != null && text.contains(filter)) {
+            revisions.add(csId.longValue());
+          }
+        }
+        decorator.stopLoading();
+        UIUtil.invokeLaterIfNeeded(() -> applyFilteredRevisions(revisions));
+      }, 0);
+    }
+  }
+
+  private void applyFilteredRevisions(LongSet revisions) {
+    myRevisionsList.setFilteredRevisions(revisions);
+    updateEditorSearch();
+  }
+
+
   private void updateEditorSearch() {
     Editor editor = findLeftEditor();
     if (editor == null) return;
-    String filter = myRevisionsList.getFilterText();
+    String filter = mySearchTextArea.getTextArea().getText();
     EditorSearchSession session = EditorSearchSession.get(editor);
     if (StringUtil.isEmpty(filter)) {
       if (session != null) {
