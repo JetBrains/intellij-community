@@ -25750,6 +25750,16 @@ public abstract class DiagnosisCompilerTestFE10TestdataTestGenerated extends Abs
                 runTest(compilerTestData("compiler/testData/diagnostics/tests/when/ExhaustiveWithNullabilityCheckElse.kt"));
             }
 
+            @TestMetadata("intersectionExhaustivenessComplex.kt")
+            public void testIntersectionExhaustivenessComplex() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/intersectionExhaustivenessComplex.kt");
+            }
+
+            @TestMetadata("intersectionExhaustivenessSimple.kt")
+            public void testIntersectionExhaustivenessSimple() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/when/intersectionExhaustivenessSimple.kt");
+            }
+
             @TestMetadata("kt10439.kt")
             public void testKt10439() throws Exception {
                 runTest(compilerTestData("compiler/testData/diagnostics/tests/when/kt10439.kt"));
