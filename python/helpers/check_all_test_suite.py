@@ -18,7 +18,6 @@ EXCLUDED_TESTS = {
 
 EXCLUDED_PACKAGES = {
     'env',
-    'web2py',
     'django',
     'jinja2',
     'appengine',
