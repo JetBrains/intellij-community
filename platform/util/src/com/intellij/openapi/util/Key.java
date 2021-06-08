@@ -17,6 +17,18 @@ import java.util.concurrent.atomic.AtomicInteger;
 /**
  * Provides type-safe access to data.
  *
+ * Implementation note. Please don't create too many instances of this class, because internal maps could overflow.
+ * Instead, store the Key instance in a private static field and use it from outside.
+ * For example,
+ * <pre>
+ * {@code
+ *   class KeyUsage {
+ *     private static final Key<String> MY_NAME_KEY = Key.create("my name");
+ *     String getName() { return getData(MY_NAME_KEY); }
+ *   }
+ * }
+ * </pre>
+ *
  * @author max
  * @author Konstantin Bulenkov
  * @see KeyWithDefaultValue
