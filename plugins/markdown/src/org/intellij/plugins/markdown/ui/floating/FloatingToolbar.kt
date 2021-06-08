@@ -3,6 +3,7 @@ package org.intellij.plugins.markdown.ui.floating
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.codeInsight.hint.HintManagerImpl
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -14,7 +15,7 @@ import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
 
-internal class FloatingToolbar(val editor: Editor) {
+internal class FloatingToolbar(val editor: Editor): Disposable {
   companion object {
     private const val verticalGap = 2
   }
@@ -65,18 +66,19 @@ internal class FloatingToolbar(val editor: Editor) {
     hint.setLocation(RelativePoint(layeredPane, hintPos))
   }
 
+  override fun dispose() {
+    unregisterListeners()
+  }
 
-  internal fun registerListeners() {
+  private fun registerListeners() {
     editor.selectionModel.addSelectionListener(selectionListener)
     editor.addEditorMouseMotionListener(mouseMotionListener)
   }
 
-
-  internal fun unregisterListeners() {
+  private fun unregisterListeners() {
     editor.selectionModel.removeSelectionListener(selectionListener)
     editor.removeEditorMouseMotionListener(mouseMotionListener)
   }
-
 
   private fun getHintPosition(hint: LightweightHint): Point {
     val hintPos = HintManagerImpl.getInstanceImpl().getHintPosition(hint, editor, HintManager.DEFAULT)
