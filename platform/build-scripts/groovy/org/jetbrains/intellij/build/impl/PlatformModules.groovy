@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileDynamic
@@ -6,6 +6,8 @@ import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.library.JpsLibrary
+
+import static org.jetbrains.intellij.build.impl.BaseLayout.PLATFORM_JAR
 
 @CompileStatic
 final class PlatformModules {
@@ -89,7 +91,6 @@ final class PlatformModules {
     "intellij.platform.ml.impl"
   )
 
-  private static final String PLATFORM_JAR = "platform-impl.jar"
   private static final String UTIL_JAR = "util.jar"
 
   @CompileDynamic
@@ -179,10 +180,10 @@ final class PlatformModules {
       addModule("intellij.java.guiForms.rt")
       addModule("intellij.platform.boot", "bootstrap.jar")
 
-      addModule("intellij.platform.icons", "resources.jar")
-      addModule("intellij.platform.resources", "resources.jar")
-      addModule("intellij.platform.colorSchemes", "resources.jar")
-      addModule("intellij.platform.resources.en", "resources.jar")
+      addModule("intellij.platform.icons", PLATFORM_JAR)
+      addModule("intellij.platform.resources", PLATFORM_JAR)
+      addModule("intellij.platform.colorSchemes", PLATFORM_JAR)
+      addModule("intellij.platform.resources.en", PLATFORM_JAR)
 
       addModule("intellij.platform.jps.model.serialization", "jps-model.jar")
       addModule("intellij.platform.jps.model.impl", "jps-model.jar")

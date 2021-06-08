@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
@@ -127,7 +128,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
 
-    productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
+    productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.java.ide.resources")
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {
