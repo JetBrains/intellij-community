@@ -601,6 +601,7 @@
 
     <readWriteAccessDetector implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReadWriteAccessDetector" id="kotlin"/>
     <codeUsageScopeOptimizer implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinScopeOptimizer"/>
+    <startupActivity implementation="org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexService.InitializationActivity"/>
     <advancedSetting id="kotlin.compiler.ref.index" default="true" groupKey="group.advanced.settings.kotlin"/>
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.editor.KotlinEditorOptions"/>
