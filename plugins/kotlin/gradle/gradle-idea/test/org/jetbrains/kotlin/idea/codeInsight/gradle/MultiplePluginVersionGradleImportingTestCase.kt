@@ -107,25 +107,23 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     private fun repositories(useKts: Boolean): String {
-        val repositories = mutableListOf(
-            "mavenCentral()",
-            "mavenLocal()",
-            "google()",
-            "gradlePluginPortal()"
-        )
+        val repositories = mutableListOf<String>()
+
+        fun MutableList<String>.addUrl(url: String) {
+            this += if (useKts) "maven(\"$url\")" else "maven { url '$url' }"
+        }
+
+        repositories.addUrl("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")
+        repositories.add("mavenLocal()")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlin-dev")
+        repositories.addUrl("https://cache-redirector.jetbrains.com/dl.bintray.com/kotlin/kotlinx")
 
         if (!gradleVersionMatches("7.0+")) {
-            repositories.add("jcenter()")
+            repositories.addUrl("https://cache-redirector.jetbrains.com/jcenter/")
         }
-
-        fun addCustomRepository(url: String) {
-            repositories += if (useKts) "maven(\"$url\")" else "maven { url '$url' }"
-        }
-
-        addCustomRepository("https://maven.pkg.jetbrains.space/kotlin/p/kotlin/dev/")
-        addCustomRepository("https://dl.bintray.com/kotlin/kotlin-dev")
-        addCustomRepository("https://kotlin.bintray.com/kotlinx")
-
         return repositories.joinToString("\n")
     }
 
