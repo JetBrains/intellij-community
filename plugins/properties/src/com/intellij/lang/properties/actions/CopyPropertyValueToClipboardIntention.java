@@ -2,6 +2,7 @@
 package com.intellij.lang.properties.actions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.PropertiesLanguage;
 import com.intellij.lang.properties.psi.Property;
@@ -16,7 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.datatransfer.StringSelection;
 
-public final class CopyPropertyValueToClipboardIntention implements IntentionAction {
+public final class CopyPropertyValueToClipboardIntention implements IntentionAction, LowPriorityAction {
 
   @Override
   public @NotNull String getText() {
