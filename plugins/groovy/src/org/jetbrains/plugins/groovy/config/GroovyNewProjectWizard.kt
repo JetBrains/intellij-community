@@ -9,6 +9,7 @@ import com.intellij.ide.NewModuleStep.Companion.twoColumnRow
 import com.intellij.ide.NewProjectWizard
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -52,10 +53,10 @@ class GroovyNewProjectWizard : NewProjectWizard<GroovyModuleSettings> {
                 }
             }
           )
-          //twoColumnRow(
-          //  { radioButton(GroovyBundle.message("radio.use.jar.file.from.disk")) },
-          //  { comboBox(DefaultComboBoxModel(), settings::jarPath) }
-          //)
+          twoColumnRow(
+            { radioButton(GroovyBundle.message("radio.use.sdk.from.disk")) },
+            { textFieldWithBrowseButton(settings::jarPath, GroovyBundle.message("dialog.title.select.groovy.sdk"), fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor())  }
+          )
         }
       }
     }
