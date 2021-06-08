@@ -2,4 +2,5 @@
 
 // TODO: Investigate
 
-val test = "so<caret>me"
+val a = 42
+val test = "so${<caret>}me"
