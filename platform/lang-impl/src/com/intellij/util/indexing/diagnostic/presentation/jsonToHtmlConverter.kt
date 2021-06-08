@@ -22,6 +22,7 @@ fun createAggregateHtml(
   head {
     title("Indexing diagnostics of '$projectName'")
     style(CSS_STYLE)
+    script(LINKABLE_TABLE_ROW_SCRIPT)
   }
   body {
     div(className = "aggregate-report-content") {
@@ -31,12 +32,12 @@ fun createAggregateHtml(
       div {
         h1("Indexing history")
         table(className = "centered-text") {
+          appendRaw("<caption style=\"caption-side: bottom; text-align: right; font-size: 14px\">Hover for details</caption>")
           thead {
             tr {
               th("Time", colspan = "6")
               th("Files", colspan = "6")
               th("IDE", rowspan = "2")
-              th("Details", rowspan = "2")
             }
             tr {
               th("Started")
@@ -55,7 +56,7 @@ fun createAggregateHtml(
           }
           tbody {
             for (diagnostic in diagnostics.sortedByDescending { it.indexingTimes.updatingStart.instant }) {
-              tr {
+              tr(className = "linkable-table-row", href = diagnostic.htmlFile.fileName.toString()) {
                 // Time section.
                 td {
                   if (diagnostic.indexingTimes.indexingReason != null) {
@@ -85,11 +86,8 @@ fun createAggregateHtml(
                 td(fileCount?.numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage?.toString() ?: NOT_APPLICABLE)
                 td(fileCount?.numberOfFilesIndexedWithLoadingContent?.toString() ?: NOT_APPLICABLE)
 
-                // IDE + Details section.
+                // IDE section.
                 td(diagnostic.appInfo.productCode + "-" + diagnostic.appInfo.build)
-                td {
-                  link(diagnostic.htmlFile.fileName.toString(), "details")
-                }
               }
             }
           }
@@ -610,6 +608,25 @@ private val CSS_STYLE = """
   .centered-text {
     text-align: center;
   }
+  
+  .linkable-table-row:hover {
+    background: #f2f3ff;
+    outline: none;
+    cursor: pointer;
+  }
+""".trimIndent()
+
+@Language("JavaScript")
+private val LINKABLE_TABLE_ROW_SCRIPT = """
+  document.addEventListener("DOMContentLoaded", () => {
+    const rows = document.getElementsByClassName("linkable-table-row")
+    for (const row of rows) {
+      const href = row.getAttribute("href")
+      row.addEventListener("click", () => {
+        window.open(href, "_blank");
+      });
+    }
+  });
 """.trimIndent()
 
 @Language("JavaScript")
@@ -674,8 +691,8 @@ private fun HtmlBuilder.table(className: String = "", body: HtmlBuilder.() -> Un
 
 private fun HtmlBuilder.thead(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("thead")))
 private fun HtmlBuilder.tbody(body: HtmlBuilder.() -> Unit) = append(createTag(body, tag("tbody")))
-private fun HtmlBuilder.tr(className: String = "", body: HtmlBuilder.() -> Unit) = append(
-  createTag(body, tag("tr").addAttrIfNotEmpty("class", className)))
+private fun HtmlBuilder.tr(className: String = "", href: String = "", body: HtmlBuilder.() -> Unit) = append(
+  createTag(body, tag("tr").addAttrIfNotEmpty("class", className).addAttrIfNotEmpty("href", href)))
 
 private fun HtmlBuilder.th(body: HtmlBuilder.() -> Unit, colspan: String = "", rowspan: String = "") = append(createTag(body, tag("th")
   .addAttrIfNotEmpty("colspan", colspan).addAttrIfNotEmpty("rowspan", rowspan))
