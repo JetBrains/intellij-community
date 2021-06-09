@@ -1,8 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.dom;
 
-import com.google.common.collect.ImmutableSet;
-import com.google.common.reflect.ClassPath;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
@@ -10,7 +8,6 @@ import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementPresentation;
-import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -44,7 +41,7 @@ import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
-import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection;
+import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.dom.references.MavenPsiElementWrapper;
 
@@ -76,25 +73,10 @@ public abstract class MavenDomTestCase extends MavenMultiVersionImportingTestCas
     myFixture.setUp();
     ((CodeInsightTestFixtureImpl)myFixture).canChangeDocumentDuringHighlighting(true); // org.jetbrains.idea.maven.utils.MavenRehighlighter
 
-    addDomInspections();
+    myFixture.enableInspections(MavenModelInspection.class);
 
     myOriginalAutoCompletion = CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
-  }
-
-  private void addDomInspections() throws IOException {
-    ImmutableSet<ClassPath.ClassInfo> classes = ClassPath.from(Thread.currentThread().getContextClassLoader())
-      .getTopLevelClasses(MavenParentMissedVersionInspection.class.getPackageName());
-    classes.forEach(clazz -> {
-      Class<?> aClass;
-      try {
-        aClass = Class.forName(clazz.getName());
-        myFixture.enableInspections((Class<? extends LocalInspectionTool>)aClass);
-      }
-      catch (Exception e) {
-        throw new RuntimeException(e);
-      }
-    });
   }
 
   @Override

@@ -20,7 +20,12 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.idea.maven.dom.inspections.MavenParentMissedVersionInspection;
+import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection;
+import org.jetbrains.idea.maven.dom.inspections.MavenRedundantGroupIdInspection;
 import org.junit.Test;
+
+import java.util.Collections;
 
 public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
 
@@ -215,6 +220,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                   "  <relativePath>../pom.xml</relativePath>" +
                   "</parent>");
 
+    myFixture.enableInspections(MavenRedundantGroupIdInspection.class);
     checkHighlighting(myProjectPom);
   }
 
@@ -261,6 +267,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          "</parent>\n" +
                          "<artifactId>m1</artifactId>\n");
 
+    myFixture.enableInspections(Collections.singletonList(MavenPropertyInParentInspection.class));
     checkHighlighting(m2);
   }
 
@@ -307,6 +314,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                                      "</parent>" +
                                      "<artifactId>m1</artifactId>");
 
+    myFixture.enableInspections(Collections.singletonList(MavenPropertyInParentInspection.class));
     checkHighlighting(m2);
   }
 
@@ -419,6 +427,8 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <artifactId>junit</artifactId>" +
                      "</parent>");
     importProjectWithErrors();
+
+    myFixture.enableInspections(MavenParentMissedVersionInspection.class);
     checkHighlighting();
   }
 
