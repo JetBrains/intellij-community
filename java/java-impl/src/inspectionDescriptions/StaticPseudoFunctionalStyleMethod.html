@@ -1,22 +1,25 @@
 <html>
 <body>
-Reports usages of pseudo-functional code if <code>Java Stream API</code> is available. 
-Though <code>guava Iterable API</code> provides functionality similar to <code>Java Streams API</code>, it's slightly different and may miss some features.
-Especially, primitive-specialized stream variants like <code>IntStream</code> are more performant than generic variants.
+Reports usages of pseudo-functional code if <code>Java Stream API</code> is available.
+<p>Though <code>guava Iterable API</code> provides functionality similar to <code>Java Streams API</code>, it's slightly different and
+  may miss some features.
+  Especially, primitive-specialized stream variants like <code>IntStream</code> are more performant than generic variants.</p>
 <p><b>Example:</b></p>
-<code>
+<pre><code>
 List&lt;String&gt; transformedIterable = Iterables.transform(someList, someTransformFunction);//warning: Pseudo functional style code
-</code>
-<p>After the quickfix the code would look like: 
-  <code>List&lt;String&gt; transformedIterable = someList.stream().map(someTransformFunction).collect(Collectors.toList());</code></p>
-<br>
-<b>Note:</b> code semantic could be changed e.g., guava's <code>Iterable.transform</code> produces lazy-evaluated iterable, but the replacement is eager-evaluated.
-<br>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>List&lt;String&gt; transformedIterable = someList.stream().map(someTransformFunction).collect(Collectors.toList());</code></pre>
+<p>
+  <b>Note:</b> Code semantics can be changed; for example, guava's <code>Iterable.transform</code> produces a lazy-evaluated iterable,
+  but the replacement is eager-evaluated.
+</p>
 <!-- tooltip end -->
 <p>
-  Use the table below to configure static method calls which should be translated to the <code>stream API</code>.
+  Use the <b>Static method calls translated to the 'Steam' API</b> option
+  to configure static method calls that should be translated to the <code>stream</code> API.
 </p>
 
-<p>This inspection only reports if the language level of the project or module is 8 or higher</p>
+<p>This inspection only reports if the language level of the project or module is eight or higher.</p>
 </body>
 </html>
