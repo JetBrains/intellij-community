@@ -22,10 +22,13 @@ import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.idea.maven.compatibility.MavenWrapperTestFixture;
 import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection;
+import org.junit.Test;
 
 import java.util.Collections;
 
 public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
+
+  @Test
   public void testVariants() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -40,7 +43,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <artifactId>junit</artifactId>" +
                      "  <version></version>" +
                      "</parent>");
-    assertCompletionVariantsInclude(myProjectPom, "junit", "jmock", "test");
+    assertCompletionVariantsInclude(myProjectPom, RENDERING_TEXT, "junit");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -50,7 +53,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <groupId>junit</groupId>" +
                      "  <artifactId><caret></artifactId>" +
                      "</parent>");
-    assertCompletionVariants(myProjectPom, "junit");
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "junit");
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -61,9 +64,10 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                      "  <artifactId>junit</artifactId>" +
                      "  <version><caret></version>" +
                      "</parent>");
-    assertCompletionVariants(myProjectPom, "3.8.1", "3.8.2", "4.0");
+    assertCompletionVariants(myProjectPom, RENDERING_TEXT, "3.8.1", "3.8.2", "4.0");
   }
 
+  @Test
   public void testResolutionInsideTheProject() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -109,6 +113,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findPsiFile(f));
   }
 
+  @Test
   public void testResolvingByRelativePath() throws Throwable {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -133,6 +138,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findPsiFile(parent));
   }
 
+  @Test
   public void testResolvingByRelativePathWithProperties() throws Throwable {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -161,6 +167,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findPsiFile(parent));
   }
 
+  @Test
   public void testResolvingByRelativePathWhenOutsideOfTheProject() throws Throwable {
     VirtualFile parent = createPomFile(myProjectRoot.getParent(),
                                        "<groupId>test</groupId>" +
@@ -185,6 +192,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertResolved(myProjectPom, findPsiFile(parent));
   }
 
+  @Test
   public void testDoNotHighlightResolvedParentByRelativePathWhenOutsideOfTheProject() {
     createPomFile(myProjectRoot.getParent(),
                   "<groupId>test</groupId>" +
@@ -208,6 +216,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting(myProjectPom);
   }
 
+  @Test
   public void testHighlightParentProperties() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project0</artifactId>" +
@@ -253,6 +262,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting(m2);
   }
 
+  @Test
   public void testHighlightParentPropertiesForMavenLess35() throws Exception {
 
     MavenWrapperTestFixture fixture = new MavenWrapperTestFixture(myProject, "3.3.9");
@@ -305,7 +315,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
 
   }
 
-
+  @Test
   public void testRelativePathCompletion() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -335,6 +345,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "dir", "two", "pom.xml");
   }
 
+  @Test
   public void testRelativePathCompletion_2() {
     importProject("<groupId>test</groupId>" + "<artifactId>project</artifactId>" + "<version>1</version>");
 
@@ -355,6 +366,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertCompletionVariants(myProjectPom, "one", "two", "pom.xml");
   }
 
+  @Test
   public void testHighlightingUnknownValues() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -373,6 +385,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test
   public void testHighlightingAbsentGroupId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -386,6 +399,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test
   public void testHighlightingAbsentArtifactId() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -399,6 +413,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test
   public void testHighlightingAbsentVersion() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -412,6 +427,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test
   public void testHighlightingInvalidRelativePath() {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
@@ -431,6 +447,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     checkHighlighting();
   }
 
+  @Test
   public void testPathQuickFixForInvalidValue() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
@@ -463,6 +480,7 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
     assertEquals("bar/pom.xml", ElementManipulators.getValueText(el));
   }
 
+  @Test
   public void testDoNotShowPathQuickFixForValidPath() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
