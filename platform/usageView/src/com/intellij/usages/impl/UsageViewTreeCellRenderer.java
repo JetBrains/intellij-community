@@ -13,13 +13,13 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.ColoredTreeCellRenderer;
 import com.intellij.ui.DirtyUI;
-import com.intellij.ui.RowIcon;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.util.FontUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -126,13 +126,9 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
                                ? SlowOperations.allowSlowOperations(() -> CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group))
                                : null;
           Icon tagIcon = TagManager.appendTags(element, this);
+          setIcon(IconUtil.rowIcon(tagIcon, group.getIcon()));
           append(group.getPresentableGroupText(),
                  patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
-          Icon icon = group.getIcon();
-          if (tagIcon != null) {
-            icon = new RowIcon(tagIcon, icon);
-          }
-          setIcon(icon);
         }
 
         int count = node.getRecursiveUsageCount();

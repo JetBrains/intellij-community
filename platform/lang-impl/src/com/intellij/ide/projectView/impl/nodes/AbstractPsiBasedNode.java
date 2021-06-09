@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.projectView.impl.nodes;
 
@@ -35,6 +35,7 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
+import com.intellij.util.IconUtil;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -173,10 +174,7 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       else {
         tagIcon = TagManager.appendTags(value, coloredText = new SimpleColoredText());
       }
-      if (tagIcon != null) {
-        icon = new com.intellij.ui.RowIcon(tagIcon, icon);
-      }
-      data.setIcon(icon);
+      data.setIcon(IconUtil.rowIcon(tagIcon, icon));
       data.setPresentableText(myName);
       if (deprecated) {
         data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
