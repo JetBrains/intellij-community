@@ -1,11 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actionsOnSave;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.UnnamedConfigurable;
 import com.intellij.openapi.options.ex.ConfigurableWrapper;
-import com.intellij.openapi.options.ex.Settings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +27,7 @@ import java.util.function.Supplier;
  * @see #getValueFromSavedStateOrFromUiState(Supplier, Function)
  * @see #updateUiOnOwnPage(Consumer)
  */
+@ApiStatus.Experimental
 public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedConfigurable> extends ActionOnSaveInfo {
   private static final Logger LOG = Logger.getInstance(ActionOnSaveBackedByOwnConfigurable.class);
 
@@ -40,14 +40,14 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
    */
   private @Nullable Conf myConfigurableWithInitializedUiComponent;
 
-  public ActionOnSaveBackedByOwnConfigurable(@NotNull String configurableId, @NotNull Class<Conf> configurableClass) {
+  public ActionOnSaveBackedByOwnConfigurable(@NotNull ActionOnSaveContext context,
+                                             @NotNull String configurableId,
+                                             @NotNull Class<Conf> configurableClass) {
+    super(context);
     myConfigurableId = configurableId;
     myConfigurableClass = configurableClass;
-  }
 
-  @Override
-  protected void onActionsOnSaveConfigurableReset(@NotNull Settings settings) {
-    UnnamedConfigurable configurable = settings.getConfigurableWithInitializedUiComponent(myConfigurableId, false);
+    UnnamedConfigurable configurable = getSettings().getConfigurableWithInitializedUiComponent(myConfigurableId, false);
 
     if (configurable instanceof ConfigurableWrapper) {
       configurable = ((ConfigurableWrapper)configurable).getRawConfigurable();
@@ -65,6 +65,50 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
 
     //noinspection unchecked
     myConfigurableWithInitializedUiComponent = (Conf)configurable;
+  }
+
+  void resetUiOnOwnPageThatIsMirroredOnActionsOnSavePage() {
+    if (myConfigurableWithInitializedUiComponent != null) {
+      resetUiOnOwnPageThatIsMirroredOnActionsOnSavePage(myConfigurableWithInitializedUiComponent);
+      getSettings().checkModified(myConfigurableId);
+    }
+  }
+
+  /**
+   * Called when 'Reset' link is clicked in the top-right corner of the 'Actions on Save' page. Implementations should restore the state of
+   * the UI components on its own page but only those that are mirrored on the 'Actions on Save' page. The goal is to make 'Actions on Save'
+   * page not modified. Own page may stay modified if there are any changes that can't be controlled by user from the 'Actions on Save' page.
+   * <br/><br/>
+   * The default method implementation restores the initial state of the 'action on save enabled' checkbox. Override this method if
+   * your implementation can also change the state of this 'action on save' via handlers of {@link #getActivatedOnDropDownLink()},
+   * {@link #getInPlaceConfigDropDownLink()}, and {@link #getActivatedOnDropDownLink()}.
+   */
+  protected void resetUiOnOwnPageThatIsMirroredOnActionsOnSavePage(@NotNull Conf configurable) {
+    setActionOnSaveEnabled(configurable, isActionOnSaveEnabledAccordingToStoredState());
+  }
+
+  @Override
+  protected final void apply() {
+    // All changes will be applied when Platform calls myConfigurableWithInitializedUiComponent.apply()
+  }
+
+  @Override
+  protected final boolean isModified() {
+    return myConfigurableWithInitializedUiComponent != null &&
+           areOptionsMirroredOnActionsOnSavePageModified(myConfigurableWithInitializedUiComponent);
+  }
+
+  /**
+   * Called from the constructor when this {@link ActionOnSaveBackedByOwnConfigurable} is created because user has switched from some other
+   * page in Settings (references) to the 'Actions on Save' page. 'Actions on Save' page may be already modified right from the start
+   * because options shown there have already been altered on the
+   * <br/><br/>
+   * The default method implementation only checks the state of the 'action on save enabled' checkbox. Override this method if
+   * your implementation can also change the state of this 'action on save' via handlers of {@link #getActivatedOnDropDownLink()},
+   * {@link #getInPlaceConfigDropDownLink()}, and {@link #getActivatedOnDropDownLink()}.
+   */
+  protected boolean areOptionsMirroredOnActionsOnSavePageModified(@NotNull Conf configurable) {
+    return isActionOnSaveEnabledAccordingToStoredState() != isActionOnSaveEnabledAccordingToUiState(configurable);
   }
 
   /**
@@ -93,26 +137,18 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
    * @param uiUpdater typical implementation is like <code>configurable.myFeatureCheckBox.setSelected(outerVariable)</code>.
    */
   protected final void updateUiOnOwnPage(@NotNull Consumer<Conf> uiUpdater) {
-    DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(context -> {
-      Settings settings = Settings.KEY.getData(context);
-      if (settings == null) {
-        LOG.error("Settings not found");
-        return;
-      }
+    ensureUiComponentsOnOwnPageInitialized();
 
-      ensureUiComponentsOnOwnPageInitialized(settings);
-
-      if (myConfigurableWithInitializedUiComponent != null) {
-        uiUpdater.accept(myConfigurableWithInitializedUiComponent);
-        settings.checkModified(myConfigurableId);
-      }
-    });
+    if (myConfigurableWithInitializedUiComponent != null) {
+      uiUpdater.accept(myConfigurableWithInitializedUiComponent);
+      getSettings().checkModified(myConfigurableId);
+    }
   }
 
-  private void ensureUiComponentsOnOwnPageInitialized(@NotNull Settings settings) {
+  private void ensureUiComponentsOnOwnPageInitialized() {
     if (myConfigurableWithInitializedUiComponent != null) return;
 
-    UnnamedConfigurable configurable = settings.getConfigurableWithInitializedUiComponent(myConfigurableId, true);
+    UnnamedConfigurable configurable = getSettings().getConfigurableWithInitializedUiComponent(myConfigurableId, true);
     if (configurable instanceof ConfigurableWrapper) {
       configurable = ((ConfigurableWrapper)configurable).getRawConfigurable();
     }

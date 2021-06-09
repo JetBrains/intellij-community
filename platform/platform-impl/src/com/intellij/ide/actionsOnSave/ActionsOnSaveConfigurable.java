@@ -34,6 +34,7 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
 
   private final @NotNull Project myProject;
 
+  private ActionOnSaveContext myActionOnSaveContext;
   private TableView<ActionOnSaveInfo> myTable;
 
   public ActionsOnSaveConfigurable(@NotNull Project project) {
@@ -74,7 +75,7 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
       public void ancestorAdded(AncestorEvent event) {
         // The 'Actions on Save' page has become visible, either the first time (right after createComponent()), or after switching to some
         // other page in Settings and then back to this page. Need to update the table.
-        reset();
+        updateTable();
       }
     });
 
@@ -98,11 +99,19 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
 
   @Override
   public boolean isModified() {
+    for (ActionOnSaveInfo info : myTable.getItems()) {
+      if (info.isModified()) {
+        return true;
+      }
+    }
     return false;
   }
 
   @Override
   public void apply() throws ConfigurationException {
+    for (ActionOnSaveInfo info : myTable.getItems()) {
+      info.apply();
+    }
   }
 
   @Override
@@ -113,6 +122,17 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
       return;
     }
 
+    for (ActionOnSaveInfo info : myTable.getItems()) {
+      if (info instanceof ActionOnSaveBackedByOwnConfigurable<?>) {
+        ((ActionOnSaveBackedByOwnConfigurable<?>)info).resetUiOnOwnPageThatIsMirroredOnActionsOnSavePage();
+      }
+    }
+
+    myActionOnSaveContext = null;
+    updateTable();
+  }
+
+  private void updateTable() {
     Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(myTable));
     if (settings == null) {
       myTable.getListTableModel().setItems(Collections.emptyList());
@@ -120,11 +140,11 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
       return;
     }
 
-    List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myProject, settings);
-    for (ActionOnSaveInfo info : infos) {
-      info.onActionsOnSaveConfigurableReset(settings);
+    if (myActionOnSaveContext == null) {
+      myActionOnSaveContext = new ActionOnSaveContext(myProject, settings);
     }
 
+    List<ActionOnSaveInfo> infos = ActionOnSaveInfoProvider.getAllActionOnSaveInfos(myActionOnSaveContext);
     myTable.getListTableModel().setItems(infos);
   }
 

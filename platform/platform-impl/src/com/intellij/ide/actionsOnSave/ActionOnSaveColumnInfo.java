@@ -2,10 +2,7 @@
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
@@ -22,7 +19,6 @@ import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
 class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSaveInfo> {
-  private static final Logger LOG = Logger.getInstance(ActionOnSaveColumnInfo.class);
 
   ActionOnSaveColumnInfo() {
     super(IdeBundle.message("actions.on.save.table.column.name.action"));
@@ -73,12 +69,6 @@ class ActionOnSaveColumnInfo extends SameRendererAndEditorColumnInfo<ActionOnSav
 
       checkBox.setSelected(info.isActionOnSaveEnabled());
       checkBox.addActionListener(e -> {
-        Settings settings = Settings.KEY.getData(DataManager.getInstance().getDataContext(checkBox));
-        if (settings == null) {
-          LOG.error("Settings not found");
-          return;
-        }
-
         info.setActionOnSaveEnabled(checkBox.isSelected());
         int row = table.getEditingRow();
         int column = table.getEditingColumn();

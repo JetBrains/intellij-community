@@ -2,15 +2,17 @@
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.options.ex.Settings;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.keymap.KeymapUtil;
+import com.intellij.openapi.options.ex.Settings;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.components.ActionLink;
 import com.intellij.ui.components.DropDownLink;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -19,15 +21,51 @@ import java.util.Collections;
 import java.util.List;
 
 /**
+ * <code>ActionOnSave</code> object lifecycle is described in {@link ActionOnSaveInfoProvider#getActionOnSaveInfos(Project, ActionOnSaveContext)}.
+ * <br/><br/>
  * Some 'actions on save' can be configured in 2 places: on the 'Actions on Save' page and on some other technology-specific page in
  * Settings (Preferences). The state of the corresponding 'action enabled' check boxes (and maybe other UI components) must be
  * the same on both pages at any time. Consider extending {@link ActionOnSaveBackedByOwnConfigurable} in this case.
  *
  * @see ActionOnSaveBackedByOwnConfigurable
+ * @see ActionOnSaveInfo#ActionOnSaveInfo(ActionOnSaveContext)
  */
+@ApiStatus.Experimental
 public abstract class ActionOnSaveInfo {
 
-  protected void onActionsOnSaveConfigurableReset(@NotNull Settings settings) { }
+  private final @NotNull ActionOnSaveContext myContext;
+
+  /**
+   * Implementations should get understanding about their current state based on the provided {@link ActionOnSaveContext}. The current state
+   * may be already modified. See {@link ActionOnSaveContext} and {@link ActionOnSaveInfo} objects lifecycle.
+   * {@link ActionOnSaveInfo#isModified()} and all getters (like {@link #isActionOnSaveEnabled()} should be implemented accordingly.
+   * <br/><br/>
+   * Setter implementations ({@link #setActionOnSaveEnabled(boolean)}), as well as handlers of {@link #getActivatedOnDropDownLink()},
+   * {@link #getInPlaceConfigDropDownLink()}, and {@link #getActivatedOnDropDownLink()} should store their state in {@link ActionOnSaveContext}.
+   * This way, new instances of <code>ActionOnSaveInfo</code> will be able to restore their state when they are re-created next time.
+   */
+  protected ActionOnSaveInfo(@NotNull ActionOnSaveContext context) {
+    myContext = context;
+  }
+
+  protected final @NotNull Project getProject() {
+    return myContext.getProject();
+  }
+
+  protected final @NotNull Settings getSettings() {
+    return myContext.getSettings();
+  }
+
+  protected final @NotNull ActionOnSaveContext getContext() {
+    return myContext;
+  }
+
+  /**
+   * Called when OK or Apply button is pressed in the Settings (Preferences) dialog.
+   */
+  protected abstract void apply();
+
+  protected abstract boolean isModified();
 
   /**
    * Text for the corresponding checkbox (if {@link #isSaveActionApplicable()} is <code>true</code>) or label (if {@link #isSaveActionApplicable()} is <code>false</code>).

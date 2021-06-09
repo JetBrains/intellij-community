@@ -2,8 +2,7 @@
 package com.intellij.ide.actionsOnSave;
 
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.options.ex.Settings;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -15,19 +14,30 @@ import java.util.List;
  * disabled, so it's recommended to use 'before' and 'after' anchors relative to all other known extensions. The order of the checkboxes
  * on the 'Actions on Save' page should reflect the real order of the performed actions.
  */
+@ApiStatus.Experimental
 public abstract class ActionOnSaveInfoProvider {
 
   private static final ExtensionPointName<ActionOnSaveInfoProvider> EP_NAME =
     ExtensionPointName.create("com.intellij.actionOnSaveInfoProvider");
 
-  static List<ActionOnSaveInfo> getAllActionOnSaveInfos(@NotNull Project project, @NotNull Settings settings) {
+  static List<ActionOnSaveInfo> getAllActionOnSaveInfos(@NotNull ActionOnSaveContext context) {
     ArrayList<ActionOnSaveInfo> infos = new ArrayList<>();
     for (ActionOnSaveInfoProvider provider : EP_NAME.getExtensionList()) {
-      infos.addAll(provider.getActionOnSaveInfos(project, settings));
+      infos.addAll(provider.getActionOnSaveInfos(context));
     }
     return infos;
   }
 
-  protected abstract @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull Project project,
-                                                                                          @NotNull Settings settings);
+  /**
+   * This method is called each time when the 'Actions on Save' page in Settings (Preferences) becomes visible. If a user moves
+   * to a different page in Settings (Preferences) and then back to the 'Actions on Save' page, this method will be called once again.
+   * <br/><br/>
+   * <code>getActionOnSaveInfos()</code> implementations should return new instances of {@link ActionOnSaveInfo} each time.
+   * <br/><br/>
+   * <code>ActionOnSaveInfo</code> implementations should get understanding about their current state based on the provided {@link ActionOnSaveContext}.
+   *
+   * @see ActionOnSaveInfo#ActionOnSaveInfo(ActionOnSaveContext)
+   * @see ActionOnSaveContext
+   */
+  protected abstract @NotNull Collection<? extends ActionOnSaveInfo> getActionOnSaveInfos(@NotNull ActionOnSaveContext context);
 }
