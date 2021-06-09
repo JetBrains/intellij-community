@@ -67,9 +67,10 @@ object ExpectedCompletionUtils {
 
         operator fun get(key: String): String? = map[key]
 
-        fun matches(expectedProposal: CompletionProposal): Boolean {
+        fun matches(expectedProposal: CompletionProposal, ignoreProperties: Collection<String>): Boolean {
             return expectedProposal.map.entries.none { expected ->
                 val actualValues = when (expected.key) {
+                    in ignoreProperties -> return@none false
                     "lookupString" -> {
                         // FIR IDE adds `.` after package names in completion
                         listOf(map[expected.key]?.removeSuffix("."), map[expected.key])
@@ -230,7 +231,8 @@ object ExpectedCompletionUtils {
         expected: Array<CompletionProposal>,
         items: Array<LookupElement>,
         checkOrder: Boolean,
-        nothingElse: Boolean
+        nothingElse: Boolean,
+        ignoreProperties: Collection<String>,
     ) {
         val itemsInformation = getItemsInformation(items)
         val allItemsString = listToString(itemsInformation)
@@ -245,7 +247,7 @@ object ExpectedCompletionUtils {
             for (index in itemsInformation.indices) {
                 val proposal = itemsInformation[index]
 
-                if (proposal.matches(expectedProposal)) {
+                if (proposal.matches(expectedProposal, ignoreProperties)) {
                     isFound = true
 
                     Assert.assertTrue(
@@ -302,7 +304,7 @@ object ExpectedCompletionUtils {
         return InTextDirectivesUtils.getPrefixedInt(fileText, NUMBER_LINE_PREFIX)
     }
 
-    fun assertNotContainsRenderedItems(unexpected: Array<CompletionProposal>, items: Array<LookupElement>) {
+    fun assertNotContainsRenderedItems(unexpected: Array<CompletionProposal>, items: Array<LookupElement>, ignoreProperties: Collection<String>) {
         val itemsInformation = getItemsInformation(items)
         val allItemsString = listToString(itemsInformation)
 
@@ -310,7 +312,7 @@ object ExpectedCompletionUtils {
             for (proposal in itemsInformation) {
                 Assert.assertFalse(
                     "Unexpected '$unexpectedProposal' presented in\n$allItemsString",
-                    proposal.matches(unexpectedProposal)
+                    proposal.matches(unexpectedProposal, ignoreProperties)
                 )
             }
         }

@@ -3,7 +3,11 @@
 package org.jetbrains.kotlin.idea.fir.completion
 
 import org.jetbrains.kotlin.idea.completion.test.AbstractJvmBasicCompletionTest
+import org.jetbrains.kotlin.idea.completion.test.ExpectedCompletionUtils
 
 abstract class AbstractHighLevelJvmBasicCompletionTest : AbstractJvmBasicCompletionTest() {
     override val captureExceptions: Boolean = false
+
+    override val ignoreProperties: Collection<String> =
+        listOf(ExpectedCompletionUtils.CompletionProposal.PRESENTATION_TEXT_ATTRIBUTES)
 }
