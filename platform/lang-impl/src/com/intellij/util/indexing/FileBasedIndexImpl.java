@@ -1424,7 +1424,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       new FileIndexingStatistics(
         fileTypeRef.get(),
         indexesProvidedByExtensions,
-        wasFullyIndexedByInfrastructureExtensions.get(),
+        !indexesProvidedByExtensions.isEmpty() && wasFullyIndexedByInfrastructureExtensions.get(),
         perIndexerUpdateTimes,
         perIndexerDeletionTimes
       ));
