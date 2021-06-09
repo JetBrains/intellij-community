@@ -240,7 +240,11 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     }
   }
 
-  override fun getDragStartDeadzone(): Int {
+  override fun getDragStartDeadzone(pressedScreenPoint: Point , draggedScreenPoint: Point): Int {
+    val point = RelativePoint(pressedScreenPoint).getPoint(myPane)
+    if (SwingUtilities.getDeepestComponentAt(myPane, point.x, point.y) is StripeButton) {
+      return super.getDragStartDeadzone(pressedScreenPoint, draggedScreenPoint)
+    }
     return JBUI.scale(Registry.intValue("ide.new.tool.window.start.drag.deadzone", 7, 0, 100))
   }
 
