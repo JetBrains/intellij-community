@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtTypeReference
@@ -21,7 +20,6 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     fun getBindingContextIfAny(element: KtElement): BindingContext? = getBindingContext(element)
     fun getTypeMapper(element: KtElement): KotlinTypeMapper?
     fun getLanguageVersionSettings(element: KtElement): LanguageVersionSettings
-    fun getReferenceVariants(ktElement: KtElement, nameHint: String): Sequence<DeclarationDescriptor>
 
     override val baseKotlinConverter: BaseKotlinConverter
         get() = KotlinConverter
