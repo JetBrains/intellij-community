@@ -22,7 +22,6 @@ import org.jetbrains.annotations.ApiStatus
  */
 @ApiStatus.Experimental
 class MarkdownTextEditorProvider: PsiAwareTextEditorProvider() {
-  private var floatingToolbar: FloatingToolbar? = null
 
   override fun accept(project: Project, file: VirtualFile): Boolean {
     if (!super.accept(project, file)) {
@@ -38,13 +37,9 @@ class MarkdownTextEditorProvider: PsiAwareTextEditorProvider() {
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val actualEditor = super.createEditor(project, file)
     if (actualEditor is TextEditor) {
-      floatingToolbar = FloatingToolbar(actualEditor.editor)
+      val toolbar = FloatingToolbar(actualEditor.editor)
+      Disposer.register(actualEditor, toolbar)
     }
     return actualEditor
-  }
-
-  override fun disposeEditor(editor: FileEditor) {
-    floatingToolbar?.let(Disposer::dispose)
-    super.disposeEditor(editor)
   }
 }
