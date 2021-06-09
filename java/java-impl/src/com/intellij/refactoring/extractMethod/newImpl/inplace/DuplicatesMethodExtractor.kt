@@ -1,0 +1,99 @@
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.refactoring.extractMethod.newImpl.inplace
+
+import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.editor.Editor
+import com.intellij.openapi.project.Project
+import com.intellij.psi.*
+import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.refactoring.extractMethod.newImpl.*
+import com.intellij.refactoring.extractMethod.newImpl.JavaDuplicatesFinder.Companion.textRangeOf
+import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
+import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
+import org.jetbrains.annotations.Nullable
+
+class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
+
+  var duplicatesFinder: JavaDuplicatesFinder? = null
+
+  var callsToReplace: List<PsiElement>? = null
+
+  var extractOptions: ExtractOptions? = null
+
+  override fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
+
+    val copiedFile = targetClass.containingFile.copy() as PsiFile
+    val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
+    val copiedElements = elements.map { PsiTreeUtil.findSameElementInCopy(it, copiedFile) }
+    val extractOptions = findExtractOptions(copiedClass, copiedElements, methodName, makeStatic)
+    this.extractOptions = extractOptions
+
+    duplicatesFinder = JavaDuplicatesFinder(copiedElements)
+
+    val elementsToReplace = MethodExtractor().prepareRefactoringElements(extractOptions)
+    val calls = MethodExtractor().replace(elements, elementsToReplace.callElements)
+    val method = targetClass.add(elementsToReplace.method) as PsiMethod
+
+    callsToReplace = calls
+    val callExpression = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java, false)!!
+    return Pair(method, callExpression)
+  }
+
+  override fun extractInDialog(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean) {
+    val extractOptions = findExtractOptions(targetClass, elements, methodName, makeStatic)
+    MethodExtractor().doDialogExtract(extractOptions)
+  }
+
+  private fun findExtractOptions(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): ExtractOptions {
+    val analyzer = CodeFragmentAnalyzer(elements)
+    var options = findExtractOptions(elements).copy(methodName = methodName)
+    options = ExtractMethodPipeline.withTargetClass(analyzer, options, targetClass) ?: throw IllegalStateException("Failed to set target class")
+    options = if (makeStatic) ExtractMethodPipeline.withForcedStatic(analyzer, options)!! else options
+    return options
+  }
+
+  override fun postprocess(editor: Editor, method: PsiMethod) {
+    val project = editor.project ?: return
+    val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
+    val finder = duplicatesFinder ?: return
+    val calls = callsToReplace ?: return
+    val options = extractOptions ?: return
+    val duplicates = finder.findDuplicates(file).filterNot { textRangeOf(it.candidate) in method.textRange }
+
+    duplicates.forEach { duplicate ->
+      printDuplicate(project, duplicate)
+      val allParameters = createParametersFromExpressions(duplicate.changedExpressions)
+      val duplicateOptions = findExtractOptions(duplicate.candidate)
+      val expressionMap = duplicate.changedExpressions.associate { (pattern, candidate) -> pattern to candidate }
+      val duplicateParameters = allParameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
+
+      val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = allParameters, methodName = method.name))
+      val duplicateToReplace = MethodExtractor().prepareRefactoringElements(duplicateOptions.copy(inputParameters = duplicateParameters, methodName = method.name))
+      runWriteAction {
+        MethodExtractor().replace(calls, elementsToReplace.callElements)
+        method.replace(elementsToReplace.method) as PsiMethod
+        MethodExtractor().replace(duplicate.candidate, duplicateToReplace.callElements)
+      }
+    }
+  }
+
+  private fun createParametersFromExpressions(changedExpressions: List<ChangedExpression>): List<InputParameter> {
+    val parameters = changedExpressions.groupBy { "${it.pattern.text}:::${it.candidate.text}" }.values.map { InputParameter(it.map { it.pattern }, ExtractMethodHelper.guessName(it.first().pattern), it.first().pattern.type!!) }
+    return parameters.groupBy { it.name }.values.flatMap { params -> params.mapIndexed { index, parameter ->  parameter.copy(name = "${parameter.name}${if (index != 0) index else ""}") } }
+  }
+
+  private fun printDuplicate(project: @Nullable Project, duplicate: Duplicate) {
+    val document = PsiDocumentManager.getInstance(project).getDocument(duplicate.candidate.first().containingFile)!!
+    println("Duplicate:")
+    println(document.getText(textRangeOf(duplicate.candidate)))
+    println()
+    println("Changes:")
+    duplicate.changedExpressions.forEach { (pattern, candidate) ->
+      println("${pattern.text} ::: ${candidate.text}")
+    }
+  }
+
+  private fun createCall(method: PsiMethod){
+
+  }
+}

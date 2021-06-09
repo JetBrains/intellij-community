@@ -93,6 +93,7 @@ class MethodExtractor {
   }
 
   fun getDefaultInplaceExtractor(options: ExtractOptions): InplaceExtractMethodProvider {
+    if (Registry.`is`("java.refactoring.extractMethod.newDuplicatesExtractor")) return DuplicatesMethodExtractor()
     val enabled = Registry.`is`("java.refactoring.extractMethod.newImplementation")
     val possible = ExtractMethodHandler.canUseNewImpl(options.project, options.anchor.containingFile, options.elements.toTypedArray())
     return if (enabled && possible) DefaultMethodExtractor() else LegacyMethodExtractor()
@@ -288,7 +289,7 @@ class MethodExtractor {
     return ExtractedElements(formattedCallElements, method)
   }
 
-  private fun replace(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {
+  fun replace(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {
     val sourceAsExpression = source.singleOrNull() as? PsiExpression
     val targetAsExpression = target.singleOrNull() as? PsiExpression
     if (sourceAsExpression != null && targetAsExpression != null) {

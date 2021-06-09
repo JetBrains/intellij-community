@@ -762,6 +762,9 @@
     <registryKey key="java.refactoring.extractMethod.newImplementation"
                  defaultValue="true"
                  description="Enable experimental extract method implementation"/>
+    <registryKey key="java.refactoring.extractMethod.newDuplicatesExtractor"
+                 defaultValue="false"
+                 description="Enable experimental extract duplicates implementation"/>
     <registryKey key="java.refactoring.extractMethod.inplace"
                  defaultValue="true"
                  description="Enable experimental extract method inplace mode"/>

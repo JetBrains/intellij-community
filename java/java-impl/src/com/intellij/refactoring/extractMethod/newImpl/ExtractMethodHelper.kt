@@ -118,7 +118,7 @@ object ExtractMethodHelper {
     }
   }
 
-  fun guessName(expression: PsiExpression): String? {
+  fun guessName(expression: PsiExpression): String {
     val codeStyleManager = JavaCodeStyleManager.getInstance(expression.project) as JavaCodeStyleManagerImpl
 
     return findVariableReferences(expression).mapNotNull { variable -> variable.name }.firstOrNull()
