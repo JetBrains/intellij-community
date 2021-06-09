@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.reference;
 
 import com.intellij.codeInsight.ExternalAnnotationsManager;
@@ -259,7 +259,7 @@ public final class RefJavaManagerImpl extends RefJavaManager {
     else if (psi instanceof PsiJavaModule) {
       return new RefJavaModuleImpl((PsiJavaModule)psi, myRefManager);
     }
-    UElement uElement = UastContextKt.toUElement(psi);
+    UElement uElement = psi instanceof UElement ? (UElement)psi : UastContextKt.toUElement(psi);
     if (uElement instanceof UClass) {
       return new RefClassImpl((UClass)uElement, psi, myRefManager);
     }
