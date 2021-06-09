@@ -1200,7 +1200,7 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
   }
 
 
-  static class LazyList<T> extends AbstractList<T> {
+  private static class LazyList<T> extends AbstractList<T> {
     final Supplier<? extends List<T>> initializer;
     AtomicReference<List<T>> ref = new AtomicReference<>(null);
 
@@ -1213,7 +1213,13 @@ public final class ChooseRunConfigurationPopup implements ExecutorProvider {
     }
 
     private List<T> getDelegate() {
-      return ref.updateAndGet(ts -> initializer.get());
+      return ref.updateAndGet(ts -> {
+        if (ts != null) {
+          return null;
+        } else {
+          return initializer.get();
+        }
+      });
     }
 
     @Override
