@@ -34,7 +34,9 @@ public class OverwrittenKeyInspection extends AbstractBaseJavaLocalInspectionToo
   private static final CallMatcher MAP_PUT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_MAP, "put").parameterCount(2);
   private static final CallMatcher SET_OF =
-    CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of");
+    CallMatcher.anyOf(
+      CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_SET, "of"),
+      CallMatcher.staticCall("java.util.EnumSet", "of"));
   private static final CallMatcher MAP_OF =
     CallMatcher.staticCall(CommonClassNames.JAVA_UTIL_MAP, "of");
   private static final CallMatcher MAP_OF_ENTRIES =

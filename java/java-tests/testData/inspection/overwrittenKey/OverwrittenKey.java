@@ -50,6 +50,15 @@ class OverwrittenKey {
                                              Map.entry("c", "b"), Map.entry(<warning descr="Duplicate Map key">"b"</warning>, "d"));
   }
 
+  enum X {
+    A, B, C
+  }
+
+  void enumSetOf() {
+    EnumSet<X> xx = EnumSet.of(<warning descr="Duplicate Set element">X.A</warning>, X.B, <warning descr="Duplicate Set element">X.A</warning>, X.C);
+    System.out.println(xx);
+  }
+
   void testParameter(Map<Object, Object> map, String key) {
     map.put(<warning descr="Duplicate Map key">key</warning>, "k1");
     map.put(<warning descr="Duplicate Map key">key</warning>, "k2");
