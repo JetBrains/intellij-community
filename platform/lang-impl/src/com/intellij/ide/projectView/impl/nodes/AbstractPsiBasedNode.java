@@ -30,9 +30,9 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.ColoredText;
 import com.intellij.ui.IconManager;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.icons.RowIcon;
 import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.IconUtil;
@@ -165,26 +165,29 @@ public abstract class AbstractPsiBasedNode<Value> extends ProjectViewNode<Value>
       catch (IndexNotReadyException ignored) {
       }
 
-      SimpleColoredText coloredText = null;
-      Icon tagIcon;
+      final Icon tagIcon;
+      final ColoredText tagText;
       if (!TagManager.isEnabled()) {
         Bookmark bookmark = BookmarkManager.getInstance(myProject).findElementBookmark(value);
         tagIcon = bookmark == null ? null : bookmark.getIcon();
+        tagText = null;
       }
       else {
-        tagIcon = TagManager.appendTags(value, coloredText = new SimpleColoredText());
+        var tagIconAndText = TagManager.getTagIconAndText(value);
+        tagIcon = tagIconAndText.first;
+        tagText = tagIconAndText.second;
       }
       data.setIcon(IconUtil.rowIcon(tagIcon, icon));
       data.setPresentableText(myName);
       if (deprecated) {
         data.setAttributesKey(CodeInsightColors.DEPRECATED_ATTRIBUTES);
       }
-      if (coloredText != null) {
-        int fragment = 0;
-        for (String text : coloredText.getTexts()) {
-          data.getColoredText().add(new ColoredFragment(text, coloredText.getAttributes().get(fragment++)));
+      if (tagText != null) {
+        var fragments = tagText.fragments();
+        for (ColoredText.Fragment fragment : fragments) {
+          data.getColoredText().add(new ColoredFragment(fragment.fragmentText(), fragment.fragmentAttributes()));
         }
-        if (fragment > 0) {
+        if (!fragments.isEmpty()) {
           data.getColoredText().add(new ColoredFragment(myName, getSimpleTextAttributes(data)));
         }
       }

@@ -35,8 +35,9 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
     Object userObject = TreeUtil.getUserObject(value);
     if (userObject instanceof HierarchyNodeDescriptor) {
       HierarchyNodeDescriptor descriptor = (HierarchyNodeDescriptor)userObject;
-      Icon tagIcon = TagManager.appendTags(descriptor.getPsiElement(), this);
-      setIcon(IconUtil.rowIcon(tagIcon, fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus)));
+      var tagIconAndText = TagManager.getTagIconAndText(descriptor.getPsiElement());
+      setIcon(IconUtil.rowIcon(tagIconAndText.first, fixIconIfNeeded(descriptor.getIcon(), selected, hasFocus)));
+      append(tagIconAndText.second);
       descriptor.getHighlightedText().customize(this);
     }
     else {

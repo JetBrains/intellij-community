@@ -125,8 +125,9 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           PsiElement element = group instanceof DataProvider
                                ? SlowOperations.allowSlowOperations(() -> CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group))
                                : null;
-          Icon tagIcon = TagManager.appendTags(element, this);
-          setIcon(IconUtil.rowIcon(tagIcon, group.getIcon()));
+          var tagIconAndText = TagManager.getTagIconAndText(element);
+          setIcon(IconUtil.rowIcon(tagIconAndText.first, group.getIcon()));
+          append(tagIconAndText.second);
           append(group.getPresentableGroupText(),
                  patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
         }
