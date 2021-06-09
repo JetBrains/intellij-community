@@ -3,35 +3,14 @@ package pack;
 
 import java.util.Arrays;
 
-public class HashMap<K,V> {
-  static class Node<K,V> {
-    final int hash;
-    final K key;
-    V value;
-    Node<K,V> next;
+public class TableWrapper {
 
-    Node(int hash, K key, V value, Node<K,V> next) {
-      this.hash = hash;
-      this.key = key;
-      this.value = value;
-      this.next = next;
-    }
-
-  }
-
-  transient Node<K,V>[] table;
-
-  transient int size;
-
-  transient int modCount;
-}
+  int[] table;
 
   public void clear() {
-    Node<K,V>[] tab;
-    modCount++;
-    if ((tab = table) != null && size > 0) {
-      size = 0;
-        Arrays.fill(tab, null);
+    int[] tab;
+    if ((tab = table) != null && table.length > 0) {
+        Arrays.fill(tab, 0);
     }
   }
 }
