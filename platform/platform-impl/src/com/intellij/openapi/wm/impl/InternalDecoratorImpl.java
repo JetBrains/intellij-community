@@ -375,7 +375,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
       }
 
       SwingUtilities.convertPointFromScreen(point, divider);
-      return Math.abs(decorator.toolWindow.getWindowInfo().getAnchor().isHorizontal() ? point.y : point.x) < ToolWindowsPane.HEADER_RESIZE_WIDTH;
+      return Math.abs(decorator.toolWindow.getWindowInfo().getAnchor().isHorizontal() ? point.y : point.x) <= ToolWindowsPane.getHeaderResizeArea();
     }
 
     private void updateCursor(@NotNull MouseEvent event, boolean isInDragZone) {

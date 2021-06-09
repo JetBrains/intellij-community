@@ -5,7 +5,6 @@ package git4idea.config
 import com.intellij.dvcs.branch.DvcsBranchSettings
 import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.openapi.components.BaseState
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.Property
 import git4idea.push.GitPushTagMode
@@ -45,9 +44,6 @@ class GitVcsOptions : BaseState() {
   val recentBranchByRepository by map<String, String>()
   @get:OptionTag("RECENT_COMMON_BRANCH")
   var recentCommonBranch by string()
-
-  @get:OptionTag("AUTO_COMMIT_ON_REVERT")
-  var isAutoCommitOnRevert by property(Registry.`is`("git.auto.commit.on.revert"))
 
   @get:OptionTag("WARN_ABOUT_CRLF")
   var warnAboutCrlf by property(true)

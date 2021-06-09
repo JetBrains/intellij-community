@@ -131,7 +131,7 @@ public final class ListIntToIntMap extends AbstractIntToIntMap implements Updata
    * which of the multiple occurrences of the key is going to be found, while this method always returns the last insertion point.
    *
    * @param array the array to be searched
-   * @param key the value to be searched for
+   * @param key   the value to be searched for
    * @return index of the insertion point for the key. The insertion point is defined as the index of the first element greater than the key.
    */
   private static int lastInsertionPoint(int[] array, int key) {

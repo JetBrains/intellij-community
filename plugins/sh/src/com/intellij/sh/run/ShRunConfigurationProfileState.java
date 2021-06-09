@@ -104,9 +104,6 @@ final class ShRunConfigurationProfileState implements RunProfileState {
   @NotNull
   private GeneralCommandLine createCommandLineForScript() {
     PtyCommandLine commandLine = new PtyCommandLine();
-    if (!SystemInfo.isWindows) {
-      commandLine.getEnvironment().put("TERM", "xterm-256color"); //NON-NLS
-    }
     commandLine.withConsoleMode(false);
     commandLine.withInitialColumns(120);
     commandLine.withParentEnvironmentType(GeneralCommandLine.ParentEnvironmentType.CONSOLE);

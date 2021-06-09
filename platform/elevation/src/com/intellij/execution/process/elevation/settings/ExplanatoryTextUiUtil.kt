@@ -12,7 +12,7 @@ import com.intellij.util.ui.UIUtil
 import java.awt.FontMetrics
 
 internal object ExplanatoryTextUiUtil {
-  fun message(firstSentence: @NlsContexts.DialogMessage String,
+  fun message(@NlsContexts.DialogMessage firstSentence: String,
               maxLineLength: Int = 70,
               fontMetrics: FontMetrics? = null): @NlsSafe String {
     return messageHtmlInnards(firstSentence)
@@ -22,7 +22,7 @@ internal object ExplanatoryTextUiUtil {
       .toString()
   }
 
-  private fun messageHtmlInnards(firstSentence: @NlsContexts.DialogMessage String): HtmlChunk {
+  private fun messageHtmlInnards(@NlsContexts.DialogMessage firstSentence: String): HtmlChunk {
     val productName = ApplicationNamesInfo.getInstance().fullProductName
     val commentHtml = ElevationBundle.message("text.elevation.explanatory.comment.html", productName)
     val warningHtml = ElevationBundle.message("text.elevation.explanatory.warning.html")

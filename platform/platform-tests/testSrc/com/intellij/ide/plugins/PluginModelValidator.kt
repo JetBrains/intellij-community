@@ -71,23 +71,23 @@ internal class PluginModelValidator {
     }
 
     // 3. check dependencies - we are aware about all modules now
-    for (moduleInfo in pluginIdToInfo.values) {
-      val descriptor = moduleInfo.descriptor
+    for (pluginInfo in pluginIdToInfo.values) {
+      val descriptor = pluginInfo.descriptor
 
       descriptor.getChild("dependencies")?.let { dependencies ->
-        checkDependencies(dependencies, moduleInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
+        checkDependencies(dependencies, pluginInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
       }
 
       // in the end after processing content and dependencies
-      if (moduleInfo.packageName == null && hasContentOrDependenciesInV2Format(descriptor)) {
+      if (pluginInfo.packageName == null && hasContentOrDependenciesInV2Format(descriptor)) {
         // some plugins cannot be yet fully migrated
-        System.err.println("Plugin ${moduleInfo.pluginId} is not fully migrated: package is not specified" +
-                           " (pluginId=${moduleInfo.pluginId}, descriptor=${pathToShortString(moduleInfo.descriptorFile)})")
+        System.err.println("Plugin ${pluginInfo.pluginId} is not fully migrated: package is not specified" +
+                           " (pluginId=${pluginInfo.pluginId}, descriptor=${pathToShortString(pluginInfo.descriptorFile)})")
       }
 
-      for (contentModuleInfo in moduleInfo.content) {
+      for (contentModuleInfo in pluginInfo.content) {
         contentModuleInfo.descriptor.getChild("dependencies")?.let { dependencies ->
-          checkDependencies(dependencies, contentModuleInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
+          checkDependencies(dependencies, contentModuleInfo, pluginInfo, moduleNameToInfo, sourceModuleNameToFileInfo)
         }
 
         contentModuleInfo.descriptor.getChild("depends")?.let {
@@ -125,20 +125,13 @@ internal class PluginModelValidator {
     return stringWriter.buffer
   }
 
-  fun printGraph() {
-    val graphAsString = graphAsString()
-    println(graphAsString)
-    System.getProperty("plugin.graph.out")?.let {
-      val outFile = Path.of(it)
-      Files.writeString(outFile, "@startjson\n$graphAsString\n@endjson")
-    }
-    System.getProperty("plugin.graph.echarts")?.let {
-      PluginGraphWriter(pluginIdToInfo).write(Path.of(it))
-    }
+  fun writeGraph(outFile: Path) {
+    PluginGraphWriter(pluginIdToInfo).write(outFile)
   }
 
   private fun checkDependencies(element: XmlElement,
                                 referencingModuleInfo: ModuleInfo,
+                                referencingPluginInfo: ModuleInfo,
                                 moduleNameToInfo: Map<String, ModuleInfo>,
                                 sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>) {
     if (referencingModuleInfo.packageName == null) {
@@ -163,6 +156,14 @@ internal class PluginModelValidator {
           val id = child.getAttributeValue("id")
           if (id == null) {
             errors.add(PluginValidationError("Id is not specified for dependency on plugin", getErrorInfo()))
+            continue
+          }
+          if (id == "com.intellij.modules.java") {
+            errors.add(PluginValidationError("Use com.intellij.modules.java id instead of com.intellij.modules.java", getErrorInfo()))
+            continue
+          }
+          if (id == referencingPluginInfo.pluginId) {
+            errors.add(PluginValidationError("Do not add dependency on a parent plugin", getErrorInfo()))
             continue
           }
 
@@ -240,7 +241,7 @@ internal class PluginModelValidator {
   // for plugin two variants:
   // 1) depends + dependency on plugin in a referenced descriptor = optional descriptor. In old format: depends tag
   // 2) no depends + no dependency on plugin in a referenced descriptor = directly injected into plugin (separate classloader is not created
-  // during transition period). In old format: xi:include (e.g. <xi:include href="dockerfile-language.xml"/>.
+  // during transition period). In old format: xi:include (e.g. <xi:include href="dockerfile-language.xml"/>).
   private fun checkContent(content: XmlElement,
                            referencingModuleInfo: ModuleInfo,
                            sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>,
@@ -295,7 +296,8 @@ internal class PluginModelValidator {
       moduleNameToInfo.put(moduleName, moduleInfo)
       referencingModuleInfo.content.add(moduleInfo)
 
-      // check that not specified using depends tag
+      @Suppress("GrazieInspection")
+      // check that not specified using `depends` tag
       for (dependsElement in referencingModuleInfo.descriptor.children) {
         if (dependsElement.name != "depends") {
           continue
@@ -404,7 +406,7 @@ private fun computeModuleSet(sourceModules: List<PluginModelValidator.Module>,
                              errors: MutableList<Throwable>): LinkedHashMap<String, ModuleDescriptorFileInfo> {
   val sourceModuleNameToFileInfo = LinkedHashMap<String, ModuleDescriptorFileInfo>()
   for (module in sourceModules) {
-    // platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have id - ignore for now
+    // platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now
     if (module.name.startsWith("fleet.") ||
         module.name == "fleet" ||
         module.name == "intellij.idea.ultimate.resources" ||

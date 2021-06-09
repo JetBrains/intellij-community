@@ -296,6 +296,27 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  fun `test StringBuilder with conditional potential update`() = doTest(
+    """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          if (param) {
+            sb.append("b");
+          }
+          
+          return /*<caret>*/ sb.toString();
+        }
+      }
+    """.trimIndent(),
+    "'a'{|'b'}",
+    configuration = {
+      UNeDfaConfiguration(
+        builderEvaluators = listOf(UStringBuilderEvaluator)
+      )
+    }
+  )
+
   fun `test StringBuilder with false deep evidence`() = doTest(
     """
       class MyFile {

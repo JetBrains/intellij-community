@@ -14,7 +14,7 @@ import com.intellij.openapi.compiler.ClassObject;
 import com.intellij.openapi.compiler.CompilationException;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -57,7 +57,7 @@ public class CompilingEvaluatorImpl extends CompilingEvaluator {
     super(project, context, data);
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
     myModule = module;
-    myLanguageLevel = module == null ? null : EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+    myLanguageLevel = module == null ? null : LanguageLevelUtil.getEffectiveLanguageLevel(module);
   }
 
   @Override

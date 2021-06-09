@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
@@ -104,7 +105,13 @@ public final class ModuleRootModificationUtil {
   }
 
   public static void setModuleSdk(@NotNull Module module, @Nullable Sdk sdk) {
-    updateModel(module, model -> model.setSdk(sdk));
+    updateModel(module, model -> {
+      if (sdk != null && ApplicationManager.getApplication().isUnitTestMode()) {
+        //noinspection TestOnlyProblems
+        WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, module.getProject()));
+      }
+      model.setSdk(sdk);
+    });
   }
 
   public static void setSdkInherited(@NotNull Module module) {

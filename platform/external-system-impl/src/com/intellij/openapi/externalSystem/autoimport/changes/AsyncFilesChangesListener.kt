@@ -36,7 +36,8 @@ class AsyncFilesChangesListener(
         val index = PathPrefixTreeMap<Boolean>()
         filesToWatch.forEach { index[it] = true }
         val updatedWatchedFiles = updatedFilesSnapshot.flatMap { (path, modificationData) ->
-          index.getAllAncestorKeys(path).map { it to modificationData }
+          index.getAllDescendantKeys(path)
+            .map { it to modificationData }
         }
         if (updatedWatchedFiles.isNotEmpty()) {
           changesListener.init()

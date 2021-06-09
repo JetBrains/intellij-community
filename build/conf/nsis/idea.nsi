@@ -37,7 +37,6 @@ Var config_path
 Var system_path
 Var productLauncher
 Var baseRegKey
-Var downloadJreX86
 Var productDir
 Var silentMode
 Var pathEnvVar
@@ -53,9 +52,7 @@ Var extra_space
 
 ; position of controls for Installation Options dialog
 var launcherShortcut
-var secondLauncherShortcut
 var addToPath
-var downloadJRE
 var updateContextMenu
 
 ;------------------------------------------------------------------------------
@@ -353,10 +350,8 @@ next_file:
   ;is it the file property?
   ${If} $2 != "idea.properties"
     ${AndIf} $2 != "${PRODUCT_EXE_FILE}.vmoptions"
-      ${StrRep} $0 ${PRODUCT_EXE_FILE} ".exe" "64.exe.vmoptions"
-      ${AndIf} $2 != $0
-        StrCpy $9 "not empty"
-        Goto done
+      StrCpy $9 "not empty"
+      Goto done
   ${EndIf}
 get_next_element:
   FindNext $1 $2
@@ -372,74 +367,20 @@ FunctionEnd
 
 Function getInstallationOptionsPositions
   !insertmacro INSTALLOPTIONS_READ $launcherShortcut "Desktop.ini" "Settings" "DesktopShortcutToLauncher"
-  !insertmacro INSTALLOPTIONS_READ $secondLauncherShortcut "Desktop.ini" "Settings" "DesktopShortcutToSecondLauncher"
   !insertmacro INSTALLOPTIONS_READ $addToPath "Desktop.ini" "Settings" "AddToPath"
-  !insertmacro INSTALLOPTIONS_READ $downloadJRE "Desktop.ini" "Settings" "DownloadJRE"
   !insertmacro INSTALLOPTIONS_READ $updateContextMenu "Desktop.ini" "Settings" "UpdateContextMenu"
 FunctionEnd
 
 
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
-  StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" 0 jre_32bit_version_supported
-    ; shortcut for 64-bit launcher.
-    StrCpy $R0 "64-bit launcher"
-    StrCpy $R1 ""
-    Goto get_installation_options_positions
 
-jre_32bit_version_supported:
-  ${StrRep} $0 ${PRODUCT_EXE_FILE} "64.exe" ".exe"
-  ${If} $0 == ${PRODUCT_EXE_FILE}
-  ; shortcuts for 32-bit and 64-bit.
-    StrCpy $R0 "32-bit launcher"
-    StrCpy $R1 "64-bit launcher"
-  ${Else}
-    ;there is only one launcher and it is 64-bit.
-    StrCpy $R0 "${MUI_PRODUCT} launcher"
-    StrCpy $R1 ""
-  ${EndIf}
-
-get_installation_options_positions:
   Call getInstallationOptionsPositions
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" $R0
 
-  ${If} $R1 != ""
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Text" $R1
-  ${Else}
-    Push $R0
-    Push $R1
-    !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $secondLauncherShortcut" "Right"
-    IntOp $R1 $R0 - 10
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Right" $R1
-    IntOp $R1 $R0 - 5
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Left" $R1
-    Pop $R1
-    Pop $R0
-  ${EndIf}
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" "${MUI_PRODUCT}"
 
-  StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" custom_pre_actions 0
-  ; if jre x86 for the build is available then add checkbox to Installation Options dialog
-  StrCmp "${LINK_TO_JRE}" "null" custom_pre_actions 0
-  inetc::head /SILENT /TOSTACK /CONNECTTIMEOUT 2 ${LINK_TO_JRE} "" /END
-  Pop $0
-  ${If} $0 == "OK"
-    ; download x86 runtime: optional if OS is not 32-bit
-    ${If} ${RunningX64}
-      StrCpy $downloadJreX86 "0"
-    ${Else}
-      StrCpy $downloadJreX86 "1"
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Flags" "DISABLED"
-      ; create shortcut for launcher 32
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" "1"
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Flags" "DISABLED"
-    ${EndIf}
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $downloadJreX86
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Text" "$(download_jre_32bit_version)"
-  ${EndIf}
-custom_pre_actions:
   Call customPreInstallActions
+
   SetRegView 32
   StrCmp "${ASSOCIATION}" "NoAssociation" skip_association
   StrCpy $R0 ${INSTALL_OPTION_ELEMENTS}
@@ -481,31 +422,6 @@ done:
   !insertmacro INSTALLOPTIONS_DISPLAY "Desktop.ini"
 FunctionEnd
 
-
-Function downloadJre
-  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $downloadJRE" "State"
-  ${If} $R0 == 1
-    inetc::get ${LINK_TO_JRE} "$TEMP\jbr-x86.tar.gz" /END
-    Pop $0
-    ${If} $0 == "OK"
-      untgz::extract "-d" "$INSTDIR\jbr-x86" "$TEMP\jbr-x86.tar.gz"
-      StrCmp $R0 "success" remove_temp_jre
-      ${LogText} "ERROR: Failed to unpack x86 runtime"
-      DetailPrint "Failed to unpack jbr-x86.tar.gz"
-      MessageBox MB_OK|MB_ICONEXCLAMATION|MB_DEFBUTTON1 "Failed to unpack $TEMP\jbr-x86.tar.gz"
-      Goto clean
-remove_temp_jre:
-      ${LogText} "Unpacked x86 runtime"
-clean:
-      IfFileExists "$TEMP\jbr-x86.tar.gz" 0 done
-      Delete "$TEMP\jbr-x86.tar.gz"
-    ${Else}
-      ${LogText} "ERROR: Failed to download x86 runtime from ${LINK_TO_JRE}: $0"
-      MessageBox MB_OK|MB_ICONEXCLAMATION "The ${LINK_TO_JRE} download is failed: $0"
-    ${EndIf}
-  ${EndIf}
-done:
-FunctionEnd
 
 ;------------------------------------------------------------------------------
 ; configuration
@@ -551,11 +467,7 @@ InstallDir "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
 BrandingText " "
 
 Function PageFinishRun
-  ${If} ${RunningX64}
-    !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE_64}" "" "$INSTDIR\bin" ""
-  ${Else}
-    !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
-  ${EndIf}
+  !insertmacro UAC_AsUser_ExecShell "" "${PRODUCT_EXE_FILE}" "" "$INSTDIR\bin" ""
 FunctionEnd
 
 ;------------------------------------------------------------------------------
@@ -616,23 +528,15 @@ Function silentConfigReader
   IfErrors bad_silent_config
   ${LogText} "  mode: $R0"
   StrCpy $silentMode "user"
-  IfErrors launcher_32
+  IfErrors launcher
   StrCpy $silentMode $R0
 
-launcher_32:
-  ClearErrors
-  ${ConfigRead} "$R1" "launcher32=" $R3
-  IfErrors launcher_64
-  ${LogText} "  shortcut for launcher32: $R3"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" $R3
-
-launcher_64:
+launcher:
   ClearErrors
   ${ConfigRead} "$R1" "launcher64=" $R3
   IfErrors update_PATH
   ${LogText} "  shortcut for launcher64: $R3"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" $R3
 
 update_PATH:
   ClearErrors
@@ -645,17 +549,9 @@ update_PATH:
 update_context_menu:
   ClearErrors
   ${ConfigRead} "$R1" "updateContextMenu=" $R3
-  IfErrors download_jbr_x86
+  IfErrors associations
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $updateContextMenu" "State" $R3
-
-download_jbr_x86:
-  ClearErrors
-  ${ConfigRead} "$R1" "jre32=" $R3
-  IfErrors associations
-  ${LogText} "  download x86 runtime: $R3"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
 
 associations:
   ClearErrors
@@ -1001,11 +897,7 @@ continue_enum_versions_hklm:
 
 end_enum_versions_hklm:
   StrCmp $INSTDIR "" 0 skip_default_instdir
-  ${If} ${RunningX64}
-    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
-  ${Else}
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
-  ${EndIf}
+  StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
 
 skip_default_instdir:
   Pop $5
@@ -1204,35 +1096,17 @@ Section "IDEA Files" CopyIdeaFiles
   Call customInstallActions
   SetRegView 32
 
-  ;define launcher in accordingly to OS version
-  ${If} ${RunningX64}
-     StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
-  ${Else}
-     StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
-  ${EndIf}
+  StrCpy $productLauncher "$INSTDIR\bin\${PRODUCT_EXE_FILE}"
   ${LogText} "Default launcher: $productLauncher"
   DetailPrint "Default launcher: $productLauncher"
 
-  StrCmp "${LINK_TO_JRE}" "null" shortcuts 0
-  ;download and install JRE x86
-  Call downloadJre
+  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $launcherShortcut" "State"
+  ${If} $R0 == 1
+    CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
+                   "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
+    ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
+  ${EndIf}
 
-shortcuts:
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $launcherShortcut" "State"
-  StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" shortcut_for_exe_64 0
-  StrCmp $R2 1 "" exe_64
-  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
-                 "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
-  ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE}"
-exe_64:
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
-shortcut_for_exe_64:
-  StrCmp $R2 1 "" add_to_path
-  CreateShortCut "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" \
-                 "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
-  ${LogText} "Create shortcut: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk $INSTDIR\bin\${PRODUCT_EXE_FILE_64}"
-
-add_to_path:
   !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
   ${If} $R0 == 1
     ${LogText} "Update PATH env var"
@@ -1242,7 +1116,6 @@ add_to_path:
     SetRebootFlag true
   ${EndIf}
 
-update_context_menu:
   ${If} $updateContextMenu > 0
     !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $updateContextMenu" "State"
     ${If} $R0 == 1
@@ -1360,9 +1233,6 @@ skip_ipr:
       "$INSTDIR" "(S-1-5-32-545)" "GenericRead + GenericExecute"
     AccessControl::GrantOnFile \
       "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions" "(S-1-5-32-545)" "GenericRead + GenericWrite"
-    ${StrRep} $0 ${PRODUCT_EXE_FILE} ".exe" "64.exe.vmoptions"
-    AccessControl::GrantOnFile \
-      "$INSTDIR\bin\$0" "(S-1-5-32-545)" "GenericRead + GenericWrite"
   ${EndIf}
 
 ; reset icon cache
@@ -1377,8 +1247,6 @@ Function .onInit
   ${If} ${RunningX64}
     Goto init
   ${Else}
-    StrCmp ${JRE_32BIT_VERSION_SUPPORTED} "0" install_jbr11_bundled_on_win32 init
-install_jbr11_bundled_on_win32:
     MessageBox MB_OK "$(not_supported_32bit_win_version)"
     Abort
   ${EndIf}
@@ -1426,11 +1294,7 @@ uac_success:
 uac_admin:
   IfSilent uac_all_users set_install_dir_admin_mode
 set_install_dir_admin_mode:
-  ${If} ${RunningX64}
-    StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
-  ${Else}
-    StrCpy $INSTDIR "$PROGRAMFILES\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
-  ${EndIf}
+  StrCpy $INSTDIR "$PROGRAMFILES64\${MANUFACTURER}\${INSTALL_DIR_AND_SHORTCUT_NAME}"
 uac_all_users:
   SetShellVarContext all
   StrCpy $baseRegKey "HKLM"
@@ -1503,18 +1367,13 @@ cant_find_installation:
   StrCmp $R0 $INSTDIR HKCU 0
 
 ; compare installdir with default admin location
-  ${If} ${RunningX64}
-    ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
-    StrCmp $R0 $INSTDIR HKLM look_at_program_files_32
-  ${Else}
-look_at_program_files_32:
-    ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES
-    StrCmp $R0 $INSTDIR HKCU undefined_location
-  ${EndIf}
+  ${UnStrStr} $R0 $INSTDIR $PROGRAMFILES64
+  StrCmp $R0 $INSTDIR HKLM undefined_location
 
 ; installdir does not contain known default locations
 undefined_location:
   Goto HKLM
+
 Done:
 FunctionEnd
 
@@ -1546,7 +1405,7 @@ Function un.onInit
 
 ; Uninstallation was run from installation dir?
   IfFileExists "$INSTDIR\IdeaWin64.dll" 0 end_of_uninstall
-  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE_64}" 0 end_of_uninstall
+  IfFileExists "$INSTDIR\${PRODUCT_EXE_FILE}" 0 end_of_uninstall
 
 get_reg_key:
   SetRegView 32
@@ -1768,10 +1627,10 @@ FunctionEnd
 
 Function un.checkIfIDEInUse
 remove_previous_installation:
-  StrCpy $R0 "$INSTDIR\IdeaWin32.dll"
+  StrCpy $R0 "$INSTDIR\${PRODUCT_EXE_FILE}"
   Call un.isIDEInUse
   IfErrors remove_dialog 0
-  StrCpy $R0 "$INSTDIR\IdeaWin64.dll"
+  StrCpy $R0 "$INSTDIR\jbr\bin\java.exe"
   Call un.isIDEInUse
   IfErrors remove_dialog done
 remove_dialog:
@@ -1884,13 +1743,10 @@ continue_uninstall:
   Push "Complete"
   Push "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
   Push "$INSTDIR\bin\idea.properties"
-  ${UnStrRep} $0 ${PRODUCT_EXE_FILE} ".exe" "64.exe.vmoptions"
-  Push "$INSTDIR\bin\$0"
   Call un.compareFileInstallationTime
   ${If} $9 != "Modified"
     Delete "$INSTDIR\bin\idea.properties"
     Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions"
-    Delete "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}.vmoptions"
   ${EndIf}
   !include "unidea_win.nsh"
   StrCpy $0 "$INSTDIR\bin"
@@ -1898,15 +1754,10 @@ continue_uninstall:
   StrCpy $0 "$INSTDIR"
   Call un.deleteDirIfEmpty
 
-; remove desktop shortcuts
-desktop_shortcut_launcher32:
-  IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" 0 desktop_shortcut_launcher64
-    DetailPrint "remove desktop shortcut to launcher32: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
-desktop_shortcut_launcher64:
-  IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk" 0 registry
-    DetailPrint "remove desktop shortcut to launcher64: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
-    Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME} x64.lnk"
+  ; remove desktop shortcuts
+  IfFileExists "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" 0 registry
+  DetailPrint "remove desktop shortcut to launcher: $DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
+  Delete "$DESKTOP\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk"
 
 registry:
   StrCpy $0 "SHCTX"

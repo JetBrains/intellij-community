@@ -1,22 +1,22 @@
 <html>
 <body>
 Reports <code>for</code> loops iterating over a collection using <code>withIndex()</code> function and not using index variable.
-<p>Paired "Remove indices in 'for' loop" quick-fix allows to amend highlighted code snippet.</p>
+<p>Paired "Remove indices in 'for' loop" quick-fix allows amending highlighted code snippet.</p>
 <p>Examples:</p>
 <pre><code>
-fun foo(bar: List&lt;String&gt;) {
-  for ((index : Int, value: String) in bar.withIndex()) { // &lt;== 'index' is unused
-
+  fun foo(bar: List&lt;String&gt;) {
+     for ((index : Int, value: String) in bar.withIndex()) { // &lt;== 'index' is unused
+         println(value)
+     }
   }
-}
 </code></pre>
-<p>After quick-fix:</p>
+<p>After the quick-fix is applied:</p>
 <pre><code>
-fun foo(bar: List&lt;String&gt;) {
-   for (value: String in bar) { // &lt;== '.withIndex()' and 'index' are removed
-
-   }
-}
+  fun foo(bar: List&lt;String&gt;) {
+      for (value: String in bar) { // &lt;== '.withIndex()' and 'index' are removed
+          println(value)
+      }
+  }
 </code></pre>
 
 </body>

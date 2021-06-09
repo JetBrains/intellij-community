@@ -5,14 +5,21 @@ Reports usages of collection <code>Collection&lt;T&gt;.count()</code>. This func
     <code>.size</code> form emphasizes that the operation is O(1) and won't allocate whereas
     <code>count()</code> could be confused with <code>Iterable&lt;T&gt;.count()</code> which is O(n) and allocating.
     <br>
-    "Replace 'count' with 'size'" quick-fix allows to amend the highlighted code snippet.
+    "Replace 'count' with 'size'" quick-fix allows amending the highlighted code snippet.
 </p>
 <p>Example:</p>
 <pre><code>
-   fun foo() {
+  fun foo() {
       var list = listOf(1,2,3)
-      list.count() // 'list.size' could be used instead
-   }
+      list.count() // replaceable 'count()'
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun foo() {
+      var list = listOf(1,2,3)
+      list.size
+  }
 </code></pre>
 </body>
 </html>

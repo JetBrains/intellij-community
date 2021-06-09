@@ -29,7 +29,7 @@ import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.pom.Navigatable;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.ui.AppIcon;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -216,7 +216,7 @@ public final class CompilerTask extends Task.Backgroundable {
       @Override
       public void setFraction(final double fraction) {
         super.setFraction(fraction);
-        GuiUtils.invokeLaterIfNeeded(
+        ModalityUiUtil.invokeLaterIfNeeded(
           () -> AppIcon.getInstance().setProgress(myProject, APP_ICON_ID, AppIconScheme.Progress.BUILD, fraction, true),
           ModalityState.any()
         );

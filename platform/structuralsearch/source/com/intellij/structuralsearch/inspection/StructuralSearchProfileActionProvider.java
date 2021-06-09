@@ -104,7 +104,7 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     }
   }
 
-  private static final class AddInspectionAction extends DumbAwareAction {
+  protected static final class AddInspectionAction extends DumbAwareAction {
     private final SingleInspectionProfilePanel myPanel;
     private final boolean myReplace;
 
@@ -119,18 +119,24 @@ public class StructuralSearchProfileActionProvider extends InspectionProfileActi
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       final SearchContext context = new SearchContext(e.getDataContext());
-      final StructuralSearchDialog dialog = new StructuralSearchDialog(context, myReplace, true);
+      final Project project = e.getData(CommonDataKeys.PROJECT);
+      assert project != null;
+      createAndFocusInspection(myPanel, myReplace, context, project);
+    }
+
+    public static void createAndFocusInspection(SingleInspectionProfilePanel panel,
+                                                Boolean replace, SearchContext context,
+                                                @NotNull Project project) {
+      final StructuralSearchDialog dialog = new StructuralSearchDialog(context, replace, true);
       if (!dialog.showAndGet()) {
         return;
       }
-      final InspectionProfileModifiableModel profile = myPanel.getProfile();
-      final Project project = e.getData(CommonDataKeys.PROJECT);
-      assert project != null;
+      final InspectionProfileModifiableModel profile = panel.getProfile();
       final Configuration configuration = dialog.getConfiguration();
       if (!createNewInspection(configuration, project, profile)) {
         return;
       }
-      myPanel.selectInspectionTool(configuration.getUuid().toString());
+      panel.selectInspectionTool(configuration.getUuid().toString());
     }
   }
 

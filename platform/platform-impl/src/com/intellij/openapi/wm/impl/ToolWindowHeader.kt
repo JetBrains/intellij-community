@@ -57,13 +57,13 @@ abstract class ToolWindowHeader internal constructor(
     westPanel.add(contentUi.tabComponent, CC().growY())
     @Suppress("LeakingThis")
     add(westPanel, CC().grow())
-    ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true)
+    ToolWindowContentUi.initMouseListeners(westPanel, contentUi, true, true)
     toolbar = ActionManager.getInstance().createActionToolbar(
       ActionPlaces.TOOLWINDOW_TITLE,
       object : ActionGroup(), DumbAware {
         private val children by lazy<Array<AnAction>> {
           val tabListAction = ActionManager.getInstance().getAction("TabList")
-          arrayOf(tabListAction, actionGroup, ShowOptionsAction(), HideAction())
+          arrayOf(tabListAction, actionGroup, DockToolWindowAction(), ShowOptionsAction(), HideAction())
         }
 
         override fun getChildren(e: AnActionEvent?) = children

@@ -29,12 +29,14 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts.TabTitle;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.Weighted;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TabbedPaneWrapper;
 import com.intellij.ui.TitledSeparator;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.JBTreeTraverser;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.EmptyIcon;
@@ -384,15 +386,28 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   private PredefinedCodeStyle[] getPredefinedStyles() {
     final Language language = getDefaultLanguage();
-    final List<PredefinedCodeStyle> result = new ArrayList<>();
+    if (language == null) return PredefinedCodeStyle.EMPTY_ARRAY;
 
-    for (PredefinedCodeStyle codeStyle : PredefinedCodeStyle.EP_NAME.getExtensions()) {
-      if (language != null && codeStyle.isApplicableToLanguage(language)) {
-        result.add(codeStyle);
-      }
+    PredefinedCodeStyle[] predefinedStyles = PredefinedCodeStyle.EP_NAME.getExtensions();
+    JBIterable<PredefinedCodeStyle> styles = JBIterable.of(predefinedStyles).filter(s -> s.isApplicableToLanguage(language));
+
+    if (styles.single() == null && styles.filter(Weighted.class).isNotEmpty()) {
+      styles = styles.sort(WEIGHTED_COMPARATOR);
     }
-    return result.toArray(PredefinedCodeStyle.EMPTY_ARRAY);
+    
+    return styles.toArray(PredefinedCodeStyle.EMPTY_ARRAY);
   }
+
+  private static final class WeightedComparator implements Comparator<Object> {
+    @Override
+    public int compare(Object o1, Object o2) {
+      double w1 = o1 instanceof Weighted ? ((Weighted)o1).getWeight() : Double.POSITIVE_INFINITY;
+      double w2 = o2 instanceof Weighted ? ((Weighted)o2).getWeight() : Double.POSITIVE_INFINITY;
+      return Double.compare(w1, w2);
+    }
+  }
+
+  private static final WeightedComparator WEIGHTED_COMPARATOR = new WeightedComparator();
 
 
   private void applyLanguageSettings(Language lang) {

@@ -36,10 +36,6 @@ abstract class AbstractOutOfBlockModificationTest : KotlinLightCodeInsightFixtur
             ktFile.text,
             SKIP_ANALYZE_CHECK_DIRECTIVE
         )
-        assertTrue(
-            "It's allowed to skip check with analyze only for tests where out-of-block is expected",
-            !isSkipCheckDefined || expectedOutOfBlock
-        )
         val tracker =
             PsiManager.getInstance(myFixture.project).modificationTracker as PsiModificationTrackerImpl
         val element = ktFile.findElementAt(myFixture.caretOffset)

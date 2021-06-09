@@ -29,16 +29,8 @@ public class EclipseClasspathWriter {
   private final Map<String, Element> myOldEntries = new HashMap<>();
 
   @NotNull
-  public Element writeClasspath(@Nullable Element oldRoot, @NotNull ModuleRootModel model) {
+  public Element writeClasspath(@NotNull ModuleRootModel model) {
     Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);
-    if (oldRoot != null) {
-      for (Element oldChild : oldRoot.getChildren(EclipseXml.CLASSPATHENTRY_TAG)) {
-        String oldKind = oldChild.getAttributeValue(EclipseXml.KIND_ATTR);
-        String oldPath = oldChild.getAttributeValue(EclipseXml.PATH_ATTR);
-        myOldEntries.put(oldKind + getJREKey(oldPath), oldChild);
-      }
-    }
-
     for (OrderEntry orderEntry : model.getOrderEntries()) {
       createClasspathEntry(orderEntry, classpathElement, model);
     }

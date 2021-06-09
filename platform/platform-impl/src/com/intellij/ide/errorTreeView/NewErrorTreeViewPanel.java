@@ -582,6 +582,7 @@ public class NewErrorTreeViewPanel extends JPanel implements DataProvider, Occur
 
     ActionManager actionManager = ActionManager.getInstance();
     myLeftToolbar = actionManager.createActionToolbar(ActionPlaces.COMPILER_MESSAGES_TOOLBAR, group, false);
+    myLeftToolbar.setTargetComponent(myMessagePanel);
     return JBUI.Panels.simplePanel(myLeftToolbar.getComponent());
   }
 

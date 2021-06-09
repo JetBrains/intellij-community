@@ -39,8 +39,8 @@ public class EventLogInternalApplicationInfo implements EventLogApplicationInfo 
   @NotNull
   @Override
   public String getTemplateUrl() {
-    if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(GroupEndpointSubstitutor.EP_NAME.getName())) {
-      GroupEndpointSubstitutor validSubstitutor = GroupEndpointSubstitutor.EP_NAME
+    if (ApplicationManager.getApplication().getExtensionArea().hasExtensionPoint(EventLogEndpointSubstitutor.EP_NAME.getName())) {
+      EventLogEndpointSubstitutor validSubstitutor = EventLogEndpointSubstitutor.EP_NAME
           .findFirstSafe(substitutor -> PluginInfoDetectorKt.getPluginInfo(substitutor.getClass()).isAllowedToInjectIntoFUS());
       return Optional.ofNullable(validSubstitutor)
         .map(substitutor -> substitutor.getTemplateUrl(myRecorderId))

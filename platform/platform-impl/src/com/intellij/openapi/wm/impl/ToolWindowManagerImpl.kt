@@ -59,19 +59,14 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.GuiUtils
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.BitUtil
-import com.intellij.util.EventDispatcher
-import com.intellij.util.SingleAlarm
-import com.intellij.util.SystemProperties
+import com.intellij.util.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.*
 import org.intellij.lang.annotations.JdkConstants
 import org.jdom.Element
 import org.jetbrains.annotations.ApiStatus
-import org.jetbrains.annotations.TestOnly
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
@@ -774,8 +769,8 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   /**
    * @return tool button for the window with specified `ID`.
    */
-  @TestOnly
-  fun getStripeButton(id: String) = idToEntry[id]!!.stripeButton
+  @ApiStatus.Internal
+  fun getStripeButton(id: String) = idToEntry[id]?.stripeButton
 
   override fun getIdsOn(anchor: ToolWindowAnchor) = getVisibleToolWindowsOn(anchor).map { it.id }.toList()
 
@@ -1988,7 +1983,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val toolWindowManager = toolWindow.toolWindowManager
       toolWindowManager.focusManager
         .doWhenFocusSettlesDown(ExpirableRunnable.forProject(toolWindowManager.project) {
-          GuiUtils.invokeLaterIfNeeded(Runnable {
+          ModalityUiUtil.invokeLaterIfNeeded(Runnable {
             val entry = toolWindowManager.idToEntry[id] ?: return@Runnable
             val windowInfo = entry.readOnlyWindowInfo
             if (!windowInfo.isVisible) {

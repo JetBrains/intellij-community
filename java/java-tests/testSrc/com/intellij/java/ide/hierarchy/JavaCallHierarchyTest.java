@@ -119,4 +119,7 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
   public void testMustIgnoreJavadocReferences() throws Exception {
     doJavaCallerTypeHierarchyTest("p.X", "persist", "X.java");
   }
+  public void testCallersOfBaseMethod() throws Exception {
+    doJavaCallerTypeHierarchyTest("p.BaseClass", "method", "X.java");
+  }
 }

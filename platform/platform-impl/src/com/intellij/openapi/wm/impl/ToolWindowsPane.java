@@ -29,6 +29,8 @@ import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.ImageUtil;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,8 +56,11 @@ import static com.intellij.util.ui.UIUtil.useSafely;
 public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance(ToolWindowsPane.class);
   @NonNls public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
-  //The width of topmost 'resize' area when toolwindow caption is used for both resize and drag
-  public static final int HEADER_RESIZE_WIDTH = 8;
+
+  //The size of topmost 'resize' area when toolwindow caption is used for both resize and drag
+  public static int getHeaderResizeArea() {
+    return JBUI.scale(Registry.intValue("ide.new.tool.window.resize.area.height", 14, 1, 26));
+  }
 
   private final JFrame frame;
 
@@ -171,6 +176,19 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   @Override
   public void doLayout() {
     Dimension size = getSize();
+    Dimension topSize = topStripe.getPreferredSize();
+    Dimension bottomSize = bottomStripe.getPreferredSize();
+    Dimension leftSize = leftStripe.getPreferredSize();
+    Dimension rightSize = rightStripe.getPreferredSize();
+    Rectangle topBounds = new Rectangle(0, 0, size.width, topSize.height);
+    int height = size.height - topSize.height - bottomSize.height;
+    Rectangle leftBounds = new Rectangle(0, topSize.height, leftSize.width, height);
+    Rectangle rightBounds = new Rectangle(size.width - rightSize.width, topSize.height, rightSize.width, height);
+    Rectangle bottomBounds = new Rectangle(0, size.height - bottomSize.height, size.width, bottomSize.height);
+    UIUtil.putClientProperty(topStripe, Stripe.VIRTUAL_BOUNDS, topBounds);
+    UIUtil.putClientProperty(leftStripe, Stripe.VIRTUAL_BOUNDS, leftBounds);
+    UIUtil.putClientProperty(rightStripe, Stripe.VIRTUAL_BOUNDS, rightBounds);
+    UIUtil.putClientProperty(bottomStripe, Stripe.VIRTUAL_BOUNDS, bottomBounds);
     if (!topStripe.isVisible()) {
       topStripe.setBounds(0, 0, 0, 0);
       bottomStripe.setBounds(0, 0, 0, 0);
@@ -179,16 +197,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       layeredPane.setBounds(0, 0, getWidth(), getHeight());
     }
     else {
-      Dimension topSize = topStripe.getPreferredSize();
-      Dimension bottomSize = bottomStripe.getPreferredSize();
-      Dimension leftSize = leftStripe.getPreferredSize();
-      Dimension rightSize = rightStripe.getPreferredSize();
-
-      topStripe.setBounds(0, 0, size.width, topSize.height);
-      int height = size.height - topSize.height - bottomSize.height;
-      leftStripe.setBounds(0, topSize.height, leftSize.width, height);
-      rightStripe.setBounds(size.width - rightSize.width, topSize.height, rightSize.width, height);
-      bottomStripe.setBounds(0, size.height - bottomSize.height, size.width, bottomSize.height);
+      topStripe.setBounds(topBounds);
+      leftStripe.setBounds(leftBounds);
+      rightStripe.setBounds(rightBounds);
+      bottomStripe.setBounds(bottomBounds);
 
       UISettings uiSettings = UISettings.getInstance();
       if (uiSettings.getHideToolStripes() || uiSettings.getPresentationMode()) {
@@ -412,17 +424,17 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   @Nullable
-  Stripe getStripeFor(@NotNull Rectangle screenRectangle, @NotNull Stripe preferred) {
-    if (!new Rectangle(getLocationOnScreen(), getSize()).intersects(screenRectangle)) {
+  Stripe getStripeFor(@NotNull Point screenPoint, @NotNull Stripe preferred) {
+    if (!new Rectangle(getLocationOnScreen(), getSize()).contains(screenPoint)) {
       return null;
     }
 
-    if (preferred.containsScreen(screenRectangle)) {
+    if (preferred.containsPoint(screenPoint)) {
       return preferred;
     }
 
     for (Stripe stripe : stripes) {
-      if (stripe.containsScreen(screenRectangle)) {
+      if (stripe.containsPoint(screenPoint)) {
         return stripe;
       }
     }

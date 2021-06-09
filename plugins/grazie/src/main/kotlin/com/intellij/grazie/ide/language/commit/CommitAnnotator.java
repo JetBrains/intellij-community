@@ -44,9 +44,7 @@ public class CommitAnnotator implements Annotator {
         .textAttributes(SpellCheckerSeveritiesProvider.TYPO_KEY)
         .range(problem.getHighlightRange()); // we're in plain text, our PSI has the range of the whole file
       for (QuickFix<?> fix : runner.toFixes(problem)) {
-        if (fix instanceof IntentionAction) {
-          annotation = annotation.withFix((IntentionAction) fix);
-        }
+        annotation = annotation.withFix((IntentionAction)fix);
       }
       annotation.create();
     }

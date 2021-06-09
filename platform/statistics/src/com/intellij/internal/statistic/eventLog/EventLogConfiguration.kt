@@ -5,16 +5,15 @@ import com.intellij.application.subscribe
 import com.intellij.internal.statistic.DeviceIdManager
 import com.intellij.internal.statistic.config.EventLogOptions.DEFAULT_ID_REVISION
 import com.intellij.internal.statistic.config.EventLogOptions.MACHINE_ID_DISABLED
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration.UNDEFINED_DEVICE_ID
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessDeviceIdProperty
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getHeadlessSaltProperty
-import com.intellij.internal.statistic.eventLog.EventLogConfiguration.getSaltPropertyKey
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration.Companion.UNDEFINED_DEVICE_ID
+import com.intellij.internal.statistic.eventLog.EventLogConfiguration.Companion.hashSha256
 import com.intellij.internal.statistic.eventLog.fus.MachineIdManager
 import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationInfoImpl
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
@@ -30,16 +29,33 @@ import java.util.concurrent.ConcurrentHashMap
 import java.util.prefs.Preferences
 
 @ApiStatus.Internal
-object EventLogConfiguration {
-  internal val LOG = Logger.getInstance(EventLogConfiguration::class.java)
-  internal const val UNDEFINED_DEVICE_ID = "000000000000000-0000-0000-0000-000000000000"
+@Service(Service.Level.APP)
+class EventLogConfiguration {
+  companion object {
+    internal val LOG = Logger.getInstance(EventLogConfiguration::class.java)
 
-  private const val FUS_RECORDER = "FUS"
-  private const val SALT_PREFERENCE_KEY = "feature_usage_event_log_salt"
-  private const val IDEA_HEADLESS_STATISTICS_DEVICE_ID = "idea.headless.statistics.device.id"
-  private const val IDEA_HEADLESS_STATISTICS_SALT = "idea.headless.statistics.salt"
+    internal const val UNDEFINED_DEVICE_ID = "000000000000000-0000-0000-0000-000000000000"
 
-  private val defaultConfiguration: EventLogRecorderConfiguration = EventLogRecorderConfiguration(FUS_RECORDER)
+    private const val FUS_RECORDER = "FUS"
+    private const val SALT_PREFERENCE_KEY = "feature_usage_event_log_salt"
+    private const val IDEA_HEADLESS_STATISTICS_DEVICE_ID = "idea.headless.statistics.device.id"
+    private const val IDEA_HEADLESS_STATISTICS_SALT = "idea.headless.statistics.salt"
+
+    @JvmStatic
+    fun getInstance(): EventLogConfiguration = ApplicationManager.getApplication().getService(EventLogConfiguration::class.java)
+
+    /**
+     * Don't use this method directly, prefer [EventLogConfiguration.anonymize]
+     */
+    fun hashSha256(salt: ByteArray, data: String): String {
+      val md = DigestUtil.sha256()
+      md.update(salt)
+      md.update(data.toByteArray())
+      return StringUtil.toHexString(md.digest())
+    }
+  }
+
+  private val defaultConfiguration: EventLogRecorderConfiguration = EventLogRecorderConfiguration(FUS_RECORDER, this)
   private val configurations: MutableMap<String, EventLogRecorderConfiguration> = HashMap()
 
   val build: String by lazy { ApplicationInfo.getInstance().build.asBuildNumber() }
@@ -61,23 +77,12 @@ object EventLogConfiguration {
     if (isDefaultRecorderId(recorderId)) return defaultConfiguration
 
     synchronized(this) {
-      return configurations.getOrPut(recorderId) { EventLogRecorderConfiguration(recorderId) }
+      return configurations.getOrPut(recorderId) { EventLogRecorderConfiguration(recorderId, this) }
     }
-  }
-
-  /**
-   * Don't use this method directly, prefer [EventLogConfiguration.anonymize]
-   */
-  fun hashSha256(salt: ByteArray, data: String): String {
-    val md = DigestUtil.sha256()
-    md.update(salt)
-    md.update(data.toByteArray())
-    return StringUtil.toHexString(md.digest())
   }
 
   fun getEventLogDataPath(): Path = Paths.get(PathManager.getSystemPath()).resolve("event-log-data")
 
-  @JvmStatic
   fun getEventLogSettingsPath(): Path = getEventLogDataPath().resolve("settings")
 
   internal fun getSaltPropertyKey(recorderId: String): String {
@@ -101,7 +106,8 @@ object EventLogConfiguration {
   }
 }
 
-class EventLogRecorderConfiguration internal constructor(private val recorderId: String) {
+class EventLogRecorderConfiguration internal constructor(private val recorderId: String,
+                                                         private val eventLogConfiguration: EventLogConfiguration) {
   val sessionId: String = generateSessionId()
 
   val deviceId: String = getOrGenerateDeviceId()
@@ -148,7 +154,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
       return data
     }
 
-    return anonymizedCache.computeIfAbsent(data) { EventLogConfiguration.hashSha256(salt, it) }
+    return anonymizedCache.computeIfAbsent(data) { hashSha256(salt, it) }
   }
 
   private fun String.shortedUUID(): String {
@@ -171,7 +177,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   private fun getOrGenerateDeviceId(): String {
     val app = ApplicationManager.getApplication()
     if (app != null && app.isHeadlessEnvironment) {
-      val property = getHeadlessDeviceIdProperty(recorderId)
+      val property = eventLogConfiguration.getHeadlessDeviceIdProperty(recorderId)
       System.getProperty(property)?.let {
         return it
       }
@@ -189,7 +195,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
   private fun getOrGenerateSalt(): ByteArray {
     val app = ApplicationManager.getApplication()
     if (app != null && app.isHeadlessEnvironment) {
-      val property = getHeadlessSaltProperty(recorderId)
+      val property = eventLogConfiguration.getHeadlessSaltProperty(recorderId)
       System.getProperty(property)?.let {
         return it.toByteArray(Charsets.UTF_8)
       }
@@ -199,7 +205,7 @@ class EventLogRecorderConfiguration internal constructor(private val recorderId:
     val name = if (StringUtil.isEmptyOrSpaces(companyName)) "jetbrains" else companyName.toLowerCase(Locale.US)
     val prefs = Preferences.userRoot().node(name)
 
-    val saltKey = getSaltPropertyKey(recorderId)
+    val saltKey = eventLogConfiguration.getSaltPropertyKey(recorderId)
     var salt = prefs.getByteArray(saltKey, null)
     if (salt == null) {
       salt = ByteArray(32)

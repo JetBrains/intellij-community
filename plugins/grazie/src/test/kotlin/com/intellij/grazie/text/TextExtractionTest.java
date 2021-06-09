@@ -16,12 +16,17 @@ import java.util.List;
 import java.util.Objects;
 
 public class TextExtractionTest extends BasePlatformTestCase {
-  public void testInlineLinkTextExtraction() {
+  public void testMarkdownInlineLink() {
     TextContent extracted = extractText("a.md", "* list [item](http://x) with a local link", 3);
     assertEquals("list item with a local link", extracted.toString());
     int prefix = "* ".length();
     assertEquals(prefix + "list [".length(), extracted.textOffsetToFile("list ".length()));
     assertEquals(prefix + "list [item".length(), extracted.textOffsetToFile("list item".length()));
+  }
+
+  public void testMarkdownInlineCode() {
+    TextContent extracted = extractText("a.md", "you can use a number of predefined fields (e.g. `EventFields.InputEvent`)", 0);
+    assertEquals("you can use a number of predefined fields (e.g. |)", TextContentTest.unknownOffsets(extracted));
   }
 
   public void testMergeAdjacentJavaComments() {

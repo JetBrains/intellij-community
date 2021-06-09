@@ -43,7 +43,7 @@ import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.GuiUtils
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.annotations.TestOnly
@@ -296,7 +296,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
         true, module.project)
 
       StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
-        GuiUtils.invokeLaterIfNeeded(Runnable {
+        ModalityUiUtil.invokeLaterIfNeeded(Runnable {
           if (module.isDisposed) return@Runnable
 
           ReformatCodeProcessor(module.project, module, false).run()

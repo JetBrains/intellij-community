@@ -12,6 +12,7 @@ import com.intellij.ide.ui.UISettingsState;
 import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Experiments;
@@ -165,6 +166,10 @@ public final class Switcher extends BaseSwitcherAction {
       }
       // register custom actions as soon as possible to block overridden actions
       registerAction(this::navigate, "ENTER");
+      if (pinned) {
+        registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_NEW_WINDOW));
+        registerAction(this::navigate, ActionUtil.getShortcutSet(IdeActions.ACTION_OPEN_IN_RIGHT_SPLIT));
+      }
       registerAction(this::hideSpeedSearchOrPopup, "ESCAPE");
       registerAction(this::closeTabOrToolWindow, "DELETE", "BACK_SPACE");
       if (!pinned) {
@@ -515,9 +520,7 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private void addForbiddenMnemonics(@NotNull Map<String, SwitcherToolWindow> keymap, @NotNull String actionId) {
-      AnAction action = ActionManager.getInstance().getAction(actionId);
-      if (action == null) return;
-      for (Shortcut shortcut : action.getShortcutSet().getShortcuts()) {
+      for (Shortcut shortcut : ActionUtil.getShortcutSet(actionId).getShortcuts()) {
         if (shortcut instanceof KeyboardShortcut) {
           KeyboardShortcut keyboardShortcut = (KeyboardShortcut)shortcut;
           keymap.put(onKeyRelease.getForbiddenMnemonic(keyboardShortcut.getFirstKeyStroke()), null);
@@ -749,6 +752,7 @@ public final class Switcher extends BaseSwitcherAction {
     }
 
     private void registerAction(@NotNull Consumer<InputEvent> action, @NotNull ShortcutSet shortcuts) {
+      if (shortcuts.getShortcuts().length == 0) return; // ignore empty shortcut set
       LightEditActionFactory.create(event -> {
         if (myPopup != null && myPopup.isVisible()) action.consume(event.getInputEvent());
       }).registerCustomShortcutSet(shortcuts, this, this);

@@ -3,18 +3,23 @@ package com.intellij.internal.statistic.eventLog
 
 import java.util.concurrent.atomic.AtomicReference
 
+/**
+ * Atomic reference that will be initialized on first usage.
+ *
+ * @param init A callback used to get initial value.
+ */
 class AtomicLazyValue<T>(private val init: () -> T) {
   private var value: AtomicReference<T?> = AtomicReference(null)
 
   fun getValue(): T {
-    return updateAndGet { it }
+    return updateAndGet { prevValue -> prevValue }
   }
 
+  /**
+   * @see java.util.concurrent.atomic.AtomicReference.updateAndGet
+   */
   @Suppress("UNCHECKED_CAST")
-  fun updateAndGet(compute: (prevValue: T) -> T): T {
-    return value.updateAndGet { compute(getPrevValue(it)) } as T
+  fun updateAndGet(update: (prevValue: T) -> T): T {
+    return value.updateAndGet { refPrevValue -> update(refPrevValue ?: init()) } as T
   }
-
-  @Suppress("UNCHECKED_CAST")
-  private fun getPrevValue(prevValue: Any?): T = if (prevValue == null) init() else prevValue as T
 }

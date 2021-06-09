@@ -688,7 +688,7 @@ private fun readContent(reader: XMLStreamReader2,
 
 private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDescriptor, readContext: ReadModuleContext) {
   var modules: MutableList<ModuleDependenciesDescriptor.ModuleReference>? = null
-  var plugins: MutableList<ModuleDependenciesDescriptor.PluginItem>? = null
+  var plugins: MutableList<ModuleDependenciesDescriptor.PluginReference>? = null
   reader.consumeChildElements { elementName ->
     when (elementName) {
       "module" -> {
@@ -715,7 +715,7 @@ private fun readDependencies(reader: XMLStreamReader2, descriptor: RawPluginDesc
         if (plugins == null) {
           plugins = ArrayList()
         }
-        plugins!!.add(ModuleDependenciesDescriptor.PluginItem(PluginId.getId(id!!)))
+        plugins!!.add(ModuleDependenciesDescriptor.PluginReference(PluginId.getId(id!!)))
       }
       else -> throw RuntimeException("Unknown content item type: ${elementName}")
     }

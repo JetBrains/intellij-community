@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.icons.AllIcons;
@@ -18,10 +18,7 @@ import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.usageView.UsageTreeColors;
 import com.intellij.usageView.UsageViewBundle;
-import com.intellij.usages.TextChunk;
-import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.*;
 import com.intellij.util.FontUtil;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.ui.JBUI;
@@ -61,10 +58,6 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       return;
     }
 
-    SlowOperations.allowSlowOperations(() -> doCustomizeCellRenderer(tree, value, expanded, row));
-  }
-
-  private void doCustomizeCellRenderer(@NotNull JTree tree, Object value, boolean expanded, int row) {
     boolean showAsReadOnly = false;
     if (value instanceof Node && value != tree.getModel().getRoot()) {
       Node node = (Node)value;
@@ -129,11 +122,13 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
         }
         else {
           UsageGroup group = node.getGroup();
-          PsiElement element = group instanceof DataProvider ? CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group) : null;
+          PsiElement element = group instanceof DataProvider
+                               ? SlowOperations.allowSlowOperations(() -> CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group))
+                               : null;
           Icon tagIcon = TagManager.appendTags(element, this);
           append(group.getText(myView),
                  patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
-          Icon icon = group.getIcon(expanded);
+          Icon icon = group.getIcon();
           if (tagIcon != null) {
             icon = new RowIcon(tagIcon, icon);
           }
@@ -147,32 +142,14 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       }
       else if (treeNode instanceof UsageNode) {
         UsageNode node = (UsageNode)treeNode;
-        setIcon(node.getUsage().getPresentation().getIcon());
+        if (!node.isValid()) {
+          append(UsageViewBundle.message("node.invalid"), UsageTreeColors.INVALID_ATTRIBUTES);
+          return;
+        }
         if (showAsReadOnly) {
           append(UsageViewBundle.message("node.readonly") + " ", patchAttrs(node, UsageTreeColors.READ_ONLY_ATTRIBUTES));
         }
-
-        if (node.isValid()) {
-          TextChunk[] text = node.getUsage().getPresentation().getCachedText();
-          if (text == null) {
-            // either:
-            //   1. the node was never updated yet
-            //   2. the usage presentation have dropped the cached text by itself
-            //      (i.e. it was stored by a soft reference and was gc-ed).
-            //  In either case, `myView.updateLater()` will eventually re-update the visible nodes.
-            text = new TextChunk[]{new TextChunk(SimpleTextAttributes.GRAY_ATTRIBUTES.toTextAttributes(),
-                                                 UsageViewBundle.message("loading"))};
-            // Since "loading..." text is not reflected in the node's cached state
-            // we must force the node to recalculate it's bounds on the next view update
-            node.forceUpdate();
-            myView.updateLater();
-          }
-          for (int i = 0; i < text.length; i++) {
-            TextChunk textChunk = text[i];
-            SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
-            append(textChunk.getText() + (i == 0 ? " " : ""), patchAttrs(node, simples), true);
-          }
-        }
+        renderNode(node);
       }
       else if (userObject instanceof String) {
         append((String)userObject, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES);
@@ -187,6 +164,31 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
       append(value.toString(), SimpleTextAttributes.REGULAR_ATTRIBUTES);
     }
     SpeedSearchUtil.applySpeedSearchHighlighting(tree, this, true, mySelected);
+  }
+
+  private void renderNode(UsageNode node) {
+    UsageNodePresentation presentation = node.getUsage().getPresentation().getCachedPresentation();
+    if (presentation == null) {
+      // either:
+      //   1. the node was never updated yet
+      //   2. the usage has dropped the cached presentation by itself
+      //      (i.e., it was stored by a soft reference and was gc-ed).
+      //  In either case, `myView.updateLater()` will eventually re-update the visible nodes.
+      append(UsageViewBundle.message("loading"), SimpleTextAttributes.GRAY_ATTRIBUTES, true);
+
+      // Since the "loading..." text is not reflected in the node's cached state,
+      // we must force the node to recalculate its bounds on the next view update
+      node.forceUpdate();
+      myView.updateLater();
+      return;
+    }
+    setIcon(presentation.getIcon());
+    TextChunk[] text = presentation.getText();
+    for (int i = 0; i < text.length; i++) {
+      TextChunk textChunk = text[i];
+      SimpleTextAttributes simples = textChunk.getSimpleAttributesIgnoreBackground();
+      append(textChunk.getText() + (i == 0 ? " " : ""), patchAttrs(node, simples), true);
+    }
   }
 
   // computes the node text regardless of the node visibility

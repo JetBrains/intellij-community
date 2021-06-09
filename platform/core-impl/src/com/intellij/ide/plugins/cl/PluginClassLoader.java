@@ -33,8 +33,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-@ApiStatus.NonExtendable
-public class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
+public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
   private static final boolean isParallelCapable = registerAsParallelCapable();
@@ -344,9 +343,9 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       return true;
     }
 
-    // some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
+    // some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise, if a plugin bundles its own version
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
-    // We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
+    // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
                                                (className.startsWith("kotlin.reflect.") &&
                                                 className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||

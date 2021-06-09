@@ -55,6 +55,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
+import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.paint.LinePainter2D;
@@ -67,6 +68,7 @@ import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.BitUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.JBValue.JBValueGroup;
@@ -91,6 +93,7 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Rectangle2D;
 import java.util.List;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -1037,7 +1040,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       int y = visLinesIterator.getY();
 
       List<GutterMark> renderers = getGutterRenderers(visualLine);
-      paintIconRow(y, renderers, g);
+      paintIconRow(visualLine, y, renderers, g);
 
       if (myHasInlaysWithGutterIcons) {
         Rectangle clip = g.getClipBounds();
@@ -1081,9 +1084,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private void paintIconRow(int lineY, List<? extends GutterMark> row, final Graphics2D g) {
+  private void paintIconRow(int visualLine, int lineY, List<? extends GutterMark> row, final Graphics2D g) {
     processIconsRowForY(lineY, row, (x, y, renderer) -> {
+      boolean isLoading = myLastActionableClick != null &&
+                          myLastActionableClick.myProgressVisualLine == visualLine &&
+                          myLastActionableClick.myProgressGutterMark == renderer;
       Icon icon = scaleIcon(renderer.getIcon());
+      if (isLoading) {
+        Icon loadingIcon = scaleIcon(AnimatedIcon.Default.INSTANCE);
+        x -= (loadingIcon.getIconWidth() - icon.getIconWidth()) / 2;
+        y -= (loadingIcon.getIconHeight() - icon.getIconHeight()) / 2;
+        icon = loadingIcon;
+      }
 
       AffineTransform old = setMirrorTransformIfNeeded(g, x, icon.getIconWidth());
       try {
@@ -1875,7 +1887,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public void mouseClicked(MouseEvent e) {
     if (e.isPopupTrigger()) {
-      invokePopup(e);
+      try {
+        invokePopup(e);
+      }
+      finally {
+        removeLoadingIconForGutterMark();
+      }
     }
   }
 
@@ -1919,7 +1936,12 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   @Override
   public void mousePressed(MouseEvent e) {
     if (e.isPopupTrigger() || isPopupAction(e)) {
-      invokePopup(e);
+      try {
+        invokePopup(e);
+      }
+      finally {
+        removeLoadingIconForGutterMark();
+      }
     }
     else if (UIUtil.isCloseClick(e)) {
       processClose(e);
@@ -1933,12 +1955,22 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   @Override
   public void mouseReleased(final MouseEvent e) {
-    if (e.isPopupTrigger()) {
-      invokePopup(e);
-      return;
+    try {
+      if (e.isPopupTrigger()) {
+        invokePopup(e);
+      }
+      else {
+        invokeGutterAction(e);
+      }
     }
+    finally {
+      removeLoadingIconForGutterMark();
+    }
+  }
 
-    GutterIconRenderer renderer = getGutterRenderer(e);
+  private void invokeGutterAction(MouseEvent e) {
+    PointInfo info = getPointInfo(e.getPoint());
+    GutterIconRenderer renderer = info == null ? null : info.renderer;
     AnAction clickAction = null;
     if (renderer != null && e.getButton() < 4) {
       clickAction = BitUtil.isSet(e.getModifiers(), InputEvent.BUTTON2_MASK)
@@ -1946,6 +1978,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
                     : renderer.getClickAction();
     }
     if (clickAction != null) {
+      myLastActionableClick = new ClickInfo(EditorUtil.yPositionToLogicalLine(myEditor, e), info.iconCenterPosition);
       PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(renderer.getClass());
       FeatureUsageData usageData = new FeatureUsageData();
       usageData.addPluginInfo(pluginInfo);
@@ -1961,9 +1994,9 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
       FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", "clicked", usageData);
 
-      performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext());
-      repaint();
       e.consume();
+      performAction(clickAction, e, ActionPlaces.EDITOR_GUTTER, myEditor.getDataContext(), info);
+      repaint();
     }
     else {
       ActiveGutterRenderer lineRenderer = getActiveRendererByMouseEvent(e);
@@ -1993,16 +2026,32 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     }
   }
 
-  private void performAction(@NotNull AnAction action, @NotNull InputEvent e, @NotNull String place, @NotNull DataContext context) {
+  private void performAction(@NotNull AnAction action,
+                             @NotNull InputEvent e,
+                             @NotNull String place,
+                             @NotNull DataContext context,
+                             @NotNull PointInfo info) {
     if (!checkDumbAware(action)) {
       notifyNotDumbAware();
       return;
     }
+    addLoadingIconForGutterMark(info);
 
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
     if (ActionUtil.lastUpdateAndCheckDumb(action, actionEvent, true)) {
       ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent);
     }
+  }
+
+  @Override
+  public @Nullable Runnable setLoadingIconForCurrentGutterMark() {
+    EDT.assertIsEdt();
+    if (myLastActionableClick == null || myLastActionableClick.myProgressRemover == null) {
+      return null;
+    }
+    Runnable remover = myLastActionableClick.myProgressRemover;
+    myLastActionableClick.myProgressRemover = null;
+    return remover;
   }
 
   @Nullable
@@ -2201,13 +2250,14 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         AnAction rightButtonAction = info.renderer.getRightButtonClickAction();
         if (rightButtonAction != null) {
           e.consume();
-          performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext());
+          performAction(rightButtonAction, e, ActionPlaces.EDITOR_GUTTER_POPUP, myEditor.getDataContext(), info);
         }
         else {
           ActionGroup actionGroup = info.renderer.getPopupMenuActions();
           if (actionGroup != null) {
             e.consume();
             if (checkDumbAware(actionGroup)) {
+              addLoadingIconForGutterMark(info);
               actionManager.createActionPopupMenu(ActionPlaces.EDITOR_GUTTER_POPUP, actionGroup).getComponent().show(this, e.getX(), e.getY());
             }
             else {
@@ -2228,6 +2278,34 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
         }
       }
     }
+  }
+
+  private void addLoadingIconForGutterMark(@NotNull PointInfo info) {
+    ClickInfo clickInfo = myLastActionableClick;
+    if (clickInfo == null) return;
+    boolean[] removed = { false };
+    EdtScheduledExecutorService.getInstance().schedule(() -> {
+      if (myLastActionableClick != clickInfo || removed[0]) return;
+      clickInfo.myProgressVisualLine = info.visualLine;
+      clickInfo.myProgressGutterMark = info.renderer;
+      repaint();
+    }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
+    myLastActionableClick.myProgressRemover = () -> {
+      EDT.assertIsEdt();
+      removed[0] = true;
+      if (myLastActionableClick == clickInfo) {
+        clickInfo.myProgressVisualLine = -1;
+        clickInfo.myProgressGutterMark = null;
+        repaint();
+      }
+    };
+  }
+
+  private void removeLoadingIconForGutterMark() {
+    Runnable remover = myLastActionableClick == null ? null : myLastActionableClick.myProgressRemover;
+    if (remover == null) return;
+    myLastActionableClick.myProgressRemover = null;
+    remover.run();
   }
 
   @Override
@@ -2282,6 +2360,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       if (result[0] != null) {
         result[0].renderersInLine = xPos.size();
         result[0].rendererPosition = new ArrayList<>(xPos.values()).indexOf(result[0].iconCenterPosition.x);
+        result[0].visualLine = line;
       }
       return result[0];
     }
@@ -2385,20 +2464,24 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
   private static final class ClickInfo {
     final int myLogicalLineAtCursor;
     final Point myIconCenterPosition;
+    int myProgressVisualLine;
+    GutterMark myProgressGutterMark;
+    Runnable myProgressRemover;
 
-    private ClickInfo(int logicalLineAtCursor, Point iconCenterPosition) {
+    ClickInfo(int logicalLineAtCursor, Point iconCenterPosition) {
       myLogicalLineAtCursor = logicalLineAtCursor;
       myIconCenterPosition = iconCenterPosition;
     }
   }
 
   private static final class PointInfo {
-    private final @NotNull GutterIconRenderer renderer;
-    private final @NotNull Point iconCenterPosition;
-    private int renderersInLine;
-    private int rendererPosition;
+    final @NotNull GutterIconRenderer renderer;
+    final @NotNull Point iconCenterPosition;
+    int renderersInLine;
+    int rendererPosition;
+    int visualLine;
 
-    private PointInfo(@NotNull GutterIconRenderer renderer, @NotNull Point iconCenterPosition) {
+    PointInfo(@NotNull GutterIconRenderer renderer, @NotNull Point iconCenterPosition) {
       this.renderer = renderer;
       this.iconCenterPosition = iconCenterPosition;
     }

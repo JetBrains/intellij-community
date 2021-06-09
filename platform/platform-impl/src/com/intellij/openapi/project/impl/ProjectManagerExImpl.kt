@@ -42,8 +42,8 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
-import com.intellij.ui.GuiUtils
 import com.intellij.ui.IdeUICustomization
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.io.delete
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InvocationEvent
@@ -98,7 +98,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
 
         // this null assertion is required to overcome bug in new version of KT compiler: KT-40034
         @Suppress("UNNECESSARY_NOT_NULL_ASSERTION")
-        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, this)) {
+        if (checkExistingProjectOnOpen(projectToClose!!, options.callback, projectStoreBaseDir, options.projectName, this)) {
           return CompletableFuture.completedFuture(null)
         }
       }
@@ -171,7 +171,8 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       val projectFilePath = if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.directoryStorePath!! else store.projectFilePath
       for (p in openProjects) {
         if (ProjectUtil.isSameProject(projectFilePath, p)) {
-          GuiUtils.invokeLaterIfNeeded({ ProjectUtil.focusProjectWindow(p, false) }, ModalityState.NON_MODAL)
+          ModalityUiUtil.invokeLaterIfNeeded({ ProjectUtil.focusProjectWindow(p, false) },
+                                             ModalityState.NON_MODAL)
           return false
         }
       }
@@ -310,6 +311,7 @@ private fun message(e: Throwable): String {
 private fun checkExistingProjectOnOpen(projectToClose: Project,
                                        callback: ProjectOpenedCallback?,
                                        projectDir: Path?,
+                                       projectName: String?,
                                        projectManager: ProjectManagerExImpl): Boolean {
   val settings = GeneralSettings.getInstance()
   val isValidProject = projectDir != null && ProjectUtil.isValidProjectPath(projectDir)
@@ -350,7 +352,8 @@ private fun checkExistingProjectOnOpen(projectToClose: Project,
         }
       }
 
-      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectDir?.fileName?.toString() ?: projectDir?.toString())
+      val projectNameValue = projectName ?: projectDir?.fileName?.toString() ?: projectDir?.toString()
+      val exitCode = ProjectUtil.confirmOpenNewProject(false, projectNameValue)
       if (exitCode == GeneralSettings.OPEN_PROJECT_SAME_WINDOW) {
         if (!projectManager.closeAndDispose(projectToClose)) {
           result = true

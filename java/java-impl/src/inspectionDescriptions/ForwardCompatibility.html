@@ -1,18 +1,18 @@
 <html>
 <body>
-Reports the Java code constructs that may fail to compile in future Java versions.
-The following problems are reported:
+Reports Java code constructs that may fail to compile in future Java versions.
+<p>The following problems are reported:</p>
 <ul>
-  <li>Use of 'assert', 'enum' or '_' as an identifier</li>
-  <li>Use of restricted identifier 'var', 'yield', or 'record' as a type name</li>
-  <li>Unqualified calls to method named 'yield'</li>
-  <li>Modifiers on 'requires java.base' statement inside module-info.java</li>
+  <li>Use of <code>assert</code>>, <code>enum</code> or </code>_</code> as an identifier</li>
+  <li>Use of the <code>var</code>, <code>yield</code>, or <code>record</code> restricted identifier as a type name</li>
+  <li>Unqualified calls to the <code>yield</code> method</li>
+  <li>Modifiers on the <code>requires java.base</code> statement inside of <code>module-info.java</code></li>
 </ul>
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   // Since Java 14, this class will stop compiling, as 'yield' becomes a restricted identifier.
   public class yield {} 
-</pre>
+</code></pre>
 <p>Fixing these issues timely may simplify migration to future Java versions.</p>
 <!-- tooltip end -->
 </body>

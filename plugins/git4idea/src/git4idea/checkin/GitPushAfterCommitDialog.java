@@ -7,7 +7,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.project.Project;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import git4idea.branch.GitBranchUtil;
 import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
@@ -74,7 +74,7 @@ public class GitPushAfterCommitDialog extends VcsPushDialog {
     TransactionGuard.getInstance().assertWriteSafeContext(modality);
 
     List<GitRepository> repositories = new ArrayList<>(selectedRepositories);
-    GuiUtils.invokeLaterIfNeeded(
+    ModalityUiUtil.invokeLaterIfNeeded(
       () -> new GitPushAfterCommitDialog(project, repositories, GitBranchUtil.getCurrentRepository(project)).showOrPush(),
       modality,
       project.getDisposed()

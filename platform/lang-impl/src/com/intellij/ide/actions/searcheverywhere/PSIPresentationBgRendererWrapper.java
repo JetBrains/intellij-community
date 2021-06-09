@@ -79,7 +79,7 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
     return value instanceof PsiItemWithPresentation ? ((PsiItemWithPresentation)value).getItem() : value;
   }
 
-  private static class PsiItemWithPresentation extends Pair<PsiElement, TargetPresentation> {
+  public static class PsiItemWithPresentation extends Pair<PsiElement, TargetPresentation> {
     /**
      * @param first
      * @param second
@@ -89,11 +89,11 @@ public class PSIPresentationBgRendererWrapper implements WeightedSearchEverywher
       super(first, second);
     }
 
-    PsiElement getItem() {
+    public PsiElement getItem() {
       return first;
     }
 
-    TargetPresentation getPresentation() {
+    public TargetPresentation getPresentation() {
       return second;
     }
   }

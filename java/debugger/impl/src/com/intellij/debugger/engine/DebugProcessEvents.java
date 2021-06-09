@@ -44,6 +44,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
@@ -54,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -247,13 +249,16 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
                       processClassPrepareEvent(suspendContext, (ClassPrepareEvent)event, notifiedClassPrepareEventRequestors);
                     }
-                    //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
-                    //ModificationWatchpointEvent, StepEvent, WatchpointEvent
-                    else if (event instanceof StepEvent) {
-                      processStepEvent(suspendContext, (StepEvent)event);
-                    }
                     else if (event instanceof LocatableEvent) {
-                      processLocatableEvent(suspendContext, (LocatableEvent)event);
+                      preloadThreadInfo(((LocatableEvent)event).thread());
+                      //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
+                      //ModificationWatchpointEvent, StepEvent, WatchpointEvent
+                      if (event instanceof StepEvent) {
+                        processStepEvent(suspendContext, (StepEvent)event);
+                      }
+                      else {
+                        processLocatableEvent(suspendContext, (LocatableEvent)event);
+                      }
                     }
                     else if (event instanceof ClassUnloadEvent) {
                       processDefaultEvent(suspendContext);
@@ -519,6 +524,21 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
         if (hint.wasStepTargetMethodMatched()) {
           suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
+        }
+      }
+    }
+  }
+
+  // Preload thread info in "parallel" commands, to avoid sync jdwp requests after
+  private static void preloadThreadInfo(@Nullable ThreadReference thread) {
+    if (Registry.is("debugger.preload.thread.info") && thread != null) {
+      if (DebuggerUtilsAsync.isAsyncEnabled() && thread instanceof ThreadReferenceImpl) {
+        ThreadReferenceImpl t = (ThreadReferenceImpl)thread;
+        try {
+          CompletableFuture.allOf(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)).get();
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }

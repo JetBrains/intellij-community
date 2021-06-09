@@ -22,13 +22,18 @@ package com.intellij.openapi.options.advanced
  import javax.swing.event.DocumentEvent
 
 class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfigurable {
-  private class SettingsRow(val row: Row, val component: JComponent, val id: String, val text: String) {
+  private class SettingsRow(val row: Row,
+                            val component: JComponent,
+                            val id: String,
+                            val text: String,
+                            val isDefaultPredicate: ComponentPredicate) {
     lateinit var groupPanel: JPanel
   }
 
   private val settingsRows = mutableListOf<SettingsRow>()
   private val groupPanels = mutableListOf<JPanel>()
   private lateinit var nothingFoundRow: Row
+  private var onlyShowModified = false
 
   private val searchAlarm = Alarm(Alarm.ThreadToUse.SWING_THREAD)
 
@@ -45,7 +50,13 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
 
   override fun RowBuilder.createComponentRow() {
     row {
-      searchField(CCFlags.growX)
+      cell {
+        searchField(CCFlags.growX)
+        checkBox(ApplicationBundle.message("checkbox.advanced.settings.modified")) { _, component ->
+          onlyShowModified = component.isSelected
+          updateSearch()
+        }
+      }
     }
 
     val groupedExtensions = AdvancedSettingBean.EP_NAME.extensions.groupBy {
@@ -78,13 +89,17 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
                   .visibleIf(isDefaultPredicate.not())
 
                 label("").constraints(pushX)
+
+                val textComponent = labelCellBuilder?.component ?: component.component
+                val row = SettingsRow(
+                  this@row, textComponent, extension.id, labelCellBuilder?.component?.text ?: extension.title(),
+                  isDefaultPredicate
+                )
+                settingsRows.add(row)
+                settingsRowsInGroup.add(row)
               }
 
               extension.description()?.let { description -> component.comment(description) }
-              val textComponent = labelCellBuilder?.component ?: component.component
-              val row = SettingsRow(this, textComponent, extension.id, labelCellBuilder?.component?.text ?: extension.title())
-              settingsRows.add(row)
-              settingsRowsInGroup.add(row)
             }
           }
         }
@@ -167,11 +182,11 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
   }
 
   private fun updateSearch() {
-    applyFilter(searchField.text)
+    applyFilter(searchField.text, onlyShowModified)
   }
 
-  private fun applyFilter(searchText: String?) {
-    if (searchText.isNullOrBlank()) {
+  private fun applyFilter(searchText: String?, onlyShowModified: Boolean) {
+    if (searchText.isNullOrBlank() && !onlyShowModified) {
       for (groupPanel in groupPanels) {
         groupPanel.isVisible = true
       }
@@ -185,15 +200,17 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
     }
 
     val searchableOptionsRegistrar = SearchableOptionsRegistrar.getInstance()
-    val filterWords = searchableOptionsRegistrar.getProcessedWords(searchText)
-    val filterWordsUnstemmed = searchText.split(' ')
+    val filterWords = searchText?.let { searchableOptionsRegistrar.getProcessedWords(it) } ?: emptySet()
+    val filterWordsUnstemmed = searchText?.split(' ') ?: emptySet()
     val visibleGroupPanels = mutableSetOf<JPanel>()
     for (settingsRow in settingsRows) {
       val textWords = searchableOptionsRegistrar.getProcessedWords(settingsRow.text)
       val idWords = settingsRow.id.split('.')
-      val textMatches = textWords.containsAll(filterWords)
-      val idMatches = idWords.containsAll(filterWordsUnstemmed)
-      val matches = textMatches || idMatches
+      val textMatches = searchText == null || (filterWords.isNotEmpty() && textWords.containsAll(filterWords))
+      val idMatches = searchText == null || (filterWordsUnstemmed.isNotEmpty() && idWords.containsAll(filterWordsUnstemmed))
+      val modifiedMatches = if (onlyShowModified) !settingsRow.isDefaultPredicate() else true
+      val matches = (textMatches || idMatches) && modifiedMatches
+
       settingsRow.row.visible = matches
       settingsRow.row.subRowsVisible = matches
       if (matches) {
@@ -216,7 +233,7 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
   }
 
   private fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
-    val text = searchText?.let {
+    val text = searchText?.takeIf { it.isNotBlank() }?.let {
       @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL),
                                               UIUtil.getSearchMatchGradientStartColor())
       "<html>$highlightedText"
@@ -232,6 +249,6 @@ class AdvancedSettingsConfigurable : UiDslConfigurable.Simple(), SearchableConfi
   override fun getId(): String = "advanced.settings"
 
   override fun enableSearch(option: String?): Runnable {
-    return Runnable { applyFilter(option) }
+    return Runnable { applyFilter(option, false) }
   }
 }

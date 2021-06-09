@@ -299,6 +299,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
   }
 
   public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize) {
+    initMouseListeners(c, ui, allowResize, false);
+  }
+  public static void initMouseListeners(@NotNull JComponent c, @NotNull ToolWindowContentUi ui, boolean allowResize, boolean allowDrag) {
     if (c.getClientProperty(TOOLWINDOW_UI_INSTALLED) != null) {
       return;
     }
@@ -392,7 +395,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mouseMoved(MouseEvent e) {
         if (isToolWindowDrag(e)) {
-          c.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+          c.setCursor(Cursor.getDefaultCursor());
           return;
         }
         c.setCursor(allowResize && ui.isResizeable() && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint())
@@ -409,9 +412,9 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
         if (!Registry.is("ide.new.tool.window.dnd")) return false;
         Component realMouseTarget = SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY());
         Component decorator = ComponentUtil.findParentByCondition(realMouseTarget, c -> c instanceof InternalDecoratorImpl);
-        if (decorator == null) return false;
+        if (decorator == null || ui.window.getType() == ToolWindowType.FLOATING || ui.window.getType() == ToolWindowType.WINDOWED) return false;
         if (ui.window.getAnchor() != ToolWindowAnchor.BOTTOM) return true;
-        if (SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() > ToolWindowsPane.HEADER_RESIZE_WIDTH) return true;//it's drag, not resize!
+        if (SwingUtilities.convertMouseEvent(e.getComponent(), e, decorator).getY() > ToolWindowsPane.getHeaderResizeArea()) return true;//it's drag, not resize!
         return false;
       }
 

@@ -1,22 +1,22 @@
 import sys
 from _pydev_bundle.pydev_console_utils import BaseInterpreterInterface
-from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
+from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend
 from _pydev_bundle.pydev_ipython_console_011 import get_ipython_hidden_vars
 
 # Uncomment to force PyDev standard shell.
 # raise ImportError()
 
 #=======================================================================================================================
-# InterpreterInterface
+# IPythonInterpreterInterface
 #=======================================================================================================================
-class InterpreterInterface(BaseInterpreterInterface):
+class IPythonInterpreterInterface(BaseInterpreterInterface):
     '''
         The methods in this class should be registered in the xml-rpc server.
     '''
 
     def __init__(self, main_thread, show_banner=True, connect_status_queue=None, rpc_client=None):
         BaseInterpreterInterface.__init__(self, main_thread, connect_status_queue, rpc_client)
-        self.interpreter = get_pydev_frontend(rpc_client)
+        self.interpreter = get_pydev_ipython_frontend(rpc_client)
         self._input_error_printed = False
         self.notification_succeeded = False
         self.notification_tries = 0

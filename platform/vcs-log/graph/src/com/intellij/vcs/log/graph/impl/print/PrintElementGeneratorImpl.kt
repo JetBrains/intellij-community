@@ -24,10 +24,10 @@ import org.jetbrains.annotations.TestOnly
 import java.util.*
 
 internal class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: LinearGraph,
-                                                      private val printElementManager: PrintElementManager,
-                                                      private val longEdgeSize: Int,
-                                                      private val visiblePartSize: Int,
-                                                      private val edgeWithArrowSize: Int) : PrintElementGenerator {
+                                                               private val printElementManager: PrintElementManager,
+                                                               private val longEdgeSize: Int,
+                                                               private val visiblePartSize: Int,
+                                                               private val edgeWithArrowSize: Int) : PrintElementGenerator {
   private val cache = SLRUMap<Int, List<GraphElement>>(CACHE_SIZE, CACHE_SIZE * 2)
   private val edgesInRowGenerator = EdgesInRowGenerator(linearGraph)
   private val elementComparator: Comparator<GraphElement>

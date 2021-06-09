@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -27,6 +27,8 @@ public class InspectionProfileWrapper {
    * {@link InspectionProfileWrapper} object that should be used later.
    */
   public static final Key<Function<InspectionProfileImpl, InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
+  public static final Key<Boolean> COMMIT_IN_PROGRESS_KEY = Key.create("Commit in progress");
+  public static final Key<Function<Class<? extends PsiElement>, Set<PsiElement>>> PSI_ELEMENTS_BEING_COMMITTED= Key.create("PsiElements that are being committed");
 
   // check whether some inspection got registered twice by accident. 've bit once.
   private static boolean alreadyChecked;

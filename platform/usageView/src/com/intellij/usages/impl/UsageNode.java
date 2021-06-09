@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -74,6 +74,6 @@ public class UsageNode extends Node implements Comparable<UsageNode>, Navigatabl
 
   @Override
   protected void updateCachedPresentation() {
-    getUsage().getPresentation().updateCachedText();
+    getUsage().getPresentation().updateCachedPresentation();
   }
 }

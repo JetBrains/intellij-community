@@ -18,8 +18,8 @@ import com.intellij.openapi.roots.ProjectModelBuildableElement;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.task.*;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ExceptionUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
@@ -346,7 +346,7 @@ public final class ProjectTaskManagerImpl extends ProjectTaskManager {
     }
 
     private void notify(@NotNull Result result) {
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(() -> {
         if (!myProject.isDisposed()) {
           myEventPublisher.finished(result);
         }

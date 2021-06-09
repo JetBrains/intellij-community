@@ -115,8 +115,8 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
     val moduleName = moduleNames.firstOrNull() ?: return null
     val predicates = CacheForCompilerErrorMessages.getPredicatesToCheck(project, moduleName)
     val failedId = extractFailedMavenId(project, moduleName) ?: return null;
-    val mavenProject = MavenProjectsManager.getInstance(project).findProject(failedId) ?: return null
-    val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), mavenProject) ?: return null
+    val mavenProject = manager.findProject(failedId) ?: return null
+    val moduleJdk = MavenUtil.getModuleJdk(manager, mavenProject) ?: return null
 
     if (predicates.any { it(message) }) return SourceLevelBuildIssue(title, message, mavenProject, moduleJdk)
     return null
@@ -126,31 +126,13 @@ class JpsReleaseVersionQuickFix : BuildIssueContributor {
     val module = ModuleManager.getInstance(project).findModuleByName(moduleName) ?: return null
     return MavenProjectsManager.getInstance(project).findProject(module)?.mavenId ?: return null
   }
-
-
 }
 
 class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuickFix {
   override val id = ID + mavenProject.mavenId.displayString
   override fun runQuickFix(project: Project, dataContext: DataContext): CompletableFuture<*> {
     val languageLevelQuickFix = LanguageLevelQuickFixFactory.getInstance(project, mavenProject)
-    if (languageLevelQuickFix == null) {
-      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                   message("maven.quickfix.cannot.update.source.level.module.not.found", mavenProject.displayName),
-                   NotificationType.INFORMATION).notify(project)
-      return CompletableFuture.completedFuture(null)
-    }
-
-    val mavenProject = languageLevelQuickFix.mavenProject
-    val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), mavenProject)
-    if (moduleJdk == null) {
-      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
-                   message("maven.quickfix.cannot.update.source.level.module.not.found", mavenProject.displayName),
-                   NotificationType.INFORMATION).notify(project)
-      return CompletableFuture.completedFuture(null)
-    }
-    languageLevelQuickFix.perform(LanguageLevel.parse(moduleJdk.versionString)!!)
-    return CompletableFuture.completedFuture(null)
+    return ProcessQuickFix.perform(languageLevelQuickFix, project, mavenProject)
   }
 
   companion object {
@@ -158,7 +140,6 @@ class UpdateSourceLevelQuickFix(val mavenProject: MavenProject) : BuildIssueQuic
   }
 
 }
-
 
 object CacheForCompilerErrorMessages {
   private val key = "compiler.err.unsupported.release.version".encodeToByteArray()
@@ -170,6 +151,8 @@ object CacheForCompilerErrorMessages {
   }
 
   private val DEFAULT_CHECK = listOf<MessagePredicate>(
+    { it.contains("source release") && it.contains("requires target release") },
+    { it.contains("invalid target release") },
     { it.contains("release version") && it.contains("not supported") }, //en
     {
       it.contains("\u30EA\u30EA\u30FC\u30B9\u30FB\u30D0\u30FC\u30B8\u30E7\u30F3")
@@ -267,6 +250,27 @@ object CacheForCompilerErrorMessages {
     }
     return -1
   }
+}
 
+object ProcessQuickFix {
+  fun perform(languageLevelQuickFix: LanguageLevelQuickFix?, project: Project, mavenProject: MavenProject): CompletableFuture<*> {
+    if (languageLevelQuickFix == null) {
+      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
+                   message("maven.quickfix.cannot.update.source.level.module.not.found", mavenProject.displayName),
+                   NotificationType.INFORMATION).notify(project)
+      return CompletableFuture.completedFuture(null)
+    }
+
+    val moduleJdk = MavenUtil.getModuleJdk(MavenProjectsManager.getInstance(project), languageLevelQuickFix.mavenProject)
+    if (moduleJdk == null) {
+      Notification(MavenUtil.MAVEN_NOTIFICATION_GROUP, "",
+                   message("maven.quickfix.cannot.update.source.level.module.not.found",
+                           languageLevelQuickFix.mavenProject.displayName),
+                   NotificationType.INFORMATION).notify(project)
+      return CompletableFuture.completedFuture(null)
+    }
+    languageLevelQuickFix.perform(LanguageLevel.parse(moduleJdk.versionString)!!)
+    return CompletableFuture.completedFuture(null)
+  }
 }
 

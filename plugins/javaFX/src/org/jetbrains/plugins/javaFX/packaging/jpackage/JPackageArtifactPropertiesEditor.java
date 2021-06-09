@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging.jpackage;
 
 import com.intellij.execution.ExecutionBundle;
@@ -17,6 +17,7 @@ import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.JavaFXBundle;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
@@ -45,7 +46,7 @@ public class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   @Nls
   @Override
   public String getTabName() {
-    return "Packaging";
+    return JavaFXBundle.message("packaging.artifact.tab.name");
   }
 
   @Override
@@ -71,14 +72,14 @@ public class JPackageArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myVendor = new JTextField(myProperties.vendor);
     myDescription = new JBTextArea(myProperties.description, 5, 50);
     myDescription.setMinimumSize(new Dimension(100, 50));
-    myVerbose = new JCheckBox("Show verbose output when building the platform specific package", myProperties.verbose);
+    myVerbose = new JCheckBox(JavaFXBundle.message("show.verbose.output.when.building.the.platform.specific.package"), myProperties.verbose);
 
     final FormBuilder builder = new FormBuilder();
-    builder.addLabeledComponent("Main class", myMainClass);
-    builder.addLabeledComponent("Version", myVersion);
-    builder.addLabeledComponent("Copyright", myCopyright);
-    builder.addLabeledComponent("Vendor", myVendor);
-    builder.addLabeledComponent("Description", new JBScrollPane(myDescription));
+    builder.addLabeledComponent(JavaFXBundle.message("label.main.class"), myMainClass);
+    builder.addLabeledComponent(JavaFXBundle.message("label.version"), myVersion);
+    builder.addLabeledComponent(JavaFXBundle.message("label.copyright"), myCopyright);
+    builder.addLabeledComponent(JavaFXBundle.message("label.vendor"), myVendor);
+    builder.addLabeledComponent(JavaFXBundle.message("label.description"), new JBScrollPane(myDescription));
     builder.addComponent(myVerbose);
     return builder.getPanel();
   }

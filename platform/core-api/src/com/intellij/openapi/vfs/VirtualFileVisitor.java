@@ -10,6 +10,28 @@ import org.jetbrains.annotations.Nullable;
  * @author Dmitry Avdeev
  */
 public abstract class VirtualFileVisitor<T> {
+  private boolean myFollowSymLinks = true;
+  private boolean mySkipRoot;
+  private int myDepthLimit = -1;
+
+  private int myLevel;
+  private Stack<T> myValueStack;
+  private T myValue;
+
+  protected VirtualFileVisitor(Option @NotNull ... options) {
+    for (Option option : options) {
+      if (option == NO_FOLLOW_SYMLINKS) {
+        myFollowSymLinks = false;
+      }
+      else if (option == SKIP_ROOT) {
+        mySkipRoot = true;
+      }
+      else if (option instanceof Option.LimitOption) {
+        myDepthLimit = ((Option.LimitOption)option).limit;
+      }
+    }
+  }
+
   public static class Option {
     private Option() { }
 
@@ -61,30 +83,6 @@ public abstract class VirtualFileVisitor<T> {
       super(cause);
     }
   }
-
-
-  private boolean myFollowSymLinks = true;
-  private boolean mySkipRoot;
-  private int myDepthLimit = -1;
-
-  private int myLevel;
-  private Stack<T> myValueStack;
-  private T myValue;
-
-  protected VirtualFileVisitor(Option @NotNull ... options) {
-    for (Option option : options) {
-      if (option == NO_FOLLOW_SYMLINKS) {
-        myFollowSymLinks = false;
-      }
-      else if (option == SKIP_ROOT) {
-        mySkipRoot = true;
-      }
-      else if (option instanceof Option.LimitOption) {
-        myDepthLimit = ((Option.LimitOption)option).limit;
-      }
-    }
-  }
-
 
   /**
    * Simple visiting method.

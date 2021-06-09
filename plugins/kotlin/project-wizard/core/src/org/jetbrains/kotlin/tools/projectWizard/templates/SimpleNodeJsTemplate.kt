@@ -69,7 +69,7 @@ class SimpleNodeJsTemplate : Template() {
     override fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> =
         withSettingsOf(module.originalModule) {
             buildList {
-                +(FileTemplateDescriptor("$id/main.kt.vm") asSrcOf SourcesetType.main)
+                +(FileTemplateDescriptor("$id/main.kt.vm", "Main.kt".asPath()) asSrcOf SourcesetType.main)
                 +(FileTemplateDescriptor("$id/GreetingTest.kt.vm") asSrcOf SourcesetType.test)
             }
         }

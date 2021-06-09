@@ -157,11 +157,7 @@ internal class EmlFileSaver(private val module: ModuleEntity,
       if (javaSettings.excludeOutput) {
         root.addContent(Element(EXCLUDE_OUTPUT_TAG))
       }
-    }
-
-    module.customImlData?.rootManagerTagCustomData?.let { languageLevelTagString ->
-      val tag = JDOMUtil.load(languageLevelTagString)
-      tag.getAttributeValue("LANGUAGE_LEVEL")?.let {
+      javaSettings.languageLevelId?.let {
         root.setAttribute("LANGUAGE_LEVEL", it)
       }
     }

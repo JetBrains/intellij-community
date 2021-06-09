@@ -3,14 +3,21 @@
 Reports explicitly given parameter types in property setters.
 <p>
     Setter parameter type always matches the property type, so it's not required to be explicit.
-    'Remove explicit type specification' quick-fix allows to amend the code accordingly.
+    'Remove explicit type specification' quick-fix allows amending the code accordingly.
 </p>
 <p>Examples:</p>
 <pre><code>
-   fun process(x: Int) {}
+  fun process(x: Int) {}
 
-   var x: Int = 0
+  var x: Int = 0
       set(value: Int) = process(value) // &lt;== 'Int' specification can be safely omitted
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun process(x: Int) {}
+
+  var x: Int = 0
+      set(value) = process(value)
 </code></pre>
 </body>
 </html>

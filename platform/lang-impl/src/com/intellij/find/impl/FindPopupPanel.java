@@ -1504,6 +1504,7 @@ public class FindPopupPanel extends JBPanel<FindPopupPanel> implements FindUI {
       return;
     }
     UIUtil.invokeLaterIfNeeded(() -> {
+      //noinspection HardCodedStringLiteral
       showEmptyText(message);
       myLoadingIcon.setIcon(EmptyIcon.ICON_16);
     });

@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageBaseFix;
 import com.intellij.codeInsight.template.Template;
+import com.intellij.codeInsight.template.TemplateEditingAdapter;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.ConstantNode;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 import org.jetbrains.idea.maven.project.MavenProject;
+import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import java.util.Collections;
 
@@ -80,7 +82,7 @@ public abstract class LanguageLevelQuickFix {
     Editor editor = CreateFromUsageBaseFix.positionCursor(project, tagProperty.getContainingFile(), tagProperty);
     if (editor == null) return;
     template.setToReformat(true);
-    TemplateManager.getInstance(project).startTemplate(editor, template, true, Collections.emptyMap(), null);
+    TemplateManager.getInstance(project).startTemplate(editor, template, true, Collections.emptyMap(), new TemplateFinishedEditing());
   }
 
   protected static PsiElement getXmlTagPsiValue(@Nullable XmlTag tag) {
@@ -94,5 +96,12 @@ public abstract class LanguageLevelQuickFix {
       return new ConstantNode(newValue).withLookupStrings(newValue);
     }
     return new ConstantNode(newValue).withLookupStrings(newValue, prevValue);
+  }
+
+  private class TemplateFinishedEditing extends TemplateEditingAdapter {
+    @Override
+    public void templateFinished(@NotNull Template template, boolean brokenOff) {
+      MavenProjectsManager.getInstance(project).forceUpdateProjects(Collections.singleton(mavenProject));
+    }
   }
 }

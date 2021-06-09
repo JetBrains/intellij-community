@@ -14,14 +14,14 @@ import com.intellij.openapi.editor.impl.event.MarkupModelListener
 import com.intellij.openapi.vfs.VirtualFile
 import java.lang.ref.WeakReference
 
-internal class HighlightingWatcher(
-  private val provider: ProblemsProvider,
-  private val listener: ProblemsListener,
-  private val file: VirtualFile,
+open class HighlightingWatcher(
+  protected val provider: ProblemsProvider,
+  protected val listener: ProblemsListener,
+  protected val file: VirtualFile,
   private val level: Int)
   : MarkupModelListener, Disposable {
 
-  private val problems = mutableMapOf<RangeHighlighterEx, Problem>()
+  protected val problems = mutableMapOf<RangeHighlighterEx, Problem>()
   private var reference: WeakReference<MarkupModelEx>? = null
 
   init {
@@ -62,10 +62,13 @@ internal class HighlightingWatcher(
 
   fun findProblem(highlighter: RangeHighlighterEx) = synchronized(problems) { problems[highlighter] }
 
+  protected open fun getHighlightingProblem(highlighter: RangeHighlighterEx): HighlightingProblem
+    = HighlightingProblem(provider, file, highlighter)
+
   private fun getProblem(highlighter: RangeHighlighterEx) = when {
     !isValid(highlighter) -> null
     else -> synchronized(problems) {
-      problems.computeIfAbsent(highlighter) { HighlightingProblem(provider, file, highlighter) }
+      problems.computeIfAbsent(highlighter) { getHighlightingProblem(highlighter) }
     }
   }
 

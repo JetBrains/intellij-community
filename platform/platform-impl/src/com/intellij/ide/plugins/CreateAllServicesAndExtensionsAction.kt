@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("TestOnlyProblems")
 package com.intellij.ide.plugins
 
@@ -22,9 +22,9 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.runModalTask
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.psi.stubs.StubElementTypeHolderEP
 import com.intellij.serviceContainer.ComponentManagerImpl
+import com.intellij.util.SystemProperties
 import com.intellij.util.getErrorsAsString
 import io.github.classgraph.AnnotationEnumValue
 import io.github.classgraph.ClassGraph
@@ -74,7 +74,7 @@ private class CreateAllServicesAndExtensionsActivity : AppLifecycleListener {
 
   init {
     if (!ApplicationManager.getApplication().isInternal
-        || !Registry.`is`("ide.plugins.create.all.services.and.extensions", false)) {
+        || !SystemProperties.`is`("ide.plugins.create.all.services.and.extensions")) {
       throw ExtensionNotApplicableException.INSTANCE
     }
   }
@@ -147,7 +147,7 @@ private fun checkExtensionPoint(extensionPoint: ExtensionPointImpl<*>, taskExecu
 }
 
 private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors: MutableList<Throwable>) {
-  for (plugin in PluginManagerCore.getPluginSet().loadedPlugins) {
+  for (plugin in PluginManagerCore.getPluginSet().enabledPlugins) {
     // we don't check classloader for sub descriptors because url set is the same
     if (plugin.classLoader !is PluginClassLoader) {
       continue
@@ -161,7 +161,8 @@ private fun checkLightServices(taskExecutor: (task: () -> Unit) -> Unit, errors:
       .use { scanResult ->
         val lightServices = scanResult.getClassesWithAnnotation(Service::class.java.name)
         for (lightService in lightServices) {
-          if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole") {
+          if (lightService.name == "org.jetbrains.plugins.grails.runner.GrailsConsole" ||
+              lightService.name == "com.jetbrains.rdserver.editors.MultiUserCaretSynchronizerProjectService") {
             // wants EDT in constructor
              continue
           }

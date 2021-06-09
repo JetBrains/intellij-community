@@ -166,6 +166,14 @@ class PluginXmlFunctionalTest extends JavaCodeInsightFixtureTestCase {
                        "}")
     myFixture.addClass("package foo; " +
                        "import com.intellij.util.xmlb.annotations.Attribute; " +
+                       "import com.intellij.util.xmlb.annotations.Property; " +
+                       "@Property(style = Property.Style.ATTRIBUTE) " +
+                       "public class ClassLevelProperty {" +
+                       " public String classLevel;"+
+                       " @Attribute(\"customAttributeName\") public int intProperty; " +
+                       "}")
+    myFixture.addClass("package foo; " +
+                       "import com.intellij.util.xmlb.annotations.Attribute; " +
                        "import com.intellij.openapi.extensions.RequiredElement; " +
                        "public class MyServiceDescriptor { " +
                        "  @Attribute public String serviceImplementation; " +

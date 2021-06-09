@@ -174,6 +174,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     });
 
     EmptyAction.registerActionShortcuts(myHistoryViewer.getComponent(), myConsoleExecutionEditor.getComponent());
+    myHistoryViewer.putUserData(EXECUTION_EDITOR_KEY, myConsoleExecutionEditor);
   }
 
   @Override
@@ -387,6 +388,7 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
 
     myConsoleExecutionEditor.getDocument().removeDocumentListener(myDocumentAdapter);
     myHistoryViewer.getDocument().removeDocumentListener(myDocumentAdapter);
+    myHistoryViewer.putUserData(EXECUTION_EDITOR_KEY, null);
 
     EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myHistoryViewer);
@@ -499,15 +501,10 @@ public class LanguageConsoleImpl extends ConsoleViewImpl implements LanguageCons
     }
 
     public void setupEditor(@NotNull EditorEx editor) {
-      ConsoleViewUtil.setupConsoleEditor(editor, false, false);
-      editor.getContentComponent().setFocusCycleRoot(false);
+      ConsoleViewUtil.setupLanguageConsoleEditor(editor);
+
       editor.setHorizontalScrollbarVisible(true);
       editor.setVerticalScrollbarVisible(true);
-      editor.setBorder(null);
-
-      EditorSettings editorSettings = editor.getSettings();
-      editorSettings.setAdditionalLinesCount(1);
-      editorSettings.setAdditionalColumnsCount(1);
 
       DataManager.registerDataProvider(editor.getComponent(), (dataId) -> getEditorData(editor, dataId));
     }

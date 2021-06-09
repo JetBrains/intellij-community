@@ -388,7 +388,7 @@ class CommonIntentionActionsTest : LightPlatformCodeInsightFixtureTestCase() {
         myFixture.launchAction(
             createMethodActions(
                 myFixture.atCaret(),
-                methodRequest(project, "baz", JvmModifier.PRIVATE, PsiType.VOID)
+                methodRequest(project, "baz", listOf(JvmModifier.PRIVATE), PsiType.VOID)
             ).findWithText("Add method 'baz' to 'Foo'")
         )
         myFixture.checkResult(

@@ -69,8 +69,8 @@ class Test(unittest.TestCase):
 
     def test_server(self):
         # Just making sure that the singleton is created in this thread.
-        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_frontend
-        get_pydev_frontend(get_localhost(), 0)
+        from _pydev_bundle.pydev_ipython_console_011 import get_pydev_ipython_frontend
+        get_pydev_ipython_frontend(get_localhost(), 0)
 
         client_port, server_port = self.get_free_addresses()
         class ServerThread(threading.Thread):

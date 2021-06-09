@@ -6,6 +6,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
 import com.intellij.util.IntSLRUCache;
 import com.intellij.util.containers.IntObjectLRUMap;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
@@ -37,11 +38,15 @@ public final class FileNameCache {
   private static void assertShortFileName(@NotNull String name) {
     if (name.length() <= 1) return;
     int start = 0;
+    int end = name.length();
     if (SystemInfo.isWindows && name.startsWith("//")) {  // Windows UNC: //Network/Ubuntu
       final int idx = name.indexOf('/', 2);
       start = idx == -1 ? 2 : idx + 1;
     }
-    if (StringUtil.containsAnyChar(name, FS_SEPARATORS, start, name.length())) {
+    if (name.endsWith(URLUtil.SCHEME_SEPARATOR)) {
+      end -= URLUtil.SCHEME_SEPARATOR.length();
+    }
+    if (StringUtil.containsAnyChar(name, FS_SEPARATORS, start, end)) {
       throw new IllegalArgumentException("Must not intern long path: '" + name + "'");
     }
   }

@@ -12,6 +12,7 @@ import com.intellij.history.integration.LocalHistoryImpl;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.history.integration.ui.models.FileDifferenceModel;
 import com.intellij.history.integration.ui.models.HistoryDialogModel;
+import com.intellij.history.integration.ui.models.RevisionItem;
 import com.intellij.history.integration.ui.models.RevisionProcessingProgress;
 import com.intellij.history.utils.LocalHistoryLog;
 import com.intellij.icons.AllIcons;
@@ -53,6 +54,7 @@ import java.awt.*;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.history.integration.LocalHistoryBundle.message;
@@ -70,7 +72,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
   private JBLoadingPanel myDiffView;
   private ActionToolbar myToolBar;
 
-  private T myModel;
+  protected T myModel;
 
   private MergingUpdateQueue myUpdateQueue;
   private boolean isUpdating;
@@ -128,6 +130,10 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
       }
       return () -> myRevisionsList.updateData(myModel);
     });
+  }
+
+  protected List<RevisionItem> getRevisions() {
+    return myModel == null ? Collections.emptyList() : myModel.getRevisions();
   }
 
   protected abstract T createModel(LocalHistoryFacade vcs);

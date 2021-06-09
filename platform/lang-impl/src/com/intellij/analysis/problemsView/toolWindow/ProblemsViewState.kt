@@ -8,7 +8,7 @@ import com.intellij.util.xmlb.annotations.XCollection
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-internal class ProblemsViewState : BaseState() {
+open class ProblemsViewState : BaseState() {
   companion object {
     @JvmStatic
     fun getInstance(project: Project) = project.getService(ProblemsViewStateManager::class.java).state

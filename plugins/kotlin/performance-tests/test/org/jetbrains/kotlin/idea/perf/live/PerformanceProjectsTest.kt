@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightVisitor
 import org.jetbrains.kotlin.idea.perf.*
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.TEST_KEY
 import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
+import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.Metric
 import org.jetbrains.kotlin.idea.perf.util.TeamCity.suite
 import org.jetbrains.kotlin.idea.testFramework.Fixture
@@ -272,7 +273,7 @@ class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
             name = "kotlin",
             stats = stats,
             note = "",
-            path = "../perfTestProject",
+            path = ExternalProject.KOTLIN_PROJECT_PATH,
             openAction = GRADLE_PROJECT,
             fast = fast
         )

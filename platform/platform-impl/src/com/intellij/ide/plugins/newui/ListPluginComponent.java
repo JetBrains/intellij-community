@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -658,7 +658,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   public void createPopupMenu(@NotNull DefaultActionGroup group,
-                              @NotNull List<ListPluginComponent> selection) {
+                              @NotNull List<? extends ListPluginComponent> selection) {
     if (myOnlyUpdateMode) {
       return;
     }
@@ -716,15 +716,13 @@ public class ListPluginComponent extends JPanel {
       }
     }
 
-    SelectionBasedPluginModelAction.addActionsTo(
-      group,
-      action -> createEnableDisableAction(action, selection),
-      () -> createUninstallAction(selection)
-    );
+    SelectionBasedPluginModelAction.addActionsTo(group,
+                                                 action -> createEnableDisableAction(action, selection),
+                                                 () -> createUninstallAction(selection));
   }
 
   public void handleKeyAction(@NotNull KeyEvent event,
-                              @NotNull List<ListPluginComponent> selection) {
+                              @NotNull List<? extends ListPluginComponent> selection) {
     if (myOnlyUpdateMode) {
       if (event.getKeyCode() == KeyEvent.VK_SPACE) {
         for (ListPluginComponent component : selection) {
@@ -811,18 +809,18 @@ public class ListPluginComponent extends JPanel {
     parent.repaint();
   }
 
-  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
+  public final @NotNull IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin;
   }
 
-  public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public final void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     myPlugin = plugin;
   }
 
-  private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<ListPluginComponent> selection) {
-    Iterator<ListPluginComponent> iterator = selection.iterator();
+  private @NotNull PluginEnableDisableAction getEnableDisableAction(@NotNull List<? extends ListPluginComponent> selection) {
+    Iterator<? extends ListPluginComponent> iterator = selection.iterator();
     BooleanSupplier isGloballyEnabledGenerator = () ->
-      myPluginModel.getState(iterator.next().myPlugin) == PluginEnabledState.ENABLED;
+      myPluginModel.getState(iterator.next().getPluginDescriptor()) == PluginEnabledState.ENABLED;
 
     boolean firstDisabled = !isGloballyEnabledGenerator.getAsBoolean();
     while (iterator.hasNext()) {
@@ -835,7 +833,7 @@ public class ListPluginComponent extends JPanel {
   }
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<ListPluginComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action,
-                                                                                                                      @NotNull List<ListPluginComponent> selection) {
+                                                                                                                      @NotNull List<? extends ListPluginComponent> selection) {
     return new SelectionBasedPluginModelAction.EnableDisableAction<>(myPluginModel,
                                                                      action,
                                                                      true,
@@ -843,7 +841,7 @@ public class ListPluginComponent extends JPanel {
                                                                      ListPluginComponent::getPluginDescriptor);
   }
 
-  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<ListPluginComponent> selection) {
+  private @NotNull SelectionBasedPluginModelAction.UninstallAction<ListPluginComponent> createUninstallAction(@NotNull List<? extends ListPluginComponent> selection) {
     return new SelectionBasedPluginModelAction.UninstallAction<>(myPluginModel,
                                                                  true,
                                                                  this,

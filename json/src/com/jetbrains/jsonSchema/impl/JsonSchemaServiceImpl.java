@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.diagnostic.PluginException;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -638,7 +639,7 @@ public class JsonSchemaServiceImpl implements JsonSchemaService, ModificationTra
       }
       List<JsonSchemaFileProvider> providers = getProvidersFromFactories(readyFactories);
       myProviders = providers;
-      if (!notReadyFactories.isEmpty()) {
+      if (!notReadyFactories.isEmpty() && !LightEdit.owns(myProject)) {
         DumbService.getInstance(myProject).runWhenSmart(() -> {
           ApplicationManager.getApplication().executeOnPooledThread(() -> ReadAction.run(() -> {
             if (myProviders == providers) {

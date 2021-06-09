@@ -2,7 +2,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
@@ -45,7 +45,7 @@ public final class IdeaTestUtil {
     final LanguageLevelProjectExtension projectExt = LanguageLevelProjectExtension.getInstance(module.getProject());
 
     final LanguageLevel projectLevel = projectExt.getLanguageLevel();
-    final LanguageLevel moduleLevel = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    final LanguageLevel moduleLevel = LanguageLevelUtil.getCustomLanguageLevel(module);
     try {
       projectExt.setLanguageLevel(level);
       setModuleLanguageLevel(module, level);
@@ -62,7 +62,7 @@ public final class IdeaTestUtil {
   }
 
   public static void setModuleLanguageLevel(@NotNull Module module, @NotNull LanguageLevel level, @NotNull Disposable parentDisposable) {
-    LanguageLevel prev = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    LanguageLevel prev = LanguageLevelUtil.getCustomLanguageLevel(module);
     setModuleLanguageLevel(module, level);
     Disposer.register(parentDisposable, () -> setModuleLanguageLevel(module, prev));
   }

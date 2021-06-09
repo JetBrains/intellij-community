@@ -850,7 +850,6 @@ public final class UIUtil {
   public static int getCheckBoxTextHorizontalOffset(@NotNull JCheckBox cb) {
     // logic copied from javax.swing.plaf.basic.BasicRadioButtonUI.paint
     ButtonUI ui = cb.getUI();
-    String text = cb.getText();
 
     Icon buttonIcon = cb.getIcon();
     if (buttonIcon == null && ui != null) {
@@ -859,26 +858,28 @@ public final class UIUtil {
       }
     }
 
-    Dimension size = new Dimension();
+    return getButtonTextHorizontalOffset(cb, cb.getSize(new Dimension()), buttonIcon);
+  }
+
+  public static int getButtonTextHorizontalOffset(@NotNull AbstractButton button, @NotNull Dimension size, @Nullable Icon buttonIcon) {
+    String text = button.getText();
+
     Rectangle viewRect = new Rectangle();
     Rectangle iconRect = new Rectangle();
     Rectangle textRect = new Rectangle();
 
-    Insets i = cb.getInsets();
+    Insets i = button.getInsets();
 
-    size = cb.getSize(size);
     viewRect.y = i.top;
     viewRect.width = size.width - (i.right + viewRect.x);
     viewRect.height = size.height - (i.bottom + viewRect.y);
-    iconRect.x = iconRect.y = iconRect.width = iconRect.height = 0;
-    textRect.x = textRect.y = textRect.width = textRect.height = 0;
 
     SwingUtilities.layoutCompoundLabel(
-      cb, cb.getFontMetrics(cb.getFont()), text, buttonIcon,
-      cb.getVerticalAlignment(), cb.getHorizontalAlignment(),
-      cb.getVerticalTextPosition(), cb.getHorizontalTextPosition(),
+      button, button.getFontMetrics(button.getFont()), text, buttonIcon,
+      button.getVerticalAlignment(), button.getHorizontalAlignment(),
+      button.getVerticalTextPosition(), button.getHorizontalTextPosition(),
       viewRect, iconRect, textRect,
-      text == null ? 0 : cb.getIconTextGap());
+      text == null ? 0 : button.getIconTextGap());
 
     return textRect.x;
   }
@@ -2132,8 +2133,8 @@ public final class UIUtil {
   }
 
   /**
-   * Please use Application.invokeLater() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
-   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings. For those, use GuiUtils, application.invoke* or TransactionGuard methods.<p/>
+   * Please use Application.invokeLater() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
+   * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings. For those, use ModalityUiUtil, application.invoke* or TransactionGuard methods.<p/>
    *
    * On AWT thread, invoked runnable immediately, otherwise do {@link SwingUtilities#invokeLater(Runnable)} on it.
    */
@@ -2142,7 +2143,7 @@ public final class UIUtil {
   }
 
   /**
-   * Please use Application.invokeAndWait() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
+   * Please use Application.invokeAndWait() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
    * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * Invoke and wait in the event dispatch thread
@@ -2158,7 +2159,7 @@ public final class UIUtil {
   }
 
   /**
-   * Please use Application.invokeAndWait() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
+   * Please use Application.invokeAndWait() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
    * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * Invoke and wait in the event dispatch thread
@@ -2176,7 +2177,7 @@ public final class UIUtil {
   }
 
   /**
-   * Please use Application.invokeAndWait() with a modality state (or GuiUtils, or TransactionGuard methods), unless you work with Swings internals
+   * Please use Application.invokeAndWait() with a modality state (or ModalityUiUtil, or TransactionGuard methods), unless you work with Swings internals
    * and 'runnable' deals with Swings components only and doesn't access any PSI, VirtualFiles, project/module model or other project settings.<p/>
    *
    * Invoke and wait in the event dispatch thread

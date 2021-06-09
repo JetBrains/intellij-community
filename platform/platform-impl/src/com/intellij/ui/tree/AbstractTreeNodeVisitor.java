@@ -1,8 +1,9 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.SlowOperations;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,7 +95,7 @@ public abstract class AbstractTreeNodeVisitor<T> implements TreeVisitor {
    * @return {@code true} if the specified node represents the given element
    */
   protected boolean matches(@NotNull AbstractTreeNode node, @NotNull T element) {
-    return node.canRepresent(element);
+    return SlowOperations.allowSlowOperations(() -> node.canRepresent(element));
   }
 
   /**

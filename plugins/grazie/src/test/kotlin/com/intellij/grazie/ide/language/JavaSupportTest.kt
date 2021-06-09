@@ -2,12 +2,13 @@
 package com.intellij.grazie.ide.language
 
 import com.intellij.grazie.GrazieTestBase
+import com.intellij.testFramework.LightProjectDescriptor
+import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 
 class JavaSupportTest : GrazieTestBase() {
-  override fun runHighlightTestForFile(file: String) {
-    myFixture.configureByFile(file)
-    myFixture.checkHighlighting(true, false, false, true)
+  override fun getProjectDescriptor(): LightProjectDescriptor {
+    return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
   }
 
   fun `test spellcheck in constructs`() {

@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffContentFactoryEx;
-import com.intellij.diff.chains.DiffRequestProducer;
 import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.impl.CacheDiffRequestProcessor;
@@ -62,6 +61,7 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.TreeTraversal;
@@ -288,7 +288,7 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private void runAfterUpdate(@NotNull Runnable postUpdateRunnable) {
-    GuiUtils.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(() -> {
       myUpdateQueue.cancelAllUpdates();
       myPostUpdateEdtActivity.add(postUpdateRunnable);
       updateTreeModel();
@@ -1026,18 +1026,19 @@ public class ShelvedChangesViewManager implements Disposable {
     private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
       @NotNull
       @Override
-      public List<? extends DiffRequestProducer> getActualProducers() {
+      public List<? extends PresentableChange> getChanges() {
         DataContext dc = DataManager.getInstance().getDataContext(myTree);
-        ListSelection<? extends DiffRequestProducer> diffProducers = DiffShelvedChangesActionProvider.createDiffProducers(dc, false);
+        ListSelection<? extends PresentableChange> diffProducers = DiffShelvedChangesActionProvider.createDiffProducers(dc, false);
         if (diffProducers == null) return emptyList();
 
         return diffProducers.getList();
       }
 
       @Override
-      public void selectFilePath(@NotNull FilePath filePath) {
+      public void select(@NotNull PresentableChange presentableChange) {
         ShelvedChangeList selectedList = getOnlyItem(getSelectedLists(myTree, it -> true));
         if (selectedList == null) return;
+        FilePath filePath = presentableChange.getFilePath();
 
         ChangesBrowserNode<?> changeListNode = (ChangesBrowserNode<?>)TreeUtil.findNodeWithObject(myTree.getRoot(), selectedList);
         TreeNode targetNode = TreeUtil.treeNodeTraverser(changeListNode).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
@@ -1060,8 +1061,8 @@ public class ShelvedChangesViewManager implements Disposable {
 
       @Nullable
       @Override
-      public FilePath getSelectedFilePath() {
-        return myCurrentShelvedElement != null ? ChangesUtil.getFilePath(myCurrentShelvedElement.getChange(myProject)) : null;
+      public PresentableChange getSelectedChange() {
+        return myCurrentShelvedElement != null ? myCurrentShelvedElement : null;
       }
     }
 

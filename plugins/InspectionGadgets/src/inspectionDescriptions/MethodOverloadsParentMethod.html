@@ -1,9 +1,12 @@
 <html>
 <body>
-Reports instance methods having the same name and the same number of parameters with the same or compatible types as
-a method in a superclass. In this case, the child method overloads the parent method, instead of overriding it.
-If it is unintended, it may result in latent bugs.
-<p>Example:</p>
+Reports instance methods having the same name and the same number of parameters as a method in a superclass,
+and where at least one of the parameters is not of the same type but of a compatible type.
+<p>
+  In this case, the method in a subclass will be overloading the method from the superclass
+  instead of overriding it. If it is unintended, it may result in latent bugs.
+</p>
+<p><b>Example:</b></p>
 <pre><code>
   public class Foo {
     void foo(int x) {}
@@ -16,7 +19,7 @@ If it is unintended, it may result in latent bugs.
 </code></pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to report cases where parameter types are not compatible.
+  Use the option to choose whether the inspection should also report cases where parameter types are not compatible.
 <p>
 </body>
 </html>

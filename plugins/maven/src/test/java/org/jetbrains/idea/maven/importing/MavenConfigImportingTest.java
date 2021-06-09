@@ -58,11 +58,11 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
 
   @Test
   public void testResolveConfigPropertiesInModules() throws IOException {
+    assumeVersionMoreThan("3.3.1");
     createProjectSubFile(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH, "-Dver=1 -DmoduleName=m1");
 
     createModulePom("m1", "<artifactId>${moduleName}</artifactId>\n" +
                           "<version>${ver}</version>\n" +
-
                           "<parent>\n" +
                           "  <groupId>test</groupId>\n" +
                           "  <artifactId>project</artifactId>\n" +
@@ -72,6 +72,7 @@ public class MavenConfigImportingTest extends MavenDomTestCase {
     importProject("<groupId>test</groupId>\n" +
                   "<artifactId>project</artifactId>\n" +
                   "<version>${ver}</version>\n" +
+                  "<packaging>pom</packaging>\n" +
 
                   "<modules>\n" +
                   "  <module>${moduleName}</module>" +

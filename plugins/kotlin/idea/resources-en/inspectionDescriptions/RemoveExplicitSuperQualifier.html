@@ -10,26 +10,47 @@ Reports <code>super</code> member calls with redundant supertype qualification.
 <p>Examples:</p>
 
 <pre><code>
-open class B {
-   open fun foo(){}
-}
+  open class B {
+      open fun foo(){}
+  }
 
-class A : B() {
-   override fun foo() {
-      super&lt;B&gt;.foo() // &lt;== redundant since 'B' is the single supertype, can be replaced with 'super.foo()'
-   }
-}
+  class A : B() {
+      override fun foo() {
+         super&lt;B&gt;.foo() // &lt;== redundant since 'B' is the only supertype
+      }
+  }
 
-interface I {
-    fun foo() {}
-}
+  interface I {
+      fun foo() {}
+  }
 
-class C : B(), I {
-    override fun foo() {
-        super&lt;B&gt;.foo() // &lt;== here &lt;B&gt; qualifier is needed to denote 'B.foo()' from 'I.foo()'
-    }
-}
+  class C : B(), I {
+      override fun foo() {
+          super&lt;B&gt;.foo() // &lt;== here &lt;B&gt; qualifier is needed to denote 'B.foo()' from 'I.foo()'
+      }
+  }
 </code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  open class B {
+      open fun foo(){}
+  }
 
+  class A : B() {
+      override fun foo() {
+         super.foo() // &lt;== Updated
+      }
+  }
+
+  interface I {
+      fun foo() {}
+  }
+
+  class C : B(), I {
+      override fun foo() {
+          super&lt;B&gt;.foo()
+      }
+  }
+</code></pre>
 </body>
 </html>

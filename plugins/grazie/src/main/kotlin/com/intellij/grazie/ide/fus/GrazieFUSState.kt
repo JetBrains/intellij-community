@@ -8,11 +8,10 @@ import com.intellij.internal.statistic.beans.newMetric
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.internal.statistic.utils.getPluginInfo
-import com.intellij.lang.Language
 
 internal class GrazieFUSState : ApplicationUsagesCollector() {
   override fun getGroupId(): String = "grazie.state"
-  override fun getVersion(): Int = 1
+  override fun getVersion(): Int = 2
 
   override fun getMetrics(): Set<MetricEvent> {
     val metrics = HashSet<MetricEvent>()
@@ -24,20 +23,18 @@ internal class GrazieFUSState : ApplicationUsagesCollector() {
     }
 
     val allRules by lazy { allRules().values.flatten().groupBy { it.globalId } }
-    fun mayLogRule(id: String) = allRules[id].orEmpty().all { getPluginInfo(it.javaClass).isSafeToReport() }
-
-    for (id in state.userEnabledRules.filter { mayLogRule(it) }) {
-      metrics.add(newMetric("rule", FeatureUsageData().addData("id", id).addData("enabled", true)))
+    fun logRule(id: String, enabled: Boolean) {
+      val rule = allRules[id]?.firstOrNull() ?: return
+      metrics.add(newMetric("rule", FeatureUsageData()
+        .addPluginInfo(getPluginInfo(rule.javaClass))
+        .addData("id", id)
+        .addData("enabled", enabled)))
     }
-    for (id in state.userDisabledRules.filter { mayLogRule(it) }) {
-      metrics.add(newMetric("rule", FeatureUsageData().addData("id", id).addData("enabled", false)))
-    }
 
+    state.userEnabledRules.forEach { logRule(it, enabled = true) }
+    state.userDisabledRules.forEach { logRule(it, enabled = false) }
 
     for (id in state.checkingContext.disabledLanguages) {
-      val language = Language.findLanguageByID(id) ?: continue
-      if (!getPluginInfo(language.javaClass).isSafeToReport()) continue
-
       metrics.add(newMetric("checkingContext", FeatureUsageData().addData("disabled_language", id)))
     }
 

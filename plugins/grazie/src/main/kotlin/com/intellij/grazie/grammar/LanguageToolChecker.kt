@@ -6,10 +6,7 @@ import com.intellij.grazie.GraziePlugin
 import com.intellij.grazie.detection.LangDetector
 import com.intellij.grazie.jlanguage.Lang
 import com.intellij.grazie.jlanguage.LangTool
-import com.intellij.grazie.text.Rule
-import com.intellij.grazie.text.TextChecker
-import com.intellij.grazie.text.TextContent
-import com.intellij.grazie.text.TextProblem
+import com.intellij.grazie.text.*
 import com.intellij.grazie.utils.*
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -30,15 +27,11 @@ import java.util.*
 
 @VisibleForTesting
 class LanguageToolChecker : TextChecker() {
-  override fun getRules(locale: Locale): Collection<Rule?> {
+  override fun getRules(locale: Locale): Collection<Rule> {
     val language = Languages.getLanguageForLocale(locale)
-    val lang = GrazieConfig.get().enabledLanguages.find { language == it.jLanguage } ?: return emptyList()
-    val activeIds = defaultEnabledIds(lang)
-    return defaultTool(lang).allRules.asSequence()
-      .distinctBy { it.id }
-      .filter { r -> !r.isDictionaryBasedSpellingRule }
-      .map { toGrazieRule(it, activeIds) }
-      .toList()
+    val state = GrazieConfig.get();
+    val lang = state.enabledLanguages.find { language == it.jLanguage } ?: return emptyList()
+    return getRules(lang, state)
   }
 
   override fun check(extracted: TextContent): @NotNull List<TextProblem> {
@@ -47,7 +40,7 @@ class LanguageToolChecker : TextChecker() {
   }
 
   class Problem(private val match: RuleMatch, lang: Lang, text: TextContent)
-    : TextProblem(toGrazieRule(match.rule, defaultEnabledIds(lang)), text, TextRange(match.fromPos, match.toPos)) {
+    : TextProblem(LanguageToolRule(lang, match.rule), text, TextRange(match.fromPos, match.toPos)) {
 
     override fun getShortMessage(): String =
       match.shortMessage.trimToNull() ?: match.rule.description.trimToNull() ?: match.rule.category.name
@@ -56,18 +49,26 @@ class LanguageToolChecker : TextChecker() {
     override fun getReplacementRange() = highlightRange
     override fun getCorrections(): List<String> = match.suggestedReplacements
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
+
+    override fun fitsGroup(group: RuleGroup): Boolean {
+      return super.fitsGroup(group) || group.rules.any { id -> isAbstractCategory(id) && match.rule.id == id }
+    }
+
+    private fun isAbstractCategory(id: String) =
+      id == RuleGroup.SENTENCE_END_PUNCTUATION || id == RuleGroup.SENTENCE_START_CASE || id == RuleGroup.UNLIKELY_OPENING_PUNCTUATION
   }
 
   companion object {
     private val logger = LoggerFactory.getLogger(LanguageToolChecker::class.java)
     private val interner = Interner.createWeakInterner<String>()
 
-    private fun defaultEnabledIds(lang: Lang) = defaultTool(lang).allActiveRules.map { it.id }.toSet()
-
-    private fun defaultTool(lang: Lang) = LangTool.getTool(lang, GrazieConfig.State())
-
-    private fun toGrazieRule(rule: org.languagetool.rules.Rule, activeIds: Set<String>) =
-      LanguageToolRule(rule, activeIds.contains(rule.id))
+    internal fun getRules(lang: Lang, state: GrazieConfig.State = GrazieConfig.get()): List<LanguageToolRule> {
+      return LangTool.getTool(lang, state).allRules.asSequence()
+        .distinctBy { it.id }
+        .filter { r -> !r.isDictionaryBasedSpellingRule }
+        .map { LanguageToolRule(lang, it) }
+        .toList()
+    }
 
     @VisibleForTesting
     fun checkText(text: TextContent): List<Problem> {

@@ -1,24 +1,23 @@
 <html>
 <body>
-Reports occurrences where usages of "magic" constants are preferred
-but other expressions are used instead.
-<p>Example:</p>
+Reports expressions that can be replaced with "magic" constants.
+<p>Example 1:</p>
 <pre>
-  // Bare literal "2" used, warning:
+  // Bare literal "2" is used, warning:
   Font font = new Font("Arial", 2)
 </pre>
-<p>instead of</p>
+<p>Example 2:</p>
 <pre>
-  // Predefined constant used, good:
+  // Predefined constant is used, good:
   Font font = new Font("Arial", Font.ITALIC)
 </pre>
 <p>
-  When possible, a quick-fix is suggested to use the appropriate predefined constant.
+  When possible, the quick-fix inserts an appropriate predefined constant.
 </p>
 <!-- tooltip end -->
 <p>
   The behavior of this inspection is controlled by <code>org.intellij.lang.annotations.MagicConstant</code> annotation.
-  Some standard Java library methods are pre-annotated but you can use this annotation in your code as well. 
+  Some standard Java library methods are pre-annotated, but you can use this annotation in your code as well.
 </p>
 </body>
 </html>

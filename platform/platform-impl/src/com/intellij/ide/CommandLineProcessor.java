@@ -76,8 +76,8 @@ public final class CommandLineProcessor {
 
     VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(FileUtilRt.toSystemIndependentName(ioFile.toString()));
     if (file == null) {
-      if (LightEditUtil.isForceOpenInLightEditMode()) {
-        Project lightEditProject = LightEditUtil.openFile(ioFile);
+      if (LightEditUtil.isLightEditEnabled()) {
+        Project lightEditProject = LightEditUtil.openFile(ioFile, true);
         if (lightEditProject != null) {
           Future<CliResult> future = shouldWait ? CommandLineWaitingManager.getInstance().addHookForPath(ioFile) : OK_FUTURE;
           return new CommandLineProcessorResult(lightEditProject, future);

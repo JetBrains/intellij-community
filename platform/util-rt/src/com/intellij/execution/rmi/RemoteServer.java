@@ -168,6 +168,7 @@ public class RemoteServer {
   }
 
   private static void setupSSL() {
+    setupDisabledAlgorithms();
     boolean caCert = System.getProperty(SslUtil.SSL_CA_CERT_PATH) != null;
     boolean clientCert = System.getProperty(SslUtil.SSL_CLIENT_CERT_PATH) != null;
     boolean clientKey = System.getProperty(SslUtil.SSL_CLIENT_KEY_PATH) != null;
@@ -184,6 +185,15 @@ public class RemoteServer {
     }
   }
 
+  private static void setupDisabledAlgorithms() {
+    passSecurityProperty("jdk.certpath.disabledAlgorithms");
+    passSecurityProperty("jdk.tls.disabledAlgorithms");
+  }
+
+  private static void passSecurityProperty(String propertyName) {
+    String value = System.getProperty(propertyName);
+    if (value != null) Security.setProperty(propertyName, value);
+  }
 
   private static String getListenAddress(boolean localHostOnly) {
     if (localHostOnly) {

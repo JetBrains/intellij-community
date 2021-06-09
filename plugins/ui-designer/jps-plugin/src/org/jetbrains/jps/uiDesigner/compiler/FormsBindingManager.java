@@ -19,6 +19,8 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import org.jetbrains.jps.incremental.java.FormsParsing;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -128,14 +130,21 @@ public final class FormsBindingManager extends FormsBuilder {
         final File form = entry.getKey();
         final ModuleBuildTarget target = entry.getValue();
         final Collection<File> sources = findBoundSourceCandidates(context, target, form);
+        boolean isFormBound = false;
         for (File boundSource : sources) {
           if (!excludes.isExcluded(boundSource)) {
+            isFormBound = true;
             addBinding(boundSource, form, srcToForms);
             holderBuilder.markDirtyFile(target, boundSource);
             context.getScope().markIndirectlyAffected(target, boundSource);
             filesToCompile.put(boundSource, target);
             exitCode = ExitCode.OK;
           }
+        }
+        if (!isFormBound) {
+          context.processMessage(new CompilerMessage(
+            getPresentableName(), BuildMessage.Kind.ERROR, FormBundle.message("class.to.bind.not.found"), form.getAbsolutePath()
+          ));
         }
       }
 

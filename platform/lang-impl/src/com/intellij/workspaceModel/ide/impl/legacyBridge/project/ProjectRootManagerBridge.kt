@@ -39,28 +39,30 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   private val jdkChangeListener = JdkChangeListener()
 
   init {
-    val bus = project.messageBus.connect(this)
+    if (!project.isDefault) {
+      val bus = project.messageBus.connect(this)
 
-    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
-      override fun changed(event: VersionedStorageChange) {
-        if (myProject.isDisposed) return
+      WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(bus, object : WorkspaceModelChangeListener {
+        override fun changed(event: VersionedStorageChange) {
+          if (myProject.isDisposed) return
 
-        // Roots changed event should be fired for the global libraries linked with module
-        val moduleChanges = event.getChanges(ModuleEntity::class.java)
-        for (change in moduleChanges) {
-          when (change) {
-            is EntityChange.Added -> addTrackedLibraryAndJdkFromEntity(change.entity)
-            is EntityChange.Removed -> removeTrackedLibrariesAndJdkFromEntity(change.entity)
-            is EntityChange.Replaced -> {
-              removeTrackedLibrariesAndJdkFromEntity(change.oldEntity)
-              addTrackedLibraryAndJdkFromEntity(change.newEntity)
+          // Roots changed event should be fired for the global libraries linked with module
+          val moduleChanges = event.getChanges(ModuleEntity::class.java)
+          for (change in moduleChanges) {
+            when (change) {
+              is EntityChange.Added -> addTrackedLibraryAndJdkFromEntity(change.entity)
+              is EntityChange.Removed -> removeTrackedLibrariesAndJdkFromEntity(change.entity)
+              is EntityChange.Replaced -> {
+                removeTrackedLibrariesAndJdkFromEntity(change.oldEntity)
+                addTrackedLibraryAndJdkFromEntity(change.newEntity)
+              }
             }
           }
         }
-      }
-    })
+      })
 
-    bus.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
+      bus.subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, jdkChangeListener)
+    }
   }
 
   override fun getActionToRunWhenProjectJdkChanges(): Runnable {
@@ -87,6 +89,8 @@ class ProjectRootManagerBridge(project: Project) : ProjectRootManagerComponent(p
   fun isFiringEvent(): Boolean = isFiringEvent
 
   private fun unsubscribeListeners() {
+    if (project.isDefault) return
+    
     val libraryTablesRegistrar = LibraryTablesRegistrar.getInstance()
     val globalLibraryTable = libraryTablesRegistrar.libraryTable
     globalLibraryTableListener.getLibraryLevels().forEach { libraryLevel ->

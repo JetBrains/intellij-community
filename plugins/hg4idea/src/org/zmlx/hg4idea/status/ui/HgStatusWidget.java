@@ -4,6 +4,7 @@ package org.zmlx.hg4idea.status.ui;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
+import com.intellij.ide.DataManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
@@ -12,7 +13,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import java.util.Objects;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,6 +24,8 @@ import org.zmlx.hg4idea.branch.HgBranchPopup;
 import org.zmlx.hg4idea.repo.HgRepository;
 import org.zmlx.hg4idea.repo.HgRepositoryManager;
 import org.zmlx.hg4idea.util.HgUtil;
+
+import java.util.Objects;
 
 /**
  * Widget to display basic hg status in the status bar.
@@ -74,7 +76,8 @@ public class HgStatusWidget extends DvcsStatusWidget<HgRepository> {
   @NotNull
   @Override
   protected ListPopup getPopup(@NotNull Project project, @NotNull HgRepository repository) {
-    return HgBranchPopup.getInstance(project, repository).asListPopup();
+    return HgBranchPopup.getInstance(project, repository, DataManager.getInstance().getDataContext(myStatusBar.getComponent()))
+      .asListPopup();
   }
 
   @Override

@@ -15,6 +15,7 @@
  */
 package org.zmlx.hg4idea.branch;
 
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,9 +27,12 @@ import java.util.Collection;
 public class HgBranchesAction extends HgAbstractGlobalSingleRepoAction {
 
   @Override
-  protected void execute(@NotNull Project project, @NotNull Collection<HgRepository> repositories, @Nullable HgRepository selectedRepo) {
+  protected void execute(@NotNull Project project,
+                         @NotNull Collection<HgRepository> repositories,
+                         @Nullable HgRepository selectedRepo,
+                         @NotNull DataContext dataContext) {
     if (selectedRepo != null) {
-      HgBranchPopup.getInstance(project, selectedRepo).asListPopup().showInFocusCenter();
+      HgBranchPopup.getInstance(project, selectedRepo, dataContext).asListPopup().showInFocusCenter();
     }
   }
 }

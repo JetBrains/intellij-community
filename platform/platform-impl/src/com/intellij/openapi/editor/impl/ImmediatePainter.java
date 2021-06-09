@@ -6,16 +6,15 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.impl.view.FontLayoutService;
 import com.intellij.openapi.editor.impl.view.IterationState;
-import com.intellij.openapi.editor.markup.EffectType;
-import com.intellij.openapi.editor.markup.HighlighterLayer;
-import com.intellij.openapi.editor.markup.HighlighterTargetArea;
-import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -105,7 +104,8 @@ class ImmediatePainter {
            !isInVirtualSpace(editor, caret) &&
            !isInsertion(document, caret.getOffset()) &&
            !caret.isAtRtlLocation() &&
-           !caret.isAtBidiRunBoundary();
+           !caret.isAtBidiRunBoundary() &&
+           noBorderEffectPainted(editor, caret);
   }
 
   private static boolean isInVirtualSpace(final Editor editor, final Caret caret) {
@@ -114,6 +114,16 @@ class ImmediatePainter {
 
   private static boolean isInsertion(final Document document, final int offset) {
     return offset < document.getTextLength() && document.getCharsSequence().charAt(offset) != '\n';
+  }
+
+  private static boolean noBorderEffectPainted(EditorEx editor, Caret caret) {
+    int offset = caret.getOffset();
+    EditorColorsScheme colorsScheme = editor.getColorsScheme();
+    return editor.getMarkupModel().processRangeHighlightersOverlappingWith(offset, offset, h -> {
+      TextAttributes attrs = h.getTextAttributes(colorsScheme);
+      return attrs == null || !attrs.hasEffects() ||
+             TextAttributesEffectsBuilder.create(attrs).getEffectDescriptor(TextAttributesEffectsBuilder.EffectSlot.FRAME_SLOT) == null;
+    });
   }
 
   private void paintImmediately(final Graphics2D g, final int offset, final char c2) {

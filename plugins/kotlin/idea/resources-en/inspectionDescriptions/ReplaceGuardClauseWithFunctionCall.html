@@ -4,9 +4,15 @@ Reports guard clause that can be replaced with kotlin's function call.
 <p>"Replace with ..." quick-fix can be used to amend the code snippet.</p>
 <p>Example:</p>
 <pre><code>
-fun test(foo: Int?) {
-    if (foo == null) throw IllegalArgumentException("foo") // 'checkNotNull(foo)' can be used instead
-}
+  fun test(foo: Int?) {
+      if (foo == null) throw IllegalArgumentException("foo") // replaceable clause
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun test(foo: Int?) {
+      checkNotNull(foo)
+  }
 </code></pre>
 </body>
 </html>

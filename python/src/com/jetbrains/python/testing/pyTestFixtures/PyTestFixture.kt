@@ -74,8 +74,6 @@ private fun createFixture(decorator: PyDecorator): PyTestFixture? {
   }
 }
 
-private const val pyTestId = PyTestFactory.id
-
 /**
  * Gets list of fixtures suitable for certain function.
  *
@@ -114,6 +112,6 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
 }
 
 internal fun isPyTestEnabled(module: Module) =
-  TestRunnerService.getInstance(module).projectConfiguration == pyTestId
+  TestRunnerService.getInstance(module).projectConfiguration == PyTestFactory.id
 
 

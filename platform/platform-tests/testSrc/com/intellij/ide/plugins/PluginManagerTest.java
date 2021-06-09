@@ -195,7 +195,7 @@ public class PluginManagerTest {
     PluginManagerCore.getAndClearPluginLoadingErrors();
     PluginManagerState loadPluginResult = loadAndInitializeDescriptors(testDataName + ".xml", isBundled);
     StringBuilder text = new StringBuilder();
-    for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.pluginSet.loadedPlugins) {
+    for (IdeaPluginDescriptorImpl descriptor : loadPluginResult.pluginSet.enabledPlugins) {
       text.append(descriptor.isEnabled() ? "+ " : "  ").append(descriptor.getPluginId().getIdString()).append('\n');
     }
     text.append("\n\n");
@@ -290,6 +290,7 @@ public class PluginManagerTest {
       IdeaPluginDescriptorImpl descriptor = PluginDescriptorTestKt.createFromDescriptor(
         pluginPath, isBundled, elementAsBytes(element), parentContext, pathResolver, new LocalFsDataLoader(pluginPath));
       parentContext.result.add(descriptor,  /* overrideUseIfCompatible = */ false);
+      descriptor.jarFiles = Collections.emptyList();
     }
     parentContext.close();
     parentContext.result.finishLoading();

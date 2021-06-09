@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging.jpackage;
 
 import com.intellij.icons.AllIcons;
@@ -36,7 +36,7 @@ import java.util.Set;
 public class JPackageArtifactType extends ArtifactType {
 
   private JPackageArtifactType() {
-    super("jpackage", () -> "Platform specific package");
+    super("jpackage", () -> JavaFXBundle.message("platform.specific.package"));
   }
   @Override
   public @NotNull Icon getIcon() {
@@ -60,7 +60,7 @@ public class JPackageArtifactType extends ArtifactType {
     final Project project = manager.getContext().getProject();
     final Sdk sdk = getJPackageCompatibleSdk(artifact, project);
     if (sdk == null) {
-      manager.registerError("Needs at least JDK 14 containing the jpackage tool", "no-jpackage");
+      manager.registerError(JavaFXBundle.message("needs.at.least.jdk.14.containing.the.jpackage.tool"), "no-jpackage");
     }
   }
 

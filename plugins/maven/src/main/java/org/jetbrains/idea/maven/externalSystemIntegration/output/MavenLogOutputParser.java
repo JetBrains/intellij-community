@@ -46,7 +46,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
     myRegisteredEvents = registeredEvents;
     myTaskId = taskId;
     myParsingContext = new MavenParsingContext(project, taskId, targetFileMapper);
-    mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext);
+    mavenSpyOutputParser = new MavenSpyOutputParser(myParsingContext, MavenSpyLoggedEventParser.EP_NAME.getExtensionList());
   }
 
   public synchronized void finish(Consumer<? super BuildEvent> messageConsumer) {
@@ -94,7 +94,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
           return true;
         }
       }
-      if (checkComplete(messageConsumer, logLine, mavenLogReader)) return true;
+      if (checkComplete(messageConsumer, logLine)) return true;
     }
     return false;
   }
@@ -132,8 +132,7 @@ public class MavenLogOutputParser implements BuildOutputParser {
   }
 
   private synchronized boolean checkComplete(Consumer<? super BuildEvent> messageConsumer,
-                                MavenLogEntryReader.MavenLogEntry logLine,
-                                MavenLogEntryReader mavenLogReader) {
+                                             MavenLogEntryReader.MavenLogEntry logLine) {
     if (logLine.myLine.equals("BUILD FAILURE")) {
       completeParsers(messageConsumer);
       messageConsumer

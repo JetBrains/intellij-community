@@ -54,7 +54,7 @@ public final class MacDockDelegate implements SystemDock.Delegate {
     recentProjectsMenu.removeAll();
 
     for (AnAction action : recentProjectActions) {
-      MenuItem menuItem = new MenuItem(((ReopenProjectAction)action).getProjectName());
+      MenuItem menuItem = new MenuItem(((ReopenProjectAction)action).getProjectNameToDisplay());
       menuItem.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {

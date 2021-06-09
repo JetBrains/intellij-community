@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.completion.ml.ngram
 
+import com.intellij.ide.lightEdit.LightEdit
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
@@ -15,7 +16,7 @@ class NGramFileListener(private val project: Project) : FileEditorManagerListene
   override fun beforeFileOpened(source: FileEditorManager, file: VirtualFile) {
     val psiFile = PsiManager.getInstance(project).findFile(file) ?: return
     val language = psiFile.language
-    if (psiFile.fileType.isBinary || !NGram.isSupported(language)) return
+    if (psiFile.fileType.isBinary || !NGram.isSupported(language) || LightEdit.owns(project)) return
     val filePointer = SmartPointerManager.createPointer(psiFile)
     ReadAction.nonBlocking(Runnable {
       NGramModelRunnerManager.getInstance(project).processFile(filePointer, language)

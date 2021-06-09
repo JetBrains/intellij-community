@@ -334,12 +334,11 @@ PsiJavaFile:AnonymousErrors1.java
                     PsiWhiteSpace(' ')
                     PsiKeyword:instanceof('instanceof')
                     PsiWhiteSpace(' ')
-                    PsiTypeTestPattern
-                      PsiTypeElement:Integer
-                        PsiJavaCodeReferenceElement:Integer
-                          PsiIdentifier:Integer('Integer')
-                          PsiReferenceParameterList
-                            <empty list>
+                    PsiTypeElement:Integer
+                      PsiJavaCodeReferenceElement:Integer
+                        PsiIdentifier:Integer('Integer')
+                        PsiReferenceParameterList
+                          <empty list>
                   PsiWhiteSpace(' ')
                   PsiJavaToken:QUEST('?')
                   PsiWhiteSpace(' ')

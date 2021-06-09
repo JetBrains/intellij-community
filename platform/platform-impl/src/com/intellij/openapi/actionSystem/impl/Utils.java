@@ -11,15 +11,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AnimatedIcon;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ExceptionUtil;
@@ -149,7 +152,7 @@ public final class Utils {
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = updater.expandActionGroupAsync(group, group instanceof CompactActionGroup);
       if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
-      try (AccessToken ignore = cancelOnUserActivityInside(promise, context.getData(PlatformDataKeys.CONTEXT_COMPONENT))) {
+      try (AccessToken ignore = cancelOnUserActivityInside(promise)) {
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), () -> {
           if (queue0 != null) {
             Runnable runnable = queue0.poll(1, TimeUnit.MILLISECONDS);
@@ -183,13 +186,11 @@ public final class Utils {
     return list;
   }
 
-  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise,
-                                                                 @Nullable Component contextComponent) {
+  private static @NotNull AccessToken cancelOnUserActivityInside(@NotNull CancellablePromise<List<AnAction>> promise) {
+    Component focusOwner = IdeFocusManager.getGlobalInstance().getFocusOwner();
     return ProhibitAWTEvents.startFiltered("expandActionGroup", event -> {
-      if (event instanceof FocusEvent && !((FocusEvent)event).isTemporary() &&
-          (event.getID() == FocusEvent.FOCUS_GAINED
-           ? ((FocusEvent)event).getComponent()
-           : ((FocusEvent)event).getOppositeComponent()) != contextComponent ||
+      if (event instanceof FocusEvent && !((FocusEvent)event).isTemporary() && event.getID() == FocusEvent.FOCUS_GAINED &&
+          focusOwner != null && !UIUtil.isAncestor(focusOwner, ((FocusEvent)event).getComponent()) ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
         promise.cancel();
@@ -202,7 +203,7 @@ public final class Utils {
                                                              @NotNull ActionGroup group,
                                                              boolean hideDisabled,
                                                              @Nullable Consumer<String> missedKeys) {
-    int maxTime = Registry.intValue("actionSystem.update.actions.async.fast.timeout.ms", 20);
+    int maxTime = Registry.intValue("actionSystem.update.actions.async.fast-track.timeout.ms", 20);
     if (maxTime < 1) return null;
     BlockingQueue<Runnable> queue = new LinkedBlockingQueue<>();
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
@@ -239,8 +240,12 @@ public final class Utils {
   static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull DataContext context, @NotNull String place) {
     JRootPane rootPane = point == null ? null : UIUtil.getRootPane(point.getComponent());
     JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
-    if (glassPane == null || !isAsyncDataContext(context)) return () -> {};
+    if (glassPane == null || !isAsyncDataContext(context)) return EmptyRunnable.getInstance();
     Component comp = point.getOriginalComponent();
+    if (ActionPlaces.EDITOR_GUTTER_POPUP.equals(place) && comp instanceof EditorGutterComponentEx &&
+        ((EditorGutterComponentEx)comp).getGutterRenderer(point.getOriginalPoint()) != null) {
+      return EmptyRunnable.getInstance();
+    }
     boolean isMenuItem = comp instanceof ActionMenu;
     JLabel icon = new JLabel(isMenuItem ? AnimatedIcon.Default.INSTANCE : AnimatedIcon.Big.INSTANCE);
     Dimension size = icon.getPreferredSize();
@@ -258,7 +263,7 @@ public final class Utils {
     EdtScheduledExecutorService.getInstance().schedule(() -> {
       if (!icon.isVisible()) return;
       glassPane.add(icon);
-    }, 500, TimeUnit.MILLISECONDS);
+    }, Registry.intValue("actionSystem.popup.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
     return () -> {
       if (icon.getParent() != null) glassPane.remove(icon);
       else icon.setVisible(false);
@@ -283,7 +288,7 @@ public final class Utils {
       final AnAction action = list.get(i);
       Presentation presentation = presentationFactory.getPresentation(action);
       if (!(action instanceof Separator) && presentation.isVisible() && StringUtil.isEmpty(presentation.getText())) {
-        String message = "Skipping empty menu item for action " + action + " of " + action.getClass();
+        String message = "Skipping empty menu item for action '" + action + "' (" + action.getClass()+")";
         if (action.getTemplatePresentation().getText() == null) {
           message += ". Please specify some default action text in plugin.xml or action constructor";
         }
@@ -534,5 +539,9 @@ public final class Utils {
       result[0] = supplier.getAsBoolean();
     });
     return result[0];
+  }
+
+  public static boolean isFrozenDataContext(DataContext context) {
+    return context instanceof PreCachedDataContext && ((PreCachedDataContext)context).isFrozenDataContext();
   }
 }

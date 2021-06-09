@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.stubindex
 
+import com.intellij.psi.StubBasedPsiElement
 import com.intellij.psi.stubs.IndexSink
 import com.intellij.psi.stubs.NamedStub
 import com.intellij.psi.tree.TokenSet
@@ -117,41 +118,23 @@ fun indexInternals(stub: KotlinCallableStubBase<*>, sink: IndexSink) {
     }
 }
 
-private val CONSTANT_EXPRESSIONS_TYPES = TokenSet.create(
-    KtStubElementTypes.NULL,
-    KtStubElementTypes.BOOLEAN_CONSTANT,
-    KtStubElementTypes.FLOAT_CONSTANT,
-    KtStubElementTypes.CHARACTER_CONSTANT,
-    KtStubElementTypes.INTEGER_CONSTANT,
-    KtStubElementTypes.REFERENCE_EXPRESSION,
-    KtStubElementTypes.DOT_QUALIFIED_EXPRESSION,
-    KtStubElementTypes.STRING_TEMPLATE
-)
+private val STRING_TEMPLATE_EMPTY_ARRAY = emptyArray<KtStringTemplateExpression>()
+private val STRING_TEMPLATE_TYPES = TokenSet.create(KtStubElementTypes.STRING_TEMPLATE)
 
-private fun KtValueArgument.argumentExpression(): KtExpression? {
-    stub?.let {
-        val constantExpressions = it.getChildrenByType(CONSTANT_EXPRESSIONS_TYPES, KtExpression.EMPTY_ARRAY)
-        return if (constantExpressions.isNotEmpty()) {
-            constantExpressions[0]
-        } else null
+private fun ValueArgument.stringTemplateExpression(): KtStringTemplateExpression? {
+    if (this is StubBasedPsiElement<*>) {
+        stub?.let {
+            val constantExpressions = it.getChildrenByType(STRING_TEMPLATE_TYPES, STRING_TEMPLATE_EMPTY_ARRAY)
+            return constantExpressions.firstOrNull()
+        }
     }
-
-    var cur: com.intellij.psi.PsiElement? = firstChild
-    while (cur != null) {
-        cur.safeAs<KtExpression>()?.let { return it }
-        cur = cur.nextSibling
-    }
-    return null
+    return getArgumentExpression() as? KtStringTemplateExpression
 }
 
 // TODO: it has to be dropped as soon as JvmFileClassUtil.getLiteralStringFromAnnotation becomes public in compiler
 private fun JvmFileClassUtil.getLiteralStringFromAnnotation(annotation: KtAnnotationEntry): String? {
-    val argumentExpression = annotation.valueArguments.firstOrNull()?.let {
-        if (it is KtValueArgument) it.argumentExpression() else it.getArgumentExpression()
-    } ?: return null
-    val stringTemplate = argumentExpression as? KtStringTemplateExpression ?: return null
-    val singleEntry = stringTemplate.entries.singleOrNull() as? KtLiteralStringTemplateEntry ?: return null
-    return singleEntry.text
+    val stringTemplateExpression = annotation.valueArguments.firstOrNull()?.stringTemplateExpression()
+    return stringTemplateExpression?.entries?.singleOrNull()?.safeAs<KtLiteralStringTemplateEntry>()?.text
 }
 
 fun indexJvmNameAnnotation(stub: KotlinAnnotationEntryStub, sink: IndexSink) {

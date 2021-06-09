@@ -1007,6 +1007,7 @@ public class JBTabsImpl extends JComponent
     if (titleProducer != null) {
       ActionToolbar toolbar = ActionManager.getInstance()
         .createActionToolbar(ActionPlaces.TABS_MORE_TOOLBAR, new DefaultActionGroup(new TitleAction(titleProducer)), true);
+      toolbar.setTargetComponent(null);
       toolbar.setMiniMode(true);
       myTitleWrapper.setContent(toolbar.getComponent());
     }
@@ -1761,7 +1762,8 @@ public class JBTabsImpl extends JComponent
 
       if (group != null) {
         final String place = info.getPlace();
-        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(place != null ? place : "JBTabs", group, tabs.myHorizontalSide);
+        ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(
+          place != null && !place.equals(ActionPlaces.UNKNOWN) ? place : "JBTabs", group, tabs.myHorizontalSide);
         toolbar.setTargetComponent(info.getActionsContextComponent());
         final JComponent actionToolbar = toolbar.getComponent();
         add(actionToolbar, BorderLayout.CENTER);

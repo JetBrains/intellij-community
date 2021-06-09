@@ -1,23 +1,34 @@
 <html>
 <body>
-Reports <code>associate() and associateTo()</code> calls that can be replaced with <code>associateBy()</code> or <code>associateWith()</code>.
+Reports <code>associate()</code> and <code>associateTo()</code> calls that can be replaced with <code>associateBy()</code> or <code>associateWith()</code>.
 <p>
     Both functions accept transformer function applied to elements of the given sequence or collection (as a receiver).
     Provided pairs are used to build resulting <code>Map</code>.
     <br>
-    Given the transformer refers to 'it', <code>associate[To]()</code> call can be replaced with more performant <code>associateBy()</code>
+    Given the transformer refers to <code>it</code>, <code>associate[To]()</code> call can be replaced with more performant <code>associateBy()</code>
     or <code>associateWith()</code>.
     <br>
     The inspection with paired with 'Replace with...' quick-fix allowing to amend the code.
 </p>
 <p>Examples:</p>
 <pre><code>
-   fun getKey(i: Int) = 1L
+  fun getKey(i: Int) = 1L
+  fun getValue(i: Int) = 1L
 
-   fun test() {
-      arrayOf(1).associate { getKey(it) to it }  // can be replaced with 'associateBy { getKey(it) }'
-      listOf(1).associate { it to getValue(it) } // can be replaced with 'listOf(1).associateWith { getValue(it) }'
-   }
+  fun test() {
+      arrayOf(1).associate { getKey(it) to it }  // replaceable 'associate()'
+      listOf(1).associate { it to getValue(it) } // replaceable 'associate()'
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun getKey(i: Int) = 1L
+  fun getValue(i: Int) = 1L
+
+  fun test() {
+      arrayOf(1).associateBy { getKey(it) }
+      listOf(1).associateWith { getValue(it) }
+  }
 </code></pre>
 </body>
 </html>

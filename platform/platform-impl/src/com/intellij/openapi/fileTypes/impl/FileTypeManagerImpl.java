@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -208,7 +207,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       @Override
       public void onSchemeDeleted(@NotNull FileTypeWithDescriptor scheme) {
-        GuiUtils.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(() -> {
           Application app = ApplicationManager.getApplication();
           app.runWriteAction(() -> fireBeforeFileTypesChanged());
           myPatternsTable.removeAllAssociations(scheme);
@@ -586,7 +585,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     // resolve unresolved mappings initialized before certain plugin initialized
     if (!myUnresolvedMappings.isEmpty()) {
       for (StandardFileType pair : myStandardFileTypes.values()) {
-        bindUnresolvedMappings(pair.fileType);
+        bindUnresolvedMappings(pair);
       }
     }
 
@@ -1263,12 +1262,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       FileTypeWithDescriptor oldFtd = myPatternsTable.findAssociatedFileType(matcher);
-      FileType oldFileType = oldFtd==null?null:oldFtd.fileType;
       ConflictingFileTypeMappingTracker.ResolveConflictResult result = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFtd, newFtd);
       if (!result.approved) {
         notificationsShown.add(result);
       }
       FileTypeWithDescriptor resolvedFtd = result.resolved;
+      FileType oldFileType = oldFtd == null ? null : oldFtd.fileType;
       if (!resolvedFtd.equals(oldFtd)) {
         myPatternsTable.addAssociation(matcher, resolvedFtd);
         if (result.approved && oldFileType != null) {
@@ -1327,17 +1326,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> descriptions = new ConcurrentHashMap<>();
   private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> displayNames = new ConcurrentHashMap<>();
 
-  private void bindUnresolvedMappings(@NotNull FileType fileType) {
+  private void bindUnresolvedMappings(@NotNull StandardFileType standardFileType) {
     for (FileNameMatcher matcher : new ArrayList<>(myUnresolvedMappings.keySet())) {
       String name = myUnresolvedMappings.get(matcher);
-      if (fileType.getName().equals(name)) {
-        myPatternsTable.addAssociation(matcher, coreDescriptorFor(fileType));
+      if (standardFileType.fileType.getName().equals(name)) {
+        myPatternsTable.addAssociation(matcher, descriptorForStandard(standardFileType));
         myUnresolvedMappings.remove(matcher);
       }
     }
 
-    for (FileNameMatcher matcher : myRemovedMappingTracker.getMappingsForFileType(fileType.getName())) {
-      removeAssociation(FileTypeWithDescriptor.allFor(fileType), matcher, false);
+    for (FileNameMatcher matcher : myRemovedMappingTracker.getMappingsForFileType(standardFileType.fileType.getName())) {
+      removeAssociation(FileTypeWithDescriptor.allFor(standardFileType.fileType), matcher, false);
     }
   }
 

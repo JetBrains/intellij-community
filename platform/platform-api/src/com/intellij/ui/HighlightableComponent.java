@@ -39,6 +39,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
     setText("");
     setOpaque(true);
     updateUI();
+    setAlignmentX(LEFT_ALIGNMENT);
   }
 
   @Override public void updateUI() {

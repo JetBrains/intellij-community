@@ -121,9 +121,7 @@ public class MavenTypingTest extends MavenDomTestCase {
   }
 
   @Test 
-  public void testTypingOpenBraceInsideTagDoesNothing() {
-    if (ignore()) return;
-
+  public void testTypingOpenBraceInsideTag() {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -133,7 +131,7 @@ public class MavenTypingTest extends MavenDomTestCase {
                      "<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
-                     "<${<caret>name>");
+                     "<${<caret>}name>");
   }
 
   @Test 

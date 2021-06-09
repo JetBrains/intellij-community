@@ -16,7 +16,7 @@ import javax.swing.BorderFactory.createEmptyBorder
 import javax.swing.JComponent
 import javax.swing.JLabel
 
-internal class ProblemsViewPreview(private val panel: ProblemsViewPanel)
+class ProblemsViewPreview(private val panel: ProblemsViewPanel)
   : JLabel(ProblemsViewBundle.message("problems.view.panel.preview.nothing"), CENTER) {
 
   var preview: Editor? = null

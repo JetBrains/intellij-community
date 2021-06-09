@@ -3,20 +3,33 @@
 package org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem
 
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.tools.projectWizard.core.buildList
-import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.*
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleConfigureTaskIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.GradleNamedTaskAccessIR
+import org.jetbrains.kotlin.tools.projectWizard.ir.buildsystem.gradle.irsList
+import org.jetbrains.kotlin.tools.projectWizard.plugins.printer.GradlePrinter
 
 fun runTaskIrs(@NonNls mainClass: String, classPath: BuildSystemIR? = null) = irsList {
     +ApplicationPluginIR(mainClass)
-
-    "application" {
-        "mainClassName" assign const(mainClass)
-    }
-
+    +ApplicationConfigurationIR(mainClass)
     if (classPath != null) {
-        +GradleConfigureTaskIR(GradleByNameTaskAccessIR("run", "JavaExec")) {
+        +GradleConfigureTaskIR(GradleNamedTaskAccessIR("run", "JavaExec")) {
             "classpath" assign classPath
         }
     }
 }
 
+class ApplicationConfigurationIR(private val mainClass: String): GradleIR, FreeIR {
+    override fun GradlePrinter.renderGradle() {
+        sectionCall("application", needIndent = true) {
+            when (dsl) {
+                GradlePrinter.GradleDsl.KOTLIN -> {
+                    call("mainClass.set") { +mainClass.quotified}
+                }
+                GradlePrinter.GradleDsl.GROOVY -> {
+                    assignment("mainClassName") { +mainClass.quotified}
+                }
+            }
+        }
+    }
+}

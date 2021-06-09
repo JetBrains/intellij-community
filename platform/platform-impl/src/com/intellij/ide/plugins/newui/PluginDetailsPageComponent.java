@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -431,7 +431,16 @@ public class PluginDetailsPageComponent extends MultiPanel {
     return editorPane;
   }
 
-  public void showPlugin(@Nullable ListPluginComponent component, boolean multiSelection) {
+  public final void showPlugins(@NotNull List<? extends ListPluginComponent> selection) {
+    int size = selection.size();
+    showPlugin(size == 1 ? selection.get(0) : null, size > 1);
+  }
+
+  public final void showPlugin(@Nullable ListPluginComponent component) {
+    showPlugin(component, false);
+  }
+
+  private void showPlugin(@Nullable ListPluginComponent component, boolean multiSelection) {
     if (myShowComponent == component && (component == null || myUpdateDescriptor == component.myUpdateDescriptor)) {
       return;
     }
@@ -461,7 +470,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
             ApplicationManager.getApplication().invokeLater(() -> {
               if (myShowComponent == component) {
                 stopLoading();
-                showPlugin(component);
+                showPluginImpl(component);
               }
             }, ModalityState.stateForComponent(component));
           });
@@ -469,12 +478,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
       }
 
       if (syncLoading) {
-        showPlugin(component);
+        showPluginImpl(component);
       }
     }
   }
 
-  private void showPlugin(@NotNull ListPluginComponent component) {
+  private void showPluginImpl(@NotNull ListPluginComponent component) {
     myPlugin = component.getPluginDescriptor();
     myUpdateDescriptor = component.myUpdateDescriptor;
     showPlugin();

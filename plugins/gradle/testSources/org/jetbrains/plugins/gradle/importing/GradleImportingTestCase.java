@@ -33,6 +33,7 @@ import com.intellij.testFramework.UsefulTestCaseKt;
 import com.intellij.util.PathUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.PathKt;
 import com.intellij.util.lang.JavaVersion;
 import org.gradle.StartParameter;
 import org.gradle.initialization.BuildLayoutParameters;
@@ -65,6 +66,9 @@ import java.io.IOException;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
@@ -138,14 +142,18 @@ public abstract class GradleImportingTestCase extends ExternalSystemImportingTes
     if (SystemInfo.isWindows && isGradleOlderThan("3.5")) {
       String serviceDirectory = GradleSettings.getInstance(myProject).getServiceDirectoryPath();
       File gradleUserHome = serviceDirectory != null ? new File(serviceDirectory) : new BuildLayoutParameters().getGradleUserHomeDir();
-      File scriptsCacheFolder = new File(gradleUserHome, "caches\\" + gradleVersion + "\\scripts");
+      Path cacheFile = Paths.get(gradleUserHome.getPath(), "caches", "jars-1", "cache.properties");
+      if (Files.notExists(cacheFile)) {
+        PathKt.createFile(cacheFile);
+      }
+      File scriptsCacheFolder = Paths.get(gradleUserHome.getPath(), "caches", gradleVersion, "scripts").toFile();
       if (FileUtil.delete(scriptsCacheFolder)) {
         LOG.debug("Gradle scripts cache folder has been successfully removed at " + scriptsCacheFolder.getPath());
       }
       else {
         LOG.debug("Gradle scripts cache folder has not been removed at " + scriptsCacheFolder.getPath());
       }
-      File scriptsRemappedCacheFolder = new File(gradleUserHome, "caches\\" + gradleVersion + "\\scripts-remapped");
+      File scriptsRemappedCacheFolder = Paths.get(gradleUserHome.getPath(), "caches", gradleVersion, "scripts-remapped").toFile();
       if (FileUtil.delete(scriptsRemappedCacheFolder)) {
         LOG.debug("Gradle scripts-remapped cache folder has been successfully removed at " + scriptsRemappedCacheFolder.getPath());
       }

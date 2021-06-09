@@ -28,7 +28,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.FindSymbolParameters;
-import com.intellij.util.indexing.IdFilter;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
@@ -140,10 +139,6 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
       }
     }
     myContributorToItsSymbolsMap.put(contributor, filter);
-  }
-
-  IdFilter getIdFilter(boolean withLibraries) {
-    return IdFilter.getProjectIdFilter(myProject, withLibraries);
   }
 
   @Override

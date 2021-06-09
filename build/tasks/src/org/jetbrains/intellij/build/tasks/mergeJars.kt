@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.tasks
 
 import com.intellij.util.lang.ImmutableZipFile
@@ -16,7 +16,7 @@ fun mergeJars(targetFile: Path, files: List<Path>) {
     val zipCreator = ZipFileWriter(outChannel, deflater = null)
     for (file in files) {
       ImmutableZipFile.load(file).use { zipFile ->
-        val entries = zipFile.entries.asSequence().filter {
+        val entries = zipFile.entries.filter {
           it.name != "META-INF/MANIFEST.MF" && it.name != PACKAGE_INDEX_NAME &&
           it.name != "license" && !it.name.startsWith("license/") &&
           it.name != "META-INF/services/javax.xml.parsers.SAXParserFactory" &&
@@ -31,7 +31,7 @@ fun mergeJars(targetFile: Path, files: List<Path>) {
           it.name != "LICENSE.md" &&
           it.name != "module-info.class" &&
           it.name != "META-INF/maven" && !it.name.startsWith("META-INF/maven/")
-        }.toList()
+        }
         writeEntries(entries, zipCreator, zipFile)
         packageIndexBuilder.add(entries)
       }

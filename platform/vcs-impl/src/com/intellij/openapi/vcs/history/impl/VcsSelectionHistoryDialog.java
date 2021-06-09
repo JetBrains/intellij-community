@@ -38,6 +38,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IntPair;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
@@ -221,7 +222,7 @@ public final class VcsSelectionHistoryDialog extends FrameWrapper implements Dat
       }
 
       private void runOnEdt(@NotNull Runnable task) {
-        GuiUtils.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(() -> {
           VcsSelectionHistoryDialog dialog = VcsSelectionHistoryDialog.this;
           if (!dialog.isDisposed() && dialog.getFrame().isShowing()) {
             task.run();

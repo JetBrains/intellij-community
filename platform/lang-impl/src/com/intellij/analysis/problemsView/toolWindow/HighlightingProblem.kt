@@ -12,7 +12,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.xml.util.XmlStringUtil.escapeString
 import javax.swing.Icon
 
-internal class HighlightingProblem(
+open class HighlightingProblem(
   override val provider: ProblemsProvider,
   override val file: VirtualFile,
   private val highlighter: RangeHighlighterEx
@@ -20,8 +20,10 @@ internal class HighlightingProblem(
 
   private fun getIcon(level: HighlightDisplayLevel) = if (severity >= level.severity.myVal) level.icon else null
 
-  internal val info: HighlightInfo?
-    get() = HighlightInfo.fromRangeHighlighter(highlighter)
+  open val info: HighlightInfo?
+    get() {
+      return HighlightInfo.fromRangeHighlighter(highlighter)
+    }
 
   override val icon: Icon
     get() = HighlightDisplayLevel.find(info?.severity)?.icon

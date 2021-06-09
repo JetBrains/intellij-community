@@ -6,6 +6,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.messages.AlertMessagesManager;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.util.*;
@@ -102,8 +103,12 @@ public class Messages {
   }
 
   public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int lines) {
+    return wrapToScrollPaneIfNeeded(comp, columns, lines, 4);
+  }
+
+  public static @NotNull JComponent wrapToScrollPaneIfNeeded(@NotNull JComponent comp, int columns, int maxLines, int lines) {
     float fontSize = comp.getFont().getSize2D();
-    Dimension maxDim = new Dimension((int)(fontSize * columns), (int)(fontSize * lines));
+    Dimension maxDim = new Dimension((int)(fontSize * columns), (int)(fontSize * maxLines));
     Dimension prefDim = comp.getPreferredSize();
     if (prefDim.width <= maxDim.width && prefDim.height <= maxDim.height) return comp;
 
@@ -116,7 +121,7 @@ public class Messages {
       new Dimension(Math.min(prefDim.width, maxDim.width) + barWidth,
                     Math.min(prefDim.height, maxDim.height) + barWidth);
     if (prefDim.width > maxDim.width) { //Too wide single-line message should be wrapped
-      preferredSize.height = Math.max(preferredSize.height, (int)(4 * fontSize) + barWidth);
+      preferredSize.height = Math.max(preferredSize.height, (int)(lines * fontSize) + barWidth);
     }
     scrollPane.setPreferredSize(preferredSize);
     return scrollPane;
@@ -222,7 +227,7 @@ public class Messages {
   }
 
   public static boolean canShowMacSheetPanel() {
-    if (!SystemInfoRt.isMac) {
+    if (!SystemInfoRt.isMac || AlertMessagesManager.isEnabled()) {
       return false;
     }
 

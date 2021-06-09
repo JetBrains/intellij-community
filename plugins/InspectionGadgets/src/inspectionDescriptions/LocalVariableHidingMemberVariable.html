@@ -1,14 +1,9 @@
 <html>
 <body>
-<p>
-  Reports local variables named identically to fields of their class
-  or surrounding classes if it is a local variable inside of an inner or anonymous class.
-  Such a variable name may be confusing.
-</p>
-<p>
-  Use the quick-fix to rename the local variable.
-</p>
-<p>Example:</p>
+Reports local variables named identically to visible fields of the containing classes.
+As a result of such naming, you may accidentally use the variable where the identically named field is intended.
+<p>A quick-fix is suggested to rename the variable.</p>
+<p><b>Example:</b></p>
 <pre><code>
   public class Foo {
     public Object foo;
@@ -24,10 +19,14 @@
 </code></pre>
 <!-- tooltip end -->
 <p>
-Use the first checkbox below to ignore local variables hiding a super class field which is not visible (e.g. because it's private).
-<p>
-Use the second checkbox below to ignore local variables in a static context, named identically to a non-static field.
-For example when the local variable is inside a static method
-or inside a method which is inside an static inner class.
+  You can configure the following options for this inspection:
+</p>
+<ol>
+  <li><strong>Ignore non-accessible fields</strong> - ignore local variables named identically to superclass fields
+    that are not visible (for example, because they are private).</li>
+  <li><strong>Ignore local variables in a static context hiding non-static fields</strong> -
+    for example when the local variable is inside a static method or inside a method which is inside a static inner class.
+  </li>
+</ol>
 </body>
 </html>

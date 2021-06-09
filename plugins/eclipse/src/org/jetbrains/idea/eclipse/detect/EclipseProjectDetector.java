@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.ProjectDetector;
@@ -48,7 +49,7 @@ class EclipseProjectDetector extends ProjectDetector {
       collectProjects(projects, Path.of(appLocation));
     }
     if (PropertiesComponent.getInstance().getBoolean("eclipse.scan.home.directory", true)) {
-      visitFiles(new File(home), file1 -> scanForProjects(file1.getPath(), projects), 3);
+      visitFiles(new File(home), file1 -> scanForProjects(file1.getPath(), projects), 2);
     }
   }
 
@@ -133,6 +134,9 @@ class EclipseProjectDetector extends ProjectDetector {
       return;
     }
     for (File file : files) {
+      if (isInSpecialMacFolder(file.getPath())) {
+        continue;
+      }
       String[] list = file.list();
       if (list != null && ContainerUtil.or(list, s -> ".project".equals(s)) && ContainerUtil.or(list, s -> ".classpath".equals(s))) {
         projects.add(file.getPath());
@@ -150,6 +154,9 @@ class EclipseProjectDetector extends ProjectDetector {
 
   private static boolean isInSpecialMacFolder(String file) {
     if (!SystemInfo.isMac) return false;
+    if (FileSystemUtil.isSymLink(file)) {
+      return true;
+    }
     String home = System.getProperty("user.home");
     Path path = Path.of(file);
     return path.startsWith(Path.of(home, "Documents")) ||
@@ -160,7 +167,7 @@ class EclipseProjectDetector extends ProjectDetector {
   }
 
   private static void visitFiles(File file, Consumer<File> processor, int depth) {
-    if (depth == 0) return;
+    if (depth == 0 || isInSpecialMacFolder(file.getPath())) return;
     processor.accept(file);
     File[] files = file.listFiles(pathname -> !pathname.getName().startsWith("."));
     if (files == null) return;

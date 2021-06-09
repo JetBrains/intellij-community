@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -33,6 +33,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -200,6 +201,10 @@ public final class PluginManagerConfigurable
       myTabHeaderComponent.update();
     });
     myPluginModel.setPluginUpdatesService(myPluginUpdatesService);
+
+    ApplicationManager.getApplication().executeOnPooledThread(() -> {
+      UpdateChecker.updateDescriptorsForInstalledPlugins(InstalledPluginsState.getInstance());
+    });
 
     createMarketplaceTab();
     createInstalledTab();
@@ -1178,12 +1183,12 @@ public final class PluginManagerConfigurable
     CopyProvider copyProvider = new CopyProvider() {
       @Override
       public void performCopy(@NotNull DataContext dataContext) {
-        StringBuilder result = new StringBuilder();
-        for (ListPluginComponent pluginComponent : component.getSelection()) {
-          IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
-          result.append(descriptor.getName()).append(" (").append(descriptor.getVersion()).append(")\n");
-        }
-        CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
+        String text = StringUtil.join(component.getSelection(),
+                                      pluginComponent -> {
+                                        IdeaPluginDescriptor descriptor = pluginComponent.getPluginDescriptor();
+                                        return String.format("%s (%s)", descriptor.getName(), descriptor.getVersion());
+                                      }, "\n");
+        CopyPasteManager.getInstance().setContents(new TextTransferable(text));
       }
 
       @Override

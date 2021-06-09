@@ -300,7 +300,7 @@ class DynamicPluginsTest {
         val extension = ep!!.extensionList.single()
         assertThat(extension.key).isEqualTo("foo")
         assertThat(extension.pluginDescriptor)
-          .isEqualTo(PluginManagerCore.getPluginSet().findEnabledModule(fooBuilder.id)!!.requireDescriptor())
+          .isEqualTo(PluginManagerCore.getPluginSet().findEnabledModule(fooBuilder.id)!!)
       }
       finally {
         Disposer.dispose(plugin2Disposable)

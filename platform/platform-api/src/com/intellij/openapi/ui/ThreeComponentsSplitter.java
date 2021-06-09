@@ -180,7 +180,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
       //Step 3 : Return the component, but find the first focusable component first
 
-      return findFocusableComponentIn((JComponent)component, null);
+      return findFocusableComponentIn(component, null);
     }
   }
 

@@ -4,15 +4,27 @@ Reports usages of curly braces in a string template around a simple identifier.
 <p>'Remove curly braces' quick-fix can be used to amend the code automatically.</p>
 <p>Examples:</p>
 <pre><code>
-fun correctUsage() {
-   val x = "x"
-   val y = "${x.length}" // &lt;== Ok
-}
+  fun redundant() {
+     val x = 4
+     val y = "${x}" // &lt;== redundant
+  }
 
-fun redundant() {
-   val x = 4
-   val y = "${x}" // &lt;== redundant, quick-fix simplifies the string to "$x"
-}
+  fun correctUsage() {
+      val x = "x"
+      val y = "${x.length}" // &lt;== Ok
+  }
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
+  fun redundant() {
+     val x = 4
+     val y = "$x"
+  }
+
+  fun correctUsage() {
+      val x = "x" &lt;== Updated
+      val y = "${x.length}"
+  }
 </code></pre>
 </body>
 </html>

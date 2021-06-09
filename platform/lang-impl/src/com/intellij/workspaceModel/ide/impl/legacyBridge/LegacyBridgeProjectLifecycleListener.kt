@@ -3,22 +3,19 @@ package com.intellij.workspaceModel.ide.impl.legacyBridge
 
 import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.ide.plugins.PluginManagerCore
+import com.intellij.openapi.components.ServiceDescriptor
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.module.impl.ExternalModuleListStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.ProjectServiceContainerCustomizer
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Internal
 class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
   companion object {
     private val LOG = logger<LegacyBridgeProjectLifecycleListener>()
-
-    fun enabled(project: Project) = ModuleManager.getInstance(project) is ModuleManagerComponentBridge
   }
 
   override fun serviceRegistered(project: Project) {
@@ -40,7 +37,7 @@ class LegacyBridgeProjectLifecycleListener : ProjectServiceContainerCustomizer {
       val apiClass = Class.forName("com.intellij.packaging.artifacts.ArtifactManager", true, javaClass.classLoader)
       val implClass = Class.forName("com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge", true,
                                     javaClass.classLoader)
-      container.registerService(apiClass, implClass, pluginDescriptor, true)
+      container.registerService(apiClass, implClass, pluginDescriptor, override = true, preloadMode = ServiceDescriptor.PreloadMode.AWAIT)
     }
     catch (ignored: Throwable) {
     }

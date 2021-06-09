@@ -1,21 +1,30 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
-import com.intellij.reference.SoftReference;
-import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
-import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.IntObjectMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.lang.ref.Reference;
-import java.lang.ref.WeakReference;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * Provides type-safe access to data.
+ *
+ * Implementation note. Please don't create too many instances of this class, because internal maps could overflow.
+ * Instead, store the Key instance in a private static field and use it from outside.
+ * For example,
+ * <pre>
+ * {@code
+ *   class KeyUsage {
+ *     private static final Key<String> MY_NAME_KEY = Key.create("my name");
+ *     String getName() { return getData(MY_NAME_KEY); }
+ *   }
+ * }
+ * </pre>
  *
  * @author max
  * @author Konstantin Bulenkov
@@ -24,14 +33,14 @@ import java.util.concurrent.atomic.AtomicInteger;
 @NonNls
 public class Key<T> {
   private static final AtomicInteger ourKeysCounter = new AtomicInteger();
-  private static final Int2ObjectMap<Reference<Key<?>>> allKeys = new Int2ObjectOpenHashMap<>();
+  private static final IntObjectMap<Key<?>> allKeys = ContainerUtil.createIntKeyWeakValueMap();
   private final int myIndex = ourKeysCounter.getAndIncrement();
   private final String myName; // for debug purposes only
 
   public Key(@NonNls @NotNull String name) {
     myName = name;
     synchronized (allKeys) {
-      allKeys.put(myIndex, new WeakReference<>(this));
+      allKeys.put(myIndex, this);
     }
   }
 
@@ -89,7 +98,7 @@ public class Key<T> {
   public static <T> Key<T> getKeyByIndex(int index) {
     synchronized (allKeys) {
       //noinspection unchecked
-      return (Key<T>)SoftReference.dereference(allKeys.get(index));
+      return (Key<T>)allKeys.get(index);
     }
   }
 
@@ -100,9 +109,8 @@ public class Key<T> {
   @Nullable
   public static Key<?> findKeyByName(@NotNull String name) {
     synchronized (allKeys) {
-      for (Reference<Key<?>> reference : allKeys.values()) {
-        Key<?> key = SoftReference.dereference(reference);
-        if (key != null && name.equals(key.myName)) {
+      for (Key<?> key : allKeys.values()) {
+        if (name.equals(key.myName)) {
           return key;
         }
       }

@@ -26,8 +26,8 @@ final class PersistentFSPaths {
     return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX);
   }
 
-  @NotNull File getVfsEnumFile(@NotNull String enumName) {
-    return new File(new File(myCachesDir), DEPENDENT_PERSISTENT_LIST_START_PREFIX + enumName + VFS_FILES_EXTENSION);
+  @NotNull Path getVfsEnumFile(@NotNull String enumName) {
+    return Path.of(myCachesDir).resolve(DEPENDENT_PERSISTENT_LIST_START_PREFIX + enumName + VFS_FILES_EXTENSION);
   }
 
   Path getRootsFile() {

@@ -1,17 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.function.Supplier;
 
-public abstract class ChangeHierarchyViewActionBase extends ToggleAction {
+public abstract class ChangeHierarchyViewActionBase extends ToggleAction implements UpdateInBackground {
   public ChangeHierarchyViewActionBase(String text, String description, Icon icon) {
     this(() -> text, () -> description, icon);
   }
@@ -48,5 +46,7 @@ public abstract class ChangeHierarchyViewActionBase extends ToggleAction {
     presentation.setEnabled(browser != null && browser.isValidBase());
   }
 
-  protected abstract HierarchyBrowserBaseEx getHierarchyBrowser(DataContext context);
+  protected @Nullable HierarchyBrowserBaseEx getHierarchyBrowser(@NotNull DataContext dataContext) {
+    return HierarchyBrowserBaseEx.HIERARCHY_BROWSER.getData(dataContext);
+  }
 }

@@ -67,7 +67,7 @@ object EventLogExternalUploader {
     }
 
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
-    val config = EventLogConfiguration.getOrCreate(recorderId)
+    val config = EventLogConfiguration.getInstance().getOrCreate(recorderId)
     val device = DeviceConfiguration(config.deviceId, config.bucket, config.machineId)
     val application = EventLogInternalApplicationInfo(recorderId, isTest)
     try {
@@ -92,7 +92,7 @@ object EventLogExternalUploader {
 
     val tempDir = getOrCreateTempDir()
     val uploader = findUploader()
-    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging", "http-client")
+    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging")
 
     val libPaths = libs.map { it.path }.toMutableList()
     libPaths.add(findLibraryByClass(NotNull::class.java))

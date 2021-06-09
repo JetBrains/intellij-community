@@ -543,4 +543,19 @@ public final class UpdateHighlightersUtil {
       assert contains: info;
     }
   }
+
+  /**
+   * Remove all highlighters with the given range from {@link DocumentMarkupModel}.
+   * This might be useful in quick fixes and intention actions to provide immediate feedback.
+   */
+  public static void removeHighlightersWithRange(@Nullable Document document, @NotNull Project project, @Nullable Segment range) {
+    if (document == null || range == null) return;
+
+    var model = DocumentMarkupModel.forDocument(document, project, false);
+    for (RangeHighlighter highlighter : model.getAllHighlighters()) {
+      if (range.getStartOffset() == highlighter.getStartOffset() && range.getEndOffset() == highlighter.getEndOffset()) {
+        model.removeHighlighter(highlighter);
+      }
+    }
+  }
 }

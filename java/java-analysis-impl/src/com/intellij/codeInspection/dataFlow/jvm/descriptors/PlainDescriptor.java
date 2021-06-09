@@ -225,9 +225,9 @@ public final class PlainDescriptor extends PsiVarDescriptor {
   /**
    * @param var variable to check
    * @return true if variable is known to be initialized in a weird way and actual initializer should be taken into account.
-   * Currentyl, reports fields declared inside java.lang.System class (System.out, System.in, System.err)
+   * Currently, reports fields declared inside java.lang.System class (System.out, System.in, System.err)
    */
-  private static boolean hasInitializationHacks(@NotNull PsiVariable var) {
+  public static boolean hasInitializationHacks(@NotNull PsiVariable var) {
     if (!(var instanceof PsiField)) return false;
     PsiClass containingClass = ((PsiField)var).getContainingClass();
     return containingClass != null && System.class.getName().equals(containingClass.getQualifiedName());

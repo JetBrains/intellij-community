@@ -1072,7 +1072,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       PsiElement element = collector.getElement(true);
       if (element == null || !ReadAction.compute(() -> element.isValid())) {
         LOG.debug("Element for which documentation was requested is not available anymore");
-        GuiUtils.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(() -> {
           component.setText(CodeInsightBundle.message("no.documentation.found"), null, collector.provider);
         }, ModalityState.any());
         callback.setDone();
@@ -1104,7 +1104,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       if (fail != null) {
         Throwable finalFail = fail;
-        GuiUtils.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(() -> {
           String message = finalFail instanceof IndexNotReadyException
                            ? CodeInsightBundle.message("documentation.message.documentation.is.not.available")
                            : CodeInsightBundle.message("javadoc.external.fetch.error.message");

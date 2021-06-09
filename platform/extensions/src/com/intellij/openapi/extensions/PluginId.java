@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -23,7 +23,11 @@ public final class PluginId implements Comparable<PluginId> {
     return registeredIds.computeIfAbsent(idString, PluginId::new);
   }
 
-  public static synchronized @Nullable PluginId findId(String @NotNull ... idStrings) {
+  public static @Nullable PluginId findId(@NotNull String idString) {
+    return registeredIds.get(idString);
+  }
+
+  public static @Nullable PluginId findId(String @NotNull ... idStrings) {
     for (String idString : idStrings) {
       PluginId pluginId = registeredIds.get(idString);
       if (pluginId != null) {

@@ -65,7 +65,13 @@ internal val pythonFactories: Array<PyAbstractTestFactory<*>>
     PyTrialTestFactory(),
     PyUnitTestFactory())
 
-fun getFactoryById(id: String): PyAbstractTestFactory<*>? = pythonFactories.firstOrNull { it.id == id }
+internal val defaultFactory: PyAbstractTestFactory<*> get() = PyUnitTestFactory()
+
+fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
+  // user may have "pytest" because it was used instead of py.test (old id) for some time
+  pythonFactories.firstOrNull { it.id == if (id == "pytest") PyTestFactory.id else id }
+
+fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryById(id) ?: defaultFactory
 
 /**
  * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
@@ -124,12 +130,8 @@ private class PyTargetBasedPsiLocation(val target: ConfigurationTarget,
 /**
  * @return factory chosen by user in "test runner" settings
  */
-private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationFactory {
-  val name = TestRunnerService.getInstance(module).projectConfiguration
-  val factories = PythonTestConfigurationType.getInstance().configurationFactories
-  val configurationFactory = factories.find { it.name == name }
-  return configurationFactory ?: factories.first()
-}
+private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationFactory =
+  TestRunnerService.getInstance(module).selectedFactory
 
 
 // folder provided by python side. Resolve test names versus it
@@ -264,7 +266,8 @@ private const val DEFAULT_PATH = ""
  * Target depends on target type. It could be path to file/folder or python target
  */
 data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target") override var target: String,
-                               @ConfigField("runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
+                               @ConfigField(
+                                 "runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -648,6 +651,10 @@ abstract class PyAbstractTestConfiguration(project: Project,
 abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
   PythonTestConfigurationType.getInstance()) {
   abstract override fun createTemplateConfiguration(project: Project): CONF_T
+
+  // Several insances of the same class point to the same factory
+  override fun equals(other: Any?): Boolean = ((other as? PyAbstractTestFactory<*>))?.id == id
+  override fun hashCode(): Int = id.hashCode()
 
   /**
    * Only UnitTest inheritors are supported

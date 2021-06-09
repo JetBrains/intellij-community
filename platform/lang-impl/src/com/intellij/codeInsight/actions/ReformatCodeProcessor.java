@@ -69,6 +69,16 @@ public class ReformatCodeProcessor extends AbstractLayoutCodeProcessor {
     }
   }
 
+  @SuppressWarnings("unused") // Used in Rider
+  public ReformatCodeProcessor(@NotNull PsiFile file, TextRange[] ranges) {
+    super(file.getProject(), file, getProgressText(), getCommandName(), false);
+    for (TextRange range : ranges) {
+      if (range != null) {
+        myRanges.add(range);
+      }
+    }
+  }
+
   public ReformatCodeProcessor(@NotNull PsiFile file, boolean processChangedTextOnly) {
     super(file.getProject(), file, getProgressText(), getCommandName(), processChangedTextOnly);
   }
