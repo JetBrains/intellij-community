@@ -9676,6 +9676,11 @@ public abstract class DiagnosisCompilerTestFE10TestdataTestGenerated extends Abs
                 runTest(compilerTestData("compiler/testData/diagnostics/tests/imports/ImportResolutionOrder.kt"));
             }
 
+            @TestMetadata("ImportStaticFunctionWithNonStaticSibling.kt")
+            public void testImportStaticFunctionWithNonStaticSibling() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/imports/ImportStaticFunctionWithNonStaticSibling.kt");
+            }
+
             @TestMetadata("ImportTwoTimes.kt")
             public void testImportTwoTimes() throws Exception {
                 runTest(compilerTestData("compiler/testData/diagnostics/tests/imports/ImportTwoTimes.kt"));
