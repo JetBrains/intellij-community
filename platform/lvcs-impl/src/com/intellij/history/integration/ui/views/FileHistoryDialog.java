@@ -106,7 +106,7 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
         FileHistoryDialogModel model = myModel;
         if (model != null) {
           model.processContents((r, c) -> {
-            if (c != null && c.contains(filter)) {
+            if (c != null && StringUtil.containsIgnoreCase(c, filter)) {
               revisions.add(r.getChangeSetId());
             }
             return true;
