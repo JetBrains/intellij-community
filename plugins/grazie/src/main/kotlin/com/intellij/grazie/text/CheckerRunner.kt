@@ -3,8 +3,10 @@
 package com.intellij.grazie.text
 
 import ai.grazie.nlp.tokenizer.sentence.SRXSentenceTokenizer
-import com.intellij.codeInspection.*
-import com.intellij.grazie.GrazieConfig
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemDescriptorBase
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieAddExceptionQuickFix
 import com.intellij.grazie.ide.inspection.grammar.quickfix.GrazieDisableRuleQuickFix
@@ -101,15 +103,13 @@ internal class CheckerRunner(val text: TextContent) {
 
   private fun isSuppressed(problem: TextProblem): Boolean {
     val sentence = findSentence(problem)
-    val defaultPattern = defaultSuppressionPattern(problem, sentence)
-    val suppressed = GrazieConfig.get().suppressingContext.suppressed
-    if (defaultPattern.full in suppressed) {
+    if (defaultSuppressionPattern(problem, sentence).isSuppressed()) {
       return true
     }
 
     val patternRange = problem.patternRange
     val errorText = problem.highlightRange.subSequence(text)
-    return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).full in suppressed
+    return patternRange != null && sentence != null && SuppressionPattern(errorText, sentence).isSuppressed()
   }
 
   private fun findSentence(problem: TextProblem) =
@@ -144,13 +144,6 @@ internal class CheckerRunner(val text: TextContent) {
     }
     return SuppressionPattern(problem.highlightRange.subSequence(text), sentenceText)
   }
-}
-
-internal class SuppressionPattern(errorText: CharSequence, sentenceText: String?) {
-  val errorText : String = normalize(errorText)
-  val full : String = this.errorText + (if (sentenceText == null) "" else "|" + normalize(sentenceText))
-
-  private fun normalize(text: CharSequence) = text.replace(Regex("\\s+"), " ").trim()
 }
 
 private val filterEp = LanguageExtension<ProblemFilter>("com.intellij.grazie.problemFilter")
