@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.MouseDragHelper;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
@@ -65,6 +66,8 @@ final class TabContentLayout extends ContentLayout implements MorePopupAware {
         return myUi.window.isActive();
       }
     };
+    MouseDragHelper.setComponentDraggable(myIdLabel, true);
+
 
     for (int i = 0; i < contentManager.getContentCount(); i++) {
       contentAdded(new ContentManagerEvent(this, contentManager.getContent(i), i));

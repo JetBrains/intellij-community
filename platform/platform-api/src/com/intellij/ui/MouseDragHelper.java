@@ -12,6 +12,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.awt.event.*;
 
 public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter implements MouseMotionListener, KeyEventDispatcher, Weighted {
   public static final int DRAG_START_DEADZONE = 7;
+  @NonNls private static final String DRAGGABLE_MARKER = "DRAGGABLE_MARKER";
 
   @NotNull
   protected final T myDragComponent;
@@ -44,6 +46,13 @@ public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter
     myParentDisposable = parent;
   }
 
+  public static void setComponentDraggable(@NotNull JComponent c, boolean draggable) {
+    c.putClientProperty(DRAGGABLE_MARKER, draggable ? Boolean.TRUE : null);
+  }
+
+  public static boolean isComponentDraggable(@NotNull Component c) {
+    return c instanceof JComponent && ((JComponent)c).getClientProperty(DRAGGABLE_MARKER) == Boolean.TRUE;
+  }
   /**
    *
    * @return false if Settings -> Appearance -> Drag-n-Drop with ALT pressed only is selected but event doesn't have ALT modifier

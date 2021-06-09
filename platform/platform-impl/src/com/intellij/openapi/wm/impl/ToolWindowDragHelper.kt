@@ -74,7 +74,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       if (bounds != null && bounds.contains(startScreenPoint.screenPoint)) {
         val point = startScreenPoint.getPoint(decorator)
         val child = SwingUtilities.getDeepestComponentAt(decorator, point.x, point.y)
-        if (child.parent is ToolWindowHeader) {
+        if (isComponentDraggable(child) && ComponentUtil.findParentByCondition(child) { t -> t is ToolWindowHeader } != null) {
           if (decorator.toolWindow.anchor != BOTTOM || decorator.locationOnScreen.y <= startScreenPoint.screenPoint.y - ToolWindowsPane.getHeaderResizeArea())
             return decorator.toolWindow
         }
