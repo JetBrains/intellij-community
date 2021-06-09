@@ -20,11 +20,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.ElementManipulators;
 import com.intellij.psi.PsiElement;
-import org.jetbrains.idea.maven.compatibility.MavenWrapperTestFixture;
-import org.jetbrains.idea.maven.dom.inspections.MavenPropertyInParentInspection;
 import org.junit.Test;
-
-import java.util.Collections;
 
 public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesTestCase {
 
@@ -199,25 +195,33 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
 
-    importProject("<groupId>test</groupId>" +
+    VirtualFile projectPom = createProjectPom("<groupId>test</groupId>" +
+                                              "<artifactId>project</artifactId>" +
+                                              "<version>1</version>");
+
+    importProject();
+
+    setPomContent(projectPom,
+                  "<warning descr=\"Definition of groupId is redundant, because it's inherited from the parent\">" +
+                  "<groupId>test</groupId>" +
+                  "</warning>" +
                   "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
+                  "<version>1</version>" +
 
-    createProjectPom("<groupId>test</groupId>" +
-                     "<artifactId>project</artifactId>" +
-                     "<version>1</version>" +
+                  "<parent>" +
+                  "  <groupId>test</groupId>" +
+                  "  <artifactId>parent</artifactId>" +
+                  "  <version>1</version>" +
+                  "  <relativePath>../pom.xml</relativePath>" +
+                  "</parent>");
 
-                     "<parent>" +
-                     "  <groupId>test</groupId>" +
-                     "  <artifactId>parent</artifactId>" +
-                     "  <version>1</version>" +
-                     "  <relativePath>../pom.xml</relativePath>" +
-                     "</parent>");
     checkHighlighting(myProjectPom);
   }
 
   @Test
   public void testHighlightParentProperties() {
+    assumeVersionMoreThan("3.5.0");
+
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project0</artifactId>" +
                      "<version>1.${revision}</version>" +
@@ -262,54 +266,48 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
 
   @Test
   public void testHighlightParentPropertiesForMavenLess35() throws Exception {
+    assumeVersionLessThan("3.5.0");
 
-    MavenWrapperTestFixture fixture = new MavenWrapperTestFixture(myProject, "3.3.9");
-    try {
-      fixture.setUp();
-      createProjectPom("<groupId>test</groupId>" +
-                       "<artifactId>project0</artifactId>" +
-                       "<version>1.${revision}</version>" +
-                       "<packaging>pom</packaging>" +
-                       "<modules>" +
-                       "  <module>m1</module>" +
-                       "  <module>m2</module>" +
-                       "</modules>" +
-                       "<properties>" +
-                       "  <revision>0</revision>" +
-                       "  <anotherProperty>0</anotherProperty>" +
-                       "</properties>");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project0</artifactId>" +
+                     "<version>1.${revision}</version>" +
+                     "<packaging>pom</packaging>" +
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>" +
+                     "<properties>" +
+                     "  <revision>0</revision>" +
+                     "  <anotherProperty>0</anotherProperty>" +
+                     "</properties>");
 
-      VirtualFile m1= createModulePom("m1",
-                                      "<parent>" +
-                                      "<groupId>test</groupId>" +
-                                      "<artifactId>project0</artifactId>" +
-                                      "<version>1.${revision}</version>" +
-                                      "</parent>" +
-                                      "<artifactId>m1</artifactId>");
+    createModulePom("m1",
+                    "<parent>" +
+                    "<groupId>test</groupId>" +
+                    "<artifactId>project0</artifactId>" +
+                    "<version>1.${revision}</version>" +
+                    "</parent>" +
+                    "<artifactId>m1</artifactId>");
 
-      VirtualFile m2 = createModulePom("m2",
-                                       "<parent>" +
-                                       "<groupId>test</groupId>" +
-                                       "<artifactId>project0</artifactId>" +
-                                       "<version>1.${revision}</version>" +
-                                       "</parent>" +
-                                       "<artifactId>m1</artifactId>");
+    createModulePom("m2",
+                    "<parent>" +
+                    "<groupId>test</groupId>" +
+                    "<artifactId>project0</artifactId>" +
+                    "<version>1.${revision}</version>" +
+                    "</parent>" +
+                    "<artifactId>m1</artifactId>");
 
-      importProject();
+    importProject();
 
-      m2 = createModulePom("m2",
-                           "<parent>" +
-                           "<groupId>test</groupId>" +
-                           "<artifactId><error descr=\"Properties in parent definition are prohibited\">project${anotherProperty}</error></artifactId>" +
-                           "<version><error descr=\"Properties in parent definition are prohibited\">1.${revision}</error></version>" +
-                           "</parent>" +
-                           "<artifactId>m1</artifactId>");
+    VirtualFile m2 = createModulePom("m2",
+                                     "<parent>" +
+                                     "<groupId>test</groupId>" +
+                                     "<artifactId><error descr=\"Properties in parent definition are prohibited\">project${anotherProperty}</error></artifactId>" +
+                                     "<version><error descr=\"Properties in parent definition are prohibited\">1.${revision}</error></version>" +
+                                     "</parent>" +
+                                     "<artifactId>m1</artifactId>");
 
-      checkHighlighting(m2);
-    } finally {
-      fixture.tearDown();
-    }
-
+    checkHighlighting(m2);
   }
 
   @Test
