@@ -54,8 +54,7 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
     }
 
     final Project project = CommonDataKeys.PROJECT.getData(dataContext);
-
-    final PsiDirectory dir = view.getOrChooseDirectory();
+    final PsiDirectory dir = getDirectory(view);
     if (dir == null || project == null) return;
 
     final CreateFileFromTemplateDialog.Builder builder = createDialogBuilder(project, dataContext);
@@ -95,6 +94,11 @@ public abstract class CreateFromTemplateAction<T extends PsiElement> extends AnA
                      );
                    }
                  });
+  }
+
+  @Nullable
+  protected PsiDirectory getDirectory(IdeView view) {
+    return view.getOrChooseDirectory();
   }
 
   @SuppressWarnings("TestOnlyProblems")
