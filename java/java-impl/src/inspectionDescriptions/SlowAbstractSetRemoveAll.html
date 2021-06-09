@@ -1,19 +1,19 @@
 <html>
 <body>
 Reports calls to <code>java.util.Set.removeAll()</code> with a <code>java.util.List</code> argument.
-Such a call can be slow when the size of the argument is greater or equal than the size of the set,
-and the set is a subclass of <code>java.util.AbstractSet</code>.
-In this case <code>List.contains()</code> is called for every element in the set, which will perform a linear search.
-<p>Example:
-<pre><code>
-  <b>public void</b> check(String... ss) {
+<p>
+  Such a call can be slow when the size of the argument is greater than or equal to the size of the set,
+  and the set is a subclass of <code>java.util.AbstractSet</code>.
+  In this case, <code>List.contains()</code> is called for each element in the set, which will perform a linear search.
+</p>
+<p><b>Example:</b></p>
+<pre><code>  public void check(String... ss) {
     // possible O(n^2) complexity
     mySet.removeAll(List.of(ss));
   }
 </code></pre>
-<p>After the quick fix is applied the result looks like:
-<pre><code>
-  <b>public void</b> check(String... ss) {
+<p>After the quick fix is applied:</p>
+<pre><code>  public void check(String... ss) {
     // O(n) complexity
     List.of(ss).forEach(mySet::remove);
   }
