@@ -9,21 +9,25 @@ import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.EditorMouseEvent
+import com.intellij.openapi.editor.event.EditorMouseListener
 import com.intellij.openapi.editor.event.EditorMouseMotionListener
-import com.intellij.openapi.editor.event.SelectionEvent
 import com.intellij.ui.LightweightHint
 import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
+import java.awt.event.KeyAdapter
+import java.awt.event.KeyEvent
 
-internal class FloatingToolbar(val editor: Editor): Disposable {
+internal class FloatingToolbar(val editor: Editor) : Disposable {
   companion object {
     private const val verticalGap = 2
   }
 
-  private val selectionListener = SelectionListener()
+  private val mouseListener = MouseListener()
+  private val keyboardListener = KeyboardListener()
   private val mouseMotionListener = MouseMotionListener()
 
   private var hint: LightweightHint? = null
+  private var lastSelection: String? = null
 
 
   init {
@@ -71,13 +75,15 @@ internal class FloatingToolbar(val editor: Editor): Disposable {
   }
 
   private fun registerListeners() {
-    editor.selectionModel.addSelectionListener(selectionListener)
+    editor.addEditorMouseListener(mouseListener)
     editor.addEditorMouseMotionListener(mouseMotionListener)
+    editor.contentComponent.addKeyListener(keyboardListener)
   }
 
   private fun unregisterListeners() {
-    editor.selectionModel.removeSelectionListener(selectionListener)
+    editor.removeEditorMouseListener(mouseListener)
     editor.removeEditorMouseMotionListener(mouseMotionListener)
+    editor.contentComponent.removeKeyListener(keyboardListener)
   }
 
   private fun getHintPosition(hint: LightweightHint): Point {
@@ -88,17 +94,43 @@ internal class FloatingToolbar(val editor: Editor): Disposable {
     return hintPos
   }
 
+  private fun updateOnProbablyChangedSelection(onSelectionChanged: (String) -> Unit) {
+    val newSelection = editor.selectionModel.selectedText
 
-  private inner class SelectionListener : com.intellij.openapi.editor.event.SelectionListener {
-    override fun selectionChanged(e: SelectionEvent) {
-      if (e.newRange.length == 0) {
-        hideIfShown()
-        return
+    when (newSelection) {
+      null -> hideIfShown()
+      lastSelection -> Unit
+      else -> onSelectionChanged(newSelection)
+    }
+
+    lastSelection = newSelection
+  }
+
+
+  private inner class MouseListener : EditorMouseListener {
+    override fun mouseReleased(e: EditorMouseEvent) {
+      updateOnProbablyChangedSelection {
+        if (isShown())
+          updateLocationIfShown()
+        else showIfHidden()
       }
+    }
+  }
 
-      if (isShown())
-        updateLocationIfShown()
-      else showIfHidden()
+
+  private inner class KeyboardListener : KeyAdapter() {
+    override fun keyReleased(e: KeyEvent) {
+      super.keyReleased(e)
+      if (e.source != editor.contentComponent) return
+
+      updateOnProbablyChangedSelection { selection ->
+        if ('\n' in selection)
+          hideIfShown()
+        else if (isShown())
+          updateLocationIfShown()
+        else
+          showIfHidden()
+      }
     }
   }
 
