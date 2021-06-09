@@ -395,7 +395,7 @@ public final class ToolWindowContentUi implements ContentUI, DataProvider {
       @Override
       public void mouseMoved(MouseEvent e) {
         if (isToolWindowDrag(e)) {
-          c.setCursor(allowDrag ? Cursor.getPredefinedCursor(Cursor.HAND_CURSOR): Cursor.getDefaultCursor());
+          c.setCursor(Cursor.getDefaultCursor());
           return;
         }
         c.setCursor(allowResize && ui.isResizeable() && getActualSplitter() != null && c.getComponentAt(e.getPoint()) == c && ui.isResizeable(e.getPoint())
