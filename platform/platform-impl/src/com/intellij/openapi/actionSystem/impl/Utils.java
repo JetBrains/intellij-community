@@ -193,7 +193,7 @@ public final class Utils {
           focusOwner != null && !UIUtil.isAncestor(focusOwner, ((FocusEvent)event).getComponent()) ||
           event instanceof KeyEvent && event.getID() == KeyEvent.KEY_PRESSED ||
           event instanceof MouseEvent && event.getID() == MouseEvent.MOUSE_PRESSED) {
-        promise.cancel();
+        ActionUpdater.cancelPromise(promise, event);
       }
       return null;
     });
@@ -209,14 +209,14 @@ public final class Utils {
     ActionUpdater fastUpdater = ActionUpdater.getActionUpdater(updater.asFastUpdateSession(missedKeys, queue::offer));
     try (AccessToken ignore = SlowOperations.allowSlowOperations(SlowOperations.FAST_TRACK)) {
       long start = System.currentTimeMillis();
-      ActionUpdater.cancelAllUpdates();
+      ActionUpdater.cancelAllUpdates("fast-track requested");
       CancellablePromise<List<AnAction>> promise = fastUpdater.expandActionGroupAsync(group, hideDisabled);
       return runLoopAndWaitForFuture(promise, null, () -> {
         Runnable runnable = queue.poll(1, TimeUnit.MILLISECONDS);
         if (runnable != null) runnable.run();
         long elapsed = System.currentTimeMillis() - start;
         if (elapsed > maxTime) {
-          promise.cancel();
+          ActionUpdater.cancelPromise(promise, "fast-track timed out");
         }
       });
     }
@@ -460,8 +460,8 @@ public final class Utils {
 
     T result;
     if (async) {
-      ActionUpdater.cancelAllUpdates();
-      AsyncPromise<T> promise = new AsyncPromise<>();
+      ActionUpdater.cancelAllUpdates("'" + place + "' invoked");
+      AsyncPromise<T> promise = ActionUpdater.newPromise(place);
       ActionUpdater.ourBeforePerformedExecutor.execute(() -> {
         try {
           Ref<T> ref = Ref.create();
