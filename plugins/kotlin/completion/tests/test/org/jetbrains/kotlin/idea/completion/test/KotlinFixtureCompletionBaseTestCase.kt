@@ -37,12 +37,13 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
                     myFixture.doHighlighting()
                 }
                 testCompletion(
-                    fileText,
-                    getPlatform(),
-                    { completionType, count -> complete(completionType, count) },
-                    defaultCompletionType(),
-                    defaultInvocationCount(),
-                    additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.FIR_IDENTICAL
+                  fileText,
+                  getPlatform(),
+                  { completionType, count -> complete(completionType, count) },
+                  defaultCompletionType(),
+                  defaultInvocationCount(),
+                  ignoreProperties = ignoreProperties,
+                  additionalValidDirectives = CompilerTestDirectives.ALL_COMPILER_TEST_DIRECTIVES + IgnoreTests.DIRECTIVES.FIR_IDENTICAL
                 )
             }
         }
@@ -50,6 +51,8 @@ abstract class KotlinFixtureCompletionBaseTestCase : KotlinLightCodeInsightFixtu
             tearDownFixture()
         }
     }
+
+    open val ignoreProperties: Collection<String> = emptyList()
 
     protected open fun configureFixture(testPath: String) {
         myFixture.configureByFile(File(testPath).name)
