@@ -259,6 +259,15 @@ Includes the following features:</p>
               id="org.intellij.plugins.markdown.ui.actions.styling.HeaderUpAction"
               icon="MarkdownIcons.EditorActions.Header_level_up">
       </action>
+
+      <separator/>
+
+      <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
+              icon="AllIcons.General.LayoutPreviewOnly">
+        <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
+        <add-to-group group-id="GenerateGroup" anchor="last"/>
+      </action>
     </group>
 
     <action class="org.intellij.plugins.markdown.ui.actions.styling.MarkdownIntroduceLinkReferenceAction"
@@ -267,12 +276,6 @@ Includes the following features:</p>
     </action>
 
     <group id="Markdown.Toolbar.Left" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
-      <action class="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
-              id="org.intellij.plugins.markdown.ui.actions.styling.InsertImageAction"
-              icon="AllIcons.General.LayoutPreviewOnly">
-        <keyboard-shortcut first-keystroke="control U" keymap="$default"/>
-        <add-to-group group-id="GenerateGroup" anchor="last"/>
-      </action>
     </group>
 
     <group id="Markdown.Toolbar.Right" class="com.intellij.openapi.actionSystem.DefaultActionGroup">
