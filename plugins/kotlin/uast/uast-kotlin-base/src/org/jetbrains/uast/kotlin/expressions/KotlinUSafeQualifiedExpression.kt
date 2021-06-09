@@ -16,8 +16,8 @@ class KotlinUSafeQualifiedExpression(
     givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), UQualifiedReferenceExpression, UMultiResolvable,
     KotlinUElementWithType, KotlinEvaluatableUElement {
-    override val receiver by lz { KotlinConverter.convertOrEmpty(sourcePsi.receiverExpression, this) }
-    override val selector by lz { KotlinConverter.convertOrEmpty(sourcePsi.selectorExpression, this) }
+    override val receiver by lz { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.receiverExpression, this) }
+    override val selector by lz { baseResolveProviderService.baseKotlinConverter.convertOrEmpty(sourcePsi.selectorExpression, this) }
     override val accessType = KotlinQualifiedExpressionAccessTypes.SAFE
 
     override val resolvedName: String?
