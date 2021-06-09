@@ -2,6 +2,8 @@
 package org.jetbrains.kotlin.idea.junit
 
 import com.intellij.execution.PsiLocation
+import com.intellij.execution.actions.ConfigurationFromContext
+import com.intellij.execution.junit.JUnitConfigurationProducer
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
@@ -10,6 +12,14 @@ import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 object JunitKotlinTestFrameworkProvider : KotlinTestFrameworkProvider {
     override val canRunJvmTests: Boolean
         get() = true
+
+    override fun isProducedByJava(configuration: ConfigurationFromContext): Boolean {
+        return configuration.isProducedBy(JUnitConfigurationProducer::class.java)
+    }
+
+    override fun isProducedByKotlin(configuration: ConfigurationFromContext): Boolean {
+        return configuration.isProducedBy(KotlinJUnitRunConfigurationProducer::class.java)
+    }
 
     override fun isTestJavaClass(testClass: PsiClass): Boolean {
         return JUnitUtil.isTestClass(testClass, false, true)
