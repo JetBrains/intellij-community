@@ -16,7 +16,6 @@ import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -70,20 +69,19 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
           libModel.commit();
         }
       }
-      Sdk sdk = model.getSdk();
-      if (sdk != null) {
-        // first, remove bundled JDK Annotations because they are too thorough - can't infer them automatically yet
-        sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> {
-          modificator.setName(modificator.getName() + "-RootType" + AnnotationOrderRootType.getInstance().name());
-          modificator.removeRoots(AnnotationOrderRootType.getInstance());
-        });
-
-        sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), annotationsRoot);
-        ProjectJdkTable.getInstance().addJdk(sdk, module.getProject());
-        model.setSdk(sdk);
-      }
-
       Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(true, module);
+    }
+
+    @Override
+    public Sdk getSdk() {
+      Sdk sdk = super.getSdk();
+      sdk = PsiTestUtil.modifyJdkRoots(sdk, modificator -> {
+        modificator.setName(modificator.getName() + "-RootType" + AnnotationOrderRootType.getInstance().name());
+        modificator.removeRoots(AnnotationOrderRootType.getInstance());
+      });
+
+      sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), getAnnotationsRoot());
+      return sdk;
     }
   };
 
