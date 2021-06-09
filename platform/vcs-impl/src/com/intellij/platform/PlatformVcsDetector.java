@@ -12,7 +12,7 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -29,7 +29,7 @@ final class PlatformVcsDetector implements StartupActivity.DumbAware {
 
   @Override
   public void runActivity(@NotNull Project project) {
-    GuiUtils.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(() -> {
       String projectBasePath = project.getBasePath();
       if (projectBasePath == null) {
         return;

@@ -59,12 +59,8 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.BalloonImpl
 import com.intellij.ui.ComponentUtil
-import com.intellij.ui.GuiUtils
 import com.intellij.ui.awt.RelativePoint
-import com.intellij.util.BitUtil
-import com.intellij.util.EventDispatcher
-import com.intellij.util.SingleAlarm
-import com.intellij.util.SystemProperties
+import com.intellij.util.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.addIfNotNull
 import com.intellij.util.ui.*
@@ -1987,7 +1983,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
       val toolWindowManager = toolWindow.toolWindowManager
       toolWindowManager.focusManager
         .doWhenFocusSettlesDown(ExpirableRunnable.forProject(toolWindowManager.project) {
-          GuiUtils.invokeLaterIfNeeded(Runnable {
+          ModalityUiUtil.invokeLaterIfNeeded(Runnable {
             val entry = toolWindowManager.idToEntry[id] ?: return@Runnable
             val windowInfo = entry.readOnlyWindowInfo
             if (!windowInfo.isVisible) {

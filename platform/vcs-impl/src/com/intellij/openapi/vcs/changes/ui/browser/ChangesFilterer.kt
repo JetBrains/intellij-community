@@ -20,7 +20,7 @@ import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ui.ChangesComparator
-import com.intellij.ui.GuiUtils
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.update.DisposableUpdate
@@ -173,7 +173,7 @@ class ChangesFilterer(val project: Project?, val listener: Listener) : Disposabl
   }
 
   private fun updatePresentation() {
-    GuiUtils.invokeLaterIfNeeded(
+    ModalityUiUtil.invokeLaterIfNeeded(
       {
         updateQueue.cancelAllUpdates()
         listener.updateChanges()

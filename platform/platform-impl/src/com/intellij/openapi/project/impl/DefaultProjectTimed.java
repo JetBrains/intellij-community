@@ -5,7 +5,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.TimedReference;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,6 +47,6 @@ public abstract class DefaultProjectTimed extends TimedReference<Project> {
         WriteAction.run(() -> super.dispose());
       }
     };
-    GuiUtils.invokeLaterIfNeeded(doDispose, ModalityState.NON_MODAL, myParentDisposable.getDisposed());
+    ModalityUiUtil.invokeLaterIfNeeded(doDispose, ModalityState.NON_MODAL, myParentDisposable.getDisposed());
   }
 }

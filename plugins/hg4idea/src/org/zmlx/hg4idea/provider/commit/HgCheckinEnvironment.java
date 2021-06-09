@@ -28,7 +28,7 @@ import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.checkin.CheckinEnvironment;
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
@@ -182,9 +182,9 @@ public class HgCheckinEnvironment implements CheckinEnvironment, AmendCommitAwar
     // push if needed
     if (isPushAfterCommit(commitContext) && exceptions.isEmpty()) {
       final List<HgRepository> preselectedRepositories = new ArrayList<>(repositoriesMap.keySet());
-      GuiUtils.invokeLaterIfNeeded(() ->
+      ModalityUiUtil.invokeLaterIfNeeded(() ->
                                      new VcsPushDialog(myProject, preselectedRepositories, HgUtil.getCurrentRepository(myProject)).show(),
-                                   ModalityState.defaultModalityState());
+                                         ModalityState.defaultModalityState());
     }
 
     return exceptions;

@@ -13,8 +13,8 @@ import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.openapi.roots.JavaProjectModelModificationService;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.ModalityUiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +60,7 @@ class AddExtLibraryDependencyFix extends OrderEntryFix {
     ModalityState modality = ModalityState.defaultModalityState();
     JavaProjectModelModificationService.getInstance(project)
       .addDependency(myCurrentModule, myLibraryDescriptor, myScope)
-      .onSuccess(__ -> GuiUtils.invokeLaterIfNeeded(() -> {
+      .onSuccess(__ -> ModalityUiUtil.invokeLaterIfNeeded(() -> {
         try {
           importClass(myCurrentModule, editor, restoreReference(), myQualifiedClassName);
         }

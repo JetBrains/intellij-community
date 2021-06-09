@@ -42,8 +42,8 @@ import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.project.ProjectStoreOwner
 import com.intellij.projectImport.ProjectAttachProcessor
 import com.intellij.projectImport.ProjectOpenedCallback
-import com.intellij.ui.GuiUtils
 import com.intellij.ui.IdeUICustomization
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.io.delete
 import org.jetbrains.annotations.ApiStatus
 import java.awt.event.InvocationEvent
@@ -171,7 +171,8 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       val projectFilePath = if (store.storageScheme == StorageScheme.DIRECTORY_BASED) store.directoryStorePath!! else store.projectFilePath
       for (p in openProjects) {
         if (ProjectUtil.isSameProject(projectFilePath, p)) {
-          GuiUtils.invokeLaterIfNeeded({ ProjectUtil.focusProjectWindow(p, false) }, ModalityState.NON_MODAL)
+          ModalityUiUtil.invokeLaterIfNeeded({ ProjectUtil.focusProjectWindow(p, false) },
+                                             ModalityState.NON_MODAL)
           return false
         }
       }

@@ -12,7 +12,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomFileElement;
@@ -25,7 +25,7 @@ public final class AntSupport {
     if (file.isValid() && ForcedAntFileAttribute.isAntFile(file) != value) {
       ForcedAntFileAttribute.forceAntFile(file, value);
       TransactionGuard.getInstance().assertWriteSafeContext(ModalityState.defaultModalityState());
-      GuiUtils.invokeLaterIfNeeded(() -> PsiManager.getInstance(project).dropPsiCaches(), ModalityState.defaultModalityState(), project.getDisposed());
+      ModalityUiUtil.invokeLaterIfNeeded(() -> PsiManager.getInstance(project).dropPsiCaches(), ModalityState.defaultModalityState(), project.getDisposed());
     }
   }
 
