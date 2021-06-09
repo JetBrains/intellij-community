@@ -26,7 +26,7 @@ Once more we have an inline <warning descr="COMMA_BEFORE_AND">fragment and</warn
 
 It is <warning descr="BEEN_PART_AGREEMENT">friend</warning> of human
 
-<warning descr="And">And</warning> we've got error in injected code!
+And we've got error in injected code!
 ```kotlin
 val b = "It is friend."
 ```
