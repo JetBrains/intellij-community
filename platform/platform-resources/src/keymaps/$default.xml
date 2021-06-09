@@ -609,16 +609,15 @@
     <keyboard-shortcut first-keystroke="alt RIGHT"/>
   </action>
   <action id="Diff.FocusOppositePane">
-    <keyboard-shortcut first-keystroke="control TAB"/>
-  </action>
-  <action id="Diff.FocusOppositePaneAndScroll">
     <keyboard-shortcut first-keystroke="control shift TAB"/>
   </action>
+  <action id="Diff.FocusOppositePaneAndScroll">
+  </action>
   <action id="Diff.ApplyLeftSide">
-    <keyboard-shortcut first-keystroke="alt shift RIGHT"/>
+    <keyboard-shortcut first-keystroke="control alt R"/>
   </action>
   <action id="Diff.ApplyRightSide">
-    <keyboard-shortcut first-keystroke="alt shift LEFT"/>
+    <keyboard-shortcut first-keystroke="control alt A"/>
   </action>
   <action id="Move">
     <keyboard-shortcut first-keystroke="F6"/>
