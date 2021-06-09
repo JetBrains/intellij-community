@@ -33,7 +33,12 @@ public final class NioFiles {
         if (parent != null) {
           createDirectories(parent);
         }
-        Files.createDirectory(path);
+        try {
+          Files.createDirectory(path);
+        }
+        catch (FileAlreadyExistsException ignored) {
+          // Ignored.
+        }
       }
     }
     return path;
