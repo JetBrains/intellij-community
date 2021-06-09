@@ -97,7 +97,7 @@ public final class TabbedContentTabLabel extends ContentTabLabel {
     }
   }
 
-  protected class TabbedContentTabAdditionalIcon extends ContentTabAdditionalIcon {
+  protected class TabbedContentTabAdditionalIcon extends ContentAdditionalIcon {
     public TabbedContentTabAdditionalIcon(@NotNull ContentTabAction action) {
       super(action);
     }
