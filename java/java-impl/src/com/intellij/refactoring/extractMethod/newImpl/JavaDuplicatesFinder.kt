@@ -5,7 +5,7 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 
-data class ChangedExpression(val pattern: PsiElement, val candidate: PsiElement)
+data class ChangedExpression(val pattern: PsiExpression, val candidate: PsiExpression)
 
 class Duplicate(val pattern: List<PsiElement>, val candidate: List<PsiElement>, val changedExpressions: List<ChangedExpression>)
 
@@ -15,15 +15,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
     fun textRangeOf(range: List<PsiElement>) = TextRange(range.first().textRange.startOffset, range.last().textRange.endOffset)
   }
 
-  private val pattern: List<PsiElement> = copyOf(pattern).filterNot(::isNoise)
-
-  fun copyOf(elements: List<PsiElement>): List<PsiElement> {
-    val project = elements.firstOrNull()?.project ?: throw IllegalArgumentException()
-    val block = PsiElementFactory.getInstance(project).createCodeBlockFromText("{}", elements.first().context)
-    val first = block.addRange(elements.first(), elements.last())
-    val last = block.lastBodyElement!!
-    return PsiTreeUtil.getElementsOfRange(first, last)
-  }
+  private val pattern: List<PsiElement> = pattern.filterNot(::isNoise)
 
   fun findDuplicates(file: PsiFile): List<Duplicate> {
     val duplicates = mutableListOf<Duplicate>()
@@ -88,8 +80,9 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
     val notEqualElements = pattern.zip(candidate).filterNot { (pattern, candidate) ->
       isEquivalent(pattern, candidate) && canBeDuplicate(childrenOf(pattern), childrenOf(candidate), changedExpressions)
     }
-    changedExpressions += notEqualElements.map { (pattern, candidate) -> ChangedExpression(pattern, candidate) }
-    return notEqualElements.all { (pattern, candidate) -> canBeReplaced(pattern, candidate) }
+    if (notEqualElements.any { (pattern, candidate) -> ! canBeReplaced(pattern, candidate) }) return false
+    changedExpressions += notEqualElements.map { (pattern, candidate) -> ChangedExpression(pattern as PsiExpression, candidate as PsiExpression) }
+    return true
   }
 
   private fun isEquivalent(pattern: PsiElement, candidate: PsiElement): Boolean {
