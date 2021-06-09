@@ -58,7 +58,8 @@ class ExampleClassWithTypos<T> {
 
     /**
      * It <warning descr="IT_VBZ">add</warning> a [member] to this <TYPO descr="Typo: In word 'grooup'">grooup</TYPO>.
-     *
+     * <warning descr="UPPERCASE_SENTENCE_START">second</warning> sentence.
+     * 
      * @param member member to add
      * @return the new size of <warning descr="DT_DT">a the</warning> group.
      */

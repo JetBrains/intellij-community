@@ -7,6 +7,8 @@ import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 
 
 class JavaSupportTest : GrazieTestBase() {
+  override val additionalEnabledRules: Set<String> = setOf("LanguageTool.EN.UPPERCASE_SENTENCE_START")
+
   override fun getProjectDescriptor(): LightProjectDescriptor {
     return LightJavaCodeInsightFixtureTestCase.JAVA_LATEST
   }
