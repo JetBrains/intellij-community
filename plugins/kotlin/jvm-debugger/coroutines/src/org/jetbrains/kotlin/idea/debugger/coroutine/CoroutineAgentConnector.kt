@@ -4,8 +4,10 @@ package org.jetbrains.kotlin.idea.debugger.coroutine
 import com.intellij.execution.configurations.JavaParameters
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JdkUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.ArchiveFileSystem
 import com.intellij.psi.JavaPsiFacade
+import com.intellij.psi.search.GlobalSearchScope
 import org.apache.maven.artifact.versioning.DefaultArtifactVersion
 
 enum class CoroutineDebuggerMode {
@@ -35,10 +37,9 @@ internal object CoroutineAgentConnector {
     }
 
     private fun findKotlinxCoroutinesCoreJar(project: Project): KotlinxCoroutinesSearchResult {
-        val matchResult = project.getJarPaths(kotlinxCoroutinesPackageName)
-                .asSequence()
-                .map { kotlinxCoroutinesCoreJarRegex.matchEntire(it) }
-                .firstOrNull { it != null }
+        val matchResult = project
+            .getJarVirtualFiles(kotlinxCoroutinesPackageName)
+            .matchToPackageRegexInProject(project, kotlinxCoroutinesCoreJarRegex)
 
         if (matchResult == null || matchResult.groupValues.size < 3) {
             return KotlinxCoroutinesSearchResult(null, CoroutineDebuggerMode.DISABLED)
@@ -49,14 +50,24 @@ internal object CoroutineAgentConnector {
         )
     }
 
-    private fun Project.getJarPaths(packageName: String): List<String> {
+    private fun List<VirtualFile>.matchToPackageRegexInProject(project: Project, regex: Regex): MatchResult? {
+        var matchResult: MatchResult?
+        val projectScope = GlobalSearchScope.allScope(project)
+        for (file in this) {
+            val jarPath = file.path.getParentJarPath() ?: continue
+            matchResult = regex.matchEntire(jarPath)
+            if (matchResult != null && projectScope.contains(file)) {
+                return matchResult
+            }
+        }
+        return null
+    }
+
+    private fun Project.getJarVirtualFiles(packageName: String): List<VirtualFile> {
         val kotlinxCoroutinesPackage = JavaPsiFacade.getInstance(this)
             .findPackage(packageName)
             ?: return emptyList()
-
-        return kotlinxCoroutinesPackage.directories.mapNotNull {
-            it.virtualFile.path.getParentJarPath()
-        }
+        return kotlinxCoroutinesPackage.directories.mapNotNull { it.virtualFile }
     }
 
     private fun String.getParentJarPath(): String? {
