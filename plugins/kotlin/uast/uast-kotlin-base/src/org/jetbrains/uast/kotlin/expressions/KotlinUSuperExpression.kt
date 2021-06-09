@@ -3,15 +3,14 @@
 package org.jetbrains.uast.kotlin
 
 import org.jetbrains.kotlin.psi.KtSuperExpression
-import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.USuperExpression
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
 class KotlinUSuperExpression(
-        override val sourcePsi: KtSuperExpression,
-        givenParent: UElement?
+    override val sourcePsi: KtSuperExpression,
+    givenParent: UElement?
 ) : KotlinAbstractUExpression(givenParent), USuperExpression, DelegatedMultiResolve, KotlinUElementWithType, KotlinEvaluatableUElement {
     override val label: String?
         get() = sourcePsi.getLabelName()
@@ -19,5 +18,6 @@ class KotlinUSuperExpression(
     override val labelIdentifier: UIdentifier?
         get() = sourcePsi.getTargetLabel()?.let { KotlinUIdentifier(it, this) }
 
-    override fun resolve() = sourcePsi.analyze()[BindingContext.LABEL_TARGET, sourcePsi.getTargetLabel()]
+    override fun resolve() =
+        baseResolveProviderService.resolveToDeclaration(sourcePsi)
 }
