@@ -259,7 +259,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   }
 
   private fun ToolWindowImpl.getBoundsOnScreen(anchor: ToolWindowAnchor, screenPoint : Point): Rectangle {
-    var trueStripe = myPane.getStripeFor(screenPoint, myPane.getStripeFor(myInitialAnchor!!))
+    val trueStripe = myPane.getStripeFor(screenPoint, myPane.getStripeFor(myInitialAnchor!!))
     val location = myPane.locationOnScreen
     location.x += getStripeWidth(LEFT)
     location.y += getStripeHeight(TOP)
