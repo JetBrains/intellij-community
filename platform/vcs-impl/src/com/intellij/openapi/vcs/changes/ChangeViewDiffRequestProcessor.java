@@ -186,19 +186,6 @@ public abstract class ChangeViewDiffRequestProcessor extends CacheDiffRequestPro
     return myCurrentChange;
   }
 
-  /**
-   * In case of conflict, will select first change with this file path
-   */
-  @Deprecated
-  protected void selectFilePath(@NotNull FilePath filePath) {
-    Wrapper changeToSelect = ContainerUtil.find(getAllChanges().iterator(), change -> change.getFilePath().equals(filePath));
-
-    if (changeToSelect != null) {
-      myCurrentChange = changeToSelect;
-      selectChange(changeToSelect);
-    }
-  }
-
   @Override
   protected boolean hasNextChange(boolean fromUpdate) {
     PrevNextDifferenceIterable strategy = getSelectionStrategy(fromUpdate);
