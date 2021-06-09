@@ -1203,6 +1203,7 @@ public final class PluginManagerCore {
   }
 
   public static boolean isPluginInstalled(PluginId id) {
+    if (pluginSet == null) return false;
     return getPlugin(id) != null;
   }
 
