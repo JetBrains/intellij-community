@@ -52,8 +52,9 @@ public abstract class LRUPopupBuilder<T> {
   private T mySelection;
   private Consumer<? super T> myOnChosen;
   private Comparator<? super T> myComparator;
-  private Iterable<? extends T> myItemsIterable;
-  private JBIterable<T> myExtraItems = JBIterable.empty();
+  private Iterable<? extends T> myValues;
+  private JBIterable<T> myTopValues = JBIterable.empty();
+  private JBIterable<T> myBottomValues = JBIterable.empty();
 
   @NotNull
   public static ListPopup forFileLanguages(@NotNull Project project,
@@ -117,7 +118,7 @@ public abstract class LRUPopupBuilder<T> {
 
   @NotNull
   public LRUPopupBuilder<T> forValues(@Nullable Iterable<? extends T> items) {
-    myItemsIterable = items;
+    myValues = items;
     return this;
   }
 
@@ -128,8 +129,15 @@ public abstract class LRUPopupBuilder<T> {
   }
 
   @NotNull
-  public LRUPopupBuilder<T> withExtra(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
-    myExtraItems = myExtraItems.append(extra);
+  public LRUPopupBuilder<T> withExtraTopValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
+    myTopValues = myTopValues.append(extra);
+    myPresentations.put(extra, Pair.create(displayName, icon));
+    return this;
+  }
+
+  @NotNull
+  public LRUPopupBuilder<T> withExtraBottomValue(@NotNull T extra, @Nls @NotNull String displayName, @Nullable Icon icon) {
+    myBottomValues = myBottomValues.append(extra);
     myPresentations.put(extra, Pair.create(displayName, icon));
     return this;
   }
@@ -151,11 +159,12 @@ public abstract class LRUPopupBuilder<T> {
     if (mySelection != null) {
       ids.add(getStorageId(mySelection));
     }
+    List<T> topItems = myTopValues.toList();
     List<T> lru = new ArrayList<>(LRU_ITEMS);
     List<T> items = new ArrayList<>(MAX_VISIBLE_SIZE);
-    List<T> extra = myExtraItems.toList();
-    if (myItemsIterable != null) {
-      for (T t : myItemsIterable) {
+    List<T> bottomItems = myBottomValues.toList();
+    if (myValues != null) {
+      for (T t : myValues) {
         (ids.contains(getStorageId(t)) ? lru : items).add(t);
       }
     }
@@ -165,10 +174,10 @@ public abstract class LRUPopupBuilder<T> {
     if (!lru.isEmpty()) {
       lru.sort(Comparator.comparingInt(o -> ids.indexOf(getStorageId(o))));
     }
-    T separator1 = !lru.isEmpty() && !items.isEmpty()? items.get(0) : null;
-    T separator2 = !lru.isEmpty() || !items.isEmpty()? ContainerUtil.getFirstItem(extra) : null;
+    List<T> combinedItems = ContainerUtil.concat(topItems, lru, items, bottomItems);
+    T sep1 = combinedItems.get(topItems.size() + lru.size());
+    T sep2 = bottomItems.isEmpty() ? null : combinedItems.get(topItems.size() + lru.size() + items.size());
 
-    List<T> combinedItems = ContainerUtil.concat(lru, items, extra);
     BaseListPopupStep<T> step =
       new BaseListPopupStep<>(myTitle, combinedItems) {
         @NotNull
@@ -188,8 +197,8 @@ public abstract class LRUPopupBuilder<T> {
         }
 
         @Override
-        public PopupStep onChosen(final T t, boolean finalChoice) {
-          if (!extra.contains(t)) {
+        public PopupStep<?> onChosen(final T t, boolean finalChoice) {
+          if (!bottomItems.contains(t) && !topItems.contains(t)) {
             storeLRUItems(t);
           }
           if (myOnChosen != null) {
@@ -201,7 +210,7 @@ public abstract class LRUPopupBuilder<T> {
         @Nullable
         @Override
         public ListSeparator getSeparatorAbove(T value) {
-          return value == separator1 || value == separator2 ? new ListSeparator() : null;
+          return value == sep1 || value == sep2 ? new ListSeparator() : null;
         }
       };
     int selection = Math.max(0, mySelection != null ? combinedItems.indexOf(mySelection) : 0);
