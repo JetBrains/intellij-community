@@ -2015,6 +2015,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/addPropertyAccessors/both/abstract.kt");
             }
 
+            @TestMetadata("caretNotOnName.kt")
+            public void testCaretNotOnName() throws Exception {
+                runTest("idea/testData/intentions/addPropertyAccessors/both/caretNotOnName.kt");
+            }
+
             @TestMetadata("delegate.kt")
             public void testDelegate() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/both/delegate.kt");
@@ -2086,6 +2091,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("abstract.kt")
             public void testAbstract() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/getter/abstract.kt");
+            }
+
+            @TestMetadata("caretNotOnName.kt")
+            public void testCaretNotOnName() throws Exception {
+                runTest("idea/testData/intentions/addPropertyAccessors/getter/caretNotOnName.kt");
             }
 
             @TestMetadata("const.kt")
@@ -2164,6 +2174,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("abstract.kt")
             public void testAbstract() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/setter/abstract.kt");
+            }
+
+            @TestMetadata("caretNotOnName.kt")
+            public void testCaretNotOnName() throws Exception {
+                runTest("idea/testData/intentions/addPropertyAccessors/setter/caretNotOnName.kt");
             }
 
             @TestMetadata("delegate.kt")
