@@ -4,6 +4,7 @@ package com.intellij.ide.plugins.cl;
 import com.intellij.diagnostic.PluginException;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
@@ -113,6 +114,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   private ClassLoader[] parents;
+  private IdeaPluginDescriptorImpl[] dependencies;
+
   // cache of computed list of all parents (not only direct)
   private volatile ClassLoader[] allParents;
   private volatile int allParentsLastCacheId;
@@ -132,6 +135,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   private final int instanceId;
   private volatile int state = ACTIVE;
 
+  @SuppressWarnings("FieldNameHidesFieldInSuperclass")
   private final ResolveScopeManager resolveScopeManager;
 
   public interface ResolveScopeManager {
@@ -166,7 +170,8 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   public PluginClassLoader(@NotNull List<Path> files,
                            @NotNull ClassPath classPath,
-                           @NotNull ClassLoader @NotNull [] parents,
+                           ClassLoader[] parents,
+                           IdeaPluginDescriptorImpl[] dependencies,
                            @NotNull PluginDescriptor pluginDescriptor,
                            @NotNull ClassLoader coreLoader,
                            @Nullable ResolveScopeManager resolveScopeManager,
@@ -178,11 +183,14 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
     this.resolveScopeManager = resolveScopeManager == null ? (p1, p2, p3) -> false : resolveScopeManager;
     this.parents = parents;
+    this.dependencies = dependencies;
     this.pluginDescriptor = pluginDescriptor;
     pluginId = pluginDescriptor.getPluginId();
     this.packagePrefix = (packagePrefix == null || packagePrefix.endsWith(".")) ? packagePrefix : (packagePrefix + '.');
     this.coreLoader = coreLoader;
-    checkNoCoreInParents(parents, coreLoader);
+    if (parents != null) {
+      checkNoCoreInParents(parents, coreLoader);
+    }
 
     this.libDirectories = libDirectories;
   }
@@ -308,6 +316,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       return result;
     }
 
+    initParents();
+
+    assert parents != null;
     if (parents.length == 0) {
       result = new ClassLoader[]{coreLoader};
       allParents = result;
@@ -324,7 +335,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
       }
 
       if (classLoader instanceof PluginClassLoader) {
-        Collections.addAll(queue, ((PluginClassLoader)classLoader).parents);
+        PluginClassLoader parent = (PluginClassLoader)classLoader;
+        parent.initParents();
+        Collections.addAll(queue, parent.parents);
       }
     }
     parentSet.add(coreLoader);
@@ -332,6 +345,23 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     allParents = result;
     allParentsLastCacheId = parentListCacheIdCounter.get();
     return result;
+  }
+
+  private void initParents() {
+    IdeaPluginDescriptorImpl[] dependencies = this.dependencies;
+    if (dependencies == null || parents != null) {
+      return;
+    }
+
+    List<ClassLoader> list = new ArrayList<>(dependencies.length);
+    for (IdeaPluginDescriptorImpl dependency : dependencies) {
+      ClassLoader loader = dependency.classLoader;
+      if (loader != null) {
+        list.add(loader);
+      }
+    }
+    parents = list.toArray(EMPTY_CLASS_LOADER_ARRAY);
+    this.dependencies = null;
   }
 
   public final void clearParentListCache() {
@@ -560,6 +590,9 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   @ApiStatus.Internal
   public final void attachParent(@NotNull ClassLoader classLoader) {
+    if (parents == null) {
+      initParents();
+    }
     int length = parents.length;
     ClassLoader[] result = new ClassLoader[length + 1];
     System.arraycopy(parents, 0, result, 0, length);
@@ -573,6 +606,10 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
    */
   @ApiStatus.Internal
   public final boolean detachParent(@NotNull ClassLoader classLoader) {
+    if (parents == null) {
+      initParents();
+    }
+
     for (int i = 0; i < parents.length; i++) {
       if (classLoader != parents[i]) {
         continue;

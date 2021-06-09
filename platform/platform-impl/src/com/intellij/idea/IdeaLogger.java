@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -108,11 +108,18 @@ public final class IdeaLogger extends Log4jBasedLogger {
   }
 
   private static void reportToFus(@NotNull Throwable t) {
-    Application application = ApplicationManager.getApplication();
-    if (application != null && !application.isUnitTestMode() && !application.isDisposed() && PluginUtil.getInstance() != null) {
-      PluginId pluginId = PluginUtil.getInstance().findPluginId(t);
-      VMOptions.MemoryKind kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
-      LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+      return;
+    }
+
+    Application app = ApplicationManager.getApplication();
+    if (app != null && !app.isUnitTestMode() && !app.isDisposed()) {
+      PluginUtil pluginUtil = PluginUtil.getInstance();
+      if (pluginUtil != null) {
+        PluginId pluginId = pluginUtil.findPluginId(t);
+        VMOptions.MemoryKind kind = DefaultIdeaErrorLogger.getOOMErrorKind(t);
+        LifecycleUsageTriggerCollector.onError(pluginId, t, kind);
+      }
     }
   }
 

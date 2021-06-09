@@ -973,8 +973,7 @@ public final class PluginManagerCore {
     }
 
     PluginSet pluginSet = new PluginSet(allPlugins, enabledPlugins, false);
-    ClassLoaderConfigurator classLoaderConfigurator = new ClassLoaderConfigurator(pluginSet, coreLoader);
-    pluginSet.enabledPlugins.forEach(classLoaderConfigurator::configure);
+    new ClassLoaderConfigurator(pluginSet, coreLoader).configureAll();
 
     if (checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap);

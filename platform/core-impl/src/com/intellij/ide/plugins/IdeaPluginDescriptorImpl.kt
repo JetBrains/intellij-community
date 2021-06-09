@@ -160,7 +160,7 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
     }
 
     if (raw.resourceBundleBaseName != null) {
-      if (id == PluginManagerCore.CORE_ID) {
+      if (id == PluginManagerCore.CORE_ID && !isSub) {
         LOG.warn("<resource-bundle>${raw.resourceBundleBaseName}</resource-bundle> tag is found in an xml descriptor" +
                  " included into the platform part of the IDE but the platform part uses predefined bundles " +
                  "(e.g. ActionsBundle for actions) anyway; this tag must be replaced by a corresponding attribute in some inner tags " +

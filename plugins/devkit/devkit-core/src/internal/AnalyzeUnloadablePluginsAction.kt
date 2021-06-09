@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.internal
 
-import com.intellij.ide.plugins.ClassLoaderConfigurator
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -208,8 +207,7 @@ class AnalyzeUnloadablePluginsAction : AnAction() {
             continue
           }
           descriptor.pluginId?.let { pluginId ->
-            if (depIdeaPlugin.`package`.rawText == null
-                || !ClassLoaderConfigurator.isMigratedToNewModel(pluginId)) {
+            if (depIdeaPlugin.`package`.rawText == null) {
               dependenciesWithoutSeparateClassloaders.add(pluginId)
             }
           }

@@ -26,10 +26,6 @@
     <xi:fallback/>
   </xi:include>
 
-  <content>
-    <module name="intellij.profiler.ultimate"/>
-  </content>
-
   <depends optional="true" config-file="intellij.java.structuralSearch.xml">com.intellij.modules.structuralsearch</depends>
   <depends optional="true" config-file="intellij.java.remoteServers.impl.xml">com.intellij.modules.remoteServers</depends>
   <depends optional="true" config-file="intellij.java.featuresTrainer.xml">training</depends>

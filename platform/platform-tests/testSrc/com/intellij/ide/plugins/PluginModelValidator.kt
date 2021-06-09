@@ -409,7 +409,6 @@ private fun computeModuleSet(sourceModules: List<PluginModelValidator.Module>,
     // platform/cwm-plugin/resources/META-INF/plugin.xml doesn't have `id` - ignore for now
     if (module.name.startsWith("fleet.") ||
         module.name == "fleet" ||
-        module.name == "intellij.idea.ultimate.resources" ||
         // https://youtrack.jetbrains.com/issue/IDEA-261850
         module.name == "intellij.indexing.shared.ultimate.plugin.internal.generator" ||
         module.name == "intellij.indexing.shared.ultimate.plugin.public" ||

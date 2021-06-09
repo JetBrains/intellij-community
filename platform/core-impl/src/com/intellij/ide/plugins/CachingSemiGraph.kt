@@ -108,8 +108,10 @@ private fun collectDirectDependencies(rootDescriptor: IdeaPluginDescriptorImpl,
   directDependenciesOfModule(rootDescriptor, pluginSet, uniqueCheck, result)
 
   // graph for plugins, not for modules - so, dependency of content must be taken into account
-  for (module in rootDescriptor.content.modules) {
-    directDependenciesOfModule(module.requireDescriptor(), pluginSet, uniqueCheck, result)
+  if (rootDescriptor.id != PluginManagerCore.CORE_ID) {
+    for (module in rootDescriptor.content.modules) {
+      directDependenciesOfModule(module.requireDescriptor(), pluginSet, uniqueCheck, result)
+    }
   }
   for (moduleId in rootDescriptor.incompatibilities) {
     val dep = pluginSet.findEnabledPlugin(moduleId)

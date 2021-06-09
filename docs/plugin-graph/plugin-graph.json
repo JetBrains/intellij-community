@@ -32,6 +32,37 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cJ6",
+    "n": "com.intellij.clion"
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "J6",
+    "name": "intellij.clion",
+    "n": "i.clion",
+    "package": null,
+    "sourceModule": "intellij.clion",
+    "descriptor": "CIDR/clion/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.clion",
+    "parent": "cJ6",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "rI",
+    "name": "intellij.profiler.clion",
+    "n": "i.profiler.clion",
+    "package": "com.intellij.profiler.clion",
+    "sourceModule": "intellij.profiler.clion",
+    "descriptor": "plugins/profiler/clion/resources/intellij.profiler.clion.xml",
+    "parent": "cJ6",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "Oc",
     "name": "intellij.cloudFormation",
     "n": "i.cloudFormation",
@@ -657,33 +688,45 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "AL",
-    "name": "intellij.jade",
-    "n": "i.jade",
-    "package": "com.jetbrains.plugins.jade",
-    "sourceModule": "intellij.jade",
-    "descriptor": "plugins/Jade/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.plugins.jade",
-    "type": 1
+    "id": "cJt",
+    "n": "com.intellij"
   }
 }, {
   "group": "nodes",
   "data": {
-    "id": "cS9",
-    "n": "com.intellij.java"
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "S9",
-    "name": "intellij.java.plugin",
-    "n": "i.java.plugin",
+    "id": "Jt",
+    "name": "intellij.idea.ultimate.resources",
+    "n": "i.idea.ultimate.resources",
     "package": null,
-    "sourceModule": "intellij.java.plugin",
-    "descriptor": "community/java/plugin/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.java",
-    "parent": "cS9",
+    "sourceModule": "intellij.idea.ultimate.resources",
+    "descriptor": "ultimate/ultimate-resources/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij",
+    "parent": "cJt",
     "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ZS",
+    "name": "intellij.profiler.ultimate.ideaAsyncProfiler",
+    "n": "i.profiler.ultimate.ideaAsyncProfiler",
+    "package": "com.intellij.profiler.ultimate.async",
+    "sourceModule": "intellij.profiler.ultimate.ideaAsyncProfiler",
+    "descriptor": "plugins/profiler/ultimate/idea-async-profiler/resources/intellij.profiler.ultimate.ideaAsyncProfiler.xml",
+    "parent": "cJt",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "TN",
+    "name": "intellij.profiler.common",
+    "n": "i.profiler.common",
+    "package": "com.intellij.profiler",
+    "sourceModule": "intellij.profiler.common",
+    "descriptor": "plugins/profiler/common/resources/intellij.profiler.common.xml",
+    "parent": "cJt",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -694,8 +737,20 @@
     "package": "com.intellij.profiler.ultimate",
     "sourceModule": "intellij.profiler.ultimate",
     "descriptor": "plugins/profiler/ultimate/resources/intellij.profiler.ultimate.xml",
-    "parent": "cS9",
+    "parent": "cJt",
     "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "AL",
+    "name": "intellij.jade",
+    "n": "i.jade",
+    "package": "com.jetbrains.plugins.jade",
+    "sourceModule": "intellij.jade",
+    "descriptor": "plugins/Jade/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.plugins.jade",
+    "type": 1
   }
 }, {
   "group": "nodes",
@@ -1044,7 +1099,7 @@
     "id": "T4",
     "name": "intellij.performanceTesting",
     "n": "i.performanceTesting",
-    "package": null,
+    "package": "com.jetbrains.performancePlugin",
     "sourceModule": "intellij.performanceTesting",
     "descriptor": "plugins/performanceTesting/resources/META-INF/plugin.xml",
     "pluginId": "com.jetbrains.performancePlugin",
@@ -1062,6 +1117,30 @@
     "descriptor": "plugins/performanceTesting/resources/intellij.performanceTesting.java.xml",
     "parent": "cT4",
     "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "kP",
+    "name": "intellij.performanceTesting.gradle",
+    "n": "i.performanceTesting.gradle",
+    "package": "com.jetbrains.performancePlugin.gradle",
+    "sourceModule": "intellij.performanceTesting.gradle",
+    "descriptor": "plugins/performanceTesting/gradle/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.performancePlugin.gradle",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "jU",
+    "name": "intellij.performanceTesting.maven",
+    "n": "i.performanceTesting.maven",
+    "package": "com.jetbrains.performancePlugin.maven",
+    "sourceModule": "intellij.performanceTesting.maven",
+    "descriptor": "plugins/performanceTesting/maven/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.performancePlugin.maven",
+    "type": 1
   }
 }, {
   "group": "nodes",
@@ -1182,6 +1261,18 @@
     "package": "com.jetbrains.python.docker",
     "sourceModule": "intellij.python.docker",
     "descriptor": "python/python-docker/resources/intellij.python.docker.xml",
+    "parent": "che",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Sp1",
+    "name": "intellij.python.profiler",
+    "n": "i.python.profiler",
+    "package": "com.jetbrains.python.profiler",
+    "sourceModule": "intellij.python.profiler",
+    "descriptor": "python/profiler/resources/intellij.python.profiler.xml",
     "parent": "che",
     "type": 0
   }
@@ -1520,6 +1611,18 @@
     "package": "org.jetbrains.plugins.slim.ruby",
     "sourceModule": "intellij.ruby.slim",
     "descriptor": "ruby/ruby-slim/resources/intellij.ruby.slim.xml",
+    "parent": "c2K",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "V3",
+    "name": "intellij.profiler.ruby",
+    "n": "i.profiler.ruby",
+    "package": "com.intellij.profiler.ruby",
+    "sourceModule": "intellij.profiler.ruby",
+    "descriptor": "plugins/profiler/ruby/resources/intellij.profiler.ruby.xml",
     "parent": "c2K",
     "type": 0
   }
@@ -2047,6 +2150,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "S9",
+    "name": "intellij.java.plugin",
+    "n": "i.java.plugin",
+    "package": null,
+    "sourceModule": "intellij.java.plugin",
+    "descriptor": "community/java/plugin/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.java",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "wo",
     "name": "com.intellij.modules.ultimate",
     "n": "c.i.m.ultimate",
@@ -2176,17 +2291,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "K0",
-    "name": "com.intellij.modules.profiler",
-    "n": "c.i.m.profiler",
-    "package": null,
-    "sourceModule": "",
-    "descriptor": "",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "xc",
     "name": "intellij.webDeployment",
     "n": "i.webDeployment",
@@ -2218,6 +2322,18 @@
     "sourceModule": "intellij.nodeJS",
     "descriptor": "plugins/NodeJS/resources/META-INF/plugin.xml",
     "pluginId": "NodeJS",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Up",
+    "name": "intellij.maven",
+    "n": "i.maven",
+    "package": null,
+    "sourceModule": "intellij.maven",
+    "descriptor": "community/plugins/maven/src/main/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.idea.maven",
     "type": 1
   }
 }, {
@@ -2277,18 +2393,6 @@
     "sourceModule": "intellij.microservices.uast",
     "descriptor": "plugins/microservices/microservices-uast/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.microservices.uast",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "Up",
-    "name": "intellij.maven",
-    "n": "i.maven",
-    "package": null,
-    "sourceModule": "intellij.maven",
-    "descriptor": "community/plugins/maven/src/main/resources/META-INF/plugin.xml",
-    "pluginId": "org.jetbrains.idea.maven",
     "type": 1
   }
 }, {
@@ -2379,6 +2483,14 @@
     "id": "QZ_YE",
     "source": "QZ",
     "target": "YE",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "J6_rI",
+    "source": "J6",
+    "target": "rI",
     "type": 1
   }
 }, {
@@ -2600,8 +2712,24 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "S9_Se",
-    "source": "S9",
+    "id": "Jt_ZS",
+    "source": "Jt",
+    "target": "ZS",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Jt_TN",
+    "source": "Jt",
+    "target": "TN",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Jt_Se",
+    "source": "Jt",
     "target": "Se",
     "type": 1
   }
@@ -2667,6 +2795,14 @@
     "id": "he_I6",
     "source": "he",
     "target": "I6",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "he_Sp1",
+    "source": "he",
+    "target": "Sp1",
     "type": 1
   }
 }, {
@@ -2856,6 +2992,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "2K_V3",
+    "source": "2K",
+    "target": "V3",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "tR_Ha",
     "source": "tR",
     "target": "Ha",
@@ -2963,6 +3107,14 @@
     "id": "YE_HW",
     "source": "YE",
     "target": "HW",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "rI_TN",
+    "source": "rI",
+    "target": "TN",
     "type": 0
   }
 }, {
@@ -3256,9 +3408,17 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "Se_K0",
+    "id": "Se_S9",
     "source": "Se",
-    "target": "K0",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Se_TN",
+    "source": "Se",
+    "target": "TN",
     "type": 0
   }
 }, {
@@ -3352,6 +3512,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "T4_ZS",
+    "source": "T4",
+    "target": "ZS",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "T4_Dx",
+    "source": "T4",
+    "target": "Dx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "j0_S9",
     "source": "j0",
     "target": "S9",
@@ -3363,6 +3539,22 @@
     "id": "j0_Se",
     "source": "j0",
     "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "jU_Up",
+    "source": "jU",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "jU_T4",
+    "source": "jU",
+    "target": "T4",
     "type": 0
   }
 }, {
@@ -3443,6 +3635,22 @@
     "id": "I6_ra",
     "source": "I6",
     "target": "ra",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Sp1_Bv",
+    "source": "Sp1",
+    "target": "Bv",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Sp1_TN",
+    "source": "Sp1",
+    "target": "TN",
     "type": 0
   }
 }, {
@@ -3747,6 +3955,14 @@
     "id": "WF_WL",
     "source": "WF",
     "target": "WL",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "V3_TN",
+    "source": "V3",
+    "target": "TN",
     "type": 0
   }
 }, {

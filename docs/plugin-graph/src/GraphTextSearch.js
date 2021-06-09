@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 import {GraphHighlighter} from "./GraphHighlighter"
 import {wrap} from "comlink"
+
+// https://bugs.webkit.org/show_bug.cgi?id=164860 - inline worker as workaround for Safari (module web worker is not supported)
 // noinspection ES6CheckImport
-import SearchWorker from "./SearchWorker?worker"
+import SearchWorker from "./SearchWorker?worker&inline"
 
 export class GraphTextSearch {
   constructor(graph, cy) {

@@ -281,7 +281,7 @@ object DynamicPlugins {
     var dependencyMessage: String? = null
     processOptionalDependenciesOnPlugin(descriptor, pluginSet, isLoaded = true) { mainDescriptor, subDescriptor ->
       if (subDescriptor.packagePrefix == null
-          || !ClassLoaderConfigurator.isMigratedToNewModel(mainDescriptor.pluginId)) {
+          || mainDescriptor.pluginId.idString == "org.jetbrains.kotlin" || mainDescriptor.pluginId == PluginManagerCore.JAVA_PLUGIN_ID) {
         dependencyMessage = "Plugin ${subDescriptor.pluginId} that optionally depends on ${descriptor.pluginId} does not have a separate classloader for the dependency"
         return@processOptionalDependenciesOnPlugin false
       }
@@ -1269,8 +1269,8 @@ private fun findLoadedPluginExtensionPointRecursive(pluginDescriptor: IdeaPlugin
     }
   }
 
-  processDirectDependencies(pluginDescriptor, pluginSet) {
-    findLoadedPluginExtensionPointRecursive(it, epName, pluginSet, context, seenPlugins)?.let { return it.first to true }
+  processDirectDependencies(pluginDescriptor, pluginSet) { dependency ->
+    findLoadedPluginExtensionPointRecursive(dependency, epName, pluginSet, context, seenPlugins)?.let { return it.first to true }
   }
   return null
 }
