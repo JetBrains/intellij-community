@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.NlsContexts.ListItem;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.ReflectionUtil;
@@ -29,7 +29,21 @@ public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
     return getIcon(true);
   }
 
-  @NlsContexts.ListItem @NotNull String getText(@Nullable UsageView view);
+  /**
+   * @deprecated implement {@link #getPresentableGroupText()} instead
+   */
+  @ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated
+  default @ListItem @NotNull String getText(@SuppressWarnings("unused") @Nullable UsageView view) {
+    if (ReflectionUtil.getMethodDeclaringClass(getClass(), "getPresentableGroupText") == UsageGroup.class) {
+      throw new AbstractMethodError("getPresentableGroupText() must be implemented");
+    }
+    return getPresentableGroupText(); // getPresentableGroupText() is implemented
+  }
+
+  default @ListItem @NotNull String getPresentableGroupText() {
+    return getText(null);
+  }
 
   default @Nullable FileStatus getFileStatus() {
     return null;

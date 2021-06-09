@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -51,7 +51,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   }
 
   public String toString() {
-    String result = getGroup() == null ? "" : getGroup().getText(null);
+    String result = getGroup() == null ? "" : getGroup().getPresentableGroupText();
     synchronized (this) {
       return result + ContainerUtil.getFirstItems(myChildren, 10);
     }
@@ -390,7 +390,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   @NotNull
   @Override
   protected String getText(@NotNull UsageView view) {
-    return getGroup().getText(view);
+    return getGroup().getPresentableGroupText();
   }
 
   @NotNull

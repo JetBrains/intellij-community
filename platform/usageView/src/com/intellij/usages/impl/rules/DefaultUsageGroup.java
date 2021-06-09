@@ -2,9 +2,7 @@
 package com.intellij.usages.impl.rules;
 
 import com.intellij.openapi.util.NlsContexts;
-import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Supplier;
 
@@ -18,7 +16,7 @@ class DefaultUsageGroup extends UsageGroupBase {
   }
 
   @Override
-  public final @NotNull String getText(@Nullable UsageView view) {
+  public final @NotNull String getPresentableGroupText() {
     return myTextSupplier.get();
   }
 }

@@ -116,7 +116,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myText;
     }
 
@@ -162,7 +162,7 @@ class ClassGroupingRule extends SingleParentUsageGroupingRule implements DumbAwa
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareToIgnoreCase(usageGroup.getText(null));
+      return getPresentableGroupText().compareToIgnoreCase(usageGroup.getPresentableGroupText());
     }
 
     @Nullable

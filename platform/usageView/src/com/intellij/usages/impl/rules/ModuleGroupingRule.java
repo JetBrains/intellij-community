@@ -17,7 +17,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInLibrary;
 import com.intellij.usages.rules.UsageInModule;
@@ -101,7 +100,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myEntry.getPresentableName();
     }
 
@@ -130,7 +129,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return StringUtil.notNullize(myItemPresentation.getPresentableText(), UsageViewBundle.message("list.item.library"));
     }
 
@@ -174,7 +173,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myModule.isDisposed() ? "" : myGrouper != null ? myGrouper.getShortenedName(myModule) : myModule.getName();
     }
 
@@ -184,7 +183,7 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
     }
 
     public String toString() {
-      return UsageViewBundle.message("node.group.module", getText(null));
+      return UsageViewBundle.message("node.group.module", getPresentableGroupText());
     }
 
     @Nullable
@@ -222,12 +221,12 @@ class ModuleGroupingRule implements UsageGroupingRuleEx, DumbAware {
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myGroupPath.get(myGroupPath.size()-1);
     }
 
     public String toString() {
-      return UsageViewBundle.message("node.group.module.group", getText(null));
+      return UsageViewBundle.message("node.group.module.group", getPresentableGroupText());
     }
   }
 }

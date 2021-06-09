@@ -136,10 +136,10 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
     @Override
     @NotNull
-    public String getText(UsageView view) { return String.valueOf(myPower); }
+    public String getPresentableGroupText() { return String.valueOf(myPower); }
 
     public String toString() {
-      return getText(null);
+      return getPresentableGroupText();
     }
 
     @Override
@@ -170,7 +170,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
       @Override
       @NotNull
-      public String getText(UsageView view) { return "Even"; }
+      public String getPresentableGroupText() { return "Even"; }
 
       @Override
       public void navigate(boolean focus) throws UnsupportedOperationException { }
@@ -184,14 +184,14 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
 
       @Override
       public int compareTo(@NotNull UsageGroup o) { return o == ODD ? -1 : 0; }
-      public String toString() { return getText(null); }
+      public String toString() { return getPresentableGroupText(); }
     };
 
     private static final UsageGroup ODD = new UsageGroup() {
 
       @Override
       @NotNull
-      public String getText(UsageView view) { return "Odd"; }
+      public String getPresentableGroupText() { return "Odd"; }
 
       @Override
       public void navigate(boolean focus) throws UnsupportedOperationException { }
@@ -206,7 +206,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
       @Override
       public int compareTo(@NotNull UsageGroup o) { return o == EVEN ? 1 : 0; }
       @Override
-      public String toString() { return getText(null); }
+      public String toString() { return getPresentableGroupText(); }
     };
 
     @Nullable

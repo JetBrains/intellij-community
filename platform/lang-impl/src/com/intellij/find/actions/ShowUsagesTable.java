@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.actions;
 
 import com.intellij.ide.util.gotoByName.ModelDiff;
@@ -245,7 +245,7 @@ public class ShowUsagesTable extends JBTable implements DataProvider {
       Usage usage = node.getUsage();
       if (usage == getTable().MORE_USAGES_SEPARATOR || usage == getTable().USAGES_OUTSIDE_SCOPE_SEPARATOR || usage == getTable().USAGES_FILTERED_OUT_SEPARATOR) return "";
       GroupNode group = (GroupNode)node.getParent();
-      String groupText = group == null ? "" : group.getGroup().getText(null);
+      String groupText = group == null ? "" : group.getGroup().getPresentableGroupText();
       return groupText + usage.getPresentation().getPlainText();
     }
 

@@ -14,7 +14,6 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageTarget;
-import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.PsiElementUsage;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
@@ -64,7 +63,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.test");
     }
   };
@@ -76,7 +75,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.production");
     }
   };
@@ -88,7 +87,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return UsageViewBundle.message("list.item.library");
     }
   };
@@ -111,7 +110,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
 
     @Override
     public int compareTo(@NotNull UsageGroup usageGroup) {
-      return getText(null).compareTo(usageGroup.getText(null));
+      return getPresentableGroupText().compareTo(usageGroup.getPresentableGroupText());
     }
 
     public boolean equals(Object o) {

@@ -14,7 +14,10 @@ import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.usages.*;
+import com.intellij.usages.NamedPresentably;
+import com.intellij.usages.Usage;
+import com.intellij.usages.UsageGroup;
+import com.intellij.usages.UsageTarget;
 import com.intellij.usages.rules.SingleParentUsageGroupingRule;
 import com.intellij.usages.rules.UsageGroupingRuleEx;
 import com.intellij.usages.rules.UsageInFile;
@@ -101,7 +104,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
 
     @Override
     @NotNull
-    public String getText(UsageView view) {
+    public String getPresentableGroupText() {
       return myPresentableName;
     }
 
@@ -132,7 +135,7 @@ public class FileGroupingRule extends SingleParentUsageGroupingRule implements D
 
     @Override
     public int compareTo(@NotNull UsageGroup otherGroup) {
-      int compareTexts = getText(null).compareToIgnoreCase(otherGroup.getText(null));
+      int compareTexts = getPresentableGroupText().compareToIgnoreCase(otherGroup.getPresentableGroupText());
       if (compareTexts != 0) return compareTexts;
       if (otherGroup instanceof FileUsageGroup) {
         return myFile.getPath().compareTo(((FileUsageGroup)otherGroup).myFile.getPath());

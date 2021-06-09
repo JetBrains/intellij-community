@@ -35,6 +35,6 @@ public abstract class UsageGroupBase implements UsageGroup {
     if (order != 0) {
       return order;
     }
-    return getText(null).compareToIgnoreCase(o.getText(null));
+    return getPresentableGroupText().compareToIgnoreCase(o.getPresentableGroupText());
   }
 }

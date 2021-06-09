@@ -126,7 +126,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
                                ? SlowOperations.allowSlowOperations(() -> CommonDataKeys.PSI_ELEMENT.getData((DataProvider)group))
                                : null;
           Icon tagIcon = TagManager.appendTags(element, this);
-          append(group.getText(myView),
+          append(group.getPresentableGroupText(),
                  patchAttrs(node, showAsReadOnly ? UsageTreeColors.READ_ONLY_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES));
           Icon icon = group.getIcon();
           if (tagIcon != null) {
@@ -232,7 +232,7 @@ final class UsageViewTreeCellRenderer extends ColoredTreeCellRenderer {
           result.append("<root>");
         }
         else {
-          result.append(node.getGroup().getText(myView));
+          result.append(node.getGroup().getPresentableGroupText());
         }
 
         result.append(" (").append(node.getRecursiveUsageCount()).append(")");

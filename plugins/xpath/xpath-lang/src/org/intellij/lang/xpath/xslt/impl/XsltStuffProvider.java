@@ -76,7 +76,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
 
         @Override
         @NotNull
-        public String getText(UsageView view) {
+        public String getPresentableGroupText() {
             final StringBuilder sb = new StringBuilder();
 
             final XPathExpression expr = myTemplate.getMatchExpression();

@@ -58,7 +58,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
   ) {
     @Override
     public String toString() {
-      return getText(null);
+      return getPresentableGroupText();
     }
   };
 
@@ -80,7 +80,7 @@ class NonCodeUsageGroupingRule extends SingleParentUsageGroupingRule implements 
       myCodeGroup = new CodeUsageGroup(() -> buildText(presentation.getCodeUsagesString(), presentation.getScopeText()));
       myDynamicCodeGroup = new DynamicUsageGroup(() -> {
         String dynamicCodeUsagesString = presentation.getDynamicCodeUsagesString();
-        return dynamicCodeUsagesString != null ? dynamicCodeUsagesString : ourDynamicGroup.getText(null);
+        return dynamicCodeUsagesString != null ? dynamicCodeUsagesString : ourDynamicGroup.getPresentableGroupText();
       });
       myNonCodeGroup = new NonCodeUsageGroup(() -> buildText(presentation.getNonCodeUsagesString(), presentation.getScopeText()));
     }
