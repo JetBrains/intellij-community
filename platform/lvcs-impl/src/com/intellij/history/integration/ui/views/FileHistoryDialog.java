@@ -104,8 +104,8 @@ public class FileHistoryDialog extends HistoryDialog<FileHistoryDialogModel> {
       myAlarm.addRequest(() -> {
         Set<Long> revisions = new HashSet<>();
         FileHistoryDialogModel model = myModel;
-        if (myModel != null) {
-          myModel.processContents((r, c) -> {
+        if (model != null) {
+          model.processContents((r, c) -> {
             if (c != null && c.contains(filter)) {
               revisions.add(r.getChangeSetId());
             }
