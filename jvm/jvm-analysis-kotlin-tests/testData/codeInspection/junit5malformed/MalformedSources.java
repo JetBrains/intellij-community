@@ -25,12 +25,12 @@ class ValueSourcesTest {
   void testWithBooleanSource(int argument) { }
 
   @ParameterizedTest
-  <warning descr="Exactly one type of input must be provided">@ValueSource(ints = {1},
-    strings = "str")</warning>
+  @<warning descr="Exactly one type of input must be provided">ValueSource</warning>(ints = {1},
+    strings = "str")
   void testWithMultipleValues(int i) { }
 
   @ParameterizedTest
-  <warning descr="No value source is defined">@ValueSource()</warning>
+  @<warning descr="No value source is defined">ValueSource</warning>()
   void testWithNoValues(int i) { }
 
   @<warning descr="Multiple parameters are not supported by this source">ParameterizedTest</warning>
@@ -39,11 +39,11 @@ class ValueSourcesTest {
 
   @ParameterizedTest
   @ValueSource(ints = {1})
-  <warning descr="Suspicious combination '@Test' and '@ParameterizedTest'">@org.junit.jupiter.api.Test</warning>
+  @org.junit.jupiter.api.<warning descr="Suspicious combination '@Test' and '@ParameterizedTest'">Test</warning>
   void testWithTestAnnotation(int i) { }
 
   @ValueSource(ints = {1})
-  <warning descr="Suspicious combination '@Test' and parameterized source">@org.junit.jupiter.api.Test</warning>
+  @org.junit.jupiter.api.<warning descr="Suspicious combination '@Test' and parameterized source">Test</warning>
   void testWithTestAnnotationNoParameterized(int i) { }
 
 }
