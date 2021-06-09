@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
@@ -39,9 +38,10 @@ public final class ScratchFromSelectionIntention implements IntentionAction {
     if (editor == null || EditorUtil.getSelectionInAnyMode(editor).isEmpty()) return;
     ScratchFileCreationHelper.Context context = ScratchFileActions.createContext(
       project, file, editor, ((EditorEx)editor).getDataContext());
-    if (context.language == null) context.language = PlainTextLanguage.INSTANCE;
-    ScratchFileCreationHelper helper = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
-    helper.prepareText(project, context, DataContext.EMPTY_CONTEXT);
+    if (context.language != null) {
+      ScratchFileCreationHelper helper = ScratchFileCreationHelper.EXTENSION.forLanguage(context.language);
+      helper.prepareText(project, context, DataContext.EMPTY_CONTEXT);
+    }
     doCreateNewScratch(project, context);
   }
 

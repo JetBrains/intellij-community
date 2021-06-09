@@ -4,16 +4,17 @@ package com.intellij.ide.scratch;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.NewActionGroup;
+import com.intellij.ide.scratch.ScratchImplUtil.LanguageItem;
 import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Caret;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.InternalFileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
+import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
@@ -22,24 +23,24 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.Consumer;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.JBIterable;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.LinkedHashSet;
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.Set;
 
 import static com.intellij.openapi.util.Conditions.not;
-import static com.intellij.openapi.util.Conditions.notNull;
 
 /**
  * @author ignatov
@@ -57,7 +58,7 @@ public final class ScratchFileActions {
   public static class NewFileAction extends DumbAwareAction {
     private static final Icon ICON = LayeredIcon.create(AllIcons.FileTypes.Text, AllIcons.Actions.Scratch);
 
-    @NonNls private static final String ACTION_ID = "NewScratchFile";
+    private static final String ACTION_ID = "NewScratchFile";
 
     private final NotNullLazyValue<@Nls String> myActionText = NotNullLazyValue.createValue(
       () -> NewActionGroup.isActionInNewPopupMenu(this) ? ActionsBundle.actionText(ACTION_ID) : ActionsBundle.message("action.NewScratchFile.text.with.new")
@@ -88,18 +89,32 @@ public final class ScratchFileActions {
       if (project == null) return;
 
       ScratchFileCreationHelper.Context context = createContext(e);
-      Consumer<Language> consumer = l -> {
-        context.language = l;
-        ScratchFileCreationHelper.EXTENSION.forLanguage(context.language).prepareText(
-          project, context, DataContext.EMPTY_CONTEXT);
+      LanguageItem selectionItem =
+        context.language != null ? LanguageItem.fromLanguage(context.language) :
+        context.fileExtension != null ? new LanguageItem(
+          null, FileTypeManager.getInstance().getFileTypeByExtension(context.fileExtension), context.fileExtension) : null;
+      Consumer<LanguageItem> consumer = o -> {
+        context.language = o.language;
+        context.fileExtension = o.fileExtension;
+        if (o != selectionItem) {
+          context.text = "";
+        }
+        if (context.language != null) {
+          ScratchFileCreationHelper.EXTENSION.forLanguage(context.language)
+            .prepareText(project, context, DataContext.EMPTY_CONTEXT);
+        }
         doCreateNewScratch(project, context);
       };
-      if (context.language != null) {
-        consumer.consume(context.language);
+      if (selectionItem != null) {
+        consumer.consume(selectionItem);
+        return;
       }
-      else {
-        LRUPopupBuilder.forFileLanguages(project, ActionsBundle.message("action.NewScratchFile.text.with.new"), null, consumer).showCenteredInCurrentWindow(project);
-      }
+      LRUPopupBuilder<LanguageItem> builder = ScratchImplUtil.buildLanguagesPopup(
+        project, ActionsBundle.message("action.NewScratchFile.text.with.new"));
+      builder
+        .onChosen(consumer)
+        .buildPopup()
+        .showCenteredInCurrentWindow(project);
     }
 
     private void updatePresentationTextAndIcon(@NotNull AnActionEvent e, @NotNull Presentation presentation) {
@@ -150,8 +165,7 @@ public final class ScratchFileActions {
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.text = StringUtil.notNullize(getSelectionText(editor));
     if (!context.text.isEmpty()) {
-      context.language = getLanguageFromCaret(project, editor, file);
-      checkLanguageAndTryToFixText(project, context, dataContext);
+      initLanguageFromCaret(project, editor, file, context, dataContext);
     }
     else {
       context.text = StringUtil.notNullize(PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext));
@@ -162,12 +176,15 @@ public final class ScratchFileActions {
 
   static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
-    Language language = Objects.requireNonNull(context.language);
-    if (context.fileExtension == null) {
-      LanguageFileType fileType = language.getAssociatedFileType();
-      context.fileExtension = fileType == null ? "" : fileType.getDefaultExtension();
+    if (context.fileExtension == null && context.language != null) {
+      LanguageFileType fileType = context.language.getAssociatedFileType();
+      if (fileType != null) {
+        context.fileExtension = ScratchImplUtil.getFileTypeExtensions(fileType, true, FileTypeManager.getInstance()).first();
+      }
     }
-    ScratchFileCreationHelper.EXTENSION.forLanguage(language).beforeCreate(project, context);
+    if (context.language != null) {
+      ScratchFileCreationHelper.EXTENSION.forLanguage(context.language).beforeCreate(project, context);
+    }
 
     VirtualFile dir = context.ideView != null ? PsiUtilCore.getVirtualFile(ArrayUtil.getFirstElement(context.ideView.getDirectories())) : null;
     RootType rootType = dir == null ? null : ScratchFileService.findRootType(dir);
@@ -179,7 +196,7 @@ public final class ScratchFileActions {
                                             (context.fileCounter != null ? context.fileCounter.create() : ""),
                                             context.fileExtension);
     VirtualFile file = ScratchRootType.getInstance().createScratchFile(
-      project, fileName, language, context.text, context.createOption);
+      project, fileName, context.language, context.text, context.createOption);
     if (file == null) return null;
 
     PsiNavigationSupport.getInstance().createNavigatable(project, file, context.caretOffset).navigate(true);
@@ -206,26 +223,31 @@ public final class ScratchFileActions {
     }
   }
 
-  @Nullable
-  static String getSelectionText(@Nullable Editor editor) {
+  static @Nullable String getSelectionText(@Nullable Editor editor) {
     if (editor == null) return null;
     return editor.getSelectionModel().getSelectedText(true);
   }
 
-  @Nullable
-  static Language getLanguageFromCaret(@NotNull Project project,
-                                       @Nullable Editor editor,
-                                       @Nullable PsiFile psiFile) {
-    if (editor == null || psiFile == null) return null;
+  private static void initLanguageFromCaret(@NotNull Project project,
+                                            @Nullable Editor editor,
+                                            @Nullable PsiFile psiFile,
+                                            @NotNull ScratchFileCreationHelper.Context context,
+                                            @NotNull DataContext dataContext) {
+    if (editor == null || psiFile == null) return;
     Caret caret = editor.getCaretModel().getPrimaryCaret();
     int offset = caret.getOffset();
     PsiElement element = InjectedLanguageManager.getInstance(project).findInjectedElementAt(psiFile, offset);
     PsiFile file = element != null ? element.getContainingFile() : psiFile;
-    Language language = file.getLanguage();
-    if (language == PlainTextLanguage.INSTANCE && file.getFileType() instanceof InternalFileType) {
-      return StdLanguages.XML;
+    FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+    FileType fileType = ScratchImplUtil.getFileTypeFromName(file.getName(), fileTypeManager);
+    context.language = fileType instanceof LanguageFileType ? file.getLanguage() : null;
+    if (fileType != null) {
+      context.fileExtension = ScratchImplUtil.getFileTypeExtensions(fileType, true, fileTypeManager).first();
     }
-    return language;
+    if (context.language == PlainTextLanguage.INSTANCE && file.getFileType() instanceof InternalFileType) {
+      context.language = StdLanguages.XML;
+    }
+    checkLanguageAndTryToFixText(project, context, dataContext);
   }
 
   public static class LanguageAction extends DumbAwareAction {
@@ -243,13 +265,18 @@ public final class ScratchFileActions {
         e.getPresentation().setEnabledAndVisible(false);
         return;
       }
-      Set<Language> languages = files
+      FileTypeManager fileTypeManager = FileTypeManager.getInstance();
+      Set<String> languages = files
         .filter(isScratch)
-        .map(o -> fileLanguage(project, o))
-        .filter(notNull())
-        .addAllTo(new LinkedHashSet<>());
-      String langName = languages.size() == 1 ? languages.iterator().next().getDisplayName()
-                                              : LangBundle.message("scratch.file.actions.0.different.languages.number", languages.size());
+        .map(file -> {
+          // language substitution is not invoked for AbstractFileType (non-LanguageFileType)
+          Language language = LanguageUtil.getFileLanguage(file) == null ? null : fileLanguage(project, file);
+          if (language != null) return language.getDisplayName();
+          return fileTypeManager.getFileTypeByFileName(file.getName()).getDisplayName();
+        })
+        .toSet();
+      String langName = languages.size() == 1 ? languages.iterator().next() :
+                        LangBundle.message("scratch.file.actions.0.different.languages.number", languages.size());
       e.getPresentation().setText(getChangeLanguageActionName(langName));
       e.getPresentation().setEnabledAndVisible(true);
     }
@@ -257,33 +284,30 @@ public final class ScratchFileActions {
     /**
      * @deprecated use internationalized string instead.
      */
-    @NotNull @Deprecated
+    @Deprecated
     @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-    protected String getLanguageTerm() {
+    protected @NotNull String getLanguageTerm() {
       return "Language"; //NON-NLS
     }
 
-    @NotNull @Nls
-    protected String getChangeLanguageActionName(@NotNull String languageName) {
+    protected @NotNull @Nls String getChangeLanguageActionName(@NotNull String languageName) {
       return LangBundle.message("scratch.file.action.change.language.action", languageName);
     }
 
-    @NotNull @Nls
-    protected String getChangeLanguageTitle() {
+    protected @NotNull @Nls String getChangeLanguageTitle() {
       return LangBundle.message("scratch.file.action.change.language.title");
     }
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
-      JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).
-        filter(fileFilter(project));
-      if (project == null || files.isEmpty()) return;
+      if (project == null) return;
+      JBIterable<VirtualFile> files = JBIterable.of(e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)).filter(fileFilter(project));
+      if (files.isEmpty()) return;
       actionPerformedImpl(e, project, getChangeLanguageTitle(), files);
     }
 
-    @NotNull
-    protected Condition<VirtualFile> fileFilter(Project project) {
+    protected @NotNull Condition<VirtualFile> fileFilter(@NotNull Project project) {
       return file -> !file.isDirectory() && ScratchRootType.getInstance().containsFile(file);
     }
 
@@ -299,8 +323,20 @@ public final class ScratchFileActions {
                                        @NotNull JBIterable<? extends VirtualFile> files) {
       ScratchFileService fileService = ScratchFileService.getInstance();
       PerFileMappings<Language> mapping = fileService.getScratchesMapping();
-      LRUPopupBuilder.forFileLanguages(project, title, files, mapping)
-                     .showInBestPositionFor(e.getDataContext());
+      VirtualFile[] filesCopy = VfsUtilCore.toVirtualFileArray(JBIterable.from((Iterable<? extends VirtualFile>)files).toList());
+      Arrays.sort(filesCopy, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), !o1.isCaseSensitive()));
+      ScratchImplUtil.buildLanguagesPopup(project, title)
+        .onChosen(item -> {
+          try {
+            WriteCommandAction.writeCommandAction(project).withName(LangBundle.message("command.name.change.language")).run(
+              () -> ScratchImplUtil.changeLanguageWithUndo(project, item, filesCopy, mapping));
+          }
+          catch (UnexpectedUndoException e1) {
+            ExceptionUtil.rethrowUnchecked(e1);
+          }
+        })
+        .buildPopup()
+        .showCenteredInCurrentWindow(project);
     }
   }
 }
