@@ -22,7 +22,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
     val visitor = object: JavaRecursiveElementWalkingVisitor() {
       override fun visitStatement(statement: PsiStatement) {
         super.visitStatement(statement)
-        if (statement.textOffset in textRangeOf(pattern)) return
+        if (statement.containingFile == pattern.firstOrNull()?.containingFile && statement.textOffset in textRangeOf(pattern)) return
         val siblings = siblingsOf(statement).take(pattern.size).toList()
         val duplicate = createDuplicate(pattern, siblings)
         if (duplicate != null) {
@@ -73,7 +73,6 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
 
     return Duplicate(pattern, candidate, result)
   }
-
 
   fun canBeDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>, changedExpressions: MutableList<ChangedExpression>): Boolean {
     if (candidate.size != pattern.size) return false
