@@ -120,9 +120,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         @Override
         protected void runRenameTemplate(Collection<Pair<PsiElement, TextRange>> stringUsages) {
           if (!VariableInplaceRenamer.super.buildTemplateAndStart(refs, stringUsages, scope, containingFile)) {
-            VariableInplaceRenameHandler.performDialogRename(myElementToRename, 
-                                                             myEditor, 
-                                                             DataManager.getInstance().getDataContext(myEditor.getContentComponent()), 
+            VariableInplaceRenameHandler.performDialogRename(myElementToRename,
+                                                             myEditor,
+                                                             DataManager.getInstance().getDataContext(myEditor.getContentComponent()),
                                                              myInitialName);
           }
         }
@@ -272,7 +272,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> renameSynthetic(newName));
       }
       for (AutomaticRenamerFactory renamerFactory : AutomaticRenamerFactory.EP_NAME.getExtensionList()) {
-        if (elementToRename != null && renamerFactory.isApplicable(elementToRename)) {
+        if (elementToRename != null && isRenamerFactoryApplicable(renamerFactory, elementToRename)) {
           final List<UsageInfo> usages = new ArrayList<>();
           final AutomaticRenamer renamer =
             renamerFactory.createRenamer(elementToRename, newName, new ArrayList<>());
@@ -329,6 +329,11 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         FinishMarkAction.finish(myProject, myEditor, markAction);
       }
     }
+  }
+
+  protected boolean isRenamerFactoryApplicable(@NotNull AutomaticRenamerFactory renamerFactory,
+                                               @NotNull PsiNamedElement elementToRename) {
+    return renamerFactory.isApplicable(elementToRename);
   }
 
   @Override
