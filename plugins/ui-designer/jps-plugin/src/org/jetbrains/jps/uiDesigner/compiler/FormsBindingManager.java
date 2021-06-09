@@ -19,6 +19,8 @@ import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.CompilationRound;
 import org.jetbrains.jps.incremental.java.CopyResourcesUtil;
 import org.jetbrains.jps.incremental.java.FormsParsing;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.storage.OneToManyPathsMapping;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
@@ -161,6 +163,21 @@ public final class FormsBindingManager extends FormsBuilder {
       }
 
       BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holderBuilder.create());
+    }
+
+    // validate if all forms to be compiled have binding
+    if (!formsToCompile.isEmpty()) {
+      Set<File> formsWithoutBinding = FileCollectionFactory.createCanonicalFileSet(formsToCompile.keySet());
+      for (Collection<File> boundForms : srcToForms.values()) {
+        formsWithoutBinding.removeAll(boundForms);
+      }
+      if (!formsWithoutBinding.isEmpty()) {
+        for (File formFile : formsWithoutBinding) {
+          context.processMessage(new CompilerMessage(
+            getPresentableName(), BuildMessage.Kind.ERROR, FormBundle.message("form.is.not.bound.to.any.source"), formFile.getAbsolutePath()
+          ));
+        }
+      }
     }
 
     FORMS_TO_COMPILE.set(context, srcToForms.isEmpty()? null : srcToForms);
