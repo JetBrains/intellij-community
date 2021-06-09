@@ -4,29 +4,30 @@ package org.jetbrains.kotlin.idea.configuration
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider
 import com.intellij.openapi.externalSystem.service.project.manage.AbstractProjectDataService
+import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.KotlinModuleKind
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.gradle.KotlinCompilation
 import org.jetbrains.kotlin.gradle.KotlinModule
 import org.jetbrains.kotlin.gradle.KotlinPlatform
 import org.jetbrains.kotlin.gradle.KotlinSourceSet
 import org.jetbrains.kotlin.idea.facet.*
-import org.jetbrains.kotlin.idea.inspections.gradle.findAll
-import org.jetbrains.kotlin.idea.inspections.gradle.findKotlinPluginVersion
+import org.jetbrains.kotlin.idea.gradle.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.platform.IdePlatformKindTooling
 import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
-import org.jetbrains.kotlin.idea.roots.populateNonJvmSourceRootTypes
+import org.jetbrains.kotlin.idea.roots.pathAsUrl
 import org.jetbrains.kotlin.platform.IdePlatformKind
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -37,7 +38,6 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatforms
-import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
@@ -165,11 +165,9 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             modelsProvider: IdeModifiableModelsProvider,
             projectPlatforms: List<KotlinPlatform>
         ): KotlinFacet? {
-            val compilerVersion = mainModuleNode
-                .findAll(BuildScriptClasspathData.KEY)
-                .firstOrNull()
-                ?.data
-                ?.let { findKotlinPluginVersion(it) }// ?: return null TODO: Fix in CLion or our plugin KT-27623
+
+            val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(mainModuleNode)
+                // ?: return null TODO: Fix in CLion or our plugin KT-27623
 
             val platformKinds = kotlinSourceSet.actualPlatforms.platforms //TODO(auskov): fix calculation of jvm target
                 .map { IdePlatformKindTooling.getTooling(it).kind }
@@ -245,3 +243,23 @@ var ModuleData.konanTargets: Set<String>
         return if (value.isNotEmpty()) value.split(',').toSet() else emptySet()
     }
     set(value) = setProperty(KOTLIN_NATIVE_TARGETS_PROPERTY, value.takeIf { it.isNotEmpty() }?.joinToString(","))
+
+private fun populateNonJvmSourceRootTypes(sourceSetNode: DataNode<GradleSourceSetData>, module: Module) {
+    val sourceFolderManager = SourceFolderManager.getInstance(module.project)
+    val contentRootDataNodes = ExternalSystemApiUtil.findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)
+    val contentRootDataList = contentRootDataNodes.mapNotNull { it.data }
+    if (contentRootDataList.isEmpty()) return
+
+    val externalToKotlinSourceTypes = mapOf(
+        ExternalSystemSourceType.SOURCE to SourceKotlinRootType,
+        ExternalSystemSourceType.TEST to TestSourceKotlinRootType
+    )
+    externalToKotlinSourceTypes.forEach { (externalType, kotlinType) ->
+        val sourcesRoots = contentRootDataList.flatMap { it.getPaths(externalType) }
+        sourcesRoots.forEach {
+            if (!FileUtil.exists(it.path)) {
+                sourceFolderManager.addSourceFolder(module, it.pathAsUrl, kotlinType)
+            }
+        }
+    }
+}

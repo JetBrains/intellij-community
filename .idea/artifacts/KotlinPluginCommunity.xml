@@ -235,6 +235,9 @@
         <element id="archive" name="kotlin-ml-completion.jar">
           <element id="module-output" name="kotlin.ml-completion" />
         </element>
+        <element id="archive" name="kotlin-groovy.jar">
+          <element id="module-output" name="kotlin.groovy" />
+        </element>
       </element>
       <element id="directory" name="kotlinc">
         <element id="extracted-dir" path="$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-dist-for-ide/1.5.10-release-918/kotlin-dist-for-ide-1.5.10-release-918.jar" path-in-jar="/" />

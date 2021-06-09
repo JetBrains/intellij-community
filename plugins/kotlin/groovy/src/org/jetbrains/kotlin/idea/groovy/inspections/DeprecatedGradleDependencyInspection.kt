@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.inspections.gradle
+package org.jetbrains.kotlin.idea.groovy.inspections
 
 import com.intellij.codeInspection.CleanupLocalInspectionTool
 import com.intellij.codeInspection.ProblemHighlightType
@@ -12,8 +12,9 @@ import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.kotlin.idea.configuration.allModules
 import org.jetbrains.kotlin.idea.configuration.getWholeModuleGroup
 import org.jetbrains.kotlin.idea.configuration.parseExternalLibraryName
+import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
 import org.jetbrains.kotlin.idea.inspections.ReplaceStringInDocumentFix
-import org.jetbrains.kotlin.idea.inspections.gradle.GradleHeuristicHelper.PRODUCTION_DEPENDENCY_STATEMENTS
+import org.jetbrains.kotlin.idea.inspections.gradle.KotlinGradleInspectionVisitor
 import org.jetbrains.kotlin.idea.versions.DEPRECATED_LIBRARIES_INFORMATION
 import org.jetbrains.kotlin.idea.versions.DeprecatedLibInfo
 import org.jetbrains.kotlin.idea.versions.LibInfo
@@ -37,7 +38,7 @@ class DeprecatedGradleDependencyInspection : BaseInspection(), CleanupLocalInspe
             if (dependenciesCall.invokedExpression.text != "dependencies") return
 
             val dependencyEntries = GradleHeuristicHelper.findStatementWithPrefixes(
-                closure, PRODUCTION_DEPENDENCY_STATEMENTS
+                closure, SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
             )
             for (dependencyStatement in dependencyEntries) {
                 visitDependencyEntry(dependencyStatement)

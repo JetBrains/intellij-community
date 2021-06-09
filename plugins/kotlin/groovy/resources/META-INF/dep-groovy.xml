@@ -1,8 +1,7 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-
     <localInspection
-            implementationClass="org.jetbrains.kotlin.idea.inspections.gradle.DifferentKotlinGradleVersionInspection"
+            implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection"
             groupName="Kotlin"
             enabledByDefault="true"
             language="Groovy"
@@ -10,7 +9,7 @@
             level="WARNING" key="inspection.different.kotlin.gradle.version.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection
-            implementationClass="org.jetbrains.kotlin.idea.inspections.gradle.DifferentStdlibGradleVersionInspection"
+            implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.DifferentStdlibGradleVersionInspection"
             groupName="Kotlin"
             enabledByDefault="true"
             language="Groovy"
@@ -18,7 +17,7 @@
             level="WARNING" key="inspection.different.stdlib.gradle.version.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection
-            implementationClass="org.jetbrains.kotlin.idea.inspections.gradle.DeprecatedGradleDependencyInspection"
+            implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.DeprecatedGradleDependencyInspection"
             groupName="Kotlin"
             enabledByDefault="true"
             cleanupTool="true"
@@ -27,12 +26,15 @@
             level="WARNING" key="inspection.deprecated.gradle.dependency.display.name" bundle="messages.KotlinBundle"/>
 
     <localInspection
-            implementationClass="org.jetbrains.kotlin.idea.inspections.gradle.GradleKotlinxCoroutinesDeprecationInspection"
+            implementationClass="org.jetbrains.kotlin.idea.groovy.inspections.GradleKotlinxCoroutinesDeprecationInspection"
             groupPath="Kotlin,Migration"
             groupName="Gradle"
             enabledByDefault="true"
             language="Groovy"
             hasStaticDescription="true"
             level="ERROR" key="inspection.gradle.kotlinx.coroutines.deprecation.display.name" bundle="messages.KotlinBundle"/>
+  </extensions>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin.idea">
+    <gradleBuildScriptSupport implementation="org.jetbrains.kotlin.idea.groovy.GroovyGradleBuildScriptSupport"/>
   </extensions>
 </idea-plugin>

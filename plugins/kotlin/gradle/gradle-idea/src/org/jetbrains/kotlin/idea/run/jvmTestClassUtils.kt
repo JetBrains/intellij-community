@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.run
 
 import com.intellij.execution.Location
 import com.intellij.execution.actions.ConfigurationFromContext
-import com.intellij.execution.junit.JUnitConfigurationProducer
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
@@ -12,8 +11,14 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.extensions.KotlinTestFrameworkProvider
 
 internal fun ConfigurationFromContext.isJpsJunitConfiguration(): Boolean {
-    return isProducedBy(JUnitConfigurationProducer::class.java)
-            || isProducedBy(AbstractPatternBasedConfigurationProducer::class.java)
+    for (extension in KotlinTestFrameworkProvider.EP_NAME.extensionList) {
+        // TODO: Shouldn't we check also isProducedByKotlin()?
+        if (extension.isProducedByJava(this)) {
+            return true
+        }
+    }
+
+    return isProducedBy(AbstractPatternBasedConfigurationProducer::class.java)
 }
 
 internal fun canRunJvmTests(): Boolean {

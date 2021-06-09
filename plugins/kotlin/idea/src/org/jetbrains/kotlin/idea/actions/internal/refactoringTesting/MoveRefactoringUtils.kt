@@ -8,7 +8,7 @@ import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.gradle.getMethodOrNull
+import java.lang.reflect.Method
 
 internal fun <T> lazyPub(initializer: () -> T) = lazy(LazyThreadSafetyMode.PUBLICATION, initializer)
 
@@ -17,8 +17,13 @@ internal fun gitReset(project: Project, projectRoot: VirtualFile) {
     fun ClassLoader.loadClassOrThrow(name: String) =
         loadClass(name) ?: error("$name not loaded")
 
-    fun Class<*>.loadMethodOrThrow(name: String, vararg arguments: Class<*>) =
-        getMethodOrNull(name, *arguments) ?: error("${this.name}::$name not loaded")
+    fun Class<*>.loadMethodOrThrow(name: String, vararg arguments: Class<*>): Method {
+        return try {
+            getMethod(name, *arguments)
+        } catch (e: NoSuchMethodException) {
+            error("${this.name}::$name not loaded")
+        }
+    }
 
     val loader = PluginManagerCore.getPlugin(PluginId.getId("Git4Idea"))?.pluginClassLoader ?: error("Git plugin is not found")
 

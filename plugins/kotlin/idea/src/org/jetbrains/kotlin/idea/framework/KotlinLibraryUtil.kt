@@ -4,11 +4,10 @@ package org.jetbrains.kotlin.idea.framework
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
-import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.libraries.Library
+import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 
 val MAVEN_SYSTEM_ID = ProjectSystemId("Maven")
-val GRADLE_SYSTEM_ID = ProjectSystemId("GRADLE")
 val KOBALT_SYSTEM_ID = ProjectSystemId("KOBALT")
 
 fun isExternalLibrary(library: Library): Boolean = ExternalSystemApiUtil.isExternalSystemLibrary(library, ProjectSystemId.IDE) ||
@@ -17,5 +16,3 @@ fun isExternalLibrary(library: Library): Boolean = ExternalSystemApiUtil.isExter
         ExternalSystemApiUtil.isExternalSystemLibrary(library, MAVEN_SYSTEM_ID)
 
 
-fun Module.isGradleModule() =
-    ExternalSystemApiUtil.isExternalSystemAwareModule(GRADLE_SYSTEM_ID, this)

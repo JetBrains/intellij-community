@@ -1,20 +1,22 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.configuration
+package org.jetbrains.kotlin.idea.groovy
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
-import org.gradle.util.GradleVersion
+import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.buildArgumentString
 import org.jetbrains.kotlin.cli.common.arguments.CliArgumentStringBuilder.replaceLanguageFeature
 import org.jetbrains.kotlin.config.LanguageFeature
-import org.jetbrains.kotlin.idea.configuration.KotlinWithGradleConfigurator.Companion.getBuildScriptSettingsPsiFile
-import org.jetbrains.kotlin.idea.inspections.gradle.DifferentKotlinGradleVersionInspection
+import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.extensions.*
+import org.jetbrains.kotlin.idea.extensions.gradle.*
+import org.jetbrains.kotlin.idea.groovy.inspections.DifferentKotlinGradleVersionInspection
 import org.jetbrains.kotlin.idea.util.application.runReadAction
-import org.jetbrains.kotlin.idea.util.module
+import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -28,11 +30,32 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner
 
+object GroovyGradleBuildScriptSupport : GradleBuildScriptSupport {
+    override fun createManipulator(
+        file: PsiFile,
+        preferNewSyntax: Boolean,
+        versionProvider: GradleVersionProvider
+    ): GroovyBuildScriptManipulator? {
+        if (file !is GroovyFile) {
+            return null
+        }
+
+        return GroovyBuildScriptManipulator(file, preferNewSyntax, versionProvider)
+    }
+
+    override fun createScriptBuilder(file: PsiFile): SettingsScriptBuilder<*>? {
+        return if (file is GroovyFile) GroovySettingsScriptBuilder(file) else null
+    }
+}
+
 class GroovyBuildScriptManipulator(
     override val scriptFile: GroovyFile,
-    override val preferNewSyntax: Boolean
+    override val preferNewSyntax: Boolean,
+    private val versionProvider: GradleVersionProvider
 ) : GradleBuildScriptManipulator<GroovyFile> {
-    private val gradleVersion = fetchGradleVersion(scriptFile)
+    override fun isApplicable(file: PsiFile) = file is GroovyFile
+
+    private val gradleVersion = versionProvider.fetchGradleVersion(scriptFile)
 
     override fun isConfiguredWithOldSyntax(kotlinPluginName: String): Boolean {
         val fileText = runReadAction { scriptFile.text }
@@ -58,16 +81,17 @@ class GroovyBuildScriptManipulator(
     ): Boolean {
         val oldText = scriptFile.text
 
-        val useNewSyntax = useNewSyntax(kotlinPluginName, gradleVersion)
+        val useNewSyntax = useNewSyntax(kotlinPluginName, gradleVersion, versionProvider)
         if (useNewSyntax) {
             scriptFile
                 .getPluginsBlock()
                 .addLastExpressionInBlockIfNeeded("$kotlinPluginExpression version '$version'")
             scriptFile.getRepositoriesBlock().apply {
                 val repository = getRepositoryForVersion(version)
-                if (repository != null) {
+                val gradleFacade = KotlinGradleFacade.instance
+                if (repository != null && gradleFacade != null) {
                     scriptFile.module?.getBuildScriptSettingsPsiFile()?.let {
-                        with(KotlinWithGradleConfigurator.getManipulator(it)) {
+                        with(gradleFacade.getManipulator(it)) {
                             addPluginRepository(repository)
                             addMavenCentralPluginRepository()
                             addPluginRepository(DEFAULT_GRADLE_PLUGIN_REPOSITORY)
@@ -115,7 +139,7 @@ class GroovyBuildScriptManipulator(
     }
 
     override fun configureProjectBuildScript(kotlinPluginName: String, version: String): Boolean {
-        if (useNewSyntax(kotlinPluginName, gradleVersion)) return false
+        if (useNewSyntax(kotlinPluginName, gradleVersion, versionProvider)) return false
 
         val oldText = scriptFile.text
         scriptFile.apply {
@@ -190,7 +214,7 @@ class GroovyBuildScriptManipulator(
     ) {
         val dependencyString = String.format(
             "%s \"%s:%s:%s\"",
-            scope.toGradleCompileScope(scriptFile.module?.getBuildSystemType() == AndroidGradle),
+            scope.toGradleCompileScope(scriptFile.module?.getBuildSystemType() == BuildSystemType.AndroidGradle),
             libraryDescriptor.libraryGroupId,
             libraryDescriptor.libraryArtifactId,
             libraryDescriptor.maxVersion
@@ -357,8 +381,11 @@ class GroovyBuildScriptManipulator(
     private fun getGroovyDependencySnippet(
         artifactName: String,
         withVersion: Boolean,
-        gradleVersion: GradleVersion
-    ) = "${gradleVersion.scope("implementation")} \"org.jetbrains.kotlin:$artifactName${if (withVersion) ":\$kotlin_version" else ""}\""
+        gradleVersion: GradleVersionInfo
+    ): String {
+        val configuration = gradleVersion.scope("implementation", versionProvider)
+        return "$configuration \"org.jetbrains.kotlin:$artifactName${if (withVersion) ":\$kotlin_version" else ""}\""
+    }
 
     private fun getApplyPluginDirective(pluginName: String) = "apply plugin: '$pluginName'"
 

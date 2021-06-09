@@ -1,15 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.inspections.gradle
+package org.jetbrains.kotlin.idea.groovy.inspections
 
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
 import org.jetbrains.kotlin.idea.configuration.KOTLIN_GROUP_ID
-import org.jetbrains.kotlin.idea.inspections.gradle.GradleHeuristicHelper.PRODUCTION_DEPENDENCY_STATEMENTS
+import org.jetbrains.kotlin.idea.extensions.gradle.KotlinGradleFacade
+import org.jetbrains.kotlin.idea.extensions.gradle.SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS
+import org.jetbrains.kotlin.idea.groovy.KotlinGroovyBundle
+import org.jetbrains.kotlin.idea.inspections.gradle.KotlinGradleInspectionVisitor
+import org.jetbrains.kotlin.idea.inspections.gradle.getResolvedKotlinGradleVersion
 import org.jetbrains.kotlin.idea.platform.tooling
+import org.jetbrains.kotlin.idea.roots.findAll
+import org.jetbrains.kotlin.idea.roots.findGradleProjectStructure
 import org.jetbrains.kotlin.platform.impl.JvmIdePlatformKind
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
@@ -22,7 +27,7 @@ class DifferentStdlibGradleVersionInspection : BaseInspection() {
     override fun buildVisitor(): BaseInspectionVisitor = MyVisitor(KOTLIN_GROUP_ID, JvmIdePlatformKind.tooling.mavenLibraryIds)
 
     override fun buildErrorString(vararg args: Any) =
-        KotlinIdeaGradleBundle.message("error.text.different.kotlin.library.version", args[0], args[1])
+        KotlinGroovyBundle.message("error.text.different.kotlin.library.version", args[0], args[1])
 
     private abstract class VersionFinder(private val groupId: String, private val libraryIds: List<String>) :
         KotlinGradleInspectionVisitor() {
@@ -59,7 +64,7 @@ class DifferentStdlibGradleVersionInspection : BaseInspection() {
             @NonNls libraryGroup: String,
             libraryIds: List<String>
         ): GrCallExpression? {
-            return GradleHeuristicHelper.findStatementWithPrefixes(closure, PRODUCTION_DEPENDENCY_STATEMENTS).firstOrNull { statement ->
+            return GradleHeuristicHelper.findStatementWithPrefixes(closure, SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS).firstOrNull { statement ->
                 libraryIds.any {
                     val index = statement.text.indexOf(it)
                     // This prevents detecting kotlin-stdlib inside kotlin-stdlib-common, -jdk8, etc.
@@ -71,9 +76,10 @@ class DifferentStdlibGradleVersionInspection : BaseInspection() {
         fun getResolvedLibVersion(file: PsiFile, groupId: String, libraryIds: List<String>): String? {
             val projectStructureNode = findGradleProjectStructure(file) ?: return null
             val module = ProjectRootManager.getInstance(file.project).fileIndex.getModuleForFile(file.virtualFile) ?: return null
+            val gradleFacade = KotlinGradleFacade.instance ?: return null
 
             for (moduleData in projectStructureNode.findAll(ProjectKeys.MODULE).filter { it.data.internalName == module.name }) {
-                moduleData.node.getResolvedVersionByModuleData(groupId, libraryIds)?.let {
+                gradleFacade.findLibraryVersionByModuleData(moduleData.node, groupId, libraryIds)?.let {
                     return it
                 }
             }

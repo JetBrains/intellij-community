@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.inspections.gradle
+package org.jetbrains.kotlin.idea.groovy.inspections
 
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.groovy.KotlinGroovyBundle
 import org.jetbrains.kotlin.idea.inspections.PluginVersionDependentInspection
+import org.jetbrains.kotlin.idea.inspections.gradle.KOTLIN_PLUGIN_CLASSPATH_MARKER
+import org.jetbrains.kotlin.idea.inspections.gradle.KotlinGradleInspectionVisitor
+import org.jetbrains.kotlin.idea.inspections.gradle.getResolvedKotlinGradleVersion
 import org.jetbrains.kotlin.idea.versions.kotlinCompilerVersionShort
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection
@@ -24,7 +27,7 @@ class DifferentKotlinGradleVersionInspection : BaseInspection(), PluginVersionDe
     override fun getGroupDisplayName() = getProbableBugs()
 
     override fun buildErrorString(vararg args: Any): String =
-        KotlinIdeaGradleBundle.message("error.text.different.kotlin.gradle.version", args[0], args[1])
+        KotlinGroovyBundle.message("error.text.different.kotlin.gradle.version", args[0], args[1])
 
     private abstract class VersionFinder : KotlinGradleInspectionVisitor() {
         protected abstract fun onFound(kotlinPluginVersion: String, kotlinPluginStatement: GrCallExpression)

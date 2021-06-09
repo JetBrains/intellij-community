@@ -6,6 +6,8 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiFile
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinIdeaGradleBundle
+import org.jetbrains.kotlin.idea.extensions.gradle.*
+import org.jetbrains.kotlin.idea.gradle.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.idea.versions.MAVEN_JS_STDLIB_ID
 import org.jetbrains.kotlin.platform.TargetPlatform
@@ -26,16 +28,16 @@ class KotlinJsGradleModuleConfigurator : KotlinWithGradleConfigurator() {
     override fun getTargetPlatform() = JsPlatforms.CompatJsPlatform
 
     override fun addElementsToFile(file: PsiFile, isTopLevelProjectFile: Boolean, version: String): Boolean {
-        val gradleVersion = fetchGradleVersion(file)
+        val gradleVersion = GradleVersionProviderImpl.fetchGradleVersion(file)
 
-        if (getManipulator(file).useNewSyntax(kotlinPluginName, gradleVersion)) {
+        if (KotlinGradleFacadeImpl.getManipulator(file).useNewSyntax(kotlinPluginName, gradleVersion, GradleVersionProviderImpl)) {
             val settingsPsiFile = if (isTopLevelProjectFile) {
                 file.module?.getTopLevelBuildScriptSettingsPsiFile()
             } else {
                 file.module?.getBuildScriptSettingsPsiFile()
             }
             if (settingsPsiFile != null) {
-                getManipulator(settingsPsiFile).addResolutionStrategy(KOTLIN_JS)
+                KotlinGradleFacadeImpl.getManipulator(settingsPsiFile).addResolutionStrategy(KOTLIN_JS)
             }
         }
 

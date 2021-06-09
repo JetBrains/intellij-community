@@ -8,7 +8,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener.EP_NAME as EP
 import com.intellij.testFramework.ExtensionTestUtil.maskExtensions
-import org.jetbrains.kotlin.idea.framework.GRADLE_SYSTEM_ID
+import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import java.lang.Exception
 import kotlin.test.assertNull

@@ -36,10 +36,10 @@ import org.jetbrains.kotlin.idea.formatter.ProjectCodeStyleImporter
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
-import org.jetbrains.kotlin.idea.inspections.gradle.findAll
-import org.jetbrains.kotlin.idea.inspections.gradle.findKotlinPluginVersion
+import org.jetbrains.kotlin.idea.gradle.KotlinGradleFacadeImpl
 import org.jetbrains.kotlin.idea.inspections.gradle.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.platform.tooling
+import org.jetbrains.kotlin.idea.roots.findAll
 import org.jetbrains.kotlin.idea.roots.migrateNonJvmSourceFolders
 import org.jetbrains.kotlin.idea.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.library.KLIB_FILE_EXTENSION
@@ -255,8 +255,7 @@ fun configureFacetByGradleModule(
         return null
     }
 
-    val compilerVersion = moduleNode.findAll(BuildScriptClasspathData.KEY).firstOrNull()?.data?.let(::findKotlinPluginVersion)
-        ?: return null
+    val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode) ?: return null
     val platformKind = detectPlatformKindByPlugin(moduleNode) ?: detectPlatformByLibrary(moduleNode)
 
     // TODO there should be a way to figure out the correct platform version

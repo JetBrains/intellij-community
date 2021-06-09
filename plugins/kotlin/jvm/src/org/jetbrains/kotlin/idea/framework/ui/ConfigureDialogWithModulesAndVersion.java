@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.idea.KotlinJvmBundle;
 import org.jetbrains.kotlin.idea.KotlinPluginUtil;
 import org.jetbrains.kotlin.idea.configuration.ConfigureKotlinInProjectUtilsKt;
 import org.jetbrains.kotlin.idea.configuration.KotlinProjectConfigurator;
-import org.jetbrains.kotlin.idea.configuration.RepositoryDescription;
+import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription;
 import org.jetbrains.kotlin.idea.util.VersioningKt;
 import org.jetbrains.kotlin.idea.versions.KotlinRuntimeLibraryUtilKt;
 

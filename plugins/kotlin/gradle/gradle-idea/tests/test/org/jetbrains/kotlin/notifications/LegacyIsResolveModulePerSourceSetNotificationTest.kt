@@ -6,11 +6,10 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.testFramework.LightPlatformTestCase
-import org.jetbrains.kotlin.idea.configuration.ui.notifications.IsResolveModulePerSourceSetSetting
-import org.jetbrains.kotlin.idea.configuration.ui.notifications.KOTLIN_UPDATE_IS_RESOLVE_MODULE_PER_SOURCE_SET_GROUP_ID
-import org.jetbrains.kotlin.idea.configuration.ui.notifications.SuppressResolveModulePerSourceSetNotificationState
-import org.jetbrains.kotlin.idea.configuration.ui.notifications.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
-import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.gradle.ui.IsResolveModulePerSourceSetSetting
+import org.jetbrains.kotlin.idea.gradle.ui.KOTLIN_UPDATE_IS_RESOLVE_MODULE_PER_SOURCE_SET_GROUP_ID
+import org.jetbrains.kotlin.idea.gradle.ui.SuppressResolveModulePerSourceSetNotificationState
+import org.jetbrains.kotlin.idea.gradle.ui.notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.AssumptionViolatedException

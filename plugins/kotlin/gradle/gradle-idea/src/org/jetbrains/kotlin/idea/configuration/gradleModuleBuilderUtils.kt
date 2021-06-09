@@ -18,15 +18,15 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.extensions.gradle.GradleBuildScriptSupport
+import org.jetbrains.kotlin.idea.extensions.gradle.RepositoryDescription
+import org.jetbrains.kotlin.idea.extensions.gradle.SettingsScriptBuilder
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.plugins.gradle.frameworkSupport.GradleFrameworkSupportProvider
 import org.jetbrains.plugins.gradle.service.project.wizard.AbstractGradleModuleBuilder
-import org.jetbrains.plugins.gradle.service.project.wizard.GradleModuleBuilder
 import org.jetbrains.plugins.gradle.util.GradleConstants
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import java.io.File
 
 internal var Module.gradleModuleBuilder: AbstractExternalModuleBuilder<*>? by UserDataProperty(Key.create("GRADLE_MODULE_BUILDER"))
@@ -43,94 +43,6 @@ internal fun findSettingsGradleFile(module: Module): VirtualFile? {
         ?: module.project.baseDir.findChild(GradleConstants.KOTLIN_DSL_SETTINGS_FILE_NAME)
 }
 
-abstract class SettingsScriptBuilder<T: PsiFile>(val scriptFile: T) {
-    private val builder = StringBuilder(scriptFile.text)
-
-    private fun findBlockBody(blockName: String, startFrom: Int = 0): Int {
-        val blockOffset = builder.indexOf(blockName, startFrom)
-        if (blockOffset < 0) return -1
-        return builder.indexOf('{', blockOffset + 1) + 1
-    }
-
-    private fun getOrPrependTopLevelBlockBody(blockName: String): Int {
-        val blockBody = findBlockBody(blockName)
-        if (blockBody >= 0) return blockBody
-        builder.insert(0, "$blockName {}\n")
-        return findBlockBody(blockName)
-    }
-
-    private fun getOrAppendInnerBlockBody(blockName: String, offset: Int): Int {
-        val repositoriesBody = findBlockBody(blockName, offset)
-        if (repositoriesBody >= 0) return repositoriesBody
-        builder.insert(offset, "\n$blockName {}\n")
-        return findBlockBody(blockName, offset)
-    }
-
-    private fun appendExpressionToBlockIfAbsent(expression: String, offset: Int) {
-        var braceCount = 1
-        var blockEnd = offset
-        for (i in offset..builder.lastIndex) {
-            when (builder[i]) {
-                '{' -> braceCount++
-                '}' -> braceCount--
-            }
-            if (braceCount == 0) {
-                blockEnd = i
-                break
-            }
-        }
-        if (!builder.substring(offset, blockEnd).contains(expression.trim())) {
-            builder.insert(blockEnd, "\n$expression\n")
-        }
-    }
-
-    private fun getOrCreatePluginManagementBody() = getOrPrependTopLevelBlockBody("pluginManagement")
-
-    protected fun addPluginRepositoryExpression(expression: String) {
-        val repositoriesBody = getOrAppendInnerBlockBody("repositories", getOrCreatePluginManagementBody())
-        appendExpressionToBlockIfAbsent(expression, repositoriesBody)
-    }
-
-    fun addMavenCentralPluginRepository() {
-        addPluginRepositoryExpression("mavenCentral()")
-    }
-
-    abstract fun addPluginRepository(repository: RepositoryDescription)
-
-    fun addResolutionStrategy(pluginId: String) {
-        val resolutionStrategyBody = getOrAppendInnerBlockBody("resolutionStrategy", getOrCreatePluginManagementBody())
-        val eachPluginBody = getOrAppendInnerBlockBody("eachPlugin", resolutionStrategyBody)
-        appendExpressionToBlockIfAbsent(
-            """
-                if (requested.id.id == "$pluginId") {
-                    useModule("org.jetbrains.kotlin:kotlin-gradle-plugin:${'$'}{requested.version}")
-                }
-            """.trimIndent(),
-            eachPluginBody
-        )
-    }
-
-    fun addIncludedModules(modules: List<String>) {
-        builder.append(modules.joinToString(prefix = "include ", postfix = "\n") { "'$it'" })
-    }
-
-    fun build() = builder.toString()
-
-    abstract fun buildPsiFile(project: Project): T
-}
-
-
-class GroovySettingsScriptBuilder(scriptFile: GroovyFile): SettingsScriptBuilder<GroovyFile>(scriptFile) {
-    override fun addPluginRepository(repository: RepositoryDescription) {
-        addPluginRepositoryExpression(repository.toGroovyRepositorySnippet())
-    }
-
-    override fun buildPsiFile(project: Project): GroovyFile {
-        return GroovyPsiElementFactory
-            .getInstance(project)
-            .createGroovyFile(build(), false, null)
-    }
-}
 class KotlinSettingsScriptBuilder(scriptFile: KtFile): SettingsScriptBuilder<KtFile>(scriptFile) {
     override fun addPluginRepository(repository: RepositoryDescription) {
         addPluginRepositoryExpression(repository.toKotlinRepositorySnippet())
@@ -144,19 +56,17 @@ class KotlinSettingsScriptBuilder(scriptFile: KtFile): SettingsScriptBuilder<KtF
 // Circumvent write actions and modify the file directly
 // TODO: Get rid of this hack when IDEA API allows manipulation of settings script similarly to the main script itself
 internal fun updateSettingsScript(module: Module, updater: (SettingsScriptBuilder<out PsiFile>) -> Unit) {
+    fun createScriptBuilder(module: Module): SettingsScriptBuilder<*>? {
+        val settingsGradleFile = findSettingsGradleFile(module)?.toPsiFile(module.project) ?: return null
+        for (extension in GradleBuildScriptSupport.EP_NAME.extensionList) {
+            return extension.createScriptBuilder(settingsGradleFile) ?: continue
+        }
+
+        return null
+    }
+
     val storedSettingsBuilder = module.settingsScriptBuilder
-    val settingsBuilder =
-        storedSettingsBuilder
-            ?: (findSettingsGradleFile(module)?.toPsiFile(module.project))?.let {
-                if (it is KtFile) {
-                    KotlinSettingsScriptBuilder(it)
-                } else if (it is GroovyFile) {
-                    GroovySettingsScriptBuilder(it)
-                } else {
-                    null
-                }
-            }
-            ?: return
+    val settingsBuilder = storedSettingsBuilder ?: createScriptBuilder(module) ?: return
     if (storedSettingsBuilder == null) {
         module.settingsScriptBuilder = settingsBuilder
     }

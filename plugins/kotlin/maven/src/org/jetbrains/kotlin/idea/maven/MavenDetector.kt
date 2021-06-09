@@ -7,12 +7,10 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.kotlin.idea.configuration.BuildSystemType
 import org.jetbrains.kotlin.idea.configuration.BuildSystemTypeDetector
 
-object Maven : BuildSystemType()
-
 class MavenDetector : BuildSystemTypeDetector {
     override fun detectBuildSystemType(module: Module): BuildSystemType? {
         return if (MavenProjectsManager.getInstance(module.project).isMavenizedModule(module))
-            Maven
+            BuildSystemType.Maven
         else
             null
     }

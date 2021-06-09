@@ -1,20 +1,31 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.kotlin.idea.extensions.gradle
 
-package org.jetbrains.kotlin.idea.configuration
-
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.DependencyScope
 import com.intellij.openapi.roots.ExternalLibraryDescriptor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
-import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.module
-import org.jetbrains.plugins.gradle.settings.GradleSettings
+
+data class RepositoryDescription(
+    val id: String,
+    val name: String,
+    val url: String,
+    val bintrayUrl: String?,
+    val isSnapshot: Boolean
+)
+
+val SCRIPT_PRODUCTION_DEPENDENCY_STATEMENTS = setOf("classpath", "compile", "api", "implementation", "compileOnly", "runtimeOnly")
 
 interface GradleBuildScriptManipulator<out Psi : PsiFile> {
+    fun isApplicable(file: PsiFile): Boolean
+
     val scriptFile: Psi
     val preferNewSyntax: Boolean
 
@@ -62,22 +73,41 @@ interface GradleBuildScriptManipulator<out Psi : PsiFile> {
     fun addResolutionStrategy(pluginId: String)
 }
 
-fun fetchGradleVersion(psiFile: PsiFile): GradleVersion {
-    return gradleVersionFromFile(psiFile) ?: GradleVersion.current()
+fun GradleBuildScriptManipulator<*>.usesNewMultiplatform(): Boolean {
+    val fileText = runReadAction { scriptFile.text }
+    return fileText.contains("multiplatform")
 }
 
-private fun gradleVersionFromFile(psiFile: PsiFile): GradleVersion? {
+interface GradleVersionInfo : Comparable<GradleVersionInfo>
+
+interface GradleVersionProvider {
+    fun getVersion(versionString: String): GradleVersionInfo
+
+    fun getCurrentVersionGlobal(): GradleVersionInfo
+    fun getCurrentVersion(project: Project, path: String): GradleVersionInfo?
+}
+
+fun GradleVersionProvider.fetchGradleVersion(psiFile: PsiFile): GradleVersionInfo {
+    return gradleVersionFromFile(psiFile) ?: getCurrentVersionGlobal()
+}
+
+private fun GradleVersionProvider.gradleVersionFromFile(psiFile: PsiFile): GradleVersionInfo? {
     val module = psiFile.module ?: return null
     val path = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
-    return GradleSettings.getInstance(module.project).getLinkedProjectSettings(path)?.resolveGradleVersion()
+    return getCurrentVersion(module.project, path)
 }
 
-val MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX = GradleVersion.version("4.4")
+const val MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX_RAW: String = "4.4"
+private const val MIN_GRADLE_VERSION_FOR_API_AND_IMPLEMENTATION_RAW: String = "3.4"
 
-fun GradleBuildScriptManipulator<*>.useNewSyntax(kotlinPluginName: String, gradleVersion: GradleVersion): Boolean {
+fun GradleBuildScriptManipulator<*>.useNewSyntax(
+    kotlinPluginName: String,
+    gradleVersion: GradleVersionInfo,
+    versionProvider: GradleVersionProvider
+): Boolean {
     if (!preferNewSyntax) return false
 
-    if (gradleVersion < MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX) return false
+    if (gradleVersion < versionProvider.getVersion(MIN_GRADLE_VERSION_FOR_NEW_PLUGIN_SYNTAX_RAW)) return false
 
     if (isConfiguredWithOldSyntax(kotlinPluginName)) return false
 
@@ -87,20 +117,13 @@ fun GradleBuildScriptManipulator<*>.useNewSyntax(kotlinPluginName: String, gradl
     return !hasOldApply
 }
 
-fun GradleBuildScriptManipulator<*>.usesNewMultiplatform(): Boolean {
-    val fileText = runReadAction { scriptFile.text }
-    return fileText.contains("multiplatform")
-}
-
 fun LanguageFeature.State.assertApplicableInMultiplatform() {
     if (this == LanguageFeature.State.ENABLED_WITH_ERROR || this == LanguageFeature.State.DISABLED)
         throw UnsupportedOperationException("Disabling the language feature is unsupported for multiplatform")
 }
 
-private val MIN_GRADLE_VERSION_FOR_API_AND_IMPLEMENTATION = GradleVersion.version("3.4")
-
-fun GradleVersion.scope(directive: String): String {
-    if (this < MIN_GRADLE_VERSION_FOR_API_AND_IMPLEMENTATION) {
+fun GradleVersionInfo.scope(directive: String, versionProvider: GradleVersionProvider): String {
+    if (this < versionProvider.getVersion(MIN_GRADLE_VERSION_FOR_API_AND_IMPLEMENTATION_RAW)) {
         return when (directive) {
             "implementation" -> "compile"
             "testImplementation" -> "testCompile"

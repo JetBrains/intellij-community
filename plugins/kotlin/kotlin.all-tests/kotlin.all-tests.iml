@@ -79,5 +79,7 @@
     <orderEntry type="module" module-name="kotlin.junit" />
     <orderEntry type="module" module-name="kotlin.grazie" />
     <orderEntry type="module" module-name="kotlin.ml-completion" />
+    <orderEntry type="module" module-name="kotlin.gradle.gradle-idea.tests" />
+    <orderEntry type="module" module-name="kotlin.groovy" />
   </component>
 </module>

@@ -3,13 +3,14 @@
 package org.jetbrains.kotlin.idea.roots
 
 import com.intellij.openapi.externalSystem.model.DataNode
-import com.intellij.openapi.externalSystem.model.ProjectKeys
+import com.intellij.openapi.externalSystem.model.Key
 import com.intellij.openapi.externalSystem.model.project.ContentRootData
-import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType
-import com.intellij.openapi.externalSystem.service.project.manage.SourceFolderManager
+import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
+import com.intellij.openapi.module.ModuleUtilCore
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -33,8 +34,9 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
+import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 
 private fun JpsModuleSourceRoot.getOrCreateProperties() =
     getProperties(rootType)?.also { (it as? JpsElementBase<*>)?.setParent(null) } ?: rootType.createDefaultProperties()
@@ -65,28 +67,9 @@ fun migrateNonJvmSourceFolders(modifiableRootModel: ModifiableRootModel) {
     KotlinSdkType.setUpIfNeeded()
 }
 
-private val ContentRootData.SourceRoot.pathAsUrl
+@KotlinPluginInternalApi
+val ContentRootData.SourceRoot.pathAsUrl
     get() = VirtualFileManager.constructUrl(URLUtil.FILE_PROTOCOL, FileUtil.toSystemIndependentName(path))
-
-fun populateNonJvmSourceRootTypes(sourceSetNode: DataNode<GradleSourceSetData>, module: Module) {
-    val sourceFolderManager = SourceFolderManager.getInstance(module.project)
-    val contentRootDataNodes = ExternalSystemApiUtil.findAll(sourceSetNode, ProjectKeys.CONTENT_ROOT)
-    val contentRootDataList = contentRootDataNodes.mapNotNull { it.data }
-    if (contentRootDataList.isEmpty()) return
-
-    val externalToKotlinSourceTypes = mapOf(
-        ExternalSystemSourceType.SOURCE to SourceKotlinRootType,
-        ExternalSystemSourceType.TEST to TestSourceKotlinRootType
-    )
-    externalToKotlinSourceTypes.forEach { (externalType, kotlinType) ->
-        val sourcesRoots = contentRootDataList.flatMap { it.getPaths(externalType) }
-        sourcesRoots.forEach {
-            if (!FileUtil.exists(it.path)) {
-                sourceFolderManager.addSourceFolder(module, it.pathAsUrl, kotlinType)
-            }
-        }
-    }
-}
 
 fun getKotlinAwareDestinationSourceRoots(project: Project): List<VirtualFile> {
     return ModuleManager.getInstance(project).modules.flatMap { it.collectKotlinAwareDestinationSourceRoots() }
@@ -149,4 +132,23 @@ fun isForGeneratedSources(sourceFolder: SourceFolder): Boolean {
     return properties != null && properties.isForGeneratedSources
             || (javaResourceProperties != null && javaResourceProperties.isForGeneratedSources)
             || (kotlinResourceProperties != null && kotlinResourceProperties.isForGeneratedSources)
+}
+
+class NodeWithData<T>(val node: DataNode<*>, val data: T)
+
+fun <T : Any> DataNode<*>.findAll(key: Key<T>): List<NodeWithData<T>> {
+    val nodes = ExternalSystemApiUtil.findAll(this, key)
+    return nodes.mapNotNull {
+        val data = it.getData(key) ?: return@mapNotNull null
+        NodeWithData(it, data)
+    }
+}
+
+fun findGradleProjectStructure(file: PsiFile) =
+    ModuleUtilCore.findModuleForFile(file.virtualFile, file.project)?.let { findGradleProjectStructure(it) }
+
+fun findGradleProjectStructure(module: Module): DataNode<ProjectData>? {
+    val externalProjectPath = ExternalSystemApiUtil.getExternalProjectPath(module) ?: return null
+    val projectInfo = ExternalSystemUtil.getExternalProjectInfo(module.project, GRADLE_SYSTEM_ID, externalProjectPath) ?: return null
+    return projectInfo.externalProjectStructure
 }
