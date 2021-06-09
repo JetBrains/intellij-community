@@ -63,7 +63,7 @@ fun createAggregateHtml(
                     strong(diagnostic.indexingTimes.indexingReason)
                     br()
                   }
-                  text(diagnostic.indexingTimes.updatingStart.presentableDateTime())
+                  text(diagnostic.indexingTimes.updatingStart.presentableLocalDateTime())
                 }
                 td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
                 td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
@@ -74,7 +74,7 @@ fun createAggregateHtml(
                     strong("Cancelled")
                     br()
                   }
-                  text(diagnostic.indexingTimes.updatingEnd.presentableDateTime())
+                  text(diagnostic.indexingTimes.updatingEnd.presentableLocalDateTime())
                 }
 
                 // Files section.
@@ -116,7 +116,7 @@ fun createAggregateHtml(
                 val events = indexIdToEvents.getOrDefault(event.chunkUniqueId, emptyList())
                 val lastAttach = events.filterIsInstance<JsonSharedIndexDiagnosticEvent.Attached>().maxByOrNull { it.time.instant } ?: continue
                 tr {
-                  td(event.time.presentableDateTime())
+                  td(event.time.presentableLocalDateTime())
                   td(lastAttach.kind)
                   td((lastAttach as? JsonSharedIndexDiagnosticEvent.Attached.Success)?.indexName ?: NOT_APPLICABLE)
                   td(event.packedSize.presentableSize())
@@ -207,9 +207,9 @@ private fun HtmlBuilder.printAppInfo(appInfo: JsonIndexDiagnosticAppInfo) {
       }
       tbody {
         tr { td("Build"); td(appInfo.build) }
-        tr { td("Build date"); td(appInfo.buildDate.presentableDateTime()) }
+        tr { td("Build date"); td(appInfo.buildDate.presentableLocalDateTime()) }
         tr { td("Product code"); td(appInfo.productCode) }
-        tr { td("Generated"); td(appInfo.generated.presentableDateTime()) }
+        tr { td("Generated"); td(appInfo.generated.presentableLocalDateTime()) }
         tr { td("OS"); td(appInfo.os) }
         tr { td("Runtime"); td(appInfo.runtime) }
       }
@@ -298,8 +298,8 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               val times = projectIndexingHistory.times
               tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }
               tr { td("Interrupted"); td(times.wasInterrupted.toString()) }
-              tr { td("Started at"); td(times.updatingStart.presentableDateTime()) }
-              tr { td("Finished at"); td(times.updatingEnd.presentableDateTime()) }
+              tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
+              tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
               tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
               tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
