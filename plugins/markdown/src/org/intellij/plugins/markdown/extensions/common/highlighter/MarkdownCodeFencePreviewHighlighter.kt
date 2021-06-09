@@ -136,6 +136,6 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
       actualLine = actualLine.substring(range.last - left)
       left = range.last
     }
-    builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine))
+    builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine)) // process line, need project and file here
   }
 }

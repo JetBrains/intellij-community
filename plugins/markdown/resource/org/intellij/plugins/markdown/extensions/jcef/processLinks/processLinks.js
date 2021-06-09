@@ -29,7 +29,7 @@ if (window.__IntelliJTools === undefined) {
     return false;
   };
 
-  window.document.onclick = function(e) {
+  window.document.addEventListener("click", function(e) {
     let target = e.target;
     while (target && target.tagName !== 'A') {
       target = target.parentNode;
@@ -41,5 +41,5 @@ if (window.__IntelliJTools === undefined) {
       e.stopPropagation();
       return window.__IntelliJTools.processClick(target);
     }
-  };
+  });
 })();

@@ -9,6 +9,7 @@ import com.intellij.ui.jcef.JCEFHtmlPanel
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
+import org.intellij.plugins.markdown.extensions.jcef.MarkdownCodeViewExtension
 import org.intellij.plugins.markdown.ui.preview.BrowserPipe
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
