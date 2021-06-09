@@ -5,8 +5,6 @@ import com.intellij.compiler.backwardRefs.DirtyScopeHolder
 import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
-import com.intellij.ide.highlighter.JavaClassFileType
-import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.*
@@ -38,6 +36,7 @@ import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.search.not
+import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.LookupStorage
@@ -64,7 +63,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     private var activeBuildCount = 0
     private val compilationCounter = LongAdder()
     private val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
-    private val supportedFileTypes: Set<FileType> = setOf(KotlinFileType.INSTANCE, JavaFileType.INSTANCE, JavaClassFileType.INSTANCE)
+    private val supportedFileTypes: Set<FileType> = setOf(KotlinFileType.INSTANCE)
     private val dirtyScopeHolder = DirtyScopeHolder(
         project,
         supportedFileTypes,
@@ -256,7 +255,8 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         val wholeClearScope = knownDirtyScope.not()
 
         // [supportedFileTypes] without references
-        val knownCleanScope = GlobalSearchScope.getScopeRestrictedByFileTypes(wholeClearScope, *supportedFileTypes.toTypedArray())
+        //val knownCleanScope = GlobalSearchScope.getScopeRestrictedByFileTypes(wholeClearScope, *supportedFileTypes.toTypedArray())
+        val knownCleanScope = wholeClearScope.restrictToKotlinSources()
 
         // [supportedFileTypes] from dirty scope + other languages from the whole project
         val wholeDirtyScope = knownCleanScope.not()
@@ -269,8 +269,8 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
          *   -----
          *   [knownDirtyScope] contains m1[1, 2, 3]
          *   [wholeClearScope] contains m2[4], m3[5, 6, 7]
-         *   [knownCleanScope] contains m3[5, 6]
-         *   [wholeDirtyScope] contains m1[1, 2, 3], m2[4], m3[7]
+         *   [knownCleanScope] contains m3[6]
+         *   [wholeDirtyScope] contains m1[1, 2, 3], m2[4], m3[5, 7]
          */
 
         return scopeWithReferences.uniteWith(wholeDirtyScope)
