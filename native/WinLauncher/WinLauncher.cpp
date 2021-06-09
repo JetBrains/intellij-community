@@ -8,11 +8,8 @@
 #include <malloc.h>
 #include <memory.h>
 
-#define _UNICODE
 #include <tchar.h>
 
-#define UNICODE
-#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <ShellAPI.h>
 #include <Shlobj.h>
