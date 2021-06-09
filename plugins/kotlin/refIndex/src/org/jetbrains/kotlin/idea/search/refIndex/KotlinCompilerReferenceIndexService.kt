@@ -5,24 +5,31 @@ import com.intellij.compiler.backwardRefs.DirtyScopeHolder
 import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
+import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.*
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
+import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.incremental.LookupStorage
@@ -44,10 +51,12 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     private var storage: LookupStorage? = null
     private var activeBuildCount = 0
     private val compilationCounter = LongAdder()
+    private val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
+    private val supportedFileTypes: Set<FileType> = setOf(KotlinFileType.INSTANCE, JavaFileType.INSTANCE, JavaClassFileType.INSTANCE)
     private val dirtyScopeHolder = DirtyScopeHolder(
         project,
-        setOf(KotlinFileType.INSTANCE),
-        ProjectRootManager.getInstance(project).fileIndex,
+        supportedFileTypes,
+        projectFileIndex,
         this,
         this,
         FileDocumentManager.getInstance(),
@@ -177,6 +186,40 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
 
     fun getScopeWithCodeReferences(element: PsiElement): GlobalSearchScope? = null
 
+    private fun buildScopeWithReferences(virtualFiles: Set<VirtualFile>): GlobalSearchScope {
+        // knows everything
+        val scopeWithReferences = ScopeWithReferencesOnCompilation(virtualFiles, projectFileIndex)
+
+        /***
+         * can contain all languages, but depends on [supportedFileTypes]
+         * [com.intellij.compiler.backwardRefs.DirtyScopeHolder.getModuleForSourceContentFile]
+         */
+        val knownDirtyScope = withDirtyScopeUnderReadLock { dirtyScope }
+
+        // [supportedFileTypes] without references + can contain references from other languages
+        val wholeClearScope = knownDirtyScope.not()
+
+        // [supportedFileTypes] without references
+        val knownCleanScope = GlobalSearchScope.getScopeRestrictedByFileTypes(wholeClearScope, *supportedFileTypes.toTypedArray())
+
+        // [supportedFileTypes] from dirty scope + other languages from the whole project
+        val wholeDirtyScope = knownCleanScope.not()
+
+        /*
+         * Example:
+         *   module1 (dirty): 1.java, 2.kt, 3.groovy
+         *   module2: 4.groovy
+         *   module3: 5.java, 6.kt, 7.groovy
+         *   -----
+         *   [knownDirtyScope] contains m1[1, 2, 3]
+         *   [wholeClearScope] contains m2[4], m3[5, 6, 7]
+         *   [knownCleanScope] contains m3[5, 6]
+         *   [wholeDirtyScope] contains m1[1, 2, 3], m2[4], m3[7]
+         */
+
+        return scopeWithReferences.uniteWith(wholeDirtyScope)
+    }
+
     override fun dispose(): Unit = withWriteLock { closeStorage() }
 
     override fun getModificationCount(): Long = compilationCounter.sum()
@@ -192,6 +235,15 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             getInstanceIfEnable(project)
         }
     }
+}
+
+private class ScopeWithReferencesOnCompilation(
+    private val referentFiles: Set<VirtualFile>,
+    private val index: ProjectFileIndex,
+) : GlobalSearchScope() {
+    override fun contains(file: VirtualFile): Boolean = file is VirtualFileWithId && index.isInSourceContent(file) && file in referentFiles
+    override fun isSearchInModuleContent(aModule: Module): Boolean = true
+    override fun isSearchInLibraries(): Boolean = false
 }
 
 private fun executeOnBuildThread(compilationFinished: () -> Unit): Unit =
