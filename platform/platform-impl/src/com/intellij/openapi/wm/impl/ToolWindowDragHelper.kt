@@ -269,7 +269,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     location.y += getStripeHeight(TOP)
     var width = myPane.width - getStripeWidth(LEFT) - getStripeWidth(RIGHT)
     var height = myPane.height - getStripeHeight(TOP) - getStripeHeight(BOTTOM)
-    if (anchor === myInitialAnchor  && trueStripe == null) {
+    if (anchor === myInitialAnchor  && trueStripe == null && isVisible) {
       if (anchor.isHorizontal) height = (myPane.rootPane.height * windowInfo.weight).toInt()
       else width = (myPane.rootPane.width * windowInfo.weight).toInt()
     } else {
