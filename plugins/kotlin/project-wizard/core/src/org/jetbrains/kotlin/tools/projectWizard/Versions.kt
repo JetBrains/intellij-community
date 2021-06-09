@@ -48,7 +48,7 @@ object Versions {
     }
 
     object GRADLE_PLUGINS {
-        val ANDROID = version("4.2.1")
+        val ANDROID = version("4.1.2")
     }
 
     object MAVEN_PLUGINS {
