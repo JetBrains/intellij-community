@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.concurrency.JobSchedulerImpl;
@@ -188,7 +188,7 @@ public class UsageViewImpl implements UsageViewEx {
     myModel = new UsageViewTreeModelBuilder(myPresentation, targets);
     myRoot = (GroupNode)myModel.getRoot();
 
-    myGroupingRules = getActiveGroupingRules(project, getUsageViewSettings());
+    myGroupingRules = getActiveGroupingRules(project, getUsageViewSettings(), getPresentation());
     myFilteringRules = getActiveFilteringRules(project);
 
     myBuilder = new UsageNodeTreeBuilder(myTargets, myGroupingRules, myFilteringRules, myRoot, myProject);
@@ -807,12 +807,15 @@ public class UsageViewImpl implements UsageViewEx {
   }
 
 
-  protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(@NotNull Project project,
-                                                                        @NotNull UsageViewSettings usageViewSettings) {
+  protected static UsageGroupingRule @NotNull [] getActiveGroupingRules(
+    @NotNull Project project,
+    @NotNull UsageViewSettings usageViewSettings,
+    @Nullable UsageViewPresentation presentation
+  ) {
     List<UsageGroupingRuleProvider> providers = UsageGroupingRuleProvider.EP_NAME.getExtensionList();
     List<UsageGroupingRule> list = new ArrayList<>(providers.size());
     for (UsageGroupingRuleProvider provider : providers) {
-      ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings));
+      ContainerUtil.addAll(list, provider.getActiveRules(project, usageViewSettings, presentation));
     }
 
     list.sort(Comparator.comparingInt(UsageGroupingRule::getRank));
@@ -1092,7 +1095,7 @@ public class UsageViewImpl implements UsageViewEx {
     allUsages.sort(USAGE_COMPARATOR);
     Set<Usage> excludedUsages = getExcludedUsages();
     reset();
-    myGroupingRules = getActiveGroupingRules(myProject, getUsageViewSettings());
+    myGroupingRules = getActiveGroupingRules(myProject, getUsageViewSettings(), getPresentation());
     myFilteringRules = getActiveFilteringRules(myProject);
 
     myBuilder.setGroupingRules(myGroupingRules);

@@ -5,10 +5,11 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.usages.UsageView;
+import com.intellij.usages.UsageViewPresentation;
 import com.intellij.usages.UsageViewSettings;
+import org.jetbrains.annotations.ApiStatus.OverrideOnly;
 import org.jetbrains.annotations.NotNull;
-
-import static org.jetbrains.annotations.ApiStatus.OverrideOnly;
+import org.jetbrains.annotations.Nullable;
 
 public interface UsageGroupingRuleProvider {
 
@@ -18,7 +19,19 @@ public interface UsageGroupingRuleProvider {
    * This is the entry point, other {@code getActiveRules} method is a simplified version.
    */
   @OverrideOnly
-  default @NotNull UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
+  default @NotNull UsageGroupingRule @NotNull [] getActiveRules(
+    @NotNull Project project,
+    @NotNull UsageViewSettings usageViewSettings,
+    @Nullable UsageViewPresentation presentation
+  ) {
+    return getActiveRules(project, usageViewSettings);
+  }
+
+  @OverrideOnly
+  default @NotNull UsageGroupingRule @NotNull [] getActiveRules(
+    @NotNull Project project,
+    @SuppressWarnings("unused") @NotNull UsageViewSettings usageViewSettings
+  ) {
     return getActiveRules(project);
   }
 
