@@ -7,5 +7,5 @@ import com.intellij.psi.search.SearchScope
 
 class KotlinScopeOptimizer : ScopeOptimizer {
     override fun getRestrictedUseScope(element: PsiElement): SearchScope? =
-        KotlinCompilerReferenceIndexService.getInstanceIfEnable(element.project)?.getScopeWithCodeReferences(element)
+        KotlinCompilerReferenceIndexService.getInstanceIfEnable(element.project)?.scopeWithCodeReferences(element)
 }

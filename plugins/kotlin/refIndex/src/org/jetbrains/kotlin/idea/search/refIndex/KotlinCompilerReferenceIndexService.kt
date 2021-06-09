@@ -7,6 +7,7 @@ import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
 import com.intellij.ide.highlighter.JavaClassFileType
 import com.intellij.ide.highlighter.JavaFileType
+import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.*
 import com.intellij.openapi.components.Service
@@ -26,6 +27,9 @@ import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.CachedValueProvider
+import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -184,9 +188,27 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         withDirtyScopeUnderWriteLock { upToDateCheckFinished(modules) }
     }
 
-    fun getScopeWithCodeReferences(element: PsiElement): GlobalSearchScope? = null
+    fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? = element.takeIf(this::isServiceEnabledFor)?.let {
+        CachedValuesManager.getCachedValue(element) {
+            CachedValueProvider.Result.create(
+                buildScopeWithReferences(referentFiles(element)),
+                PsiModificationTracker.MODIFICATION_COUNT,
+                this,
+            )
+        }
+    }
 
-    private fun buildScopeWithReferences(virtualFiles: Set<VirtualFile>): GlobalSearchScope {
+    // TODO
+    private fun referentFiles(element: PsiElement): Set<VirtualFile>? = null
+
+    private fun isServiceEnabledFor(element: PsiElement): Boolean = storage != null && isEnabled &&
+            runReadAction { element.containingFile }
+                ?.let(InjectedLanguageManager.getInstance(project)::isInjectedFragment)
+                ?.not() == true
+
+    private fun buildScopeWithReferences(virtualFiles: Set<VirtualFile>?): GlobalSearchScope? {
+        if (virtualFiles == null) return null
+
         // knows everything
         val scopeWithReferences = ScopeWithReferencesOnCompilation(virtualFiles, projectFileIndex)
 
