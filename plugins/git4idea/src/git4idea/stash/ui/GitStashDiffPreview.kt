@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
 import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
-import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
 import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
@@ -21,7 +20,7 @@ import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
 import java.beans.PropertyChangeListener
 import java.util.stream.Stream
 import javax.swing.JTree
-import kotlin.streams.asSequence
+import kotlin.streams.toList
 
 class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInEditor: Boolean, parentDisposable: Disposable) :
   ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
@@ -63,11 +62,11 @@ class GitStashDiffPreview(project: Project, private val tree: ChangesTree, isInE
 
   private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
     override fun getChanges(): List<PresentableChange> {
-      return allChanges.asSequence().mapNotNull { wrapper -> wrapper.createProducer(project) as? ChangeDiffRequestChain.Producer }.toList()
+      return allChanges.toList()
     }
 
     override fun select(change: PresentableChange) {
-      this@GitStashDiffPreview.selectFilePath(change.filePath)
+      (change as? Wrapper)?.run(::selectChange)
     }
 
     override fun getSelectedChange(): PresentableChange? {
