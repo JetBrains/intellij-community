@@ -27,7 +27,7 @@ import java.util.Map;
 
 public abstract class ContentLabel extends BaseLabel {
   private static final int DEFAULT_HORIZONTAL_INSET = JBUIScale.scale(12);
-  private static final int ICONS_GAP = JBUIScale.scale(3);
+  protected static final int ICONS_GAP = JBUIScale.scale(3);
 
   private final List<AdditionalIcon> myAdditionalIcons = new SmartList<>();
   protected int myIconWithInsetsWidth;
@@ -44,7 +44,7 @@ public abstract class ContentLabel extends BaseLabel {
   public ContentLabel(@NotNull ToolWindowContentUi ui, boolean bold) {
     super(ui, bold);
 
-    behavior.setActionTrigger(MouseEvent.MOUSE_RELEASED);
+    behavior.setActionTrigger(BaseButtonBehavior.MOUSE_PRESSED_RELEASED);
     behavior.setMouseDeadzone(TimedDeadzone.NULL);
   }
 
@@ -89,10 +89,11 @@ public abstract class ContentLabel extends BaseLabel {
     currentIconTooltip = null;
   }
 
-  protected boolean handleActionsClick() {
+  protected boolean handleActionsClick(@NotNull MouseEvent e) {
     for (AdditionalIcon icon : myAdditionalIcons) {
       if (mouseOverIcon(icon)) {
         icon.runAction();
+        e.consume();
         return true;
       }
     }
@@ -140,8 +141,7 @@ public abstract class ContentLabel extends BaseLabel {
         repaint();
       }
 
-      AdditionalIcon first = ContainerUtil.find(myAdditionalIcons, icon -> mouseOverIcon(icon));
-
+      AdditionalIcon first = findHoveredIcon();
       if (first != null) {
         showTooltip(first);
         return;
@@ -149,6 +149,11 @@ public abstract class ContentLabel extends BaseLabel {
     }
 
     showTooltip(null);
+  }
+
+  @Nullable
+  protected AdditionalIcon findHoveredIcon() {
+    return ContainerUtil.find(myAdditionalIcons, icon -> mouseOverIcon(icon));
   }
 
   boolean hasActiveIcons() {

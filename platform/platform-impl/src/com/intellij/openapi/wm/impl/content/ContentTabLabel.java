@@ -40,11 +40,11 @@ class ContentTabLabel extends ContentLabel {
 
   @Override
   protected void handleMouseClick(@NotNull MouseEvent e) {
-    if (handleActionsClick()) return;
-
-    selectContent();
-
-    handleDoubleClick(e);
+    if (e.getID() == MouseEvent.MOUSE_RELEASED) {
+      if (handleActionsClick(e)) return;
+      selectContent();
+      handleDoubleClick(e);
+    }
   }
 
   private void handleDoubleClick(@NotNull MouseEvent e) {
