@@ -6271,6 +6271,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertPrimaryConstructorToSecondary/initWithoutAssignments.kt");
         }
 
+        @TestMetadata("inlineClass.kt")
+        public void testInlineClass() throws Exception {
+            runTest("testData/intentions/convertPrimaryConstructorToSecondary/inlineClass.kt");
+        }
+
         @TestMetadata("noArgName.kt")
         public void testNoArgName() throws Exception {
             runTest("testData/intentions/convertPrimaryConstructorToSecondary/noArgName.kt");
@@ -6309,6 +6314,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("useParamChain.kt")
         public void testUseParamChain() throws Exception {
             runTest("testData/intentions/convertPrimaryConstructorToSecondary/useParamChain.kt");
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("testData/intentions/convertPrimaryConstructorToSecondary/valueClass.kt");
         }
 
         @TestMetadata("vararg.kt")
@@ -12983,6 +12993,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/movePropertyToClassBody/dataClass.kt");
         }
 
+        @TestMetadata("inlineClass.kt")
+        public void testInlineClass() throws Exception {
+            runTest("testData/intentions/movePropertyToClassBody/inlineClass.kt");
+        }
+
         @TestMetadata("location1.kt")
         public void testLocation1() throws Exception {
             runTest("testData/intentions/movePropertyToClassBody/location1.kt");
@@ -13006,6 +13021,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/intentions/movePropertyToClassBody/simple.kt");
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("testData/intentions/movePropertyToClassBody/valueClass.kt");
         }
 
         @TestMetadata("vararg.kt")

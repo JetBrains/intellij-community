@@ -18,10 +18,7 @@ import org.jetbrains.kotlin.lexer.KtTokens.VARARG_KEYWORD
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder.Target.CONSTRUCTOR
-import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
-import org.jetbrains.kotlin.psi.psiUtil.endOffset
-import org.jetbrains.kotlin.psi.psiUtil.getChildrenOfType
-import org.jetbrains.kotlin.psi.psiUtil.startOffset
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.parents
 
@@ -33,7 +30,15 @@ class ConvertPrimaryConstructorToSecondaryIntention : SelfTargetingRangeIntentio
         val primaryCtor = element.primaryConstructor ?: return null
         val startOffset =
             (if (primaryCtor.getConstructorKeyword() != null) primaryCtor else element.nameIdentifier)?.startOffset ?: return null
-        if (element.isAnnotation() || element.isData() || element.superTypeListEntries.any { it is KtDelegatedSuperTypeEntry }) return null
+        if (element.isAnnotation() ||
+            element.isData() ||
+            element.isData() ||
+            element.isInline() ||
+            element.isValue() ||
+            element.superTypeListEntries.any { it is KtDelegatedSuperTypeEntry }
+        ) {
+            return null
+        }
         if (primaryCtor.valueParameters.any { it.hasValOrVar() && (it.name == null || it.annotationEntries.isNotEmpty()) }) return null
         return TextRange(startOffset, primaryCtor.endOffset)
     }
