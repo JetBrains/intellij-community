@@ -28,22 +28,24 @@ abstract class GrazieTestBase : BasePlatformTestCase() {
     super.setUp()
     myFixture.enableInspections(*inspectionTools)
 
-    if (GrazieConfig.get().enabledLanguages != enabledLanguages) {
-      GrazieConfig.update { state ->
-        val checkingContext = state.checkingContext.copy(
-          isCheckInStringLiteralsEnabled = true,
-          isCheckInCommentsEnabled = true,
-          isCheckInDocumentationEnabled = true
-        )
-        state.copy(
-          enabledLanguages = enabledLanguages,
-          userEnabledRules = enabledRules + additionalEnabledRules,
-          checkingContext = checkingContext
-        )
-      }
-
-      PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+    GrazieConfig.update { state ->
+      val checkingContext = state.checkingContext.copy(
+        isCheckInStringLiteralsEnabled = true,
+        isCheckInCommentsEnabled = true,
+        isCheckInDocumentationEnabled = true
+      )
+      state.copy(
+        enabledLanguages = enabledLanguages,
+        userEnabledRules = enabledRules + additionalEnabledRules,
+        checkingContext = checkingContext
+      )
     }
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
+  }
+
+  override fun tearDown() {
+    GrazieConfig.update { GrazieConfig.State() }
+    super.tearDown()
   }
 
   protected open fun runHighlightTestForFile(file: String) {
