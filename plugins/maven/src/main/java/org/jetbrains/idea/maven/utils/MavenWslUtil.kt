@@ -113,7 +113,7 @@ internal object MavenWslUtil : MavenUtil() {
 
   @JvmStatic
   fun WSLDistribution.resolveM2Dir(): File {
-    return this.getWindowsFile(File(this.environment["HOME"], DOT_M2_DIR))!!
+    return this.getWindowsFile(File(this.environment["HOME"], DOT_M2_DIR))
   }
 
   /**
@@ -208,8 +208,8 @@ internal object MavenWslUtil : MavenUtil() {
   }
 
   @JvmStatic
-  fun WSLDistribution.getWindowsFile(wslFile: File): File? {
-    return FileUtil.toSystemIndependentName(wslFile.path).let(this::getWindowsPath)?.let(::File)
+  fun WSLDistribution.getWindowsFile(wslFile: File): File {
+    return FileUtil.toSystemIndependentName(wslFile.path).let(this::getWindowsPath).let(::File)
   }
 
   @JvmStatic
