@@ -29,14 +29,16 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtilities;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.*;
 
 class ContentTabLabel extends BaseLabel {
   private static final int MAX_WIDTH = JBUIScale.scale(400);
@@ -74,8 +76,10 @@ class ContentTabLabel extends BaseLabel {
     }
 
     hideCurrentTooltip();
-    if(myText != null && !myText.equals(getText())) {
-      IdeTooltip tooltip = new IdeTooltip(this, getMousePosition(), new JLabel(myText));
+
+    String originalText = getOriginalText();
+    if (originalText != null && !originalText.equals(getText())) {
+      IdeTooltip tooltip = new IdeTooltip(this, getMousePosition(), new JLabel(originalText));
       currentIconTooltip = new CurrentTooltip(IdeTooltipManager.getInstance().show(tooltip, false, false), null);
     }
   }
@@ -90,26 +94,41 @@ class ContentTabLabel extends BaseLabel {
   private final BaseButtonBehavior behavior = new BaseButtonBehavior(this) {
     @Override
     protected void execute(@NotNull MouseEvent e) {
-      for (AdditionalIcon icon : myAdditionalIcons) {
-        if (mouseOverIcon(icon)) {
-          icon.runAction();
-          return;
-        }
-      }
+      if (handleActionsClick()) return;
 
       selectContent();
 
-      if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && !myLayout.myDoubleClickActions.isEmpty()) {
-        DataContext dataContext = DataManager.getInstance().getDataContext(ContentTabLabel.this);
-        for (AnAction action : myLayout.myDoubleClickActions) {
-          AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
-          if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-            ActionUtil.performActionDumbAwareWithCallbacks(action, event);
-          }
+      handleDoubleClick(e);
+    }
+  };
+
+  private boolean handleActionsClick() {
+    for (AdditionalIcon icon : myAdditionalIcons) {
+      if (mouseOverIcon(icon)) {
+        icon.runAction();
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private void handleDoubleClick(@NotNull MouseEvent e) {
+    if (e.getClickCount() == 2 && e.getButton() == MouseEvent.BUTTON1 && !myLayout.myDoubleClickActions.isEmpty()) {
+      DataContext dataContext = DataManager.getInstance().getDataContext(this);
+      for (AnAction action : myLayout.myDoubleClickActions) {
+        AnActionEvent event = AnActionEvent.createFromInputEvent(e, ActionPlaces.UNKNOWN, null, dataContext);
+        if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
+          ActionUtil.performActionDumbAwareWithCallbacks(action, event);
         }
       }
     }
-  };
+  }
+
+  @NlsContexts.Label
+  @Nullable
+  public String getOriginalText() {
+    return myText;
+  }
 
   @Override
   public void setText(@NlsContexts.Label String text) {
