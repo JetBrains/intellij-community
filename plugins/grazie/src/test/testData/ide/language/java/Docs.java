@@ -41,6 +41,8 @@ class ExampleClassWithNoTypos<T> {
  *
  * This guy <warning descr="MASS_AGREEMENT">have</warning> no useful logic; it's just a documentation example.
  *
+ * </unopenedTag>
+ *
  * @param T the <warning descr="KIND_OF_A">type of a</warning> <TYPO descr="Typo: In word 'membr'">membr</TYPO> in this group.
  */
 class ExampleClassWithTypos<T> {

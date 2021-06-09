@@ -35,7 +35,7 @@ public class JavaTextExtractor extends TextExtractor {
     .excluding(e -> EXCLUDED.contains(PsiUtilCore.getElementType(e)))
     .removingIndents(" \t");
   private static final Pattern anyTag = Pattern.compile("</?\\w+[^>]*>");
-  private static final Pattern closingTag = Pattern.compile("</\\w+[^>]*>");
+  private static final Pattern closingTag = Pattern.compile("</\\w+>");
 
   @Override
   public TextContent buildTextContent(@NotNull PsiElement root, @NotNull Set<TextContent.TextDomain> allowedDomains) {
@@ -74,9 +74,7 @@ public class JavaTextExtractor extends TextExtractor {
       String text = content.toString();
       String tagName = text.substring(matcher.start() + 2, matcher.end() - 1);
       int openingTag = text.lastIndexOf("<" + tagName, matcher.start());
-      if (openingTag < 0) break;
-
-      content = content.markUnknown(new TextRange(openingTag, matcher.end()));
+      content = content.markUnknown(new TextRange(openingTag < 0 ? matcher.start() : openingTag, matcher.end()));
     }
     
     while (true) {
