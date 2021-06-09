@@ -14,8 +14,8 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.memory.agent.MemoryAgent;
-import com.intellij.debugger.memory.agent.MemoryAgentCapabilities;
 import com.intellij.debugger.memory.agent.MemoryAgentPathsToClosestGCRootsProvider;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.impl.DebuggerTreeRenderer;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.*;
@@ -569,9 +569,12 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
       public XValue getReferringObjectsValue() {
         ReferringObjectsProvider provider = ReferringObjectsProvider.BASIC_JDI;
 
-        MemoryAgentCapabilities capabilities = MemoryAgent.get(getEvaluationContext().getDebugProcess()).getCapabilities();
-        if (capabilities.canFindPathsToClosestGcRoots()) {
-          provider = new MemoryAgentPathsToClosestGCRootsProvider(MemoryAgent.DEFAULT_GC_ROOTS_PATHS_LIMIT, MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT);
+        if (DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
+          provider = new MemoryAgentPathsToClosestGCRootsProvider(
+            MemoryAgent.DEFAULT_GC_ROOTS_PATHS_LIMIT,
+            MemoryAgent.DEFAULT_GC_ROOTS_OBJECTS_LIMIT,
+            provider
+          );
         }
 
         return new JavaReferringObjectsValue(JavaValue.this, provider, null);

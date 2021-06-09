@@ -21,6 +21,7 @@ import java.util.Random;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 class MemoryAgentImpl implements MemoryAgent {
   private enum MemoryAgentActionState {
@@ -31,7 +32,7 @@ class MemoryAgentImpl implements MemoryAgent {
 
   static final MemoryAgent DISABLED = new MemoryAgentImpl();
   private final IdeaNativeAgentProxyMirror myProxy;
-  private final MemoryAgentProgressTracker myProgressTracker;
+  private MemoryAgentProgressTracker myProgressTracker;
   private MemoryAgentCapabilities myCapabilities;
   private MemoryAgentActionState myState;
   private File myCancellationFile;
@@ -39,7 +40,10 @@ class MemoryAgentImpl implements MemoryAgent {
 
   public static MemoryAgent createMemoryAgent(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
     MemoryAgentImpl memoryAgent = new MemoryAgentImpl();
-    memoryAgent.myCapabilities = memoryAgent.myProxy.initializeCapabilities(evaluationContext);
+    memoryAgent.myCapabilities = memoryAgent.initializeCapabilities(evaluationContext);
+    if (memoryAgent.myCapabilities.isDisabled()) {
+      return DISABLED;
+    }
     return memoryAgent;
   }
 
@@ -52,7 +56,12 @@ class MemoryAgentImpl implements MemoryAgent {
     );
     myCapabilities = MemoryAgentCapabilities.DISABLED;
     myState = MemoryAgentActionState.FINISHED;
-    myProgressTracker = new MemoryAgentProgressTracker();
+    myProgressTracker = MemoryAgentProgressTracker.DISABLED;
+  }
+
+  @NotNull
+  private MemoryAgentCapabilities initializeCapabilities(@NotNull EvaluationContextImpl evaluationContext) throws EvaluateException {
+    return myProxy.initializeCapabilities(evaluationContext);
   }
 
   private <T> MemoryAgentActionResult<T> executeOperation(Callable<MemoryAgentActionResult<T>> callable) throws EvaluateException {
@@ -65,6 +74,12 @@ class MemoryAgentImpl implements MemoryAgent {
       myCancellationFile = null;
     }
 
+    if (myProgressIndicator != null) {
+      myProgressTracker = new MemoryAgentProgressTrackerImpl(this, myProgressIndicator);
+    } else {
+      myProgressTracker = MemoryAgentProgressTracker.DISABLED;
+    }
+
     try {
       myState = MemoryAgentActionState.RUNNING;
       myProgressTracker.startMonitoringProgress();
@@ -75,6 +90,8 @@ class MemoryAgentImpl implements MemoryAgent {
     }
     finally {
       myProgressTracker.stopMonitoringProgress();
+      myProgressIndicator = null;
+      myProgressTracker = MemoryAgentProgressTracker.DISABLED;
       FileUtil.delete(new File(myProxy.getProgressFileName()));
       myState = MemoryAgentActionState.FINISHED;
     }
@@ -186,58 +203,98 @@ class MemoryAgentImpl implements MemoryAgent {
     return myCapabilities;
   }
 
-  private class MemoryAgentProgressTracker {
+  @Override
+  public boolean isDisabled() {
+    return this == DISABLED;
+  }
+
+  private interface MemoryAgentProgressTracker {
+    MemoryAgentProgressTracker DISABLED = new MemoryAgentProgressTracker() {
+    };
+
+    default void startMonitoringProgress() {
+
+    }
+
+    default void cancelMonitoringProgress() {
+
+    }
+
+    default void stopMonitoringProgress() {
+
+    }
+  }
+
+  private static class MemoryAgentProgressTrackerImpl implements MemoryAgentProgressTracker {
     private static final int PROGRESS_CHECKING_DELAY_MS = 500;
+    private final ProgressIndicator myProgressIndicator;
+    private final MemoryAgent myAgent;
+    private final ReentrantLock myProgressIndicatorLock = new ReentrantLock();
     private ScheduledFuture<?> myProgressCheckingFuture;
 
-    private void startMonitoringProgress() {
-      if (myProgressIndicator != null) {
+    MemoryAgentProgressTrackerImpl(@NotNull MemoryAgent agent, @NotNull ProgressIndicator progressIndicator) {
+      myAgent = agent;
+      myProgressIndicator = progressIndicator;
+    }
+
+    @Override
+    public void startMonitoringProgress() {
         myProgressIndicator.start();
         myProgressCheckingFuture = AppExecutorUtil.getAppScheduledExecutorService()
           .scheduleWithFixedDelay(this::updateProgress, 0, PROGRESS_CHECKING_DELAY_MS, TimeUnit.MILLISECONDS);
-      }
     }
 
+    @Override
     public void cancelMonitoringProgress() {
       stopMonitoringProgress(true);
     }
 
+    @Override
     public void stopMonitoringProgress() {
       stopMonitoringProgress(false);
     }
 
     private void stopMonitoringProgress(boolean cancel) {
-      if (myProgressCheckingFuture != null) {
-        myProgressCheckingFuture.cancel(true);
-      }
-
-      if (myProgressIndicator != null && myProgressIndicator.isRunning()) {
-        if (cancel) {
-          myProgressIndicator.cancel();
-        } else {
-          myProgressIndicator.stop();
+      try {
+        myProgressIndicatorLock.lock();
+        if (myProgressCheckingFuture != null) {
+          myProgressCheckingFuture.cancel(true);
         }
-      }
 
-      myProgressCheckingFuture = null;
+        if (myProgressIndicator.isRunning()) {
+          if (cancel) {
+            myProgressIndicator.cancel();
+          } else {
+            myProgressIndicator.stop();
+          }
+        }
+
+        myProgressCheckingFuture = null;
+      }
+      finally {
+        myProgressIndicatorLock.unlock();
+      }
     }
 
     @SuppressWarnings("HardCodedStringLiteral")
     private void updateProgress() {
       ApplicationManager.getApplication().assertIsNonDispatchThread();
-      if (myProgressIndicator == null) {
-        stopMonitoringProgress();
-      }
 
-      MemoryAgentProgressPoint progressPoint = checkProgress();
+      MemoryAgentProgressPoint progressPoint = myAgent.checkProgress();
       if (progressPoint == null) {
         return;
       }
 
       ApplicationManager.getApplication().invokeLater(() -> {
-        if (myProgressIndicator != null) {
-          myProgressIndicator.setText(progressPoint.getMessage());
-          myProgressIndicator.setFraction(progressPoint.getFraction());
+        try {
+          myProgressIndicatorLock.lock();
+          if (myProgressIndicator.isRunning()) {
+            myProgressIndicator.setText(progressPoint.getMessage());
+            myProgressIndicator.setFraction(progressPoint.getFraction());
+          }
+        }
+        finally {
+          myProgressIndicatorLock.unlock();
         }
       });
 

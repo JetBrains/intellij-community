@@ -344,7 +344,6 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         connection = new RemoteConnectionBuilder(false, DebuggerSettings.getInstance().getTransport(), "")
           .asyncAgent(true)
           .project(environment.getProject())
-          .memoryAgent(DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT)
           .create(parameters);
       }
       catch (ExecutionException e) {

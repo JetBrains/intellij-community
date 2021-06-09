@@ -11,6 +11,7 @@ import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
 import com.intellij.debugger.memory.agent.MemoryAgent;
 import com.intellij.debugger.memory.agent.MemoryAgentActionResult;
 import com.intellij.debugger.memory.agent.ui.RetainedSizeDialog;
+import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -52,7 +53,12 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
           }
 
           EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, suspendContext.getFrameProxy());
-          MemoryAgent memoryAgent = MemoryAgent.get(debugProcess);
+          MemoryAgent memoryAgent = MemoryAgent.get(evaluationContext);
+          if (memoryAgent.isDisabled()) {
+            dialog.setAgentCouldntBeLoadedMessage();
+            return;
+          }
+
           Disposer.register(dialog.getDisposable(), () -> memoryAgent.cancelAction());
           memoryAgent.setProgressIndicator(dialog.createProgressIndicator());
           MemoryAgentActionResult<Pair<long[], ObjectReference[]>> result = memoryAgent.estimateObjectSize(
@@ -63,19 +69,25 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
             return;
           }
 
-          if (result.executedSuccessfully()) {
-            Pair<long[], ObjectReference[]> sizesAndHeldObjects = result.getResult();
-            dialog.setHeldObjectsAndSizes(
-              Arrays.asList(sizesAndHeldObjects.getSecond()),
-              sizesAndHeldObjects.getFirst()[0],
-              sizesAndHeldObjects.getFirst()[1]
-            );
-          } else {
-            dialog.setCalculationTimeout();
-          }
+          interpretResult(result, dialog);
         }
         catch (EvaluateException e) {
           XDebuggerManagerImpl.getNotificationGroup().createNotification(JavaDebuggerBundle.message("action.failed"), NotificationType.ERROR);
+        }
+      }
+
+      private void interpretResult(@NotNull MemoryAgentActionResult<Pair<long[], ObjectReference[]>> result,
+                                   @NotNull RetainedSizeDialog dialog) {
+        if (result.executedSuccessfully()) {
+          Pair<long[], ObjectReference[]> sizesAndHeldObjects = result.getResult();
+          long[] sizes = sizesAndHeldObjects.getFirst();
+          dialog.setHeldObjectsAndSizes(
+            Arrays.asList(sizesAndHeldObjects.getSecond()),
+            sizes[0],
+            sizes[1]
+          );
+        } else {
+          dialog.setCalculationTimeoutMessage();
         }
       }
 
@@ -90,12 +102,13 @@ public class CalculateRetainedSizeAction extends DebuggerTreeAction {
   protected boolean isEnabled(@NotNull XValueNodeImpl node, @NotNull AnActionEvent e) {
     if (!super.isEnabled(node, e)) return false;
     DebugProcessImpl debugProcess = JavaDebugProcess.getCurrentDebugProcess(node.getTree().getProject());
-    if (debugProcess == null || !debugProcess.isEvaluationPossible() || !MemoryAgent.get(debugProcess).getCapabilities().isLoaded()) {
+    if (debugProcess == null || !debugProcess.isEvaluationPossible() ||
+        !DebuggerSettings.getInstance().ENABLE_MEMORY_AGENT) {
       e.getPresentation().setVisible(false);
       return false;
     }
 
     ObjectReference reference = getObjectReference(node);
-    return reference != null && MemoryAgent.get(debugProcess).getCapabilities().canEstimateObjectSize();
+    return reference != null;
   }
 }
