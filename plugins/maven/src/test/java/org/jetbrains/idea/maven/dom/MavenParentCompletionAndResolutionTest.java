@@ -257,8 +257,6 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                          "</parent>\n" +
                          "<artifactId>m1</artifactId>\n");
 
-
-    myFixture.enableInspections(Collections.singletonList(MavenPropertyInParentInspection.class));
     checkHighlighting(m2);
   }
 
@@ -307,7 +305,6 @@ public class MavenParentCompletionAndResolutionTest extends MavenDomWithIndicesT
                            "</parent>" +
                            "<artifactId>m1</artifactId>");
 
-      myFixture.enableInspections(Collections.singletonList(MavenPropertyInParentInspection.class));
       checkHighlighting(m2);
     } finally {
       fixture.tearDown();

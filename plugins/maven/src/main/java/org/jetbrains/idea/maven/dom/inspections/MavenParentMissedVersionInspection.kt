@@ -27,8 +27,8 @@ class MavenParentMissedVersionInspection : DomElementsInspection<MavenDomProject
       return
     }
 
-    if (!parent.version.exists() &&
-        !isConsumerPomResolutionApplicable(domFileElement.file.project)) {
+    val project = domFileElement.file.project
+    if (!parent.version.exists() && !isConsumerPomResolutionApplicable(project)) {
       val version = getParentVersion(domFileElement.file, model)
       listOf(
         holder.createProblem(
