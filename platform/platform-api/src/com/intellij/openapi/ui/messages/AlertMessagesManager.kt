@@ -15,6 +15,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.MouseDragHelper
+import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.MacMessages
@@ -130,9 +131,11 @@ private class AlertDialog(project: Project?,
                           doNotAskOption: DoNotAskOption?,
                           val myHelpId: String?) : DialogWrapper(project, parentComponent, false, IdeModalityType.IDE, false) {
 
-  private val myTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
+  private val myIsTitleComponent = SystemInfoRt.isMac || !Registry.`is`("ide.message.dialogs.as.swing.alert.show.title.bar", false)
 
+  private val myRootLayout = RootLayout()
   private val myIconComponent = JLabel(myIcon)
+  private var myTitleComponent: JComponent? = null
   private val mySouthPanel = JPanel(BorderLayout(0, JBUI.scale(20)))
   private val myButtonsPanel = JPanel()
   private val myCloseButton: JComponent?
@@ -140,11 +143,10 @@ private class AlertDialog(project: Project?,
   private var myHelpButton: JButton? = null
 
   init {
-    setUndecorated(myTitleComponent)
     title = myTitle
     setDoNotAskOption(doNotAskOption)
 
-    if (myTitleComponent && !SystemInfoRt.isMac) {
+    if (myIsTitleComponent && !SystemInfoRt.isMac) {
       myCloseButton = InplaceButton(IconButton(null, AllIcons.Ide.Notification.Close, AllIcons.Ide.Notification.CloseHover, null)) {
         doCancelAction()
       }
@@ -166,20 +168,24 @@ private class AlertDialog(project: Project?,
     if (myHelpButton != null) {
       val helpButton = myHelpButton!!
       helpButton.parent.remove(helpButton)
-      contentPane.add(helpButton, 0)
+      myRootLayout.addAdditionalComponent(helpButton)
     }
 
     if (myCloseButton != null) {
-      contentPane.add(myCloseButton, 0)
+      myRootLayout.addAdditionalComponent(myCloseButton)
     }
 
-    if (myTitleComponent) {
+    if (myIsTitleComponent) {
+      setUndecorated(true)
+      rootPane.windowDecorationStyle = JRootPane.NONE
+      rootPane.border = PopupBorder.Factory.create(true, true)
+
       object : MouseDragHelper<JComponent>(myDisposable, contentPane as JComponent) {
         var myLocation: Point? = null
 
         override fun canStartDragging(dragComponent: JComponent, dragComponentPoint: Point): Boolean {
           val target = dragComponent.findComponentAt(dragComponentPoint)
-          return target == null || target == dragComponent || target is JPanel
+          return target == null || target == dragComponent || target == myTitleComponent || target is JPanel
         }
 
         override fun processDrag(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point) {
@@ -218,37 +224,46 @@ private class AlertDialog(project: Project?,
     JBUI.scale(if (StringUtil.length(myMessage) < 130 || myButtonsPanel.preferredSize.width < JBUI.scale(300)) 370 else 440),
     preferredSize.height)
 
-  override fun createRootLayout(): LayoutManager {
-    return object : BorderLayout() {
-      override fun addLayoutComponent(name: String?, comp: Component) {
-        if (comp != myCloseButton && comp != myHelpButton) {
-          super.addLayoutComponent(name, comp)
-        }
+  override fun createRootLayout(): LayoutManager = myRootLayout
+
+  private inner class RootLayout : BorderLayout() {
+    private var myParent: Container? = null
+
+    fun addAdditionalComponent(component: Component) {
+      myParent!!.add(component, 0)
+    }
+
+    override fun addLayoutComponent(name: String?, comp: Component) {
+      if (myParent == null) {
+        myParent = comp.parent
+      }
+      if (comp != myCloseButton && comp != myHelpButton) {
+        super.addLayoutComponent(name, comp)
+      }
+    }
+
+    override fun layoutContainer(target: Container) {
+      super.layoutContainer(target)
+
+      if (myCloseButton != null) {
+        val offset = JBUI.scale(20)
+        val size = myCloseButton.preferredSize
+        myCloseButton.setBounds(target.width - offset, offset - size.height, size.width, size.height)
       }
 
-      override fun layoutContainer(target: Container) {
-        super.layoutContainer(target)
+      if (myHelpButton != null) {
+        val helpButton = myHelpButton!!
+        val firstButton = myButtons[0]
 
-        if (myCloseButton != null) {
-          val offset = JBUI.scale(20)
-          val size = myCloseButton.preferredSize
-          myCloseButton.setBounds(target.width - offset, offset - size.height, size.width, size.height)
-        }
+        val iconPoint = SwingUtilities.convertPoint(myIconComponent, 0, 0, target)
+        val buttonPoint = SwingUtilities.convertPoint(firstButton, 0, 0, target)
 
-        if (myHelpButton != null) {
-          val helpButton = myHelpButton!!
-          val firstButton = myButtons[0]
+        val iconSize = myIconComponent.preferredSize
+        val helpSize = helpButton.preferredSize
+        val buttonSize = firstButton.preferredSize
 
-          val iconPoint = SwingUtilities.convertPoint(myIconComponent, 0, 0, target)
-          val buttonPoint = SwingUtilities.convertPoint(firstButton, 0, 0, target)
-
-          val iconSize = myIconComponent.preferredSize
-          val helpSize = helpButton.preferredSize
-          val buttonSize = firstButton.preferredSize
-
-          helpButton.setBounds(iconPoint.x + (iconSize.width - helpSize.width) / 2,
-                               buttonPoint.y + (buttonSize.height - helpSize.height) / 2, helpSize.width, helpSize.height)
-        }
+        helpButton.setBounds(iconPoint.x + (iconSize.width - helpSize.width) / 2,
+                             buttonPoint.y + (buttonSize.height - helpSize.height) / 2, helpSize.width, helpSize.height)
       }
     }
   }
@@ -263,9 +278,10 @@ private class AlertDialog(project: Project?,
     val textPanel = JPanel(BorderLayout(0, JBUI.scale(8)))
     dialogPanel.add(textPanel)
 
-    if (myTitleComponent && !StringUtil.isEmpty(myTitle)) {
+    if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
       val titleComponent = createTextComponent(myTitle)
       titleComponent.font = JBFont.create(titleComponent.font).biggerOn(3f).asBold()
+      myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
     }
 
@@ -332,7 +348,7 @@ private class AlertDialog(project: Project?,
     return component
   }
 
-  override fun createContentPaneBorder(): Border = JBUI.Borders.empty(20)
+  override fun createContentPaneBorder(): Border = if (myIsTitleComponent) JBUI.Borders.empty(20) else JBUI.Borders.empty(14, 20, 20, 20)
 
   override fun createActions(): Array<Action> {
     val actions: MutableList<Action> = ArrayList()
