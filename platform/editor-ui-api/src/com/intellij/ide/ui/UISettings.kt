@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui
 
 import com.intellij.diagnostic.LoadingState
@@ -142,12 +142,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
 
   val cycleScrolling: Boolean
     get() = AdvancedSettings.getBoolean("ide.cycle.scrolling")
-
-  var navigateToPreview: Boolean
-    get() = state.navigateToPreview
-    set(value) {
-      state.navigateToPreview = value
-    }
 
   var selectedTabsLayoutInfoId: @NonNls String?
     get() = state.selectedTabsLayoutInfoId
@@ -414,12 +408,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
   val showInplaceCommentsInternal: Boolean
     get() = showInplaceComments && ApplicationManager.getApplication()?.isInternal ?: false
 
-  var enableAlphaMode: Boolean
-    get() = state.enableAlphaMode
-    set(value) {
-      state.enableAlphaMode = value
-    }
-
   var fullPathsInWindowHeader: Boolean
     get() = state.fullPathsInWindowHeader
     set(value) {
@@ -432,13 +420,6 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
       state.mergeMainMenuWithWindowTitle = value
     }
 
-
-  init {
-    // TODO Remove the registry keys and migration code in 2019.3
-    if (SystemProperties.`is`("tabs.alphabetical")) {
-      sortTabsAlphabetically = true
-    }
-  }
 
   companion object {
     init {
