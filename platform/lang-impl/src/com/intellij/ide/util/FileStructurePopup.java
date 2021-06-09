@@ -776,7 +776,7 @@ public class FileStructurePopup implements Disposable, TreeActionsOwner {
       language = ((LanguageFileType) fileType).getLanguage();
     }
 
-    ActionsEventLogGroup.ACTION_INVOKED.log(
+    ActionsEventLogGroup.ACTION_FINISHED.log(
       myProject,
       EventFields.PluginInfoFromInstance.with(action),
       EventFields.ActionPlace.with(ActionPlaces.FILE_STRUCTURE_POPUP),

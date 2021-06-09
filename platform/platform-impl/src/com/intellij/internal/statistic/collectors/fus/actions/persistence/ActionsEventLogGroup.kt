@@ -9,10 +9,10 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
   override fun getGroup(): EventLogGroup = GROUP
 
   companion object {
-    const val ACTION_INVOKED_EVENT_ID = "action.invoked"
+    const val ACTION_FINISHED_EVENT_ID = "action.finished"
 
     @JvmField
-    val GROUP = EventLogGroup("actions", 65)
+    val GROUP = EventLogGroup("actions", 66)
 
     @JvmField
     val START_TIME = EventFields.Long("start_time")
@@ -48,15 +48,15 @@ class ActionsEventLogGroup : CounterUsagesCollector() {
     val RESULT = ObjectEventField("result", RESULT_TYPE, ERROR)
 
     @JvmField
-    val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_INVOKED_EVENT_ID)
+    val ADDITIONAL = EventFields.createAdditionalDataField(GROUP.id, ACTION_FINISHED_EVENT_ID)
 
     @JvmField
-    val ACTION_INVOKED = registerActionInvokedEvent(
-      GROUP, ACTION_INVOKED_EVENT_ID, START_TIME, ADDITIONAL, EventFields.Language, EventFields.DurationMs, DUMB_START, RESULT
+    val ACTION_FINISHED = registerActionEvent(
+      GROUP, ACTION_FINISHED_EVENT_ID, START_TIME, ADDITIONAL, EventFields.Language, EventFields.DurationMs, DUMB_START, RESULT
     )
 
     @JvmStatic
-    fun registerActionInvokedEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
+    fun registerActionEvent(group: EventLogGroup, eventId: String, vararg extraFields: EventField<*>): VarargEventId {
       return group.registerVarargEvent(
         eventId,
         EventFields.PluginInfoFromInstance,

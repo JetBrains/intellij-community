@@ -54,7 +54,7 @@ public class ActionsCollectorImpl extends ActionsCollector {
                                          @Nullable AnAction action,
                                          @Nullable AnActionEvent event,
                                          @NotNull List<EventPair<?>> customData) {
-    record(ActionsEventLogGroup.ACTION_INVOKED, project, action, event, customData);
+    record(ActionsEventLogGroup.ACTION_FINISHED, project, action, event, customData);
   }
 
   public static void record(VarargEventId eventId,
