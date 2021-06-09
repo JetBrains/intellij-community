@@ -2,13 +2,10 @@
 package org.jetbrains.intellij.build.testFramework
 
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.intellij.build.BuildContext
-import org.jetbrains.intellij.build.BuildOptions
-import org.jetbrains.intellij.build.ProductProperties
-import org.jetbrains.intellij.build.ProprietaryBuildTools
+import org.jetbrains.intellij.build.*
 
 fun createBuildContext(homePath: String, productProperties: ProductProperties,
-                       buildTools: ProprietaryBuildTools?,
+                       buildTools: ProprietaryBuildTools,
                        skipDependencySetup: Boolean = false, communityHomePath: String = "$homePath/community"
 ): BuildContext {
   val options = BuildOptions()
@@ -21,4 +18,10 @@ fun createBuildContext(homePath: String, productProperties: ProductProperties,
     options.isUseCompiledClassesFromProjectOutput = true
   }
   return BuildContext.createContext(communityHomePath, homePath, productProperties, buildTools, options)
+}
+
+fun runTestBuild(homePath: String, productProperties: ProductProperties, buildTools: ProprietaryBuildTools,
+                 communityHomePath: String = "$homePath/community") {
+  val buildContext = createBuildContext(homePath, productProperties, buildTools, false, communityHomePath)
+  BuildTasks.create(buildContext).runTestBuild()
 }
