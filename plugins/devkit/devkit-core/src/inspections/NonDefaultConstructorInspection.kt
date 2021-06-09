@@ -89,7 +89,7 @@ class NonDefaultConstructorInspection : DevKitUastInspectionBase(UClass::class.j
       }
 
 
-      @NlsSafe val kind = if (isService) "Service" else "Extension"
+      @NlsSafe val kind = if (isService) DevKitBundle.message("inspections.non.default.warning.type.service") else DevKitBundle.message("inspections.non.default.warning.type.extension")
       @Nls val suffix =
         if (area == null) DevKitBundle.message("inspections.non.default.warning.suffix.project.or.module")
         else {
