@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.*;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -105,12 +106,12 @@ public final class ScratchFileActions {
         }
         doCreateNewScratch(project, context);
       };
-      if (selectionItem != null) {
-        consumer.consume(selectionItem);
-        return;
-      }
       LRUPopupBuilder<LanguageItem> builder = ScratchImplUtil.buildLanguagesPopup(
         project, ActionsBundle.message("action.NewScratchFile.text.with.new"));
+      if (selectionItem != null) {
+        String displayName = LangBundle.message("scratch.file.action.new.from.selection", selectionItem.fileType.getDisplayName());
+        builder.withExtraTopValue(selectionItem, displayName, EmptyIcon.ICON_16);
+      }
       builder
         .onChosen(consumer)
         .buildPopup()
@@ -138,11 +139,11 @@ public final class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
-      ScratchFileCreationHelper.Context context = createContext(e);
-      context.filePrefix = LangBundle.message("scratch.file.action.new.buffer.action.buffer");
+      ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
+      context.filePrefix = "buffer";
       context.createOption = ScratchFileService.Option.create_if_missing;
       context.fileCounter = ScratchFileActions::nextBufferIndex;
-      if (context.language == null) context.language = PlainTextLanguage.INSTANCE;
+      context.language = PlainTextLanguage.INSTANCE;
       doCreateNewScratch(project, context);
     }
   }
