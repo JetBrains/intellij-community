@@ -12968,6 +12968,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/movePropertyToClassBody/dataClass.kt");
         }
 
+        @TestMetadata("inlineClass.kt")
+        public void testInlineClass() throws Exception {
+            runTest("testData/intentions/movePropertyToClassBody/inlineClass.kt");
+        }
+
         @TestMetadata("location1.kt")
         public void testLocation1() throws Exception {
             runTest("testData/intentions/movePropertyToClassBody/location1.kt");
@@ -12991,6 +12996,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         @TestMetadata("simple.kt")
         public void testSimple() throws Exception {
             runTest("testData/intentions/movePropertyToClassBody/simple.kt");
+        }
+
+        @TestMetadata("valueClass.kt")
+        public void testValueClass() throws Exception {
+            runTest("testData/intentions/movePropertyToClassBody/valueClass.kt");
         }
 
         @TestMetadata("vararg.kt")
