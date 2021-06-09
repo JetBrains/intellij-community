@@ -6,7 +6,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.resolve.BindingContext.DOUBLE_COLON_LHS
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
@@ -18,12 +17,11 @@ class KotlinUCallableReferenceExpression(
         get() {
             if (qualifierType == null) return null
             val receiverExpression = sourcePsi.receiverExpression ?: return null
-            return KotlinConverter.convertExpression(receiverExpression, this, DEFAULT_EXPRESSION_TYPES_LIST)
+            return baseResolveProviderService.baseKotlinConverter.convertExpression(receiverExpression, this, DEFAULT_EXPRESSION_TYPES_LIST)
         }
 
     override val qualifierType by lz {
-        val ktType = sourcePsi.analyze()[DOUBLE_COLON_LHS, sourcePsi.receiverExpression]?.type ?: return@lz null
-        ktType.toPsiType(this, sourcePsi, boxed = true)
+        baseResolveProviderService.getDoubleColonReceiverType(sourcePsi, this)
     }
 
     override val callableName: String
