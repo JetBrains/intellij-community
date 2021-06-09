@@ -172,17 +172,21 @@ final class BuildTasksImpl extends BuildTasks {
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
-  private void buildProvidedModulesList(Path targetFile, Collection<String> modules) {
-    buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, {
-      buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
-      buildContext.messages.debug("Building provided modules list for the following modules: $modules")
-      FileUtil.delete(targetFile)
-      // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-      runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules, List.of("listBundledPlugins", targetFile.toString()))
-      if (!Files.exists(targetFile)) {
-        buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
+  private static void buildProvidedModulesList(BuildContext buildContext, Path targetFile, @NotNull Collection<String> modules) {
+    buildContext.executeStep("Build provided modules list", BuildOptions.PROVIDED_MODULES_LIST_STEP, new Runnable() {
+      @Override
+      void run() {
+        buildContext.messages.progress("Building provided modules list for ${modules.size()} modules")
+        buildContext.messages.debug("Building provided modules list for the following modules: $modules")
+        FileUtil.delete(targetFile)
+        // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
+        runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules,
+                              List.of("listBundledPlugins", targetFile.toString()))
+        if (!Files.exists(targetFile)) {
+          buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
+        }
+        buildContext.notifyArtifactWasBuilt(targetFile)
       }
-      buildContext.notifyArtifactWasBuilt(targetFile)
     })
   }
 
@@ -396,7 +400,7 @@ idea.fatal.error.notification=disabled
 
     if (buildContext.shouldBuildDistributions()) {
       Path providedModulesFile = Path.of(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-builtinModules.json")
-      buildProvidedModulesList(providedModulesFile, moduleNames)
+      buildProvidedModulesList(buildContext, providedModulesFile, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
           PluginsCollector collector = new PluginsCollector(buildContext)
