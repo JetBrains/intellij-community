@@ -130,14 +130,21 @@ public final class FormsBindingManager extends FormsBuilder {
         final File form = entry.getKey();
         final ModuleBuildTarget target = entry.getValue();
         final Collection<File> sources = findBoundSourceCandidates(context, target, form);
+        boolean isFormBound = false;
         for (File boundSource : sources) {
           if (!excludes.isExcluded(boundSource)) {
+            isFormBound = true;
             addBinding(boundSource, form, srcToForms);
             holderBuilder.markDirtyFile(target, boundSource);
             context.getScope().markIndirectlyAffected(target, boundSource);
             filesToCompile.put(boundSource, target);
             exitCode = ExitCode.OK;
           }
+        }
+        if (!isFormBound) {
+          context.processMessage(new CompilerMessage(
+            getPresentableName(), BuildMessage.Kind.ERROR, FormBundle.message("class.to.bind.not.found"), form.getAbsolutePath()
+          ));
         }
       }
 
@@ -163,21 +170,6 @@ public final class FormsBindingManager extends FormsBuilder {
       }
 
       BuildOperations.cleanOutputsCorrespondingToChangedFiles(context, holderBuilder.create());
-    }
-
-    // validate if all forms to be compiled have binding
-    if (!formsToCompile.isEmpty()) {
-      Set<File> formsWithoutBinding = FileCollectionFactory.createCanonicalFileSet(formsToCompile.keySet());
-      for (Collection<File> boundForms : srcToForms.values()) {
-        formsWithoutBinding.removeAll(boundForms);
-      }
-      if (!formsWithoutBinding.isEmpty()) {
-        for (File formFile : formsWithoutBinding) {
-          context.processMessage(new CompilerMessage(
-            getPresentableName(), BuildMessage.Kind.ERROR, FormBundle.message("form.is.not.bound.to.any.source"), formFile.getAbsolutePath()
-          ));
-        }
-      }
     }
 
     FORMS_TO_COMPILE.set(context, srcToForms.isEmpty()? null : srcToForms);
