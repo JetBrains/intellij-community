@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.ide.IdeBundle
@@ -10,6 +10,7 @@ import com.sun.net.httpserver.HttpServer
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.After
 import org.junit.Assert
+import org.junit.Assert.fail
 import org.junit.Before
 import org.junit.Test
 import java.io.IOException
@@ -19,9 +20,9 @@ import java.nio.charset.StandardCharsets
 import java.util.zip.GZIPOutputStream
 import kotlin.properties.Delegates
 
-private const val LOCALHOST = "127.0.0.1"
-
 class HttpRequestsTest {
+  private val LOCALHOST = "127.0.0.1"
+
   private var server: HttpServer by Delegates.notNull()
   private var url: String by Delegates.notNull()
 
@@ -42,7 +43,7 @@ class HttpRequestsTest {
   fun redirectLimit() {
     try {
       HttpRequests.request("").redirectLimit(0).readString(null)
-      Assert.fail()
+      fail()
     }
     catch (e: IOException) {
       assertThat(e.message).isEqualTo(IdeBundle.message("error.connection.failed.redirects"))
@@ -58,7 +59,7 @@ class HttpRequestsTest {
       ex.close()
     }
     HttpRequests.request(url).readTimeout(50).readString(null)
-    Assert.fail()
+    fail()
   }
 
   @Test(timeout = 5000)
@@ -109,7 +110,7 @@ class HttpRequestsTest {
     HttpRequests.request(url)
       .tuner { c: URLConnection -> (c as HttpURLConnection).requestMethod = "PUT" }
       .tryConnect()
-    Assert.fail()
+    fail()
   }
 
   @Test(timeout = 5000)
@@ -134,7 +135,7 @@ class HttpRequestsTest {
       HttpRequests
         .post(url, null)
         .write("hello")
-      Assert.fail()
+      fail()
     }
     catch (e: SocketException) {
       // java.net.SocketException: Software caused connection abort: recv failed
@@ -160,7 +161,7 @@ class HttpRequestsTest {
         .post(url, null)
         .isReadResponseOnError(true)
         .write("hello")
-      Assert.fail()
+      fail()
     }
     catch (e: HttpRequests.HttpStatusException) {
       assertThat(e.message).isEqualTo(serverErrorText)
@@ -185,7 +186,7 @@ class HttpRequestsTest {
         ex.close()
       }
       HttpRequests.request(url).productNameAsUserAgent().readString(null)
-      Assert.fail()
+      fail()
     }
     catch (e: HttpRequests.HttpStatusException) {
       assertThat(e.statusCode).isEqualTo(HttpURLConnection.HTTP_UNAUTHORIZED)
@@ -198,7 +199,7 @@ class HttpRequestsTest {
       HttpRequests.request(url).tuner { connection: URLConnection ->
         connection.setRequestProperty("X-Custom", "c-str\u0000")
       }.readString(null)
-      Assert.fail()
+      fail()
     }
     catch (e: AssertionError) {
       assertThat(e.message).contains("value contains NUL bytes")
@@ -218,7 +219,7 @@ class HttpRequestsTest {
       HttpRequests.request(url)
         .isReadResponseOnError(true)
         .readString(null)
-      Assert.fail()
+      fail()
     }
     catch (e: HttpRequests.HttpStatusException) {
       assertThat(e.statusCode).isEqualTo(HttpURLConnection.HTTP_NOT_FOUND)
