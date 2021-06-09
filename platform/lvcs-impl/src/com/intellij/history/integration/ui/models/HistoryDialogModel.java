@@ -15,6 +15,8 @@ import com.intellij.history.core.tree.RootEntry;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.revertion.Reverter;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
@@ -81,7 +83,7 @@ public abstract class HistoryDialogModel {
     });
   }
 
-  public void processContents(@NotNull PairProcessor<Revision, String> processor) {
+  public void processContents(@NotNull PairProcessor<? super Revision, ? super String> processor) {
     Map<Long, Revision> revMap = new HashMap<>();
     for (RevisionItem r : getRevisions()) {
       revMap.put(r.revision.getChangeSetId(), r.revision);
@@ -100,6 +102,14 @@ public abstract class HistoryDialogModel {
         Content content = entry == null ? null : entry.getContent();
         String text = content == null ? null : content.getString(entry, myGateway);
         return processor.process(revision, text);
+      }
+
+      @Override
+      public void begin(ChangeSet c) {
+        ProgressManager.checkCanceled();
+        if (Thread.currentThread().isInterrupted()) {
+          throw new ProcessCanceledException();
+        }
       }
 
       @Override
