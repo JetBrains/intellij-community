@@ -76,16 +76,16 @@ public class MultipleJdksMoveClassTest extends UsefulTestCase {
 
     ModuleRootModificationUtil.updateModel(myJava7Module, model -> {
       Sdk mockJdk17 = IdeaTestUtil.getMockJdk17();
-      model.setSdk(mockJdk17);
       WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk17, myFixture.getProject()));
+      model.setSdk(mockJdk17);
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java7";
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });
 
     ModuleRootModificationUtil.updateModel(myJava8Module, model -> {
       Sdk mockJdk18 = IdeaTestUtil.getMockJdk18();
-      model.setSdk(mockJdk18);
       WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk18, myFixture.getProject()));
+      model.setSdk(mockJdk18);
       String contentUrl = VfsUtilCore.pathToUrl(myFixture.getTempDirPath()) + "/java8";
       model.addContentEntry(contentUrl).addSourceFolder(contentUrl, false);
     });

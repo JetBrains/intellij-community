@@ -41,8 +41,8 @@ public class JavaCheckRegexpWithFlagsTest extends JavaCodeInsightTestCase {
 
     // the 1.8 mock jdk has the needed Pattern class
     Sdk jdk18 = IdeaTestUtil.getMockJdk18();
-    PsiTestUtil.removeAllRoots(myModule, jdk18);
     WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk18, myProject));
+    PsiTestUtil.removeAllRoots(myModule, jdk18);
 
     configureByText(JavaFileType.INSTANCE, getJavaText(regExp, flags));
     final PsiFile regexpFile = setUpRegexpInjectionAndGetRegexpFile();

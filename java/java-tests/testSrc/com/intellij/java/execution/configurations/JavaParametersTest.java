@@ -116,8 +116,8 @@ public class JavaParametersTest extends ModuleRootManagerTestCase {
       model.getModuleExtension(LanguageLevelModuleExtension.class)
            .setLanguageLevel(LanguageLevel.JDK_15_PREVIEW);
       Sdk mockJdk = IdeaTestUtil.getMockJdk(JavaVersion.compose(14));
-      model.setSdk(mockJdk);
       WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(mockJdk, myProject));
+      model.setSdk(mockJdk);
     });
     JavaParameters javaParameters = new JavaParameters();
     javaParameters.configureByModule(myModule, JavaParameters.CLASSES_AND_TESTS);

@@ -11,6 +11,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.roots.*;
@@ -62,6 +63,9 @@ public final class PsiTestUtil {
   public static void removeAllRoots(@NotNull Module module, Sdk jdk) {
     ModuleRootModificationUtil.updateModel(module, model -> {
       model.clear();
+      if (jdk != null && ApplicationManager.getApplication().isUnitTestMode()) {
+        WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(jdk, module.getProject()));
+      }
       model.setSdk(jdk);
     });
   }

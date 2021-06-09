@@ -40,8 +40,8 @@ public class RawTypeCanBeGenericFixTest extends LightJavaCodeInsightFixtureTestC
     public void configureModule(@NotNull Module module, @NotNull ModifiableRootModel model, @NotNull ContentEntry contentEntry) {
       super.configureModule(module, model, contentEntry);
       Sdk sdk = IdeaTestUtil.getMockJdk18();
-      model.setSdk(sdk);
       ProjectJdkTable.getInstance().addJdk(sdk);
+      model.setSdk(sdk);
     }
   };
 

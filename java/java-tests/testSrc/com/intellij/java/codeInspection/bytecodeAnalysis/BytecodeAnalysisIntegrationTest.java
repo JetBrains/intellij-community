@@ -79,8 +79,8 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
         });
 
         sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), annotationsRoot);
-        model.setSdk(sdk);
         ProjectJdkTable.getInstance().addJdk(sdk);
+        model.setSdk(sdk);
       }
 
       Registry.get(ProjectBytecodeAnalysis.NULLABLE_METHOD).setValue(true, module);

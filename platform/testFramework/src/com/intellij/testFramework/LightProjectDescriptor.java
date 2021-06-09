@@ -141,8 +141,8 @@ public class LightProjectDescriptor {
     ModuleRootModificationUtil.updateModel(module, model -> {
       Sdk sdk = getSdk();
       if (sdk != null) {
-        model.setSdk(sdk);
         ProjectJdkTable.getInstance().addJdk(sdk, module.getProject());
+        model.setSdk(sdk);
       }
 
       ContentEntry contentEntry = model.addContentEntry(srcRoot);

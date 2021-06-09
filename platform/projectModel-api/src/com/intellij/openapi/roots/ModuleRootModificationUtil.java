@@ -106,11 +106,11 @@ public final class ModuleRootModificationUtil {
 
   public static void setModuleSdk(@NotNull Module module, @Nullable Sdk sdk) {
     updateModel(module, model -> {
-      model.setSdk(sdk);
       if (sdk != null && ApplicationManager.getApplication().isUnitTestMode()) {
         //noinspection TestOnlyProblems
         WriteAction.runAndWait(() -> ProjectJdkTable.getInstance().addJdk(sdk, module.getProject()));
       }
+      model.setSdk(sdk);
     });
   }
 
