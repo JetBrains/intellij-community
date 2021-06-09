@@ -57,7 +57,7 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
   private static final @NonNls String LATEST_GRADLE_VERSION_KEY = "LATEST_GRADLE_VERSION_KEY";
   private static final @NonNls String LATEST_UPDATING_TIME_KEY = "LATEST_UPDATING_TIME_KEY";
 
-  private static final @NonNls String FALLBACK_VERSION = "0.7.3";
+  private static final @NonNls String FALLBACK_VERSION = "1.0";
   protected static final @NonNls String HELP_COMMENT = "// See https://github.com/JetBrains/gradle-intellij-plugin/\n";
 
   private static final @NonNls String TASK_NAME_RUN_IDE = ":runIde";
@@ -123,9 +123,9 @@ public class GradleIntellijPluginFrameworkSupportProvider extends KotlinDslGradl
     buildScriptData
       .addPluginDefinitionInPluginsGroup("id 'org.jetbrains.intellij' version '" + pluginVersion + "'")
       .addOther(HELP_COMMENT +
-                "intellij {\n    version '" + ideVersion + "'\n}\n")
+                "intellij {\n    version = '" + ideVersion + "'\n}\n")
       .addOther("patchPluginXml {\n" +
-                "    changeNotes \"\"\"\n" +
+                "    changeNotes = \"\"\"\n" +
                 "      Add change notes here.<br>\n" +
                 "      <em>most HTML tags may be used</em>\"\"\"\n" +
                 "}");

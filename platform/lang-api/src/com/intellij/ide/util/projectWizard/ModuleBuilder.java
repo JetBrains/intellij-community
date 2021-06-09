@@ -29,8 +29,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ModalityUiUtil;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -309,7 +309,7 @@ public abstract class ModuleBuilder extends AbstractModuleBuilder {
 
     if (runFromProjectWizard) {
       StartupManager.getInstance(module.getProject()).runAfterOpened(() -> {
-        GuiUtils.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(() -> {
           ApplicationManager.getApplication().runWriteAction(() -> onModuleInitialized(module));
         }, ModalityState.NON_MODAL, module.getDisposed());
       });

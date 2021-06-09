@@ -101,6 +101,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     @Override
     protected void filterChanged() {
       filterTree();
+      updateEmptyText();
     }
   };
   private boolean myModified;
@@ -305,7 +306,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     reset();
     getProject().getMessageBus().connect(myDisposable).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
-      public void profileChanged(@Nullable InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         if (myProfile == profile) {
           initToolStates();
           filterTree();
@@ -549,6 +550,8 @@ public class SingleInspectionProfilePanel extends JPanel {
     }, myDisposable);
     myTreeTable.setTreeCellRenderer(renderer);
     myTreeTable.setRootVisible(false);
+    updateEmptyText();
+
     final TreeTableTree tree = myTreeTable.getTree();
     tree.putClientProperty(DefaultTreeUI.LARGE_MODEL_ALLOWED, true);
     tree.setRowHeight(renderer.getTreeCellRendererComponent(tree, "xxx", true, true, false, 0, true).getPreferredSize().height);
@@ -1231,6 +1234,26 @@ public class SingleInspectionProfilePanel extends JPanel {
 
   public JComponent getPreferredFocusedComponent() {
     return myTreeTable;
+  }
+
+  private void updateEmptyText() {
+    final var emptyText = myTreeTable.getEmptyText();
+    emptyText.setText(AnalysisBundle.message("inspections.settings.empty.text"));
+    if (!myInspectionsFilter.isEmptyFilter()) {
+      emptyText.appendLine(
+        AnalysisBundle.message("inspections.settings.empty.text.link"),
+        SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+        e -> { myInspectionsFilter.reset(); }
+      );
+    } else {
+      for (EmptyInspectionTreeLinkProvider provider : EmptyInspectionTreeLinkProvider.EP_NAME.getExtensionList()) {
+        emptyText.appendLine(
+          provider.getText(),
+          SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
+          provider.getActionListener(this)
+        );
+      }
+    }
   }
 
   private final class MyFilterComponent extends FilterComponent {

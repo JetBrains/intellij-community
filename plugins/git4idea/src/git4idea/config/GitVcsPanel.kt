@@ -4,6 +4,8 @@ package git4idea.config
 import com.intellij.application.options.editor.CheckboxDescriptor
 import com.intellij.application.options.editor.checkBox
 import com.intellij.dvcs.branch.DvcsSyncSettings
+import com.intellij.dvcs.repo.VcsRepositoryManager
+import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.ide.ui.search.OptionDescription
 import com.intellij.openapi.Disposable
@@ -25,9 +27,7 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsEnvCustomizer
-import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager
-import com.intellij.openapi.vcs.changes.onChangeListAvailabilityChanged
 import com.intellij.openapi.vcs.update.AbstractCommonUpdateAction
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -46,6 +46,7 @@ import com.intellij.vcs.log.ui.filter.StructureFilterPopupComponent
 import com.intellij.vcs.log.ui.filter.VcsLogClassicFilterUi
 import git4idea.GitVcs
 import git4idea.branch.GitBranchIncomingOutgoingManager
+import git4idea.config.gpg.GpgSignConfigurableRow.Companion.createGpgSignRow
 import git4idea.i18n.GitBundle.message
 import git4idea.index.canEnableStagingArea
 import git4idea.index.enableStagingArea
@@ -66,7 +67,6 @@ private val gitOptionGroupName get() = message("settings.git.option.group")
 
 // @formatter:off
 private fun cdSyncBranches(project: Project)                                  = CheckboxDescriptor(DvcsBundle.message("sync.setting"), PropertyBinding({ projectSettings(project).syncSetting == DvcsSyncSettings.Value.SYNC }, { projectSettings(project).syncSetting = if (it) DvcsSyncSettings.Value.SYNC else DvcsSyncSettings.Value.DONT_SYNC }), groupName = gitOptionGroupName)
-private val cdCommitOnCherryPick                                        get() = CheckboxDescriptor(message("settings.commit.automatically.on.cherry.pick"), PropertyBinding(applicationSettings::isAutoCommitOnCherryPick, applicationSettings::setAutoCommitOnCherryPick), groupName = gitOptionGroupName)
 private fun cdAddCherryPickSuffix(project: Project)                           = CheckboxDescriptor(message("settings.add.suffix"), PropertyBinding({ projectSettings(project).shouldAddSuffixToCherryPicksOfPublishedCommits() }, { projectSettings(project).setAddSuffixToCherryPicks(it) }), groupName = gitOptionGroupName)
 private fun cdWarnAboutCrlf(project: Project)                                 = CheckboxDescriptor(message("settings.crlf"), PropertyBinding({ projectSettings(project).warnAboutCrlf() }, { projectSettings(project).setWarnAboutCrlf(it) }), groupName = gitOptionGroupName)
 private fun cdWarnAboutDetachedHead(project: Project)                         = CheckboxDescriptor(message("settings.detached.head"), PropertyBinding({ projectSettings(project).warnAboutDetachedHead() }, { projectSettings(project).setWarnAboutDetachedHead(it) }), groupName = gitOptionGroupName)
@@ -80,7 +80,6 @@ private val cdEnableStagingArea                                         get() = 
 
 internal fun gitOptionDescriptors(project: Project): List<OptionDescription> {
   val list = mutableListOf(
-    cdCommitOnCherryPick,
     cdAutoUpdateOnPush(project),
     cdWarnAboutCrlf(project),
     cdWarnAboutDetachedHead(project),
@@ -297,10 +296,6 @@ internal class GitVcsPanel(private val project: Project) :
       }
     }
     row {
-      checkBox(cdCommitOnCherryPick)
-        .enableIf(ChangeListsEnabledPredicate(project, disposable!!))
-    }
-    row {
       checkBox(cdAddCherryPickSuffix(project))
     }
     row {
@@ -373,6 +368,7 @@ internal class GitVcsPanel(private val project: Project) :
     if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
       updateProjectInfoFilter()
     }
+    createGpgSignRow(project, disposable!!)
   }
 
   private fun LayoutBuilder.updateProjectInfoFilter() {
@@ -462,7 +458,7 @@ internal class ExpandableTextFieldWithReadOnlyText(lineParser: ParserFunction,
   fun JoinerFunction.join(vararg items: String): String = `fun`(items.toList())
 }
 
-private class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
+class StagingAreaAvailablePredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
   override fun addListener(listener: (Boolean) -> Unit) {
     project.messageBus.connect(disposable).subscribe(CommitModeManager.SETTINGS, object : CommitModeManager.SettingsListener {
       override fun settingsChanged() {
@@ -474,10 +470,11 @@ private class StagingAreaAvailablePredicate(val project: Project, val disposable
   override fun invoke(): Boolean = canEnableStagingArea()
 }
 
-private class ChangeListsEnabledPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
+class HasGitRootsPredicate(val project: Project, val disposable: Disposable) : ComponentPredicate() {
   override fun addListener(listener: (Boolean) -> Unit) {
-    onChangeListAvailabilityChanged(project, disposable, false) { listener(invoke()) }
+    project.messageBus.connect(disposable).subscribe(VcsRepositoryManager.VCS_REPOSITORY_MAPPING_UPDATED,
+                                                     VcsRepositoryMappingListener { listener(invoke()) })
   }
 
-  override fun invoke(): Boolean = ChangeListManager.getInstance(project).areChangeListsEnabled()
+  override fun invoke(): Boolean = GitRepositoryManager.getInstance(project).repositories.size != 0
 }

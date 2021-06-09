@@ -2,9 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui.timeline
 
 import com.intellij.collaboration.async.CompletableFutureUtil.handleOnEdt
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.project.Project
@@ -23,7 +21,6 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.GHRepositoryPermissionLevel
 import org.jetbrains.plugins.github.api.data.GHUser
-import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequest
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestShort
 import org.jetbrains.plugins.github.api.data.pullrequest.timeline.GHPRTimelineItem
 import org.jetbrains.plugins.github.i18n.GithubBundle
@@ -177,8 +174,8 @@ internal class GHPRFileEditorComponentFactory(private val project: Project,
 
     val actionManager = ActionManager.getInstance()
     actionManager.getAction("Github.PullRequest.Timeline.Update").registerCustomShortcutSet(scrollPane, uiDisposable)
-    val actionGroup = actionManager.getAction("Github.PullRequest.Timeline.Popup") as ActionGroup
-    PopupHandler.installPopupHandler(scrollPane, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+    val groupId = "Github.PullRequest.Timeline.Popup"
+    PopupHandler.installPopupMenu(scrollPane, groupId, groupId)
 
     return mainPanel
   }

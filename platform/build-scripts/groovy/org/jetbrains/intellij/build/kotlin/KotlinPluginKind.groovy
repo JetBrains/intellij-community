@@ -15,21 +15,17 @@ enum KotlinPluginKind {
   IJ_CE("KotlinPluginCommunity", "kotlin.plugin.version"),
   MI("MobilePlugin",
      "kotlin.plugin.version",
-     "kotlin-ultimate.mobile-native.overrides",
-     "mobile-ide/mobile-native/overrides/resources",
+     "intellij.mobile.ide",
+     "mobile-ide/resources",
      [
        Couple.of("artifacts/kotlin-ocswift", "kotlin-ocswift"),
        Couple.of("artifacts/MobilePlugin", "Mobile")
      ]),
-  MI_AC(
-    "AppCodeMobilePlugin",
+  AC_KMM(
+    "AppCodeKMMPlugin",
     "kotlin.plugin.version",
-    "kotlin-ultimate.appcode-with-mobile",
-    "CIDR-appcode/appcode-kotlin-native/appcode-with-mobile/resources",
-    [
-      Couple.of("artifacts/kotlin-ocswift", "kotlin-ocswift"),
-      Couple.of("artifacts/AppCodeMobilePlugin", "AppCodeMobilePlugin")
-    ]
+    "kotlin-ultimate.appcode-kmm",
+    "CIDR-appcode/appcode-kmm/resources"
   ),
   AC("AppCodeKotlinPlugin",
      "kotlin.plugin.version",

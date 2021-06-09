@@ -3,12 +3,14 @@ package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.ui.JBSwingUtilities;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -29,7 +31,9 @@ import java.util.List;
  */
 class Stripe extends JPanel implements UISettingsListener {
   private static final Dimension EMPTY_SIZE = new Dimension();
+  static final Key<Rectangle> VIRTUAL_BOUNDS = Key.create("Virtual stripe bounds");
 
+  @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT})
   private final int anchor;
   private final List<StripeButton> buttons = new ArrayList<>();
 
@@ -39,9 +43,9 @@ class Stripe extends JPanel implements UISettingsListener {
   private JComponent myDragButtonImage;
   private LayoutData myLastLayoutData;
   private boolean myFinishingDrop;
-  static final int DROP_DISTANCE_SENSITIVITY = 20;
+  static final int DROP_DISTANCE_SENSITIVITY = 200;
 
-  Stripe(@MagicConstant(valuesFromClass = SwingConstants.class) int anchor) {
+  Stripe(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int anchor) {
     super(new GridBagLayout());
 
     setOpaque(true);
@@ -184,9 +188,9 @@ class Stripe extends JPanel implements UISettingsListener {
 
     data.fitSize = toFitWith != null ? toFitWith : new Dimension();
 
-    Rectangle stripeSensitiveRectangle = new Rectangle(-DROP_DISTANCE_SENSITIVITY, -DROP_DISTANCE_SENSITIVITY,
-                                                       getWidth() + DROP_DISTANCE_SENSITIVITY * 2, getHeight() + DROP_DISTANCE_SENSITIVITY * 2);
-    boolean processDrop = isDroppingButton() && stripeSensitiveRectangle.intersects(myDropRectangle) && !noDrop;
+    Point point = myDropRectangle != null ? myDropRectangle.getLocation() : new Point(-1, -1);
+    SwingUtilities.convertPointToScreen(point, this);
+    boolean processDrop = isDroppingButton() && containsPoint(point) && !noDrop;
 
     if (toFitWith == null) {
       for (StripeButton button : buttons) {
@@ -445,15 +449,50 @@ class Stripe extends JPanel implements UISettingsListener {
     }
   }
 
-  public boolean containsScreen(@NotNull Rectangle screenRec) {
-    Point point = screenRec.getLocation();
-    SwingUtilities.convertPointFromScreen(point, this);
-    return new Rectangle(point, screenRec.getSize()).intersects(
-      new Rectangle(-DROP_DISTANCE_SENSITIVITY,
-                    -DROP_DISTANCE_SENSITIVITY,
-                    getWidth() + DROP_DISTANCE_SENSITIVITY,
-                    getHeight() + DROP_DISTANCE_SENSITIVITY)
-    );
+  boolean containsPoint(@NotNull Point screenPoint) {
+    Point point = screenPoint.getLocation();
+    SwingUtilities.convertPointFromScreen(point, isVisible() ? this : getParent());
+    int width = getWidth();
+    int height = getHeight();
+    if (!isVisible()) {
+      Rectangle bounds = UIUtil.getClientProperty(this, VIRTUAL_BOUNDS);
+      if (bounds != null) {
+        point.x -= bounds.x;
+        point.y -= bounds.y;
+        width = bounds.width;
+        height = bounds.height;
+      }
+    }
+    int areaSize = Math.min(Math.min(getParent().getWidth() / 2, getParent().getHeight() / 2), JBUI.scale(DROP_DISTANCE_SENSITIVITY));
+    Point[] points = {new Point(0, 0), new Point(width, 0), new Point(width, height), new Point(0, height)};
+    switch (anchor) {
+      case SwingConstants.TOP: {
+        updateLocation(points, 1, 2, -1, +1, areaSize);
+        updateLocation(points, 0, 3, 1, 1, areaSize);
+        break;
+      }
+      case SwingConstants.LEFT: {
+        updateLocation(points, 0, 1, 1, 1, areaSize);
+        updateLocation(points, 3, 2, 1, -1, areaSize);
+        break;
+      }
+      case SwingConstants.BOTTOM: {
+        updateLocation(points, 3, 0, 1, -1, areaSize);
+        updateLocation(points, 2, 1, -1, -1, areaSize);
+        break;
+      }
+
+      case SwingConstants.RIGHT: {
+        updateLocation(points, 1, 0, -1, 1, areaSize);
+        updateLocation(points, 2, 3, -1, 1, areaSize);
+      }
+    }
+    return new Polygon(new int[]{points[0].x, points[1].x, points[2].x, points[3].x},
+                       new int[]{points[0].y, points[1].y, points[2].y, points[3].y}, 4).contains(point);
+  }
+
+  private static void updateLocation(Point[] points, int indexFrom, int indexTo, int xSign, int ySign, int areaSize) {
+    points[indexTo].setLocation(points[indexFrom].x + xSign * areaSize, points[indexFrom].y + ySign * areaSize);
   }
 
   public void finishDrop(@NotNull ToolWindowManagerImpl manager) {
@@ -478,7 +517,7 @@ class Stripe extends JPanel implements UISettingsListener {
 
   void processDropButton(@NotNull StripeButton button, @NotNull JComponent buttonImage, Point screenPoint) {
     if (!isDroppingButton()) {
-      final BufferedImage image = UIUtil.createImage(button, button.getWidth(), button.getHeight(), BufferedImage.TYPE_INT_RGB);
+      final BufferedImage image = button.createDragImage();
       buttonImage.paint(image.getGraphics());
       myDragButton = button;
       myDragButtonImage = buttonImage;
@@ -492,6 +531,12 @@ class Stripe extends JPanel implements UISettingsListener {
 
     revalidate();
     repaint();
+  }
+
+  @Nullable
+  Boolean getDropToSide() {
+    if (myLastLayoutData == null || !myLastLayoutData.dragTargetChosen) return null;
+    return myLastLayoutData.dragToSide;
   }
 
   private boolean isDroppingButton() {

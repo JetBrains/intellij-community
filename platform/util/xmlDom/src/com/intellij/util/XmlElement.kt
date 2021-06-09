@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import org.jetbrains.annotations.ApiStatus
@@ -19,5 +19,5 @@ data class XmlElement(
   fun getChild(name: String): XmlElement? = children.firstOrNull { it.name == name }
 
   // should not be used - uncomment for migration
-  //fun getChildren(name: String): List<XmlElement> = children.filter { it.name == name }
+  fun getChildren(name: String): List<XmlElement> = children.filter { it.name == name }
 }

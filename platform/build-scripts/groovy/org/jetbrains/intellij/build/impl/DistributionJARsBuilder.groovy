@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.containers.MultiMap
 import com.jetbrains.plugin.blockmap.core.BlockMap
@@ -76,8 +77,13 @@ final class DistributionJARsBuilder {
     this.buildContext = buildContext
     this.pluginsToPublish = filterPluginsToPublish(pluginsToPublish)
 
-    def releaseDate = buildContext.applicationInfo.majorReleaseDate ?:
-                      ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern("uuuuMMdd"))
+    def releaseDatePattern = "uuuuMMdd"
+    // cut off hours and minutes if any
+    def releaseDate = buildContext.applicationInfo.majorReleaseDate?.substring(0, releaseDatePattern.size()) ?:
+                      ZonedDateTime.now(ZoneOffset.UTC).format(DateTimeFormatter.ofPattern(releaseDatePattern))
+    if (releaseDate.startsWith('__')) {
+      buildContext.messages.error("Unresolved release-date: $releaseDate")
+    }
     def releaseVersion = "${buildContext.applicationInfo.majorVersion}${buildContext.applicationInfo.minorVersionMainPart}00"
     this.pluginXmlPatcher = new PluginXmlPatcher(buildContext.messages, releaseDate, releaseVersion, buildContext.applicationInfo.productName, buildContext.applicationInfo.isEAP)
 
@@ -277,17 +283,21 @@ final class DistributionJARsBuilder {
     })
   }
 
-  static List<String> getModulesToCompile(BuildContext buildContext) {
-    def productLayout = buildContext.productProperties.productLayout
-    def modulesToInclude = productLayout.getIncludedPluginModules(productLayout.bundledPluginModules as Set<String>) +
-                           PlatformModules.PLATFORM_API_MODULES +
-                           PlatformModules.PLATFORM_IMPLEMENTATION_MODULES +
-                           productLayout.productApiModules +
-                           productLayout.productImplementationModules +
-                           productLayout.additionalPlatformJars.values() +
-                           toolModules + buildContext.productProperties.additionalModulesToCompile +
-                           ["intellij.idea.community.build.tasks", "intellij.platform.images.build"]
-    modulesToInclude - productLayout.excludedModuleNames
+  static Set<String> getModulesToCompile(BuildContext buildContext) {
+    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
+    Set<String> modulesToInclude = new LinkedHashSet<>()
+    modulesToInclude.addAll(productLayout.getIncludedPluginModules(Set.copyOf(productLayout.bundledPluginModules)))
+    modulesToInclude.addAll(PlatformModules.PLATFORM_API_MODULES)
+    modulesToInclude.addAll(PlatformModules.PLATFORM_IMPLEMENTATION_MODULES)
+    modulesToInclude.addAll(productLayout.productApiModules)
+    modulesToInclude.addAll(productLayout.productImplementationModules)
+    modulesToInclude.addAll(productLayout.additionalPlatformJars.values())
+    modulesToInclude.addAll(toolModules)
+    modulesToInclude.addAll(buildContext.productProperties.additionalModulesToCompile)
+    modulesToInclude.add("intellij.idea.community.build.tasks")
+    modulesToInclude.add("intellij.platform.images.build")
+    modulesToInclude.removeAll(productLayout.excludedModuleNames)
+    return modulesToInclude
   }
 
   List<String> getModulesForPluginsToPublish() {
@@ -882,6 +892,7 @@ final class DistributionJARsBuilder {
               modulePatches(List.of(moduleName))
               module(moduleName) {
                 ant.exclude(name: "**/icon-robots.txt")
+                ant.exclude(name: ".unmodified")
 
                 for (String exclude in layout.moduleExcludes.get(moduleName)) {
                   //noinspection GrUnresolvedAccess
@@ -935,11 +946,11 @@ final class DistributionJARsBuilder {
       }
       if (layoutSpec.copyFiles) {
         for (ModuleResourceData resourceData in layout.resourcePaths) {
-          String path = FileUtil.toSystemIndependentName(new File(basePath(buildContext, resourceData.moduleName),
-                                                                  resourceData.resourcePath).absolutePath)
+          String path = FileUtilRt.toSystemIndependentName(new File(basePath(buildContext, resourceData.moduleName),
+                                                                    resourceData.resourcePath).absolutePath)
           if (resourceData.packToZip) {
             zip(resourceData.relativeOutputPath) {
-              if (Files.isRegularFile(Paths.get(path))) {
+              if (Files.isRegularFile(Path.of(path))) {
                 ant.fileset(file: path)
               }
               else {
@@ -949,7 +960,7 @@ final class DistributionJARsBuilder {
           }
           else {
             dir(resourceData.relativeOutputPath) {
-              if (Files.isRegularFile(Paths.get(path))) {
+              if (Files.isRegularFile(Path.of(path))) {
                 ant.fileset(file: path)
               }
               else {

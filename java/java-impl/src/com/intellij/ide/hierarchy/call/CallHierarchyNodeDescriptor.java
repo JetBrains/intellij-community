@@ -2,6 +2,7 @@
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.core.JavaPsiBundle;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
@@ -14,7 +15,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
@@ -95,22 +95,21 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
         myHighlightedText.getEnding().addText(file != null ? file.getName() : JavaBundle.message("node.call.hierarchy.unknown.jsp"), mainTextAttributes);
       }
       else {
-        @NlsSafe StringBuilder buffer = new StringBuilder(128);
         PsiClass containingClass = enclosingElement.getContainingClass();
-        if (containingClass != null) {
-          buffer.append(ClassPresentationUtil.getNameForClass(containingClass, false));
-          buffer.append('.');
-        }
-        String methodText =
+        String className = containingClass == null ? null : ClassPresentationUtil.getNameForClass(containingClass, false);
+        String methodName =
           enclosingElement instanceof PsiMethod
-          ? PsiFormatUtil.formatMethod(
-            (PsiMethod)enclosingElement,
-            PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-            PsiFormatUtilBase.SHOW_TYPE)
+          ? PsiFormatUtil.formatMethod((PsiMethod)enclosingElement,
+            PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS, PsiFormatUtilBase.SHOW_TYPE)
           : enclosingElement.getName();
-        buffer.append(methodText);
 
-        myHighlightedText.getEnding().addText(buffer.toString(), mainTextAttributes);
+        String fullMethodName = className == null ? methodName :
+                                containingClass.getContainingClass() == null ?
+                                className +"."+methodName :
+                                // in case of complex nested classes prefer "foo() in Inner in Outer" instead of confusing "Inner in Outer.foo()"
+                                JavaPsiBundle.message("class.context.display", methodName, className);
+
+        myHighlightedText.getEnding().addText(fullMethodName, mainTextAttributes);
       }
     }
     else if (FileTypeUtils.isInServerPageFile(enclosingElement) && enclosingElement instanceof PsiFile) {
@@ -132,12 +131,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     }
     myName = myHighlightedText.getText();
 
-    if (
-      !Comparing.equal(myHighlightedText, oldText) ||
-      !Comparing.equal(getIcon(), oldIcon)
-    ){
-      changes = true;
-    }
+    changes |= !Comparing.equal(myHighlightedText, oldText) || !Comparing.equal(getIcon(), oldIcon);
     return changes;
   }
 

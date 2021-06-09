@@ -237,7 +237,7 @@ public class ImaginaryEditor extends UserDataHolderBase implements Editor {
 
   @Override
   public boolean isInsertMode() {
-    return false;
+    return true;
   }
 
   @Override

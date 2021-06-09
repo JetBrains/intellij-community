@@ -14,16 +14,12 @@ import com.intellij.packaging.impl.artifacts.InvalidArtifactType
 import com.intellij.packaging.impl.artifacts.workspacemodel.ArtifactManagerBridge.Companion.artifactsMap
 import com.intellij.util.EventDispatcher
 import com.intellij.util.xmlb.XmlSerializer
-import com.intellij.workspaceModel.ide.JpsImportedEntitySource
-import com.intellij.workspaceModel.ide.WorkspaceModel
-import com.intellij.workspaceModel.ide.getInstance
+import com.intellij.workspaceModel.ide.*
 import com.intellij.workspaceModel.ide.impl.virtualFile
-import com.intellij.workspaceModel.ide.toExternalSource
-import com.intellij.workspaceModel.storage.CachedValue
-import com.intellij.workspaceModel.storage.VersionedEntityStorage
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
+import com.intellij.workspaceModel.storage.*
 import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnBuilder
+import com.intellij.workspaceModel.storage.impl.VersionedEntityStorageOnStorage
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.jps.util.JpsPathUtil
@@ -34,6 +30,24 @@ open class ArtifactBridge(
   val project: Project,
   val eventDispatcher: EventDispatcher<ArtifactListener>?,
 ) : ModifiableArtifact, UserDataHolderBase() {
+
+  init {
+    val busConnection = project.messageBus.connect()
+    WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(busConnection, object : WorkspaceModelChangeListener {
+      override fun beforeChanged(event: VersionedStorageChange) {
+        event.getChanges(ArtifactEntity::class.java).filterIsInstance<EntityChange.Removed<ArtifactEntity>>().forEach {
+          if (it.entity.persistentId() != artifactId) return@forEach
+
+          val currentStore = entityStorage.current
+          val storage = if (currentStore is WorkspaceEntityStorageBuilder) currentStore.toStorage() else currentStore
+          entityStorage = VersionedEntityStorageOnStorage(storage)
+          assert(entityStorage.current.resolve(artifactId) != null) {
+            "Cannot resolve artifact $artifactId. Current store: $currentStore"
+          }
+        }
+      }
+    })
+  }
 
   private val diffOrNull: WorkspaceEntityStorageBuilder?
     get() {
@@ -189,17 +203,24 @@ open class ArtifactBridge(
         elementsWithDiff += it
       }
     }
-    diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
-      this.rootElement = rootEntity
+    val oldRootElement = entity.rootElement
+    if (oldRootElement != rootEntity) {
+      diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+        this.rootElement = rootEntity
+      }
+      diff.removeEntity(oldRootElement)
     }
   }
 
   override fun setProperties(provider: ArtifactPropertiesProvider, properties: ArtifactProperties<*>?) {
     if (properties == null) {
       val entity = diff.get(artifactId)
-      val filtered = entity.customProperties.filterNot { it.providerType == provider.id }
-      diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
-        this.customProperties = filtered
+      val (toBeRemoved, filtered) = entity.customProperties.partition { it.providerType == provider.id }
+      if (toBeRemoved.isNotEmpty()) {
+        diff.modifyEntity(ModifiableArtifactEntity::class.java, entity) {
+          this.customProperties = filtered.asSequence()
+        }
+        toBeRemoved.forEach { diff.removeEntity(it) }
       }
     }
     else {

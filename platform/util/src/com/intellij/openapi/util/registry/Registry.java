@@ -3,6 +3,7 @@ package com.intellij.openapi.util.registry;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.util.MathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -86,6 +87,13 @@ public final class Registry  {
     catch (MissingResourceException ignore) {
       return defaultValue;
     }
+  }
+
+  public static int intValue(@NonNls @NotNull String key, int defaultValue, int minValue, int maxValue) {
+    if (defaultValue < minValue || defaultValue > maxValue) {
+      throw new IllegalArgumentException("Wrong values for default:min:max (" + defaultValue + ":" + minValue + ":" + maxValue+")");
+    }
+    return MathUtil.clamp(intValue(key, defaultValue), minValue, maxValue);
   }
 
   public static double doubleValue(@NonNls @NotNull String key) throws MissingResourceException {

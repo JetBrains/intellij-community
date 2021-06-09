@@ -4,15 +4,15 @@ package git4idea.ift
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.LocalFileSystem
 import git4idea.actions.GitInit
 import training.project.FileUtils
+import training.project.ProjectUtils
 import java.io.File
 
 object GitProjectUtil {
   fun restoreGitLessonsFiles(project: Project) {
-    val learningProjectPath = ProjectRootManager.getInstance(project).contentRoots[0].toNioPath()
+    val learningProjectPath = ProjectUtils.getProjectRoot(project).toNioPath()
     val learningProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(learningProjectPath)
                               ?: error("Learning project not found")
     invokeAndWaitIfNeeded {

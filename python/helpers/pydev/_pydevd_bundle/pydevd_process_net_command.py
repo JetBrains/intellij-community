@@ -653,10 +653,6 @@ def process_net_command(py_db, cmd_id, seq, text):
                     if supported_type:
                         py_db.has_plugin_exception_breaks = py_db.plugin.has_exception_breaks()
                         py_db.on_breakpoints_changed()
-                    else:
-                        raise NameError(breakpoint_type)
-
-
 
             elif cmd_id == CMD_REMOVE_EXCEPTION_BREAK:
                 exception = text

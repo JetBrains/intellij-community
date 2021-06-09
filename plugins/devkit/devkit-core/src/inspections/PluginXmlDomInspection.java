@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.inspections;
 
 import com.intellij.ExtensionPoints;
@@ -274,14 +274,6 @@ public final class PluginXmlDomInspection extends DevKitPluginXmlInspectionBase 
   private static void annotateModuleDescriptor(ContentDescriptor.ModuleDescriptor descriptor, DomElementAnnotationHolder holder) {
     final IdeaPlugin ideaPlugin = descriptor.getName().getValue();
     if (ideaPlugin == null) return;
-
-    final String moduleDescriptorPackage = ideaPlugin.getPackage().getStringValue();
-    final String descriptorPackage = descriptor.getPackage().getStringValue();
-    if (!Comparing.strEqual(moduleDescriptorPackage, descriptorPackage)) {
-      holder.createProblem(descriptor.getPackage(),
-                           DevKitBundle.message("inspections.plugin.xml.module.descriptor.package.does.not.match",
-                                                descriptorPackage, moduleDescriptorPackage, descriptor.getName().getStringValue()));
-    }
   }
 
   private static boolean isIdeaProjectOrJetBrains(DomElement element) {

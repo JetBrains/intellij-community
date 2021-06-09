@@ -28,12 +28,12 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.ui.BalloonLayoutData;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import com.intellij.util.text.CharArrayUtil;
@@ -525,7 +525,7 @@ public final class EventLog {
           }
 
           EventLogConsole console = Objects.requireNonNull(getConsole(notification));
-          GuiUtils.invokeLaterIfNeeded(() -> console.doPrintNotification(notification), ModalityState.NON_MODAL, myProject.getDisposed());
+          ModalityUiUtil.invokeLaterIfNeeded(() -> console.doPrintNotification(notification), ModalityState.NON_MODAL, myProject.getDisposed());
         }
       });
     }
@@ -545,7 +545,7 @@ public final class EventLog {
       else {
         StartupManager.getInstance(myProject).runAfterOpened(() -> {
           if (!ShutDownTracker.isShutdownHookRunning()) {
-            GuiUtils.invokeLaterIfNeeded(() -> console.doPrintNotification(notification), ModalityState.NON_MODAL, myProject.getDisposed());
+            ModalityUiUtil.invokeLaterIfNeeded(() -> console.doPrintNotification(notification), ModalityState.NON_MODAL, myProject.getDisposed());
           }
         });
       }

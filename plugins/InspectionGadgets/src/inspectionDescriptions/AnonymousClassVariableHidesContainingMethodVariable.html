@@ -1,17 +1,24 @@
 <html>
 <body>
+Reports fields in an anonymous class that are named identically to local variables or parameters of
+the containing method or lambda expression.
 <p>
-  Reports anonymous class variables named identically to variables of a containing method or lambda expression.
-  Such a variable name may be confusing.
+  As a result of such naming, you may accidentally use the anonymous class field where
+  the identically named variable or parameter from the containing method is intended.
 </p>
-<p>
-  Use the quick-fix to rename the concerned anonymous class variable.
-</p>
-<p>Example:</p>
+<p>A quick-fix is suggested to rename the field.</p>
+<p><b>Example:</b></p>
 <pre><code>
-  var foo = new Object() {
-    private int foo = 1; // Anonymous class field 'x' hides variable in containing method
-  };
+  class Test {
+    public Test(String value) {
+      Object foo = new Object() {
+        private String value = "TEST";
+        public void foo() {
+          System.out.println(value); //the field is accessed, not the parameter
+        }
+      };
+    }
+  }
 </code></pre>
 <!-- tooltip end -->
 </body>

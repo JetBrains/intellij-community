@@ -20,6 +20,7 @@ import com.sun.jna.win32.StdCallLibrary;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -259,7 +260,7 @@ public final class Restarter {
 
   // this is required to support X server's focus stealing prevention mechanism, see JBR-2503
   private static void setDesktopStartupId(ProcessBuilder processBuilder) {
-    if (!SystemInfo.isJetBrainsJvm) return;
+    if (!SystemInfo.isJetBrainsJvm || !"sun.awt.X11.XToolkit".equals(Toolkit.getDefaultToolkit().getClass().getName())) return;
     try {
       Long lastUserActionTime = ReflectionUtil.getStaticFieldValue(Class.forName("sun.awt.X11.XBaseWindow"), long.class, "globalUserTime");
       if (lastUserActionTime == null) {

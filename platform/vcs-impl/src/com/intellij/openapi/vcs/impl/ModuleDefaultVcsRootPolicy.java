@@ -18,6 +18,7 @@ import com.intellij.project.ProjectKt;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
@@ -82,9 +83,10 @@ public class ModuleDefaultVcsRootPolicy extends DefaultVcsRootPolicy {
     }
 
     @Override
-    public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
+    public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
+                                    @NotNull Collection<? extends VirtualFile> oldRoots,
                                     @NotNull Collection<? extends VirtualFile> newRoots,
-                                    @NotNull Collection<? extends VirtualFile> oldRoots) {
+                                    @NotNull String libraryNameForDebug) {
       scheduleMappedRootsUpdate();
     }
   }

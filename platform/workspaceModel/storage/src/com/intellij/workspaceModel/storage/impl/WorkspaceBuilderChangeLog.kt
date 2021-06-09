@@ -18,9 +18,9 @@ class WorkspaceBuilderChangeLog {
 
   internal fun <T : WorkspaceEntity> addReplaceEvent(entityId: EntityId,
                                                      copiedData: WorkspaceEntityData<T>,
-                                                     addedChildren: List<Pair<ConnectionId, EntityId>>,
-                                                     removedChildren: Set<Pair<ConnectionId, EntityId>>,
-                                                     parentsMapRes: Map<ConnectionId, EntityId?>) {
+                                                     addedChildren: List<Pair<ConnectionId, ChildEntityId>>,
+                                                     removedChildren: Set<Pair<ConnectionId, ChildEntityId>>,
+                                                     parentsMapRes: Map<ConnectionId, ParentEntityId?>) {
     modificationCount++
 
     val existingChange = changeLog[entityId]
@@ -114,9 +114,9 @@ internal sealed class ChangeEntry {
 
   data class ReplaceEntity<E : WorkspaceEntity>(
     val newData: WorkspaceEntityData<E>,
-    val newChildren: List<Pair<ConnectionId, EntityId>>,
-    val removedChildren: List<Pair<ConnectionId, EntityId>>,
-    val modifiedParents: Map<ConnectionId, EntityId?>
+    val newChildren: List<Pair<ConnectionId, ChildEntityId>>,
+    val removedChildren: List<Pair<ConnectionId, ChildEntityId>>,
+    val modifiedParents: Map<ConnectionId, ParentEntityId?>
   ) : ChangeEntry()
 
   data class ReplaceAndChangeSource<E : WorkspaceEntity>(

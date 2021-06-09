@@ -10,10 +10,7 @@ import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.ComponentUtil;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.RawCommandLineEditor;
-import com.intellij.ui.UserActivityWatcher;
+import com.intellij.ui.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,6 +88,16 @@ public class MavenRunnerPanel implements MavenSettingsObservable {
     c.weightx = 1;
     c.insets.left = 10;
     panel.add(myVMParametersEditor, c);
+
+    JLabel labelOverrideJvmConfig = new JLabel(MavenConfigurableBundle.message("maven.settings.vm.options.tooltip"));
+    Font font = labelOverrideJvmConfig.getFont();
+    labelOverrideJvmConfig.setFont(new Font(font.getName(), font.getStyle(), font.getSize() - 2));
+    labelOverrideJvmConfig.setForeground(Gray._50);
+    c.gridx = 1;
+    c.gridy++;
+    c.weightx = 1;
+    c.insets.left = 20;
+    panel.add(labelOverrideJvmConfig, c);
     c.insets.left = 0;
 
     myJdkLabel = new JLabel(MavenConfigurableBundle.message("maven.settings.runner.jre"));

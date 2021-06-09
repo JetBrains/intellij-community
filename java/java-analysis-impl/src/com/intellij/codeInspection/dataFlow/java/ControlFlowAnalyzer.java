@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow.java;
 
 import com.intellij.codeInsight.ExceptionUtil;
@@ -1590,50 +1590,49 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
   @Override public void visitInstanceOfExpression(PsiInstanceOfExpression expression) {
     startElement(expression);
     PsiPattern pattern = expression.getPattern();
+    PsiExpression operand = expression.getOperand();
+    CFGBuilder builder = new CFGBuilder(this);
+    PsiTypeElement checkType = expression.getCheckType();
     if (pattern instanceof PsiTypeTestPattern) {
-      PsiExpression operand = expression.getOperand();
-      PsiTypeElement checkType = ((PsiTypeTestPattern)pattern).getCheckType();
-      PsiType type = checkType.getType();
-      CFGBuilder builder = new CFGBuilder(this);
+      PsiType type = ((PsiTypeTestPattern)pattern).getCheckType().getType();
       PsiPatternVariable variable = ((PsiTypeTestPattern)pattern).getPatternVariable();
-      if (variable != null) {
-        DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
-        DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
-        if (expr instanceof DfaVariableValue) {
-          builder.push(expr);
-        }
-        else {
-          DfaVariableValue tmp = createTempVariable(operand.getType());
-          builder
-            .pushForWrite(tmp)
-            .pushExpression(operand)
-            .assign();
-        }
-        builder
-          .dup()
-          .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
-          .isInstance(expression, operand, type)
-          .ifConditionIs(false)
-          .pop()
-          .push(DfTypes.FALSE)
-          .elseBranch()
-          .pushForWrite(dfaVar)
-          .swap()
-          .assign()
-          .pop()
-          .push(DfTypes.TRUE)
-          .end();
-      } else {
-        builder
-          .pushExpression(operand)
-          .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
-          .isInstance(expression, operand, type);
+      DfaVariableValue dfaVar = PlainDescriptor.createVariableValue(getFactory(), variable);
+      DfaValue expr = JavaDfaValueFactory.getExpressionDfaValue(getFactory(), operand);
+      if (expr instanceof DfaVariableValue) {
+        builder.push(expr);
       }
+      else {
+        DfaVariableValue tmp = createTempVariable(operand.getType());
+        builder
+          .pushForWrite(tmp)
+          .pushExpression(operand)
+          .assign();
+      }
+      builder
+        .dup()
+        .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
+        .isInstance(expression, operand, type)
+        .ifConditionIs(false)
+        .pop()
+        .push(DfTypes.FALSE)
+        .elseBranch()
+        .pushForWrite(dfaVar)
+        .swap()
+        .assign()
+        .pop()
+        .push(DfTypes.TRUE)
+        .end();
+    }
+    else if (checkType != null) {
+      PsiType type = checkType.getType();
+      builder
+        .pushExpression(operand)
+        .push(DfTypes.typedObject(type, Nullability.NOT_NULL))
+        .isInstance(expression, operand, type);
     }
     else {
       pushUnknown();
     }
-
     finishElement(expression);
   }
 

@@ -84,7 +84,7 @@ public final class ScratchFileActions {
       Project project = e.getProject();
       if (project == null) return;
 
-      ScratchFileCreationHelper.Context context = createContext(e, project);
+      ScratchFileCreationHelper.Context context = createContext(e);
       Consumer<Language> consumer = l -> {
         context.language = l;
         ScratchFileCreationHelper.EXTENSION.forLanguage(context.language).prepareText(
@@ -120,7 +120,7 @@ public final class ScratchFileActions {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Project project = e.getProject();
       if (project == null) return;
-      ScratchFileCreationHelper.Context context = createContext(e, project);
+      ScratchFileCreationHelper.Context context = createContext(e);
       context.filePrefix = LangBundle.message("scratch.file.action.new.buffer.action.buffer");
       context.createOption = ScratchFileService.Option.create_if_missing;
       context.fileCounter = ScratchFileActions::nextBufferIndex;
@@ -129,29 +129,35 @@ public final class ScratchFileActions {
     }
   }
 
-  @NotNull
-  static ScratchFileCreationHelper.Context createContext(@NotNull AnActionEvent e, @NotNull Project project) {
+  static @NotNull ScratchFileCreationHelper.Context createContext(@NotNull AnActionEvent e) {
+    Project project = Objects.requireNonNull(e.getProject());
     PsiFile file = e.getData(CommonDataKeys.PSI_FILE);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
     if (file == null && editor != null) {
       // see data provider in com.intellij.diff.tools.holders.TextEditorHolder
       file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
     }
+    return createContext(project, file, editor, e.getDataContext());
+  }
 
+  static @NotNull ScratchFileCreationHelper.Context createContext(@NotNull Project project,
+                                                                  @Nullable PsiFile file,
+                                                                  @Nullable Editor editor,
+                                                                  @NotNull DataContext dataContext) {
     ScratchFileCreationHelper.Context context = new ScratchFileCreationHelper.Context();
     context.text = StringUtil.notNullize(getSelectionText(editor));
     if (!context.text.isEmpty()) {
       context.language = getLanguageFromCaret(project, editor, file);
-      checkLanguageAndTryToFixText(project, context, e.getDataContext());
+      checkLanguageAndTryToFixText(project, context, dataContext);
     }
     else {
-      context.text = StringUtil.notNullize(e.getData(PlatformDataKeys.PREDEFINED_TEXT));
+      context.text = StringUtil.notNullize(PlatformDataKeys.PREDEFINED_TEXT.getData(dataContext));
     }
-    context.ideView = e.getData(LangDataKeys.IDE_VIEW);
+    context.ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
     return context;
   }
 
-  static PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
+  static @Nullable PsiFile doCreateNewScratch(@NotNull Project project, @NotNull ScratchFileCreationHelper.Context context) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("scratch");
     Language language = Objects.requireNonNull(context.language);
     if (context.fileExtension == null) {
@@ -200,7 +206,7 @@ public final class ScratchFileActions {
   @Nullable
   static String getSelectionText(@Nullable Editor editor) {
     if (editor == null) return null;
-    return editor.getSelectionModel().getSelectedText();
+    return editor.getSelectionModel().getSelectedText(true);
   }
 
   @Nullable

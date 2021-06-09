@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.parser.partial;
 
 import com.intellij.java.parser.JavaParsingTestCase;
@@ -112,6 +112,7 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchIncomplete5() { doParserTest("switch(\n foo();"); }
 
   public void testSwitchLabelsNormal() { doParserTest("case 1: break; default: break;"); }
+  public void testSwitchLabelsWithPattern() { doParserTest("case int[] ia && ia.length > 10 : { }"); }
   public void testSwitchLabelsMultiple() { doParserTest("case 1, 2: break;"); }
   public void testSwitchLabelsIncomplete0() { doParserTest("case"); }
   public void testSwitchLabelsIncomplete1() { doParserTest("case 2"); }
@@ -133,6 +134,20 @@ public class StatementParserTest extends JavaParsingTestCase {
   public void testSwitchRules10() { doParserTest("case (b) -> f(b);"); }
   public void testSwitchRules11() { doParserTest("case 1, 2 -> { }"); }
   public void testSwitchRules12() { doParserTest("case 1, -> { }"); }
+  public void testSwitchRules13() { doParserTest("case null, default -> { }"); }
+  public void testSwitchRules14() { doParserTest("case default -> { }"); }
+
+  public void testSwitchRulesWithPattern0() { doParserTest("case Integer i -> { }"); }
+  public void testSwitchRulesWithPattern1() { doParserTest("case int[] ia -> { }"); }
+  public void testSwitchRulesWithPattern2() { doParserTest("case Integer i && i > 10 -> { }"); }
+  public void testSwitchRulesWithPattern3() { doParserTest("case (Integer i && i > 10) && boolExpr() -> { }"); }
+  public void testSwitchRulesWithPattern4() { doParserTest("case null, default -> { }"); }
+  public void testSwitchRulesWithPattern5() { doParserTest("case null -> { }"); }
+
+  public void testSwitchRulesWithPatternIncomplete0() { doParserTest("case Integer i &&  -> { }"); }
+  public void testSwitchRulesWithPatternIncomplete1() { doParserTest("case (Integer i  -> { }"); }
+  public void testSwitchRulesWithPatternIncomplete2() { doParserTest("case Integer i, -> { }"); }
+  public void testSwitchRulesWithPatternIncomplete3() { doParserTest("case (Integer i && ) && boolExpr() -> { }"); }
 
   public void testSyncNormal() { doParserTest("synchronized(o){}"); }
   public void testSyncIncomplete0() { doParserTest("synchronized"); }

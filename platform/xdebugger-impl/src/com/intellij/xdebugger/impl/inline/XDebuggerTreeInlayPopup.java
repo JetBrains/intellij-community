@@ -132,12 +132,14 @@ public class XDebuggerTreeInlayPopup<D> {
       wrappedActions.add(actionLink);
     }
 
-    myToolbar = new ActionToolbarImpl(ACTION_PLACE, wrappedActions, true);
+    var toolbarImpl = new ActionToolbarImpl(ACTION_PLACE, wrappedActions, true);
+    toolbarImpl.setTargetComponent(null);
     for (AnAction action : wrappedActions.getChildren(null)) {
       action.registerCustomShortcutSet(action.getShortcutSet(), mainPanel);
     }
 
-    myToolbar.setBorder(BorderFactory.createEmptyBorder());
+    toolbarImpl.setBorder(BorderFactory.createEmptyBorder());
+    myToolbar = toolbarImpl;
     return myToolbar;
   }
 

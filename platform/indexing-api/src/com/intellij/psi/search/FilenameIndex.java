@@ -73,6 +73,23 @@ public final class FilenameIndex {
                                            boolean directories,
                                            @NotNull Processor<? super PsiFileSystemItem> processor,
                                            @NotNull GlobalSearchScope scope,
+                                           @NotNull Project project) {
+    return processFilesByName(name, directories, true, processor, scope, project, null);
+  }
+
+  public static boolean processFilesByName(@NotNull final String name,
+                                           boolean directories,
+                                           boolean caseSensitively,
+                                           @NotNull Processor<? super PsiFileSystemItem> processor,
+                                           @NotNull final GlobalSearchScope scope,
+                                           @NotNull final Project project) {
+    return processFilesByName(name, directories, caseSensitively, processor, scope, project, null);
+  }
+
+  public static boolean processFilesByName(@NotNull final String name,
+                                           boolean directories,
+                                           @NotNull Processor<? super PsiFileSystemItem> processor,
+                                           @NotNull GlobalSearchScope scope,
                                            @NotNull Project project,
                                            @Nullable IdFilter idFilter) {
     return processFilesByName(name, directories, true, processor, scope, project, idFilter);
@@ -143,7 +160,7 @@ public final class FilenameIndex {
                                                                       boolean directories) {
     SmartList<PsiFileSystemItem> result = new SmartList<>();
     Processor<PsiFileSystemItem> processor = Processors.cancelableCollectProcessor(result);
-    processFilesByName(name, directories, processor, scope, project, null);
+    processFilesByName(name, directories, processor, scope, project);
 
     if (directories) {
       return result.toArray(new PsiFileSystemItem[0]);

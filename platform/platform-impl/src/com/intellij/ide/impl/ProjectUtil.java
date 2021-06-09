@@ -13,6 +13,7 @@ import com.intellij.openapi.application.*;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.components.impl.stores.IProjectStore;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -37,7 +38,6 @@ import com.intellij.platform.PlatformProjectOpenProcessor;
 import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
@@ -290,7 +290,7 @@ public final class ProjectUtil {
     }
 
     StartupManager.getInstance(project).runAfterOpened(() -> {
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(() -> {
         ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
         if (toolWindow != null) {
           toolWindow.activate(null);
@@ -315,7 +315,7 @@ public final class ProjectUtil {
       else {
         Ref<ProjectOpenProcessor> ref = new Ref<>();
         ApplicationManager.getApplication().invokeAndWait(() -> {
-          ref.set(new SelectProjectOpenProcessorDialog(processors, virtualFile).showAndGetChoice());
+          ref.set(SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile));
         });
         processor = ref.get();
         if (processor == null) {
@@ -345,7 +345,7 @@ public final class ProjectUtil {
       }
       else {
         processorFuture = CompletableFuture.supplyAsync(() -> {
-          return new SelectProjectOpenProcessorDialog(processors, virtualFile).showAndGetChoice();
+          return SelectProjectOpenProcessorDialog.showAndGetChoice(processors, virtualFile);
         }, ApplicationManager.getApplication()::invokeLater);
       }
     }
@@ -677,12 +677,19 @@ public final class ProjectUtil {
   public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<? extends Path> list, String location) {
     Project result = null;
 
-    for (Path file : list) {
-      result = openOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
-      if (result != null) {
-        LOG.debug(location + ": load project from ", file);
-        return result;
+    try
+    {
+      for (Path file : list) {
+        result = openOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
+        if (result != null) {
+          LOG.debug(location + ": load project from ", file);
+          return result;
+        }
       }
+    }
+    catch (ProcessCanceledException ex) {
+      LOG.debug(location + ": skip project opening");
+      return null;
     }
 
     for (Path file : list) {

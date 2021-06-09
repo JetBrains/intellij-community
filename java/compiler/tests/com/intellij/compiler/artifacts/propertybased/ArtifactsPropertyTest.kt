@@ -72,7 +72,7 @@ class ArtifactsPropertyTest {
       }
     }
 
-    PropertyChecker.customized().withIterationCount(100_000).checkScenarios {
+    PropertyChecker.checkScenarios {
       codeMaker = CodeMaker()
       ImperativeCommand {
         try {

@@ -62,7 +62,7 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
 
   prepareUiFuture.thenComposeAsync({
     val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-    val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
+    val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine())
     (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
      ApplicationImpl.preventAwtAutoShutdown(app)
      if (isInternal) {
@@ -176,9 +176,7 @@ private fun startApp(app: ApplicationImpl,
       }
     })
     .thenRun {
-      if (!app.isHeadlessEnvironment) {
-        addActivateAndWindowsCliListeners()
-      }
+      addActivateAndWindowsCliListeners()
       initAppActivity.end()
 
       if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {

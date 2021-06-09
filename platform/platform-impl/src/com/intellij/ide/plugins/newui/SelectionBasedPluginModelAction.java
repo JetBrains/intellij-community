@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.icons.AllIcons;
@@ -28,14 +28,14 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
 
   protected final @NotNull MyPluginModel myPluginModel;
   protected final boolean myShowShortcut;
-  protected final @NotNull List<C> mySelection;
-  private final @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> myPluginDescriptor;
+  protected final @NotNull List<? extends C> mySelection;
+  private final @NotNull Function<? super C, ? extends IdeaPluginDescriptor> myPluginDescriptor;
 
   protected SelectionBasedPluginModelAction(@NotNull @Nls String text,
                                             @NotNull MyPluginModel pluginModel,
                                             boolean showShortcut,
-                                            @NotNull List<C> selection,
-                                            @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
+                                            @NotNull List<? extends C> selection,
+                                            @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
     super(text);
 
     myPluginModel = pluginModel;
@@ -66,8 +66,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
     EnableDisableAction(@NotNull MyPluginModel pluginModel,
                         @NotNull PluginEnableDisableAction action,
                         boolean showShortcut,
-                        @NotNull List<C> selection,
-                        @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
+                        @NotNull List<? extends C> selection,
+                        @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
       super(action.toString(),
             pluginModel,
             showShortcut,
@@ -138,8 +138,8 @@ abstract class SelectionBasedPluginModelAction<C extends JComponent> extends Dum
     UninstallAction(@NotNull MyPluginModel pluginModel,
                     boolean showShortcut,
                     @NotNull JComponent uiParent,
-                    @NotNull List<C> selection,
-                    @NotNull Function<@NotNull ? super C, @Nullable ? extends IdeaPluginDescriptor> pluginDescriptor) {
+                    @NotNull List<? extends C> selection,
+                    @NotNull Function<? super C, ? extends IdeaPluginDescriptor> pluginDescriptor) {
       super(IdeBundle.message("plugins.configurable.uninstall.button"),
             pluginModel,
             showShortcut,

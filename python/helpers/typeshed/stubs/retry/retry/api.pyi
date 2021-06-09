@@ -1,8 +1,7 @@
+from _typeshed import IdentityFunction
 from logging import Logger
 from typing import Any, Callable, Dict, Optional, Sequence, Tuple, Type, TypeVar, Union
 
-_T = TypeVar("_T", bound=Callable[..., Any])
-_Decorator = Callable[[_T], _T]
 _R = TypeVar("_R")
 
 def retry_call(
@@ -25,4 +24,4 @@ def retry(
     backoff: float = ...,
     jitter: Union[Tuple[float, float], float] = ...,
     logger: Optional[Logger] = ...,
-) -> _Decorator[_T]: ...
+) -> IdentityFunction: ...

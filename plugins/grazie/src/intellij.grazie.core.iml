@@ -262,5 +262,27 @@
     <orderEntry type="module" module-name="intellij.platform.util.ui" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
+    <orderEntry type="module-library">
+      <library name="Grazie NLP tokenizer" type="repository">
+        <properties maven-id="ai.grazie.nlp:nlp-tokenizer:0.1.26">
+          <exclude>
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk7" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
+            <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
+          </exclude>
+        </properties>
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.26/nlp-tokenizer-0.1.26.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.26/nlp-common-0.1.26.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-tokenizer/0.1.26/nlp-tokenizer-0.1.26-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/ai/grazie/nlp/nlp-common/0.1.26/nlp-common-0.1.26-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="library" name="StreamEx" level="project" />
   </component>
 </module>

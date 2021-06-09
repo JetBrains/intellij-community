@@ -37,9 +37,10 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
     private StateRestoringCheckBox readAccesses;
     private StateRestoringCheckBox writeAccesses;
+    private StateRestoringCheckBox searchForBase;
     private StateRestoringCheckBox overrideUsages;
     private StateRestoringCheckBox expectedUsages;
-    private StateRestoringCheckBox searchForBase;
+    private StateRestoringCheckBox searchInOverridingMethods;
 
     @NotNull
     @Override
@@ -58,8 +59,9 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
 
         options.isReadAccess = isSelected(readAccesses);
         options.isWriteAccess = isSelected(writeAccesses);
-        options.setSearchOverrides(isSelected(overrideUsages));
         options.isSearchForBaseAccessors = isSelected(searchForBase);
+        options.isSearchInOverridingMethods = isSelected(searchInOverridingMethods);
+        options.setSearchOverrides(isSelected(overrideUsages));
         if (expectedUsages != null) {
             options.setSearchExpected(expectedUsages.isSelected());
         }
@@ -85,16 +87,6 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
                 true
         );
 
-        PsiElement psiElement = getPsiElement();
-        if (psiElement instanceof KtParameter && ((KtParameter)psiElement).hasValOrVar()) {
-            searchForBase = createCheckbox(JavaBundle.message("find.options.include.accessors.base.checkbox"),
-                                               options.isSearchForBaseAccessors, true);
-            JComponent decoratedCheckbox = new ComponentPanelBuilder(searchForBase).
-                    withComment(JavaBundle.message("find.options.include.accessors.base.checkbox.comment")).createPanel();
-            decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
-            findWhatPanel.add(decoratedCheckbox);
-        }
-
         return findWhatPanel;
     }
 
@@ -108,6 +100,20 @@ public class KotlinFindPropertyUsagesDialog extends JavaFindUsagesDialog<KotlinP
         super.addUsagesOptions(optionsPanel);
 
         KtNamedDeclaration property = (KtNamedDeclaration) getPsiElement();
+        if (property.hasModifier(KtTokens.OVERRIDE_KEYWORD) || property.hasModifier(KtTokens.OPEN_KEYWORD) ||
+            property instanceof KtParameter && !((KtParameter)property).hasValOrVar()) {
+            searchForBase = createCheckbox(JavaBundle.message("find.options.include.accessors.base.checkbox"),
+                                           getFindUsagesOptions().isSearchForBaseAccessors, true);
+            JComponent decoratedCheckbox = new ComponentPanelBuilder(searchForBase).
+                    withComment(JavaBundle.message("find.options.include.accessors.base.checkbox.comment")).createPanel();
+            decoratedCheckbox.setAlignmentX(Component.LEFT_ALIGNMENT);
+            optionsPanel.add(decoratedCheckbox);
+        }
+
+        if (property instanceof KtParameter) {
+            searchInOverridingMethods = addCheckboxToPanel(JavaBundle.message("find.options.search.overriding.methods.checkbox"),
+                                                           getFindUsagesOptions().isSearchInOverridingMethods, optionsPanel, true);
+        }
 
         boolean isAbstract = property.hasModifier(KtTokens.ABSTRACT_KEYWORD);
         boolean isOpen = property.hasModifier(KtTokens.OPEN_KEYWORD);

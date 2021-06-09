@@ -8,7 +8,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -21,10 +20,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.uast.UastModificationTracker;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.IdIterator;
 import it.unimi.dsi.fastutil.Hash;
-import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
-import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.ObjectOpenCustomHashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -135,7 +131,7 @@ public abstract class MetaAnnotationUtil {
 
   private static GlobalSearchScope getAllAnnotationFilesScope(Project project) {
     return CachedValuesManager.getManager(project).getCachedValue(project, () -> {
-      GlobalSearchScope javaScope = new FileIdScope(project, getJavaAnnotationInheritorIds(project));
+      GlobalSearchScope javaScope = GlobalSearchScope.filesScope(project, getJavaAnnotationInheritorIds(project));
       GlobalSearchScope otherScope = searchForAnnotationInheritorsInOtherLanguages(project);
       return Result.createSingleDependency(
         javaScope.uniteWith(otherScope),
@@ -166,38 +162,11 @@ public abstract class MetaAnnotationUtil {
     return GlobalSearchScope.filesWithLibrariesScope(project, allAnnotationFiles);
   }
 
-  private static @NotNull IntSet getJavaAnnotationInheritorIds(Project project) {
-    IdIterator iterator = StubIndex.getInstance().getContainingIds(JavaStubIndexKeys.SUPER_CLASSES, "Annotation", project,
-                                                                   GlobalSearchScope.allScope(project));
-    IntSet idSet = new IntOpenHashSet();
-    while (iterator.hasNext()) {
-      idSet.add(iterator.next());
-    }
-    return idSet;
-  }
-
-  private static final class FileIdScope extends GlobalSearchScope {
-    private final IntSet myIdSet;
-
-    FileIdScope(Project project, IntSet idSet) {
-      super(project);
-      myIdSet = idSet;
-    }
-
-    @Override
-    public boolean isSearchInModuleContent(@NotNull Module aModule) {
-      return true;
-    }
-
-    @Override
-    public boolean isSearchInLibraries() {
-      return true;
-    }
-
-    @Override
-    public boolean contains(@NotNull VirtualFile file) {
-      return file instanceof VirtualFileWithId && myIdSet.contains(((VirtualFileWithId)file).getId());
-    }
+  private static @NotNull Set<VirtualFile> getJavaAnnotationInheritorIds(Project project) {
+    return StubIndex.getInstance().getContainingFiles(JavaStubIndexKeys.SUPER_CLASSES,
+                                                      "Annotation",
+                                                      project,
+                                                      GlobalSearchScope.allScope(project));
   }
 
   private static void collectClassWithChildren(PsiClass psiClass, Set<? super PsiClass> classes, GlobalSearchScope scope) {

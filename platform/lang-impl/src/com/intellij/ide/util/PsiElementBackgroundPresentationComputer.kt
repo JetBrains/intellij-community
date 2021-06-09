@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util
 
 import com.intellij.navigation.TargetPresentation
@@ -7,12 +7,13 @@ import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.ui.popup.util.PopupUtil
+import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiElement
 import com.intellij.ui.AnimatedIcon.ANIMATION_IN_RENDERER_ALLOWED
 import com.intellij.ui.ScreenUtil
 import com.intellij.ui.popup.AbstractPopup
-import com.intellij.util.ObjectUtils
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.UIUtil.runWhenChanged
 import com.intellij.util.ui.UIUtil.runWhenHidden
 import kotlinx.coroutines.*
@@ -26,17 +27,16 @@ import javax.swing.JList
 import javax.swing.event.ListDataEvent
 
 internal fun getComputer(list: JList<*>): PsiElementBackgroundPresentationComputer {
-  val existing = list.getClientProperty(computerKey)
+  val existing = UIUtil.getClientProperty(list, computerKey)
   if (existing != null) {
-    @Suppress("UNCHECKED_CAST")
-    return existing as PsiElementBackgroundPresentationComputer
+    return existing
   }
   val computer = PsiElementBackgroundPresentationComputer(list)
-  list.putClientProperty(computerKey, computer)
-  list.putClientProperty(ANIMATION_IN_RENDERER_ALLOWED, true)
+  UIUtil.putClientProperty(list, computerKey, computer)
+  UIUtil.putClientProperty(list, ANIMATION_IN_RENDERER_ALLOWED, true)
   fun cleanUp() {
-    list.putClientProperty(computerKey, null)
-    list.putClientProperty(ANIMATION_IN_RENDERER_ALLOWED, null)
+    UIUtil.putClientProperty(list, computerKey, null)
+    UIUtil.putClientProperty(list, ANIMATION_IN_RENDERER_ALLOWED, null)
     computer.dispose()
   }
   runWhenHidden(list, ::cleanUp)
@@ -44,7 +44,7 @@ internal fun getComputer(list: JList<*>): PsiElementBackgroundPresentationComput
   return computer
 }
 
-private val computerKey = ObjectUtils.sentinel("PsiElementBackgroundPresentationComputer")
+private val computerKey = Key.create<PsiElementBackgroundPresentationComputer>("PsiElementBackgroundPresentationComputer")
 
 private typealias RendererAndElement = Pair<PsiElementListCellRenderer<*>, PsiElement>
 

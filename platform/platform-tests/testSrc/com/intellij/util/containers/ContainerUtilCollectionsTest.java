@@ -95,7 +95,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testSoftMapTossedEvenWithIdentityStrategy() {
-    Map<Object, Object> map = CollectionFactory.createSoftIdentityMap();
+    Map<Object, Object> map = CollectionFactory.createSoftMap(HashingStrategy.identity());
     checkKeyTossedEventually(map);
   }
 
@@ -191,7 +191,7 @@ public class ContainerUtilCollectionsTest extends Assert {
       map.remove(strong);
       assertNull(map.get(strong));
 
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects(() -> map.isEmpty());
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -216,7 +216,7 @@ public class ContainerUtilCollectionsTest extends Assert {
       map.remove(strong);
       assertEquals(0, map.get(strong));
 
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects(() -> map.isEmpty());
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -241,7 +241,7 @@ public class ContainerUtilCollectionsTest extends Assert {
       map.remove(RANDOM_INT);
       assertNull(map.get(RANDOM_INT));
 
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects(() -> map.isEmpty());
     }
     while (map.size() != 0);
     assertTrue(map.isEmpty());
@@ -255,7 +255,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testSoftMapCustomStrategy() {
-    Map<String, String> map = ContainerUtil.createSoftMap(IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
+    Map<String, String> map = CollectionFactory.createSoftMap(IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     map.put("ab", "ab");
     assertEquals("ab", map.get("AB"));
@@ -266,7 +266,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testWeakMapCustomStrategy() {
-    Map<String, String> map = ContainerUtil.createWeakMap(10, 0.5f, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
+    Map<String, String> map = CollectionFactory.createWeakMap(10, 0.5f, IGNORE_CASE_WITH_CRAZY_HASH_STRATEGY);
 
     String keyL = "ab";
     String keyU = StringUtil.toUpperCase(keyL);
@@ -288,7 +288,7 @@ public class ContainerUtilCollectionsTest extends Assert {
 
   @Test(timeout = TIMEOUT)
   public void testSoftNativeHashCodeDoesNotGetCalledWhenCustomStrategyIsSpecified() {
-    Map<Object, Object> map = CollectionFactory.createSoftIdentityMap();
+    Map<Object, Object> map = CollectionFactory.createSoftMap(HashingStrategy.identity());
 
     checkHashCodeDoesntCalledFor(map);
   }
@@ -490,7 +490,7 @@ public class ContainerUtilCollectionsTest extends Assert {
       assertEquals(Object.class, actual.getClass()); // still not gced, put failed. repeat
     }
     if (i == N) {
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects(() -> map.get(key)==null);
       Object prev = map.putIfAbsent(key, newVal);
       assertNull(prev);
       assertSame(newVal, map.get(key));
@@ -517,7 +517,7 @@ public class ContainerUtilCollectionsTest extends Assert {
       assertEquals(Object.class, actual.getClass()); // still not gced, put failed. repeat
     }
     if (i == N) {
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects(() -> map.get(key)==null);
       Object prev = map.putIfAbsent(key, newVal);
       assertNull(prev);
       assertSame(newVal, map.get(key));
@@ -628,7 +628,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     checkEntrySetIteratorTossesValue(ContainerUtil.createIntKeyWeakValueMap());
   }
 
-  private void checkEntrySetIteratorTossesValue(IntObjectMap<Object> map) {
+  private void checkEntrySetIteratorTossesValue(@NotNull IntObjectMap<Object> map) {
     map.put(1, this);
     map.put(2, this);
     map.put(3, strong = new Object());
@@ -639,7 +639,7 @@ public class ContainerUtilCollectionsTest extends Assert {
     strong = null;
     for (int i=0; i<10; i++) {
       if (map.get(3)==null) break;
-      GCUtil.tryGcSoftlyReachableObjects();
+      GCUtil.tryGcSoftlyReachableObjects(() -> map.get(3)==null);
     }
     if (map.get(3) == null) {
       List<Integer> keys = ContainerUtil.map(ContainerUtil.collect(iterator), e -> e.getKey());

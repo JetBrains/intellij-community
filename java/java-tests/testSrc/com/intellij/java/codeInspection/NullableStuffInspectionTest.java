@@ -328,6 +328,12 @@ public class NullableStuffInspectionTest extends LightJavaCodeInsightFixtureTest
     doTest();
   }
   
+  public void testInheritTypeUse() {
+    myInspection.REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true;
+    DataFlowInspection8Test.setupTypeUseAnnotations("typeUse", myFixture);
+    doTest();
+  }
+
   public void testIncorrectPlacementAmbiguous() {
     DataFlowInspection8Test.setupAmbiguousAnnotations("typeUse", myFixture);
     doTest();

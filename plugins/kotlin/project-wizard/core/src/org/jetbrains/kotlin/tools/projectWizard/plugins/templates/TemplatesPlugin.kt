@@ -111,7 +111,11 @@ class TemplatesPlugin(context: Context) : Plugin(context) {
                     val modules = buildFile.modules.modules
 
                     val applicationState = modules.mapNotNull { module ->
-                        module.template?.createInterceptors(module)
+                        module.template?.let {
+                            with(it) {
+                                createInterceptors(module)
+                            }
+                        }
                     }.flatten()
                         .applyAll(TemplateInterceptionApplicationState(buildFile, emptyMap()))
 

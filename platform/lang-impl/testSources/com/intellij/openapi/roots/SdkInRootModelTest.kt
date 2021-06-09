@@ -95,29 +95,6 @@ class SdkInRootModelTest {
   }
 
   @Test
-  fun `set not yet added sdk as module sdk`() {
-    val model = createModifiableModel(module)
-    val sdk = projectModel.createSdk("my sdk")
-    model.sdk = sdk
-    assertThat(model.isSdkInherited).isFalse()
-    assertThat(model.sdk).isEqualTo(sdk)
-    assertThat(model.sdkName).isEqualTo("my sdk")
-    val orderEntry = dropModuleSourceEntry(model, 1).single() as JdkOrderEntry
-    assertThat(orderEntry.presentableName).isEqualTo("< my sdk >")
-    assertThat(orderEntry.isValid).isTrue()
-    assertThat(orderEntry.jdkName).isEqualTo("my sdk")
-    assertThat(orderEntry.jdk).isEqualTo(sdk)
-    val committed = commitModifiableRootModel(model)
-    projectModel.addSdk(sdk)
-    assertThat(committed.isSdkInherited).isFalse()
-    assertThat(committed.sdk).isEqualTo(sdk)
-    val committedEntry = dropModuleSourceEntry(committed, 1).single() as JdkOrderEntry
-    assertThat(committedEntry.presentableName).isEqualTo("< my sdk >")
-    assertThat(committedEntry.isValid).isTrue()
-    assertThat(committedEntry.jdkName).isEqualTo("my sdk")
-  }
-
-  @Test
   fun `set module sdk by name`() {
     val model = createModifiableModel(module)
     model.setInvalidSdk("my sdk", projectModel.sdkType.name)

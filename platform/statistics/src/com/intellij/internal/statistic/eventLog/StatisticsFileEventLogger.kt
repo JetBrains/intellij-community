@@ -26,6 +26,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   private var lastEventTime: Long = 0
   private var lastEventCreatedTime: Long = 0
   private var eventMergeTimeoutMs: Long
+  private val mergeStrategy: StatisticsEventMergeStrategy = FilteredEventMergeStrategy(hashSetOf("start_time"))
   private var lastEventFlushFuture: ScheduledFuture<CompletableFuture<Void>>? = null
 
   init {
@@ -58,7 +59,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
   }
 
   private fun log(event: LogEvent, createdTime: Long, rawEventId: String, rawData: Map<String, Any>) {
-    if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && lastEvent!!.validatedEvent.shouldMerge(event)) {
+    if (lastEvent != null && event.time - lastEventTime <= eventMergeTimeoutMs && mergeStrategy.shouldMerge(lastEvent!!.validatedEvent, event)) {
       lastEventTime = event.time
       lastEvent!!.validatedEvent.event.increment()
     }
@@ -68,6 +69,7 @@ open class StatisticsFileEventLogger(private val recorderId: String,
       lastEventTime = event.time
       lastEventCreatedTime = createdTime
     }
+
     if (StatisticsRecorderUtil.isTestModeEnabled(recorderId)) {
       lastEventFlushFuture?.cancel(false)
       // call flush() instead of logLastEvent() directly so that logLastEvent is executed on the logExecutor thread and not on scheduled executor pool thread

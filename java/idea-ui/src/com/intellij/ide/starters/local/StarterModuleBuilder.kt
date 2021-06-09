@@ -14,9 +14,11 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.WriteAction
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.JavaModuleType
@@ -36,12 +38,15 @@ import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.setupNewModuleJdk
 import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.pom.java.LanguageLevel
-import com.intellij.ui.GuiUtils
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.annotations.TestOnly
 import java.io.IOException
 import java.net.URL
 import javax.swing.Icon
@@ -96,6 +101,32 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
           }
         }
       }
+    }
+
+    @TestOnly
+    fun StarterModuleBuilder.setupTestModule(module: Module, consumer: StarterContext.() -> Unit) {
+      this.apply {
+        starterContext.starterPack = getStarterPack()
+        moduleJdk = ModuleRootManager.getInstance(module).sdk
+        starterContext.starter = starterContext.starterPack.starters.first()
+        starterContext.starterDependencyConfig = loadTestDependencyConfig(starterContext.starter!!)
+      }
+
+      consumer.invoke(starterContext)
+
+      ApplicationManager.getApplication().invokeAndWait {
+        runWriteAction {
+          setupModule(module)
+
+          PsiDocumentManager.getInstance(module.project).commitAllDocuments()
+          FileDocumentManager.getInstance().saveAllDocuments()
+        }
+      }
+    }
+
+    private fun loadTestDependencyConfig(starter: Starter): DependencyConfig {
+      val starterDependencyDom = starter.versionConfigUrl.openStream().use { JDOMUtil.load(it) }
+      return StarterUtils.parseDependencyConfig(starterDependencyDom, starter.versionConfigUrl.path, false)
     }
   }
 
@@ -265,7 +296,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
         true, module.project)
 
       StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
-        GuiUtils.invokeLaterIfNeeded(Runnable {
+        ModalityUiUtil.invokeLaterIfNeeded(Runnable {
           if (module.isDisposed) return@Runnable
 
           ReformatCodeProcessor(module.project, module, false).run()

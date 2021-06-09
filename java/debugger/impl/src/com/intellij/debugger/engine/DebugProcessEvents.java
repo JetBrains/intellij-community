@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.*;
@@ -8,6 +8,7 @@ import com.intellij.debugger.engine.requests.LocatableEventRequestor;
 import com.intellij.debugger.engine.requests.MethodReturnValueWatcher;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.DebuggerUtilsAsync;
 import com.intellij.debugger.impl.DebuggerUtilsImpl;
 import com.intellij.debugger.impl.PrioritizedTask;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
@@ -43,6 +44,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.impl.XDebugSessionImpl;
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
+import com.jetbrains.jdi.ThreadReferenceImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.*;
 import com.sun.jdi.request.EventRequest;
@@ -53,6 +55,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -165,7 +168,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                 }
 
                 if (processed == eventSet.size()) {
-                  eventSet.resume();
+                  DebuggerUtilsAsync.resume(eventSet);
                   return;
                 }
 
@@ -182,7 +185,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
                       }
                       if (!DebuggerSession.enableBreakpointsDuringEvaluation()) {
                         notifySkippedBreakpoints(locatableEvent, true);
-                        eventSet.resume();
+                        DebuggerUtilsAsync.resume(eventSet);
                         return;
                       }
                     }
@@ -191,7 +194,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
                 if (!isCurrentVirtualMachine(myVmProxy)) {
                   notifySkippedBreakpoints(locatableEvent, false);
-                  eventSet.resume();
+                  DebuggerUtilsAsync.resume(eventSet);
                   return;
                 }
 
@@ -246,13 +249,16 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
                       processClassPrepareEvent(suspendContext, (ClassPrepareEvent)event, notifiedClassPrepareEventRequestors);
                     }
-                    //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
-                    //ModificationWatchpointEvent, StepEvent, WatchpointEvent
-                    else if (event instanceof StepEvent) {
-                      processStepEvent(suspendContext, (StepEvent)event);
-                    }
                     else if (event instanceof LocatableEvent) {
-                      processLocatableEvent(suspendContext, (LocatableEvent)event);
+                      preloadThreadInfo(((LocatableEvent)event).thread());
+                      //AccessWatchpointEvent, BreakpointEvent, ExceptionEvent, MethodEntryEvent, MethodExitEvent,
+                      //ModificationWatchpointEvent, StepEvent, WatchpointEvent
+                      if (event instanceof StepEvent) {
+                        processStepEvent(suspendContext, (StepEvent)event);
+                      }
+                      else {
+                        processLocatableEvent(suspendContext, (LocatableEvent)event);
+                      }
                     }
                     else if (event instanceof ClassUnloadEvent) {
                       processDefaultEvent(suspendContext);
@@ -323,7 +329,7 @@ public class DebugProcessEvents extends DebugProcessImpl {
 
   public static void enableRequestWithHandler(EventRequest request, Consumer<? super Event> handler) {
     request.putProperty(REQUEST_HANDLER, handler);
-    request.enable();
+    DebuggerUtilsAsync.setEnabled(request, true);
   }
 
   private static void enableNonSuspendingRequest(EventRequest request, Consumer<? super Event> handler) {
@@ -518,6 +524,21 @@ public class DebugProcessEvents extends DebugProcessImpl {
         }
         if (hint.wasStepTargetMethodMatched()) {
           suspendContext.getDebugProcess().resetIgnoreSteppingFilters(event.location(), hint);
+        }
+      }
+    }
+  }
+
+  // Preload thread info in "parallel" commands, to avoid sync jdwp requests after
+  private static void preloadThreadInfo(@Nullable ThreadReference thread) {
+    if (Registry.is("debugger.preload.thread.info") && thread != null) {
+      if (DebuggerUtilsAsync.isAsyncEnabled() && thread instanceof ThreadReferenceImpl) {
+        ThreadReferenceImpl t = (ThreadReferenceImpl)thread;
+        try {
+          CompletableFuture.allOf(t.frameCountAsync(), t.nameAsync(), t.statusAsync(), t.frameAsync(0)).get();
+        }
+        catch (Exception e) {
+          LOG.error(e);
         }
       }
     }

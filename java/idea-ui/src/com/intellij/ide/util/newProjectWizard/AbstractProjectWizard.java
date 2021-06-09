@@ -62,11 +62,14 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   private static WizardContext initContext(@Nullable Project project, @Nullable String defaultPath, Disposable parentDisposable) {
     WizardContext context = new WizardContext(project, parentDisposable);
+    if (defaultPath == null && project != null) {
+      defaultPath = project.getBasePath();
+    }
     if (defaultPath != null) {
       context.setProjectFileDirectory(Paths.get(defaultPath), true);
       context.setProjectName(defaultPath.substring(FileUtil.toSystemIndependentName(defaultPath).lastIndexOf("/") + 1));
     }
-   return context;
+    return context;
   }
 
   @Nullable
@@ -354,5 +357,10 @@ public abstract class AbstractProjectWizard extends AbstractWizard<ModuleWizardS
 
   public void setDelegate(@Nullable WizardDelegate delegate) {
     myDelegate = delegate;
+  }
+
+  @NotNull
+  public WizardContext getWizardContext() {
+    return myWizardContext;
   }
 }

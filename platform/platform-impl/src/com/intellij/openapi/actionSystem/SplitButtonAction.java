@@ -51,7 +51,7 @@ public final class SplitButtonAction extends ActionGroup implements CustomCompon
 
   @Override
   public boolean isUpdateInBackground() {
-    return myActionGroup instanceof UpdateInBackground && ((UpdateInBackground)myActionGroup).isUpdateInBackground();
+    return UpdateInBackground.isUpdateInBackground(myActionGroup);
   }
 
   @Override

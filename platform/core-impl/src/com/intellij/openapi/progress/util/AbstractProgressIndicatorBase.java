@@ -21,13 +21,12 @@ import com.intellij.ui.IconManager;
 import com.intellij.util.DeprecatedMethodException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.exception.FrequentErrorLogger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AbstractProgressIndicatorBase extends UserDataHolderBase implements ProgressIndicator {
-  private static final FrequentErrorLogger LOG = FrequentErrorLogger.newInstance(Logger.getInstance(AbstractProgressIndicatorBase.class));
+  private static final Logger LOG = Logger.getInstance(AbstractProgressIndicatorBase.class);
 
   private volatile @NlsContexts.ProgressText String myText;
   private volatile double myFraction;
@@ -61,7 +60,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   private Stack<State> myStateStack; // guarded by getLock()
 
-  private ProgressIndicator myModalityProgress;
+  private volatile ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
   private volatile int myNonCancelableSectionCount;
   private final Object lock = ObjectUtils.sentinel("APIB lock");
@@ -70,11 +69,11 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   public void start() {
     synchronized (getLock()) {
       if (isRunning()) {
-        LOG.error("Attempt to start ProgressIndicator which is already running", new IllegalStateException());
+        throwInvalidState("Attempt to start ProgressIndicator which is already running");
       }
       if (myStopped) {
         if (myCanceled && !isReuseable()) {
-          LOG.error("Attempt to start ProgressIndicator which is cancelled and already stopped:" + this + "," + getClass(), new IllegalStateException());
+          throwInvalidState("Attempt to start ProgressIndicator which is cancelled and already stopped");
         }
         myCanceled = false;
         myStopped = false;
@@ -104,13 +103,20 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void stop() {
     synchronized (getLock()) {
+      if (myStopped) {
+        throwInvalidState("Attempt to stop ProgressIndicator which is already stopped");
+      }
       if (!myRunning) {
-        LOG.error("stop() should be called only if start() called before", new IllegalStateException());
+        throwInvalidState("stop() should be called only if start() called before");
       }
       myRunning = false;
       myStopped = true;
       stopSystemActivity();
     }
+  }
+
+  private void throwInvalidState(@NotNull String message) {
+    LOG.error(message + ": " + this + "," + getClass(), new IllegalStateException());
   }
 
   void stopSystemActivity() {
@@ -263,7 +269,7 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   @Override
   public void setModalityProgress(@Nullable ProgressIndicator modalityProgress) {
     if (isRunning()) {
-      LOG.error("Must be not running but got: "+this, new IllegalStateException());
+      throwInvalidState("setModalityProgress() must not be called on already running indicator");
     }
     myModalityProgress = modalityProgress;
     setModalityState(modalityProgress);

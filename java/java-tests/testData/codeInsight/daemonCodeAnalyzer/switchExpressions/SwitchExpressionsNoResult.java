@@ -28,4 +28,10 @@ class Test {
       default -> x > 0 ? () -> {} : () -> {};
     };
   }
+  
+  Object invalidLambdaContext(int x) {
+    return (Runnable) switch (x) {
+      default -> x > 0 ? <error descr="Lambda expression not expected here">() -> {}</error> : <error descr="Lambda expression not expected here">() -> {}</error>;
+    };
+  }
 }

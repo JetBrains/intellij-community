@@ -24,9 +24,14 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Map;
+
 public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/expressions";
 
@@ -36,6 +41,23 @@ public class Java8ExpressionsCheckTest extends LightDaemonAnalyzerTestCase {
 
   public void testNestedLambdaAdditionalConstraints() {
     doTestAllMethodCallExpressions();
+  }
+
+  public void testNestedLambdaReturnTypeCheck() {
+    configure();
+    PsiMethodCallExpression
+      call = PsiTreeUtil.getParentOfType(getFile().findElementAt(getEditor().getCaretModel().getOffset()), PsiMethodCallExpression.class);
+    @Nullable PsiLambdaExpression lambda = PsiTreeUtil.getParentOfType(call, PsiLambdaExpression.class);
+
+    PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(lambda.getFunctionalInterfaceType());
+    Map<PsiElement, @Nls String> errors = LambdaUtil.checkReturnTypeCompatible(lambda, interfaceReturnType);
+    if (errors != null) {
+      fail(StreamEx.of(errors.values()).joining(", "));
+    }
+
+    PsiType type = call.getType();
+    assertNotNull(type);
+    assertFalse(type.getPresentableText(), type.equalsToText(CommonClassNames.JAVA_LANG_OBJECT));
   }
 
   public void testForbidCachingForAllQualifiersWhenDependOnThreadLocalTypes() {

@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction
 
 class ExternalProject(val path: String, val openWith: ProjectOpenAction) {
     companion object {
-        const val KOTLIN_PROJECT_PATH = "../perfTestProject"
+        val KOTLIN_PROJECT_PATH = "../${System.getProperty("performanceProjects", "kotlin")}"
 
         val KOTLIN_GRADLE = ExternalProject(KOTLIN_PROJECT_PATH, ProjectOpenAction.GRADLE_PROJECT)
         val KOTLIN_JPS = ExternalProject(KOTLIN_PROJECT_PATH, ProjectOpenAction.EXISTING_IDEA_PROJECT)

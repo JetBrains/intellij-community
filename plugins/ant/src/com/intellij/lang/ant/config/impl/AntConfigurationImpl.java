@@ -35,8 +35,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.config.AbstractProperty;
@@ -129,7 +129,7 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
         restartDaemon();
       }
       private void restartDaemon() {
-        GuiUtils.invokeLaterIfNeeded(() -> DaemonCodeAnalyzer.getInstance(project).restart(), ModalityState.any());
+        ModalityUiUtil.invokeLaterIfNeeded(() -> DaemonCodeAnalyzer.getInstance(project).restart(), ModalityState.any());
       }
     });
 

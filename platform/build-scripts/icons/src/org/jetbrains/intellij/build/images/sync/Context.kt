@@ -165,6 +165,7 @@ internal class Context(private val errorHandler: Consumer<String> = Consumer { e
       devIconsVerifier?.accept(repos)
     }
     catch (e: Exception) {
+      e.printStackTrace(System.err)
       doFail("Test failures detected")
     }
   }

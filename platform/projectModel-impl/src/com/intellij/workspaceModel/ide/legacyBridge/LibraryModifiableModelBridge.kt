@@ -4,6 +4,6 @@ package com.intellij.workspaceModel.ide.legacyBridge
 import com.intellij.openapi.roots.impl.libraries.LibraryEx
 
 
-interface LibraryModifiableModelBridge: LibraryEx.ModifiableModelEx, LibraryEx {
+interface LibraryModifiableModelBridge : LibraryEx.ModifiableModelEx, LibraryEx {
   fun prepareForCommit()
 }

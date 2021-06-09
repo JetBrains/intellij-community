@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.commit
 
-import com.intellij.ide.util.DelegatingProgressIndicator
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
@@ -14,6 +13,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.DumbService.isDumb
 import com.intellij.openapi.util.registry.Registry
@@ -26,6 +26,8 @@ import com.intellij.openapi.vcs.changes.CommitResultHandler
 import com.intellij.openapi.vcs.changes.actions.DefaultCommitExecutorAction
 import com.intellij.openapi.vcs.checkin.*
 import com.intellij.openapi.vcs.checkin.CheckinHandler.ReturnResult
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
+import com.intellij.util.progress.DelegatingProgressIndicatorEx
 import com.intellij.vcs.commit.AbstractCommitWorkflow.Companion.getCommitExecutors
 import kotlinx.coroutines.*
 import java.lang.Runnable
@@ -160,6 +162,9 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
         if (isSkipCommitChecks()) return@executeDefault ReturnResult.COMMIT
 
         val indicator = IndeterminateIndicator(ui.commitProgressUi.startProgress())
+        indicator.addStateDelegate(object : AbstractProgressIndicatorExBase() {
+          override fun cancel() = this@launch.cancel()
+        })
         try {
           runAllHandlers(executor, indicator)
         }
@@ -252,7 +257,7 @@ abstract class NonModalCommitWorkflowHandler<W : NonModalCommitWorkflow, U : Non
   }
 }
 
-private class IndeterminateIndicator(indicator: ProgressIndicator) : DelegatingProgressIndicator(indicator) {
+private class IndeterminateIndicator(indicator: ProgressIndicatorEx) : DelegatingProgressIndicatorEx(indicator) {
   override fun setIndeterminate(indeterminate: Boolean) = Unit
   override fun setFraction(fraction: Double) = Unit
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl.rules;
 
 import com.intellij.icons.AllIcons;
@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.TestSourcesFilter;
-import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
@@ -59,7 +58,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
 
   private static final UsageScopeGroup TEST = new UsageScopeGroup(0) {
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return AllIcons.Nodes.TestSourceFolder;
     }
 
@@ -71,7 +70,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
   };
   private static final UsageScopeGroup PRODUCTION = new UsageScopeGroup(1) {
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return PlatformIcons.SOURCE_FOLDERS_ICON;
     }
 
@@ -83,7 +82,7 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
   };
   private static final UsageScopeGroup LIBRARY = new UsageScopeGroup(2) {
     @Override
-    public Icon getIcon(boolean isOpen) {
+    public Icon getIcon() {
       return PlatformIcons.LIBRARY_ICON;
     }
 
@@ -100,17 +99,6 @@ class UsageScopeGroupingRule extends SingleParentUsageGroupingRule implements Du
       myCode = code;
     }
 
-    @Override
-    public void update() {
-    }
-
-    @Override
-    public FileStatus getFileStatus() {
-      return null;
-    }
-
-    @Override
-    public boolean isValid() { return true; }
     @Override
     public void navigate(boolean focus) { }
     @Override

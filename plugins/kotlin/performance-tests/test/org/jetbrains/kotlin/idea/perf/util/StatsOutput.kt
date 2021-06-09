@@ -14,19 +14,38 @@ import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.BufferedWriter
 import java.io.File
 
-internal fun List<Metric>.writeCSV(name: String, header: Array<String>) {
-    fun Metric.append(prefix: String, output: BufferedWriter) {
-        val s = "$prefix ${this.metricName}".trim()
-        output.appendLine("$s,${metricValue ?: ""},")
-        metrics?.forEach {
-            it.append(s, output)
+internal fun List<Benchmark>.writeCSV(name: String) {
+    val header = listOf("benchmark", "name", "measurement", "value", "buildId", "timestamp")
+    fun Benchmark.append(output: BufferedWriter, warmUpValues: Boolean = false) {
+
+        fun values(n: String, value: Long?): String? = value?.let {
+            listOf(
+                benchmark,
+                this.name,
+                n,
+                value,
+                buildId?.toString() ?: "",
+                buildTimestamp
+            ).joinToString()
         }
+
+        val s = if (warmUpValues) {
+            val warmUpValue = metrics.firstOrNull { it.metricName == "_value" }?.let { metric ->
+                metric.rawMetrics?.firstOrNull { it.warmUp == true && it.index == 0 }?.metricValue
+            }
+            values(Stats.WARM_UP + " #0", warmUpValue)
+        } else {
+            values(Stats.GEOM_MEAN, metricValue)
+        }
+        s?.let(output::appendLine)
     }
 
     val statsFile = statsFile(name, "csv")
     statsFile.bufferedWriter().use { output ->
         output.appendLine(header.joinToString())
-        forEach { it.append("$name:", output) }
+        for (warmUpValue in arrayOf(true, false)) {
+            filterNot { it.name == Stats.GEOM_MEAN }.forEach { it.append(output, warmUpValues = warmUpValue) }
+        }
         output.flush()
     }
 }

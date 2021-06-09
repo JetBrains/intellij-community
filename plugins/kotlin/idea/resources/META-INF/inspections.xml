@@ -1552,7 +1552,7 @@
                      language="JAVA"
                      key="inspection.kotlin.sealed.in.java.display.name" bundle="messages.KotlinBundle"/>
 
-    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.MoveSuspiciousCallableReferenceIntoParenthesesInspection"
+    <localInspection implementationClass="org.jetbrains.kotlin.idea.inspections.SuspiciousCallableReferenceInLambdaInspection"
                      groupPath="Kotlin"
                      groupName="Probable bugs"
                      enabledByDefault="true"

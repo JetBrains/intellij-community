@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class BreakpointManager
@@ -11,10 +11,7 @@ import com.intellij.debugger.JavaDebuggerBundle;
 import com.intellij.debugger.engine.BreakpointStepMethodFilter;
 import com.intellij.debugger.engine.DebugProcessImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
-import com.intellij.debugger.impl.DebuggerContextImpl;
-import com.intellij.debugger.impl.DebuggerContextListener;
-import com.intellij.debugger.impl.DebuggerManagerImpl;
-import com.intellij.debugger.impl.DebuggerSession;
+import com.intellij.debugger.impl.*;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -538,7 +535,7 @@ public class BreakpointManager {
     }
     requestManager.setFilterThread(newFilterThread);
     EventRequestManager eventRequestManager = requestManager.getVMRequestManager();
-    if (Registry.is("debugger.async.jdi") && eventRequestManager instanceof EventRequestManagerImpl) {
+    if (DebuggerUtilsAsync.isAsyncEnabled() && eventRequestManager instanceof EventRequestManagerImpl) {
       Stream<EventRequestManagerImpl.ThreadVisibleEventRequestImpl> requests =
         StreamEx.<EventRequest>of(eventRequestManager.breakpointRequests())
           .append(eventRequestManager.methodEntryRequests())

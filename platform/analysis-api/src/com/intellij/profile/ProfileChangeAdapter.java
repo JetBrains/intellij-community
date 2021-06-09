@@ -3,13 +3,14 @@ package com.intellij.profile;
 
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface ProfileChangeAdapter {
   @Topic.ProjectLevel
   Topic<ProfileChangeAdapter> TOPIC = new Topic<>(ProfileChangeAdapter.class, Topic.BroadcastDirection.NONE);
 
-  default void profileChanged(@Nullable InspectionProfile profile) {
+  default void profileChanged(@NotNull InspectionProfile profile) {
   }
 
   default void profileActivated(@Nullable InspectionProfile oldProfile, @Nullable InspectionProfile profile) {

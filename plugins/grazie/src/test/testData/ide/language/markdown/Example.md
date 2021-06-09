@@ -10,8 +10,8 @@ It has:
 Of course, it has an `inline` fragment.
 
 Even big fragment with injected code.
-```kotlin
-val a = "So big!"
+```html
+<tag>This is <warning descr="EN_A_VS_AN">a</warning> error in article, making this paragraph so damn big!</tag>
 ```
 
 ## Now bad part have <warning descr="HAVE_PART_AGREEMENT">go</warning> there

@@ -13,7 +13,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.FusAwareAction;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
@@ -169,7 +168,9 @@ public class ActionsCollectorImpl extends ActionsCollector {
 
   /** @noinspection unused*/
   public static void onBeforeActionInvoked(@NotNull AnAction action, @NotNull AnActionEvent event) {
-    Stats stats = new Stats(event.getProject());
+    Project project = event.getProject();
+    DataContext context = getCachedDataContext(event);
+    Stats stats = new Stats(project, getFileLanguage(context), getInjectedOrFileLanguage(project, context));
     ourStats.put(event, stats);
   }
 
@@ -178,15 +179,20 @@ public class ActionsCollectorImpl extends ActionsCollector {
     long durationMillis = stats != null ? TimeoutUtil.getDurationMillis(stats.start) : -1;
 
     List<EventPair<?>> data = new ArrayList<>();
-    if (stats != null && stats.isDumb != null) {
-      data.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb));
+    if (stats != null) {
+      data.add(ActionsEventLogGroup.START_TIME.with(stats.startMs));
+      if (stats.isDumb != null) {
+        data.add(ActionsEventLogGroup.DUMB_START.with(stats.isDumb));
+      }
     }
 
     ObjectEventData reportedResult = toReportedResult(result);
     data.add(ActionsEventLogGroup.RESULT.with(reportedResult));
 
     Project project = stats != null ? stats.projectRef.get() : null;
-    addLanguageContextFields(project, event, data);
+    Language contextBefore = stats != null ? stats.fileLanguage : null;
+    Language injectedContextBefore = stats != null ? stats.injectedFileLanguage : null;
+    addLanguageContextFields(project, event, contextBefore, injectedContextBefore, data);
     if (action instanceof FusAwareAction) {
       List<EventPair<?>> additionalUsageData = ((FusAwareAction)action).getAdditionalUsageData(event);
       data.add(ActionsEventLogGroup.ADDITIONAL.with(new ObjectEventData(additionalUsageData)));
@@ -216,37 +222,94 @@ public class ActionsCollectorImpl extends ActionsCollector {
     return new ObjectEventData(ActionsEventLogGroup.RESULT_TYPE.with("unknown"));
   }
 
-  private static void addLanguageContextFields(@Nullable Project project, @NotNull AnActionEvent event, @NotNull List<EventPair<?>> data) {
-    // we try to avoid as many problems as possible, because
-    // 1. non-async dataContext can fail due to advanced event-count, or freeze EDT on slow GetDataRules
-    // 2. async dataContext can fail due to slow GetDataRules prohibition on EDT
-    DataContext dataContext = dataId -> Utils.getRawDataIfCached(event.getDataContext(), dataId);
+  private static void addLanguageContextFields(@Nullable Project project,
+                                               @NotNull AnActionEvent event,
+                                               @Nullable Language contextBefore,
+                                               @Nullable Language injectedContextBefore,
+                                               @NotNull List<EventPair<?>> data) {
+    DataContext dataContext = getCachedDataContext(event);
+    Language language = getFileLanguage(dataContext);
+    data.add(EventFields.CurrentFile.with(language != null ? language : contextBefore));
 
-    Language hostFileLanguage = getHostFileLanguage(dataContext, project);
-    data.add(EventFields.CurrentFile.with(hostFileLanguage));
-    if (hostFileLanguage == null || hostFileLanguage == PlainTextLanguage.INSTANCE) {
-      PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
-      Language language = file != null ? file.getLanguage() : null;
-      data.add(EventFields.Language.with(language));
-    }
+    Language injectedLanguage = getInjectedOrFileLanguage(project, dataContext);
+    data.add(EventFields.Language.with(injectedLanguage != null ? injectedLanguage : injectedContextBefore));
   }
 
-  private static @Nullable Language getHostFileLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
-    if (project == null) return null;
-    Editor editor = CommonDataKeys.HOST_EDITOR.getData(dataContext);
-    if (editor == null) return null;
-    PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(editor.getDocument());
+  /**
+   * Computing fields from data context might be slow and cause freezes.
+   * To avoid it, we report only those fields which were already computed
+   * in {@link AnAction#update} or {@link AnAction#actionPerformed(AnActionEvent)}
+   */
+  private static @NotNull DataContext getCachedDataContext(@NotNull AnActionEvent event) {
+    return dataId -> Utils.getRawDataIfCached(event.getDataContext(), dataId);
+  }
+
+  /**
+   * Returns language from {@link InjectedDataKeys#EDITOR}, {@link InjectedDataKeys#PSI_FILE}
+   * or {@link CommonDataKeys#PSI_FILE} if there's no information about injected fragment
+   */
+  private static @Nullable Language getInjectedOrFileLanguage(@Nullable Project project, @NotNull DataContext dataContext) {
+    Language injected = getInjectedLanguage(dataContext, project);
+    return injected != null ? injected : getFileLanguage(dataContext);
+  }
+
+  @Nullable
+  private static Language getInjectedLanguage(@NotNull DataContext dataContext, @Nullable Project project) {
+    PsiFile file = InjectedDataKeys.PSI_FILE.getData(dataContext);
+    if (file != null) {
+      return file.getLanguage();
+    }
+
+    if (project != null) {
+      Editor editor = InjectedDataKeys.EDITOR.getData(dataContext);
+      if (editor != null && !project.isDisposed()) {
+        PsiFile injectedFile = PsiDocumentManager.getInstance(project).getCachedPsiFile(editor.getDocument());
+        if (injectedFile != null) {
+          return injectedFile.getLanguage();
+        }
+      }
+    }
+    return null;
+  }
+
+  /**
+   * Returns language from {@link CommonDataKeys#PSI_FILE}
+   */
+  private static @Nullable Language getFileLanguage(@NotNull DataContext dataContext) {
+    PsiFile file = CommonDataKeys.PSI_FILE.getData(dataContext);
     return file != null ? file.getLanguage() : null;
   }
 
   private static final class Stats {
+    /**
+     * Action start time in milliseconds, used to report "start_time" field
+     */
+    final long startMs = System.currentTimeMillis();
+
+    /**
+     * Action start time in nanoseconds, used to report "duration_ms" field
+     * We can't use ms to measure duration because it depends on local system time and, therefore, can go backwards
+     */
     final long start = System.nanoTime();
+
     WeakReference<Project> projectRef;
     final Boolean isDumb;
 
-    private Stats(Project project) {
+    /**
+     * Language from {@link CommonDataKeys#PSI_FILE}
+     */
+    Language fileLanguage;
+
+    /**
+     * Language from {@link InjectedDataKeys#EDITOR}, {@link InjectedDataKeys#PSI_FILE} or {@link CommonDataKeys#PSI_FILE}
+     */
+    Language injectedFileLanguage;
+
+    private Stats(@Nullable Project project, @Nullable Language fileLanguage, @Nullable Language injectedFileLanguage) {
       this.projectRef = new WeakReference<>(project);
       this.isDumb = project != null && !project.isDisposed() ? DumbService.isDumb(project) : null;
+      this.fileLanguage = fileLanguage;
+      this.injectedFileLanguage = injectedFileLanguage;
     }
   }
 }

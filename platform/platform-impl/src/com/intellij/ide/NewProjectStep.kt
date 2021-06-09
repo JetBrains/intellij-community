@@ -5,7 +5,6 @@ import com.intellij.ide.NewProjectWizard.Companion.EP_WIZARD
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
@@ -46,13 +45,6 @@ class NewProjectStep : NewModuleStep<NewProjectStepSettings>() {
 
     settings.languageProperty.set(languages.first())
   }.withBorder(JBUI.Borders.empty(10, 10))
-
-  class NewProjectWizardWithSettings<T>(wizard: NewProjectWizard<T>) : NewProjectWizard<T> by wizard {
-    var settings : T = settingsFactory.invoke()
-
-    fun settingsList() = settingsList(settings)
-    fun setupProject(project: Project?) = setupProject(project, settings)
-  }
 }
 
 class NewProjectStepSettings(val initialLanguage: String) {

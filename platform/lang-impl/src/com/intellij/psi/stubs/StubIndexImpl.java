@@ -14,6 +14,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CompactVirtualFileSet;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
@@ -38,6 +39,7 @@ import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import it.unimi.dsi.fastutil.ints.IntSets;
 import it.unimi.dsi.fastutil.objects.ObjectIterators;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -428,9 +430,9 @@ public final class StubIndexImpl extends StubIndexEx {
       return true;
     }
 
-    //if (idFilter == null) {
-    //  idFilter = fileBasedIndexEx.projectIndexableFiles(scope.getProject());
-    //}
+    if (idFilter == null) {
+      idFilter = fileBasedIndexEx.projectIndexableFiles(scope.getProject());
+    }
 
     try {
       @Nullable IdFilter finalIdFilter = idFilter;
@@ -475,6 +477,17 @@ public final class StubIndexImpl extends StubIndexEx {
         return result.size();
       }
     };
+  }
+
+  @Override
+  public @NotNull <Key> Set<VirtualFile> getContainingFiles(@NotNull StubIndexKey<Key, ?> indexKey,
+                                                            @NotNull Key dataKey,
+                                                            @NotNull Project project,
+                                                            @NotNull GlobalSearchScope scope) {
+    IntSet result = getContainingIds(indexKey, dataKey, project, null, scope);
+    CompactVirtualFileSet fileSet = new CompactVirtualFileSet(result == null ? IntSets.emptySet() : result);
+    fileSet.freeze();
+    return fileSet;
   }
 
   private @Nullable <Key> IntSet getContainingIds(@NotNull StubIndexKey<Key, ?> indexKey,

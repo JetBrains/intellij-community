@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -23,6 +23,8 @@ import java.nio.file.Paths;
 import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
+import java.util.function.Function;
 import java.util.function.Predicate;
 
 /**
@@ -38,6 +40,9 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   protected final ClassPath classPath;
   private final ClassLoadingLocks<String> classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
+
+  protected final @NotNull ClassPath.ClassDataConsumer classDataConsumer =
+    ClassPath.recordLoadingTime ? new ClassPath.MeasuringClassDataConsumer(this) : this;
 
   /**
    * Called by the VM to support dynamic additions to the class path.
@@ -142,13 +147,13 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder,
-                             @Nullable ClassPath.ResourceFileFactory resourceFileFactory,
-                             boolean isParallelCapable) {
+                           @Nullable Function<Path, ResourceFile> resourceFileFactory,
+                           boolean isParallelCapable) {
     this(builder, resourceFileFactory, isParallelCapable, false);
   }
 
   protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder,
-                           @Nullable ClassPath.ResourceFileFactory resourceFileFactory,
+                           @Nullable Function<Path, ResourceFile> resourceFileFactory,
                            boolean isParallelCapable,
                            boolean isMimicJarUrlConnectionNeeded) {
     super(builder.parent);
@@ -160,10 +165,19 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       urlsWithProtectionDomain = Collections.emptySet();
     }
 
-    classPath = new ClassPath(files, urlsWithProtectionDomain, builder, resourceFileFactory, this, isMimicJarUrlConnectionNeeded);
+    classPath = new ClassPath(files, urlsWithProtectionDomain, builder, resourceFileFactory, isMimicJarUrlConnectionNeeded);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
     classLoadingLocks = isParallelCapable ? new ClassLoadingLocks<>() : null;
+  }
+
+  protected UrlClassLoader(@NotNull List<Path> files, @NotNull ClassPath classPath) {
+    super(null);
+
+    this.files = files;
+    this.classPath = classPath;
+    isBootstrapResourcesAllowed = false;
+    classLoadingLocks = new ClassLoadingLocks<>();
   }
 
   /** @deprecated adding URLs to a classloader at runtime could lead to hard-to-debug errors */
@@ -203,7 +217,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
     Class<?> clazz;
     try {
-      clazz = classPath.findClass(name);
+      clazz = classPath.findClass(name, classDataConsumer);
     }
     catch (IOException e) {
       throw new ClassNotFoundException(name, e);
@@ -345,7 +359,17 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return classLoadingLocks == null ? this : classLoadingLocks.getOrCreateLock(className);
   }
 
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public @Nullable BiPredicate<String, Boolean> resolveScopeManager;
+
   public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
+    // isDefinitelyAlienClass
+    BiPredicate<String, Boolean> resolveScopeManager = this.resolveScopeManager;
+    if (resolveScopeManager != null && resolveScopeManager.test(name, forceLoadFromSubPluginClassloader)) {
+      return null;
+    }
+
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null) {
@@ -367,7 +391,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
           return c;
         }
       }
-      return classPath.findClass(name);
+      return classPath.findClass(name, classDataConsumer);
     }
   }
 

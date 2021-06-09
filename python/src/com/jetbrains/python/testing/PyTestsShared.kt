@@ -34,7 +34,7 @@ import com.intellij.remote.RemoteSdkAdditionalData
 import com.intellij.util.ThreeState
 import com.jetbrains.extensions.*
 import com.jetbrains.python.PyBundle
-import com.jetbrains.python.PyNames
+import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
@@ -58,12 +58,20 @@ import java.util.regex.Matcher
 /**
  * New configuration factories
  */
-internal val pythonFactories
-  get() = arrayOf<PythonConfigurationFactoryBase>(
-    PyUnitTestFactory(),
+internal val pythonFactories: Array<PyAbstractTestFactory<*>>
+  get() = arrayOf(
     PyTestFactory(),
     PyNoseTestFactory(),
-    PyTrialTestFactory())
+    PyTrialTestFactory(),
+    PyUnitTestFactory())
+
+internal val defaultFactory: PyAbstractTestFactory<*> get() = PyUnitTestFactory()
+
+fun getFactoryById(id: String): PyAbstractTestFactory<*>? =
+  // user may have "pytest" because it was used instead of py.test (old id) for some time
+  pythonFactories.firstOrNull { it.id == if (id == "pytest") PyTestFactory.id else id }
+
+fun getFactoryByIdOrDefault(id: String): PyAbstractTestFactory<*> = getFactoryById(id) ?: defaultFactory
 
 /**
  * Accepts text that may be wrapped in TC message. Unwraps it and removes TC escape code.
@@ -79,12 +87,6 @@ fun processTCMessage(text: String): String {
 }
 
 internal fun getAdditionalArgumentsProperty() = PyAbstractTestConfiguration::additionalArguments
-
-/**
- * If runner name is here that means test runner only can run inheritors for TestCase
- */
-val RunnersThatRequireTestCaseClass: Set<String> = setOf<String>(PythonTestConfigurationsModel.getPythonsUnittestName(),
-                                                                 PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST))
 
 /**
  * Checks if element could be test target
@@ -128,12 +130,8 @@ private class PyTargetBasedPsiLocation(val target: ConfigurationTarget,
 /**
  * @return factory chosen by user in "test runner" settings
  */
-private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationFactory {
-  val name = TestRunnerService.getInstance(module).projectConfiguration
-  val factories = PythonTestConfigurationType.getInstance().configurationFactories
-  val configurationFactory = factories.find { it.name == name }
-  return configurationFactory ?: factories.first()
-}
+private fun findConfigurationFactoryFromSettings(module: Module): ConfigurationFactory =
+  TestRunnerService.getInstance(module).selectedFactory
 
 
 // folder provided by python side. Resolve test names versus it
@@ -268,7 +266,8 @@ private const val DEFAULT_PATH = ""
  * Target depends on target type. It could be path to file/folder or python target
  */
 data class ConfigurationTarget(@ConfigField("runcfg.python_tests.config.target") override var target: String,
-                               @ConfigField("runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
+                               @ConfigField(
+                                 "runcfg.python_tests.config.targetType") override var targetType: PyRunTargetVariant) : TargetWithVariant {
   fun copyTo(dst: ConfigurationTarget) {
     // TODO:  do we have such method it in Kotlin?
     dst.target = target
@@ -411,13 +410,12 @@ internal interface PyTestConfigurationWithCustomSymbol {
  *
  */
 abstract class PyAbstractTestConfiguration(project: Project,
-                                           configurationFactory: ConfigurationFactory,
-                                           private val runnerName: String)
-  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, configurationFactory), PyRerunAwareConfiguration,
+                                           private val testFactory: PyAbstractTestFactory<*>)
+  : AbstractPythonTestRunConfiguration<PyAbstractTestConfiguration>(project, testFactory), PyRerunAwareConfiguration,
     RefactoringListenerProvider, SMRunnerConsolePropertiesProvider {
 
   override fun createTestConsoleProperties(executor: Executor): SMTRunnerConsoleProperties =
-    PythonTRunnerConsoleProperties(this, executor, true, PyTestsLocator).also {properties ->
+    PythonTRunnerConsoleProperties(this, executor, true, PyTestsLocator).also { properties ->
       if (isIdTestBased) properties.makeIdTestBased()
     }
 
@@ -433,12 +431,12 @@ abstract class PyAbstractTestConfiguration(project: Project,
   @ConfigField("runcfg.python_tests.config.additionalArguments")
   var additionalArguments: String = ""
 
-  val testFrameworkName: String = configurationFactory.name
+  val testFrameworkName: String = testFactory.name
 
   /**
    * @see [RunnersThatRequireTestCaseClass]
    */
-  fun isTestClassRequired(): ThreeState = if (RunnersThatRequireTestCaseClass.contains(runnerName)) {
+  fun isTestClassRequired(): ThreeState = if (testFactory.onlyClassesSupported) {
     ThreeState.YES
   }
   else {
@@ -485,7 +483,11 @@ abstract class PyAbstractTestConfiguration(project: Project,
   /**
    * Check if framework is available on SDK
    */
-  abstract fun isFrameworkInstalled(): Boolean
+  open fun isFrameworkInstalled(): Boolean {
+    val sdk = sdk ?: return false // No SDK -- no tests
+    val requiredPackage = testFactory.packageRequired ?: return true // No package required
+    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
+  }
 
   override fun isIdTestBased(): Boolean = true
 
@@ -649,6 +651,25 @@ abstract class PyAbstractTestConfiguration(project: Project,
 abstract class PyAbstractTestFactory<out CONF_T : PyAbstractTestConfiguration> : PythonConfigurationFactoryBase(
   PythonTestConfigurationType.getInstance()) {
   abstract override fun createTemplateConfiguration(project: Project): CONF_T
+
+  // Several insances of the same class point to the same factory
+  override fun equals(other: Any?): Boolean = ((other as? PyAbstractTestFactory<*>))?.id == id
+  override fun hashCode(): Int = id.hashCode()
+
+  /**
+   * Only UnitTest inheritors are supported
+   */
+  abstract val onlyClassesSupported: Boolean
+
+  /**
+   * Test framework needs package to be installed
+   */
+  open val packageRequired: String? = null
+
+  open fun isFrameworkInstalled(sdk: Sdk): Boolean {
+    val requiredPackage = packageRequired ?: return true // No package required
+    return PyPackageManager.getInstance(sdk).packages?.firstOrNull { it.name == requiredPackage } != null
+  }
 }
 
 

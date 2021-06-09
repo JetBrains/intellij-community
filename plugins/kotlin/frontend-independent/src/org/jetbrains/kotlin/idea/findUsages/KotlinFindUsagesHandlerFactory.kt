@@ -9,19 +9,14 @@ import com.intellij.find.findUsages.FindUsagesOptions
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import com.intellij.psi.search.searches.OverridingMethodsSearch
 import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.idea.asJava.LightClassProvider.Companion.providedToLightMethods
-import org.jetbrains.kotlin.idea.findUsages.KotlinFindUsagesSupport.Companion.checkSuperMethods
 import org.jetbrains.kotlin.idea.findUsages.handlers.DelegatingFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindClassUsagesHandler
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinFindMemberUsagesHandler
 import org.jetbrains.kotlin.idea.findUsages.handlers.KotlinTypeParameterFindUsagesHandler
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport.Companion.isOverridable
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
-import org.jetbrains.kotlin.psi.psiUtil.parameterIndex
 
 class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactory() {
     val javaHandlerFactory = JavaFindUsagesHandlerFactory(project)
@@ -61,33 +56,8 @@ class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactor
             is KtClassOrObject ->
                 return KotlinFindClassUsagesHandler(element, this)
 
-            is KtParameter -> {
-                if (!forHighlightUsages) {
-                    if (element.hasValOrVar()) {
-                        val declarationsToSearch = checkSuperMethods(element, null, findPropertyOptions.isSearchForBaseAccessors)
-                        return handlerForMultiple(element, declarationsToSearch)
-                    }
-                    val function = element.ownerFunction
-                    if (function != null && function.isOverridable()) {
-                        val psiMethod = function.providedToLightMethods().singleOrNull()
-                        if (psiMethod != null) {
-                            val hasOverridden = OverridingMethodsSearch.search(psiMethod).any()
-                            if (hasOverridden && findFunctionOptions.isSearchForBaseMethod) {
-                                val parametersCount = psiMethod.parameterList.parametersCount
-                                val parameterIndex = element.parameterIndex()
-                                assert(parameterIndex < parametersCount)
-                                val overridingParameters = OverridingMethodsSearch.search(psiMethod, true)
-                                    .filter { it.parameterList.parametersCount == parametersCount }
-                                    .mapNotNull { it.parameterList.parameters[parameterIndex].unwrapped }
-                                return handlerForMultiple(element, listOf(element) + overridingParameters)
-                            }
-                        }
-
-                    }
-                }
-
-                return KotlinFindMemberUsagesHandler.getInstance(element, factory = this)
-            }
+            is KtParameter -> return if (!forHighlightUsages) handlerForMultiple(element, listOf(element))
+                                     else KotlinFindMemberUsagesHandler.getInstance(element, factory = this)
 
             is KtNamedFunction, is KtProperty, is KtConstructor<*> -> {
                 val declaration = element as KtNamedDeclaration
@@ -95,10 +65,7 @@ class KotlinFindUsagesHandlerFactory(project: Project) : FindUsagesHandlerFactor
                 if (forHighlightUsages) {
                     return KotlinFindMemberUsagesHandler.getInstance(declaration, factory = this)
                 }
-
-                val declarationsToSearch = checkSuperMethods(declaration, null, findFunctionOptions.isSearchForBaseMethod)
-
-                return handlerForMultiple(declaration, declarationsToSearch)
+                return handlerForMultiple(declaration, listOf(declaration))
             }
 
             is KtTypeParameter ->

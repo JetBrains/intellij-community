@@ -8,7 +8,6 @@ import com.intellij.psi.search.LocalSearchScope
 import com.intellij.psi.util.PartiallyKnownString
 import com.intellij.testFramework.PlatformTestUtil
 import junit.framework.TestCase
-import org.jetbrains.uast.UCallExpression
 import org.jetbrains.uast.UReturnExpression
 import org.jetbrains.uast.analysis.*
 import org.jetbrains.uast.getUastParentOfType
@@ -297,6 +296,27 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
     )
   }
 
+  fun `test StringBuilder with conditional potential update`() = doTest(
+    """
+      class MyFile {
+        String a(boolean param) {
+          StringBuilder sb = new StringBuilder("a");
+          if (param) {
+            sb.append("b");
+          }
+          
+          return /*<caret>*/ sb.toString();
+        }
+      }
+    """.trimIndent(),
+    "'a'{|'b'}",
+    configuration = {
+      UNeDfaConfiguration(
+        builderEvaluators = listOf(UStringBuilderEvaluator)
+      )
+    }
+  )
+
   fun `test StringBuilder with false deep evidence`() = doTest(
     """
       class MyFile {
@@ -472,7 +492,7 @@ class UStringEvaluatorWithSideEffectsTest : AbstractStringEvaluatorTest() {
   }
 
   fun `test many appends`() {
-    val size = 400
+    val size = 250
     val file = myFixture.configureByText("MyFile.java", """
       class MyFile {
         String b() {

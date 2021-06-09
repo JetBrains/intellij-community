@@ -3,6 +3,7 @@ package com.intellij.openapi.wm;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ui.UIBundle;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -47,7 +48,7 @@ public final class ToolWindowAnchor {
     return this == TOP || this == BOTTOM;
   }
 
-  public static @NotNull ToolWindowAnchor get(int swingOrientationConstant) {
+  public static @NotNull ToolWindowAnchor get(@MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT}) int swingOrientationConstant) {
     switch(swingOrientationConstant) {
       case SwingConstants.TOP:
         return TOP;

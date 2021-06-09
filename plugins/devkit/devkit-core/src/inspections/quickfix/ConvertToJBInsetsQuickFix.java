@@ -46,7 +46,7 @@ public class ConvertToJBInsetsQuickFix implements LocalQuickFix {
         text = "insetsBottom(" + bottom + ")";
       } else if (isZero(top, left, bottom)) {
         text = "insetsRight(" + right + ")";
-      } else if (top.equals(left) && left.equals(bottom) && bottom.equals(right) && right.equals(top)) {
+      } else if (top.equals(left) && left.equals(bottom) && bottom.equals(right)) {
         text = "insets(" + top + ")";
       } else if (top.equals(bottom) && right.equals(left)) {
         text = String.format("insets(%s, %s)", top, left);

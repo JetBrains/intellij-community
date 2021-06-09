@@ -2,8 +2,8 @@
 package com.siyeh.ig.jdk;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -52,7 +52,7 @@ public class ForwardCompatibilityInspectionTest extends LightJavaInspectionTestC
 
   public void withLevel(LanguageLevel languageLevel, Runnable runnable) {
     Module module = getModule();
-    LanguageLevel prev = LanguageLevelModuleExtensionImpl.getInstance(module).getLanguageLevel();
+    LanguageLevel prev = LanguageLevelUtil.getCustomLanguageLevel(module);
     IdeaTestUtil.setModuleLanguageLevel(module, languageLevel);
     try {
       runnable.run();

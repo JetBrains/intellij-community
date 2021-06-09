@@ -225,7 +225,8 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameInScopeItemP
   @NotNull
   private static FindSymbolParameters createParameters(@NotNull ChooseByNameViewModel base, @NotNull String pattern, boolean everywhere) {
     ChooseByNameModel model = base.getModel();
-    IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? ((ContributorsBasedGotoByModel)model).getIdFilter(everywhere) : null;
+    IdFilter idFilter = model instanceof ContributorsBasedGotoByModel ? IdFilter.getProjectIdFilter(
+      ((ContributorsBasedGotoByModel)model).getProject(), everywhere) : null;
     GlobalSearchScope searchScope = FindSymbolParameters.searchScopeFor(base.getProject(), everywhere);
     return new FindSymbolParameters(pattern, getNamePattern(base, pattern), searchScope, idFilter);
   }

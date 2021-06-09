@@ -1085,7 +1085,7 @@ public final class PsiClassImplUtil {
         return false;
       }
     }
-    if (qName1.hashCode() != qName2.hashCode() || !qName1.equals(qName2)) {
+    if (!qName1.equals(qName2)) {
       return false;
     }
 

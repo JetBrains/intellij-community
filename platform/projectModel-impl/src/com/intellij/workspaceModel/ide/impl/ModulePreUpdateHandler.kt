@@ -3,7 +3,6 @@ package com.intellij.workspaceModel.ide.impl
 
 import com.intellij.workspaceModel.ide.WorkspaceModelPreUpdateHandler
 import com.intellij.workspaceModel.storage.EntityChange
-import com.intellij.workspaceModel.storage.EntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
@@ -21,7 +20,8 @@ class ModulePreUpdateHandler : WorkspaceModelPreUpdateHandler {
       when (change) {
         is EntityChange.Added -> removedModulePersistentIds.remove((change.entity as ModuleEntity).persistentId())
         is EntityChange.Removed -> removedModulePersistentIds.add((change.entity as ModuleEntity).persistentId())
-        else -> {}
+        else -> {
+        }
       }
     }
 

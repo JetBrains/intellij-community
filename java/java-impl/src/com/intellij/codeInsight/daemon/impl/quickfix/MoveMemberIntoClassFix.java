@@ -56,7 +56,9 @@ public class MoveMemberIntoClassFix extends LocalQuickFixAndIntentionActionOnPsi
     documentManager.commitDocument(document);
     psiClass = classPtr.getElement();
     if (psiClass == null) return;
-    psiClass.add(member);
+    PsiElement rBrace = psiClass.getRBrace();
+    if (rBrace == null) return;
+    psiClass.addBefore(member, rBrace);
   }
 
   @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.uploader
 
 import com.google.gson.Gson
@@ -67,8 +67,8 @@ object EventLogExternalUploader {
     }
 
     EventLogSystemLogger.logCreatingExternalSendCommand(recorderId)
-    val config = EventLogConfiguration.getOrCreate(recorderId)
-    val device = DeviceConfiguration(config.deviceId, config.bucket)
+    val config = EventLogConfiguration.getInstance().getOrCreate(recorderId)
+    val device = DeviceConfiguration(config.deviceId, config.bucket, config.machineId)
     val application = EventLogInternalApplicationInfo(recorderId, isTest)
     try {
       val command = prepareUploadCommand(device, recorder, application)
@@ -92,7 +92,7 @@ object EventLogExternalUploader {
 
     val tempDir = getOrCreateTempDir()
     val uploader = findUploader()
-    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging", "http-client")
+    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging")
 
     val libPaths = libs.map { it.path }.toMutableList()
     libPaths.add(findLibraryByClass(NotNull::class.java))
@@ -115,6 +115,8 @@ object EventLogExternalUploader {
     addArgument(args, LOGS_OPTION, logFiles.joinToString(separator = File.pathSeparator))
     addArgument(args, DEVICE_OPTION, device.deviceId)
     addArgument(args, BUCKET_OPTION, device.bucket.toString())
+    addArgument(args, MACHINE_ID_OPTION, device.machineId.id)
+    addArgument(args, ID_REVISION_OPTION, device.machineId.revision.toString())
     addArgument(args, URL_OPTION, applicationInfo.templateUrl)
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)

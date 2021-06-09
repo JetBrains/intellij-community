@@ -10,31 +10,32 @@ import com.intellij.openapi.vfs.VirtualFileVisitor
 import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager
 import com.intellij.util.ArrayUtilRt.EMPTY_STRING_ARRAY
-import com.intellij.util.containers.ConcurrentList
-import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.toArray
 import com.intellij.util.io.URLUtil
 import com.intellij.workspaceModel.storage.url.VirtualFileUrl
 import java.util.*
 
 class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectories: List<JarDirectoryDescription>) {
-  private val virtualFilePointersList: ConcurrentList<VirtualFilePointer> = ContainerUtil.createConcurrentList()
+  private val virtualFilePointersList = mutableSetOf<VirtualFilePointer>()
   private val virtualFilePointerManager = VirtualFilePointerManager.getInstance()
+
   @Volatile
   private var timestampOfCachedFiles = -1L
+
   @Volatile
   private var cachedFilesList = arrayOf<VirtualFile>()
+
   @Volatile
   private var cachedUrlsList: Array<String>? = null
 
   init {
-    urls.forEach { virtualFilePointersList.addIfAbsent(it as VirtualFilePointer) }
-    jarDirectories.forEach { virtualFilePointersList.addIfAbsent(it.directoryUrl as VirtualFilePointer) }
+    urls.forEach { virtualFilePointersList.add(it as VirtualFilePointer) }
+    jarDirectories.forEach { virtualFilePointersList.add(it.directoryUrl as VirtualFilePointer) }
   }
 
   fun isJarDirectory(url: String): Boolean = jarDirectories.any { it.directoryUrl.url == url }
   fun findByUrl(url: String): VirtualFilePointer? = virtualFilePointersList.find { it.url == url }
-  fun getList(): List<VirtualFilePointer> = Collections.unmodifiableList(virtualFilePointersList)
+  fun getList(): List<VirtualFilePointer> = Collections.unmodifiableList(virtualFilePointersList.toList())
   fun getUrls(): Array<String> {
     if (cachedUrlsList == null) {
       cachedUrlsList = virtualFilePointersList.map { it.url }.toArray(EMPTY_STRING_ARRAY)
@@ -45,7 +46,7 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
   fun getFiles(): Array<VirtualFile> {
     val timestamp = timestampOfCachedFiles
     val cachedResults = cachedFilesList
-    return if (timestamp == virtualFilePointerManager.modificationCount) cachedResults else  cacheVirtualFilePointersData()
+    return if (timestamp == virtualFilePointerManager.modificationCount) cachedResults else cacheVirtualFilePointersData()
   }
 
   private fun cacheVirtualFilePointersData(): Array<VirtualFile> {
@@ -87,7 +88,8 @@ class FileContainerDescription(val urls: List<VirtualFileUrl>, val jarDirectorie
               return true
             }
           })
-        } else {
+        }
+        else {
           if (!directoryFile.isValid) continue
           val children = directoryFile.children
           for (file in children) {

@@ -53,9 +53,9 @@ abstract class TypeInfo(val variance: Variance) {
                 } ?: containingDeclarationForPseudocode
 
                 throw KotlinExceptionWithAttachments(stackException.message, stackException)
-                    .withAttachment("original expression", originalElement.text)
-                    .withAttachment("containing declaration", containingDeclarationForPseudocode?.text)
-                    .withAttachment("enclosing declaration", enclosingPseudocodeDeclaration?.text)
+                    .withAttachment("original_expression.txt", originalElement.text)
+                    .withAttachment("containing_declaration.txt", containingDeclarationForPseudocode?.text)
+                    .withAttachment("enclosing_declaration.txt", enclosingPseudocodeDeclaration?.text)
             }
         ).flatMap { it.getPossibleSupertypes(variance, builder) }
     }

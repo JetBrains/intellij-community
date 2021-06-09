@@ -30,6 +30,7 @@ class WorkspaceModelTopics : Disposable {
     @Topic.ProjectLevel
     private val CHANGED = Topic(WorkspaceModelChangeListener::class.java, Topic.BroadcastDirection.NONE)
 
+    @JvmStatic
     fun getInstance(project: Project): WorkspaceModelTopics = project.service()
   }
 
@@ -87,7 +88,8 @@ class WorkspaceModelTopics : Disposable {
           innerActivity.end()
         }
       }
-    } else {
+    }
+    else {
       allEvents.forEach { queue -> queue.collectToQueue = false }
     }
     allEvents.clear()

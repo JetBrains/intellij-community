@@ -11,8 +11,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileFilters;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.util.text.UniqueNameGenerator;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -45,11 +43,6 @@ public class MigrationMapSet {
   @NonNls private static final String PACKAGE_TYPE = "package";
   @NonNls private static final String CLASS_TYPE = "class";
   @NonNls private static final String RECURSIVE = "recursive";
-
-  @NonNls private static final String SWING_MAP_FILE_NAME = "Swing__1_0_3____1_1_.xml";
-  @NonNls private static final String[] DEFAULT_MAPS = new  String[] {
-    "/com/intellij/refactoring/migration/res/" + SWING_MAP_FILE_NAME,
-  };
 
   public MigrationMapSet() {
   }
@@ -97,11 +90,6 @@ public class MigrationMapSet {
       if (fileName.equals(name)) return true;
     }
 
-    for (String defaultTemplate : DEFAULT_MAPS) {
-      String fileName = FileUtilRt.getNameWithoutExtension(StringUtil.getShortName(defaultTemplate, '/'));
-
-      if (fileName.equals(name)) return true;
-    }
     return false;
   }
 
@@ -134,13 +122,6 @@ public class MigrationMapSet {
       URL migrationMap = provider.getMigrationMap();
       String fileName = new File(migrationMap.getFile()).getName();
       copyMap(dir, migrationMap, fileName);
-    }
-
-    for (String defaultTemplate : DEFAULT_MAPS) {
-      URL url = MigrationMapSet.class.getResource(defaultTemplate);
-      LOG.assertTrue(url != null);
-      String fileName = defaultTemplate.substring(defaultTemplate.lastIndexOf("/") + 1);
-      copyMap(dir, url, fileName);
     }
   }
 
@@ -210,15 +191,10 @@ public class MigrationMapSet {
       if (NAME.equals(node.getName())) {
         @NlsSafe String name = node.getAttributeValue(VALUE);
         map.setName(name);
-        if (SWING_MAP_FILE_NAME.equals(fileName)) {
-          map.setDescription(RefactoringBundle.message("migration.swing.description"));
-        }
-        else {
-          for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
-            if (new File(provider.getMigrationMap().getFile()).getName().equals(fileName)) {
-              map.setDescription(provider.getDescription());
-              break;
-            }
+        for (PredefinedMigrationProvider provider : PredefinedMigrationProvider.EP_NAME.getExtensionList()) {
+          if (new File(provider.getMigrationMap().getFile()).getName().equals(fileName)) {
+            map.setDescription(provider.getDescription());
+            break;
           }
         }
       }

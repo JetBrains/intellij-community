@@ -317,6 +317,16 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                 final int line,
                                                                                 @Nullable final T properties,
                                                                                 boolean temporary) {
+    return addLineBreakpoint(type, fileUrl, line, properties, temporary, true);
+  }
+
+  @NotNull
+  public <T extends XBreakpointProperties> XLineBreakpoint<T> addLineBreakpoint(final XLineBreakpointType<T> type,
+                                                                                @NotNull final String fileUrl,
+                                                                                final int line,
+                                                                                @Nullable final T properties,
+                                                                                boolean temporary,
+                                                                                boolean initUI) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LineBreakpointState<T> state = new LineBreakpointState<>(true, type.getId(), fileUrl, line, temporary,
                                                              ++myTime, type.getDefaultSuspendPolicy());
@@ -324,7 +334,7 @@ public final class XBreakpointManagerImpl implements XBreakpointManager {
     state.setGroup(myDefaultGroup);
     XLineBreakpointImpl<T> breakpoint = new XLineBreakpointImpl<>(type, this, properties,
                                                                   state);
-    addBreakpoint(breakpoint, false, true);
+    addBreakpoint(breakpoint, false, initUI);
     return breakpoint;
   }
 

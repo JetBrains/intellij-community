@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import groovy.transform.TypeCheckingMode
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
@@ -86,6 +87,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.webp",
     "intellij.grazie",
     "intellij.featuresTrainer",
+    "intellij.vcs.git.featuresTrainer",
     "intellij.lombok"
   ]
 
@@ -110,23 +112,23 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "plugins/gradle/lib/gradle-tooling-extension-api.jar"       : "1.6",
     "plugins/gradle/lib/gradle-tooling-extension-impl.jar"      : "1.6",
     "plugins/maven/lib/maven-server-api.jar"                    : "1.6",
-    "plugins/maven/lib/maven2-server-impl.jar"                  : "1.6",
+    "plugins/maven/lib/maven2-server.jar"                  : "1.6",
     "plugins/maven/lib/maven3-server-common.jar"                : "1.6",
-    "plugins/maven/lib/maven30-server-impl.jar"                 : "1.6",
-    "plugins/maven/lib/maven3-server-impl.jar"                  : "1.6",
+    "plugins/maven/lib/maven30-server.jar"                 : "1.6",
+    "plugins/maven/lib/maven3-server.jar"                  : "1.6",
     "plugins/maven/lib/artifact-resolver-m2.jar"                : "1.6",
     "plugins/maven/lib/artifact-resolver-m3.jar"                : "1.6",
     "plugins/maven/lib/artifact-resolver-m31.jar"               : "1.6",
     "plugins/xpath/lib/rt/xslt-rt.jar"                          : "1.6",
     "plugins/xslt-debugger/lib/xslt-debugger-rt.jar"            : "1.6",
     "plugins/xslt-debugger/lib/rt/xslt-debugger-impl-rt.jar"    : "1.8",
-    "plugins/android/lib/jb-layoutlib-jdk11-27.1.1.0.jar"       : "9",
+    "plugins/android/lib/layoutlib-27.2.0.0.jar"                : "9",
   ]
 
   BaseIdeaProperties() {
     productLayout.mainJarName = "idea.jar"
 
-    productLayout.additionalPlatformJars.put("resources.jar", "intellij.java.ide.resources")
+    productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.java.ide.resources")
 
     productLayout.platformLayoutCustomizer = { PlatformLayout layout ->
       layout.customize {

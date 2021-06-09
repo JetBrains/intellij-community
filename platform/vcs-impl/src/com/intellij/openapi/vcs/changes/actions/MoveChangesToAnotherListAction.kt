@@ -137,7 +137,9 @@ class MoveChangesToAnotherListAction : AbstractChangeListAction() {
         .ifEmpty { nonAffectedLists }
       val defaultSelection = guessPreferredList(preferredList)
 
-      val chooser = ChangeListChooser(project, suggestedLists, defaultSelection, StringUtil.removeEllipsisSuffix(title), null)
+      val chooser = ChangeListChooser(project, StringUtil.removeEllipsisSuffix(title))
+      chooser.setChangeLists(suggestedLists)
+      chooser.setDefaultSelection(defaultSelection)
       chooser.show()
       return chooser.selectedList
     }

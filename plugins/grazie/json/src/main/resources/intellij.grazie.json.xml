@@ -4,6 +4,7 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <grammar.strategy language="JSON" implementationClass="com.intellij.grazie.ide.language.json.JsonGrammarCheckingStrategy"/>
+    <textExtractor language="JSON" implementationClass="com.intellij.grazie.ide.language.json.JsonTextExtractor"/>
+    <problemFilter language="JSON" implementationClass="com.intellij.grazie.ide.language.json.JsonProblemFilter"/>
   </extensions>
 </idea-plugin>

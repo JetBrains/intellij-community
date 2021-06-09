@@ -13,7 +13,7 @@ import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.tree.LeafState
 import java.util.Objects.hash
 
-internal class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : Node(parent) {
+class ProblemNode(parent: Node, val file: VirtualFile, val problem: Problem) : Node(parent) {
 
   var text: String = ""
     private set

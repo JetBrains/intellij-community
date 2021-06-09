@@ -44,7 +44,7 @@ public abstract class ProjectFileNodeUpdater {
         updateFromRoot();
       }
     });
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, newRoots, oldRoots) -> updateFromRoot());
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> updateFromRoot());
     connection.subscribe(VFS_CHANGES, new BulkFileListener() {
       @Override
       public void after(@NotNull List<? extends @NotNull VFileEvent> events) {

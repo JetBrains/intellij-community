@@ -6,7 +6,6 @@ import com.intellij.ide.hierarchy.HierarchyNodeDescriptor
 import com.intellij.ide.hierarchy.HierarchyTreeStructure
 import com.intellij.ide.hierarchy.JavaHierarchyUtil
 import com.intellij.ide.hierarchy.MethodHierarchyBrowserBase
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
@@ -30,8 +29,7 @@ class KotlinOverrideHierarchyBrowser(
 
         val tree = createTree(false)
 
-        val group = actionManager.getAction(IdeActions.GROUP_METHOD_HIERARCHY_POPUP) as ActionGroup
-        PopupHandler.installPopupHandler(tree, group, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP, actionManager)
+        PopupHandler.installPopupMenu(tree, IdeActions.GROUP_METHOD_HIERARCHY_POPUP, ActionPlaces.METHOD_HIERARCHY_VIEW_POPUP)
 
         BaseOnThisMethodAction().registerCustomShortcutSet(actionManager.getAction(IdeActions.ACTION_METHOD_HIERARCHY).shortcutSet, tree)
 

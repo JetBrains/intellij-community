@@ -22,7 +22,7 @@ class ExecutorAction private constructor(val origin: AnAction,
     copyFrom(origin)
   }
 
-  override fun isUpdateInBackground() = (origin as? UpdateInBackground)?.isUpdateInBackground == true
+  override fun isUpdateInBackground() = UpdateInBackground.isUpdateInBackground(origin)
 
   companion object {
     @JvmStatic

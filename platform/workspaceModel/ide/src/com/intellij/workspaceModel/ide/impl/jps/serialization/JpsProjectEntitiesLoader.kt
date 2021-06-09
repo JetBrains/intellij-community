@@ -174,8 +174,3 @@ internal fun loadStorageFile(xmlFile: Path, pathMacroManager: PathMacroManager):
   return FileStorageCoreUtil.load(rootElement, pathMacroManager, true)
 }
 
-fun levelToLibraryTableId(level: String) = when (level) {
-  JpsLibraryTableSerializer.MODULE_LEVEL -> error("this method isn't supposed to be used for module-level libraries")
-  JpsLibraryTableSerializer.PROJECT_LEVEL -> LibraryTableId.ProjectLibraryTableId
-  else -> LibraryTableId.GlobalLibraryTableId(level)
-}

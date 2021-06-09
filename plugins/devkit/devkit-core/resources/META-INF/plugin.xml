@@ -192,11 +192,6 @@
                      enabledByDefault="false" level="WARNING"
                      implementationClass="org.jetbrains.idea.devkit.inspections.internal.UseCoupleInspection"
                      key="inspection.use.couple.display.name"/>
-    <localInspection language="JAVA" shortName="DontUsePairConstructor"
-                     groupPathKey="inspections.group.path" groupKey="inspections.group.code"
-                     enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.idea.devkit.inspections.internal.DontUseNewPairInspection"
-                     key="inspection.dont.use.pair.constructor.display.name"/>
     <!--suppress PluginXmlCapitalization -->
     <localInspection language="UAST" shortName="UseVirtualFileEquals"
                      groupPathKey="inspections.group.path" groupKey="inspections.group.code"
@@ -408,7 +403,7 @@
     <registryKey key="tmh.generate.assertions.for.annotations" defaultValue="true"
                  description="Generate assertions for @RequiresEdt and similar annotations.
                  The assertions are added by instrumenting class files during compilation."/>
-    <registryKey key="tmh.generate.line.numbers" defaultValue="false"
+    <registryKey key="tmh.generate.line.numbers" defaultValue="true"
                  description="Generate line numbers when instrumenting @RequiresEdt and similar annotations.
                  This results in better stack traces when generated assertions throw exceptions, but might slow down the compilation."/>
   </extensions>

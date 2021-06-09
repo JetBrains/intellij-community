@@ -47,10 +47,6 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     }, fileNames);
   }
 
-  public void testIdeaDev41005() throws Exception {
-    doJavaCallerTypeHierarchyTest("B", "xyzzy", "B.java", "D.java", "A.java");
-  }
-
   public void testDirectRecursion() throws Exception {
     doJavaCallerTypeHierarchyTest("A", "recursive", "A.java");
   }
@@ -63,24 +59,28 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
     doJavaCallerTypeHierarchyTest("A", "recursive2", "A.java");
   }
 
+  public void testIdeaDev41005() throws Exception {
+    doJavaCallerTypeHierarchyTest("B", "xyzzy", "A.java");
+  }
+
   public void testIdeaDev41005_Inheritance() throws Exception {
-    doJavaCallerTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java");
+    doJavaCallerTypeHierarchyTest("D", "xyzzy", "A.java");
   }
 
   public void testIdeaDev41005_Sibling() throws Exception {
-    doJavaCallerTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java");
+    doJavaCallerTypeHierarchyTest("D", "xyzzy", "A.java");
   }
 
   public void testIdeaDev41005_SiblingUnderInheritance() throws Exception {
-    doJavaCallerTypeHierarchyTest("D", "xyzzy", "B.java", "D.java", "A.java", "C.java", "CChild.java");
+    doJavaCallerTypeHierarchyTest("D", "xyzzy", "A.java");
   }
 
   public void testIdeaDev41232() throws Exception {
-    doJavaCallerTypeHierarchyTest("A", "main", "B.java", "A.java");
+    doJavaCallerTypeHierarchyTest("A", "main", "A.java");
   }
 
   public void testDefaultConstructor() throws Exception {
-    doJavaCallerTypeHierarchyTest("A", "A", "A.java", "B.java");
+    doJavaCallerTypeHierarchyTest("A", "A", "A.java");
   }
 
   public void testMethodRef() throws Exception {
@@ -118,5 +118,8 @@ public class JavaCallHierarchyTest extends HierarchyViewTestBase {
 
   public void testMustIgnoreJavadocReferences() throws Exception {
     doJavaCallerTypeHierarchyTest("p.X", "persist", "X.java");
+  }
+  public void testCallersOfBaseMethod() throws Exception {
+    doJavaCallerTypeHierarchyTest("p.BaseClass", "method", "X.java");
   }
 }

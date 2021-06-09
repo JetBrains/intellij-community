@@ -43,7 +43,6 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.Executor;
 
 public final class AppUIUtil {
@@ -314,14 +313,14 @@ public final class AppUIUtil {
   }
 
   public static boolean needToShowConsentsAgreement() {
-    return ConsentOptions.getInstance().getConsents().getValue();
+    return ConsentOptions.getInstance().getConsents().getSecond();
   }
 
   public static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor) {
-    final Map.Entry<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
     final Ref<Boolean> result = new Ref<>(Boolean.FALSE);
-    if (consentsToShow.getValue()) {
-      edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.getKey())));
+    if (consentsToShow.getSecond()) {
+      edtExecutor.execute(() -> result.set(confirmConsentOptions(consentsToShow.getFirst())));
     }
     return result.get();
   }
@@ -410,7 +409,7 @@ public final class AppUIUtil {
 
   public static List<Consent> loadConsentsForEditing() {
     final ConsentOptions options = ConsentOptions.getInstance();
-    List<Consent> result = options.getConsents().getKey();
+    List<Consent> result = options.getConsents().getFirst();
     if (options.isEAP()) {
       final Consent statConsent = options.getUsageStatsConsent();
       if (statConsent != null) {

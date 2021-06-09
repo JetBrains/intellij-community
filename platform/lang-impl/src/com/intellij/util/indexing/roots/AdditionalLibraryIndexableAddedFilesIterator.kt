@@ -10,15 +10,18 @@ import com.intellij.util.indexing.roots.IndexableFilesIterationMethods.iterateRo
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin
 import org.jetbrains.annotations.Nls
 
-internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibraryName: @Nls String,
-                                                            val rootsToIndex: Iterable<VirtualFile>) : IndexableFilesIterator {
-  override fun getDebugName(): String = "Additional library change reindexing iterator for $presentableLibraryName"
+internal class AdditionalLibraryIndexableAddedFilesIterator(val presentableLibraryName: @Nls String?,
+                                                            val rootsToIndex: Iterable<VirtualFile>,
+                                                            val libraryNameForDebug: String) : IndexableFilesIterator {
+  override fun getDebugName(): String = "Additional library change reindexing iterator for ${presentableLibraryName ?: "unknown"} library; $libraryNameForDebug"
 
-  override fun getIndexingProgressText(): String =
-    IndexingBundle.message("progress.text.additional.library.indexing.added.files", presentableLibraryName)
+  override fun getIndexingProgressText(): String = presentableLibraryName?.let {
+    IndexingBundle.message("progress.text.additional.library.indexing.added.files", it)
+  } ?: IndexingBundle.message("progress.text.additional.library.indexing.unknown.added.files")
 
-  override fun getRootsScanningProgressText(): String =
-    IndexingBundle.message("progress.text.additional.library.scanning.added.files", presentableLibraryName)
+  override fun getRootsScanningProgressText(): String = presentableLibraryName?.let {
+    IndexingBundle.message("progress.text.additional.library.scanning.added.files", it)
+  } ?: IndexingBundle.message("progress.text.additional.library.scanning.unknown.added.files")
 
   override fun getOrigin(): IndexableSetOrigin = PartialAdditionalLibraryIndexableSetOrigin()
 

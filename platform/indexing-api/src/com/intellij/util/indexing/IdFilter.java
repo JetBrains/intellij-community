@@ -27,11 +27,13 @@ import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.BitSet;
 
+@ApiStatus.Internal
 public abstract class IdFilter {
   private static final Logger LOG = Logger.getInstance(IdFilter.class);
   private static final Key<CachedValue<IdFilter>> INSIDE_PROJECT = Key.create("INSIDE_PROJECT");

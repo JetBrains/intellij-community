@@ -9,6 +9,7 @@ import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -18,11 +19,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-public abstract class MouseDragHelper extends MouseAdapter implements MouseMotionListener, KeyEventDispatcher, Weighted {
+public abstract class MouseDragHelper<T extends JComponent> extends MouseAdapter implements MouseMotionListener, KeyEventDispatcher, Weighted {
   public static final int DRAG_START_DEADZONE = 7;
 
   @NotNull
-  private final JComponent myDragComponent;
+  protected final T myDragComponent;
 
   private Point myPressPointScreen;
   protected Point myPressedOnScreenPoint;
@@ -32,15 +33,13 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
   private IdeGlassPane myGlassPane;
   @NotNull
   private final Disposable myParentDisposable;
-  private Dimension myDelta;
-
   private boolean myDetachPostponed;
   private boolean myDetachingMode;
   private boolean myCancelled;
   private Disposable myGlassPaneListenersDisposable = Disposer.newDisposable();
   private boolean myStopped;
 
-  public MouseDragHelper(@NotNull Disposable parent, @NotNull JComponent dragComponent) {
+  public MouseDragHelper(@NotNull Disposable parent, @NotNull T dragComponent) {
     myDragComponent = dragComponent;
     myParentDisposable = parent;
   }
@@ -124,13 +123,6 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
     myPressPointScreen = new RelativePoint(e).getScreenPoint();
     myPressedOnScreenPoint = new Point(myPressPointScreen);
     processMousePressed(e);
-
-    myDelta = new Dimension();
-    if (myDragComponent.isShowing()) {
-      final Point delta = SwingUtilities.convertPoint(e.getComponent(), e.getPoint(), myDragComponent);
-      myDelta.width = delta.x;
-      myDelta.height = delta.y;
-    }
   }
 
   @Override
@@ -268,9 +260,11 @@ public abstract class MouseDragHelper extends MouseAdapter implements MouseMotio
   }
 
   private boolean isWithinDeadZone(@NotNull MouseEvent e) {
-    final Point screen = new RelativePoint(e).getScreenPoint();
-    return Math.abs(myPressPointScreen.x - screen.x - myDelta.width) < DRAG_START_DEADZONE &&
-           Math.abs(myPressPointScreen.y - screen.y - myDelta.height) < DRAG_START_DEADZONE;
+    return myPressPointScreen.distance(e.getLocationOnScreen()) < getDragStartDeadzone();
+  }
+
+  protected int getDragStartDeadzone() {
+    return JBUI.scale(DRAG_START_DEADZONE);
   }
 
   @Override

@@ -46,15 +46,31 @@ class VcsStatisticsCollector : CounterUsagesCollector() {
                                   unversionedBefore: Collection<FilePath>,
                                   unversionedAfter: Collection<FilePath>,
                                   wasUpdatingBefore: Boolean) {
+      val changesDelta = computeDelta(changesBefore, changesAfter)
+      val unversionedDelta = computeDelta(unversionedBefore, unversionedAfter)
 
-      val changes: MutableSet<Change> = (changesBefore union changesAfter).toMutableSet()
-      changes.removeAll(changesBefore intersect changesAfter)
+      CHANGES_VIEW_REFRESH.log(project,
+                               WAS_UPDATING_BEFORE.with(wasUpdatingBefore),
+                               CHANGES_DELTA.with(changesDelta),
+                               UNVERSIONED_DELTA.with(unversionedDelta))
+    }
 
-      val unversioned: MutableSet<FilePath> = (unversionedBefore union unversionedAfter).toMutableSet()
-      unversioned.removeAll(unversionedBefore intersect unversionedAfter)
+    private fun <T> computeDelta(before: Collection<T>, after: Collection<T>): Int {
+      val beforeSet = before.toHashSet()
+      val afterSet = after.toHashSet()
 
-      CHANGES_VIEW_REFRESH.log(project, WAS_UPDATING_BEFORE.with(wasUpdatingBefore), CHANGES_DELTA.with(changes.size),
-                               UNVERSIONED_DELTA.with(unversioned.size))
+      var result = 0
+      for (value in beforeSet) {
+        if (!afterSet.contains(value)) {
+          result++
+        }
+      }
+      for (value in afterSet) {
+        if (!beforeSet.contains(value)) {
+          result++
+        }
+      }
+      return result
     }
   }
 

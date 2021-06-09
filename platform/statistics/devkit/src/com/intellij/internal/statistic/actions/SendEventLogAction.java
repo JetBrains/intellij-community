@@ -1,10 +1,10 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.actions;
 
 import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchFileService;
-import com.intellij.internal.statistic.eventLog.connection.*;
 import com.intellij.internal.statistic.eventLog.*;
+import com.intellij.internal.statistic.eventLog.connection.*;
 import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
 import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter;
@@ -74,9 +74,9 @@ public class SendEventLogAction extends AnAction {
 
       private StatisticsResult send() {
         String recorderId = StringUtil.trim(Registry.stringValue("usage.statistics.test.action.recorder.id"));
-        EventLogRecorderConfiguration config = EventLogConfiguration.INSTANCE.getOrCreate(recorderId);
+        EventLogRecorderConfiguration config = EventLogConfiguration.getInstance().getOrCreate(recorderId);
         return EventLogStatisticsService.send(
-          new DeviceConfiguration(config.getDeviceId(), config.getBucket()),
+          new DeviceConfiguration(config.getDeviceId(), config.getBucket(), config.getMachineId()),
           new EventLogInternalRecorderConfig(recorderId),
           new EventLogTestSettingsService(recorderId),
           new EventLogTestResultDecorator()

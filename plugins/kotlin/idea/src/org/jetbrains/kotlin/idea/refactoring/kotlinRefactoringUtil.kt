@@ -910,7 +910,7 @@ fun checkSuperMethods(
 ): List<PsiElement> {
     if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
 
-    val (declarationDescriptor, overriddenElementsToDescriptor) = getSuperMethods(declaration, ignore)
+    val (declarationDescriptor, overriddenElementsToDescriptor) = getSuperDescriptors(declaration, ignore)
 
     if (overriddenElementsToDescriptor.isEmpty()) return listOf(declaration)
 
@@ -956,51 +956,36 @@ fun checkSuperMethods(
     return askUserForMethodsToSearch(declarationDescriptor, overriddenElementsToDescriptor)
 }
 
-fun checkSuperMethods(
-    declaration: KtDeclaration,
-    ignore: Collection<PsiElement>?,
-    searchForBase: Boolean
-): List<PsiElement> {
-    if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
+private fun getSuperDescriptors(declaration: KtDeclaration, ignore: Collection<PsiElement>?) = underModalProgress(
+    declaration.project,
+    KotlinBundle.message("find.usages.progress.text.declaration.superMethods")
+) {
+    val declarationDescriptor = declaration.unsafeResolveToDescriptor() as CallableDescriptor
 
-    val (_, overriddenElementsToDescriptor) = getSuperMethods(declaration, ignore)
+    if (declarationDescriptor is LocalVariableDescriptor) return@underModalProgress (declarationDescriptor to emptyMap<PsiElement, CallableDescriptor>())
 
-    if (overriddenElementsToDescriptor.isEmpty()) return listOf(declaration)
-
-    return if (searchForBase) overriddenElementsToDescriptor.keys.toList() else listOf(declaration)
-}
-
-fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) :
-        Pair<CallableDescriptor, Map<PsiElement, CallableDescriptor>> {
-    val project = declaration.project
-
-    return underModalProgress(
-        project,
-        KotlinBundle.message("find.usages.progress.text.declaration.superMethods")
-    ) {
-        val declarationDescriptor = declaration.unsafeResolveToDescriptor() as CallableDescriptor
-
-        if (declarationDescriptor is LocalVariableDescriptor) return@underModalProgress (declarationDescriptor to emptyMap<PsiElement, CallableDescriptor>())
-        else {
-            val overriddenElementsToDescriptor = HashMap<PsiElement, CallableDescriptor>()
-            for (overriddenDescriptor in DescriptorUtils.getAllOverriddenDescriptors(
-                declarationDescriptor
-            )) {
-                val overriddenDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
-                    project,
-                    overriddenDescriptor
-                ) ?: continue
-                if (overriddenDeclaration is KtNamedFunction || overriddenDeclaration is KtProperty || overriddenDeclaration is PsiMethod || overriddenDeclaration is KtParameter) {
-                    overriddenElementsToDescriptor[overriddenDeclaration] = overriddenDescriptor
-                }
-            }
-            if (ignore != null) {
-                overriddenElementsToDescriptor.keys.removeAll(ignore)
-            }
-
-            (declarationDescriptor to overriddenElementsToDescriptor)
+    val overriddenElementsToDescriptor = HashMap<PsiElement, CallableDescriptor>()
+    for (overriddenDescriptor in DescriptorUtils.getAllOverriddenDescriptors(
+        declarationDescriptor
+    )) {
+        val overriddenDeclaration = DescriptorToSourceUtilsIde.getAnyDeclaration(
+            declaration.project,
+            overriddenDescriptor
+        ) ?: continue
+        if (overriddenDeclaration is KtNamedFunction || overriddenDeclaration is KtProperty || overriddenDeclaration is PsiMethod || overriddenDeclaration is KtParameter) {
+            overriddenElementsToDescriptor[overriddenDeclaration] = overriddenDescriptor
         }
     }
+    if (ignore != null) {
+        overriddenElementsToDescriptor.keys.removeAll(ignore)
+    }
+    (declarationDescriptor to overriddenElementsToDescriptor)
+}
+
+fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
+    if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return listOf(declaration)
+    val (_, overriddenElementsToDescriptor) = getSuperDescriptors(declaration, ignore)
+    return if (overriddenElementsToDescriptor.isEmpty()) listOf(declaration) else overriddenElementsToDescriptor.keys.toList()
 }
 
 fun checkSuperMethodsWithPopup(

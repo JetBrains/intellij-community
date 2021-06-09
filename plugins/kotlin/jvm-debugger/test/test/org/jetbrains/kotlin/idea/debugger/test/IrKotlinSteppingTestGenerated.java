@@ -1151,6 +1151,16 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             runTest("testData/stepping/custom/manyFilesWithInlineCalls2.kt");
         }
 
+        @TestMetadata("multilineFunctionCall.kt")
+        public void testMultilineFunctionCall() throws Exception {
+            runTest("testData/stepping/custom/multilineFunctionCall.kt");
+        }
+
+        @TestMetadata("sequentialInlineFunctionCalls.kt")
+        public void testSequentialInlineFunctionCalls() throws Exception {
+            runTest("testData/stepping/custom/sequentialInlineFunctionCalls.kt");
+        }
+
         @TestMetadata("severalFunLiterals.kt")
         public void testSeveralFunLiterals() throws Exception {
             runTest("testData/stepping/custom/severalFunLiterals.kt");

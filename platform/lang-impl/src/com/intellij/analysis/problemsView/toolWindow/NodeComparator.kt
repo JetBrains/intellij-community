@@ -3,7 +3,7 @@ package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.openapi.util.text.StringUtil.naturalCompare
 
-internal data class NodeComparator(
+data class NodeComparator(
   private val sortFoldersFirst: Boolean,
   private val sortBySeverity: Boolean,
   private val sortByName: Boolean)

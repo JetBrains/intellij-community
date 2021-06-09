@@ -683,6 +683,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.os.SystemRuntimeCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.UpdateManagerUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.settings.ProxyTypeCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
     <applicationInitializedListener implementation="com.intellij.openapi.application.ImportOldConfigsUsagesCollector$Trigger"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryApplicationUsagesCollector"/>
@@ -747,9 +748,7 @@
 
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.EAPUsageCollector"/>
     <postStartupActivity implementation="com.intellij.featureStatistics.ProductivityFeaturesRegistryImpl$EventLogSubscribeActivity"/>
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider" order="first"/>
-    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.SearchEverywhereEventLoggerProvider" order="first"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.eventLog.fus.SearchEverywhereSessionService"/>
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.fus.FeatureUsageEventLoggerProvider"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.featureStatistics.fusCollectors.SystemStateMonitor"/>
     <statistic.eventLog.fusStateEventTracker implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.WSLInstallationsCollector"/>
@@ -845,6 +844,8 @@
     <actionPromoter implementation="com.intellij.ide.actions.WindowActionPromoter"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsGlobalSummaryManager"/>
 
+    <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModelCache"
+                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCacheImpl"/>
     <cachesInvalidator implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidator"/>
     <backgroundPostStartupActivity implementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelCachesInvalidatorBackgroundActivity"/>
     <postStartupActivity implementation="com.intellij.workspaceModel.ide.impl.jps.serialization.DelayedProjectSynchronizer"/>
@@ -943,14 +944,13 @@
                         serviceImplementation="com.intellij.ide.browsers.impl.WebBrowserServiceImpl"/>
 
     <!-- Actions on Save -->
-    <!--
     <projectConfigurable groupId="tools"
                          groupWeight="170"
                          instance="com.intellij.ide.actionsOnSave.ActionsOnSaveConfigurable"
                          id="actions.on.save"
                          bundle="messages.IdeBundle"
-                         key="actions.on.save.page.title"/>
-    -->
+                         key="actions.on.save.page.title"
+                         nonDefaultProject="true"/>
 
     <!--troubleshooting-->
     <generalTroubleInfoCollector implementation="com.intellij.ide.troubleshooting.AboutTroubleInfoCollector"/>
@@ -1195,8 +1195,6 @@
     <applicationService serviceImplementation="com.intellij.ide.ui.IconDbMaintainer" preload="notHeadless"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.accessibility.AccessibilityUsageTrackerCollector$CollectStatisticsTask"/>
-    <registryKey key="statistics.mlse.report.percentage" defaultValue="100"
-                 description="Percent of data reported by machine learning for search everywhere logger. 0 to disable"/>
 
     <editorFactoryListener implementation="com.intellij.codeInsight.editorActions.ReaderModeEditorFactoryListener"/>
     <readerModeMatcher implementation="com.intellij.diff.actions.DiffReaderModeMatcher"/>
@@ -1223,7 +1221,7 @@
 
     <advancedSetting id="ide.show.fileType.icon.in.titleBar" default="false" groupKey="group.advanced.settings.ui"/>
     <advancedSetting id="ide.max.recent.projects" default="50" groupKey="group.advanced.settings.ide"/>
-    <advancedSetting id="temporary.configurations.limit" default="4" groupKey="group.advanced.settings.ide"/>
+    <advancedSetting id="temporary.configurations.limit" default="5" groupKey="group.advanced.settings.ide"/>
     <advancedSetting id="edit.source.on.enter.key.request.focus.in.editor" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.tree.collapse.recursively" default="true" groupKey="group.advanced.settings.project.view"/>
     <advancedSetting id="ide.open.readme.md.on.startup" default="true" groupKey="group.advanced.settings.startup"/>
@@ -1238,6 +1236,8 @@
     <advancedSetting id="terminal.escape.moves.focus.to.editor" default="true" groupKey="group.advanced.settings.terminal"/>
 
     <backgroundPostStartupActivity implementation="com.intellij.ide.plugins.DependencyFeatureCollector"/>
+    <projectService serviceInterface="com.intellij.presentation.FilePresentationService"
+                    serviceImplementation="com.intellij.presentation.impl.FilePresentationServiceImpl"/>
 /  </extensions>
   <extensions defaultExtensionNs="org.jetbrains">
     <urlOpener implementation="com.intellij.ide.browsers.impl.DefaultUrlOpener" order="last"/>
@@ -1258,8 +1258,12 @@
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
-              topic="com.intellij.openapi.fileTypes.FileTypeListener" />
-    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingEventsListener" activeInHeadlessMode="true" activeInTestMode="false"
+              topic="com.intellij.openapi.fileTypes.FileTypeListener"/>
+    <listener class="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger$TypingEventsListener" activeInHeadlessMode="true"
+              activeInTestMode="false"
               topic="com.intellij.openapi.actionSystem.ex.AnActionListener"/>
+
+    <listener class="com.intellij.ide.plugins.CreateAllServicesAndExtensionsActivity" topic="com.intellij.ide.AppLifecycleListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 </idea-plugin>

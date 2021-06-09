@@ -5,6 +5,7 @@ import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.ui.messages.AlertMessagesManager;
 import com.intellij.openapi.ui.messages.MessageDialog;
 import com.intellij.openapi.ui.messages.MessagesService;
 import com.intellij.openapi.ui.messages.TwoStepConfirmationDialog;
@@ -51,6 +52,11 @@ public class MessagesServiceImpl implements MessagesService {
                                @Nullable String helpId) {
     if (isApplicationInUnitTestOrHeadless()) {
       return TestDialogManager.getTestImplementation().show(message);
+    }
+
+    if (AlertMessagesManager.isEnabled()) {
+      return AlertMessagesManager.instance().showMessageDialog(project, parentComponent, message, title, options, defaultOptionIndex,
+                                                               focusedOptionIndex, icon, doNotAskOption, helpId);
     }
 
     try {

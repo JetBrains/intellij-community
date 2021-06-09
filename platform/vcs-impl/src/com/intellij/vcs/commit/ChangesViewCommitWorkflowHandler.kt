@@ -196,13 +196,21 @@ internal class ChangesViewCommitWorkflowHandler(
 
   private fun changeListDataChanged() {
     commitAuthor = currentChangeList?.author
+    commitAuthorDate = currentChangeList?.authorDate
   }
 
   override fun commitAuthorChanged() {
     val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
     if (commitAuthor == changeList.author) return
 
-    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, changeList.authorDate))
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, commitAuthorDate))
+  }
+
+  override fun commitAuthorDateChanged() {
+    val changeList = changeListManager.getChangeList(currentChangeList?.id) ?: return
+    if (commitAuthorDate == changeList.authorDate) return
+
+    changeListManager.editChangeListData(changeList.name, ChangeListData.of(commitAuthor, commitAuthorDate))
   }
 
   override fun inclusionChanged() {

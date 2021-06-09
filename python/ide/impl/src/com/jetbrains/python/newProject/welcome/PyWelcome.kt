@@ -183,6 +183,7 @@ private object PyWelcome {
     val toolWindow = toolWindowManager.getToolWindow(ToolWindowId.PROJECT_VIEW)
     if (toolWindow == null) {
       val listener = ProjectViewListener(project, baseDir, module, file)
+      Disposer.register(PythonPluginDisposable.getInstance(project), listener)
       // collected listener will release the connection
       project.messageBus.connect(listener).subscribe(ToolWindowManagerListener.TOPIC, listener)
     }

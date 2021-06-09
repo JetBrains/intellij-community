@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.psi.*;
@@ -158,8 +158,10 @@ public class PsiPatternVariableImpl extends CompositePsiElement implements PsiPa
   public void delete() throws IncorrectOperationException {
     PsiPattern pattern = getPattern();
     if (pattern instanceof PsiTypeTestPattern) {
-      replace(getTypeElement());
-      return;
+      if (pattern.getParent() instanceof PsiInstanceOfExpression) {
+        pattern.replace(getTypeElement());
+        return;
+      }
     }
     super.delete();
   }

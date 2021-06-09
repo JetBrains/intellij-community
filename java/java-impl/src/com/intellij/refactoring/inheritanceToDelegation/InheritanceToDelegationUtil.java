@@ -1,7 +1,10 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.inheritanceToDelegation;
 
-import com.intellij.psi.*;
+import com.intellij.psi.CommonClassNames;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiModifier;
 
 /**
  * @author dsl
@@ -21,7 +24,7 @@ public final class InheritanceToDelegationUtil {
       if (baseMethod != null) {
         PsiClass containingClass = baseMethod.getContainingClass();
         String qName = containingClass.getQualifiedName();
-        if (qName == null || !CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) return true;
+        if (!CommonClassNames.JAVA_LANG_OBJECT.equals(qName)) return true;
       }
     }
     return false;

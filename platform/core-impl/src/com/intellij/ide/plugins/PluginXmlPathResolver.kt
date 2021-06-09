@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.diagnostic.Logger
@@ -134,6 +134,29 @@ class PluginXmlPathResolver(private val pluginJarFiles: List<Path>) : PathResolv
       throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader)")
     }
     return null
+  }
+
+  override fun resolveModuleFile(readContext: ReadModuleContext,
+                                 dataLoader: DataLoader,
+                                 path: String,
+                                 readInto: RawPluginDescriptor?): RawPluginDescriptor {
+    val input = dataLoader.load(path)
+    if (input == null) {
+      // todo (deal with different plugin content for ultimate and community)
+      if (path == "intellij.profiler.ultimate.xml") {
+        val descriptor = RawPluginDescriptor()
+        descriptor.`package` = "com.intellij.profiler.ultimate"
+        return descriptor
+      }
+      throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, pluginJarFiles=${pluginJarFiles.joinToString(separator = "\n  ")})")
+    }
+    return readModuleDescriptor(input = input,
+                                readContext = readContext,
+                                pathResolver = this,
+                                dataLoader = dataLoader,
+                                includeBase = null,
+                                readInto = readInto,
+                                locationSource = null)
   }
 
   private fun findInJarFiles(readInto: RawPluginDescriptor,

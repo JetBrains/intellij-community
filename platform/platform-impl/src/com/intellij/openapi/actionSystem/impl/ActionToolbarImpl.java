@@ -18,6 +18,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -163,9 +164,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
                            boolean horizontal,
                            boolean decorateButtons) {
     super(null);
-    if (ActionPlaces.UNKNOWN.equals(place)) {
-      LOG.warn("Please use specific place, instead of ActionPlaces.UNKNOWN. " +
-               "Any string unique enough to deduct the toolbar purpose out of it will do.", myCreationTrace);
+    if (ActionPlaces.UNKNOWN.equals(place) || place.isEmpty()) {
+      LOG.warn("Please do not use ActionPlaces.UNKNOWN or the empty place. " +
+               "Any string unique enough to deduce the toolbar location will do.", myCreationTrace);
     }
 
     myPlace = place;
@@ -1219,8 +1220,16 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     else {
       label.setIcon(EmptyIcon.create(icon.getIconWidth(), icon.getIconHeight()));
-      EdtScheduledExecutorService.getInstance().schedule(() -> label.setIcon(icon), 500, TimeUnit.MILLISECONDS);
+      boolean suppressLoading = ActionPlaces.MAIN_TOOLBAR.equals(myPlace) ||
+                                ActionPlaces.NAVIGATION_BAR_TOOLBAR.equals(myPlace) ||
+                                ActionPlaces.TOOLWINDOW_TITLE.equals(myPlace) ||
+                                ActionPlaces.WELCOME_SCREEN.equals(myPlace);
+      if (!suppressLoading) {
+        EdtScheduledExecutorService.getInstance().schedule(
+          () -> label.setIcon(icon), Registry.intValue("actionSystem.toolbar.progress.icon.delay", 500), TimeUnit.MILLISECONDS);
+      }
     }
+    myForcedUpdateRequested = true;
     add(label);
   }
 

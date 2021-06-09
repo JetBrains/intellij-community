@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.serviceContainer
 
@@ -110,7 +110,10 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(internal val paren
                                            mainContainerDescriptor: ContainerDescriptor,
                                            componentManager: ComponentManagerImpl,
                                            crossinline task: (IdeaPluginDescriptorImpl, ContainerDescriptor) -> Unit) {
-      executeRegisterTask(mainPluginDescriptor, mainContainerDescriptor, componentManager::getContainerDescriptor, task)
+      task(mainPluginDescriptor, mainContainerDescriptor)
+      executeRegisterTaskForContent(mainPluginDescriptor) {
+        task(it, componentManager.getContainerDescriptor(it))
+      }
     }
   }
 

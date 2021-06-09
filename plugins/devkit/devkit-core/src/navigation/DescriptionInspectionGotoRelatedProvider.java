@@ -21,7 +21,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.util.Query;
-import org.apache.log4j.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.inspections.DescriptionCheckerUtil;

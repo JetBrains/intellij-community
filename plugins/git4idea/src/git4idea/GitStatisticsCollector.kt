@@ -47,7 +47,6 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
     val appSettings = GitVcsApplicationSettings.getInstance()
     val defaultAppSettings = GitVcsApplicationSettings()
 
-    addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isAutoCommitOnCherryPick }, "cherrypick.autocommit")
     addBoolIfDiffers(set, appSettings, defaultAppSettings, { it.isStagingAreaEnabled }, "staging.area.enabled")
 
     val version = GitVcs.getInstance(project).version

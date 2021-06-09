@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.treeStructure;
 
 import com.intellij.ide.IdeBundle;
@@ -11,7 +11,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.ui.tree.TreePathBackgroundSupplier;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.SlowOperations;
 import com.intellij.util.ThreeState;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -340,7 +339,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
     for (int row = firstVisibleRow; row <= lastVisibleRow; row++) {
       TreePath path = getPathForRow(row);
-      Color color = path == null ? null : SlowOperations.allowSlowOperations(() -> getFileColorForPath(path));
+      Color color = path == null ? null : getFileColorForPath(path);
       if (color != null) {
         Rectangle bounds = getRowBounds(row);
         g.setColor(color);

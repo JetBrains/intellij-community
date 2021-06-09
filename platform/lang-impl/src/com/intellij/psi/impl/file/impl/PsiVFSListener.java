@@ -651,9 +651,10 @@ public final class PsiVFSListener implements BulkFileListener {
     }
 
     @Override
-    public void libraryRootsChanged(@Nls @NotNull String presentableLibraryName,
+    public void libraryRootsChanged(@Nullable @Nls String presentableLibraryName,
+                                    @NotNull Collection<? extends VirtualFile> oldRoots,
                                     @NotNull Collection<? extends VirtualFile> newRoots,
-                                    @NotNull Collection<? extends VirtualFile> oldRoots) {
+                                    @NotNull String libraryNameForDebug) {
       ApplicationManager.getApplication().runWriteAction(
         (ExternalChangeAction)() -> {
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(manager);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.codeWithMe.ClientId;
@@ -34,7 +34,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
-import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
 import com.intellij.openapi.wm.impl.ProjectFrameHelper;
@@ -86,8 +85,6 @@ public final class IdeEventQueue extends EventQueue {
   private static final boolean ourTypeAheadSearchEverywhereEnabled = Boolean.getBoolean("action.aware.typeAhead.searchEverywhere");
   private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
   private static TransactionGuardImpl ourTransactionGuard;
-  private static ProgressManager ourProgressManager;
-  private static PerformanceWatcher ourPerformanceWatcher;
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -369,7 +366,7 @@ public final class IdeEventQueue extends EventQueue {
   public void dispatchEvent(@NotNull AWTEvent e) {
     // DO NOT ADD ANYTHING BEFORE fixNestedSequenceEvent is called
     long startedAt = System.currentTimeMillis();
-    PerformanceWatcher performanceWatcher = obtainPerformanceWatcher();
+    PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstanceOrNull();
     EventWatcher eventWatcher = EventWatcher.getInstance();
     try {
       if (performanceWatcher != null) {
@@ -429,8 +426,12 @@ public final class IdeEventQueue extends EventQueue {
       Runnable runnable = extractRunnable(e);
       Class<? extends Runnable> runnableClass = runnable != null ? runnable.getClass() : Runnable.class;
       Runnable processEventRunnable = () -> {
+        Application application = ApplicationManager.getApplication();
+        ProgressManager progressManager = application != null && !application.isDisposed() ?
+                                          ProgressManager.getInstance() :
+                                          null;
+
         try (AccessToken ignored = startActivity(finalE1)) {
-          ProgressManager progressManager = obtainProgressManager();
           if (progressManager != null) {
             progressManager.computePrioritized(() -> {
               _dispatchEvent(myCurrentEvent);
@@ -461,11 +462,9 @@ public final class IdeEventQueue extends EventQueue {
           }
           if (eventWatcher != null &&
               runnableClass != FLUSH_NOW_CLASS) {
-            eventWatcher.logTimeMillis(
-              runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
-              startedAt,
-              runnableClass
-            );
+            eventWatcher.logTimeMillis(runnableClass != Runnable.class ? runnableClass.getName() : finalE1.toString(),
+                                       startedAt,
+                                       runnableClass);
           }
         }
 
@@ -559,30 +558,6 @@ public final class IdeEventQueue extends EventQueue {
         }
       }
     }
-  }
-
-  @Nullable
-  private static ProgressManager obtainProgressManager() {
-    ProgressManager manager = ourProgressManager;
-    if (manager == null) {
-      Application app = ApplicationManager.getApplication();
-      if (app != null && !app.isDisposed()) {
-        ourProgressManager = manager = ApplicationManager.getApplication().getService(ProgressManager.class);
-      }
-    }
-    return manager;
-  }
-
-  private static @Nullable PerformanceWatcher obtainPerformanceWatcher() {
-    PerformanceWatcher watcher = ourPerformanceWatcher;
-    if (watcher == null && LoadingState.COMPONENTS_LOADED.isOccurred()) {
-      Application app = ApplicationManager.getApplication();
-      if (app != null && !app.isDisposed()) {
-        watcher = ApplicationManager.getApplication().getServiceIfCreated(PerformanceWatcher.class);
-        ourPerformanceWatcher = watcher;
-      }
-    }
-    return watcher;
   }
 
   private static boolean isMetaKeyPressedOnLinux(@NotNull AWTEvent e) {
@@ -708,7 +683,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void _dispatchEvent(@NotNull AWTEvent e) {
-    if (e.getID() == MouseEvent.MOUSE_DRAGGED && LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (e.getID() == MouseEvent.MOUSE_DRAGGED && appIsLoaded()) {
       DnDManagerImpl dndManager = (DnDManagerImpl)DnDManager.getInstance();
       if (dndManager != null) {
         dndManager.setLastDropHandler(null);
@@ -755,10 +730,11 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
+    Application application = ApplicationManager.getApplication();
     if (e instanceof ComponentEvent &&
-        LoadingState.COMPONENTS_LOADED.isOccurred() &&
-        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      WindowManagerEx windowManager = (WindowManagerEx)ApplicationManager.getApplication().getServiceIfCreated(WindowManager.class);
+        ourAppIsLoaded &&
+        !application.isHeadlessEnvironment()) {
+      WindowManagerEx windowManager = application.getServiceIfCreated(WindowManagerEx.class);
       if (windowManager != null) {
         windowManager.dispatchComponentEvent((ComponentEvent)e);
       }
@@ -874,11 +850,11 @@ public final class IdeEventQueue extends EventQueue {
       return;
     }
 
-    if (!LoadingState.COMPONENTS_LOADED.isOccurred()) {
+    if (!appIsLoaded()) {
       return;
     }
 
-    WindowManagerEx windowManager = (WindowManagerEx)ApplicationManager.getApplication().getServiceIfCreated(WindowManager.class);
+    WindowManagerEx windowManager = ApplicationManager.getApplication().getServiceIfCreated(WindowManagerEx.class);
     if (windowManager == null) {
       return;
     }

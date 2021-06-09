@@ -30,8 +30,8 @@ import com.intellij.openapi.vfs.pointers.VirtualFilePointerContainer;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerListener;
 import com.intellij.openapi.vfs.pointers.VirtualFilePointerManager;
 import com.intellij.project.ProjectKt;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
@@ -44,7 +44,6 @@ import com.intellij.util.indexing.UnindexedFilesUpdater;
 import com.intellij.util.indexing.roots.AdditionalLibraryRootsContributor;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.messages.MessageBusConnection;
-import com.intellij.workspaceModel.ide.WorkspaceModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,7 +151,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     OrderEnumerationHandler.EP_NAME.addChangeListener(rootsExtensionPointListener, this);
 
 
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, newRoots, oldRoots) -> {
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> {
       if (!(FileBasedIndex.getInstance() instanceof FileBasedIndexImpl)) {
         return;
       }
@@ -173,7 +172,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
       if (rootsToIndex.isEmpty()) return;
 
       List<IndexableFilesIterator> indexableFilesIterators =
-        Collections.singletonList(AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex));
+        Collections.singletonList(AdditionalLibraryRootsContributor.createIndexingIterator(presentableLibraryName, rootsToIndex, libraryNameForDebug));
 
       DumbService.getInstance(myProject).queueTask(new UnindexedFilesUpdater(myProject, indexableFilesIterators, "On updated roots of library '" + presentableLibraryName + "'"));
     });
@@ -193,7 +192,7 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     myCollectWatchRootsFuture.cancel(false);
     myCollectWatchRootsFuture = myExecutor.submit(() -> {
       Pair<Set<String>, Set<String>> watchRoots = ReadAction.compute(() -> myProject.isDisposed() ? null : collectWatchRoots(newDisposable));
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(() -> {
         if (myProject.isDisposed()) return;
         myRootPointersDisposable = newDisposable;
         // dispose after the re-creating container to keep VFPs from disposing and re-creating back;

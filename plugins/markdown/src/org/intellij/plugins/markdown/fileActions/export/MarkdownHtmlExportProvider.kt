@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.fileActions.export
 
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.TextComponentAccessor
@@ -42,7 +43,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
     val htmlPanel = preview.getUserData(MarkdownPreviewFileEditor.PREVIEW_BROWSER) ?: return
 
     if (htmlPanel is MarkdownJCEFHtmlPanel) {
-      htmlPanel.saveHtml(outputFile, exportSettings.getResourceSavingSettings(), project) { path, ok ->
+      htmlPanel.saveHtml(outputFile, service<MarkdownHtmlExportSettings>().getResourceSavingSettings(), project) { path, ok ->
         if (ok) {
           notifyAndRefreshIfExportSuccess(File(path), project)
         }
@@ -83,7 +84,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
       .component
       .apply {
         toolTipText = MarkdownBundle.message("markdown.export.dialog.checkbox.tooltip")
-        isSelected = exportSettings.getResourceSavingSettings().isSaved
+        isSelected = service<MarkdownHtmlExportSettings>().getResourceSavingSettings().isSaved
       }
   }
 
@@ -96,7 +97,7 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
         childComponent.history = resDirRecent
       }
 
-      val savedSettings = exportSettings.getResourceSavingSettings()
+      val savedSettings = service<MarkdownHtmlExportSettings>().getResourceSavingSettings()
       childComponent.text = savedSettings.resourceDir.ifEmpty {
         FileUtil.join(suggestedTargetFile.parent, suggestedTargetFile.nameWithoutExtension, "images")
       }
@@ -124,10 +125,9 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
 
   private fun saveSettings(project: Project) {
     val imageDir = resourceDirField.childComponent.text
-    exportSettings.apply {
-      saveResources = saveImagesCheckbox.isSelected
-      resourceDirectory = imageDir
-    }
+    val exportSettings = service<MarkdownHtmlExportSettings>()
+    exportSettings.saveResources = saveImagesCheckbox.isSelected
+    exportSettings.resourceDirectory = imageDir
     RecentsManager.getInstance(project).registerRecentEntry(IMAGE_DIR_RESENT_KEYS, imageDir)
   }
 
@@ -160,7 +160,6 @@ internal class MarkdownHtmlExportProvider : MarkdownExportProvider {
 
   companion object {
     private const val IMAGE_DIR_RESENT_KEYS: @NonNls String = "ImportExportFile.ImageDir.RECENT_KEYS"
-    private val exportSettings = MarkdownHtmlExportSettings.INSTANCE
 
     @JvmStatic
     val format = MarkdownFileActionFormat("HTML", "html")

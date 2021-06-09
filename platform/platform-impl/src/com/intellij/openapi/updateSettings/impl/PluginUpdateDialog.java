@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -122,11 +122,7 @@ public class PluginUpdateDialog extends DialogWrapper {
       }
     };
     PluginManagerConfigurable.registerCopyProvider(myPluginsPanel);
-    myPluginsPanel.setSelectionListener(__ -> {
-      List<ListPluginComponent> selection = myPluginsPanel.getSelection();
-      int size = selection.size();
-      myDetailsPage.showPlugin(size == 1 ? selection.get(0) : null, size > 1);
-    });
+    myPluginsPanel.setSelectionListener(__ -> myDetailsPage.showPlugins(myPluginsPanel.getSelection()));
 
     for (PluginDownloader plugin : downloaders) {
       myGroup.descriptors.add(plugin.getDescriptor());

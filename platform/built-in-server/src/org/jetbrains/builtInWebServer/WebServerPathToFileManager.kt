@@ -95,7 +95,7 @@ class WebServerPathToFileManager(private val project: Project) {
       }
     })
     project.messageBus.connect().subscribe(AdditionalLibraryRootsListener.TOPIC,
-                                           AdditionalLibraryRootsListener { _, _, _ ->
+                                           AdditionalLibraryRootsListener { _, _, _, _ ->
                                              clearCache()
                                            })
   }

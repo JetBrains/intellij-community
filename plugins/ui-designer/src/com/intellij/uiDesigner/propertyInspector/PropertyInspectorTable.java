@@ -197,10 +197,10 @@ public final class PropertyInspectorTable extends JBTable implements DataProvide
     );
 
     // Popup menu
-    PopupHandler.installPopupHandler(
+    PopupHandler.installPopupMenu(
       this,
-      (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP),
-      ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP, ActionManager.getInstance());
+      IdeActions.GROUP_GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP,
+      ActionPlaces.GUI_DESIGNER_PROPERTY_INSPECTOR_POPUP);
   }
 
   public void setEditor(final GuiEditor editor) {

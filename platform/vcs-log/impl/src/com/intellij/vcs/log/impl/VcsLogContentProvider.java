@@ -156,7 +156,6 @@ public final class VcsLogContentProvider implements ChangesViewContentProvider {
   }
 
   final static class VcsLogVisibilityPredicate implements Predicate<Project> {
-    @NotNull
     @Override
     public boolean test(@NotNull Project project) {
       return !VcsProjectLog.getLogProviders(project).isEmpty();

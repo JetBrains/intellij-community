@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.shelf;
 
 import com.intellij.diff.DiffContentFactory;
@@ -46,6 +46,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.changes.actions.ShowDiffPreviewAction;
+import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider;
 import com.intellij.openapi.vcs.changes.patch.PatchFileType;
 import com.intellij.openapi.vcs.changes.patch.tool.PatchDiffRequest;
 import com.intellij.openapi.vcs.changes.ui.*;
@@ -60,8 +61,10 @@ import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
 import com.intellij.util.IconUtil.IconSizeWrapper;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.containers.UtilKt;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.GraphicsUtil;
@@ -78,10 +81,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.DefaultTreeCellEditor;
-import javax.swing.tree.TreeCellEditor;
-import javax.swing.tree.TreePath;
+import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
@@ -288,7 +288,7 @@ public class ShelvedChangesViewManager implements Disposable {
   }
 
   private void runAfterUpdate(@NotNull Runnable postUpdateRunnable) {
-    GuiUtils.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(() -> {
       myUpdateQueue.cancelAllUpdates();
       myPostUpdateEdtActivity.add(postUpdateRunnable);
       updateTreeModel();
@@ -714,7 +714,7 @@ public class ShelvedChangesViewManager implements Disposable {
 
       DataManager.registerDataProvider(myRootPanel, this);
 
-      PopupHandler.installPopupHandler(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
+      PopupHandler.installPopupMenu(myTree, "ShelvedChangesPopupMenu", SHELF_CONTEXT_MENU);
     }
 
     @Override
@@ -1016,6 +1016,54 @@ public class ShelvedChangesViewManager implements Disposable {
       }
 
       return new PatchDiffRequest(createAppliedTextPatch(patch), title, null);
+    }
+
+    @Override
+    protected @Nullable AnAction createGoToChangeAction() {
+      return new MyGoToChangePopupProvider().createGoToChangeAction();
+    }
+
+    private class MyGoToChangePopupProvider extends SelectionAwareGoToChangePopupActionProvider {
+      @NotNull
+      @Override
+      public List<? extends PresentableChange> getChanges() {
+        DataContext dc = DataManager.getInstance().getDataContext(myTree);
+        ListSelection<? extends PresentableChange> diffProducers = DiffShelvedChangesActionProvider.createDiffProducers(dc, false);
+        if (diffProducers == null) return emptyList();
+
+        return diffProducers.getList();
+      }
+
+      @Override
+      public void select(@NotNull PresentableChange presentableChange) {
+        ShelvedChangeList selectedList = getOnlyItem(getSelectedLists(myTree, it -> true));
+        if (selectedList == null) return;
+        FilePath filePath = presentableChange.getFilePath();
+
+        ChangesBrowserNode<?> changeListNode = (ChangesBrowserNode<?>)TreeUtil.findNodeWithObject(myTree.getRoot(), selectedList);
+        TreeNode targetNode = TreeUtil.treeNodeTraverser(changeListNode).traverse(TreeTraversal.POST_ORDER_DFS).find(node -> {
+          if (node instanceof DefaultMutableTreeNode) {
+            Object userObject = ((DefaultMutableTreeNode)node).getUserObject();
+            if (userObject instanceof ShelvedWrapper) {
+              ShelvedWrapper shelvedWrapper = (ShelvedWrapper)userObject;
+              Change change = shelvedWrapper.getChange(myProject);
+              return ChangesUtil.getFilePath(change).equals(filePath);
+            }
+          }
+          return false;
+        });
+
+        if (targetNode != null) {
+          TreeUtil.selectNode(myTree, targetNode);
+          refresh(false);
+        }
+      }
+
+      @Nullable
+      @Override
+      public PresentableChange getSelectedChange() {
+        return myCurrentShelvedElement != null ? myCurrentShelvedElement : null;
+      }
     }
 
     @NotNull

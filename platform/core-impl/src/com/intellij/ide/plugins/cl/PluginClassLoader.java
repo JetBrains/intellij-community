@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.cl;
 
 import com.intellij.diagnostic.PluginException;
@@ -33,8 +33,7 @@ import java.util.function.BiFunction;
 import java.util.function.Function;
 
 @ApiStatus.Internal
-@ApiStatus.NonExtendable
-public class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
+public final class PluginClassLoader extends UrlClassLoader implements PluginAwareClassLoader {
   public static final ClassLoader[] EMPTY_CLASS_LOADER_ARRAY = new ClassLoader[0];
 
   private static final boolean isParallelCapable = registerAsParallelCapable();
@@ -86,6 +85,10 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     String debugFilePath = System.getProperty("plugin.classloader.debug", "");
     if (!debugFilePath.isEmpty()) {
       try {
+        if (debugFilePath.startsWith("~/") || debugFilePath.startsWith("~\\")) {
+          debugFilePath = System.getProperty("user.home") + debugFilePath.substring(1);
+        }
+
         logStreamCandidate = Files.newBufferedWriter(Paths.get(debugFilePath));
         ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
           @Override
@@ -139,11 +142,37 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
                            @NotNull ClassLoader @NotNull [] parents,
                            @NotNull PluginDescriptor pluginDescriptor,
                            @Nullable Path pluginRoot,
+                           @NotNull ClassLoader coreLoader) {
+    super(builder, null, isParallelCapable, false);
+
+    instanceId = instanceIdProducer.incrementAndGet();
+
+    this.resolveScopeManager = (p1, p2, p3) -> false;
+    this.parents = parents;
+    this.pluginDescriptor = pluginDescriptor;
+    pluginId = pluginDescriptor.getPluginId();
+    this.packagePrefix = null;
+    this.coreLoader = coreLoader;
+    checkNoCoreInParents(parents, coreLoader);
+
+    libDirectories = new SmartList<>();
+    if (pluginRoot != null) {
+      Path libDir = pluginRoot.resolve("lib");
+      if (Files.exists(libDir)) {
+        libDirectories.add(libDir.toAbsolutePath().toString());
+      }
+    }
+  }
+
+  public PluginClassLoader(@NotNull List<Path> files,
+                           @NotNull ClassPath classPath,
+                           @NotNull ClassLoader @NotNull [] parents,
+                           @NotNull PluginDescriptor pluginDescriptor,
                            @NotNull ClassLoader coreLoader,
                            @Nullable ResolveScopeManager resolveScopeManager,
                            @Nullable String packagePrefix,
-                           @Nullable ClassPath.ResourceFileFactory resourceFileFactory) {
-    super(builder, resourceFileFactory, isParallelCapable, !pluginDescriptor.isBundled() && !"JetBrains".equals(pluginDescriptor.getVendor()));
+                           @NotNull List<String> libDirectories) {
+    super(files, classPath);
 
     instanceId = instanceIdProducer.incrementAndGet();
 
@@ -153,20 +182,22 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
     pluginId = pluginDescriptor.getPluginId();
     this.packagePrefix = (packagePrefix == null || packagePrefix.endsWith(".")) ? packagePrefix : (packagePrefix + '.');
     this.coreLoader = coreLoader;
+    checkNoCoreInParents(parents, coreLoader);
+
+    this.libDirectories = libDirectories;
+  }
+
+  public @NotNull List<String> getLibDirectories() {
+    return libDirectories;
+  }
+
+  private static void checkNoCoreInParents(@NotNull ClassLoader @NotNull [] parents, @NotNull ClassLoader coreLoader) {
     if (PluginClassLoader.class.desiredAssertionStatus()) {
-      for (ClassLoader parent : this.parents) {
+      for (ClassLoader parent : parents) {
         if (parent == coreLoader) {
           Logger.getInstance(PluginClassLoader.class).error("Core loader must be not specified in parents " +
                                                             "(parents=" + Arrays.toString(parents) + ", coreLoader=" + coreLoader + ")");
         }
-      }
-    }
-
-    libDirectories = new SmartList<>();
-    if (pluginRoot != null) {
-      Path libDir = pluginRoot.resolve("lib");
-      if (Files.exists(libDir)) {
-        libDirectories.add(libDir.toAbsolutePath().toString());
       }
     }
   }
@@ -312,9 +343,9 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
       return true;
     }
 
-    // some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
+    // some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise, if a plugin bundles its own version
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
-    // We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
+    // We assume that these classes don't change between Kotlin versions, so it's safe to always load them from platform's kotlin-runtime.
     return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") ||
                                                (className.startsWith("kotlin.reflect.") &&
                                                 className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
@@ -335,7 +366,7 @@ public class PluginClassLoader extends UrlClassLoader implements PluginAwareClas
 
       Writer logStream = PluginClassLoader.logStream;
       try {
-        c = classPath.findClass(name);
+        c = classPath.findClass(name, classDataConsumer);
       }
       catch (LinkageError e) {
         if (logStream != null) {

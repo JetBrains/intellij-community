@@ -21,7 +21,6 @@ import com.intellij.ui.EditorNotifications;
 import com.intellij.util.Alarm;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.messages.MessageBusConnection;
-import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 
@@ -58,12 +57,6 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
   @Override
   public boolean isEditedGeneratedFile(@NotNull VirtualFile file) {
     return myEditedGeneratedFiles.contains(file);
-  }
-
-  private void libraryRootsChanged(@NotNull @Nls String presentableLibraryName,
-                                   @NotNull Collection<? extends VirtualFile> newRoots,
-                                   @NotNull Collection<? extends VirtualFile> oldRoots) {
-    resetOnRootsSchanged();
   }
 
   static final class MyDocumentListener implements DocumentListener {
@@ -137,7 +130,8 @@ public final class GeneratedSourceFileChangeTrackerImpl extends GeneratedSourceF
         resetOnRootsSchanged();
       }
     });
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, this::libraryRootsChanged);
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
+                         (presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> resetOnRootsSchanged());
   }
 
   private void resetOnRootsSchanged() {

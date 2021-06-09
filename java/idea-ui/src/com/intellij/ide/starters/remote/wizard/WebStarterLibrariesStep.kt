@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.layout.*
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.HttpRequests
@@ -407,7 +408,7 @@ open class WebStarterLibrariesStep(contextProvider: WebStarterContextProvider) :
     textField.addDocumentListener(object : DocumentAdapter() {
       override fun textChanged(e: DocumentEvent) {
         searchMergingUpdateQueue.queue(Update.create("", Runnable {
-          GuiUtils.invokeLaterIfNeeded(Runnable {
+          ModalityUiUtil.invokeLaterIfNeeded(Runnable {
             currentSearchString = textField.text
             loadLibrariesList()
             librariesList.repaint()

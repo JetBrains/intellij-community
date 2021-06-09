@@ -18,7 +18,7 @@ import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.deployment.DeploymentUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -805,7 +805,7 @@ public final class CompileDriver {
           }
         }
 
-        LanguageLevel moduleLanguageLevel = EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module);
+        LanguageLevel moduleLanguageLevel = LanguageLevelUtil.getEffectiveLanguageLevel(module);
         if (languageLevel == null) {
           languageLevel = moduleLanguageLevel;
         }

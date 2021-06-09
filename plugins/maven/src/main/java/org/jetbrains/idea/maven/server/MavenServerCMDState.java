@@ -30,8 +30,12 @@ import org.slf4j.Logger;
 import org.slf4j.impl.Log4jLoggerFactory;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MavenServerCMDState extends CommandLineState {
+  private static final com.intellij.openapi.diagnostic.Logger LOG = com.intellij.openapi.diagnostic
+    .Logger.getInstance(MavenServerCMDState.class);
   private static boolean setupThrowMainClass = false;
 
   @NonNls private static final String MAIN_CLASS = "org.jetbrains.idea.maven.server.RemoteMavenServer";
@@ -64,8 +68,7 @@ public class MavenServerCMDState extends CommandLineState {
     params.setWorkingDirectory(getWorkingDirectory());
 
 
-    Map<String, String> defs = new HashMap<>();
-    defs.putAll(getMavenOpts());
+    Map<String, String> defs = new HashMap<>(getMavenOpts());
 
     configureSslRelatedOptions(defs);
 
@@ -83,7 +86,8 @@ public class MavenServerCMDState extends CommandLineState {
 
     params.getVMParametersList().addProperty("maven.defaultProjectBuilder.disableGlobalModelCache", "true");
 
-    boolean xmxSet = false;
+    String xmxProperty = null;
+    String xmsProperty = null;
 
     if (myVmOptions != null) {
       ParametersList mavenOptsList = new ParametersList();
@@ -91,7 +95,12 @@ public class MavenServerCMDState extends CommandLineState {
 
       for (String param : mavenOptsList.getParameters()) {
         if (param.startsWith("-Xmx")) {
-          xmxSet = true;
+          xmxProperty = param;
+          continue;
+        }
+        if (param.startsWith("-Xms")) {
+          xmsProperty = param;
+          continue;
         }
         params.getVMParametersList().add(param);
       }
@@ -110,13 +119,15 @@ public class MavenServerCMDState extends CommandLineState {
 
     String embedderXmx = System.getProperty("idea.maven.embedder.xmx");
     if (embedderXmx != null) {
-      params.getVMParametersList().add("-Xmx" + embedderXmx);
+      xmxProperty = "-Xmx" + embedderXmx;
     }
     else {
-      if (!xmxSet) {
-        params.getVMParametersList().add("-Xmx768m");
+      if (xmxProperty == null) {
+        xmxProperty = getMaxXmxStringValue("-Xmx768m", xmsProperty);
       }
     }
+    params.getVMParametersList().add(xmsProperty);
+    params.getVMParametersList().add(xmxProperty);
 
 
     String mavenEmbedderParameters = System.getProperty("idea.maven.embedder.parameters");
@@ -211,5 +222,73 @@ public class MavenServerCMDState extends CommandLineState {
   @TestOnly
   public static void resetThrowExceptionOnNextServerStart() {
     setupThrowMainClass = false;
+  }
+
+  @Nullable
+  static String getMaxXmxStringValue(@Nullable String memoryValueA, @Nullable String memoryValueB) {
+    MemoryProperty propertyA = MemoryProperty.valueOf(memoryValueA);
+    MemoryProperty propertyB = MemoryProperty.valueOf(memoryValueB);
+    if (propertyA != null && propertyB != null) {
+      MemoryProperty maxMemoryProperty = propertyA.valueBytes > propertyB.valueBytes ? propertyA : propertyB;
+      return MemoryProperty.of(MemoryProperty.MemoryPropertyType.XMX, maxMemoryProperty.valueBytes).toString(maxMemoryProperty.unit);
+    }
+    return Optional
+      .ofNullable(propertyA).or(() -> Optional.ofNullable(propertyB))
+      .map(property -> MemoryProperty.of(MemoryProperty.MemoryPropertyType.XMX, property.valueBytes).toString(property.unit))
+      .orElse(null);
+  }
+
+  private static class MemoryProperty {
+    private static final Pattern MEMORY_PROPERTY_PATTERN = Pattern.compile("^(-Xmx|-Xms)(\\d+)([kK]|[mM]|[gG])?$");
+    final String type;
+    final long valueBytes;
+    final MemoryUnit unit;
+
+    private MemoryProperty(@NotNull String type, long value, @Nullable String unit) {
+      this.type = type;
+      this.unit = unit != null ? MemoryUnit.valueOf(unit.toUpperCase()) : MemoryUnit.B;
+      this.valueBytes = value * this.unit.ratio;
+    }
+
+    @NotNull
+    public static MemoryProperty of(@NotNull MemoryPropertyType propertyType, long bytes) {
+      return new MemoryProperty(propertyType.type, bytes, MemoryUnit.B.name());
+    }
+
+    @Nullable
+    public static MemoryProperty valueOf(@Nullable String value) {
+      if (value == null) return null;
+      Matcher matcher = MEMORY_PROPERTY_PATTERN.matcher(value);
+      if (matcher.find()) {
+        return new MemoryProperty(matcher.group(1), Long.valueOf(matcher.group(2)), matcher.group(3));
+      }
+      LOG.warn(value + " not match " + MEMORY_PROPERTY_PATTERN);
+      return null;
+    }
+
+    @Override
+    public String toString() {
+      return toString(unit);
+    }
+
+    public String toString(MemoryUnit unit) {
+      return type + valueBytes / unit.ratio + unit.name().toLowerCase();
+    }
+
+    private enum MemoryUnit {
+      B(1), K(B.ratio * 1024), M(K.ratio * 1024), G(M.ratio * 1024);
+      final int ratio;
+      MemoryUnit(int ratio) {
+        this.ratio = ratio;
+      }
+    }
+
+    private enum MemoryPropertyType {
+      XMX("-Xmx"), XMS("-Xms");
+      private final String type;
+      MemoryPropertyType(String type) {
+        this.type = type;
+      }
+    }
   }
 }

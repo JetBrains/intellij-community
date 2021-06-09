@@ -54,14 +54,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
-import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Consumer;
-import com.intellij.util.PathMappingSettings;
-import com.intellij.util.TimeoutUtil;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.net.NetUtils;
@@ -1025,7 +1021,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
         }
 
         if (rerun) {
-          GuiUtils.invokeLaterIfNeeded(() -> myRerunAction.consume(displayName), ModalityState.defaultModalityState());
+          ModalityUiUtil.invokeLaterIfNeeded(() -> myRerunAction.consume(displayName), ModalityState.defaultModalityState());
         }
       }
     }.queue();

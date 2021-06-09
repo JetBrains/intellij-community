@@ -5,6 +5,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.impl.dataRules.GetDataRule;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
@@ -237,7 +238,7 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public <T> void saveInDataContext(DataContext dataContext, @NotNull Key<T> dataKey, @Nullable T data) {
-    if (dataContext instanceof UserDataHolder) {
+    if (dataContext instanceof UserDataHolder && !Utils.isFrozenDataContext(dataContext)) {
       ((UserDataHolder)dataContext).putUserData(dataKey, data);
     }
   }

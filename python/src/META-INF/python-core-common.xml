@@ -94,8 +94,6 @@
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyKeywordTypedHandler" id="pyCommaAfterKwd"/>
     <typedHandler implementation="com.jetbrains.python.codeInsight.PyMethodNameTypedHandler" id="pyMethodNameTypedHandler"/>
     <typedHandler implementation="com.jetbrains.python.editor.PythonSpaceHandler"/>
-    <applicationService serviceImplementation="com.jetbrains.python.testing.VFSTestFrameworkListenerImpl"
-                        serviceInterface="com.jetbrains.python.testing.VFSTestFrameworkListener"/>
 
 
     <idIndexer filetype="Python" implementationClass="com.jetbrains.python.PyIdIndexer"/>
@@ -132,6 +130,7 @@
     <runConfigurationProducer implementation="com.jetbrains.python.testing.tox.PyToxConfigurationProducer"/>
     <runConfigurationProducer implementation="com.jetbrains.python.testing.PyTestsConfigurationProducer"/>
     <advancedSetting id="python.pytest.swapdiff" default="false" groupKey="group.advanced.settings.python"/>
+    <advancedSetting id="python.pytest.show_summary" default="false" groupKey="group.advanced.settings.python"/>
     <runLineMarkerContributor language="Python"
                               implementationClass="com.jetbrains.python.testing.PyTestLineMarkerContributor"/>
 
@@ -202,7 +201,6 @@
                                    implementationClass="com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpSyntaxHighlighterFactory"/>
     <regExpLanguageHost forClass="com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl" implementationClass="com.jetbrains.python.codeInsight.PythonRegExpHost"/>
 
-    <applicationService serviceImplementation="com.jetbrains.python.testing.PyTestFrameworkService"/>
     <autoImportOptionsProvider instance="com.jetbrains.python.codeInsight.imports.PyAutoImportOptions"/>
 
     <completion.ml.contextFeatures language="Python" implementationClass="com.jetbrains.python.codeInsight.mlcompletion.PyContextFeatureProvider"/>
@@ -367,7 +365,6 @@
     <applicationService serviceInterface="com.jetbrains.python.codeInsight.imports.ImportChooser" serviceImplementation="com.jetbrains.python.codeInsight.imports.PyImportChooser"/>
 
     <registryKey key="python.relative.import.depth" defaultValue="3" description="Specifies default acceptable number of dots in a relative import statement"/>
-    <registryKey key="python.use.new.sdk.updater" defaultValue="true" description="Use experimental PyUpdateSdkTask"/>
 
     <!-- flake8 -->
     <lang.inspectionSuppressor language="Python" implementationClass="com.jetbrains.python.inspections.flake8.Flake8InspectionSuppressor"/>
@@ -681,8 +678,4 @@
   <extensions defaultExtensionNs="com.jetbrains.python.debugger">
     <numericContainerPopupCustomizer implementation="com.jetbrains.python.debugger.pydev.tables.PyNumericContainerPopupCustomizerDefault"/>
   </extensions>
-
-  <applicationListeners>
-    <listener activeInTestMode="false" class="com.jetbrains.python.testing.VFSTestFrameworkListenerImpl$Listener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
-  </applicationListeners>
 </idea-plugin>

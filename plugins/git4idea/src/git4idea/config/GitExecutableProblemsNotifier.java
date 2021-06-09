@@ -8,7 +8,7 @@ import com.intellij.openapi.components.Service;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.VcsBundle;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import git4idea.i18n.GitBundle;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.Nls;
@@ -41,7 +41,7 @@ public final class GitExecutableProblemsNotifier {
   }
 
   static void notify(@NotNull Project project, @NotNull BadGitExecutableNotification notification) {
-    GuiUtils.invokeLaterIfNeeded(() -> {
+    ModalityUiUtil.invokeLaterIfNeeded(() -> {
       if (ensureSingularOfType(project, notification.getClass())) {
         notification.notify(project);
       }

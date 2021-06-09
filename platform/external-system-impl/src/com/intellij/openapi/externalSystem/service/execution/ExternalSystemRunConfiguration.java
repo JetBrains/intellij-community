@@ -23,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
@@ -64,9 +63,6 @@ public class ExternalSystemRunConfiguration
   extends LocatableConfigurationBase
   implements SearchScopeProvidingRunProfile,
              CommonProgramRunConfigurationParameters {
-
-  static final ExtensionPointName<ExternalSystemRunConfigurationExtension> EP_NAME
-    = ExtensionPointName.create("com.intellij.externalSystem.runConfigurationExtension");
 
   public static final Key<InputStream> RUN_INPUT_KEY = Key.create("RUN_INPUT_KEY");
   public static final Key<Class<? extends BuildProgressListener>> PROGRESS_LISTENER_KEY = Key.create("PROGRESS_LISTENER_KEY");

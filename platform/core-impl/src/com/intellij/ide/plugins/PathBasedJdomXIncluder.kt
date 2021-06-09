@@ -19,4 +19,10 @@ interface PathResolver {
                   dataLoader: DataLoader,
                   relativePath: String,
                   readInto: RawPluginDescriptor?): RawPluginDescriptor?
+
+  // module in a new file name format must be always resolved
+  fun resolveModuleFile(readContext: ReadModuleContext,
+                        dataLoader: DataLoader,
+                        path: String,
+                        readInto: RawPluginDescriptor?): RawPluginDescriptor
 }

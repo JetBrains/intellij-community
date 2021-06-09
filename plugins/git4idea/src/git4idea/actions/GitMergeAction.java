@@ -24,7 +24,7 @@ import com.intellij.openapi.vcs.update.ActionInfo;
 import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.GuiUtils;
+import com.intellij.util.ModalityUiUtil;
 import com.intellij.vcs.ViewUpdateInfoNotification;
 import git4idea.GitBranch;
 import git4idea.GitRevisionNumber;
@@ -247,7 +247,7 @@ abstract class GitMergeAction extends GitRepositoryAction {
       MergeChangeCollector collector = new MergeChangeCollector(project, repository, currentRev);
       collector.collect(files);
 
-      GuiUtils.invokeLaterIfNeeded(() -> {
+      ModalityUiUtil.invokeLaterIfNeeded(() -> {
         ProjectLevelVcsManagerEx manager = (ProjectLevelVcsManagerEx)ProjectLevelVcsManager.getInstance(project);
         UpdateInfoTree tree = manager.showUpdateProjectInfo(files, actionName, ActionInfo.UPDATE, false);
         if (tree != null) {

@@ -1,11 +1,9 @@
 ctypes.GetLastError  # Is actually a pointer
+selectors.KqueueSelector
+signal.SIGEMT
+signal.SIGINFO
 locale.[A-Z0-9_]+  # Constants that should be moved to _locale and re-exported conditionally
 locale.nl_langinfo  # Function that should be moved to _locale and re-exported conditionally
-os.path.join  # Parameter name mismatch
-posixpath.altsep  # Type mismatch
-posixpath.realpath  # Parameter name mismatch
-urllib.request.pathname2url  # Parameter name mismatch
-urllib.request.url2pathname  # Same
 
 # ==========
 # Whitelist entries that cannot or should not be fixed

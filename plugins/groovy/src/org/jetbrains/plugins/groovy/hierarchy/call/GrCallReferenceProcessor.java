@@ -36,7 +36,7 @@ public class GrCallReferenceProcessor implements CallReferenceProcessor {
   public boolean process(@NotNull PsiReference reference, @NotNull JavaCallHierarchyData data) {
     PsiClass originalClass = data.getOriginalClass();
     PsiMethod method = data.getMethod();
-    Set<PsiMethod> methodsToFind = data.getMethodsToFind();
+    Set<? extends PsiMethod> methodsToFind = data.getMethodsToFind();
     PsiMethod methodToFind = data.getMethodToFind();
     PsiClassType originalType = data.getOriginalType();
     Map<PsiMember, NodeDescriptor<?>> methodToDescriptorMap = data.getResultMap();

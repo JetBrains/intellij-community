@@ -20,20 +20,13 @@
     ]]></description>
 
   <content>
-    <module name="intellij.grazie.java" package="com.intellij.grazie.ide.language.java"/>
-    <module name="intellij.grazie.json" package="com.intellij.grazie.ide.language.json"/>
-    <module name="intellij.grazie.markdown" package="com.intellij.grazie.ide.language.markdown"/>
-    <module name="intellij.grazie.properties" package="com.intellij.grazie.ide.language.properties"/>
-    <module name="intellij.grazie.xml" package="com.intellij.grazie.ide.language.xml"/>
-    <module name="intellij.grazie.yaml" package="com.intellij.grazie.ide.language.yaml"/>
+    <module name="intellij.grazie.java"/>
+    <module name="intellij.grazie.json"/>
+    <module name="intellij.grazie.markdown"/>
+    <module name="intellij.grazie.properties"/>
+    <module name="intellij.grazie.xml"/>
+    <module name="intellij.grazie.yaml"/>
   </content>
-
-  <depends optional="true" config-file="intellij.grazie.java.xml">com.intellij.modules.java</depends>
-  <depends optional="true" config-file="intellij.grazie.json.xml">com.intellij.modules.json</depends>
-  <depends optional="true" config-file="intellij.grazie.markdown.xml">org.intellij.plugins.markdown</depends>
-  <depends optional="true" config-file="intellij.grazie.properties.xml">com.intellij.properties</depends>
-  <depends optional="true" config-file="intellij.grazie.xml.xml">com.intellij.modules.xml</depends>
-  <depends optional="true" config-file="intellij.grazie.yaml.xml">org.jetbrains.plugins.yaml</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceImplementation="com.intellij.grazie.GrazieConfig"/>
@@ -57,17 +50,22 @@
     <search.optionContributor implementation="com.intellij.grazie.ide.ui.search.GrazieSearchableOptionContributor"/>
 
     <statistics.applicationUsagesCollector implementation="com.intellij.grazie.ide.fus.GrazieFUSState"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSRuleIDRule"/>
-    <statistics.validation.customValidationRule implementation="com.intellij.grazie.ide.fus.GrazieFUSStrategyIDRule"/>
-    <statistics.counterUsagesCollector groupId="grazie.count" version="3"/>
+    <statistics.counterUsagesCollector groupId="grazie.count" version="4"/>
 
     <spellchecker.dictionary.runtimeDictionaryProvider implementation="com.intellij.grazie.spellcheck.GrazieDictionaryProvider"/>
     <notificationGroup id="Proofreading missing languages information" displayType="STICKY_BALLOON" bundle="messages.GrazieBundle" key="grazie.notification.missing-languages.group"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <grammar.strategy language="TEXT" implementationClass="com.intellij.grazie.ide.language.plain.PlainTextGrammarCheckingStrategy"/>
-    <grammar.strategy language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitMessageGrammarCheckingStrategy"/>
+    <textChecker implementation="com.intellij.grazie.grammar.LanguageToolChecker" id="languageTool"/>
+
+    <textExtractor language="TEXT" implementationClass="com.intellij.grazie.text.PlainTextExtractor"/>
+
+    <problemFilter language="" implementationClass="com.intellij.grazie.text.CommentProblemFilter"/>
+  </extensions>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <annotator language="TEXT" implementationClass="com.intellij.grazie.ide.language.commit.CommitAnnotator"/>
   </extensions>
 
   <extensionPoints>
@@ -75,5 +73,15 @@
                     dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy"/>
     </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.grazie.textExtractor" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.grazie.text.TextExtractor"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.grazie.problemFilter" beanClass="com.intellij.lang.LanguageExtensionPoint"
+                    dynamic="true">
+      <with attribute="implementationClass" implements="com.intellij.grazie.text.ProblemFilter"/>
+    </extensionPoint>
+    <extensionPoint qualifiedName="com.intellij.grazie.textChecker" interface="com.intellij.grazie.text.TextChecker"
+                    dynamic="true"/>
   </extensionPoints>
 </idea-plugin>

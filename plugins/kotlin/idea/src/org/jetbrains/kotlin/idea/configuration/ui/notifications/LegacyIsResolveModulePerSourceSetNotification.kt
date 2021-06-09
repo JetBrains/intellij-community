@@ -38,7 +38,7 @@ fun notifyLegacyIsResolveModulePerSourceSetSettingIfNeeded(
     notificationSuppressState: SuppressResolveModulePerSourceSetNotificationState,
     isResolveModulePerSourceSetSetting: IsResolveModulePerSourceSetSetting
 ) {
-    if (PlatformVersion.isAndroidStudio() || PlatformUtils.isMobileIde()) return
+    if (PlatformVersion.isAndroidStudio() || PlatformUtils.isMobileIde() || PlatformUtils.isAppCode()) return
     if (notificationSuppressState.isSuppressed) return
     if (isResolveModulePerSourceSetSetting.isResolveModulePerSourceSet) return
     if (previouslyShownNotification.get()?.isExpired == false) return

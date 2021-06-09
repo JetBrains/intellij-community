@@ -21,7 +21,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Set;
 
 final class SliceForwardUtil {
@@ -92,29 +91,16 @@ final class SliceForwardUtil {
       PsiParameter parameter = (PsiParameter)from;
       PsiElement scope = parameter.getDeclarationScope();
       Collection<PsiParameter> parametersToAnalyze = new HashSet<>();
-      if (scope instanceof PsiMethod) {
+      if (scope instanceof PsiMethod && ((PsiMethod)scope).hasModifierProperty(PsiModifier.ABSTRACT)) {
         final PsiMethod method = (PsiMethod)scope;
         int index = method.getParameterList().getParameterIndex(parameter);
+        final Set<PsiMethod> implementors = new HashSet<>();
 
-        Collection<PsiMethod> superMethods = ContainerUtil.set(method.findDeepestSuperMethods());
-        superMethods.add(method);
-        for (Iterator<PsiMethod> iterator = superMethods.iterator(); iterator.hasNext(); ) {
+        if (!OverridingMethodsSearch.search(method, parent.getScope().toSearchScope(), true).forEach(sub -> {
           ProgressManager.checkCanceled();
-          PsiMethod superMethod = iterator.next();
-          if (!parent.params.scope.contains(superMethod)) {
-            iterator.remove();
-          }
-        }
-
-        final Set<PsiMethod> implementors = new HashSet<>(superMethods);
-        for (PsiMethod superMethod : superMethods) {
-          ProgressManager.checkCanceled();
-          if (!OverridingMethodsSearch.search(superMethod, parent.getScope().toSearchScope(), true).forEach(sub -> {
-            ProgressManager.checkCanceled();
-            implementors.add(sub);
-            return true;
-          })) return false;
-        }
+          implementors.add(sub);
+          return true;
+        })) return false;
         for (PsiMethod implementor : implementors) {
           ProgressManager.checkCanceled();
           if (!parent.params.scope.contains(implementor)) continue;
@@ -131,12 +117,11 @@ final class SliceForwardUtil {
       }
       for (final PsiParameter psiParameter : parametersToAnalyze) {
         ProgressManager.checkCanceled();
-
         if (!searchReferencesAndProcessAssignmentTarget(psiParameter, null, parent, processor)) return false;
       }
       return true;
     }
-    if (from instanceof PsiField) {
+    else if (from instanceof PsiField) {
       return searchReferencesAndProcessAssignmentTarget(from, null, parent, processor);
     }
 

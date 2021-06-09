@@ -15,7 +15,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Pair
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.execution.ParametersListUtil
-import com.jetbrains.python.PyNames
+import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonHelper
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.testing.PyTestSharedForm.create
@@ -55,7 +55,7 @@ class PyPyTestExecutionEnvironment(configuration: PyTestConfiguration, environme
 
 
 class PyTestConfiguration(project: Project, factory: PyTestFactory)
-  : PyAbstractTestConfiguration(project, factory, PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)),
+  : PyAbstractTestConfiguration(project, factory),
     PyTestConfigurationWithCustomSymbol {
   @ConfigField("runcfg.pytest.config.keywords")
   var keywords: String = ""
@@ -72,6 +72,7 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
   override fun getCustomRawArgumentsString(forRerun: Boolean): String = mutableListOf<String>().apply {
     if (keywords.isNotEmpty()) add("-k $keywords")
     if (AdvancedSettings.getBoolean("python.pytest.swapdiff")) add("--jb-swapdiff")
+    if (AdvancedSettings.getBoolean("python.pytest.show_summary")) add("--jb-show-summary")
   }.joinToString(" ")
 
   override fun getTestSpecsForRerun(scope: GlobalSearchScope, locations: MutableList<Pair<Location<*>, AbstractTestProxy>>): List<String> =
@@ -92,8 +93,6 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
     return super.getTestSpec()
   }
 
-  override fun isFrameworkInstalled(): Boolean = VFSTestFrameworkListener.getInstance().isTestFrameworkInstalled(sdk, PyNames.PY_TEST)
-
   override fun setMetaInfo(metaInfo: String) {
     // Metainfo contains test name along with params.
     parameters = getParamFromMetaInfo(metaInfo)
@@ -113,11 +112,19 @@ class PyTestConfiguration(project: Project, factory: PyTestFactory)
 }
 
 class PyTestFactory : PyAbstractTestFactory<PyTestConfiguration>() {
+  companion object {
+    const val id = "py.test"  //Do not rename: used as ID for run configurations
+  }
+
   override fun createTemplateConfiguration(project: Project): PyTestConfiguration = PyTestConfiguration(project, this)
 
-  override fun getName(): String = PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.PY_TEST)
+  override fun getId() = PyTestFactory.id
 
-  override fun getId() = "py.test" //Do not rename: used as ID for run configurations
+  override fun getName(): String = PyBundle.message("runcfg.pytest.display_name")
+
+  override val onlyClassesSupported: Boolean = false
+
+  override val packageRequired: String = "pytest"
 }
 
 private const val PYTEST_RUN_CONFIG: String = "PYTEST_RUN_CONFIG"

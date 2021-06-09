@@ -3,9 +3,7 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.DynamicBundle
-import com.intellij.openapi.util.NlsSafe
 
 abstract class AbstractKotlinBundleIndependent protected constructor(pathToBundle: String) : DynamicBundle(pathToBundle) {
-    @NlsSafe
     protected fun String.withHtml(): String = "<html>$this</html>"
 }

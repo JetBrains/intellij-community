@@ -109,6 +109,7 @@ open class SingleChangeListCommitWorkflow(
 private class DefaultNameChangeListCleaner(val project: Project, commitState: ChangeListCommitState) {
   private val isChangeListFullyIncluded = commitState.changeList.changes.size == commitState.changes.size
   private val isDefaultNameChangeList = commitState.changeList.hasDefaultName()
+  private val listName = commitState.changeList.name
 
   fun use(block: () -> Unit) {
     block()
@@ -117,7 +118,7 @@ private class DefaultNameChangeListCleaner(val project: Project, commitState: Ch
 
   fun clean() {
     if (isDefaultNameChangeList && isChangeListFullyIncluded) {
-      ChangeListManager.getInstance(project).editComment(LocalChangeList.getDefaultName(), "")
+      ChangeListManager.getInstance(project).editComment(listName, "")
     }
   }
 }

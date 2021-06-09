@@ -1,6 +1,24 @@
 <html>
 <body>
-Reports creating of <code>Throwable</code> and subclasses, where the created <code>Throwable</code> is never actually thrown.
-Also reports function calls which return <code>Throwable</code> instances, where the result of the function call is not thrown.
+Reports instantiations of <code>Throwable</code> or a subclass, where the created <code>Throwable</code>
+is never actually thrown.
+<p><b>Example:</b></p>
+<pre><code>
+fun check(condition: Boolean) {
+    if (!condition) /* throw is missing here */ IllegalArgumentException("condition is not met");
+}
+</code></pre>
+
+These are simple mistakes to make which are hard to catch in tests.
+<p>Also reports method calls which return instances of <code>Throwable</code> or a subclass,
+where the result of the method call is not thrown.
+<p><b>Example:</b></p>
+<pre><code>
+fun createError() = RuntimeException()
+
+fun foo() {
+    /* throw is missing here */ createError()
+}
+</code></pre>
 </body>
 </html>

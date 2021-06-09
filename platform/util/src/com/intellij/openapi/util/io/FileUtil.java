@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
@@ -23,9 +23,10 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.*;
-import java.nio.file.attribute.PosixFileAttributeView;
-import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.InvalidPathException;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -857,6 +858,10 @@ public class FileUtil extends FileUtilRt {
     else if (StringUtil.startsWithChar(normalizedPath, '/')) {
       return "/";
     }
+    int sc = normalizedPath.indexOf(URLUtil.SCHEME_SEPARATOR);
+    if (sc != -1) {
+      return normalizedPath.substring(0, sc + URLUtil.SCHEME_SEPARATOR.length());
+    }
 
     return null;
   }
@@ -1370,13 +1375,7 @@ public class FileUtil extends FileUtilRt {
   }
 
   public static void setExecutable(@NotNull File file) throws IOException {
-    PosixFileAttributeView view = Files.getFileAttributeView(file.toPath(), PosixFileAttributeView.class);
-    if (view != null) {
-      Set<PosixFilePermission> permissions = view.readAttributes().permissions();
-      if (permissions.add(PosixFilePermission.OWNER_EXECUTE)) {
-        view.setPermissions(permissions);
-      }
-    }
+    NioFiles.setExecutable(file.toPath());
   }
 
   @NotNull
@@ -1468,6 +1467,10 @@ public class FileUtil extends FileUtilRt {
     }
 
     return true;
+  }
+
+  public static boolean deleteWithRenaming(@NotNull Path file) {
+    return deleteWithRenaming(file.toFile());
   }
 
   public static boolean deleteWithRenaming(@NotNull File file) {

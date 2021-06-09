@@ -23,7 +23,6 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
     public boolean ANNOTATE_IGNORE_SPACES = true;
     public AnnotateDetectMovementsOption ANNOTATE_DETECT_INNER_MOVEMENTS = AnnotateDetectMovementsOption.NONE;
-    public boolean AUTO_COMMIT_ON_CHERRY_PICK = true;
     public boolean USE_CREDENTIAL_HELPER = false;
     public boolean STAGING_AREA_ENABLED = false;
   }
@@ -61,6 +60,7 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setPathToGit(@Nullable String pathToGit) {
     myState.myPathToGit = pathToGit;
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(GitExecutableManager.TOPIC).executableChanged();
   }
 
   public boolean isIgnoreWhitespaces() {
@@ -78,14 +78,6 @@ public final class GitVcsApplicationSettings implements PersistentStateComponent
 
   public void setAnnotateDetectMovementsOption(@NotNull AnnotateDetectMovementsOption value) {
     myState.ANNOTATE_DETECT_INNER_MOVEMENTS = value;
-  }
-
-  public void setAutoCommitOnCherryPick(boolean autoCommit) {
-    myState.AUTO_COMMIT_ON_CHERRY_PICK = autoCommit;
-  }
-
-  public boolean isAutoCommitOnCherryPick() {
-    return myState.AUTO_COMMIT_ON_CHERRY_PICK;
   }
 
   public void setUseCredentialHelper(boolean useCredentialHelper) {

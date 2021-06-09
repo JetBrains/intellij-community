@@ -9,10 +9,7 @@ import com.intellij.workspaceModel.ide.JpsFileEntitySource
 import com.intellij.workspaceModel.ide.JpsImportedEntitySource
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.FacetId
-import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
-import com.intellij.workspaceModel.storage.bridgeEntities.addFacetEntity
+import com.intellij.workspaceModel.storage.bridgeEntities.*
 import com.intellij.workspaceModel.storage.impl.EntityDataDelegation
 import com.intellij.workspaceModel.storage.impl.ModifiableWorkspaceEntityBase
 import com.intellij.workspaceModel.storage.impl.WorkspaceEntityBase
@@ -67,13 +64,22 @@ internal class FacetEntitiesSerializer(private val imlFileUrl: VirtualFileUrl,
 
       // Check for existing facet
       val newFacetId = FacetId(facetState.name, facetState.facetType, moduleEntity.persistentId())
-      if (builder.resolve(newFacetId) != null) {
-        res = false
+      var facetEntity: FacetEntity? = null
+      val existingFacet = builder.resolve(newFacetId)
+      if (existingFacet != null && configurationXmlTag != null) {
+        if (existingFacet.configurationXmlTag == null) {
+          facetEntity = builder.modifyEntity(ModifiableFacetEntity::class.java, existingFacet)  { this.configurationXmlTag = configurationXmlTag }
+          facetEntity = builder.changeSource(facetEntity, source)
+        } else {
+          res = false
+        }
       }
 
-      val facetEntity = builder.addFacetEntity(facetState.name, facetState.facetType, configurationXmlTag, moduleEntity, underlyingFacet,
-                                               source)
-      if (externalSystemId != null && !externalStorage) {
+      if (existingFacet == null) {
+        facetEntity = builder.addFacetEntity(facetState.name, facetState.facetType, configurationXmlTag, moduleEntity, underlyingFacet, source)
+      }
+
+      if (facetEntity != null && externalSystemId != null && !externalStorage) {
         builder.addEntity(ModifiableFacetExternalSystemIdEntity::class.java, source) {
           facet = facetEntity
           this.externalSystemId = externalSystemId

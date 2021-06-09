@@ -766,6 +766,7 @@
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.assignment.can.be.operator.assignment"
                      groupKey="inspection.assignments"
+                     enabledByDefault="true" level="INFORMATION"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignmentCanBeOperatorAssignmentInspection"/>
     <localInspection language="Groovy" groupPath="Groovy"
                      key="inspection.display.name.assignment.to.for.loop.parameter"

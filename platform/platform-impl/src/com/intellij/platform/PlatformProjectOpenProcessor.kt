@@ -3,6 +3,7 @@ package com.intellij.platform
 
 import com.intellij.ide.impl.OpenProjectTask
 import com.intellij.ide.impl.ProjectUtil
+import com.intellij.ide.lightEdit.LightEditService
 import com.intellij.ide.lightEdit.LightEditUtil
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.application.ApplicationManager
@@ -47,12 +48,19 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
     @JvmField
     val PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR = Key.create<Boolean>("PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR")
 
+    @JvmField
+    val PROJECT_NEWLY_OPENED = Key.create<Boolean>("PROJECT_NEWLY_OPENED")
+
     fun Project.isOpenedByPlatformProcessor(): Boolean {
       return getUserData(PROJECT_OPENED_BY_PLATFORM_PROCESSOR) == true
     }
 
     fun Project.isConfiguredByPlatformProcessor(): Boolean {
       return getUserData(PROJECT_CONFIGURED_BY_PLATFORM_PROCESSOR) == true
+    }
+
+    fun Project.isNewProject(): Boolean {
+      return getUserData(PROJECT_NEWLY_OPENED) == true
     }
 
     @JvmStatic
@@ -130,7 +138,7 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
 
       var options = originalOptions
       if (LightEditUtil.isForceOpenInLightEditMode()) {
-        val lightEditProject = LightEditUtil.openFile(file)
+        val lightEditProject = LightEditUtil.openFile(file, false)
         if (lightEditProject != null) {
           return lightEditProject
         }
@@ -145,6 +153,12 @@ class PlatformProjectOpenProcessor : ProjectOpenProcessor(), CommandLineProjectO
       // no reasonable directory -> create new temp one or use parent
       if (baseDirCandidate == null) {
         LOG.info("No project directory found")
+        if (LightEditUtil.isLightEditEnabled() && !LightEditService.getInstance().isPreferProjectMode) {
+          val lightEditProject = LightEditUtil.openFile(file, true)
+          if (lightEditProject != null) {
+            return lightEditProject
+          }
+        }
         if (Registry.`is`("ide.open.file.in.temp.project.dir")) {
           return createTempProjectAndOpenFile(file, options)
         }

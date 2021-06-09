@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package com.jetbrains.python.testing
@@ -54,8 +40,7 @@ class PyUnitTestExecutionEnvironment(configuration: PyUnitTestConfiguration, env
 
 
 class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
-  PyAbstractTestConfiguration(project, factory,
-                              PythonTestConfigurationsModel.getPythonsUnittestName()) { // Bare functions not supported in unittest: classes only
+  PyAbstractTestConfiguration(project, factory) { // Bare functions not supported in unittest: classes only
   @ConfigField("runcfg.unittest.config.pattern")
   var pattern: String? = null
 
@@ -103,9 +88,15 @@ class PyUnitTestConfiguration(project: Project, factory: PyUnitTestFactory) :
 }
 
 class PyUnitTestFactory : PyAbstractTestFactory<PyUnitTestConfiguration>() {
+  companion object {
+    const val id: String = "Unittests"
+  }
+
   override fun createTemplateConfiguration(project: Project): PyUnitTestConfiguration = PyUnitTestConfiguration(project, this)
 
-  override fun getName(): String = PythonTestConfigurationsModel.getPythonsUnittestName()
+  override fun getName(): String = PyBundle.message("runcfg.unittest.display_name")
 
-  override fun getId(): String = "Unittests"
+  override fun getId(): String = PyUnitTestFactory.id
+
+  override val onlyClassesSupported: Boolean = true
 }

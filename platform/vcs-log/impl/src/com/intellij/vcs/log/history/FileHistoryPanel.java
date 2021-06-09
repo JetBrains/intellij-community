@@ -115,7 +115,6 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
     myDetailsSplitter.setSecondComponent(myProperties.get(CommonUiProperties.SHOW_DETAILS) ? myDetailsPanel : null);
 
     myDetailsPanel.installCommitSelectionListener(myGraphTable);
-    VcsLogUiUtil.installDetailsListeners(myGraphTable, myDetailsPanel, logData, this);
 
     setEditorDiffPreview();
     EditorTabDiffPreviewManager.getInstance(myProject).subscribeToPreviewVisibilityChange(this, this::setEditorDiffPreview);
@@ -140,7 +139,7 @@ public class FileHistoryPanel extends JPanel implements DataProvider, Disposable
       }
     }.getMainComponent(), BorderLayout.CENTER);
 
-    PopupHandler.installPopupHandler(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
+    PopupHandler.installPopupMenu(myGraphTable, VcsLogActionPlaces.HISTORY_POPUP_ACTION_GROUP, VcsLogActionPlaces.VCS_HISTORY_PLACE);
     invokeOnDoubleClick(ActionManager.getInstance().getAction(VcsLogActionPlaces.VCS_LOG_SHOW_DIFF_ACTION), tableWithProgress);
 
     Disposer.register(disposable, this);

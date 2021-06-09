@@ -39,13 +39,14 @@ class ArtifactModifiableModelBridge(
 
   internal val elementsWithDiff = mutableSetOf<PackagingElement<*>>()
 
+  private val versionedOnBuilder = VersionedEntityStorageOnBuilder(diff)
+
   override fun getArtifacts(): Array<ArtifactBridge> {
     val newBridges = mutableListOf<ArtifactBridge>()
     val artifacts = diff
       .entities(ArtifactEntity::class.java)
       .map { artifactEntity ->
-        diff.artifactsMap.getDataByEntity(artifactEntity) ?: createArtifactBridge(artifactEntity, VersionedEntityStorageOnBuilder(diff),
-                                                                                  project).also {
+        diff.artifactsMap.getDataByEntity(artifactEntity) ?: createArtifactBridge(artifactEntity, versionedOnBuilder, project).also {
           newBridges.add(it)
           manager.artifactWithDiffs.add(it)
         }
@@ -61,7 +62,7 @@ class ArtifactModifiableModelBridge(
 
     val newBridges = mutableListOf<ArtifactBridge>()
     val bridge = diff.artifactsMap.getDataByEntity(artifactEntity)
-                 ?: createArtifactBridge(artifactEntity, VersionedEntityStorageOnBuilder(diff), project).also {
+                 ?: createArtifactBridge(artifactEntity, versionedOnBuilder, project).also {
                    newBridges.add(it)
                    manager.artifactWithDiffs.add(it)
                  }
@@ -86,8 +87,7 @@ class ArtifactModifiableModelBridge(
       .entities(ArtifactEntity::class.java)
       .filter { it.artifactType == typeId }
       .map { artifactEntity ->
-        diff.artifactsMap.getDataByEntity(artifactEntity) ?: createArtifactBridge(artifactEntity, VersionedEntityStorageOnBuilder(diff),
-                                                                                  project).also {
+        diff.artifactsMap.getDataByEntity(artifactEntity) ?: createArtifactBridge(artifactEntity, versionedOnBuilder, project).also {
           newBridges.add(it)
           manager.artifactWithDiffs.add(it)
         }
@@ -102,8 +102,7 @@ class ArtifactModifiableModelBridge(
     val artifacts = diff
       .entities(ArtifactEntity::class.java)
       .map { artifactEntity ->
-        diff.artifactsMap.getDataByEntity(artifactEntity) ?: createArtifactBridge(artifactEntity, VersionedEntityStorageOnBuilder(diff),
-                                                                                  project).also {
+        diff.artifactsMap.getDataByEntity(artifactEntity) ?: createArtifactBridge(artifactEntity, versionedOnBuilder, project).also {
           newBridges.add(it)
           manager.artifactWithDiffs.add(it)
         }
@@ -136,7 +135,7 @@ class ArtifactModifiableModelBridge(
     val rootElementEntity = rootElement.getOrAddEntity(diff, source, project) as CompositePackagingElementEntity
     rootElement.forThisAndFullTree {
       if (!it.hasStorage()) {
-        it.setStorage(VersionedEntityStorageOnBuilder(diff), project, elementsWithDiff, PackagingElementInitializer)
+        it.setStorage(versionedOnBuilder, project, elementsWithDiff, PackagingElementInitializer)
         elementsWithDiff += it
       }
     }
@@ -148,7 +147,7 @@ class ArtifactModifiableModelBridge(
     )
 
     val persistentId = artifactEntity.persistentId()
-    val modifiableArtifact = ArtifactBridge(persistentId, VersionedEntityStorageOnBuilder(diff), project, eventDispatcher)
+    val modifiableArtifact = ArtifactBridge(persistentId, versionedOnBuilder, project, eventDispatcher)
     modifiableToOriginal[modifiableArtifact] = modifiableArtifact
     diff.mutableArtifactsMap.addMapping(artifactEntity, modifiableArtifact)
 
@@ -186,7 +185,7 @@ class ArtifactModifiableModelBridge(
     val existingModifiableArtifact = modifiableToOriginal.getKeysByValue(artifact)?.singleOrNull()
     if (existingModifiableArtifact != null) return existingModifiableArtifact
 
-    val modifiableArtifact = ArtifactBridge(artifactId, VersionedEntityStorageOnBuilder(diff), project, eventDispatcher)
+    val modifiableArtifact = ArtifactBridge(artifactId, versionedOnBuilder, project, eventDispatcher)
     modifiableToOriginal[modifiableArtifact] = artifact
     eventDispatcher.multicaster.artifactChanged(modifiableArtifact, artifact.name)
     return modifiableArtifact

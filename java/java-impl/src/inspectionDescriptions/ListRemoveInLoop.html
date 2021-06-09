@@ -1,16 +1,17 @@
 <html>
 <body>
-Reports <code>List.remove(index)</code> called in a loop, which can be replaced with <code>List.subList().clear()</code>. The replacement
-is more efficient for most <code>List</code> implementations, when many elements are deleted.
+Reports <code>List.remove(index)</code> called in a loop that can be replaced with <code>List.subList().clear()</code>.
+<p>The replacement
+  is more efficient for most <code>List</code> implementations when many elements are deleted.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   void removeRange(List&lt;String&gt; list, int from, int to) {
     for (int i = from; i &lt; to; i++) {
         list.remove(from);
     }
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
+</code></pre>
+<p>After the quick-fix is applied:</p>
 <pre>
   void removeRange(List&lt;String&gt; list, int from, int to) {
     if (to &gt; from) {
@@ -19,7 +20,7 @@ is more efficient for most <code>List</code> implementations, when many elements
   }
 </pre>
 <p>
-  The quick-fix adds a range-check automatically to prevent a possible <code>IndexOutOfBoundsException</code> when the minimal value is bigger
+  The quick-fix adds a range check automatically to prevent a possible <code>IndexOutOfBoundsException</code> when the minimal value is bigger
   than the maximal value. It can be removed if such a situation is impossible in your code.
 </p>
 <!-- tooltip end -->

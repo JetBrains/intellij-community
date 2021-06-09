@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -364,11 +364,11 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     myExternalDocAction.registerCustomShortcutSet(CustomShortcutSet.fromString("UP"), this);
     myExternalDocAction.registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_EXTERNAL_JAVADOC).getShortcutSet(), myEditorPane);
     edit.registerCustomShortcutSet(CommonShortcuts.getEditSource(), this);
-    ActionPopupMenu contextMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(
-      ActionPlaces.JAVADOC_TOOLBAR, actions, new MenuItemPresentationFactory(true));
     PopupHandler popupHandler = new PopupHandler() {
       @Override
       public void invokePopup(Component comp, int x, int y) {
+        ActionPopupMenu contextMenu = ((ActionManagerImpl)ActionManager.getInstance()).createActionPopupMenu(
+          ActionPlaces.JAVADOC_TOOLBAR, actions, new MenuItemPresentationFactory(true));
         contextMenu.getComponent().show(comp, x, y);
       }
     };
@@ -409,6 +409,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     };
     myToolBar.setSecondaryActionsIcon(AllIcons.Actions.More, true);
+    myToolBar.setTargetComponent(this);
 
     JLayeredPane layeredPane = new JBLayeredPane() {
       @Override
@@ -1203,9 +1204,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       private Image getImage() {
         if (!myImageLoaded) {
           Image image = loadImageFromUrl();
-          myImage = ImageUtil.toBufferedImage(image != null ?
-                                              image :
-                                              ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage());
+          myImage = ImageUtil.toBufferedImage(
+            image != null ? image : ((ImageIcon)UIManager.getLookAndFeelDefaults().get("html.missingImage")).getImage(),
+            false, true);
+
           myImageLoaded = true;
         }
         return myImage;

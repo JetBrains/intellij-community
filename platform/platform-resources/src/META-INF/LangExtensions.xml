@@ -1,6 +1,6 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <projectServiceContainerInitializedListener implementation="com.intellij.openapi.module.impl.ModuleManagerComponent$MyProjectServiceContainerInitializedListener" order="first"/>
+    <projectServiceContainerInitializedListener implementation="com.intellij.openapi.module.impl.ModuleProjectServiceContainerInitializedListener" order="first"/>
 
     <applicationService serviceInterface="com.intellij.openapi.project.impl.ProjectStoreFactory"
                         serviceImplementation="com.intellij.configurationStore.PlatformLangProjectStoreFactory"
@@ -99,8 +99,6 @@
                         serviceImplementation="com.intellij.model.BranchServiceImpl"/>
 
     <projectServiceContainerCustomizer implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.LegacyBridgeProjectLifecycleListener"/>
-    <projectService serviceInterface="com.intellij.workspaceModel.ide.WorkspaceModel"
-                    serviceImplementation="com.intellij.workspaceModel.ide.impl.WorkspaceModelImpl" preload="await"/>
     <projectService serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService" preload="await"/>
     <projectServiceContainerInitializedListener implementation="com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleBridgeLoaderService$ModuleBridgeProjectServiceInitializedListener"/>
 
@@ -544,6 +542,7 @@
     <getDataRule key="usageTarget" implementationClass="com.intellij.ide.impl.dataRules.UsageTargetsRule"/>
     <getDataRule key="UsageInfo.List" implementationClass="com.intellij.ide.impl.dataRules.UsageInfo2ListRule"/>
     <getDataRule key="module" implementationClass="com.intellij.ide.impl.dataRules.ModuleRule"/>
+    <getDataRule key="search.targets" implementationClass="com.intellij.find.actions.SearchTargetsDataRule"/>
     <getDataRule key="search.target.variants" implementationClass="com.intellij.find.actions.SearchTargetVariantsDataRule"/>
 
     <dataValidators implementation="com.intellij.ide.impl.LangDataValidators"/>
@@ -805,6 +804,18 @@
       <className>com.intellij.codeInsight.intention.impl.QuickEditAction</className>
       <category>Language injection</category>
     </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertRelativePathToAbsoluteIntentionAction</className>
+      <category>Other</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.codeInsight.intention.impl.ConvertAbsolutePathToRelativeIntentionAction</className>
+      <category>Other</category>
+    </intentionAction>
+    <intentionAction>
+      <className>com.intellij.ide.scratch.ScratchFromSelectionIntention</className>
+      <category>Other</category>
+    </intentionAction>
 
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.DoNotShowInspectionIntentionMenuContributor"/>
     <intentionMenuContributor implementation="com.intellij.codeInsight.daemon.impl.GutterIntentionMenuContributor"/>
@@ -829,6 +840,7 @@
     <editorActionHandler action="EditorSelectWord" implementationClass="com.intellij.openapi.editor.actions.SelectWordAtCaretAction$Handler" id="indent.guide.select.word" order=" before psi.select.word"/>
     <editorActionHandler action="EditorUnSelectWord" implementationClass="com.intellij.codeInsight.editorActions.UnSelectWordHandler" id="psi.unselect.word"/>
     <editorActionHandler action="EditorPaste" implementationClass="com.intellij.codeInsight.editorActions.PasteHandler"/>
+    <editorActionHandler action="EditorPaste" implementationClass="com.intellij.codeInsight.editorActions.LanguageConsolePasteHandler" order="first"/>
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.codeInsight.editorActions.CopyHandler"/>
     <editorActionHandler action="EditorCopy" implementationClass="com.intellij.codeInsight.documentation.render.DocRenderCopyHandler"
                          id="docRender" order="first"/>
@@ -952,7 +964,10 @@
     <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
     <annotator language="" implementationClass="com.intellij.codeInsight.highlighting.HyperlinkAnnotator"/>
 
-    <projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProvider"/>
+    <!--<projectService serviceImplementation="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProvider"/>-->
+    <projectService serviceInterface="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProviderBase"
+                    serviceImplementation="com.intellij.analysis.problemsView.toolWindow.HighlightingErrorsProvider"/>
+
     <projectService serviceInterface="com.intellij.analysis.problemsView.ProblemsCollector"
                     serviceImplementation="com.intellij.analysis.problemsView.toolWindow.ProjectErrorsCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.analysis.problemsView.toolWindow.ProblemsViewStatsCollector"/>
@@ -1249,8 +1264,12 @@
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.ActionsEqualityProvider"/>
     <searchEverywhereResultsEqualityProvider implementation="com.intellij.ide.actions.searcheverywhere.OptionEqualityProvider"/>
 
+    <statistic.eventLog.eventLoggerProvider implementation="com.intellij.ide.actions.searcheverywhere.ml.logger.SearchEverywhereEventLoggerProvider" order="first"/>
+    <applicationService serviceImplementation="com.intellij.ide.actions.searcheverywhere.ml.SearchEverywhereMlSessionService"/>
+
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingCache"/>
     <projectService serviceImplementation="com.intellij.ide.actions.runAnything.RunAnythingContextRecentDirectoryCache"/>
+    <actionConfigurationCustomizer implementation="com.intellij.ide.actions.runAnything.RunAnythingAction$ShortcutTracker"/>
 
     <runAnything.executionProvider id="RunAnythingRunConfigurationProvider"
                                    implementation="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
@@ -1377,7 +1396,7 @@
     <projectService serviceImplementation="com.intellij.execution.segmentedRunDebugWidget.StateWidgetManager"/>
 
     <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.NamedScopeDescriptor$Factory"/>
-    <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.PatternDescriptor$Factory"/>
+    <fileSetDescriptorFactory implementation="com.intellij.application.options.codeStyle.excludedFiles.GlobPatternDescriptor$Factory"/>
 
     <fileBasedIndexLayout id="in-memory"
                           presentableNameKey="in.memory.storage.presentable.name"

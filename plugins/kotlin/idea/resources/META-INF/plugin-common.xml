@@ -707,7 +707,7 @@
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightSettings"/>
 
-    <referenceImporter implementation="org.jetbrains.kotlin.idea.quickfix.KotlinReferenceImporter"/>
+    <referenceImporter implementation="org.jetbrains.kotlin.idea.codeInsight.KotlinReferenceImporter"/>
     <autoImportOptionsProvider instance="org.jetbrains.kotlin.idea.codeInsight.KotlinCodeInsightWorkspaceSettingsProvider"/>
 
     <fileType.fileViewProviderFactory filetype="KJSM" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>

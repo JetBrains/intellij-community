@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -89,7 +89,18 @@ final class PluginLayout extends BaseLayout {
       mainJarName = "${convertModuleNameToFileName(layout.mainModule)}.jar"
     }
 
-    /**
+    @Override
+    void withModule(String moduleName) {
+      if (moduleName.endsWith(".jps") || moduleName.endsWith(".rt")) {
+        // must be in a separate JAR
+        super.withModule(moduleName)
+      }
+      else {
+        layout.moduleJars.putValue(mainJarName, moduleName)
+      }
+    }
+
+  /**
      * Custom name of the directory (under 'plugins' directory) where the plugin should be placed. By default the main module name is used
      * (with stripped {@code intellij} prefix and dots replaced by dashes).
      * <strong>Don't set this property for new plugins</strong>; it is temporary added to keep layout of old plugins unchanged.

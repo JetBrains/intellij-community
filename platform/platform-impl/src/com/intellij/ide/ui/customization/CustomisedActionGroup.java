@@ -36,7 +36,7 @@ public class CustomisedActionGroup extends ActionGroup implements UpdateInBackgr
 
   @Override
   public boolean isUpdateInBackground() {
-    return myGroup instanceof UpdateInBackground && ((UpdateInBackground)myGroup).isUpdateInBackground();
+    return UpdateInBackground.isUpdateInBackground(myGroup);
   }
 
   @Override

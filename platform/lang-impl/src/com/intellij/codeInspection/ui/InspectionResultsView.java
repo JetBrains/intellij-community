@@ -173,7 +173,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
     getProject().getMessageBus().connect(this).subscribe(ProfileChangeAdapter.TOPIC, new ProfileChangeAdapter() {
       @Override
-      public void profileChanged(InspectionProfile profile) {
+      public void profileChanged(@NotNull InspectionProfile profile) {
         if (profile == ProjectInspectionProfileManager.getInstance(getProject()).getCurrentProfile()) {
           InspectionResultsView.this.profileChanged();
         }

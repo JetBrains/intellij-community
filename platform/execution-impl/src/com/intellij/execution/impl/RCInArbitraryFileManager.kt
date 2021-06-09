@@ -13,11 +13,7 @@ import com.intellij.openapi.vfs.CharsetToolkit
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.GuiUtils
-import com.intellij.util.PathUtil
-import com.intellij.util.SmartList
-import com.intellij.util.throwIfNotEmpty
-import com.intellij.util.toBufferExposingByteArray
+import com.intellij.util.*
 import org.jdom.Element
 import java.io.ByteArrayInputStream
 
@@ -92,7 +88,8 @@ internal class RCInArbitraryFileManager(private val project: Project) {
   }
 
   private fun deleteFile(file: VirtualFile) {
-    GuiUtils.invokeLaterIfNeeded(Runnable { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }, ModalityState.NON_MODAL)
+    ModalityUiUtil.invokeLaterIfNeeded(
+      Runnable { runWriteAction { file.delete(this@RCInArbitraryFileManager) } }, ModalityState.NON_MODAL)
   }
 
   /**

@@ -10,6 +10,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.PsiVariable
 import com.intellij.psi.codeStyle.JavaCodeStyleManager
+import com.intellij.psi.codeStyle.VariableKind
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.rename.naming.AutomaticRenamer
 import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory
@@ -22,8 +23,9 @@ import org.jetbrains.kotlin.descriptors.VariableDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.unsafeResolveToDescriptor
 import org.jetbrains.kotlin.idea.core.unquote
 import org.jetbrains.kotlin.idea.refactoring.KotlinRefactoringSettings
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.isAncestor
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
@@ -39,6 +41,8 @@ class AutomaticVariableRenamer(
     private val toUnpluralize = ArrayList<KtNamedDeclaration>()
 
     init {
+        val oldClassName = klass.name!!.unquote()
+        val newClassNameUnquoted = newClassName.unquote()
         for (usage in usages) {
             val usageElement = usage.element ?: continue
 
@@ -48,7 +52,10 @@ class AutomaticVariableRenamer(
                 KtParameter::class.java
             ) as KtCallableDeclaration? ?: continue
 
-            if (parameterOrVariable.typeReference?.isAncestor(usageElement) != true) continue
+            val variableName = parameterOrVariable.name ?: continue
+            
+            if (variableName.equals(newClassNameUnquoted, ignoreCase = true)) continue
+            if (!StringUtil.containsIgnoreCase(variableName, oldClassName)) continue
 
             val descriptor = try {
                 parameterOrVariable.unsafeResolveToDescriptor()
@@ -65,7 +72,7 @@ class AutomaticVariableRenamer(
             myElements.add(parameterOrVariable)
         }
 
-        suggestAllNames(klass.name?.unquote(), newClassName.unquote())
+        suggestAllNames(oldClassName, newClassNameUnquoted)
     }
 
     override fun getDialogTitle() = JavaRefactoringBundle.message("rename.variables.title")
@@ -74,13 +81,13 @@ class AutomaticVariableRenamer(
 
     override fun entityName() = JavaRefactoringBundle.message("entity.name.variable")
 
-    override fun nameToCanonicalName(name: String, element: PsiNamedElement): String? {
+    override fun nameToCanonicalName(name: String, element: PsiNamedElement): String {
         if (element !is KtNamedDeclaration) return name
 
-        val psiVariable = element.toLightElements().firstIsInstanceOrNull<PsiVariable>()
-        val propertyName = if (psiVariable != null) {
-            val codeStyleManager = JavaCodeStyleManager.getInstance(psiVariable.project)
-            codeStyleManager.variableNameToPropertyName(name, codeStyleManager.getVariableKind(psiVariable))
+        val codeStyleManager = JavaCodeStyleManager.getInstance(element.project)
+        val kind = variableKind(codeStyleManager, element)
+        val propertyName = if (kind != null) {
+            codeStyleManager.variableNameToPropertyName(name, kind)
         } else name
 
         if (element in toUnpluralize) {
@@ -91,19 +98,33 @@ class AutomaticVariableRenamer(
         return propertyName
     }
 
-    override fun canonicalNameToName(canonicalName: String, element: PsiNamedElement): String? {
+    override fun canonicalNameToName(canonicalName: String, element: PsiNamedElement): String {
         if (element !is KtNamedDeclaration) return canonicalName
 
-        val psiVariable = element.toLightElements().firstIsInstanceOrNull<PsiVariable>()
-        val varName = if (psiVariable != null) {
-            val codeStyleManager = JavaCodeStyleManager.getInstance(psiVariable.project)
-            codeStyleManager.propertyNameToVariableName(canonicalName, codeStyleManager.getVariableKind(psiVariable))
+        val codeStyleManager = JavaCodeStyleManager.getInstance(element.project)
+        val kind = variableKind(codeStyleManager, element)
+        val varName = if (kind != null) {
+            codeStyleManager.propertyNameToVariableName(canonicalName, kind)
         } else canonicalName
 
         return if (element in toUnpluralize)
             StringUtil.pluralize(varName)
         else
             varName
+    }
+
+    private fun variableKind(
+        codeStyleManager: JavaCodeStyleManager,
+        ktElement: KtNamedDeclaration
+    ): VariableKind? {
+        if (ktElement is KtProperty && ktElement.isTopLevel && !ktElement.hasModifier(KtTokens.CONST_KEYWORD)) {
+            return null
+        }
+        if (ktElement.containingClassOrObject is KtObjectDeclaration) {
+            return null
+        }
+        val psiVariable = ktElement.toLightElements().firstIsInstanceOrNull<PsiVariable>()
+        return if (psiVariable != null) codeStyleManager.getVariableKind(psiVariable) else null
     }
 
     companion object {

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io.jackson
 
 import com.fasterxml.jackson.core.JsonGenerator
@@ -25,13 +25,11 @@ inline fun JsonGenerator.array(fieldName: String? = null, writer: () -> Unit) {
 
 open class IntelliJPrettyPrinter : DefaultPrettyPrinter() {
   companion object {
-    @JvmField
-    val UNIX_LINE_FEED_INSTANCE = DefaultIndenter("  ", "\n")
+    @JvmField val UNIX_LINE_FEED_INSTANCE = DefaultIndenter("  ", "\n")
   }
 
   init {
     _objectFieldValueSeparatorWithSpaces = ": "
     _objectIndenter = UNIX_LINE_FEED_INSTANCE
-    _arrayIndenter = UNIX_LINE_FEED_INSTANCE
   }
 }

@@ -14,7 +14,7 @@ object KotlinPluginUtil {
 
     private val KNOWN_KOTLIN_PLUGIN_IDS = listOf(
         "org.jetbrains.kotlin",
-        "org.jetbrains.kotlin.native.clion",
+        "com.intellij.appcode.kmm",
         "org.jetbrains.kotlin.native.appcode"
     )
 

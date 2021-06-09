@@ -28,7 +28,7 @@ public final class DeviceIdManager {
   private static final String DEVICE_ID_PREFERENCE_KEY = "device_id";
 
   /**
-   * @deprecated Use getOrGenerateId(String) with purpose specific id
+   * @deprecated Use {@link DeviceIdManager#getOrGenerateId(DeviceIdToken, String)} with purpose specific id
    */
   @Deprecated
   public static String getOrGenerateId() {

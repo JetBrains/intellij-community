@@ -90,7 +90,7 @@ public final class ChangeDiffRequestProducer implements DiffRequestProducer, Cha
   }
 
   @Override
-  public @Nullable ChangesBrowserNode.Tag getPopupTag() {
+  public @Nullable ChangesBrowserNode.Tag getTag() {
     return tryCast(myChangeContext.get(TAG_KEY), ChangesBrowserNode.Tag.class);
   }
 

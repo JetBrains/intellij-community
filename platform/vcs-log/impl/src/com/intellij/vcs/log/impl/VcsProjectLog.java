@@ -272,6 +272,11 @@ public final class VcsProjectLog implements Disposable {
 
   @NotNull
   private static ModalityState getModality() {
+    /*
+     Using "any" modality specifically is required in order to be able to wait for log initialization or disposal under modal progress.
+     Otherwise, methods such as "VcsProjectLog#runWhenLogIsReady" or "VcsProjectLog.shutDown" won't be able to work
+     when "disposeLog" is queued as "invokeAndWait" (used there in order to ensure sequential execution) will hang when modal progress is displayed.
+    */
     return ModalityState.any();
   }
 

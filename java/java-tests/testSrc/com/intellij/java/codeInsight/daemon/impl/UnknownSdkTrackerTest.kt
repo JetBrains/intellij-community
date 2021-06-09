@@ -16,7 +16,6 @@ import com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver.UnknownSdk
 import com.intellij.testFramework.ExtensionTestUtil
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.testFramework.assertions.Assertions
-import com.intellij.testFramework.setSystemPropertyForTest
 import com.intellij.util.ui.UIUtil
 
 class UnknownSdkTrackerTestKt : LightPlatformTestCase() {

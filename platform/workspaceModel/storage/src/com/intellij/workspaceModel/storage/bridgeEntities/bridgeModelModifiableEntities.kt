@@ -40,6 +40,7 @@ class ModifiableJavaModuleSettingsEntity : ModifiableWorkspaceEntityBase<JavaMod
   var excludeOutput: Boolean by EntityDataDelegation()
   var compilerOutput: VirtualFileUrl? by VirtualFileUrlNullableProperty()
   var compilerOutputForTests: VirtualFileUrl? by VirtualFileUrlNullableProperty()
+  var languageLevelId: String? by EntityDataDelegation()
 
   var module: ModuleEntity by MutableOneToOneChild.NotNull(JavaModuleSettingsEntity::class.java, ModuleEntity::class.java, true)
 }
@@ -48,6 +49,7 @@ fun WorkspaceEntityStorageDiffBuilder.addJavaModuleSettingsEntity(inheritedCompi
                                                                   excludeOutput: Boolean,
                                                                   compilerOutput: VirtualFileUrl?,
                                                                   compilerOutputForTests: VirtualFileUrl?,
+                                                                  languageLevelId: String?,
                                                                   module: ModuleEntity,
                                                                   source: EntitySource) = addEntity(
   ModifiableJavaModuleSettingsEntity::class.java, source) {
@@ -55,6 +57,7 @@ fun WorkspaceEntityStorageDiffBuilder.addJavaModuleSettingsEntity(inheritedCompi
   this.excludeOutput = excludeOutput
   this.compilerOutput = compilerOutput
   this.compilerOutputForTests = compilerOutputForTests
+  this.languageLevelId = languageLevelId
   this.module = module
 }
 
@@ -272,8 +275,8 @@ class ModifiableArtifactEntity : ModifiableWorkspaceEntityBase<ArtifactEntity>()
   var artifactType: String by EntityDataDelegation()
   var includeInProjectBuild: Boolean by EntityDataDelegation()
   var outputUrl: VirtualFileUrl? by VirtualFileUrlNullableProperty()
-  var rootElement: CompositePackagingElementEntity by MutableOneToAbstractOneChild(ArtifactEntity::class.java,
-                                                                                   CompositePackagingElementEntity::class.java)
+  var rootElement: CompositePackagingElementEntity by MutableOneToAbstractOneParent(ArtifactEntity::class.java,
+                                                                                    CompositePackagingElementEntity::class.java)
   var customProperties: Sequence<ArtifactPropertiesEntity> by customPropertiesDelegate
 
   companion object {

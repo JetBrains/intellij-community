@@ -218,12 +218,6 @@ public final class CharArrayUtil {
     return offset;
   }
 
-  //Commented in order to apply to the green code policy as the method is unused.
-  //
-  //public static int shiftBackwardUntil(char[] buffer, int offset, String chars) {
-  //  return shiftBackwardUntil(new CharArrayCharSequence(buffer), offset, chars);
-  //}
-
   /**
    * Calculates offset that points to the given buffer and has the following characteristics:
    * <p/>
@@ -279,20 +273,24 @@ public final class CharArrayUtil {
     if (start + len > end) return false;
     if (start < 0) return false;
 
-    //if (buffer instanceof String && s instanceof String) {
-    //  return ((String)buffer).regionMatches(offset, (String)s, 0, len);
-    //}
-
     for (int i = 0; i < len; i++) {
       if (buffer.charAt(start + i) != s.charAt(i)) return false;
     }
     return true;
   }
 
-  public static boolean regionMatches(@NotNull CharSequence s1, int start1, int end1, @NotNull CharSequence s2, int start2, int end2) {
-    if (end1-start1 != end2-start2) return false;
+  private static void assertRegionIndicesInRange(int s1Length, int start1, int end1,
+                                                 int s2Length, int start2, int end2) {
+    if (start1 < 0 || start1 > end1 || end1 > s1Length || start2 < 0 || start2 > end2 || end2 > s2Length) {
+      throw new IllegalArgumentException("Indices out of bounds: (" + start1 + ", " + end1 + ") of CharSequence length " + s1Length + " vs (" + start2 + ", " + end2 + ") of CharSequence length " + s2Length);
+    }
+  }
 
-    for (int i = start1,j=start2; i < end1; i++,j++) {
+  public static boolean regionMatches(@NotNull CharSequence s1, int start1, int end1, @NotNull CharSequence s2, int start2, int end2) {
+    if (end1 - start1 != end2 - start2) return false;
+    assertRegionIndicesInRange(s1.length(), start1, end1, s2.length(), start2, end2);
+
+    for (int i = start1, j = start2; i < end1; i++, j++) {
       if (s1.charAt(i) != s2.charAt(j)) return false;
     }
     return true;
@@ -302,8 +300,9 @@ public final class CharArrayUtil {
       return regionMatches(s1, start1, end1, s2, start2, end2);
     }
     if (end1-start1 != end2-start2) return false;
+    assertRegionIndicesInRange(s1.length(), start1, end1, s2.length(), start2, end2);
 
-    for (int i = start1,j=start2; i < end1; i++,j++) {
+    for (int i = start1, j = start2; i < end1; i++, j++) {
       if (!StringUtilRt.charsEqualIgnoreCase(s1.charAt(i), s2.charAt(j))) return false;
     }
     return true;

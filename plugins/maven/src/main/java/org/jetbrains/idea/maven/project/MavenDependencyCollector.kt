@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project
 
 import com.intellij.ide.plugins.DependencyCollector
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserService
@@ -20,6 +21,8 @@ class MavenDependencyCollector : DependencyCollector {
 
 class MavenDependencyUpdater(private val project: Project) : MavenImportListener {
   override fun importFinished(importedProjects: Collection<MavenProject>, newModules: List<Module>) {
-    PluginAdvertiserService.instance.rescanDependencies(project)
+    ApplicationManager.getApplication().executeOnPooledThread {
+      PluginAdvertiserService.instance.rescanDependencies(project)
+    }
   }
 }

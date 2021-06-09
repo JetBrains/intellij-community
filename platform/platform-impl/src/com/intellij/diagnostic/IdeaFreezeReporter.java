@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.ide.AppLifecycleListener;
@@ -120,8 +120,9 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     }
   }
 
-  private static Attachment createReportAttachment(int lengthInSeconds, String text) {
-    Attachment res = new Attachment(REPORT_PREFIX + "-" + lengthInSeconds + "s.txt", text);
+  private static @NotNull Attachment createReportAttachment(long durationInSeconds,
+                                                            @NotNull String text) {
+    Attachment res = new Attachment(REPORT_PREFIX + "-" + durationInSeconds + "s.txt", text);
     res.setIncluded(true);
     return res;
   }
@@ -178,8 +179,12 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         }
       }
       File dir = toFile.getParentFile();
-      IdeaLoggingEvent event = createEvent((int)((myDumpTask.getTotalTime() + PerformanceWatcher.getUnresponsiveInterval()) / 1000),
-                                           Collections.emptyList(), myDumpTask, dir, false);
+      PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstance();
+      IdeaLoggingEvent event = createEvent(myDumpTask.getTotalTime() + performanceWatcher.getUnresponsiveInterval(),
+                                           Collections.emptyList(),
+                                           dir,
+                                           performanceWatcher,
+                                           false);
       if (event != null) {
         try {
           FileUtil.writeToFile(new File(dir, MESSAGE_FILE_NAME), event.getMessage());
@@ -188,7 +193,8 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
           }
           saveAppInfo(dir.toPath().resolve(APPINFO_FILE_NAME), false);
         }
-        catch (IOException ignored) { }
+        catch (IOException ignored) {
+        }
       }
     }
   }
@@ -215,19 +221,22 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     cleanup(reportDir);
 
     if (Registry.is("freeze.reporter.enabled")) {
-      int lengthInSeconds = (int)(durationMs / 1000);
-      long dumpingDuration = durationMs - PerformanceWatcher.getUnresponsiveInterval();
-      if (lengthInSeconds > FREEZE_THRESHOLD &&
-          // check that we have at least half of the dumps required
-          (myDumpTask.isValid(dumpingDuration) ||
-           myCurrentDumps.size() >=
-           Math.max(3, Math.min(PerformanceWatcher.getMaxDumpDuration(), dumpingDuration / 2) / PerformanceWatcher.getDumpInterval())) &&
-          !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
-        List<Attachment> attachments = new ArrayList<>();
-        addDumpsAttachments(myCurrentDumps, ThreadDump::getRawDump, attachments);
-        attachments.addAll(extraAttachments);
+      PerformanceWatcher performanceWatcher = PerformanceWatcher.getInstance();
 
-        report(createEvent(lengthInSeconds, attachments, myDumpTask, reportDir, true));
+      if ((int)(durationMs / 1000) > FREEZE_THRESHOLD &&
+          !ContainerUtil.isEmpty(myStacktraceCommonPart)) {
+        // check that we have at least half of the dumps required
+        long dumpingDurationMs = durationMs - performanceWatcher.getUnresponsiveInterval();
+        long dumpsCount = Math.min(performanceWatcher.getMaxDumpDuration(), dumpingDurationMs / 2) / performanceWatcher.getDumpInterval();
+
+        if (myDumpTask.isValid(dumpingDurationMs) ||
+            myCurrentDumps.size() >= Math.max(3, dumpsCount)) {
+          List<Attachment> attachments = new ArrayList<>();
+          addDumpsAttachments(myCurrentDumps, ThreadDump::getRawDump, attachments);
+          attachments.addAll(extraAttachments);
+
+          report(createEvent(durationMs, attachments, reportDir, performanceWatcher, true));
+        }
       }
     }
     myDumpTask = null;
@@ -295,22 +304,38 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
     return read;
   }
 
-  private @Nullable IdeaLoggingEvent createEvent(int lengthInSeconds,
-                                                 List<Attachment> attachments,
-                                                 @NotNull SamplingTask dumpTask,
+  private @Nullable IdeaLoggingEvent createEvent(long duration,
+                                                 @NotNull List<? extends Attachment> attachments,
                                                  @Nullable File reportDir,
+                                                 @NotNull PerformanceWatcher performanceWatcher,
                                                  boolean finished) {
-    List<ThreadInfo[]> infos = dumpTask.getThreadInfos();
-    long dumpInterval = dumpTask.getDumpInterval();
-    long sampledTime = dumpTask.getSampledTime();
+    List<ThreadInfo[]> infos = myDumpTask.getThreadInfos();
+    long dumpInterval = infos.isEmpty() ?
+                        performanceWatcher.getDumpInterval() :
+                        myDumpTask.getDumpInterval();
     if (infos.isEmpty()) {
       infos = ContainerUtil.map(myCurrentDumps, ThreadDump::getThreadInfos);
-      dumpInterval = PerformanceWatcher.getDumpInterval();
-      sampledTime = infos.size() * dumpInterval;
     }
 
-    List<ThreadInfo> causeThreads = ContainerUtil.mapNotNull(infos, IdeaFreezeReporter::getCauseThread);
-    boolean allInEdt = causeThreads.stream().allMatch(ThreadDumper::isEDT);
+    return createEvent(duration,
+                       dumpInterval,
+                       infos.size(),
+                       ContainerUtil.mapNotNull(infos, IdeaFreezeReporter::getCauseThread),
+                       attachments,
+                       reportDir,
+                       performanceWatcher.getJitProblem(),
+                       finished);
+  }
+
+  private @Nullable IdeaLoggingEvent createEvent(long duration,
+                                                 long dumpInterval,
+                                                 int sampledCount,
+                                                 @NotNull List<? extends ThreadInfo> causeThreads,
+                                                 @NotNull List<? extends Attachment> attachments,
+                                                 @Nullable File reportDir,
+                                                 @Nullable String jitProblem,
+                                                 boolean finished) {
+    boolean allInEdt = ContainerUtil.and(causeThreads, ThreadDumper::isEDT);
 
     CallTreeNode root = CallTreeNode.buildTree(causeThreads, dumpInterval);
     int classLoadingRatio = countClassLoading(causeThreads) * 100 / causeThreads.size();
@@ -340,30 +365,30 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         return null;
       }
 
+      long durationInSeconds = duration / 1000;
       String edtNote = allInEdt ? "in EDT " : "";
-      String message = "Freeze " + edtNote + "for " + lengthInSeconds + " seconds\n" +
+      String message = "Freeze " + edtNote + "for " + durationInSeconds + " seconds\n" +
                        (finished ? "" : myAppClosing ? "IDE is closing. " : "IDE KILLED! ") +
-                       "Sampled time: " + sampledTime + "ms, sampling rate: " + dumpInterval + "ms";
-      String jitProblem = PerformanceWatcher.getInstance().getJitProblem();
+                       "Sampled time: " + sampledCount * dumpInterval + "ms, sampling rate: " + dumpInterval + "ms";
       if (jitProblem != null) {
         message += ", " + jitProblem;
       }
-      long total = dumpTask.getTotalTime();
-      long gcTime = dumpTask.getGcTime();
+      long total = myDumpTask.getTotalTime();
+      long gcTime = myDumpTask.getGcTime();
       if (total > 0) {
         message += ", GC time: " + gcTime + "ms (" + gcTime * 100 / total + "%), Class loading: " + classLoadingRatio + "%";
       }
       if (DebugAttachDetector.isDebugEnabled()) {
         message += ", debug agent: on";
       }
-      double processCpuLoad = dumpTask.getProcessCpuLoad();
+      double processCpuLoad = myDumpTask.getProcessCpuLoad();
       if (processCpuLoad > 0) {
         message += ", cpu load: " + (int)(processCpuLoad * 100) + "%";
       }
       if (nonEdtCause) {
         message += "\n\nThe stack is from the thread that was blocking EDT";
       }
-      Attachment report = createReportAttachment(lengthInSeconds, reportText);
+      Attachment report = createReportAttachment(durationInSeconds, reportText);
       return LogMessage.createEvent(new Freeze(commonStack), message,
                                     ContainerUtil.append(attachments, report).toArray(Attachment.EMPTY_ARRAY));
     }

@@ -1,23 +1,44 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.pom.Navigatable;
+import com.intellij.util.ReflectionUtil;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
 public interface UsageGroup extends Comparable<UsageGroup>, Navigatable {
-  @Nullable
-  Icon getIcon(boolean isOpen);
+
+  /**
+   * @deprecated implement {@link #getIcon()} instead
+   */
+  @ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated
+  default @Nullable Icon getIcon(@SuppressWarnings("unused") boolean isOpen) {
+    if (ReflectionUtil.getMethodDeclaringClass(getClass(), "getIcon") == UsageGroup.class) {
+      return null;
+    }
+    return getIcon(); // getIcon() is implemented
+  }
+
+  default @Nullable Icon getIcon() {
+    return getIcon(true);
+  }
 
   @NlsContexts.ListItem @NotNull String getText(@Nullable UsageView view);
 
-  @Nullable
-  FileStatus getFileStatus();
+  default @Nullable FileStatus getFileStatus() {
+    return null;
+  }
 
-  boolean isValid();
-  void update();
+  default boolean isValid() {
+    return true;
+  }
+
+  default void update() {
+  }
 }

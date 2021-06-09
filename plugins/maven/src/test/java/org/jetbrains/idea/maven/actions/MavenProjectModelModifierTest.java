@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.actions;
 
-import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -181,7 +181,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                   "<version>1</version>");
 
     Module module = getModule("project");
-    assertEquals(LanguageLevel.JDK_1_5, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
+    assertEquals(LanguageLevel.JDK_1_5, LanguageLevelUtil.getEffectiveLanguageLevel(module));
     Promise<Void> result = getExtension().changeLanguageLevel(module, LanguageLevel.JDK_1_8);
     assertNotNull(result);
     XmlTag tag = findTag("project.build.plugins.plugin");
@@ -193,7 +193,7 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
     assertEquals("8", configuration.getSubTagText("target"));
 
     waitUntilImported(result);
-    assertEquals(LanguageLevel.JDK_1_8, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
+    assertEquals(LanguageLevel.JDK_1_8, LanguageLevelUtil.getEffectiveLanguageLevel(module));
   }
 
   @Test
@@ -202,28 +202,13 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>");
     Module module = getModule("project");
-    assertEquals(LanguageLevel.JDK_1_5, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
+    assertEquals(LanguageLevel.JDK_1_5, LanguageLevelUtil.getEffectiveLanguageLevel(module));
     Promise<Void> result = getExtension().changeLanguageLevel(module, LanguageLevel.values()[LanguageLevel.HIGHEST.ordinal() + 1]);
     waitUntilImported(result);
     assertEquals("--enable-preview",
                  findTag("project.build.plugins.plugin")
                    .findFirstSubTag("configuration")
                    .getSubTagText("compilerArgs"));
-  }
-
-  @Test
-  public void testChangeLanguageLevelPropertyLiveTemplate() {
-    importProject("<groupId>test</groupId>" +
-                  "<artifactId>project</artifactId>" +
-                  "<version>1</version>");
-    Module module = getModule("project");
-    assertEquals(LanguageLevel.JDK_1_5, EffectiveLanguageLevelUtil.getEffectiveLanguageLevel(module));
-    getExtension().changeLanguageLevelPropertyLiveTemplate(module, LanguageLevel.JDK_1_8);
-    XmlTag tag = findTag("project.properties");
-    assertNotNull(tag);
-    assertSize(2, tag.getSubTags());
-    assertEquals("8", tag.getSubTags()[0].getValue().getText());
-    assertEquals("8", tag.getSubTags()[1].getValue().getText());
   }
 
   private void createTwoModulesPom(final String m1, final String m2) {

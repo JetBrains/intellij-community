@@ -130,6 +130,7 @@ internal class BreakpointCreator(
             if (result.contains(")")) {
                 return result.substringBefore(")")
             }
+            return result
         }
         return null
     }

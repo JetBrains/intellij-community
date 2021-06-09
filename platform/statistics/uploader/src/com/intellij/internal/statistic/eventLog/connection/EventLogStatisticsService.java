@@ -1,14 +1,13 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog.connection;
 
+import com.intellij.internal.statistic.config.EventLogOptions;
 import com.intellij.internal.statistic.eventLog.*;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult.ResultCode;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpRequests;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsHttpResponse;
 import com.intellij.internal.statistic.eventLog.connection.request.StatsRequestBuilder;
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter;
-import org.apache.http.Consts;
-import org.apache.http.entity.ContentType;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,15 +16,16 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import static com.intellij.internal.statistic.StatisticsStringUtil.isEmpty;
 
 @ApiStatus.Internal
 public class EventLogStatisticsService implements StatisticsService {
-  private static final ContentType APPLICATION_JSON = ContentType.create("application/json", Consts.UTF_8);
 
   private static final int MAX_FILES_TO_SEND = 5;
 
@@ -100,6 +100,8 @@ public class EventLogStatisticsService implements StatisticsService {
     final String productCode = info.getProductCode();
     EventLogBuildType defaultBuildType = getDefaultBuildType(info);
     LogEventFilter baseFilter = settings.getBaseEventFilter();
+
+    MachineId machineId = getMachineId(device, settings);
     try {
       EventLogConnectionSettings connectionSettings = info.getConnectionSettings();
 
@@ -113,7 +115,8 @@ public class EventLogStatisticsService implements StatisticsService {
         LogEventFilter filter = settings.getEventFilter(baseFilter, type);
         String deviceId = device.getDeviceId();
         LogEventRecordRequest recordRequest =
-          LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger);
+          LogEventRecordRequest.Companion.create(file, config.getRecorderId(), productCode, deviceId, filter, isInternal, logger,
+                                                 machineId);
         ValidationErrorInfo error = validate(recordRequest, file);
         if (error != null) {
           if (logger.isTraceEnabled()) {
@@ -126,7 +129,7 @@ public class EventLogStatisticsService implements StatisticsService {
 
         try {
           StatsHttpRequests.post(serviceUrl, connectionSettings).
-            withBody(LogEventSerializer.INSTANCE.toString(recordRequest), APPLICATION_JSON).
+            withBody(LogEventSerializer.INSTANCE.toString(recordRequest), "application/json", StandardCharsets.UTF_8).
             succeed((r, code) -> {
               toRemove.add(file);
               decorator.onSucceed(recordRequest, loadAndLogResponse(logger, r, file), file.getAbsolutePath());
@@ -156,6 +159,18 @@ public class EventLogStatisticsService implements StatisticsService {
       logger.info(message != null ? message : "", e);
       throw new StatServiceException("Error during data sending.", e);
     }
+  }
+
+  private static MachineId getMachineId(@NotNull DeviceConfiguration device, @NotNull EventLogSettingsService settings) {
+    if (device.getMachineId() == MachineId.DISABLED) {
+      return MachineId.DISABLED;
+    }
+    Map<String, String> options = settings.getOptions();
+    String machineIdSaltOption = options.get(EventLogOptions.MACHINE_ID_SALT);
+    if (EventLogOptions.MACHINE_ID_DISABLED.equals(machineIdSaltOption)) {
+      return MachineId.DISABLED;
+    }
+    return device.getMachineId();
   }
 
   @NotNull

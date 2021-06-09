@@ -162,8 +162,7 @@ final class ActionUpdater {
   private <T> T callAction(@NotNull AnAction action, @NotNull Op operation, @NotNull Supplier<? extends T> call) {
     // `CodeInsightAction.beforeActionUpdate` runs `commitAllDocuments`, allow it
     boolean canAsync = Utils.isAsyncDataContext(myDataContext) && operation != Op.beforeActionPerformedUpdate;
-    boolean shallAsync = myForceAsync || canAsync && action instanceof UpdateInBackground &&
-                                         ((UpdateInBackground)action).isUpdateInBackground();
+    boolean shallAsync = myForceAsync || canAsync && UpdateInBackground.isUpdateInBackground(action);
     boolean isEDT = EDT.isCurrentThreadEdt();
     if (isEDT && canAsync && shallAsync && !SlowOperations.isInsideActivity(SlowOperations.ACTION_PERFORM)) {
       LOG.error("Calling " + operation + " on EDT on `" + action.getClass().getName() + "` " +
@@ -177,7 +176,7 @@ final class ActionUpdater {
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     return computeOnEdt(() -> {
-      long start = System.currentTimeMillis();
+      long start = System.nanoTime();
       try {
         return ProgressManager.getInstance().runProcess(() -> {
           try (AccessToken ignored = ProhibitAWTEvents.start(operation.name())) {
@@ -186,9 +185,9 @@ final class ActionUpdater {
         }, ProgressWrapper.wrap(progress));
       }
       finally {
-        long elapsed = System.currentTimeMillis() - start;
+        long elapsed = TimeoutUtil.getDurationMillis(start);
         if (elapsed > 100) {
-          LOG.warn("Slow (" + elapsed + "ms) '" + operation + "' on action " + action + " of " + action.getClass() +
+          LOG.warn("Slow (" + elapsed + " ms) '" + operation + "' on action " + action + " of " + action.getClass() +
                    ". Consider speeding it up and/or implementing UpdateInBackground.");
         }
       }

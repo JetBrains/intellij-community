@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.stash.ui
 
 import com.intellij.openapi.Disposable
@@ -31,7 +31,7 @@ class GitStashUi(private val project: Project, isEditorDiffPreview: Boolean, dis
 
   init {
     tree = GitStashTree(project, this)
-    PopupHandler.installPopupHandler(tree, "Git.Stash.ContextMenu", GIT_STASH_UI_PLACE)
+    PopupHandler.installPopupMenu(tree, "Git.Stash.ContextMenu", GIT_STASH_UI_PLACE)
 
     toolbar = buildToolbar()
 
@@ -64,7 +64,7 @@ class GitStashUi(private val project: Project, isEditorDiffPreview: Boolean, dis
     if (!force && (isInEditor == (editorTabPreview != null))) return
 
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    diffPreviewProcessor = GitStashDiffPreview(project, tree, this)
+    diffPreviewProcessor = GitStashDiffPreview(project, tree, isInEditor, this)
     diffPreviewProcessor!!.toolbarWrapper.setVerticalSizeReferent(toolbar)
 
     if (isInEditor) {

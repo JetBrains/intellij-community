@@ -23,6 +23,21 @@ public class SmartSelectionTestGenerated extends AbstractSmartSelectionTest {
         KotlinTestUtils.runTest(this::doTestSmartSelection, this, testDataFilePath);
     }
 
+    @TestMetadata("afterRightParenthesis.kt")
+    public void testAfterRightParenthesis() throws Exception {
+        runTest("testData/smartSelection/afterRightParenthesis.kt");
+    }
+
+    @TestMetadata("afterRightParenthesis2.kt")
+    public void testAfterRightParenthesis2() throws Exception {
+        runTest("testData/smartSelection/afterRightParenthesis2.kt");
+    }
+
+    @TestMetadata("afterRightParenthesis3.kt")
+    public void testAfterRightParenthesis3() throws Exception {
+        runTest("testData/smartSelection/afterRightParenthesis3.kt");
+    }
+
     @TestMetadata("beforeComment.kt")
     public void testBeforeComment() throws Exception {
         runTest("testData/smartSelection/beforeComment.kt");

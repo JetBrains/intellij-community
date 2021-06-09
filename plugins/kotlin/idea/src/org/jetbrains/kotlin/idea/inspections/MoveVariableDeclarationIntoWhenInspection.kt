@@ -12,6 +12,7 @@ import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.PsiWhiteSpace
 import com.intellij.psi.SmartPsiElementPointer
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.util.isOneLiner
@@ -95,7 +96,7 @@ private tailrec fun KtExpression.previousPropertyFromParent(): KtProperty? {
 }
 
 private class VariableDeclarationIntoWhenFix(
-    private val actionName: String,
+    @Nls private val actionName: String,
     private val subjectExpressionPointer: SmartPsiElementPointer<KtExpression>,
     private val transform: (KtProperty) -> KtExpression?
 ) : LocalQuickFix {

@@ -23,7 +23,7 @@ class BaseLayoutSpec {
   }
 
   /**
-   * Register an additional module to be included into the plugin distribution into a separate JAR file. Module-level libraries from
+   * Register an additional module to be included into the plugin distribution. Module-level libraries from
    * {@code moduleName} with scopes 'Compile' and 'Runtime' will be also copied to the 'lib' directory of the plugin.
    */
   void withModule(String moduleName) {

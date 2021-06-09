@@ -4,8 +4,8 @@
        Both Community and Professional editions. -->
   <module value="com.intellij.modules.pycharm"/>
 
-  <xi:include href="/META-INF/PlatformLangXmlPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
-  <xi:include href="/META-INF/RemoteServers.xml" xpointer="xpointer(/idea-plugin/*)"/>
+  <xi:include href="/META-INF/PlatformLangXmlPlugin.xml"/>
+  <xi:include href="intellij.platform.remoteServers.impl.xml"/>
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationInitializedListener implementation="com.intellij.internal.statistic.updater.StatisticsJobsScheduler"/>

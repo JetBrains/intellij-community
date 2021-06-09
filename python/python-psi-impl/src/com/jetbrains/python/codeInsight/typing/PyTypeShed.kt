@@ -39,11 +39,16 @@ import java.io.File
 object PyTypeShed {
 
   private val stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels = mapOf(
-    // name to python version when this name was introduced
-    "_py_abc" to LanguageLevel.PYTHON37,
-    "contextvars" to LanguageLevel.PYTHON37,
-    "graphlib" to LanguageLevel.PYTHON39,
-    "zoneinfo" to LanguageLevel.PYTHON39
+    // name to python versions when this name was introduced and removed
+    "_bootlocale" to (LanguageLevel.PYTHON36 to LanguageLevel.PYTHON39),
+    "_py_abc" to (LanguageLevel.PYTHON37 to null),
+    "contextvars" to (LanguageLevel.PYTHON37 to null),
+    "formatter" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "graphlib" to (LanguageLevel.PYTHON39 to null),
+    "importlib.resources" to (LanguageLevel.PYTHON37 to null),  // likely it is ignored now
+    "macpath" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON37),
+    "parser" to (LanguageLevel.PYTHON27 to LanguageLevel.PYTHON39),
+    "zoneinfo" to (LanguageLevel.PYTHON39 to null)
   )
 
   /**
@@ -52,8 +57,11 @@ object PyTypeShed {
   fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk: Sdk): Boolean {
     if (isInStandardLibrary(root)) {
       val head = name.firstComponent ?: return true
-      val lowestLanguageLevel = stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels[head] ?: return true
-      return PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk).isAtLeast(lowestLanguageLevel)
+      val languageLevels = stdlibNamesAvailableOnlyInSubsetOfSupportedLanguageLevels[head] ?: return true
+      val currentLanguageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk)
+      return currentLanguageLevel.isAtLeast(languageLevels.first) && languageLevels.second.let {
+        it == null || it.isAtLeast(currentLanguageLevel)
+      }
     }
     if (isInThirdPartyLibraries(root)) {
       if (ApplicationManager.getApplication().isUnitTestMode) {
@@ -63,7 +71,12 @@ object PyTypeShed {
       val alternativePossiblePackages = PyPsiPackageUtil.PACKAGES_TOPLEVEL[possiblePackage] ?: emptyList()
 
       val packageManager = PyPackageManagers.getInstance().forSdk(sdk)
-      val installedPackages = packageManager.packages ?: return true
+      val installedPackages = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+        packageManager.refreshAndGetPackages(false)
+      }
+      else {
+        packageManager.packages ?: return true
+      }
 
       return packageManager.parseRequirement(possiblePackage)?.match(installedPackages) != null ||
              alternativePossiblePackages.any { PyPsiPackageUtil.findPackage(installedPackages, it) != null }

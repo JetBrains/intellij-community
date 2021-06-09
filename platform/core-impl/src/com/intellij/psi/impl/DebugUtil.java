@@ -23,7 +23,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
-import com.intellij.util.exception.FrequentErrorLogger;
 import com.intellij.util.graph.InboundSemiGraph;
 import com.intellij.util.graph.OutboundSemiGraph;
 import org.jetbrains.annotations.ApiStatus;
@@ -438,7 +437,6 @@ public final class DebugUtil {
 
   private static final ThreadLocal<Object> ourPsiModificationTrace = new ThreadLocal<>();
   private static final ThreadLocal<Integer> ourPsiModificationDepth = new ThreadLocal<>();
-  private static final FrequentErrorLogger ourErrorLogger = FrequentErrorLogger.newInstance(LOG);
 
   private static void beginPsiModification(@Nullable String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
@@ -540,10 +538,10 @@ public final class DebugUtil {
   private static Throwable handleUnspecifiedTrace() {
     Throwable trace = new Throwable();
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      ourErrorLogger.error("PSI invalidated outside transaction", trace);
+      LOG.error("PSI invalidated outside transaction", trace);
     }
     else {
-      ourErrorLogger.info("PSI invalidated outside transaction", trace);
+      LOG.info("PSI invalidated outside transaction", trace);
     }
     return trace;
   }

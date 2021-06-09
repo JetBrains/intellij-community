@@ -204,6 +204,8 @@ public final class UrlImpl implements Url {
   public @NotNull Url removeParameter(@NotNull String name) {
     StringBuilder result = new StringBuilder();
     String parameters = this.parameters;
+    if (parameters == null) return this;
+    
     if (parameters.startsWith("?")) {
       parameters = StringUtil.trimStart(parameters, "?");
       result.append("?");

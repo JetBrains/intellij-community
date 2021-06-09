@@ -679,14 +679,6 @@ public final class ReflectionUtil {
     return unsafe;
   }
 
-
-  private static final class MySecurityManager extends SecurityManager {
-    private static final MySecurityManager INSTANCE = new MySecurityManager();
-    Class<?>[] getStack() {
-      return getClassContext();
-    }
-  }
-
   /**
    * Returns the class this method was called 'framesToSkip' frames up the caller hierarchy.
    *
@@ -695,17 +687,8 @@ public final class ReflectionUtil {
    * Please consider not using it.
    * These aren't the droids you're looking for!</b>
    */
-  @Nullable
   public static Class<?> findCallerClass(int framesToSkip) {
-    try {
-      Class<?>[] stack = MySecurityManager.INSTANCE.getStack();
-      int indexFromTop = 1 + framesToSkip;
-      return stack.length > indexFromTop ? stack[indexFromTop] : null;
-    }
-    catch (Exception e) {
-      LOG.warn(e);
-      return null;
-    }
+    return ReflectionUtilRt.findCallerClass(framesToSkip + 1);
   }
 
   public static boolean isAssignable(@NotNull Class<?> ancestor, @NotNull Class<?> descendant) {

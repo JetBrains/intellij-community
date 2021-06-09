@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
@@ -12,8 +12,8 @@ import com.intellij.ide.plugins.ContainerDescriptor;
 import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.ApplicationLoader;
+import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.Main;
-import com.intellij.idea.MutedErrorLogger;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
@@ -165,47 +165,6 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
     Disposer.register(parentDisposable, () -> {
       AWTAutoShutdown.getInstance().notifyThreadFree(thread); // allow for EDT to exit - needed for Upsource
     });
-  }
-
-  // this constructor must be called only by ApplicationLoader
-  public ApplicationImpl(boolean isInternal,
-                         boolean isUnitTestMode,
-                         boolean isHeadless,
-                         boolean isCommandLine,
-                         @NotNull Thread edtThread) {
-    super(null);
-
-    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
-    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
-    registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
-
-    Disposer.setDebugMode(isInternal || isUnitTestMode || Disposer.isDebugDisposerOn());
-
-    myIsInternal = isInternal;
-    myTestModeFlag = isUnitTestMode;
-    myHeadlessMode = isHeadless;
-    myCommandLineMode = isCommandLine;
-
-    mySaveAllowed = !(isUnitTestMode || isHeadless);
-
-    if (!isUnitTestMode && !isHeadless) {
-      Disposable uiRootDisposable = Disposer.newDisposable();
-      //noinspection deprecation
-      Disposer.register(this, uiRootDisposable, "ui");
-    }
-
-    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
-    myLock = new ReadMostlyRWLock(edtThread);
-    // Acquire IW lock on EDT indefinitely in legacy mode
-    if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
-      EventQueue.invokeLater(() -> acquireWriteIntentLock(getClass().getName()));
-    }
-    activity.end();
-
-    NoSwingUnderWriteAction.watchForEvents(this);
-
-    // reset back to null only when all components already disposed
-    ApplicationManager.setApplication(this, myLastDisposable);
   }
 
   /**
@@ -660,7 +619,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
           exitCode = Main.RESTART_FAILED;
         }
       }
-      MutedErrorLogger.dropCaches();
+      IdeaLogger.dropFrequentExceptionsCaches();
       System.exit(exitCode);
     }
     finally {

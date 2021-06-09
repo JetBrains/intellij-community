@@ -11,8 +11,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.CommonClassNames;
+import com.intellij.util.ThrowableRunnable;
 import com.jetbrains.jdi.*;
 import com.sun.jdi.*;
+import com.sun.jdi.event.EventSet;
 import com.sun.jdi.request.EventRequest;
 import com.sun.jdi.request.EventRequestManager;
 import one.util.streamex.StreamEx;
@@ -33,7 +35,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 public final class DebuggerUtilsAsync {
   private static final Logger LOG = Logger.getInstance(DebuggerUtilsAsync.class);
 
-  private static boolean isAsyncEnabled() {
+  public static boolean isAsyncEnabled() {
     return Registry.is("debugger.async.jdi");
   }
 
@@ -104,11 +106,78 @@ public final class DebuggerUtilsAsync {
     return completedFuture(ref.getValues(index, length));
   }
 
+  public static CompletableFuture<List<ThreadReference>> allThreads(VirtualMachine vm) {
+    if (vm instanceof VirtualMachineImpl && isAsyncEnabled()) {
+      return reschedule(((VirtualMachineImpl)vm).allThreadsAsync());
+    }
+    return completedFuture(vm.allThreads());
+  }
+
+
   public static CompletableFuture<Integer> length(ArrayReference ref) {
     if (ref instanceof ArrayReferenceImpl && isAsyncEnabled()) {
       return reschedule(((ArrayReferenceImpl)ref).lengthAsync());
     }
     return completedFuture(ref.length());
+  }
+
+  public static CompletableFuture<String> sourceName(ReferenceType type) {
+    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
+      return reschedule(((ReferenceTypeImpl)type).sourceNameAsync());
+    }
+    return toCompletableFuture(() -> type.sourceName());
+  }
+
+  public static CompletableFuture<List<String>> availableStrata(ReferenceType type) {
+    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
+      return reschedule(((ReferenceTypeImpl)type).availableStrataAsync());
+    }
+    return toCompletableFuture(() -> type.availableStrata());
+  }
+
+  public static CompletableFuture<List<Location>> locationsOfLine(@NotNull ReferenceType type, int lineNumber) {
+    return locationsOfLine(type, type.virtualMachine().getDefaultStratum(), null, lineNumber);
+  }
+
+  /**
+   * Drop-in replacement for the standard jdi version, but "parallel" inside, so a lot faster when type has lots of methods
+   */
+  public static List<Location> locationsOfLineSync(@NotNull ReferenceType type, int lineNumber)
+    throws AbsentInformationException {
+    return locationsOfLineSync(type, type.virtualMachine().getDefaultStratum(), null, lineNumber);
+  }
+
+  public static CompletableFuture<List<Location>> locationsOfLine(ReferenceType type, String stratum, String sourceName, int lineNumber) {
+    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
+      return reschedule(((ReferenceTypeImpl)type).locationsOfLineAsync(stratum, sourceName, lineNumber));
+    }
+    return toCompletableFuture(() -> type.locationsOfLine(stratum, sourceName, lineNumber));
+  }
+
+  /**
+   * Drop-in replacement for the standard jdi version, but "parallel" inside, so a lot faster when type has lots of methods
+   */
+  public static List<Location> locationsOfLineSync(ReferenceType type, String stratum, String sourceName, int lineNumber)
+    throws AbsentInformationException {
+    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
+      try {
+        return ((ReferenceTypeImpl)type).locationsOfLineAsync(stratum, sourceName, lineNumber).get();
+      }
+      catch (Exception e) {
+        if (e.getCause() instanceof AbsentInformationException) {
+          throw (AbsentInformationException)e.getCause();
+        }
+        LOG.warn(e);
+      }
+    }
+    return type.locationsOfLine(stratum, sourceName, lineNumber);
+  }
+
+  public static CompletableFuture<List<Location>> allLineLocationsAsync(Method method) {
+    if (method instanceof MethodImpl && isAsyncEnabled()) {
+      return reschedule(((MethodImpl)method).allLineLocationsAsync());
+    }
+    return toCompletableFuture(() -> method.allLineLocations());
   }
 
   public static CompletableFuture<Boolean> instanceOf(@Nullable Type subType, @NotNull String superType) {
@@ -287,42 +356,54 @@ public final class DebuggerUtilsAsync {
     return completedFuture(StreamEx.empty());
   }
 
-  public static CompletableFuture<List<Location>> locationsOfLine(@NotNull ReferenceType type, int lineNumber) {
-    return locationsOfLine(type, type.virtualMachine().getDefaultStratum(), null, lineNumber);
-  }
-
-  /**
-   * Drop-in replacement for the standard jdi version, but "parallel" inside, so a lot faster when type has lots of methods
-   */
-  public static List<Location> locationsOfLineSync(@NotNull ReferenceType type, int lineNumber)
-    throws AbsentInformationException {
-    return locationsOfLineSync(type, type.virtualMachine().getDefaultStratum(), null, lineNumber);
-  }
-
-  public static CompletableFuture<List<Location>> locationsOfLine(ReferenceType type, String stratum, String sourceName, int lineNumber) {
-    if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
-      return ((ReferenceTypeImpl)type).locationsOfLineAsync(stratum, sourceName, lineNumber);
+  public static CompletableFuture<byte[]> bytecodes(Method method) {
+    if (method instanceof MethodImpl && isAsyncEnabled()) {
+      return ((MethodImpl)method).bytecodesAsync();
     }
-    return toCompletableFuture(() -> type.locationsOfLine(stratum, sourceName, lineNumber));
+    return toCompletableFuture(() -> method.bytecodes());
   }
 
-  /**
-   * Drop-in replacement for the standard jdi version, but "parallel" inside, so a lot faster when type has lots of methods
-   */
-  public static List<Location> locationsOfLineSync(ReferenceType type, String stratum, String sourceName, int lineNumber)
-    throws AbsentInformationException {
+  public static CompletableFuture<byte[]> constantPool(ReferenceType type) {
     if (type instanceof ReferenceTypeImpl && isAsyncEnabled()) {
-      try {
-        return ((ReferenceTypeImpl)type).locationsOfLineAsync(stratum, sourceName, lineNumber).get();
-      }
-      catch (Exception e) {
-        if (e.getCause() instanceof AbsentInformationException) {
-          throw (AbsentInformationException)e.getCause();
-        }
-        LOG.warn(e);
-      }
+      return ((ReferenceTypeImpl)type).constantPoolAsync();
     }
-    return type.locationsOfLine(stratum, sourceName, lineNumber);
+    return toCompletableFuture(() -> type.constantPool());
+  }
+
+  public static CompletableFuture<Void> setEnabled(EventRequest request, boolean value) {
+    EventRequestManager eventRequestManager = request.virtualMachine().eventRequestManager();
+    if (eventRequestManager instanceof EventRequestManagerImpl && isAsyncEnabled()) {
+      return ((EventRequestManagerImpl)eventRequestManager).setEnabledAsync(request, value);
+    }
+    return toCompletableFuture(() -> request.setEnabled(value));
+  }
+
+  public static CompletableFuture<Void> resume(VirtualMachine vm) {
+    if (vm instanceof VirtualMachineImpl && isAsyncEnabled()) {
+      return ((VirtualMachineImpl)vm).resumeAsync();
+    }
+    return toCompletableFuture(() -> vm.resume());
+  }
+
+  public static CompletableFuture<Void> resume(ThreadReference thread) {
+    if (thread instanceof ThreadReferenceImpl && isAsyncEnabled()) {
+      return ((ThreadReferenceImpl)thread).resumeAsync();
+    }
+    return toCompletableFuture(() -> thread.resume());
+  }
+
+  public static CompletableFuture<Void> resume(EventSet eventSet) {
+    if (eventSet instanceof EventSetImpl && isAsyncEnabled()) {
+      return ((EventSetImpl)eventSet).resumeAsync();
+    }
+    return toCompletableFuture(() -> eventSet.resume());
+  }
+
+  public static CompletableFuture<List<ReferenceType>> allCLasses(VirtualMachine virtualMachine) {
+    if (virtualMachine instanceof VirtualMachineImpl && isAsyncEnabled()) {
+      return ((VirtualMachineImpl)virtualMachine).allClassesAsync();
+    }
+    return toCompletableFuture(() -> virtualMachine.allClasses());
   }
 
   /**
@@ -379,13 +460,23 @@ public final class DebuggerUtilsAsync {
     return res;
   }
 
-  public static Throwable unwrap(Throwable throwable) {
+  public static Throwable unwrap(@Nullable Throwable throwable) {
     return throwable instanceof CompletionException ? throwable.getCause() : throwable;
   }
 
-  private static <T, E extends Exception> CompletableFuture<T> toCompletableFuture(ThrowableComputable<? extends T, E> provider) {
+  public static <T, E extends Exception> CompletableFuture<T> toCompletableFuture(ThrowableComputable<? extends T, E> provider) {
     try {
       return completedFuture(provider.compute());
+    }
+    catch (Exception e) {
+      return CompletableFuture.failedFuture(e);
+    }
+  }
+
+  public static <E extends Exception> CompletableFuture<Void> toCompletableFuture(ThrowableRunnable<E> provider) {
+    try {
+      provider.run();
+      return completedFuture(null);
     }
     catch (Exception e) {
       return CompletableFuture.failedFuture(e);

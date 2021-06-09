@@ -65,7 +65,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
 
   internal fun addIncompletePlugin(plugin: IdeaPluginDescriptorImpl, error: PluginLoadingError?) {
     if (!idMap.containsKey(plugin.pluginId)) {
-      val existingIncompletePlugin = incompletePlugins[plugin.pluginId]
+      val existingIncompletePlugin = incompletePlugins.get(plugin.pluginId)
       if (existingIncompletePlugin == null || VersionComparatorUtil.compare(plugin.version, existingIncompletePlugin.version) > 0) {
         incompletePlugins.put(plugin.pluginId, plugin)
       }
@@ -107,7 +107,7 @@ class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<St
       }
     }
 
-    // remove any error that occurred for plugin with the same id
+    // remove any error that occurred for plugin with the same `id`
     pluginErrors.remove(pluginId)
     incompletePlugins.remove(pluginId)
     val prevDescriptor = plugins.put(pluginId, descriptor)

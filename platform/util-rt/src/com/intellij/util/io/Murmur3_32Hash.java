@@ -81,6 +81,10 @@ public final class Murmur3_32Hash {
     return fMix(h1, 2 * input.length());
   }
 
+  public int hashString(CharSequence input) {
+    return hashString(input, 0, input.length());
+  }
+
   public int hashString(CharSequence input, int start, int end) {
     int h1 = seed;
     int i = start;

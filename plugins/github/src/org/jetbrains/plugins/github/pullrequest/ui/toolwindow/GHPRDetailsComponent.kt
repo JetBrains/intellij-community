@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui.toolwindow
 
-import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.DefaultActionGroup
@@ -54,7 +53,7 @@ internal object GHPRDetailsComponent {
       detailsModel.addAndInvokeDetailsChangedListener {
         it.select(detailsModel.state, true)
       }
-      PopupHandler.installPopupHandler(it, DefaultActionGroup(GHPRReloadStateAction()), ActionPlaces.UNKNOWN, actionManager)
+      PopupHandler.installPopupMenu(it, DefaultActionGroup(GHPRReloadStateAction()), "GHPRStatePanelPopup")
     }
 
     metadata.border = BorderFactory.createCompoundBorder(IdeBorderFactory.createBorder(SideBorder.TOP),
@@ -75,10 +74,10 @@ internal object GHPRDetailsComponent {
       add(timelineLink, CC().gapBottom("push"))
     }
 
-    val actionGroup = actionManager.getAction("Github.PullRequest.Details.Popup") as ActionGroup
-    PopupHandler.installPopupHandler(detailsSection, actionGroup, ActionPlaces.UNKNOWN, actionManager)
-    PopupHandler.installPopupHandler(description, actionGroup, ActionPlaces.UNKNOWN, actionManager)
-    PopupHandler.installPopupHandler(metadata, actionGroup, ActionPlaces.UNKNOWN, actionManager)
+    val groupId = "Github.PullRequest.Details.Popup"
+    PopupHandler.installPopupMenu(detailsSection, groupId, groupId)
+    PopupHandler.installPopupMenu(description, groupId, groupId)
+    PopupHandler.installPopupMenu(metadata, groupId, groupId)
 
     return JPanel(MigLayout(LC().insets("0", "0", "0", "0")
                               .gridGap("0", "0")

@@ -1194,6 +1194,11 @@ public abstract class DialogWrapper {
     return getDimensionServiceKey();
   }
 
+  /**
+   * @see #OK_EXIT_CODE
+   * @see #CANCEL_EXIT_CODE
+   * @see #CLOSE_EXIT_CODE
+   */
   public int getExitCode() {
     return myExitCode;
   }

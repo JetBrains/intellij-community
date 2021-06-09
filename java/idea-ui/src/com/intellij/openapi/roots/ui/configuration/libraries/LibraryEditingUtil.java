@@ -163,6 +163,7 @@ public final class LibraryEditingUtil {
       @NotNull
       @Override
       public String getTextFor(TypeForNewLibrary value) {
+        //noinspection HardCodedStringLiteral
         return value.getCreateActionName();
       }
 

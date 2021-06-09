@@ -1,4 +1,7 @@
 # coding=utf-8
+
+#  Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+
 import pytest
 from distutils import version
 import sys
@@ -25,7 +28,9 @@ if __name__ == '__main__':
             plugins_to_load.append(pytest_plugin)
 
     args = sys.argv[1:]
-    if version.LooseVersion(pytest.__version__) >= version.LooseVersion("6.0"):
+    if "--jb-show-summary" in args:
+        args.remove("--jb-show-summary")
+    elif version.LooseVersion(pytest.__version__) >= version.LooseVersion("6.0"):
         args += ["--no-header", "--no-summary", "-q"]
 
     if JB_DISABLE_BUFFERING and "-s" not in args:

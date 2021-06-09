@@ -35,7 +35,6 @@ import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.ui.GuiUtils;
 import com.intellij.util.*;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
@@ -208,7 +207,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
       @Override
       public void onSchemeDeleted(@NotNull FileTypeWithDescriptor scheme) {
-        GuiUtils.invokeLaterIfNeeded(() -> {
+        ModalityUiUtil.invokeLaterIfNeeded(() -> {
           Application app = ApplicationManager.getApplication();
           app.runWriteAction(() -> fireBeforeFileTypesChanged());
           myPatternsTable.removeAllAssociations(scheme);
@@ -330,7 +329,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     for (StandardFileType pair : myStandardFileTypes.values()) {
       if (mySchemeManager.findSchemeByName(pair.fileType.getName()) == null) {
-        notificationsShown.addAll(registerFileTypeWithoutNotification(pair.fileType, coreIdeaPluginDescriptor(), pair.matchers, true));
+        notificationsShown.addAll(registerFileTypeWithoutNotification(pair.fileType, pair.pluginDescriptor, pair.matchers, true));
       }
     }
 
@@ -338,12 +337,13 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       InputStream defaultFileTypeStream = FileTypeManagerImpl.class.getClassLoader().getResourceAsStream("defaultFileTypes.xml");
       if (defaultFileTypeStream != null) {
         Element defaultFileTypesElement = JDOMUtil.load(defaultFileTypeStream);
+        IdeaPluginDescriptor coreIdeaPluginDescriptor = coreIdeaPluginDescriptor();
         for (Element e : defaultFileTypesElement.getChildren()) {
           if ("filetypes".equals(e.getName())) {
             for (Element element : e.getChildren(ELEMENT_FILETYPE)) {
               String fileTypeName = element.getAttributeValue(ATTRIBUTE_NAME);
               if (myPendingFileTypes.get(fileTypeName) == null) {
-                loadFileType("defaultFileTypes.xml", element, coreIdeaPluginDescriptor(), true);
+                loadFileType("defaultFileTypes.xml", element, coreIdeaPluginDescriptor, true);
               }
             }
           }
@@ -585,7 +585,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     // resolve unresolved mappings initialized before certain plugin initialized
     if (!myUnresolvedMappings.isEmpty()) {
       for (StandardFileType pair : myStandardFileTypes.values()) {
-        bindUnresolvedMappings(pair.fileType);
+        bindUnresolvedMappings(pair);
       }
     }
 
@@ -772,7 +772,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     DeprecatedMethodException.report("Use fileType extension instead.");
     ApplicationManager.getApplication().runWriteAction(() -> {
       fireBeforeFileTypesChanged();
-      registerFileTypeWithoutNotification(type, coreIdeaPluginDescriptor(), defaultAssociations, true);
+      registerFileTypeWithoutNotification(type, detectPluginDescriptor(type).pluginDescriptor, defaultAssociations, true);
       fireFileTypesChanged(type, null);
     });
   }
@@ -1262,12 +1262,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
 
       FileTypeWithDescriptor oldFtd = myPatternsTable.findAssociatedFileType(matcher);
-      FileType oldFileType = oldFtd==null?null:oldFtd.fileType;
       ConflictingFileTypeMappingTracker.ResolveConflictResult result = myConflictingMappingTracker.warnAndResolveConflict(matcher, oldFtd, newFtd);
       if (!result.approved) {
         notificationsShown.add(result);
       }
       FileTypeWithDescriptor resolvedFtd = result.resolved;
+      FileType oldFileType = oldFtd == null ? null : oldFtd.fileType;
       if (!resolvedFtd.equals(oldFtd)) {
         myPatternsTable.addAssociation(matcher, resolvedFtd);
         if (result.approved && oldFileType != null) {
@@ -1298,19 +1298,26 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private static void checkUnique(@NotNull FileTypeWithDescriptor newFtd,
                                   @NotNull Map<? super String, FileTypeWithDescriptor> names,
                                   @NotNull String getterName,
-                                  @NotNull Function<? super FileType, String> getter) {
+                                  @NotNull Function<? super FileType, String> nameExtractor) {
     FileType newFileType = newFtd.fileType;
-    String name = getter.apply(newFileType);
+    String name = nameExtractor.apply(newFileType);
     FileTypeWithDescriptor prevFtd = names.put(name, newFtd);
     if (prevFtd != null
         // should be able to override AbstractFileType silently
-        && (prevFtd.fileType instanceof AbstractFileType) == (newFileType instanceof AbstractFileType)
-        // two plugins can easily conflict between themselves on everything, we wash our hands in this case
-        && (prevFtd.pluginDescriptor.isBundled() || newFtd.pluginDescriptor.isBundled())) {
-      LOG.error("\n" + prevFtd + " (" + prevFtd.fileType.getClass() + ") and" +
-                "\n" + newFtd + " (" + newFileType.getClass() + ")\n" +
-                " both have the same ." + getterName + "(): '" + name + "'. " +
-                "Please override either one's "+getterName+"() to something unique.");
+        && (prevFtd.fileType instanceof AbstractFileType) == (newFileType instanceof AbstractFileType)) {
+      String error = "\n" + prevFtd + " (" + prevFtd.fileType.getClass() + ") and" +
+                     "\n" + newFtd + " (" + newFileType.getClass() + ")\n" +
+                     " both have the same ." + getterName + "(): '" + name + "'. " +
+                     "Please override either one's " + getterName + "() to something unique.";
+      PluginDescriptor pluginToBlame = prevFtd.pluginDescriptor.isBundled() ? newFtd.pluginDescriptor : prevFtd.pluginDescriptor;
+      if (prevFtd.pluginDescriptor.isBundled() || newFtd.pluginDescriptor.isBundled()) {
+        // file type from the plugin conflicts with bundled file type
+        LOG.error(new PluginException(error, pluginToBlame.getPluginId()));
+      }
+      else {
+        // two plugins conflict between themselves (or one plugin has multiple personality disordered file types), we wash our hands in this case
+        LOG.warn(new PluginException(error, pluginToBlame.getPluginId()));
+      }
     }
   }
 
@@ -1319,17 +1326,17 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> descriptions = new ConcurrentHashMap<>();
   private final Map<PluginDescriptor, Map<String, FileTypeWithDescriptor>> displayNames = new ConcurrentHashMap<>();
 
-  private void bindUnresolvedMappings(@NotNull FileType fileType) {
+  private void bindUnresolvedMappings(@NotNull StandardFileType standardFileType) {
     for (FileNameMatcher matcher : new ArrayList<>(myUnresolvedMappings.keySet())) {
       String name = myUnresolvedMappings.get(matcher);
-      if (fileType.getName().equals(name)) {
-        myPatternsTable.addAssociation(matcher, coreDescriptorFor(fileType));
+      if (standardFileType.fileType.getName().equals(name)) {
+        myPatternsTable.addAssociation(matcher, descriptorForStandard(standardFileType));
         myUnresolvedMappings.remove(matcher);
       }
     }
 
-    for (FileNameMatcher matcher : myRemovedMappingTracker.getMappingsForFileType(fileType.getName())) {
-      removeAssociation(FileTypeWithDescriptor.allFor(fileType), matcher, false);
+    for (FileNameMatcher matcher : myRemovedMappingTracker.getMappingsForFileType(standardFileType.fileType.getName())) {
+      removeAssociation(FileTypeWithDescriptor.allFor(standardFileType.fileType), matcher, false);
     }
   }
 

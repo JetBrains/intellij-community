@@ -16,8 +16,13 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.gotoByName.ModelDiff;
+import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.internal.statistic.service.fus.collectors.UIEventLogger;
+import com.intellij.navigation.ItemPresentation;
+import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.components.Service;
@@ -57,6 +62,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
+import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usageView.UsageViewUtil;
@@ -70,17 +76,20 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.JBUI;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.*;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 
 import javax.swing.*;
 import javax.swing.table.TableColumn;
 import java.awt.*;
+import java.awt.event.ItemEvent;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static com.intellij.find.actions.ResolverKt.findShowUsages;
@@ -262,10 +271,6 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     // show super method warning dialogs before starting finding usages
     PsiElement[] primaryElements = handler.getPrimaryElements();
     PsiElement[] secondaryElements = handler.getSecondaryElements();
-    String searchString = FindBundle.message(
-      "find.usages.of.element.tab.name",
-      options.generateUsagesString(), UsageViewUtil.getLongName(handler.getPsiElement())
-    );
     return new ShowUsagesActionHandler() {
       @Override
       public boolean isValid() {
@@ -274,7 +279,33 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
       @Override
       public @NotNull UsageSearchPresentation getPresentation() {
-        return () -> searchString;
+        return new UsageSearchPresentation() {
+          @Nls
+          @Override
+          public @NotNull String getSearchString() {
+            PsiElement element = handler.getPsiElement();
+            HtmlBuilder builder = new HtmlBuilder();
+
+            builder.append(StringUtil.capitalize(UsageViewUtil.getType(element))).nbsp().
+              append(HtmlChunk.text(UsageViewUtil.getLongName(element)).bold());
+
+            if (element instanceof NavigationItem) {
+              ItemPresentation itemPresentation = ((NavigationItem)element).getPresentation();
+              if (itemPresentation != null && StringUtil.isNotEmpty(itemPresentation.getLocationString())) {
+                builder.nbsp().append(HtmlChunk.text(itemPresentation.getLocationString()).
+                                        wrapWith("font").attr("color", "#" + ColorUtil.toHex(SimpleTextAttributes.GRAY_ATTRIBUTES.getFgColor())));
+              }
+            }
+
+            return builder.toString();
+          }
+
+          @Nls
+          @Override
+          public @NotNull String getSearchOptions() {
+            return options.generateUsagesString();
+          }
+        };
       }
 
       @Override
@@ -608,24 +639,20 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Project project = parameters.project;
 
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table);
-    String title = UsageViewBundle.message(
-      "search.title.0.in.1",
-      actionHandler.getPresentation().getSearchString(),
-      actionHandler.getSelectedScope().getDisplayName()
-    );
-    builder.setTitle(XmlStringUtil.wrapInHtml("<body><nobr>" + StringUtil.escapeXmlEntities(title) + "</nobr></body>"));
+    String title = actionHandler.getPresentation().getSearchString();
+    builder.setTitle(XmlStringUtil.wrapInHtml("<body><nobr>" + title + "</nobr></body>"));
     builder.setAdText(getSecondInvocationHint(actionHandler));
 
     builder.setMovable(true).setResizable(true);
     builder.setItemChoosenCallback(itemChoseCallback);
-    JBPopup[] popup = new JBPopup[1];
+    AtomicReference<AbstractPopup> popupRef = new AtomicReference<>();
 
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
     if (shortcut != null) {
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          cancel(popup[0]);
+          cancel(popupRef.get());
           showDialogAndRestart(parameters, actionHandler);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
@@ -635,16 +662,11 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       new DumbAwareAction() {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          cancel(popup[0]);
+          cancel(popupRef.get());
           showUsagesInMaximalScope(parameters, actionHandler);
         }
       }.registerCustomShortcutSet(new CustomShortcutSet(shortcut.getFirstKeyStroke()), table);
     }
-
-    InplaceButton settingsButton = createSettingsButton(
-      project, () -> cancel(popup[0]),
-      showDialogAndRestartRunnable(parameters, actionHandler)
-    );
 
     ActiveComponent statusComponent = new ActiveComponent() {
       @Override
@@ -659,17 +681,50 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       }
     };
     DefaultActionGroup pinGroup = new DefaultActionGroup();
-    ActiveComponent pin = createPinButton(project, popup, pinGroup, table, actionHandler::findUsages);
-    builder.setCommandButton(new CompositeActiveComponent(statusComponent, settingsButton, pin));
+    ActiveComponent pin = createPinButton(project, popupRef, pinGroup, table, actionHandler::findUsages);
+    builder.setCommandButton(new CompositeActiveComponent(statusComponent, pin));
 
-    DefaultActionGroup toolbar = new DefaultActionGroup();
-    usageView.addFilteringActions(toolbar);
+    DefaultActionGroup filteringGroup = new DefaultActionGroup();
+    usageView.addFilteringActions(filteringGroup);
+    filteringGroup.add(ActionManager.getInstance().getAction("UsageGrouping.FileStructure"));
 
-    toolbar.add(UsageGroupingRuleProviderImpl.createGroupByFileStructureAction(usageView));
-    ActionToolbar actionToolbar = createActionToolbar(table, toolbar);
-    JComponent toolBar = actionToolbar.getComponent();
-    toolBar.setOpaque(false);
-    builder.setSettingButton(toolBar);
+    JPanel northPanel = new JPanel(new GridBagLayout());
+    GridBag gc = new GridBag().nextLine();
+
+    ActionToolbar actionToolbar = createActionToolbar(table, filteringGroup);
+    JComponent toolbarComponent = actionToolbar.getComponent();
+    toolbarComponent.setOpaque(false);
+    northPanel.add(toolbarComponent, gc.next());
+
+    ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo(project, false, false, actionHandler.getSelectedScope().getDisplayName());
+    var scopeComboBox = scopeChooserCombo.getComboBox();
+    scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
+    scopeComboBox.addItemListener(event -> {
+      if (event.getStateChange() == ItemEvent.SELECTED) {
+        SearchScope scope = scopeChooserCombo.getSelectedScope();
+        if (scope != null) {
+          cancel(popupRef.get());
+          showElementUsages(parameters, actionHandler.withScope(scope));
+        }
+      }
+    });
+    scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
+    scopeChooserCombo.setButtonVisible(false);
+    northPanel.add(scopeChooserCombo, gc.next());
+    northPanel.add(new Box.Filler(JBUI.size(10, 0), JBUI.size(10, 0), JBUI.size(Short.MAX_VALUE, 0)), gc.next().weightx(1.0).fillCellHorizontally());
+
+    DefaultActionGroup settingsGroup = new DefaultActionGroup(
+      new SettingsAction(project, () -> cancel(popupRef.get()), showDialogAndRestartRunnable(parameters, actionHandler)));
+    actionToolbar = createActionToolbar(table, settingsGroup);
+    toolbarComponent = actionToolbar.getComponent();
+    toolbarComponent.setOpaque(false);
+
+    JLabel optionsLabel = new JLabel(actionHandler.getPresentation().getSearchOptions());
+    northPanel.add(optionsLabel, gc.next());
+    northPanel.add(toolbarComponent, gc.next());
+
+    builder.setNorthComponent(northPanel);
+
     builder.setCancelKeyEnabled(false);
 
     PopupUpdateProcessor processor = new PopupUpdateProcessor(usageView.getProject()) {
@@ -678,16 +733,17 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     };
     builder.addListener(processor);
 
-    popup[0] = builder.createPopup();
-    JComponent content = popup[0].getContent();
+    popupRef.set((AbstractPopup)builder.createPopup());
+    JComponent content = popupRef.get().getContent();
 
-    String fullTitle = title + getStatusString(true, false, 0, 0);
-    int approxWidth = (int)(toolBar.getPreferredSize().getWidth()
-                            + new JLabel(fullTitle).getPreferredSize().getWidth()
-                            + settingsButton.getPreferredSize().getWidth());
-    IntRef minWidth = parameters.minWidth;
-    minWidth.set(Math.max(minWidth.get(), approxWidth));
-    for (AnAction action : toolbar.getChildren(null)) {
+    // Set title text alignment
+    CaptionPanel caption = popupRef.get().getTitle();
+    if (caption instanceof TitlePanel) {
+      ((TitlePanel)caption).getLabel().setHorizontalAlignment(SwingConstants.LEFT);
+    }
+
+    parameters.minWidth.set(-1);
+    for (AnAction action : filteringGroup.getChildren(null)) {
       action.unregisterCustomShortcutSet(usageView.getComponent());
       action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }
@@ -697,8 +753,8 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       action.registerCustomShortcutSet(action.getShortcutSet(), content);
     }
     /* save toolbar actions for using later, in automatic filter toggling in {@link #restartShowUsagesWithFiltersToggled(List} */
-    popup[0].setUserData(Collections.singletonList(toolbar));
-    return popup[0];
+    popupRef.get().setUserData(Collections.singletonList(filteringGroup));
+    return popupRef.get();
   }
 
   @NotNull
@@ -711,7 +767,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
   @NotNull
   private static ActiveComponent createPinButton(@NotNull Project project,
-                                                 JBPopup @NotNull [] popup,
+                                                 @NotNull AtomicReference<AbstractPopup> popupRef,
                                                  @NotNull DefaultActionGroup pinGroup,
                                                  @NotNull JTable table,
                                                  @NotNull Runnable findUsagesRunnable) {
@@ -727,7 +783,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
           hideHints();
-          cancel(popup[0]);
+          cancel(popupRef.get());
           findUsagesRunnable.run();
         }
       };
@@ -1057,6 +1113,37 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     @Override
     public String toString() {
       return myString;
+    }
+  }
+
+  private static class SettingsAction extends DumbAwareAction implements CustomComponentAction {
+    private final Project project;
+    private final Runnable cancelAction;
+    private final Runnable showDialogAction;
+    private SettingsAction(@NotNull Project project, @NotNull Runnable cancelAction, @NotNull Runnable showDialogAction) {
+      super(FindBundle.message("show.usages.settings.tooltip"), null, AllIcons.General.GearPlain);
+      this.project = project;
+      this.cancelAction = cancelAction;
+      this.showDialogAction = showDialogAction;
+      //getTemplatePresentation().setHoveredIcon(AllIcons.General.GearHover);
+    }
+
+    @Override
+    public void actionPerformed(@NotNull AnActionEvent e) {
+      ApplicationManager.getApplication().invokeLater(showDialogAction, project.getDisposed());
+      cancelAction.run();
+    }
+
+    @Override
+    @NotNull
+    public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
+      return new ActionButton(this, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+        @Override
+        protected @Nullable String getShortcutText() {
+          KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
+          return shortcut != null ? KeymapUtil.getShortcutText(shortcut) : null;
+        }
+      };
     }
   }
 

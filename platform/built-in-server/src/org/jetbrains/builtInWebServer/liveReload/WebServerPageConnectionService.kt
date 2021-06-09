@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.options.SimpleConfigurable
+import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
@@ -22,13 +22,10 @@ import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.GotItTooltip
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
-import com.intellij.xml.XmlBundle
 import io.netty.buffer.Unpooled
 import io.netty.handler.codec.http.FullHttpRequest
 import io.netty.handler.codec.http.QueryStringDecoder
 import io.netty.util.CharsetUtil
-import org.jetbrains.builtInWebServer.BuiltInServerConfigurableUi
-import org.jetbrains.builtInWebServer.BuiltInServerOptions
 import org.jetbrains.ide.BuiltInServerBundle
 import org.jetbrains.io.jsonRpc.Client
 import org.jetbrains.io.jsonRpc.ClientManager
@@ -187,17 +184,17 @@ class WebServerPageConnectionService {
     if (!modifiedFiles.contains(editorFile)) return
 
     gotItTooltip.withLink(CommonBundle.message("action.text.configure.ellipsis")) {
-      ShowSettingsUtil.getInstance().editConfigurable(
-        editorComponent.editor.project, SimpleConfigurable.create(
-        "builtInServer",
-        XmlBundle.message("setting.builtin.server.category.label"),
-        BuiltInServerConfigurableUi::class.java
-      ) { BuiltInServerOptions.getInstance() })
+      ShowSettingsUtil.getInstance().showSettingsDialog(
+        editorComponent.editor.project,
+        { (it as? ConfigurableWrapper)?.id == "project.propDebugger" },
+        null)
     }
 
     gotItTooltip.show(editorComponent) { component, _ ->
       val editor = (component as? EditorComponentImpl)?.editor ?: return@show Point(0,0)
-      editor.visualPositionToXY(editor.caretModel.currentCaret.visualPosition)
+      val p = editor.visualPositionToXY(editor.caretModel.currentCaret.visualPosition)
+      val v = component.visibleRect
+      Point(p.x.coerceIn(v.x, v.x + v.width), p.y.coerceIn(v.y, v.y + v.height))
     }
   }
 

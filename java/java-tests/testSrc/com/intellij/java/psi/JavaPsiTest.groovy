@@ -1,13 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi
 
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.diagnostic.DefaultLogger
-import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.roots.LanguageLevelProjectExtension
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.*
-import com.intellij.psi.impl.light.LightRecordMethod
 import com.intellij.psi.impl.source.PsiClassReferenceType
 import com.intellij.psi.impl.source.PsiImmediateClassType
 import com.intellij.psi.util.PsiTreeUtil
@@ -236,6 +234,14 @@ class JavaPsiTest extends LightJavaCodeInsightFixtureTestCase {
     }
   }
 
+  void "test instanceof no pattern get type"() {
+    withLanguageLevel(LanguageLevel.JDK_X) {
+      def clazz = configureFile("class A{ boolean foo(Object a){ return a instanceof String;} }").classes[0]
+      def returnStatement = clazz.methods.first().getBody().statements.first() as PsiReturnStatement
+      def instanceOfExpression = returnStatement.returnValue as PsiInstanceOfExpression
+      assert instanceOfExpression.getCheckType().getText() == "String"
+    }
+  }
 
   void "test instanceof annotation and modifiers"() {
     withLanguageLevel(LanguageLevel.JDK_16_PREVIEW) {

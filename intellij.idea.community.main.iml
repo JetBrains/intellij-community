@@ -6,6 +6,7 @@
       <excludeFolder url="file://$MODULE_DIR$/android/android-uitests" />
       <excludeFolder url="file://$MODULE_DIR$/config" />
       <excludeFolder url="file://$MODULE_DIR$/system" />
+      <excludeFolder url="file://$MODULE_DIR$/docs/plugin-graph/dist" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -69,6 +70,7 @@
     <orderEntry type="module" module-name="intellij.devkit" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.eclipse" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.git" scope="RUNTIME" />
+    <orderEntry type="module" module-name="intellij.vcs.git.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.images" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.groovy" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.junit" scope="RUNTIME" />
@@ -153,7 +155,5 @@
     <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.ml.models.local" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.kotlin.plugin.community.main" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.android.gradle.dsl.impl" scope="RUNTIME" />
-    <orderEntry type="module" module-name="intellij.android.gradle.dsl.kotlin.impl" scope="RUNTIME" />
   </component>
 </module>

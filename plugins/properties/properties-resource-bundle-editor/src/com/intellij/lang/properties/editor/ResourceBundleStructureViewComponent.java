@@ -89,7 +89,7 @@ public class ResourceBundleStructureViewComponent extends PropertiesGroupingStru
     propertiesPopupGroup.copyFromGroup((DefaultActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_STRUCTURE_VIEW_POPUP));
     propertiesPopupGroup.add(Separator.getInstance(), Constraints.FIRST);
     propertiesPopupGroup.add(new NewPropertyAction(true), Constraints.FIRST);
-    PopupHandler.installPopupHandler(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(getTree(), propertiesPopupGroup, IdeActions.GROUP_STRUCTURE_VIEW_POPUP);
   }
 
   private PsiFile @NotNull [] getSelectedPsiFiles() {

@@ -2,6 +2,9 @@
 package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.build.events.MessageEvent;
+import com.intellij.diagnostic.Activity;
+import com.intellij.diagnostic.ActivityCategory;
+import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.importing.ProjectResolverPolicy;
@@ -256,6 +259,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     resolverCtx.checkCancelled();
 
     final long startTime = System.currentTimeMillis();
+    Activity activity = StartUpMeasurer.startActivity("project data obtaining", ActivityCategory.GRADLE_IMPORT);
     ProjectImportAction.AllModels allModels;
     CountDownLatch buildFinishWaiter = new CountDownLatch(1);
     try {
@@ -286,6 +290,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
     finally {
       ProgressIndicatorUtils.awaitWithCheckCanceled(buildFinishWaiter);
+      activity.end();
       final long timeInMs = (System.currentTimeMillis() - startTime);
       performanceTrace.logPerformance("Gradle data obtained", timeInMs);
       LOG.debug(String.format("Gradle data obtained in %d ms", timeInMs));
@@ -315,6 +320,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
                                             boolean isBuildSrcProject,
                                             boolean useCustomSerialization) {
     final long startDataConversionTime = System.currentTimeMillis();
+    Activity activity = StartUpMeasurer.startActivity("project data processing", ActivityCategory.GRADLE_IMPORT);
     extractExternalProjectModels(allModels, resolverCtx, useCustomSerialization);
 
     String projectName = allModels.getMainBuild().getName();
@@ -459,6 +465,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Collection<DataNode<LibraryData>> libraries = getChildren(projectDataNode, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
 
+    activity.end();
     final long timeConversionInMs = (System.currentTimeMillis() - startDataConversionTime);
     performanceTrace.logPerformance("Gradle project data processed", timeConversionInMs);
     LOG.debug(String.format("Project data resolved in %d ms", timeConversionInMs));

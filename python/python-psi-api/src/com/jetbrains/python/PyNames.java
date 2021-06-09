@@ -222,10 +222,6 @@ public final class PyNames {
 
   public static final String PASS = "pass";
 
-  public static final String NOSE_TEST = "nose";
-  public static final String PY_TEST = "pytest";
-  public static final String TRIAL_TEST = "Twisted";
-
   public static final String TEST_CASE = "TestCase";
 
   public static final String PYCACHE = "__pycache__";

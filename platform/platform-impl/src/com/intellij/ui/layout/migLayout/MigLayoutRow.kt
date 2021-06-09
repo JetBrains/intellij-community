@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout.migLayout
 
 import com.intellij.icons.AllIcons
@@ -33,6 +33,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
                             private val incrementsIndent: Boolean = parent != null) : Row() {
   companion object {
     private const val COMPONENT_ENABLED_STATE_KEY = "MigLayoutRow.enabled"
+    private const val COMPONENT_VISIBLE_STATE_KEY = "MigLayoutRow.visible"
 
     // as static method to ensure that members of current row are not used
     private fun createCommentRow(parent: MigLayoutRow,
@@ -81,11 +82,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 
   var gapAfter: String? = null
     set(value) {
-      field = value;
+      field = value
       rowConstraints?.gapAfter = if (value == null) null else ConstraintParser.parseBoundSize(value, true, false)
     }
 
-  var rowConstraints: DimConstraint? = null;
+  var rowConstraints: DimConstraint? = null
 
   private var componentIndexWhenCellModeWasEnabled = -1
 
@@ -144,9 +145,20 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
       }
 
       field = value
+
       for ((index, c) in components.withIndex()) {
-        c.isVisible = value
         builder.componentConstraints[c]?.hideMode = if (index == components.size - 1 && value) 2 else 3
+
+        if (!value) {
+          c.putClientProperty(COMPONENT_VISIBLE_STATE_KEY, if (c.isVisible) null else false)
+        }
+        else {
+          if (c.getClientProperty(COMPONENT_VISIBLE_STATE_KEY) == false) {
+            c.putClientProperty(COMPONENT_VISIBLE_STATE_KEY, null)
+            continue
+          }
+        }
+        c.isVisible = value
       }
     }
 
@@ -187,7 +199,7 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
     get() = labeled || (subRows?.any { it.isLabeledIncludingSubRows } ?: false)
 
   internal val columnIndexIncludingSubRows: Int
-    get() = max(columnIndex, subRows?.asSequence()?.map { it.columnIndexIncludingSubRows }?.max() ?: -1)
+    get() = max(columnIndex, subRows?.asSequence()?.map { it.columnIndexIncludingSubRows }?.maxOrNull() ?: -1)
 
   override fun createChildRow(label: JLabel?, isSeparated: Boolean, noGrid: Boolean, title: String?): MigLayoutRow {
     return createChildRow(indent, label, isSeparated, noGrid, title)
@@ -356,6 +368,11 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
   override fun <T : JComponent> component(component: T): CellBuilder<T> {
     addComponent(component)
     return CellBuilderImpl(builder, this, component)
+  }
+
+  override fun <T : JComponent> component(component: T, viewComponent: JComponent): CellBuilder<T> {
+    addComponent(viewComponent)
+    return CellBuilderImpl(builder, this, component, viewComponent)
   }
 
   internal fun addComponent(component: JComponent, cc: CC = CC()) {
@@ -541,7 +558,8 @@ internal class MigLayoutRow(private val parent: MigLayoutRow?,
 private class CellBuilderImpl<T : JComponent> internal constructor(
   private val builder: MigLayoutBuilder,
   private val row: MigLayoutRow,
-  override val component: T
+  override val component: T,
+  private val viewComponent: JComponent = component
 ) : CellBuilder<T>, CheckboxCellBuilder, ScrollPaneCellBuilder {
   private var applyIfEnabled = false
   private var property: GraphProperty<*>? = null
@@ -552,17 +570,17 @@ private class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun comment(text: String, maxLineLength: Int, forComponent: Boolean): CellBuilder<T> {
-    row.addCommentRow(text, maxLineLength, forComponent, component)
+    row.addCommentRow(text, maxLineLength, forComponent, viewComponent)
     return this
   }
 
   override fun commentComponent(component: JComponent, forComponent: Boolean): CellBuilder<T> {
-    row.addCommentRow(component, forComponent, this.component)
+    row.addCommentRow(component, forComponent, viewComponent)
     return this
   }
 
   override fun focused(): CellBuilder<T> {
-    builder.preferredFocusedComponent = component
+    builder.preferredFocusedComponent = viewComponent
     return this
   }
 
@@ -593,22 +611,22 @@ private class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun enabled(isEnabled: Boolean) {
-    component.isEnabled = isEnabled
+    viewComponent.isEnabled = isEnabled
   }
 
   override fun enableIf(predicate: ComponentPredicate): CellBuilder<T> {
-    component.isEnabled = predicate()
-    predicate.addListener { component.isEnabled = it }
+    viewComponent.isEnabled = predicate()
+    predicate.addListener { viewComponent.isEnabled = it }
     return this
   }
 
   override fun visible(isVisible: Boolean) {
-    component.isVisible = isVisible
+    viewComponent.isVisible = isVisible
   }
 
   override fun visibleIf(predicate: ComponentPredicate): CellBuilder<T> {
-    component.isVisible = predicate()
-    predicate.addListener { component.isVisible = it }
+    viewComponent.isVisible = predicate()
+    predicate.addListener { viewComponent.isVisible = it }
     return this
   }
 
@@ -618,57 +636,57 @@ private class CellBuilderImpl<T : JComponent> internal constructor(
   }
 
   override fun shouldSaveOnApply(): Boolean {
-    return !(applyIfEnabled && !component.isEnabled)
+    return !(applyIfEnabled && !viewComponent.isEnabled)
   }
 
   override fun actsAsLabel() {
-    builder.updateComponentConstraints(component) { spanX = 1 }
+    builder.updateComponentConstraints(viewComponent) { spanX = 1 }
   }
 
   override fun noGrowY() {
-    builder.updateComponentConstraints(component) {
+    builder.updateComponentConstraints(viewComponent) {
       growY(0.0f)
       pushY(0.0f)
     }
   }
 
   override fun sizeGroup(name: String): CellBuilderImpl<T> {
-    builder.updateComponentConstraints(component) {
+    builder.updateComponentConstraints(viewComponent) {
       sizeGroup(name)
     }
     return this
   }
 
   override fun growPolicy(growPolicy: GrowPolicy): CellBuilder<T> {
-    builder.updateComponentConstraints(component) {
+    builder.updateComponentConstraints(viewComponent) {
       builder.defaultComponentConstraintCreator.applyGrowPolicy(this, growPolicy)
     }
     return this
   }
 
   override fun constraints(vararg constraints: CCFlags): CellBuilder<T> {
-    builder.updateComponentConstraints(component) {
+    builder.updateComponentConstraints(viewComponent) {
       overrideFlags(this, constraints)
     }
     return this
   }
 
   override fun withLargeLeftGap(): CellBuilder<T> {
-    builder.updateComponentConstraints(component) {
+    builder.updateComponentConstraints(viewComponent) {
       horizontal.gapBefore = gapToBoundSize(builder.spacing.largeHorizontalGap, true)
     }
     return this
   }
 
   override fun withLeftGap(): CellBuilder<T> {
-    builder.updateComponentConstraints(component) {
+    builder.updateComponentConstraints(viewComponent) {
       horizontal.gapBefore = gapToBoundSize(builder.spacing.horizontalGap, true)
     }
     return this
   }
 
   override fun withLeftGap(gapLeft: Int): CellBuilder<T> {
-    builder.updateComponentConstraints(component) {
+    builder.updateComponentConstraints(viewComponent) {
       horizontal.gapBefore = gapToBoundSize(gapLeft, true)
     }
     return this

@@ -4,6 +4,7 @@
   </dependencies>
 
   <extensions defaultExtensionNs="com.intellij.grazie">
-    <grammar.strategy language="XML" implementationClass="com.intellij.grazie.ide.language.xml.XmlGrammarCheckingStrategy"/>
+    <textExtractor language="XML" implementationClass="com.intellij.grazie.ide.language.xml.XmlTextExtractor$Xml"/>
+    <textExtractor language="HTML" implementationClass="com.intellij.grazie.ide.language.xml.XmlTextExtractor$Html"/>
   </extensions>
 </idea-plugin>

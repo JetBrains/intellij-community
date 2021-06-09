@@ -7,7 +7,6 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
-import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -237,7 +236,7 @@ public class FileSystemTreeImpl implements FileSystemTree {
   }
 
   public void registerMouseListener(final ActionGroup group) {
-    PopupHandler.installPopupHandler(myTree, group, ActionPlaces.UNKNOWN);
+    PopupHandler.installPopupMenu(myTree, group, "FileSystemTreePopup");
   }
 
   @Override

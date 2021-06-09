@@ -62,10 +62,6 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
     presentation.setText("");
     presentation.setDescription(getActionTooltip());
     presentation.setIcon(getActionIcon());
-
-    for (AnAction child : getTemplateActions()) {
-      child.update(AnActionEvent.createFromAnAction(this, e.getInputEvent(), e.getPlace(), e.getDataContext()));
-    }
   }
 
   private static AnAction @NotNull [] getTemplateActions() {
@@ -139,8 +135,8 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       }, -1);
   }
 
-  private static boolean myShowPlatformUpdateIcon;
-  private static boolean myShowPluginsUpdateIcon;
+  private static boolean ourShowPlatformUpdateIcon;
+  private static boolean ourShowPluginsUpdateIcon;
 
   public static void updateState() {
     resetActionIcon();
@@ -150,12 +146,12 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
       for (UpdateAction action : provider.getUpdateActions(DataContext.EMPTY_CONTEXT)) {
         if (action.isNewAction()) {
           if (action.isIdeUpdate()) {
-            myShowPlatformUpdateIcon = true;
+            ourShowPlatformUpdateIcon = true;
           }
           else {
-            myShowPluginsUpdateIcon = true;
+            ourShowPluginsUpdateIcon = true;
           }
-          if (myShowPlatformUpdateIcon && myShowPluginsUpdateIcon) {
+          if (ourShowPlatformUpdateIcon && ourShowPluginsUpdateIcon) {
             break loop;
           }
         }
@@ -168,7 +164,7 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static @NotNull @Nls String getActionTooltip() {
-    boolean updates = myShowPlatformUpdateIcon || myShowPluginsUpdateIcon;
+    boolean updates = ourShowPlatformUpdateIcon || ourShowPluginsUpdateIcon;
     if (!updates) {
       for (ActionProvider provider : ActionProvider.EP_NAME.getExtensionList()) {
         if (!provider.getUpdateActions(DataContext.EMPTY_CONTEXT).isEmpty()) {
@@ -181,14 +177,14 @@ public final class SettingsEntryPointAction extends DumbAwareAction implements R
   }
 
   private static void resetActionIcon() {
-    myShowPlatformUpdateIcon = myShowPluginsUpdateIcon = false;
+    ourShowPlatformUpdateIcon = ourShowPluginsUpdateIcon = false;
   }
 
   private static @NotNull Icon getActionIcon() {
-    if (myShowPlatformUpdateIcon) {
+    if (ourShowPlatformUpdateIcon) {
       return AllIcons.Ide.Notification.IdeUpdate;
     }
-    if (myShowPluginsUpdateIcon) {
+    if (ourShowPluginsUpdateIcon) {
       return AllIcons.Ide.Notification.PluginUpdate;
     }
     return AllIcons.General.GearPlain;

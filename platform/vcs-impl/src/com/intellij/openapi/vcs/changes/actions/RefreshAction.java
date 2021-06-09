@@ -63,7 +63,7 @@ public class RefreshAction extends AnAction implements DumbAware {
 
     VcsDirtyScopeManager.getInstance(project).markEverythingDirty();
 
-    changeListManager.invokeAfterUpdate(true, () -> {
+    changeListManager.invokeAfterUpdate(false, () -> {
       Collection<Change> changesAfterUpdate = changeListManager.getAllChanges();
       Collection<FilePath> unversionedAfter = changeListManager.getUnversionedFilesPaths();
 

@@ -4,6 +4,7 @@ package org.jetbrains.idea.devkit.threadingModelHelper;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.ObjectUtils;
@@ -34,6 +35,12 @@ public class TMHIntegrationTest extends LightPlatformTestCase {
     "Read access is allowed from inside read-action (or EDT) only";
   private static final String WRITE_ACCESS_ASSERTION_MESSAGE = "Write access is allowed inside write-action only";
   private static final String NON_READ_ACCESS_ASSERTION_MESSAGE = "Read access is not allowed";
+
+  @Override
+  protected void setUp() throws Exception {
+    super.setUp();
+    DefaultLogger.disableStderrDumping(getTestRootDisposable());
+  }
 
   public void testEdtActionOnEdt() {
     runEdtAction();

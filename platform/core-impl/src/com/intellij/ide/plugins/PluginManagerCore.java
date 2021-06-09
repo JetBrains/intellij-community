@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.core.CoreBundle;
@@ -17,15 +17,11 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.GraphGenerator;
-import com.intellij.util.graph.InboundSemiGraph;
+import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.*;
 
@@ -39,7 +35,6 @@ import java.nio.file.*;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ForkJoinPool;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -48,6 +43,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 // Prefer to use only JDK classes. Any post start-up functionality should be placed in PluginManager class.
+/**
+ * See <a href="https://github.com/JetBrains/intellij-community/blob/master/platform/core-impl/src/com/intellij/ide/plugins/readme.md">Plugin Model V2 documentation</a>
+ */
 public final class PluginManagerCore {
   public static final @NonNls String META_INF = "META-INF/";
 
@@ -78,19 +76,14 @@ public final class PluginManagerCore {
   private static final MethodType HAS_LOADED_CLASS_METHOD_TYPE = MethodType.methodType(boolean.class, String.class);
 
   private static Reference<Map<PluginId, Set<String>>> brokenPluginVersions;
-  private static volatile IdeaPluginDescriptorImpl[] ourPlugins;
-  private static volatile List<IdeaPluginDescriptorImpl> ourLoadedPlugins;
-  private static Map<PluginId, PluginLoadingError> ourPluginLoadingErrors;
-
-  private static Map<String, String[]> ourAdditionalLayoutMap = Collections.emptyMap();
+  private static volatile @Nullable PluginSet pluginSet;
+  private static Map<PluginId, PluginLoadingError> pluginLoadingErrors;
 
   @SuppressWarnings("StaticNonFinalField")
   public static volatile boolean isUnitTestMode = Boolean.getBoolean("idea.is.unit.test");
-  @ApiStatus.Internal
-  static final boolean usePluginClassLoader = Boolean.getBoolean("idea.from.sources.plugins.class.loader");
 
   @ApiStatus.Internal
-  private static final List<Supplier<? extends HtmlChunk>> ourPluginErrors = new ArrayList<>();
+  private static final List<Supplier<? extends HtmlChunk>> pluginErrors = new ArrayList<>();
 
   private static Set<PluginId> ourPluginsToDisable;
   private static Set<PluginId> ourPluginsToEnable;
@@ -118,16 +111,11 @@ public final class PluginManagerCore {
    * Do not call this method during bootstrap, should be called in a copy of PluginManager, loaded by PluginClassLoader.
    */
   public static @NotNull IdeaPluginDescriptor @NotNull[] getPlugins() {
-    IdeaPluginDescriptor[] result = ourPlugins;
-    if (result == null) {
-      loadAndInitializePlugins(null, null);
-      return ourPlugins;
-    }
-    return result;
+    return getPluginSet().allPlugins.toArray(new IdeaPluginDescriptor[0]);
   }
 
-  static @NotNull Collection<IdeaPluginDescriptorImpl> getAllPlugins() {
-    return Arrays.asList(ourPlugins);
+  static @NotNull PluginSet getPluginSet() {
+    return Objects.requireNonNull(pluginSet);
   }
 
   /**
@@ -140,37 +128,30 @@ public final class PluginManagerCore {
 
   @ApiStatus.Internal
   public static @NotNull List<IdeaPluginDescriptorImpl> getLoadedPlugins(@Nullable ClassLoader coreClassLoader) {
-    List<IdeaPluginDescriptorImpl> result = ourLoadedPlugins;
-    if (result == null) {
-      loadAndInitializePlugins(null, coreClassLoader);
-      return ourLoadedPlugins;
+    PluginSet result = pluginSet;
+    if (result != null) {
+      return result.enabledPlugins;
     }
-    return result;
+    return loadAndInitializePlugins(PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources()),
+                                    coreClassLoader == null ? PluginManagerCore.class.getClassLoader() : coreClassLoader).enabledPlugins;
   }
 
   @ApiStatus.Internal
   public static @NotNull List<HtmlChunk> getAndClearPluginLoadingErrors() {
-    synchronized (ourPluginErrors) {
-      List<HtmlChunk> errors = ContainerUtil.map(ourPluginErrors, Supplier::get);
-      ourPluginErrors.clear();
+    synchronized (pluginErrors) {
+      List<HtmlChunk> errors = ContainerUtil.map(pluginErrors, Supplier::get);
+      pluginErrors.clear();
       return errors;
-    }
-  }
-
-  private static void registerPluginErrors(List<? extends Supplier<? extends HtmlChunk>> errors) {
-    synchronized (ourPluginErrors) {
-      ourPluginErrors.addAll(errors);
     }
   }
 
   @ApiStatus.Internal
   public static boolean arePluginsInitialized() {
-    return ourPlugins != null;
+    return pluginSet != null;
   }
 
-  static synchronized void doSetPlugins(@NotNull IdeaPluginDescriptorImpl @Nullable [] value) {
-    ourPlugins = value;
-    ourLoadedPlugins = value == null ? null : Collections.unmodifiableList(getOnlyEnabledPlugins(value));
+  static synchronized void doSetPlugins(@Nullable List<IdeaPluginDescriptorImpl> value) {
+    pluginSet = value == null ? null : new PluginSet(value, getOnlyEnabledPlugins(value), true);
   }
 
   public static boolean isDisabled(@NotNull PluginId pluginId) {
@@ -308,8 +289,8 @@ public final class PluginManagerCore {
 
   @ApiStatus.Internal
   public static @Nullable PluginDescriptor getPluginDescriptorOrPlatformByClassName(@NotNull @NonNls String className) {
-    List<IdeaPluginDescriptorImpl> loadedPlugins = ourLoadedPlugins;
-    if (loadedPlugins == null ||
+    PluginSet pluginSet = PluginManagerCore.pluginSet;
+    if (pluginSet == null ||
         className.startsWith("java.") ||
         className.startsWith("javax.") ||
         className.startsWith("kotlin.") ||
@@ -319,7 +300,7 @@ public final class PluginManagerCore {
     }
 
     IdeaPluginDescriptor result = null;
-    for (IdeaPluginDescriptorImpl o : loadedPlugins) {
+    for (IdeaPluginDescriptorImpl o : pluginSet.enabledPlugins) {
       ClassLoader classLoader = o.getPluginClassLoader();
       if (!hasLoadedClass(className, classLoader)) {
         continue;
@@ -333,7 +314,7 @@ public final class PluginManagerCore {
       return null;
     }
 
-    // return if the found plugin is not "core" or the package is obviously "core"
+    // return if the found plugin is not "core", or the package is obviously "core"
     if (!CORE_ID.equals(result.getPluginId()) ||
         className.startsWith("com.jetbrains.") || className.startsWith("org.jetbrains.") ||
         className.startsWith("com.intellij.") || className.startsWith("org.intellij.") ||
@@ -342,9 +323,9 @@ public final class PluginManagerCore {
       return result;
     }
 
-    // otherwise we need to check plugins with use-idea-classloader="true"
+    // otherwise, we need to check plugins with use-idea-classloader="true"
     String root = null;
-    for (IdeaPluginDescriptorImpl o : loadedPlugins) {
+    for (IdeaPluginDescriptorImpl o : pluginSet.enabledPlugins) {
       if (!o.isUseIdeaClassLoader) {
         continue;
       }
@@ -420,14 +401,12 @@ public final class PluginManagerCore {
   static @Nullable IdeaPluginDescriptorImpl getImplicitDependency(@NotNull IdeaPluginDescriptorImpl descriptor,
                                                                   @NotNull Supplier<IdeaPluginDescriptorImpl> javaDepGetter) {
     // skip our plugins as expected to be up-to-date whether bundled or not
-    if (descriptor.isBundled() ||
-        VENDOR_JETBRAINS.equals(descriptor.getVendor())) {
+    if (descriptor.isBundled() || VENDOR_JETBRAINS.equals(descriptor.getVendor())) {
       return null;
     }
 
     PluginId pluginId = descriptor.getPluginId();
-    if (CORE_ID.equals(pluginId) ||
-        JAVA_PLUGIN_ID.equals(pluginId)) {
+    if (CORE_ID.equals(pluginId) || JAVA_PLUGIN_ID.equals(pluginId)) {
       return null;
     }
 
@@ -459,8 +438,8 @@ public final class PluginManagerCore {
     ourShadowedBundledPlugins = null;
   }
 
-  private static void logPlugins(@NotNull IdeaPluginDescriptorImpl @NotNull [] plugins,
-                                 Collection<IdeaPluginDescriptorImpl> incompletePlugins) {
+  private static void logPlugins(@NotNull List<IdeaPluginDescriptorImpl> plugins,
+                                 @NotNull Collection<IdeaPluginDescriptorImpl> incompletePlugins) {
     StringBuilder bundled = new StringBuilder();
     StringBuilder disabled = new StringBuilder();
     StringBuilder custom = new StringBuilder();
@@ -528,7 +507,7 @@ public final class PluginManagerCore {
   private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, PluginLoadingError> pluginErrors,
                                                         @NotNull List<Supplier<@NlsContexts.DetailedDescription String>> globalErrors,
                                                         @NotNull List<Supplier<HtmlChunk>> actions) {
-    ourPluginLoadingErrors = pluginErrors;
+    pluginLoadingErrors = pluginErrors;
 
     if (pluginErrors.isEmpty() && globalErrors.isEmpty()) {
       return;
@@ -552,7 +531,10 @@ public final class PluginManagerCore {
       ).collect(Collectors.toList());
 
       if (!errorsList.isEmpty()) {
-        registerPluginErrors(ContainerUtil.concat(errorsList, actions));
+        synchronized (PluginManagerCore.pluginErrors) {
+          PluginManagerCore.pluginErrors.addAll(errorsList);
+          PluginManagerCore.pluginErrors.addAll(actions);
+        }
       }
 
       getLogger().warn(logMessage);
@@ -563,103 +545,19 @@ public final class PluginManagerCore {
   }
 
   public static @Nullable @NlsContexts.Label String getShortLoadingErrorMessage(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    PluginLoadingError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
+    PluginLoadingError error = pluginLoadingErrors.get(pluginDescriptor.getPluginId());
     return error == null ? null : error.getShortMessage();
   }
 
   public static @Nullable PluginId getFirstDisabledDependency(@NotNull IdeaPluginDescriptor pluginDescriptor) {
-    PluginLoadingError error = ourPluginLoadingErrors.get(pluginDescriptor.getPluginId());
+    PluginLoadingError error = pluginLoadingErrors.get(pluginDescriptor.getPluginId());
     return error == null ? null : error.disabledDependency;
   }
 
-  static @NotNull CachingSemiGraph<IdeaPluginDescriptorImpl> createPluginIdGraph(@NotNull Collection<IdeaPluginDescriptorImpl> descriptors,
-                                                                                 @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
-                                                                                 boolean withOptional) {
-    boolean hasAllModules = idToDescriptorMap.containsKey(ALL_MODULES_MARKER);
-    Supplier<IdeaPluginDescriptorImpl> javaDep = () -> idToDescriptorMap.get(JAVA_MODULE_ID);
-    Set<IdeaPluginDescriptorImpl> uniqueCheck = new HashSet<>();
-    Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>> in = new HashMap<>(descriptors.size());
-    for (IdeaPluginDescriptorImpl descriptor : descriptors) {
-      List<IdeaPluginDescriptorImpl> list = getDirectDependencies(descriptor, idToDescriptorMap, withOptional, hasAllModules, javaDep, uniqueCheck);
-      if (!list.isEmpty()) {
-        in.put(descriptor, list);
-      }
-    }
-    return new CachingSemiGraph<>(descriptors, in);
-  }
-
-  private static @NotNull List<IdeaPluginDescriptorImpl> getDirectDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
-                                                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
-                                                                               boolean withOptional,
-                                                                               boolean hasAllModules,
-                                                                               @NotNull Supplier<IdeaPluginDescriptorImpl> javaDep,
-                                                                               @NotNull Set<IdeaPluginDescriptorImpl> uniqueCheck) {
-    List<PluginDependency> dependencies = rootDescriptor.pluginDependencies;
-    IdeaPluginDescriptorImpl implicitDep = hasAllModules ? getImplicitDependency(rootDescriptor, javaDep) : null;
-    int capacity = dependencies.size() + rootDescriptor.incompatibilities.size();
-    if (!withOptional) {
-      for (PluginDependency dependency : dependencies) {
-        if (dependency.isOptional()) {
-          capacity--;
-        }
-      }
-    }
-    if (capacity == 0) {
-      return implicitDep == null ? Collections.emptyList() : Collections.singletonList(implicitDep);
-    }
-
-    uniqueCheck.clear();
-
-    List<IdeaPluginDescriptorImpl> plugins = new ArrayList<>(capacity + (implicitDep == null ? 0 : 1));
-    if (implicitDep != null) {
-      if (rootDescriptor == implicitDep) {
-        getLogger().error("Plugin " + rootDescriptor + " depends on self");
-      }
-      else {
-        uniqueCheck.add(implicitDep);
-        plugins.add(implicitDep);
-      }
-    }
-
-    for (PluginDependency dependency : dependencies) {
-      if (!withOptional && dependency.isOptional()) {
-        continue;
-      }
-
-      // check for missing optional dependency
-      IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(dependency.getPluginId());
-      // if 'dep' refers to a module we need to check the real plugin containing this module only if it's still enabled,
-      // otherwise the graph will be inconsistent
-      if (dep == null) {
-        continue;
-      }
-
-      // ultimate plugin it is combined plugin, where some included XML can define dependency on ultimate explicitly and for now not clear,
-      // can be such requirements removed or not
-      if (rootDescriptor == dep) {
-        if (!CORE_ID.equals(rootDescriptor.getPluginId())) {
-          getLogger().error("Plugin " + rootDescriptor + " depends on self");
-        }
-      }
-      else if (uniqueCheck.add(dep)) {
-        plugins.add(dep);
-      }
-    }
-
-    for (PluginId moduleId : rootDescriptor.incompatibilities) {
-      IdeaPluginDescriptorImpl dep = idToDescriptorMap.get(moduleId);
-      if (dep != null && uniqueCheck.add(dep)) {
-        plugins.add(dep);
-      }
-    }
-
-    return plugins;
-  }
-
   private static void checkPluginCycles(@NotNull List<IdeaPluginDescriptorImpl> descriptors,
-                                        @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idToDescriptorMap,
+                                        @NotNull PluginSet pluginSet,
                                         @NotNull List<Supplier<@Nls String>> errors) {
-    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(descriptors, idToDescriptorMap, true);
+    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = CachingSemiGraphKt.createPluginIdGraph(descriptors, pluginSet, true);
     DFSTBuilder<IdeaPluginDescriptorImpl> builder = new DFSTBuilder<>(GraphGenerator.generate(graph));
     if (builder.isAcyclic()) {
       return;
@@ -676,18 +574,18 @@ public final class PluginManagerCore {
       errors.add(message("plugin.loading.error.plugins.cannot.be.loaded.because.they.form.a.dependency.cycle", pluginsString));
 
       StringBuilder detailedMessage = new StringBuilder();
-      Function<IdeaPluginDescriptorImpl, String> pluginToString = plugin -> "id = " + plugin.getPluginId().getIdString() + " (" + plugin.getName() + ")";
+      Function<IdeaPluginDescriptorImpl, String> pluginToString = plugin -> {
+        return "id = " + plugin.getPluginId().getIdString() + " (" + plugin.getName() + ")";
+      };
 
       detailedMessage.append("Detected plugin dependencies cycle details (only related dependencies are included):\n");
       component.stream()
-        .map(p -> Pair.create(p, pluginToString.apply(p)))
+        .map(p -> new Pair<>(p, pluginToString.apply(p)))
         .sorted(Comparator.comparing(p -> p.second, String.CASE_INSENSITIVE_ORDER))
         .forEach(p -> {
           detailedMessage.append("  ").append(p.getSecond()).append(" depends on:\n");
-
-          ContainerUtil.toCollection(() -> graph.getIn(p.first))
-            .stream()
-            .filter(dep -> component.contains(dep))
+          graph.getInStream(p.first)
+            .filter(component::contains)
             .map(pluginToString)
             .sorted(String.CASE_INSENSITIVE_ORDER)
             .forEach(dep -> detailedMessage.append("    ").append(dep).append("\n"));
@@ -699,29 +597,38 @@ public final class PluginManagerCore {
 
   private static void prepareLoadingPluginsErrorMessage(@NotNull Map<PluginId, String> disabledIds,
                                                         @NotNull Set<PluginId> disabledRequiredIds,
-                                                        @NotNull Map<PluginId, ? extends IdeaPluginDescriptor> idMap,
+                                                        @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                                         @NotNull Map<PluginId, PluginLoadingError> pluginErrors,
                                                         @NotNull List<Supplier<String>> globalErrors) {
-    List<Supplier<HtmlChunk>> actions = new ArrayList<>();
-    if (!disabledIds.isEmpty()) {
-      @NlsSafe String nameToDisable;
-      if (disabledIds.size() == 1) {
-        PluginId id = disabledIds.keySet().iterator().next();
-        nameToDisable = idMap.containsKey(id) ? idMap.get(id).getName() : id.getIdString();
-      }
-      else {
-        nameToDisable = null;
-      }
-      actions.add(() -> HtmlChunk.link(DISABLE, CoreBundle.message("link.text.disable.plugin.or.plugins", nameToDisable, nameToDisable != null ? 0 : 1)));
-      if (!disabledRequiredIds.isEmpty()) {
-        String nameToEnable = disabledRequiredIds.size() == 1 && idMap.containsKey(disabledRequiredIds.iterator().next())
-                              ? idMap.get(disabledRequiredIds.iterator().next()).getName()
-                              : null;
-        actions.add(() -> HtmlChunk
-          .link(ENABLE, CoreBundle.message("link.text.enable.plugin.or.plugins", nameToEnable, nameToEnable != null ? 0 : 1)));
-      }
-      actions.add(() -> HtmlChunk.link(EDIT, CoreBundle.message("link.text.open.plugin.manager")));
+    if (disabledIds.isEmpty()) {
+      prepareLoadingPluginsErrorMessage(pluginErrors, globalErrors, Collections.emptyList());
+      return;
     }
+
+    @NlsSafe String nameToDisable;
+    if (disabledIds.size() == 1) {
+      PluginId id = disabledIds.keySet().iterator().next();
+      nameToDisable = idMap.containsKey(id) ? idMap.get(id).getName() : id.getIdString();
+    }
+    else {
+      nameToDisable = null;
+    }
+
+    List<Supplier<HtmlChunk>> actions = new ArrayList<>();
+    actions.add(() -> {
+      return HtmlChunk.link(DISABLE,
+                            CoreBundle.message("link.text.disable.plugin.or.plugins", nameToDisable, nameToDisable != null ? 0 : 1));
+    });
+    if (!disabledRequiredIds.isEmpty()) {
+      String nameToEnable = disabledRequiredIds.size() == 1 && idMap.containsKey(disabledRequiredIds.iterator().next())
+                            ? idMap.get(disabledRequiredIds.iterator().next()).getName()
+                            : null;
+      actions.add(() -> {
+        return HtmlChunk.link(ENABLE,
+                              CoreBundle.message("link.text.enable.plugin.or.plugins", nameToEnable, nameToEnable == null ? 1 : 0));
+      });
+    }
+    actions.add(() -> HtmlChunk.link(EDIT, CoreBundle.message("link.text.open.plugin.manager")));
     prepareLoadingPluginsErrorMessage(pluginErrors, globalErrors, actions);
   }
 
@@ -776,50 +683,14 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static @NotNull CompletionStage<List<IdeaPluginDescriptorImpl>> initPlugins(@NotNull ClassLoader coreClassLoader) {
+  public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> initPlugins(@NotNull ClassLoader coreClassLoader) {
     CompletableFuture<DescriptorListLoadingContext> future = descriptorListFuture;
     if (future == null) {
-      future = CompletableFuture.completedFuture(null);
+      throw new IllegalStateException("Call scheduleDescriptorLoading() first");
     }
     return future.thenApply(context -> {
-      loadAndInitializePlugins(context, coreClassLoader);
-      return ourLoadedPlugins;
+      return loadAndInitializePlugins(context, coreClassLoader).enabledPlugins;
     });
-  }
-
-  private static @NotNull Map<String, String[]> loadAdditionalLayoutMap() {
-    Path fileWithLayout = usePluginClassLoader
-                          ? Paths.get(PathManager.getSystemPath(), PlatformUtils.getPlatformPrefix() + ".txt")
-                          : null;
-    if (fileWithLayout == null || !Files.exists(fileWithLayout)) {
-      return Collections.emptyMap();
-    }
-
-    Map<String, String[]> additionalLayoutMap = new LinkedHashMap<>();
-    try (BufferedReader bufferedReader = Files.newBufferedReader(fileWithLayout)) {
-      String line;
-      while ((line = bufferedReader.readLine()) != null) {
-        List<String> parameters = ParametersListUtil.parse(line.trim());
-        if (parameters.size() < 2) {
-          continue;
-        }
-        additionalLayoutMap.put(parameters.get(0), ArrayUtilRt.toStringArray(parameters.subList(1, parameters.size())));
-      }
-    }
-    catch (Exception ignored) {
-    }
-    return additionalLayoutMap;
-  }
-
-  /**
-   * not used by plugin manager - only for dynamic plugin reloading.
-   * Building plugin graph and using `getInList` as it is done for regular loading is not required - all that magic and checks
-   * are not required here because only regular plugins maybe dynamically reloaded.
-   */
-  @ApiStatus.Internal
-  public static @NotNull ClassLoaderConfigurator createClassLoaderConfiguratorForDynamicPlugin(@NotNull IdeaPluginDescriptorImpl pluginDescriptor) {
-    Map<PluginId, IdeaPluginDescriptorImpl> idMap = buildPluginIdMap(ContainerUtil.concat(getLoadedPlugins(null), Collections.singletonList(pluginDescriptor)));
-    return new ClassLoaderConfigurator(true, PluginManagerCore.class.getClassLoader(), idMap, ourAdditionalLayoutMap);
   }
 
   public static @NotNull BuildNumber getBuildNumber() {
@@ -998,7 +869,9 @@ public final class PluginManagerCore {
     }
   }
 
-  static @NotNull PluginManagerState initializePlugins(@NotNull DescriptorListLoadingContext context, @NotNull ClassLoader coreLoader, boolean checkEssentialPlugins) {
+  static @NotNull PluginManagerState initializePlugins(@NotNull DescriptorListLoadingContext context,
+                                                       @NotNull ClassLoader coreLoader,
+                                                       boolean checkEssentialPlugins) {
     PluginLoadingResult loadingResult = context.result;
     Map<PluginId, PluginLoadingError> pluginErrors = new HashMap<>(loadingResult.getPluginErrors$intellij_platform_core_impl());
     @NotNull List<Supplier<String>> globalErrors = loadingResult.getGlobalErrors();
@@ -1013,28 +886,58 @@ public final class PluginManagerCore {
     }
 
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadingResult.idMap;
-    IdeaPluginDescriptorImpl coreDescriptor = idMap.get(CORE_ID);
-    if (checkEssentialPlugins && coreDescriptor == null) {
-      throw new EssentialPluginMissingException(Collections.singletonList(CORE_ID + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
+    if (checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
+      throw new EssentialPluginMissingException(
+        Collections.singletonList(CORE_ID + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
     }
 
     List<IdeaPluginDescriptorImpl> descriptors = loadingResult.getEnabledPlugins();
+    PluginSet rawPluginSet = new PluginSet(descriptors, descriptors, false);
     disableIncompatiblePlugins(descriptors, idMap, pluginErrors);
-    checkPluginCycles(descriptors, idMap, globalErrors);
+    checkPluginCycles(descriptors, rawPluginSet, globalErrors);
+
+    Map<PluginId, String> disabledIds = new HashMap<>();
 
     // topological sort based on required dependencies only
-    IdeaPluginDescriptorImpl[] sortedRequired = getTopologicallySorted(createPluginIdGraph(descriptors, idMap, false));
+    List<IdeaPluginDescriptorImpl> sortedRequired = CachingSemiGraphKt.getTopologicallySorted(descriptors, rawPluginSet, false);
 
-    Set<PluginId> enabledPluginIds = new LinkedHashSet<>();
-    Set<PluginId> enabledModuleIds = new LinkedHashSet<>();
-    Map<PluginId, String> disabledIds = new LinkedHashMap<>();
-    Set<PluginId> disabledRequiredIds = new LinkedHashSet<>();
+    Set<PluginId> enabledPluginIds = new HashSet<>();
+    Set<String> enabledModuleV2Ids = new HashSet<>();
+    Set<PluginId> disabledRequiredIds = new HashSet<>();
 
+    Logger logger = getLogger();
+    boolean isDebugLogEnabled = logger.isDebugEnabled() || !System.getProperty("plugin.classloader.debug", "").isEmpty();
     for (IdeaPluginDescriptorImpl descriptor : sortedRequired) {
       boolean wasEnabled = descriptor.isEnabled();
-      if (wasEnabled && computePluginEnabled(descriptor, enabledPluginIds, enabledModuleIds, idMap, disabledRequiredIds, context.disabledPlugins, pluginErrors)) {
+      if (wasEnabled && computePluginEnabled(descriptor,
+                                             enabledPluginIds, enabledModuleV2Ids,
+                                             idMap, disabledRequiredIds, context.disabledPlugins, pluginErrors)) {
         enabledPluginIds.add(descriptor.getPluginId());
-        enabledModuleIds.addAll(descriptor.modules);
+        enabledPluginIds.addAll(descriptor.modules);
+
+        m: for (PluginContentDescriptor.ModuleItem item : descriptor.content.modules) {
+          for (ModuleDependenciesDescriptor.ModuleReference ref : item.requireDescriptor().dependencies.modules) {
+            if (!enabledModuleV2Ids.contains(ref.name)) {
+              if (isDebugLogEnabled) {
+                logger.info("Module " + item.name + " is not enabled because dependency " + ref.name + " is not available");
+              }
+              continue m;
+            }
+          }
+          for (ModuleDependenciesDescriptor.PluginReference ref : item.requireDescriptor().dependencies.plugins) {
+            if (!enabledPluginIds.contains(ref.id)) {
+              if (isDebugLogEnabled) {
+                logger.info("Module " + item.name + " is not enabled because dependency " + ref.id + " is not available");
+              }
+              continue m;
+            }
+          }
+
+          enabledModuleV2Ids.add(item.name);
+        }
+        if (descriptor.packagePrefix != null) {
+          enabledModuleV2Ids.add(descriptor.getId().getIdString());
+        }
       }
       else {
         descriptor.setEnabled(false);
@@ -1047,95 +950,22 @@ public final class PluginManagerCore {
     prepareLoadingPluginsErrorMessage(disabledIds, disabledRequiredIds, idMap, pluginErrors, globalErrors);
 
     // topological sort based on all (required and optional) dependencies
-    CachingSemiGraph<IdeaPluginDescriptorImpl> graph = createPluginIdGraph(Arrays.asList(sortedRequired), idMap, true);
-    IdeaPluginDescriptorImpl[] sortedAll = getTopologicallySorted(graph);
-
-    List<IdeaPluginDescriptorImpl> enabledPlugins = getOnlyEnabledPlugins(sortedAll);
-
-    for (IdeaPluginDescriptorImpl plugin : enabledPlugins) {
-      checkOptionalDescriptors(plugin.pluginDependencies, idMap);
+    List<IdeaPluginDescriptorImpl> allPlugins = CachingSemiGraphKt.getTopologicallySorted(sortedRequired, rawPluginSet, true);
+    List<IdeaPluginDescriptorImpl> enabledPlugins = getOnlyEnabledPlugins(allPlugins);
+    if (!context.result.incompletePlugins.isEmpty()) {
+      allPlugins.addAll(context.result.incompletePlugins.values());
     }
-    Map<String, String[]> additionalLayoutMap = loadAdditionalLayoutMap();
-    ourAdditionalLayoutMap = additionalLayoutMap;
-    ClassLoaderConfigurator classLoaderConfigurator = new ClassLoaderConfigurator(context.usePluginClassLoader, coreLoader, idMap,
-                                                                                  additionalLayoutMap);
-    enabledPlugins.forEach(classLoaderConfigurator::configure);
+
+    PluginSet pluginSet = new PluginSet(allPlugins, enabledPlugins, false);
+    ClassLoaderConfigurator classLoaderConfigurator = new ClassLoaderConfigurator(pluginSet, coreLoader);
+    pluginSet.enabledPlugins.forEach(classLoaderConfigurator::configure);
 
     if (checkEssentialPlugins) {
       checkEssentialPluginsAreAvailable(idMap);
     }
 
-    Set<PluginId> effectiveDisabledIds = disabledIds.isEmpty() ? Collections.emptySet() : new HashSet<>(disabledIds.keySet());
-    return new PluginManagerState(sortedAll, enabledPlugins, disabledRequiredIds, effectiveDisabledIds, idMap);
-  }
-
-  private static void checkOptionalDescriptors(@NotNull List<PluginDependency> pluginDependencies,
-                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    for (PluginDependency dependency : pluginDependencies) {
-      IdeaPluginDescriptorImpl subDescriptor = dependency.subDescriptor;
-      if (subDescriptor == null || dependency.isDisabledOrBroken) {
-        continue;
-      }
-
-      IdeaPluginDescriptorImpl dependencyDescriptor = idMap.get(dependency.getPluginId());
-      if (dependencyDescriptor == null || !dependencyDescriptor.isEnabled()) {
-        dependency.isDisabledOrBroken = true;
-        continue;
-      }
-
-      // check that plugin doesn't depend on unavailable plugin
-      List<PluginDependency> childDependencies = subDescriptor.pluginDependencies;
-      if (!checkChildDeps(childDependencies, idMap)) {
-        dependency.isDisabledOrBroken = true;
-      }
-    }
-  }
-
-  // multiple dependency condition is not supported, so,
-  // jsp-javaee.xml depends on com.intellij.javaee.web, and included file in turn define jsp-css.xml that depends on com.intellij.css
-  // that's why nesting level is more than one
-  private static boolean checkChildDeps(@NotNull List<PluginDependency> childDependencies, @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap) {
-    for (PluginDependency dependency : childDependencies) {
-      if (dependency.isDisabledOrBroken) {
-        if (dependency.isOptional()) {
-          continue;
-        }
-        return false;
-      }
-
-      IdeaPluginDescriptorImpl dependentDescriptor = idMap.get(dependency.getPluginId());
-      if (dependentDescriptor == null || !dependentDescriptor.isEnabled()) {
-        dependency.isDisabledOrBroken = true;
-        if (dependency.isOptional()) {
-          continue;
-        }
-        return false;
-      }
-
-      if (dependency.subDescriptor != null) {
-        List<PluginDependency> list = dependency.subDescriptor.pluginDependencies;
-        if (!checkChildDeps(list, idMap)) {
-          dependency.isDisabledOrBroken = true;
-          if (dependency.isOptional()) {
-            continue;
-          }
-          return false;
-        }
-      }
-    }
-    return true;
-  }
-
-  static @NotNull IdeaPluginDescriptorImpl @NotNull [] getTopologicallySorted(@NotNull InboundSemiGraph<IdeaPluginDescriptorImpl> graph) {
-    DFSTBuilder<IdeaPluginDescriptorImpl> requiredOnlyGraph = new DFSTBuilder<>(GraphGenerator.generate(graph));
-    IdeaPluginDescriptorImpl[] sortedRequired = graph.getNodes().toArray(new IdeaPluginDescriptorImpl[0]);
-    Comparator<IdeaPluginDescriptorImpl> comparator = requiredOnlyGraph.comparator();
-    // there is circular reference between core and implementation-detail plugin, as not all such plugins extracted from core,
-    // so, ensure that core plugin is always first (otherwise not possible to register actions - parent group not defined)
-    Arrays.sort(sortedRequired, (o1, o2) -> {
-      return CORE_ID.equals(o1.getPluginId()) ? -1 : CORE_ID.equals(o2.getPluginId()) ? 1 : comparator.compare(o1, o2);
-    });
-    return sortedRequired;
+    Set<PluginId> effectiveDisabledIds = disabledIds.isEmpty() ? Collections.emptySet() : Java11Shim.INSTANCE.copyOf(disabledIds.keySet());
+    return new PluginManagerState(pluginSet, disabledRequiredIds, effectiveDisabledIds);
   }
 
   @ApiStatus.Internal
@@ -1191,8 +1021,8 @@ public final class PluginManagerCore {
   }
 
   private static boolean computePluginEnabled(@NotNull IdeaPluginDescriptorImpl descriptor,
-                                              @NotNull Set<PluginId> loadedPluginIds,
-                                              @NotNull Set<PluginId> loadedModuleIds,
+                                              @NotNull Set<PluginId> enabledPluginIds,
+                                              @NotNull Set<String> enabledModuleV2Ids,
                                               @NotNull Map<PluginId, IdeaPluginDescriptorImpl> idMap,
                                               @NotNull Set<PluginId> disabledRequiredIds,
                                               @NotNull Set<PluginId> disabledPlugins,
@@ -1200,29 +1030,27 @@ public final class PluginManagerCore {
     if (CORE_ID.equals(descriptor.getPluginId())) {
       return true;
     }
+
     boolean notifyUser = !descriptor.isImplementationDetail();
-
     boolean result = true;
-
     for (PluginId incompatibleId : descriptor.incompatibilities) {
-      if (!loadedModuleIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) {
+      if (!enabledPluginIds.contains(incompatibleId) || disabledPlugins.contains(incompatibleId)) {
         continue;
       }
 
       result = false;
       String presentableName = incompatibleId.getIdString();
-      errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
-                                                                  message("plugin.loading.error.long.ide.contains.conflicting.module",
-                                                                          descriptor.getName(), presentableName),
-                                                                  message("plugin.loading.error.short.ide.contains.conflicting.module",
-                                                                          presentableName),
-                                                                  notifyUser,
-                                                                  null));
+      errors.put(descriptor.getPluginId(),
+                 new PluginLoadingError(
+                   descriptor,
+                   message("plugin.loading.error.long.ide.contains.conflicting.module", descriptor.getName(), presentableName),
+                   message("plugin.loading.error.short.ide.contains.conflicting.module", presentableName), notifyUser, null
+                 ));
     }
 
     for (PluginDependency dependency : descriptor.pluginDependencies) {
       PluginId depId = dependency.getPluginId();
-      if (dependency.isOptional() || loadedPluginIds.contains(depId) || loadedModuleIds.contains(depId)) {
+      if (dependency.isOptional() || enabledPluginIds.contains(depId)) {
         continue;
       }
 
@@ -1233,43 +1061,76 @@ public final class PluginManagerCore {
         disabledRequiredIds.add(dep.getPluginId());
       }
 
-      String depName = dep == null ? null : dep.getName();
-      if (depName == null) {
-        @NlsSafe String depPresentableId = depId.getIdString();
-        if (errors.containsKey(depId)) {
-          errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
-                                                                      message("plugin.loading.error.long.depends.on.failed.to.load.plugin",
-                                                                              descriptor.getName(),
-                                                                              depPresentableId),
-                                                                      message("plugin.loading.error.short.depends.on.failed.to.load.plugin",
-                                                                              depPresentableId), notifyUser,
-                                                                      null));
-        }
-        else {
-          errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
-                                                                      message("plugin.loading.error.long.depends.on.not.installed.plugin",
-                                                                              descriptor.getName(),
-                                                                              depPresentableId),
-                                                                      message("plugin.loading.error.short.depends.on.not.installed.plugin",
-                                                                              depPresentableId),
-                                                                      notifyUser,
-                                                                      null));
-        }
+      addCannotLoadError(descriptor, errors, notifyUser, depId, dep);
+    }
+    for (ModuleDependenciesDescriptor.PluginReference item : descriptor.dependencies.plugins) {
+      if (enabledPluginIds.contains(item.id)) {
+        continue;
       }
-      else {
-        errors.put(descriptor.getPluginId(), new PluginLoadingError(descriptor,
-                                                                    message("plugin.loading.error.long.depends.on.disabled.plugin",
-                                                                            descriptor.getName(), depName),
-                                                                    message("plugin.loading.error.short.depends.on.disabled.plugin",
-                                                                            depName),
-                                                                    notifyUser,
-                                                                    dep.getPluginId()));
+
+      result = false;
+      IdeaPluginDescriptorImpl dep = idMap.get(item.id);
+      if (dep != null && disabledPlugins.contains(item.id)) {
+        // broken/incompatible plugins can be updated, add them anyway
+        disabledRequiredIds.add(dep.getPluginId());
       }
+
+      addCannotLoadError(descriptor, errors, notifyUser, item.id, dep);
+    }
+    for (ModuleDependenciesDescriptor.ModuleReference item : descriptor.dependencies.modules) {
+      if (enabledModuleV2Ids.contains(item.name)) {
+        continue;
+      }
+
+      result = false;
+      errors.put(descriptor.getPluginId(),
+                 new PluginLoadingError(
+                   descriptor,
+                   message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.getName(), item.name),
+                   message("plugin.loading.error.short.depends.on.not.installed.plugin", item.name), notifyUser, null
+                 ));
+
     }
     return result;
   }
 
-  private static @NotNull @Nls Supplier<String> message(@NotNull @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String key, Object @NotNull ... params) {
+  private static void addCannotLoadError(@NotNull IdeaPluginDescriptorImpl descriptor,
+                                         @NotNull Map<PluginId, PluginLoadingError> errors,
+                                         boolean notifyUser,
+                                         PluginId depId,
+                                         @Nullable IdeaPluginDescriptor dep) {
+    String depName = dep == null ? null : dep.getName();
+    if (depName == null) {
+      @NlsSafe String depPresentableId = depId.getIdString();
+      if (errors.containsKey(depId)) {
+        errors.put(descriptor.getPluginId(),
+                   new PluginLoadingError(
+                     descriptor,
+                     message("plugin.loading.error.long.depends.on.failed.to.load.plugin", descriptor.getName(), depPresentableId),
+                     message("plugin.loading.error.short.depends.on.failed.to.load.plugin", depPresentableId), notifyUser, null
+                   ));
+      }
+      else {
+        errors.put(descriptor.getPluginId(),
+                   new PluginLoadingError(
+                     descriptor,
+                     message("plugin.loading.error.long.depends.on.not.installed.plugin", descriptor.getName(), depPresentableId),
+                     message("plugin.loading.error.short.depends.on.not.installed.plugin", depPresentableId), notifyUser, null
+                   ));
+      }
+    }
+    else {
+      errors.put(descriptor.getPluginId(),
+                 new PluginLoadingError(
+                   descriptor,
+                   message("plugin.loading.error.long.depends.on.disabled.plugin", descriptor.getName(), depName),
+                   message("plugin.loading.error.short.depends.on.disabled.plugin", depName), notifyUser, dep.getPluginId()
+                 ));
+    }
+  }
+
+  private static @NotNull @Nls Supplier<String> message(@NotNull @PropertyKey(resourceBundle = CoreBundle.BUNDLE) String key,
+                                                        Object @NotNull ... params) {
     //noinspection Convert2Lambda
     return new Supplier<String>() {
       @Override
@@ -1280,38 +1141,23 @@ public final class PluginManagerCore {
   }
 
   @SuppressWarnings("NonPrivateFieldAccessedInSynchronizedContext")
-  private static synchronized void loadAndInitializePlugins(@Nullable DescriptorListLoadingContext context, @Nullable ClassLoader coreLoader) {
-    if (coreLoader == null) {
-      Class<?> callerClass = ReflectionUtil.findCallerClass(1);
-      assert callerClass != null;
-      coreLoader = callerClass.getClassLoader();
-    }
-
+  private static synchronized @NotNull PluginSet loadAndInitializePlugins(@NotNull DescriptorListLoadingContext context,
+                                                                          @NotNull ClassLoader coreLoader) {
     try {
-      if (context == null) {
-        //noinspection resource
-        context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
-      }
       Activity activity = StartUpMeasurer.startActivity("plugin initialization", ActivityCategory.DEFAULT);
       PluginManagerState initResult = initializePlugins(context, coreLoader, !isUnitTestMode);
-
-      ourPlugins = initResult.sortedPlugins;
       PluginLoadingResult result = context.result;
-      if (!result.incompletePlugins.isEmpty()) {
-        int oldSize = initResult.sortedPlugins.length;
-        IdeaPluginDescriptorImpl[] all = Arrays.copyOf(initResult.sortedPlugins, oldSize + result.incompletePlugins.size());
-        ArrayUtil.copy(result.incompletePlugins.values(), all, oldSize);
-        ourPlugins = all;
-      }
 
       ourPluginsToDisable = initResult.effectiveDisabledIds;
       ourPluginsToEnable = initResult.disabledRequiredIds;
-      ourLoadedPlugins = initResult.sortedEnabledPlugins;
+
       ourShadowedBundledPlugins = result.shadowedBundledIds;
 
       activity.end();
-      activity.setDescription("plugin count: " + ourLoadedPlugins.size());
-      logPlugins(initResult.sortedPlugins, result.incompletePlugins.values());
+      activity.setDescription("plugin count: " + initResult.pluginSet.enabledPlugins.size());
+      logPlugins(initResult.pluginSet.allPlugins, result.incompletePlugins.values());
+      pluginSet = initResult.pluginSet;
+      return initResult.pluginSet;
     }
     catch (RuntimeException e) {
       getLogger().error(e);
@@ -1348,7 +1194,7 @@ public final class PluginManagerCore {
   }
 
   public static @Nullable IdeaPluginDescriptor findPluginByModuleDependency(@NotNull PluginId id) {
-    for (IdeaPluginDescriptorImpl descriptor : ourPlugins) {
+    for (IdeaPluginDescriptorImpl descriptor : getPluginSet().allPlugins) {
       if (descriptor.modules.contains(id)) {
         return descriptor;
       }
@@ -1363,7 +1209,7 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   public static @NotNull Map<PluginId, IdeaPluginDescriptorImpl> buildPluginIdMap() {
     LoadingState.COMPONENTS_REGISTERED.checkOccurred();
-    return buildPluginIdMap(Arrays.asList(ourPlugins));
+    return buildPluginIdMap(Objects.requireNonNull(pluginSet).allPlugins);
   }
 
   /**
@@ -1430,8 +1276,8 @@ public final class PluginManagerCore {
     return true;
   }
 
-  private static @NotNull List<IdeaPluginDescriptorImpl> getOnlyEnabledPlugins(@NotNull IdeaPluginDescriptorImpl @NotNull[] sortedAll) {
-    List<IdeaPluginDescriptorImpl> enabledPlugins = new ArrayList<>(sortedAll.length);
+  private static @NotNull List<IdeaPluginDescriptorImpl> getOnlyEnabledPlugins(@NotNull List<IdeaPluginDescriptorImpl> sortedAll) {
+    List<IdeaPluginDescriptorImpl> enabledPlugins = new ArrayList<>(sortedAll.size());
     for (IdeaPluginDescriptorImpl descriptor : sortedAll) {
       if (descriptor.isEnabled()) {
         enabledPlugins.add(descriptor);

@@ -97,12 +97,6 @@ public final class PythonSdkType extends SdkType {
     return "reference.project.structure.sdk.python";
   }
 
-  @Override
-  @NotNull
-  public Icon getIconForAddAction() {
-    return PythonFileType.INSTANCE.getIcon();
-  }
-
   /**
    * @return name of builtins skeleton file; for Python 2.x it is '{@code __builtins__.py}'.
    */

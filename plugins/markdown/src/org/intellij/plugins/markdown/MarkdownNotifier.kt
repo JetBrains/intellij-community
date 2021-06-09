@@ -7,7 +7,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 
 object MarkdownNotifier {
-  private val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Markdown")
+  val NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Markdown")
 
   fun notifyPandocDetected(project: Project) {
     NOTIFICATION_GROUP.createNotification(

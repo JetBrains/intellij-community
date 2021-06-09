@@ -14,14 +14,16 @@ import org.jetbrains.uast.visitor.AbstractUastVisitor
 @ApiStatus.Experimental
 class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrategy<T>) {
   interface UValueEvaluatorStrategy<T : Any> {
-    fun calculateLiteral(element: ULiteralExpression): T?
+    fun calculateLiteral(element: ULiteralExpression): T? = null
 
-    fun calculatePolyadicExpression(element: UPolyadicExpression, elementEvaluator: (UElement) -> T?): T?
+    fun calculatePolyadicExpression(element: UPolyadicExpression): CalculateRequest<T>? = null
 
     fun constructValueFromList(element: UElement, values: List<T>?): T?
 
     fun constructUnknownValue(element: UElement): T?
   }
+
+  class CalculateRequest<T>(val arguments: List<UElement>, val collapse: (List<T?>) -> T?)
 
   fun calculateValue(element: UElement, configuration: UNeDfaConfiguration<T> = UNeDfaConfiguration()): T? {
     val parentElement = element.getContainingUMethod() ?: element.getContainingUVariable() as? UField
@@ -29,29 +31,61 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
     return calculate(graph, element, configuration)
   }
 
+  fun canBeDependencyForBuilderOfThisEvaluator(element: UElement, configuration: UNeDfaConfiguration<T>): Boolean {
+    val graph = element.getContainingUMethod()?.let { UastLocalUsageDependencyGraph.getGraphByUElement(it) } ?: return false
+
+    graph.visitDependents(element) { currentElement ->
+      if (currentElement is UCallExpression) {
+        if (configuration.getBuilderEvaluatorForCall(currentElement) != null) {
+          return true
+        }
+      }
+    }
+
+    return false
+  }
+
   fun calculateContainingBuilderValue(
     element: UElement,
-    configuration: UNeDfaConfiguration<T> = UNeDfaConfiguration()
+    configuration: UNeDfaConfiguration<T> = UNeDfaConfiguration(),
+    fallbackWithCurrentElement: Boolean = false
   ): T? {
     val graph = element.getContainingUMethod()?.let { UastLocalUsageDependencyGraph.getGraphByUElement(it) } ?: return null
 
-    val deque = ArrayDeque<UElement>()
-    deque += element
-
-    while (deque.isNotEmpty()) {
-      val currentElement = deque.removeFirst()
+    graph.visitDependents(element, { it !is Dependent.CallExpression }) { currentElement ->
       if (currentElement is UCallExpression) {
         configuration.getBuilderEvaluatorForCall(currentElement)?.let { builder ->
           // TODO: provide objects to analyze only necessary branches, e.g. if our element in one of if branches
           return BuilderEvaluator(graph, configuration, builder).calculateBuilder(currentElement, null, null)
         }
       }
-      for (dependent in graph.dependents[currentElement].orEmpty()) {
-        deque += dependent.element
-      }
     }
 
-    return null
+    return if (!fallbackWithCurrentElement) {
+      null
+    }
+    else {
+      val builderLikeExpressionEvaluator = configuration.builderEvaluators.singleOrNull() ?: return null
+      return BuilderEvaluator(graph, configuration, builderLikeExpressionEvaluator).calculateBuilder(element, null, null)
+    }
+  }
+
+  private inline fun UastLocalUsageDependencyGraph.visitDependents(
+    element: UElement,
+    dependentCondition: (Dependent) -> Boolean = { true },
+    visit: (UElement) -> Unit
+  ) {
+    val deque = ArrayDeque<UElement>()
+    deque += element
+
+    while (deque.isNotEmpty()) {
+      val currentElement = deque.removeFirst()
+      visit(currentElement)
+
+      for (dependent in dependents[currentElement].orEmpty()) {
+        if (dependentCondition(dependent)) deque += dependent.element
+      }
+    }
   }
 
   private fun calculate(graph: UastLocalUsageDependencyGraph,
@@ -62,9 +96,9 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
     }
 
     if (element is UPolyadicExpression) {
-      return strategy.calculatePolyadicExpression(element) { operand ->
-        calculate(graph, operand, configuration)
-      }
+      val calculateRequest = strategy.calculatePolyadicExpression(element) ?: return null
+      val operands = calculateRequest.arguments.map { calculate(graph, it, configuration) }
+      return calculateRequest.collapse(operands)
     }
 
     if (
@@ -111,7 +145,7 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
       val dslEvaluator = configuration.getDslEvaluatorForCall(element)
       if (dslEvaluator != null) {
         val (builderLikeEvaluator, methodDescriptor) = dslEvaluator
-        return BuilderEvaluator(graph, configuration, builderLikeEvaluator).calculateDsl(element,  methodDescriptor)
+        return BuilderEvaluator(graph, configuration, builderLikeEvaluator).calculateDsl(element, methodDescriptor)
       }
       if (element.resolve()?.let { configuration.methodsToAnalyzePattern.accepts(it) } == true) {
         return strategy.constructValueFromList(element, analyzeMethod(graph, element, configuration))
@@ -283,7 +317,8 @@ class UNeDfaValueEvaluator<T : Any>(private val strategy: UValueEvaluatorStrateg
       if (dependencies.isEmpty() && element is UReferenceExpression) {
         val declaration = element.resolveToUElement()
         if (declaration is UParameter && declaration.uastParent is UMethod && declaration.uastParent == graph.uAnchor) {
-          val usagesResults = analyzeUsages(declaration.uastParent as UMethod, declaration, configuration) { usageGraph, argument, usageConfiguration ->
+          val usagesResults = analyzeUsages(declaration.uastParent as UMethod, declaration,
+                                            configuration) { usageGraph, argument, usageConfiguration ->
             BuilderEvaluator(usageGraph, usageConfiguration, builderEvaluator).calculateBuilder(argument, null, null)
           }
           return usagesResults.singleOrNull() ?: strategy.constructValueFromList(element, usagesResults)

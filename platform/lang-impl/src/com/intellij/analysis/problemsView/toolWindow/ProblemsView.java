@@ -62,9 +62,13 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     if (panel != null && panel.isShowing()) panel.selectHighlighter(highlighter);
   }
 
-  static @Nullable Document getDocument(@Nullable Project project, @NotNull VirtualFile file) {
+  public static @Nullable Document getDocument(@Nullable Project project, @NotNull VirtualFile file) {
     Object item = file.isDirectory() ? null : findFileSystemItem(project, file);
     return item instanceof PsiFile ? PsiDocumentManager.getInstance(project).getDocument((PsiFile)item) : null;
+  }
+
+  public static @Nullable ProblemsViewPanel getSelectedPanel(@Nullable Project project) {
+    return get(ProblemsViewPanel.class, getSelectedContent(project));
   }
 
   private static @Nullable Content getSelectedContent(@Nullable Project project) {
@@ -108,7 +112,7 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
   public void init(@NotNull ToolWindow window) {
     if (!isProjectErrorsEnabled()) return;
     Project project = ((ToolWindowEx)window).getProject();
-    HighlightingErrorsProvider.getInstance(project);
+    HighlightingErrorsProviderBase.getInstance(project);
   }
 
   @Override

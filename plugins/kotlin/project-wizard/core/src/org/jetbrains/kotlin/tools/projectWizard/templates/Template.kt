@@ -113,7 +113,7 @@ abstract class Template : SettingsOwner, EntitiesOwnerDescriptor, DisplayableSet
     open fun Reader.getFileTemplates(module: ModuleIR): List<FileTemplateDescriptorWithPath> = emptyList()
     open fun Reader.getAdditionalSettings(module: Module): Map<String, Any> = emptyMap()
 
-    open fun createInterceptors(module: ModuleIR): List<TemplateInterceptor> = emptyList()
+    open fun Reader.createInterceptors(module: ModuleIR): List<TemplateInterceptor> = emptyList()
 
     open fun Reader.createRunConfigurations(module: ModuleIR): List<WizardRunConfiguration> = emptyList()
 

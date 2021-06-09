@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.psi.UserDataProperty
 import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationResult
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
+import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
 import java.nio.file.Path
 import kotlin.io.path.isDirectory
@@ -107,6 +108,10 @@ interface ScriptConfigurationManager {
         @JvmStatic
         fun getInstance(project: Project): ScriptConfigurationManager = project.service()
 
+        @JvmStatic
+        fun compositeScriptConfigurationManager(project: Project) =
+            getInstance(project).cast<CompositeScriptConfigurationManager>()
+
         fun toVfsRoots(roots: Iterable<File>): List<VirtualFile> = roots.mapNotNull { classpathEntryToVfs(it.toPath()) }
 
         // TODO: report this somewhere, but do not throw: assert(res != null, { "Invalid classpath entry '$this': exists: ${exists()}, is directory: $isDirectory, is file: $isFile" })
@@ -120,14 +125,15 @@ interface ScriptConfigurationManager {
         @TestOnly
         fun updateScriptDependenciesSynchronously(file: PsiFile) {
             // TODO: review the usages of this method
-            (getInstance(file.project) as CompositeScriptConfigurationManager).default
-                .updateScriptDependenciesSynchronously(file)
+            defaultScriptingSupport(file.project).updateScriptDependenciesSynchronously(file)
         }
+
+        private fun defaultScriptingSupport(project: Project) =
+            compositeScriptConfigurationManager(project).default
 
         @TestOnly
         fun clearCaches(project: Project) {
-            (getInstance(project) as CompositeScriptConfigurationManager).default
-                .updateScriptDefinitionsReferences()
+            defaultScriptingSupport(project).updateScriptDefinitionsReferences()
         }
 
         fun clearManualConfigurationLoadingIfNeeded(file: VirtualFile) {

@@ -506,7 +506,7 @@ public final class ScopeEditorPanel implements Disposable {
       }
     });
 
-    PopupHandler.installPopupHandler(tree, createTreePopupActions(), "ScopeEditorPopup");
+    PopupHandler.installPopupMenu(tree, createTreePopupActions(), "ScopeEditorPopup");
   }
 
   private ActionGroup createTreePopupActions() {

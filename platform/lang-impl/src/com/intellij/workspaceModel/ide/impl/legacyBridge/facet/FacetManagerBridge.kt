@@ -24,7 +24,6 @@ import com.intellij.workspaceModel.storage.bridgeEntities.FacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModifiableFacetEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.facets
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.jps.model.serialization.facet.FacetState
 
 class FacetManagerBridge(module: Module) : FacetManagerBase() {
@@ -63,8 +62,8 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
   }
 
   companion object {
-    fun <F: Facet<C>, C: FacetConfiguration> createFacetFromStateRaw(module: Module, type: FacetType<F, C>,
-                             state: FacetState, underlyingFacet: Facet<*>?): F {
+    internal fun <F : Facet<C>, C : FacetConfiguration> createFacetFromStateRaw(module: Module, type: FacetType<F, C>,
+                                                                                state: FacetState, underlyingFacet: Facet<*>?): F {
       val configuration: C = type.createDefaultConfiguration()
       val config = state.configuration
       FacetUtil.loadFacetConfiguration(configuration, config)
@@ -81,7 +80,7 @@ class FacetManagerBridge(module: Module) : FacetManagerBase() {
       return facet;
     }
 
-    fun saveFacetConfiguration(facet: Facet<*>): FacetState? {
+    internal fun saveFacetConfiguration(facet: Facet<*>): FacetState? {
       val facetState = createFacetState(facet, facet.module.project)
       if (facet !is InvalidFacet) {
         val config = FacetUtil.saveFacetConfiguration(facet) ?: return null

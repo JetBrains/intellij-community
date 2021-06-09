@@ -9,8 +9,8 @@ import javax.swing.JComponent
 /**
  * Text completion contributor for swing text components like [com.intellij.ui.components.JBTextField].
  *
- * Note: If you want to add code completion for editor than use [com.intellij.codeInsight.completion.CompletionContributor],
- * if file path completion for text field than use [com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl.installFileCompletion]
+ * Note: If you want to add code completion for an editor then use [com.intellij.codeInsight.completion.CompletionContributor],
+ * if file path completion for a text field then use [com.intellij.openapi.fileChooser.impl.FileChooserFactoryImpl.installFileCompletion]
  * @see TextCompletionPopup
  */
 @ApiStatus.Experimental

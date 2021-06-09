@@ -1,9 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
+
+import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
-class JavaPluginLayout {
+final class JavaPluginLayout {
   static PluginLayout javaPlugin(@DelegatesTo(PluginLayout.PluginLayoutSpec) Closure addition = {}) {
     return PluginLayout.plugin("intellij.java.plugin") {
       directoryName = "java"
@@ -16,8 +18,8 @@ class JavaPluginLayout {
       withModule("intellij.platform.jps.build.javac.rt", "jps-builders-6.jar")
       withModule("intellij.java.aetherDependencyResolver", "aether-dependency-resolver.jar")
       withModule("intellij.java.jshell.protocol", "jshell-protocol.jar")
-      withModule("intellij.java.resources", "resources.jar")
-      withModule("intellij.java.resources.en", "resources.jar")
+      withModule("intellij.java.resources", BaseLayout.PLATFORM_JAR)
+      withModule("intellij.java.resources.en", BaseLayout.PLATFORM_JAR)
 
       // JavacRemoteProto generated against protobuf-java6; don't let it sneak into the IDE classpath and shadow its JavacRemoteProto.
       withModule("intellij.platform.jps.build.javac.rt.rpc", "rt/jps-javac-rt-rpc.jar")

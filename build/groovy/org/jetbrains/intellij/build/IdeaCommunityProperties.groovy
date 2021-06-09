@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.PlatformLayout
 
 import java.util.function.Consumer
@@ -20,7 +21,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     buildCrossPlatformDistribution = true
 
     productLayout.productImplementationModules = ["intellij.platform.main"]
-    productLayout.additionalPlatformJars.put("resources.jar", "intellij.idea.community.resources")
+    productLayout.additionalPlatformJars.put(BaseLayout.PLATFORM_JAR, "intellij.idea.community.resources")
     productLayout.bundledPluginModules += BUNDLED_PLUGIN_MODULES
     productLayout.prepareCustomPluginRepositoryForPublishedPlugins = false
     productLayout.buildAllCompatiblePlugins = false

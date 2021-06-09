@@ -8,7 +8,6 @@ import com.intellij.openapi.application.AppUIExecutor.onUiThread
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
-import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
 import com.intellij.openapi.progress.util.ProgressWindow.DEFAULT_PROGRESS_DIALOG_POSTPONE_TIME_MILLIS
 import com.intellij.openapi.util.Disposer
@@ -16,6 +15,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.VcsBundle.message
 import com.intellij.openapi.vcs.changes.InclusionListener
+import com.intellij.openapi.wm.ex.ProgressIndicatorEx
 import com.intellij.openapi.wm.ex.StatusBarEx
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.ui.AnimatedIcon
@@ -119,7 +119,7 @@ open class CommitProgressPanel : NonOpaquePanel(VerticalLayout(4)), CommitProgre
 
   override fun dispose() = Unit
 
-  override fun startProgress(): ProgressIndicator {
+  override fun startProgress(): ProgressIndicatorEx {
     check(progress == null) { "Commit checks indicator already created" }
 
     val indicator = InlineCommitChecksProgressIndicator()

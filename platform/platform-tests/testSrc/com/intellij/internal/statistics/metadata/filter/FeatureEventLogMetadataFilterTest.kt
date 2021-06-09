@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistics.metadata.filter
 
 import com.intellij.internal.statistic.eventLog.*
+import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
 import com.intellij.internal.statistic.eventLog.filters.LogEventCompositeFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventFilter
-import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter
 import com.intellij.internal.statistic.eventLog.filters.LogEventMetadataFilter
-import com.intellij.internal.statistic.eventLog.connection.metadata.EventGroupsFilterRules
+import com.intellij.internal.statistic.eventLog.filters.LogEventSnapshotBuildFilter
 import com.intellij.internal.statistics.StatisticsTestEventFactory.newEvent
 import com.intellij.internal.statistics.logger.TestDataCollectorDebugLogger
 import com.intellij.openapi.util.io.FileUtil
@@ -22,7 +22,7 @@ class FeatureEventLogMetadataFilterTest {
     all.add(newEvent("group-id-1", "second"))
     all.add(newEvent("group-id-2", "third"))
 
-    testGroupFilteRules(EventGroupsFilterRules.empty(), all, ArrayList())
+    testGroupFilterRules(EventGroupsFilterRules.empty(), all, ArrayList())
   }
 
   @Test
@@ -32,7 +32,7 @@ class FeatureEventLogMetadataFilterTest {
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.20.132", null)
     rulesBuilder.addVersion("group-id", "2", "10")
-    testGroupFilteRules(rulesBuilder.build(), listOf(event), listOf(event))
+    testGroupFilterRules(rulesBuilder.build(), listOf(event), listOf(event))
   }
 
   @Test
@@ -41,7 +41,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.20.132", null)
-    testGroupFilteRules(rulesBuilder.build(), listOf(event), listOf(event))
+    testGroupFilterRules(rulesBuilder.build(), listOf(event), listOf(event))
   }
 
   @Test
@@ -50,7 +50,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", "2", "10")
-    testGroupFilteRules(rulesBuilder.build(), listOf(event), listOf(event))
+    testGroupFilterRules(rulesBuilder.build(), listOf(event), listOf(event))
   }
 
   @Test
@@ -59,7 +59,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addGroup("group-id")
-    testGroupFilteRules(rulesBuilder.build(), listOf(event), emptyList())
+    testGroupFilterRules(rulesBuilder.build(), listOf(event), emptyList())
   }
 
   @Test
@@ -78,7 +78,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.20.132", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -98,7 +98,7 @@ class FeatureEventLogMetadataFilterTest {
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.20.132", null)
     rulesBuilder.addBuild("group-id-2", "173.20.132", "173.24.132")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -120,7 +120,7 @@ class FeatureEventLogMetadataFilterTest {
     rulesBuilder.addBuild("group-id", null, "182.0")
     rulesBuilder.addBuild("group-id-1", null, "182.0")
     rulesBuilder.addBuild("group-id-2", null, "182.0")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -136,7 +136,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", "2", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -152,7 +152,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", "2", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -168,7 +168,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", null, "3")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -184,7 +184,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", null, "4")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -201,7 +201,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", null, null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -218,7 +218,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", null, "182.0")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -235,7 +235,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", "1", "5")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -252,7 +252,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", "1", "5")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -268,7 +268,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", "1", "4")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -285,7 +285,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", "1", "4").addVersion("group-id", "4", "5")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -302,7 +302,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", "1", "4").addVersion("group-id", "3", "5")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -318,7 +318,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", null, "3").addVersion("group-id", "5", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -335,7 +335,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addVersion("group-id", null, "2").addVersion("group-id", null, null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -477,7 +477,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.23", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -491,7 +491,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.23.435", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -505,7 +505,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.232", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -517,7 +517,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.232.1", null)
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -531,7 +531,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "172.20.132", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -545,7 +545,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.20.132", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -559,7 +559,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.23.13", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -571,7 +571,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "181.20.132", null)
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -583,7 +583,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.203.132", null)
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -595,7 +595,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "173.23.35", null)
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -607,7 +607,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "181.0", null)
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -621,7 +621,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "181.0", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -633,7 +633,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", null, "173.23")
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -645,7 +645,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", null, "173.23.234")
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -659,7 +659,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", null, "173.23.234")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -673,7 +673,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", null, "173.23.234")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -687,7 +687,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", null, "173.23.234")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -699,7 +699,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", null, "173.23.234")
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -711,7 +711,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", null, "183.23.234")
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -723,7 +723,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", null, "183.345.12")
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -737,7 +737,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "181.345.12", "183.345.12")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -751,7 +751,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "183.35.12", "183.345.12")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -765,7 +765,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "183.35.12", "183.35.120")
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -781,7 +781,7 @@ class FeatureEventLogMetadataFilterTest {
 
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "183.35.12", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -798,7 +798,7 @@ class FeatureEventLogMetadataFilterTest {
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "183.35.12", null)
     rulesBuilder.addBuild("group-id-1", "183.35.32", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -816,7 +816,7 @@ class FeatureEventLogMetadataFilterTest {
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "183.35.12", null)
     rulesBuilder.addBuild("group-id-1", "181.35.32", null)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
   @Test
@@ -831,7 +831,7 @@ class FeatureEventLogMetadataFilterTest {
     val rulesBuilder = TestGroupFilterRulesBuilder()
     rulesBuilder.addBuild("group-id", "183.35.12", null)
     rulesBuilder.addBuild("group-id-1", "181.35.32", null)
-    testGroupFilteRules(rulesBuilder.build(), all, ArrayList())
+    testGroupFilterRules(rulesBuilder.build(), all, ArrayList())
   }
 
   @Test
@@ -861,10 +861,10 @@ class FeatureEventLogMetadataFilterTest {
     rulesBuilder.addBuild("group-id", "183.35.12", null)
     rulesBuilder.addVersion("group-id", 3, 5)
     rulesBuilder.addVersion("group-id", 11, Int.MAX_VALUE)
-    testGroupFilteRules(rulesBuilder.build(), all, filtered)
+    testGroupFilterRules(rulesBuilder.build(), all, filtered)
   }
 
-  private fun testGroupFilteRules(rules: EventGroupsFilterRules<EventLogBuild>, all: List<LogEvent>, filtered: List<LogEvent>) {
+  private fun testGroupFilterRules(rules: EventGroupsFilterRules<EventLogBuild>, all: List<LogEvent>, filtered: List<LogEvent>) {
     testMetadataFilter(all, filtered, LogEventMetadataFilter(rules))
   }
 
@@ -890,9 +890,15 @@ class FeatureEventLogMetadataFilterTest {
         out.append(LogEventSerializer.toString(event)).append("\n")
       }
       FileUtil.writeToFile(log, out.toString())
+      val machineId = MachineId("machine-id", 42)
       val actual = LogEventRecordRequest.create(
-        log, "recorder-id", "IU", "user-id", 600, filter, false, TestDataCollectorDebugLogger
+        log, "recorder-id", "IU", "user-id", 600, filter, false, TestDataCollectorDebugLogger, machineId
       )
+      for (record in expected.records) {
+        for (event in record.events) {
+          LogEventRecordRequest.fillMachineId(event, machineId)
+        }
+      }
       assertEquals(expected, actual)
     }
     finally {

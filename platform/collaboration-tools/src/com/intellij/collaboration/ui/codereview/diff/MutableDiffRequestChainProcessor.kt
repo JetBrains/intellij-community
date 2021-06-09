@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.collaboration.ui.codereview.diff
 
 import com.intellij.diff.chains.AsyncDiffRequestChain
@@ -6,12 +6,15 @@ import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.impl.CacheDiffRequestProcessor
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
+import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.changes.actions.diff.SelectionAwareGoToChangePopupActionProvider
+import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import kotlin.properties.Delegates
 
-//TODO: changes navigation popup
-open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?)
-  : CacheDiffRequestProcessor.Simple(project) {
+open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequestChain?) : CacheDiffRequestProcessor.Simple(project) {
 
   private val asyncChangeListener = AsyncDiffRequestChain.Listener {
     dropCaches()
@@ -19,7 +22,7 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
     updateRequest(true)
   }
 
-  var chain: DiffRequestChain? by Delegates.observable<DiffRequestChain?>(null) { _, oldValue, newValue ->
+  var chain: DiffRequestChain? by Delegates.observable(null) { _, oldValue, newValue ->
     if (oldValue is AsyncDiffRequestChain) {
       oldValue.onAssigned(false)
       oldValue.removeListener(asyncChangeListener)
@@ -74,5 +77,26 @@ open class MutableDiffRequestChainProcessor(project: Project, chain: DiffRequest
   override fun isNavigationEnabled(): Boolean {
     val chain = chain ?: return false
     return chain.requests.size > 1
+  }
+
+  override fun createGoToChangeAction(): AnAction? {
+    return MyGoToChangePopupProvider().createGoToChangeAction()
+  }
+
+  open fun selectFilePath(filePath: FilePath) {}
+
+  private inner class MyGoToChangePopupProvider : SelectionAwareGoToChangePopupActionProvider() {
+    override fun getChanges(): List<PresentableChange> {
+      return chain?.requests?.mapNotNull { it as? ChangeDiffRequestChain.Producer } ?: emptyList()
+    }
+
+    override fun getSelectedChange(): PresentableChange? {
+      val producer = chain?.requests?.getOrNull(currentIndex)
+      return if (producer is ChangeDiffRequestChain.Producer) producer else null
+    }
+
+    override fun select(change: PresentableChange) {
+      this@MutableDiffRequestChainProcessor.selectFilePath(change.filePath)
+    }
   }
 }

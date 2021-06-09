@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author: Eugene Zhuravlev
@@ -114,15 +114,11 @@ public class RequestHint {
 
   protected boolean isTheSameFrame(SuspendContextImpl context) {
     if (mySteppedOut) return false;
-    final ThreadReferenceProxyImpl contextThread = context.getThread();
+    ThreadReferenceProxyImpl contextThread = context.getThread();
     if (contextThread != null) {
-      try {
-        int currentDepth = contextThread.frameCount();
-        if (currentDepth < myFrameCount) mySteppedOut = true;
-        return currentDepth == myFrameCount;
-      }
-      catch (EvaluateException ignored) {
-      }
+      int currentDepth = context.frameCount();
+      if (currentDepth < myFrameCount) mySteppedOut = true;
+      return currentDepth == myFrameCount;
     }
     return false;
   }

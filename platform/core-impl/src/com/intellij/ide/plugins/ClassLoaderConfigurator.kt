@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.ide.plugins
 
@@ -6,24 +6,39 @@ import com.intellij.diagnostic.PluginException
 import com.intellij.ide.plugins.cl.PluginClassLoader
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginId
+import com.intellij.util.SmartList
 import com.intellij.util.lang.ClassPath
+import com.intellij.util.lang.ResourceFile
 import com.intellij.util.lang.UrlClassLoader
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
 import org.jetbrains.annotations.ApiStatus
-import java.io.IOException
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 import java.nio.file.Files
-import java.nio.file.NoSuchFileException
 import java.nio.file.Path
 import java.util.*
+import java.util.function.BiPredicate
+import java.util.function.Function
+
+private val DEFAULT_CLASSLOADER_CONFIGURATION = UrlClassLoader.build().useCache()
 
 @ApiStatus.Internal
 class ClassLoaderConfigurator(
-  private val usePluginClassLoader: Boolean /* grab classes from platform loader only if nothing is found in any of plugin dependencies */,
-  private val coreLoader: ClassLoader,
-  val idMap: Map<PluginId, IdeaPluginDescriptorImpl>,
-  private val additionalLayoutMap: Map<String, Array<String>>) {
+  val pluginSet: PluginSet,
+  private val coreLoader: ClassLoader = ClassLoaderConfigurator::class.java.classLoader,
+) {
+  companion object {
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isMigratedToNewModel(idString: String): Boolean {
+      return idString != "org.jetbrains.kotlin"
+             && idString != "com.intellij.java"
+    }
+
+    @ApiStatus.Internal
+    @JvmStatic
+    fun isMigratedToNewModel(pluginId: PluginId) = isMigratedToNewModel(pluginId.idString)
+  }
 
   private var javaDep: Optional<IdeaPluginDescriptorImpl>? = null
 
@@ -31,21 +46,19 @@ class ClassLoaderConfigurator(
   // set to remove duplicated classloaders
   private val loaders = LinkedHashSet<ClassLoader>()
 
-  // temporary list to produce arrays (avoid allocation for each plugin)
-  private val packagePrefixes = ArrayList<String>()
-  private val hasAllModules = idMap.containsKey(PluginManagerCore.ALL_MODULES_MARKER)
-  private val urlClassLoaderBuilder = UrlClassLoader.build().useCache()
+  private val hasAllModules = pluginSet.isPluginEnabled(PluginManagerCore.ALL_MODULES_MARKER)
 
   // todo for dynamic reload this guard doesn't contain all used plugin prefixes
   private val pluginPackagePrefixUniqueGuard = HashSet<String>()
   @Suppress("JoinDeclarationAndAssignment")
-  private val resourceFileFactory: ClassPath.ResourceFileFactory?
+  private val resourceFileFactory: Function<Path, ResourceFile>?
 
   init {
     resourceFileFactory = try {
+      @Suppress("UNCHECKED_CAST")
       MethodHandles.lookup().findStatic(coreLoader.loadClass("com.intellij.util.lang.PathClassLoader"), "getResourceFileFactory",
-                                        MethodType.methodType(ClassPath.ResourceFileFactory::class.java))
-        .invokeExact() as ClassPath.ResourceFileFactory
+                                        MethodType.methodType(Function::class.java))
+        .invokeExact() as Function<Path, ResourceFile>
     }
     catch (ignore: ClassNotFoundException) {
       null
@@ -56,252 +69,236 @@ class ClassLoaderConfigurator(
     }
   }
 
-  fun configureDependenciesIfNeeded(mainToSub: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>,
+  fun configureDependenciesIfNeeded(mainToModule: Map<IdeaPluginDescriptorImpl, List<IdeaPluginDescriptorImpl>>,
                                     dependencyPlugin: IdeaPluginDescriptorImpl) {
-    for ((mainDependent, value) in mainToSub) {
+    for ((mainDependent, modules) in mainToModule) {
       val mainDependentClassLoader = mainDependent.classLoader as PluginClassLoader
-      if (isClassloaderPerDescriptorEnabled(mainDependent)) {
-        for (dependency in mainDependent.pluginDependencies) {
-          urlClassLoaderBuilder.files(mainDependentClassLoader.files)
-          for (subDescriptor in value) {
-            if (subDescriptor === dependency.subDescriptor) {
-              configureSubPlugin(dependency, mainDependentClassLoader, mainDependent)
-              break
-            }
-          }
+      if (mainDependent.packagePrefix != null
+          && isMigratedToNewModel(mainDependent.id)) {
+        for (module in modules) {
+          assert(module.packagePrefix != null)
+          configureModule(module, mainDependentClassLoader,
+                          files = mainDependentClassLoader.files,
+                          libDirectories = mainDependentClassLoader.libDirectories,
+                          classPath = mainDependentClassLoader.classPath)
         }
       }
       else {
         mainDependentClassLoader.attachParent(dependencyPlugin.classLoader!!)
-        for (subDescriptor in value) {
-          subDescriptor.classLoader = mainDependentClassLoader
+        for (module in modules) {
+          module.classLoader = mainDependentClassLoader
         }
       }
     }
     loaders.clear()
-    urlClassLoaderBuilder.files(emptyList())
   }
 
-  fun configure(mainDependent: IdeaPluginDescriptorImpl) {
-    val pluginPackagePrefix = mainDependent.packagePrefix
-    if (pluginPackagePrefix != null && !pluginPackagePrefixUniqueGuard.add(pluginPackagePrefix)) {
-      throw PluginException("Package prefix $pluginPackagePrefix is already used", mainDependent.pluginId)
-    }
+  fun configure(plugin: IdeaPluginDescriptorImpl) {
+    checkPackagePrefixUniqueness(plugin)
 
-    if (mainDependent.pluginId == PluginManagerCore.CORE_ID || mainDependent.isUseCoreClassLoader) {
-      setPluginClassLoaderForMainAndSubPlugins(mainDependent, coreLoader)
+    if (plugin.pluginId == PluginManagerCore.CORE_ID) {
+      configureCorePlugin(plugin)
       return
     }
-    else if (!usePluginClassLoader) {
-      setPluginClassLoaderForMainAndSubPlugins(mainDependent, null)
+    else if (plugin.isUseCoreClassLoader) {
+      setPluginClassLoaderForMainAndSubPlugins(plugin, coreLoader)
+      return
     }
+
     loaders.clear()
 
     // first, set class loader for main descriptor
     if (hasAllModules) {
-      val implicitDependency = PluginManagerCore.getImplicitDependency(mainDependent) {
+      val implicitDependency = PluginManagerCore.getImplicitDependency(plugin) {
         // first, set class loader for main descriptor
         if (javaDep == null) {
-          javaDep = Optional.ofNullable(idMap.get(PluginManagerCore.JAVA_PLUGIN_ID))
+          javaDep = Optional.ofNullable(pluginSet.findEnabledPlugin(PluginManagerCore.JAVA_PLUGIN_ID))
         }
         javaDep!!.orElse(null)
       }
-      implicitDependency?.let { addLoaderOrLogError(mainDependent, it, loaders) }
+      implicitDependency?.let { addLoaderOrLogError(plugin, it, loaders) }
     }
 
-    var classPath = mainDependent.jarFiles
-    if (classPath == null) {
-      classPath = collectClassPath(mainDependent)
-    }
-    else {
-      mainDependent.jarFiles = null
-    }
-    urlClassLoaderBuilder.files(classPath)
-
-    val pluginDependencies = mainDependent.pluginDependencies
-    if (pluginDependencies.isEmpty()) {
-      assert(!mainDependent.isUseIdeaClassLoader)
-      mainDependent.classLoader = createPluginClassLoader(mainDependent)
-      return
+    var files = plugin.jarFiles
+    if (files == null) {
+      log.error("jarFiles is not set for $plugin")
+      files = Collections.emptyList()!!
     }
 
-    for (dependency in pluginDependencies) {
-      if (!dependency.isDisabledOrBroken && (!isClassloaderPerDescriptorEnabled(mainDependent) || dependency.subDescriptor == null)) {
-        addClassloaderIfDependencyEnabled(dependency.pluginId, mainDependent)
+    var oldActiveSubModules: MutableList<IdeaPluginDescriptorImpl>? = null
+    for (dependency in plugin.pluginDependencies) {
+      val p = pluginSet.findEnabledPlugin(dependency.pluginId) ?: continue
+      val loader = p.classLoader
+      if (loader == null) {
+        log.error(PluginLoadingError.formatErrorMessage(plugin, "requires missing class loader for $p"))
+      }
+      else if (loader !== coreLoader) {
+        loaders.add(loader)
+      }
+
+      dependency.subDescriptor?.let {
+        if (oldActiveSubModules == null) {
+          oldActiveSubModules = ArrayList()
+        }
+        oldActiveSubModules!!.add(it)
       }
     }
 
     // new format
-    for (dependency in mainDependent.dependencyDescriptor.plugins) {
-      addClassloaderIfDependencyEnabled(dependency.id, mainDependent)
+    processDirectDependencies(plugin, pluginSet) {
+      val classLoader = it.classLoader!!
+      if (classLoader !== coreLoader) {
+        loaders.add(classLoader)
+      }
     }
 
-    val mainDependentClassLoader = if (mainDependent.isUseIdeaClassLoader) {
-      configureUsingIdeaClassloader(classPath, mainDependent)
+    val mimicJarUrlConnection = !plugin.isBundled && plugin.vendor != "JetBrains"
+    val pluginClassPath = ClassPath(files, Collections.emptySet(), DEFAULT_CLASSLOADER_CONFIGURATION, resourceFileFactory, mimicJarUrlConnection)
+
+    val libDirectories: MutableList<String> = SmartList()
+    val libDir = plugin.path.resolve("lib")
+    if (Files.exists(libDir)) {
+      libDirectories.add(libDir.toAbsolutePath().toString())
+    }
+
+    val mainDependentClassLoader = if (plugin.isUseIdeaClassLoader) {
+      configureUsingIdeaClassloader(files, plugin)
     }
     else {
-      createPluginClassLoader(mainDependent)
+      createPluginClassLoader(plugin, files = files, libDirectories = libDirectories, classPath = pluginClassPath)
     }
 
     // second, set class loaders for sub descriptors
-    if (usePluginClassLoader && isClassloaderPerDescriptorEnabled(mainDependent)) {
-      mainDependent.classLoader = mainDependentClassLoader
-      for (dependencyInfo in pluginDependencies) {
-        configureSubPlugin(dependencyInfo, mainDependentClassLoader, mainDependent)
-      }
+    plugin.classLoader = mainDependentClassLoader
+    for (module in plugin.content.modules) {
+      configureModule(module = module.requireDescriptor(),
+                      mainDependentClassLoader = mainDependentClassLoader,
+                      files = files,
+                      libDirectories = libDirectories,
+                      classPath = pluginClassPath)
     }
-    else {
-      setPluginClassLoaderForMainAndSubPlugins(mainDependent, mainDependentClassLoader)
+
+    for (subDescriptor in (oldActiveSubModules ?: Collections.emptyList())) {
+      // classLoader must be set - otherwise sub descriptor considered as inactive
+      subDescriptor.classLoader = mainDependentClassLoader
     }
 
     // reset to ensure that stalled data will be not reused somehow later
     loaders.clear()
-    urlClassLoaderBuilder.files(emptyList())
   }
 
-  private fun createPluginClassLoader(descriptor: IdeaPluginDescriptorImpl): PluginClassLoader {
-    val parentLoaders = if (loaders.isEmpty()) PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY
-    else loaders.toArray(PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY)
-    return createPluginClassLoader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory)
-  }
-
-  private fun configureSubPlugin(dependencyInfo: PluginDependency,
-                                 mainDependentClassLoader: ClassLoader,
-                                 parentDescriptor: IdeaPluginDescriptorImpl) {
-    val dependent = (if (dependencyInfo.isDisabledOrBroken) null else dependencyInfo.subDescriptor) ?: return
-    assert(!dependent.isUseIdeaClassLoader)
-    val pluginPackagePrefix = dependent.packagePrefix
-    if (pluginPackagePrefix == null) {
-      if (parentDescriptor.packagePrefix != null) {
-        throw PluginException("Sub descriptor must specify package if it is specified for main plugin descriptor " +
-                              "(descriptorFile=${dependent.descriptorPath}, parentPackagePrefix=${parentDescriptor.packagePrefix})",
-                              parentDescriptor.id)
-      }
-    }
-    else {
-      if (pluginPackagePrefix == parentDescriptor.packagePrefix) {
-        throw PluginException("Sub descriptor must not specify the same package as main plugin descriptor", parentDescriptor.id)
-      }
-
-      if (parentDescriptor.packagePrefix == null) {
-        val parentId = parentDescriptor.id.idString
-        if (!(parentId == "Docker" ||
-              parentId == "org.jetbrains.plugins.ruby" ||
-              parentId == "org.intellij.grails" ||
-              parentId == "JavaScript")) {
-          throw PluginException("Sub descriptor must not specify package if one is not specified for main plugin descriptor",
-                                parentDescriptor.id)
+  private fun configureCorePlugin(plugin: IdeaPluginDescriptorImpl) {
+    plugin.classLoader = coreLoader
+    // do we really have pluginDependencies for core plugin?
+    for (dependency in plugin.pluginDependencies) {
+      if (dependency.subDescriptor != null) {
+        val descriptor = pluginSet.findEnabledPlugin(dependency.pluginId)
+        if (descriptor != null) {
+          descriptor.classLoader = coreLoader
+          assert(descriptor.pluginDependencies.isEmpty())
         }
       }
-      if (!pluginPackagePrefixUniqueGuard.add(pluginPackagePrefix)) {
-        throw PluginException("Package prefix $pluginPackagePrefix is already used", parentDescriptor.id)
-      }
     }
 
-    val dependency = idMap.get(dependencyInfo.pluginId)
-    if (dependency == null || !dependency.isEnabled) {
+    if (plugin.content.modules.isEmpty()) {
       return
     }
 
-    if (pluginPackagePrefix == null) {
-      packagePrefixes.clear()
-      collectPackagePrefixes(dependent, packagePrefixes)
-      // no package prefixes if only bean extension points are configured
-      if (packagePrefixes.isEmpty()) {
-        log.debug(
-          "Optional descriptor $dependencyInfo contains only bean extension points or light services")
+    val coreUrlClassLoader = coreLoader as? UrlClassLoader
+    for (item in plugin.content.modules) {
+      val module = item.requireDescriptor()
+      // skip if some dependency is not available
+      if (module.dependencies.modules.any { !pluginSet.isModuleEnabled(it.name) } ||
+          module.dependencies.plugins.any { !pluginSet.isPluginEnabled(it.id) }) {
+        continue
+      }
+
+      assert(module.content.modules.isEmpty())
+      if (coreUrlClassLoader == null) {
+        module.classLoader = coreLoader
+      }
+      else {
+        if (coreUrlClassLoader.resolveScopeManager == null) {
+          val resolveScopeManager = createPluginDependencyAndContentBasedScope(descriptor = plugin, pluginSet = pluginSet)
+          if (resolveScopeManager != null) {
+            coreUrlClassLoader.resolveScopeManager = BiPredicate { name, force ->
+              resolveScopeManager.isDefinitelyAlienClass(name, "", force)
+            }
+          }
+        }
+
+        configureModule(module = module,
+                        mainDependentClassLoader = coreLoader,
+                        files = Collections.emptyList(),
+                        libDirectories = ArrayList(),
+                        classPath = coreUrlClassLoader.classPath)
       }
     }
+  }
+
+  private fun checkPackagePrefixUniqueness(module: IdeaPluginDescriptorImpl) {
+    val packagePrefix = module.packagePrefix
+    if (packagePrefix != null && !pluginPackagePrefixUniqueGuard.add(packagePrefix)) {
+      throw PluginException("Package prefix $packagePrefix is already used (module=$module)", module.pluginId)
+    }
+  }
+
+  private fun createPluginClassLoader(descriptor: IdeaPluginDescriptorImpl,
+                                      files: List<Path>,
+                                      libDirectories: MutableList<String>,
+                                      classPath: ClassPath): PluginClassLoader {
+    val parentLoaders = if (loaders.isEmpty()) {
+      PluginClassLoader.EMPTY_CLASS_LOADER_ARRAY
+    }
+    else {
+      loaders.toArray(arrayOfNulls(loaders.size))
+    }
+
+    return createPluginClassLoader(parentLoaders = parentLoaders,
+                                   descriptor = descriptor,
+                                   files = files,
+                                   coreLoader = coreLoader,
+                                   classPath = classPath,
+                                   libDirectories = libDirectories,
+                                   pluginSet = pluginSet)
+  }
+
+  private fun configureModule(module: IdeaPluginDescriptorImpl,
+                              mainDependentClassLoader: ClassLoader,
+                              files: List<Path>,
+                              libDirectories: MutableList<String>,
+                              classPath: ClassPath) {
+    if (module.packagePrefix == null) {
+      throw PluginException("Package is not specified (module=$module)", module.pluginId)
+    }
+
+    checkPackagePrefixUniqueness(module)
     loaders.clear()
 
     // must be before main descriptor classloader
-    // only first level is supported - N level is not supported for a new model (several requirements maybe specified instead)
-    if (parentDescriptor.descriptorPath == null) {
-      addSiblingClassloaderIfNeeded(dependent, parentDescriptor)
+
+    for (item in module.dependencies.modules) {
+      // Module dependency is always optional. If the module depends on an unavailable plugin, it will not be loaded.
+      val descriptor = (pluginSet.findEnabledModule(item.name) ?: return)
+      val classLoader = descriptor.classLoader
+      if (classLoader != null && classLoader !== coreLoader) {
+        loaders.add(classLoader)
+      }
+    }
+    for (item in module.dependencies.plugins) {
+      val descriptor = pluginSet.findEnabledPlugin(item.id) ?: return
+      if (descriptor.classLoader !== coreLoader) {
+        loaders.add(descriptor.classLoader!!)
+      }
     }
 
     // add main descriptor classloader as parent
-    loaders.add(mainDependentClassLoader)
-    addLoaderOrLogError(dependent, dependency, loaders)
-    val pluginDependencies = dependent.pluginDependencies
-
-    // add config-less dependencies to classloader parents
-    for (subDependency in pluginDependencies) {
-      if (!subDependency.isDisabledOrBroken && subDependency.subDescriptor == null) {
-        addClassloaderIfDependencyEnabled(subDependency.pluginId, dependent)
-      }
-    }
-    val subClassloader = if (pluginPackagePrefix == null) {
-      SubPluginClassLoader(dependent,
-        urlClassLoaderBuilder,
-        loaders.toTypedArray(),
-        packagePrefixes.toTypedArray(),
-        coreLoader, resourceFileFactory)
-    }
-    else {
-      createPluginClassLoader(dependent)
+    if (mainDependentClassLoader !== coreLoader) {
+      loaders.add(mainDependentClassLoader)
     }
 
-    dependent.classLoader = subClassloader
-    for (subDependency in pluginDependencies) {
-      configureSubPlugin(subDependency, subClassloader, dependent)
-    }
-  }
-
-  private fun addSiblingClassloaderIfNeeded(dependent: IdeaPluginDescriptorImpl, parentDescriptor: IdeaPluginDescriptorImpl) {
-    if (!ClassLoaderConfigurationData.SEPARATE_CLASSLOADER_FOR_SUB) {
-      return
-    }
-
-    for (dependentModuleDependency in dependent.dependencyDescriptor.modules) {
-      if (parentDescriptor.contentDescriptor.findModuleByName(dependentModuleDependency.name) == null) {
-        // todo what about dependency on a module that contained in another plugin?
-        throw PluginException(
-          "Main descriptor $parentDescriptor must list module in content if it is specified as dependency in sub descriptor " +
-          "(descriptorFile=${dependent.descriptorPath})", parentDescriptor.id
-        )
-      }
-      for (dependencyPluginDependency in parentDescriptor.pluginDependencies) {
-        if (!dependencyPluginDependency.isDisabledOrBroken && dependencyPluginDependency.subDescriptor != null &&
-            dependentModuleDependency.packageName == dependencyPluginDependency.subDescriptor!!.packagePrefix) {
-          val classLoader = dependencyPluginDependency.subDescriptor!!.classLoader
-                            ?: throw PluginException("Classloader is null for sibling. " +
-                                                     "Please ensure that content entry in the main plugin specifies module with package `" +
-                                                     dependentModuleDependency.packageName +
-                                                     "` before module with package `${dependent.packagePrefix}`" +
-                                                     "(descriptorFile=${dependent.descriptorPath})", parentDescriptor.id)
-          loaders.add(classLoader)
-        }
-      }
-    }
-  }
-
-  private fun addClassloaderIfDependencyEnabled(dependencyId: PluginId, dependent: IdeaPluginDescriptorImpl) {
-    val dependency = idMap.get(dependencyId) ?: return
-
-    // must be first to ensure that it is used first to search classes (very important if main plugin descriptor doesn't have package prefix)
-    // check dependencies between optional descriptors (aka modules in a new model) from different plugins
-    if (ClassLoaderConfigurationData.SEPARATE_CLASSLOADER_FOR_SUB && !dependency.pluginDependencies.isEmpty()) {
-      for (dependentModuleDependency in dependent.dependencyDescriptor.modules) {
-        if (dependency.contentDescriptor.findModuleByName(dependentModuleDependency.name) != null) {
-          for (pluginDependency in dependency.pluginDependencies) {
-            if (!pluginDependency.isDisabledOrBroken && pluginDependency.subDescriptor != null &&
-                dependentModuleDependency.packageName == pluginDependency.subDescriptor!!.packagePrefix) {
-              loaders.add(pluginDependency.subDescriptor!!.classLoader!!)
-            }
-          }
-          break
-        }
-      }
-    }
-
-    val loader = dependency.classLoader
-    if (loader == null) {
-      log.error(PluginLoadingError.formatErrorMessage(dependent, "requires missing class loader for '${dependency.name}'"))
-    }
-    else if (loader !== coreLoader) {
-      loaders.add(loader)
-    }
+    assert(module.pluginDependencies.isEmpty())
+    module.classLoader = createPluginClassLoader(module, files = files, libDirectories = libDirectories, classPath = classPath)
   }
 
   private fun addLoaderOrLogError(dependent: IdeaPluginDescriptorImpl,
@@ -320,67 +317,25 @@ class ClassLoaderConfigurator(
     rootDescriptor.classLoader = classLoader
     for (dependency in rootDescriptor.pluginDependencies) {
       if (dependency.subDescriptor != null) {
-        val descriptor = idMap.get(dependency.pluginId)
-        if (descriptor != null && descriptor.isEnabled) {
+        val descriptor = pluginSet.findEnabledPlugin(dependency.pluginId)
+        if (descriptor != null) {
           setPluginClassLoaderForMainAndSubPlugins(dependency.subDescriptor!!, classLoader)
         }
       }
     }
-  }
 
-  private fun collectClassPath(descriptor: IdeaPluginDescriptorImpl): List<Path> {
-    val pluginPath = descriptor.path
-    if (!Files.isDirectory(pluginPath)) {
-      return listOf(pluginPath)
-    }
+    for (item in rootDescriptor.content.modules) {
+      val module = item.requireDescriptor()
+      // skip if some dependency is not available
+      if (module.dependencies.modules.any { !pluginSet.isModuleEnabled(it.name) } ||
+          module.dependencies.plugins.any { !pluginSet.isPluginEnabled(it.id) }) {
+        continue
+      }
 
-    val result = ArrayList<Path>()
-    val classesDir = pluginPath.resolve("classes")
-    if (Files.exists(classesDir)) {
-      result.add(classesDir)
+      setPluginClassLoaderForMainAndSubPlugins(module, classLoader)
     }
-    if (usePluginClassLoader) {
-      val productionDirectory = pluginPath.parent
-      if (productionDirectory.endsWith("production")) {
-        result.add(pluginPath)
-        val moduleName = pluginPath.fileName.toString()
-        val additionalPaths = additionalLayoutMap.get(moduleName)
-        if (additionalPaths != null) {
-          for (path in additionalPaths) {
-            result.add(productionDirectory.resolve(path))
-          }
-        }
-      }
-    }
-    try {
-      Files.newDirectoryStream(pluginPath.resolve("lib")).use { childStream ->
-        for (f in childStream) {
-          if (Files.isRegularFile(f)) {
-            val name = f.fileName.toString()
-            if (name.endsWith(".jar", ignoreCase = true) || name.endsWith(".zip", ignoreCase = true)) {
-              result.add(f)
-            }
-          }
-          else {
-            result.add(f)
-          }
-        }
-      }
-    }
-    catch (ignore: NoSuchFileException) {
-    }
-    catch (e: IOException) {
-      PluginManagerCore.getLogger().debug(e)
-    }
-    return result
   }
 }
-
-// this list doesn't duplicate of PluginXmlFactory.CLASS_NAMES - interface related must be not here
-private val IMPL_CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
-  "implementation", "implementationClass", "builderClass",
-  "serviceImplementation", "class", "className",
-  "instance", "implementation-class"))
 
 // do not use class reference here
 @Suppress("SSBasedInspection")
@@ -390,9 +345,11 @@ private val log: Logger
 // static to ensure that anonymous classes will not hold ClassLoaderConfigurator
 private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
                                     descriptor: IdeaPluginDescriptorImpl,
-                                    urlClassLoaderBuilder: UrlClassLoader.Builder,
+                                    files: List<Path>,
+                                    libDirectories: MutableList<String>,
                                     coreLoader: ClassLoader,
-                                    resourceFileFactory: ClassPath.ResourceFileFactory?): PluginClassLoader {
+                                    classPath: ClassPath,
+                                    pluginSet: PluginSet): PluginClassLoader {
   // main plugin descriptor
   if (descriptor.descriptorPath == null) {
     when (descriptor.id.idString) {
@@ -400,26 +357,29 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
         // multiple packages - intellij.diagram and intellij.diagram.impl modules
         return createPluginClassLoaderWithExtraPackage(parentLoaders = parentLoaders,
                                                        descriptor = descriptor,
-                                                       urlClassLoaderBuilder = urlClassLoaderBuilder,
+                                                       files = files,
                                                        coreLoader = coreLoader,
-                                                       resourceFileFactory = resourceFileFactory,
+                                                       classPath = classPath,
+                                                       libDirectories = libDirectories,
                                                        customPackage = "com.intellij.diagram.")
       }
       "com.intellij.struts2" -> {
         return createPluginClassLoaderWithExtraPackage(parentLoaders = parentLoaders,
                                                        descriptor = descriptor,
-                                                       urlClassLoaderBuilder = urlClassLoaderBuilder,
+                                                       files = files,
                                                        coreLoader = coreLoader,
-                                                       resourceFileFactory = resourceFileFactory,
+                                                       classPath = classPath,
+                                                       libDirectories = libDirectories,
                                                        customPackage = "com.intellij.lang.ognl.")
       }
       "com.intellij.properties" -> {
         // todo ability to customize (cannot move due to backward compatibility)
         return createPluginClassloader(parentLoaders = parentLoaders,
                                        descriptor = descriptor,
-                                       urlClassLoaderBuilder = urlClassLoaderBuilder,
+                                       files = files,
                                        coreLoader = coreLoader,
-                                       resourceFileFactory = resourceFileFactory) { name, packagePrefix, force ->
+                                       classPath = classPath,
+                                       libDirectories = libDirectories) { name, packagePrefix, force ->
           if (force) {
             false
           }
@@ -431,60 +391,67 @@ private fun createPluginClassLoader(parentLoaders: Array<ClassLoader>,
         }
       }
     }
-
-    if (descriptor.packagePrefix == null) {
-      return PluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, descriptor.pluginPath, coreLoader, null, null,
-                               resourceFileFactory)
-    }
   }
   else {
-    if (!descriptor.contentDescriptor.modules.isEmpty()) {
+    if (!descriptor.content.modules.isEmpty()) {
       // see "The `content.module` element" section about content handling for a module
       return createPluginClassloader(parentLoaders = parentLoaders,
                                      descriptor = descriptor,
-                                     urlClassLoaderBuilder = urlClassLoaderBuilder,
+                                     files = files,
                                      coreLoader = coreLoader,
-                                     resourceFileFactory = resourceFileFactory,
+                                     classPath = classPath,
+                                     libDirectories = libDirectories,
                                      resolveScopeManager = createModuleContentBasedScope(descriptor))
     }
     else if (descriptor.packagePrefix != null) {
       return createPluginClassloader(parentLoaders = parentLoaders,
                                      descriptor = descriptor,
-                                     urlClassLoaderBuilder = urlClassLoaderBuilder,
+                                     files = files,
                                      coreLoader = coreLoader,
-                                     resourceFileFactory = resourceFileFactory) { name, packagePrefix, _ ->
-        // force flag is ignored for module - e.g. RailsViewLineMarkerProvider is referenced
+                                     classPath = classPath,
+                                     libDirectories = libDirectories) { name, packagePrefix, _ ->
+        // force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced
         // as extension implementation in several modules
         !name.startsWith(packagePrefix) && !name.startsWith("com.intellij.ultimate.PluginVerifier")
       }
     }
   }
 
-  return createPluginClassloader(parentLoaders, descriptor, urlClassLoaderBuilder, coreLoader, resourceFileFactory,
-                                 createPluginDependencyAndContentBasedScope(descriptor))
+  return createPluginClassloader(
+    parentLoaders = parentLoaders,
+    descriptor = descriptor,
+    files = files,
+    coreLoader = coreLoader,
+    classPath = classPath,
+    libDirectories = libDirectories,
+    resolveScopeManager = createPluginDependencyAndContentBasedScope(descriptor = descriptor, pluginSet = pluginSet)
+  )
 }
 
 private fun createPluginClassloader(parentLoaders: Array<ClassLoader>,
                                     descriptor: IdeaPluginDescriptorImpl,
-                                    urlClassLoaderBuilder: UrlClassLoader.Builder,
+                                    files: List<Path>,
+                                    libDirectories: MutableList<String>,
                                     coreLoader: ClassLoader,
-                                    resourceFileFactory: ClassPath.ResourceFileFactory?,
+                                    classPath: ClassPath,
                                     resolveScopeManager: PluginClassLoader.ResolveScopeManager?): PluginClassLoader {
-  return PluginClassLoader(urlClassLoaderBuilder, parentLoaders, descriptor, descriptor.pluginPath, coreLoader,
-                           resolveScopeManager, descriptor.packagePrefix, resourceFileFactory)
+  return PluginClassLoader(files, classPath, parentLoaders, descriptor, coreLoader, resolveScopeManager, descriptor.packagePrefix,
+                           libDirectories)
 }
 
 private fun createPluginClassLoaderWithExtraPackage(parentLoaders: Array<ClassLoader>,
                                                     descriptor: IdeaPluginDescriptorImpl,
-                                                    urlClassLoaderBuilder: UrlClassLoader.Builder,
+                                                    files: List<Path>,
+                                                    libDirectories: MutableList<String>,
                                                     coreLoader: ClassLoader,
-                                                    resourceFileFactory: ClassPath.ResourceFileFactory?,
+                                                    classPath: ClassPath,
                                                     customPackage: String): PluginClassLoader {
   return createPluginClassloader(parentLoaders = parentLoaders,
                                  descriptor = descriptor,
-                                 urlClassLoaderBuilder = urlClassLoaderBuilder,
+                                 files = files,
                                  coreLoader = coreLoader,
-                                 resourceFileFactory = resourceFileFactory) { name, packagePrefix, force ->
+                                 classPath = classPath,
+                                 libDirectories = libDirectories) { name, packagePrefix, force ->
     if (force) {
       false
     }
@@ -496,9 +463,14 @@ private fun createPluginClassLoaderWithExtraPackage(parentLoaders: Array<ClassLo
 
 // package of module is not taken in account to support resolving of module libraries -
 // instead, only classes from plugin's modules (content or dependencies) are excluded.
-private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorImpl): PluginClassLoader.ResolveScopeManager {
+private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDescriptorImpl,
+                                                       pluginSet: PluginSet): PluginClassLoader.ResolveScopeManager? {
   val contentPackagePrefixes = getContentPackagePrefixes(descriptor)
-  val dependencyPackagePrefixes = getDependencyPackagePrefixes(descriptor)
+  val dependencyPackagePrefixes = getDependencyPackagePrefixes(descriptor, pluginSet)
+  if (contentPackagePrefixes.isEmpty() && dependencyPackagePrefixes.isEmpty()) {
+    return null
+  }
+
   val pluginId = descriptor.pluginId.idString
   return PluginClassLoader.ResolveScopeManager { name, _, force ->
     if (force) {
@@ -511,6 +483,7 @@ private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDes
         return@ResolveScopeManager true
       }
     }
+
     for (prefix in dependencyPackagePrefixes) {
       if (name.startsWith(prefix)) {
         return@ResolveScopeManager true
@@ -522,29 +495,28 @@ private fun createPluginDependencyAndContentBasedScope(descriptor: IdeaPluginDes
 }
 
 private fun getContentPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): List<String> {
-  var result: MutableList<String>? = null
-  for (item in descriptor.contentDescriptor.modules) {
-    if (item.isInjected) {
-      continue
-    }
-
-    val packagePrefix = item.packageName ?: continue
-    if (result == null) {
-      result = ArrayList(descriptor.contentDescriptor.modules.size)
-    }
-    result.add("$packagePrefix.")
+  val modules = descriptor.content.modules
+  if (modules.isEmpty()) {
+    return Collections.emptyList()
   }
-  return result ?: emptyList()
+
+  val result = Array(modules.size) {
+    val module = modules.get(it).requireDescriptor()
+    "${module.packagePrefix ?: throw PluginException("Package is not specified (module=$module)", module.pluginId)}."
+  }
+  @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
+  return Arrays.asList(*result)
 }
 
-private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): List<String> {
-  if (descriptor.dependencyDescriptor.modules.isEmpty()) {
-    return emptyList()
+private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl, pluginSet: PluginSet): List<String> {
+  val dependencies = descriptor.dependencies.modules
+  if (dependencies.isEmpty()) {
+    return Collections.emptyList()
   }
 
-  val result = ArrayList<String>(descriptor.dependencyDescriptor.modules.size)
-  for (item in descriptor.dependencyDescriptor.modules) {
-    val packagePrefix = item.packageName
+  val result = ArrayList<String>(dependencies.size)
+  for (item in dependencies) {
+    val packagePrefix = (pluginSet.findEnabledModule(item.name) ?: continue).packagePrefix
     // intellij.platform.commercial.verifier is injected
     if (packagePrefix != null && item.name != "intellij.platform.commercial.verifier") {
       result.add("$packagePrefix.")
@@ -554,22 +526,20 @@ private fun getDependencyPackagePrefixes(descriptor: IdeaPluginDescriptorImpl): 
 }
 
 private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl): PluginClassLoader.ResolveScopeManager {
-  val packagePrefixes = ArrayList<String>(descriptor.contentDescriptor.modules.size)
-  for (item in descriptor.contentDescriptor.modules) {
-    item.packageName?.let {
-      packagePrefixes.add("$it.")
-    }
+  val packagePrefixes = ArrayList<String>(descriptor.content.modules.size)
+  for (item in descriptor.content.modules) {
+    packagePrefixes.add("${item.requireDescriptor().packagePrefix!!}.")
   }
 
-  // force flag is ignored for module - e.g. RailsViewLineMarkerProvider is referenced as extension implementation in several modules
+  // force flag is ignored for module - e.g., RailsViewLineMarkerProvider is referenced as extension implementation in several modules
   return PluginClassLoader.ResolveScopeManager { name, packagePrefix, _ ->
     if (name.startsWith(packagePrefix!!) || name.startsWith("com.intellij.ultimate.PluginVerifier")) {
       return@ResolveScopeManager false
     }
 
-    // for a module, the referenced module doesn't have own classloader and is added directly to classpath,
-    // so, if name doesn't pass standard package prefix filter,
-    // check that it is not in content - if in content, then it means that class is not alien
+    // For a module, the referenced module doesn't have own classloader and is added directly to classpath,
+    // so, if name doesn't pass standard package prefix filter.
+    // Check that it is not in content - if in content, then it means that class is not alien.
     for (prefix in packagePrefixes) {
       if (name.startsWith(prefix)) {
         return@ResolveScopeManager false
@@ -579,92 +549,7 @@ private fun createModuleContentBasedScope(descriptor: IdeaPluginDescriptorImpl):
   }
 }
 
-private fun isClassloaderPerDescriptorEnabled(descriptor: IdeaPluginDescriptorImpl): Boolean {
-  return ClassLoaderConfigurationData.isClassloaderPerDescriptorEnabled(descriptor.id, descriptor.packagePrefix)
-}
-
-private fun collectPackagePrefixes(dependent: IdeaPluginDescriptorImpl, packagePrefixes: MutableList<String>) {
-  // from extensions
-  dependent.unsortedEpNameToExtensionElements.values.forEach { extensionDescriptors ->
-    for (extensionDescriptor in extensionDescriptors) {
-      if (extensionDescriptor.implementation != null) {
-        addPackageByClassNameIfNeeded(extensionDescriptor.implementation!!, packagePrefixes)
-        continue
-      }
-
-      val element = extensionDescriptor.element ?: continue
-      if (!element.attributes.isEmpty()) {
-        continue
-      }
-
-      for (attributeName in IMPL_CLASS_NAMES) {
-        val className = element.getAttributeValue(attributeName)
-        if (className != null && !className.isEmpty()) {
-          addPackageByClassNameIfNeeded(className, packagePrefixes)
-          break
-        }
-      }
-    }
-  }
-
-  // from services
-  collectFromServices(dependent.appContainerDescriptor, packagePrefixes)
-  collectFromServices(dependent.projectContainerDescriptor, packagePrefixes)
-  collectFromServices(dependent.moduleContainerDescriptor, packagePrefixes)
-}
-
-private fun addPackageByClassNameIfNeeded(name: String, packagePrefixes: MutableList<String>) {
-  for (packagePrefix in packagePrefixes) {
-    if (name.startsWith(packagePrefix)) {
-      return
-    }
-  }
-
-  // for classes like com.intellij.thymeleaf.lang.ThymeleafParserDefinition$SPRING_SECURITY_EXPRESSIONS
-  // we must not try to load the containing package
-  if (name.indexOf('$') != -1) {
-    packagePrefixes.add(name)
-    return
-  }
-
-  val lastPackageDot = name.lastIndexOf('.')
-  if (lastPackageDot > 0 && lastPackageDot != name.length) {
-    addPackagePrefixIfNeeded(packagePrefixes, name.substring(0, lastPackageDot + 1))
-  }
-}
-
-private fun addPackagePrefixIfNeeded(packagePrefixes: MutableList<String>, packagePrefix: String) {
-  for (i in packagePrefixes.indices) {
-    val existingPackagePrefix = packagePrefixes.get(i)
-    if (packagePrefix.startsWith(existingPackagePrefix)) {
-      return
-    }
-    else if (existingPackagePrefix.startsWith(packagePrefix) && existingPackagePrefix.indexOf('$') == -1) {
-      packagePrefixes.set(i, packagePrefix)
-      for (j in packagePrefixes.size - 1 downTo i + 1) {
-        if (packagePrefixes.get(j).startsWith(packagePrefix)) {
-          packagePrefixes.removeAt(j)
-        }
-      }
-      return
-    }
-  }
-  packagePrefixes.add(packagePrefix)
-}
-
-private fun collectFromServices(containerDescriptor: ContainerDescriptor, packagePrefixes: MutableList<String>) {
-  for (service in containerDescriptor.services) {
-    // testServiceImplementation is ignored by intention
-    service.serviceImplementation?.let {
-      addPackageByClassNameIfNeeded(it, packagePrefixes)
-    }
-    service.headlessImplementation?.let {
-      addPackageByClassNameIfNeeded(it, packagePrefixes)
-    }
-  }
-}
-
-private fun configureUsingIdeaClassloader(classPath: List<Path?>, descriptor: IdeaPluginDescriptorImpl): ClassLoader {
+private fun configureUsingIdeaClassloader(classPath: List<Path>, descriptor: IdeaPluginDescriptorImpl): ClassLoader {
   log.warn("${descriptor.pluginId} uses deprecated `use-idea-classloader` attribute")
   val loader = ClassLoaderConfigurator::class.java.classLoader
   try {

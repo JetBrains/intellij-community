@@ -50,7 +50,6 @@ class CompilationContextImpl implements CompilationContext {
   final Map<String, String> newToOldModuleName
   JpsCompilationData compilationData
   KotlinBinaries kotlinBinaries
-  private final CompilationTasks compilationTasks
 
   @SuppressWarnings("GrUnresolvedAccess")
   @CompileDynamic
@@ -166,7 +165,6 @@ class CompilationContextImpl implements CompilationContext {
     String buildOutputRoot = options.outputRootPath ?: buildOutputRootEvaluator.apply(project, messages)
     this.paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, jdkHome)
     this.kotlinBinaries = kotlinBinaries
-    this.compilationTasks = CompilationTasks.create(this)
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
@@ -204,19 +202,13 @@ class CompilationContextImpl implements CompilationContext {
 
   void prepareForBuild() {
     checkCompilationOptions()
-    def dataDirName = ".jps-build-data"
     def logDir = new File(paths.buildOutputRoot, "log")
     FileUtil.delete(logDir)
-    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, dataDirName), new File("$logDir/compilation.log"),
+    compilationData = new JpsCompilationData(new File(paths.buildOutputRoot, ".jps-build-data"), new File("$logDir/compilation.log"),
                                              System.getProperty("intellij.build.debug.logging.categories", ""), messages)
 
-    def classesDirName = CLASSES_DIR_NAME
     def projectArtifactsDirName = "project-artifacts"
     overrideProjectOutputDirectory()
-    List<String> outputDirectoriesToKeep = ["log"]
-    if (compilationTasks.areCompiledClassesProvided()) {
-      outputDirectoriesToKeep.add(classesDirName)
-    }
 
     String baseArtifactsOutput = "$paths.buildOutputRoot/$projectArtifactsDirName"
     JpsArtifactService.instance.getArtifacts(project).each {
@@ -226,26 +218,18 @@ class CompilationContextImpl implements CompilationContext {
     if (!options.useCompiledClassesFromProjectOutput) {
       messages.info("Incremental compilation: " + options.incrementalCompilation)
     }
+
     if (options.incrementalCompilation) {
       System.setProperty("kotlin.incremental.compilation", "true")
-      outputDirectoriesToKeep.add(dataDirName)
-      outputDirectoriesToKeep.add(classesDirName)
-      outputDirectoriesToKeep.add(projectArtifactsDirName)
     }
 
     suppressWarnings(project)
     exportModuleOutputProperties()
-
-    if (options.cleanOutputFolder) {
-      cleanOutput(outputDirectoriesToKeep)
-    }
-    else {
-      messages.info("cleanOutput step was skipped")
-    }
-    compilationTasks.reuseCompiledClassesIfProvided()
+    /**
+     * FIXME should be called lazily yet it breaks {@link org.jetbrains.intellij.build.TestingTasks#runTests}, needs investigation
+     */
+    CompilationTasks.create(this).reuseCompiledClassesIfProvided()
   }
-
-  private static final String CLASSES_DIR_NAME = "classes"
 
   private overrideProjectOutputDirectory() {
     if (options.projectClassesOutputDirectory != null && !options.projectClassesOutputDirectory.isEmpty()) {
@@ -258,7 +242,7 @@ class CompilationContextImpl implements CompilationContext {
       }
     }
     else {
-      projectOutputDirectory = "$paths.buildOutputRoot/$CLASSES_DIR_NAME"
+      projectOutputDirectory = "$paths.buildOutputRoot/classes"
     }
   }
 
@@ -278,22 +262,6 @@ class CompilationContextImpl implements CompilationContext {
       for (boolean test : [true, false]) {
         [module.name, getOldModuleName(module.name)].findAll { it != null}.each {
           ant.project.setProperty("module.${it}.output.${test ? "test" : "main"}", getOutputPath(module, test))
-        }
-      }
-    }
-  }
-
-  void cleanOutput(List<String> outputDirectoriesToKeep) {
-    messages.block("Clean output") {
-      def outputPath = paths.buildOutputRoot
-      messages.progress("Cleaning output directory $outputPath")
-      new File(outputPath).listFiles()?.each { File file ->
-        if (outputDirectoriesToKeep.contains(file.name)) {
-          messages.info("Skipped cleaning for $file.absolutePath")
-        }
-        else {
-          messages.info("Deleting $file.absolutePath")
-          FileUtil.delete(file)
         }
       }
     }

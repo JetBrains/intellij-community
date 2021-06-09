@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports usage of automatic modules in the <code>requires</code> directive. An automatic
-module is unreliable, since it can depend on types on the class path,
+Reports usages of automatic modules in the <code>requires</code> directive.
+<p>An automatic
+module is unreliable since it can depend on the types on the class path,
 and its name and exported packages could change if and when it's
-converted into an explicit module.
+  converted into an explicit module.</p>
 <p>Corresponds to <code>-Xlint:requires-automatic</code> and <code>-Xlint:requires-transitive-automatic</code> Javac options.
 The first option increases awareness of when automatic modules are used.
 The second warns the authors of a module that they're putting the users of that module at risk by establishing implied readability to an automatic module.
@@ -16,7 +17,7 @@ The second warns the authors of a module that they're putting the users of that 
 </pre>
 <!-- tooltip end -->
 <p>
-  Use the checkbox below to warn only on transitive dependencies
+  Use the <b>Highlight only transitive dependencies</b> option to warn only about transitive dependencies.
 </p>
 </body>
 </html>

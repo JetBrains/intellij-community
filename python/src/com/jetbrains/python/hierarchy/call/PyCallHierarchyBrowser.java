@@ -57,7 +57,7 @@ public class PyCallHierarchyBrowser extends CallHierarchyBrowserBase {
 
   private JTree createHierarchyTree(ActionGroup group) {
     JTree tree = createTree(false);
-    PopupHandler.installPopupHandler(tree, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP, ActionManager.getInstance());
+    PopupHandler.installPopupMenu(tree, group, ActionPlaces.CALL_HIERARCHY_VIEW_POPUP);
     return tree;
   }
 

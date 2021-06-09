@@ -4,20 +4,8 @@ package org.jetbrains.kotlin.tools.projectWizard
 import com.intellij.ide.wizard.BuildSystemType
 import com.intellij.openapi.extensions.ExtensionPointName
 
-abstract class KotlinBuildSystemType(override val name: String) : BuildSystemType<KotlinSettings>(name) {
+abstract class KotlinBuildSystemType<P>(override val name: String) : BuildSystemType<KotlinSettings, P> {
   companion object{
-    var EP_NAME = ExtensionPointName<KotlinBuildSystemType>("com.intellij.newProjectWizard.buildSystem.kotlin")
-  }
-}
-
-class GradleKotlinBuildSystemType : KotlinBuildSystemType("Gradle") {
-  override fun setupProject(settings: KotlinSettings) {
-    TODO("Not yet implemented")
-  }
-}
-
-class MavenKotlinBuildSystemType : KotlinBuildSystemType("Maven") {
-  override fun setupProject(settings: KotlinSettings) {
-    TODO("Not yet implemented")
+    var EP_NAME = ExtensionPointName<KotlinBuildSystemType<*>>("com.intellij.newProjectWizard.buildSystem.kotlin")
   }
 }

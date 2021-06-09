@@ -1,10 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("DynamicPluginsTestUtil")
 @file:Suppress("UsePropertyAccessSyntax")
 package com.intellij.ide.plugins
 
-import com.intellij.ide.plugins.DynamicPlugins.loadPlugin
-import com.intellij.ide.plugins.DynamicPlugins.unloadPlugin
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.util.BuildNumber
@@ -33,8 +31,11 @@ internal fun loadDescriptorInTest(dir: Path, disabledPlugins: Set<PluginId> = em
   if (result == null) {
     @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
+    throw AssertionError("Cannot load plugin from $dir")
   }
-  return result!!
+
+  result.jarFiles = emptyList()
+  return result
 }
 
 @JvmOverloads
@@ -60,21 +61,18 @@ internal fun loadPluginWithText(pluginBuilder: PluginBuilder, loader: ClassLoade
   pluginBuilder.build(pluginDirectory)
   val descriptor = loadDescriptorInTest(pluginDirectory)
   assertThat(DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)).isNull()
-  setPluginClassLoaderForMainAndSubPlugins(descriptor, loader)
   try {
-    loadPlugin(descriptor)
+    DynamicPlugins.loadPlugin(pluginDescriptor = descriptor)
   }
   catch (e: Exception) {
-    unloadPlugin(descriptor)
+    DynamicPlugins.unloadPlugin(descriptor)
     throw e
   }
 
   return Disposable {
-    val unloadDescriptor = loadDescriptorInTest(pluginDirectory)
-    val canBeUnloaded = DynamicPlugins.allowLoadUnloadWithoutRestart(unloadDescriptor)
-    unloadPlugin(descriptor)
-
-    assertThat(canBeUnloaded).isTrue()
+    val reason = DynamicPlugins.checkCanUnloadWithoutRestart(descriptor)
+    DynamicPlugins.unloadPlugin(descriptor)
+    assertThat(reason).isNull()
   }
 }
 

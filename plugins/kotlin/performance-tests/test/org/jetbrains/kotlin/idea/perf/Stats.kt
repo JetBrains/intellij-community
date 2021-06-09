@@ -81,12 +81,17 @@ class Stats(
     private fun toTimingsMs(statInfosArray: Array<StatInfos>) =
         statInfosArray.map { info -> info?.let { it[TEST_KEY] as? Long }?.nsToMs ?: 0L }.toLongArray()
 
-    private fun calcMean(statInfosArray: Array<StatInfos>): Mean = calcMean(toTimingsMs(statInfosArray))
+    private fun calcMean(statInfosArray: Array<StatInfos>): Mean =
+        calcMean(toTimingsMs(statInfosArray))
+
+    private fun stabilityPercentage(mean: Mean): Int =
+        round(mean.stdDev * 100.0 / mean.mean).toInt()
 
     fun <SV, TV> perfTest(
         testName: String,
         warmUpIterations: Int = 5,
         iterations: Int = 20,
+        fastIterations: Boolean = false,
         setUp: (TestData<SV, TV>) -> Unit = { },
         test: (TestData<SV, TV>) -> Unit,
         tearDown: (TestData<SV, TV>) -> Unit = { },
@@ -95,6 +100,7 @@ class Stats(
         val warmPhaseData = PhaseData(
             iterations = warmUpIterations,
             testName = testName,
+            fastIterations = fastIterations,
             setUp = setUp,
             test = test,
             tearDown = tearDown
@@ -102,6 +108,7 @@ class Stats(
         val mainPhaseData = PhaseData(
             iterations = iterations,
             testName = testName,
+            fastIterations = fastIterations,
             setUp = setUp,
             test = test,
             tearDown = tearDown
@@ -112,12 +119,12 @@ class Stats(
                 warmUpPhase(warmPhaseData, metricChildren)
                 val statInfoArray = mainPhase(mainPhaseData, metricChildren)
 
-                assertEquals(iterations, statInfoArray.size)
+                if (!mainPhaseData.fastIterations) assertEquals(iterations, statInfoArray.size)
+
                 if (testName != WARM_UP) {
                     // do not estimate stability for warm-up
                     if (!testName.contains(WARM_UP)) {
-                        val calcMean = calcMean(statInfoArray)
-                        val stabilityPercentage = round(calcMean.stdDev * 100.0 / calcMean.mean).toInt()
+                        val stabilityPercentage = stabilityPercentage(calcMean(statInfoArray))
                         logMessage { "$testName stability is $stabilityPercentage %" }
                         val stabilityName = "$name: $testName stability"
 
@@ -302,6 +309,15 @@ class Stats(
                         PerformanceCounter.resetAllCounters()
                     }
                 }
+
+                if (phaseData.fastIterations && attempt > 0) {
+                    val subArray = statInfosArray.take(attempt + 1).toTypedArray()
+                    val stabilityPercentage = stabilityPercentage(calcMean(subArray))
+                    val stable = stabilityPercentage <= acceptanceStabilityLevel
+                    if (stable) {
+                        return subArray
+                    }
+                }
             }
         } catch (t: Throwable) {
             logMessage(t) { "error at ${phaseData.testName}" }
@@ -344,28 +360,6 @@ class Stats(
     }
 
     private fun flush() {
-        val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
-        simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
-//        properties["buildTimestamp"] = simpleDateFormat.format(Date())
-//        properties["buildId"] = 87015694
-//        properties["buildBranch"] = "rr/perf/json-output"
-//        properties["agentName"] = "kotlin-linux-perf-unit879"
-
-        var buildId: Int? = null
-        var agentName: String? = null
-        var buildBranch: String? = null
-        var commit: String? = null
-
-        System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE")?.let { teamcityConfig ->
-            val buildProperties = Properties()
-            buildProperties.load(FileInputStream(teamcityConfig))
-
-            buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
-            agentName = buildProperties["agent.name"]?.toString()
-            buildBranch = buildProperties["teamcity.build.branch"]?.toString()
-            commit = buildProperties["build.vcs.number"]?.toString()
-        }
-
         if (perfTestRawDataMs.isNotEmpty()) {
             val geomMeanMs = geomMean(perfTestRawDataMs.toList()).toLong()
             Metric(GEOM_MEAN, metricValue = geomMeanMs).writeTeamCityStats(name)
@@ -373,16 +367,11 @@ class Stats(
 
         try {
             metric?.let {
-                val benchmark = Benchmark(
-                    agentName = agentName,
-                    buildBranch = buildBranch,
-                    commit = commit,
-                    buildId = buildId,
+                val benchmark = BENCHMARK_STUB.copy(
                     benchmark = name,
                     name = it.metricName,
                     metricValue = it.metricValue,
                     metricError = it.metricError,
-                    buildTimestamp = simpleDateFormat.format(Date()),
                     metrics = it.metrics ?: emptyList()
                 )
 
@@ -403,6 +392,38 @@ class Stats(
         const val GEOM_MEAN = "geomMean"
 
         internal val extraMetricNames = setOf("", "_value", GEOM_MEAN, "mean", "stdDev")
+
+        @JvmStatic
+        private val BENCHMARK_STUB = run {
+            val simpleDateFormat = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ")
+            simpleDateFormat.timeZone = TimeZone.getTimeZone("UTC")
+
+            var buildId: Int? = null
+            var agentName: String? = null
+            var buildBranch: String? = null
+            var commit: String? = null
+
+            System.getenv("TEAMCITY_BUILD_PROPERTIES_FILE")?.let { teamcityConfig ->
+                val buildProperties = Properties()
+                buildProperties.load(FileInputStream(teamcityConfig))
+
+                buildId = buildProperties["teamcity.build.id"]?.toString()?.toInt()
+                agentName = buildProperties["agent.name"]?.toString()
+                buildBranch = (buildProperties["teamcity.build.branch"] ?: System.getProperty("teamcity.build.branch"))?.toString()
+                if (buildBranch == null || buildBranch == "<default>") buildBranch = "master"
+                commit = (buildProperties["build.vcs.number"] ?: System.getProperty("build.vcs.number"))?.toString()
+            }
+
+            Benchmark(
+                agentName = agentName,
+                buildBranch = buildBranch,
+                commit = commit,
+                buildId = buildId,
+                benchmark = "",
+                buildTimestamp = simpleDateFormat.format(Date()),
+                metrics = emptyList()
+            )
+        }
 
         inline fun runAndMeasure(note: String, block: () -> Unit) {
             val openProjectMillis = measureTimeMillis {
@@ -437,7 +458,8 @@ data class PhaseData<SV, TV>(
     val testName: String,
     val setUp: (TestData<SV, TV>) -> Unit,
     val test: (TestData<SV, TV>) -> Unit,
-    val tearDown: (TestData<SV, TV>) -> Unit
+    val tearDown: (TestData<SV, TV>) -> Unit,
+    val fastIterations: Boolean = false
 )
 
 data class TestData<SV, TV>(var setUpValue: SV?, var value: TV?) {

@@ -25,12 +25,10 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.search.DelegatingGlobalSearchScope
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.psi.util.parentOfType
 import com.intellij.util.ThreeState
 import com.intellij.xdebugger.frame.XStackFrame
-import com.sun.jdi.AbsentInformationException
-import com.sun.jdi.Location
-import com.sun.jdi.ObjectCollectedException
-import com.sun.jdi.ReferenceType
+import com.sun.jdi.*
 import com.sun.jdi.request.ClassPrepareRequest
 import org.jetbrains.kotlin.codegen.inline.KOTLIN_STRATA_NAME
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
@@ -46,13 +44,12 @@ import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.load.java.JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import java.util.ArrayList
 
 class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiRequestPositionManager, PositionManagerEx() {
     private val stackFrameInterceptor: StackFrameInterceptor = myDebugProcess.project.getServiceSafe()
@@ -79,7 +76,7 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
         frame: StackFrameProxyImpl,
         location: Location,
         expression: String
-    ): ThreeState? {
+    ): ThreeState {
         return ThreeState.UNSURE
     }
 
@@ -143,31 +140,90 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
             return SourcePosition.createFromElement(elementInDeclaration)
         }
 
-        val sameLineLocations = location.safeMethod()?.safeAllLineLocations()?.filter {
-            it.safeLineNumber() == lineNumber && it.safeSourceName() == fileName
+        // There may be several locations for same source line. If same source position would be created for all of them,
+        // breakpoints at this line will stop on every location.
+        if (location.shouldBeTreatedAsReentrantSourcePosition(psiFile, fileName)) {
+            return KotlinReentrantSourcePosition(SourcePosition.createFromLine(psiFile, sourceLineNumber))
         }
+        return SourcePosition.createFromLine(psiFile, sourceLineNumber)
+    }
 
-        if (sameLineLocations != null) {
-            // There are several locations for same source line. If same source position would be created for all of them,
-            // breakpoints at this line will stop on every location.
-            // Each location is probably some code in arguments between inlined invocations (otherwise same line locations would
-            // have been merged into one), but it's impossible to correctly map locations to actual source expressions now.
-            val locationIndex = sameLineLocations.indexOf(location)
-            if (locationIndex > 0) {
-                /*
-                    `finally {}` block code is placed in the class file twice.
-                    Unless the debugger metadata is available, we can't figure out if we are inside `finally {}`, so we have to check it using PSI.
-                    This is conceptually wrong and won't work in some cases, but it's still better than nothing.
-                */
-                val elementAt = psiFile.getLineStartOffset(lineNumber)?.let { psiFile.findElementAt(it) }
-                val isInsideDuplicatedFinally = elementAt != null && elementAt.getStrictParentOfType<KtFinallySection>() != null
-                if (!isInsideDuplicatedFinally) {
-                    return KotlinReentrantSourcePosition(SourcePosition.createFromLine(psiFile, sourceLineNumber))
-                }
+    private fun Location.shouldBeTreatedAsReentrantSourcePosition(psiFile: PsiFile, sourceFileName: String): Boolean {
+        val method = safeMethod() ?: return false
+        val sameLineLocations = method
+            .safeAllLineLocations()
+            .filter {
+                it.safeSourceName() == sourceFileName &&
+                it.lineNumber() == lineNumber()
+            }
+
+        /*
+            `finally {}` block code is placed in the class file twice.
+            Unless the debugger metadata is available, we can't figure out if we are inside `finally {}`, so we have to check it using PSI.
+            This is conceptually wrong and won't work in some cases, but it's still better than nothing.
+        */
+        if (sameLineLocations.size < 2 || hasFinallyBlockInParent(psiFile)) {
+            return false
+        }
+        val locationsInSameInlinedFunction = findLocationsInSameInlinedFunction(sameLineLocations, method, sourceFileName)
+        return locationsInSameInlinedFunction.ifEmpty { sameLineLocations }.indexOf(this) > 0
+    }
+
+    private fun Location.hasFinallyBlockInParent(psiFile: PsiFile): Boolean {
+        val elementAt = psiFile.getLineStartOffset(lineNumber())?.let { psiFile.findElementAt(it) }
+        return elementAt?.parentOfType<KtFinallySection>() != null
+    }
+
+    private fun Location.findLocationsInSameInlinedFunction(locations: List<Location>, method: Method, sourceFileName: String): List<Location> {
+        val leastEnclosingBorders = method
+            .getInlineFunctionBorders(sourceFileName)
+            .getLeastEnclosingBorders(this)
+            ?: return emptyList()
+        return locations.filter { leastEnclosingBorders.contains(it) }
+    }
+
+    private fun List<Pair<Location, Location>>.getLeastEnclosingBorders(location: Location): Pair<Location, Location>? {
+        var result: Pair<Location, Location>? = null
+        for (pair in this) {
+            if (pair.contains(location) &&
+                (result == null || pair.first > result.first)
+            ) {
+                result = pair
             }
         }
+        return result
+    }
 
-        return SourcePosition.createFromLine(psiFile, sourceLineNumber)
+    private fun Pair<Location, Location>.contains(location: Location) = location in first..second
+
+    private fun Method.getInlineFunctionBorders(sourceFileName: String): List<Pair<Location, Location>> {
+        val localVariables = safeVariables() ?: return emptyList()
+        return localVariables
+            .asSequence()
+            .filter { it.isInlineFunctionLocalVariable(name()) }
+            .mapNotNull { it.getBorders() }
+            .filter { it.first.safeSourceName() == sourceFileName }
+            .toList()
+    }
+
+    private fun LocalVariable.isInlineFunctionLocalVariable(methodName: String) =
+        name().startsWith(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
+        name().substringAfter(LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) != methodName
+
+    private fun LocalVariable.getBorders(): Pair<Location, Location>? {
+        val scopeStart = getFieldValue<Location>("scopeStart") ?: return null
+        val scopeEnd = getFieldValue<Location>("scopeEnd") ?: return null
+        return Pair(scopeStart, scopeEnd)
+    }
+
+    private inline fun <reified T> Any.getFieldValue(fieldName: String): T? {
+        try {
+            val field = javaClass.declaredFields.firstOrNull { it.name == fieldName } ?: return null
+            field.isAccessible = true
+            return field.get(this) as? T
+        } catch (ex: Exception) {
+            return null
+        }
     }
 
     class KotlinReentrantSourcePosition(delegate: SourcePosition) : DelegateSourcePosition(delegate)

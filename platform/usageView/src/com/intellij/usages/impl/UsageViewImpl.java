@@ -828,7 +828,7 @@ public class UsageViewImpl implements UsageViewEx {
     EditSourceOnEnterKeyHandler.install(myTree);
 
     TreeUtil.promiseSelectFirst(myTree);
-    PopupHandler.installPopupHandler(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
+    PopupHandler.installPopupMenu(myTree, IdeActions.GROUP_USAGE_VIEW_POPUP, ActionPlaces.USAGE_VIEW_POPUP);
 
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
       @Override
@@ -1248,25 +1248,11 @@ public class UsageViewImpl implements UsageViewEx {
     }
   }
 
-  private final class ShowSettings extends AnAction {
+  private final class ShowSettings extends AnAction implements UpdateInBackground {
     private ShowSettings() {
       super(UsageViewBundle.message("action.text.usage.view.settings"), null, AllIcons.General.GearPlain);
-      ConfigurableUsageTarget configurableUsageTarget = getConfigurableTarget(myTargets);
-      Supplier<String> description = null;
-      try {
-        description = configurableUsageTarget == null
-                      ? null
-                      : UsageViewBundle.messagePointer("action.ShowSettings.show.settings.for.description",
-                                                       configurableUsageTarget.getLongDescriptiveName());
-      }
-      catch (IndexNotReadyException ignored) {
-      }
-      if (description == null) {
-        description = UsageViewBundle.messagePointer("action.ShowSettings.show.find.usages.settings.dialog.description");
-      }
-      getTemplatePresentation().setDescription(description);
-      KeyboardShortcut shortcut =
-        configurableUsageTarget == null ? getShowUsagesWithSettingsShortcut() : configurableUsageTarget.getShortcut();
+      ConfigurableUsageTarget target = getConfigurableTarget(myTargets);
+      KeyboardShortcut shortcut = target == null ? getShowUsagesWithSettingsShortcut() : target.getShortcut();
       if (shortcut != null) {
         registerCustomShortcutSet(new CustomShortcutSet(shortcut), getComponent());
       }
@@ -1275,6 +1261,22 @@ public class UsageViewImpl implements UsageViewEx {
     @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setEnabled(e.getData(CommonDataKeys.EDITOR) == null);
+      if (getTemplatePresentation().getDescription() == null) {
+        ConfigurableUsageTarget target = getConfigurableTarget(myTargets);
+        Supplier<String> description = null;
+        if (target != null) {
+          try {
+            description = UsageViewBundle.messagePointer(
+              "action.ShowSettings.show.settings.for.description", target.getLongDescriptiveName());
+          }
+          catch (IndexNotReadyException ignored) { }
+        }
+        if (description == null) {
+          description = UsageViewBundle.messagePointer("action.ShowSettings.show.find.usages.settings.dialog.description");
+        }
+        getTemplatePresentation().setDescription(description);
+        e.getPresentation().setDescription(description);
+      }
     }
 
     @Override

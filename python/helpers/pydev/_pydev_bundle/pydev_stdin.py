@@ -57,6 +57,9 @@ class StdIn(BaseStdIn):
         self.rpc_client = rpc_client
 
     def readline(self, *args, **kwargs):
+        return self.request_input()
+
+    def request_input(self):
         from pydev_console.pydev_protocol import KeyboardInterruptException
 
         # Ok, callback into the client to get the new input
@@ -76,6 +79,12 @@ class StdIn(BaseStdIn):
 
     def close(self, *args, **kwargs):
         pass  # expected in StdIn
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        return self.request_input()
 
 #=======================================================================================================================
 # DebugConsoleStdIn
@@ -102,5 +111,16 @@ class DebugConsoleStdIn(BaseStdIn):
         # Notify Java side about input and call original function
         self.__pydev_run_command(True)
         result = self.original_stdin.readline(*args, **kwargs)
+        self.__pydev_run_command(False)
+        return result
+
+    def __iter__(self):
+        self.iter = self.original_stdin.__iter__()
+        return self
+
+    def __next__(self):
+        # Notify Java side about input and call original function
+        self.__pydev_run_command(True)
+        result = self.iter.__next__()
         self.__pydev_run_command(False)
         return result

@@ -1,18 +1,18 @@
 <html>
 <body>
-Reports dangerous operations inside constructors including:
+Reports dangerous operations with <code>this</code> inside constructors including:
 
 <ul>
-  <li>Accessing a non-final property in constructor</li>
-  <li>Calling a non-final function in constructor</li>
+  <li>Accessing a non-final property during class initialization: from a constructor or from property initialization</li>
+  <li>Calling a non-final function during class initialization</li>
   <li>Using <code>this</code> as a function argument in a constructor of a non-final class</li>
 </ul>
 
 These operations are dangerous because your class can be inherited,
-and a derived class is not yet initialized at this moment. Typical example:
+and a derived class is not fully initialized yet at this moment.
 <br /><br />
-
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
 <b>abstract class</b> Base {
     <b>val</b> code = calculate()
     <b>abstract fun</b> calculate(): Int
@@ -25,6 +25,6 @@ and a derived class is not yet initialized at this moment. Typical example:
 <b>fun</b> testIt() {
     println(Derived(42).code) <i>// Expected: 42, actual: 0</i>
 }
-</pre>
+</code></pre>
 </body>
 </html>

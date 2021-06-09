@@ -31,17 +31,12 @@ public class UsageGroupingRuleProviderImpl implements UsageGroupingRuleProviderE
   }
 
   @Override
-  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project) {
-    return getActiveRules(project, UsageViewSettings.getInstance());
-  }
-
-  @Override
-  public UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
+  public @NotNull UsageGroupingRule @NotNull [] getActiveRules(@NotNull Project project, @NotNull UsageViewSettings usageViewSettings) {
     return ActiveRules.getActiveRules(project, usageViewSettings, supportsNonCodeRule(), supportsScopesRule(), supportsModuleRule());
   }
 
   @Override
-  public @NotNull UsageGroupingRule[] getAllRules(@NotNull Project project, @Nullable UsageView usageView) {
+  public @NotNull UsageGroupingRule @NotNull [] getAllRules(@NotNull Project project, @Nullable UsageView usageView) {
     return ActiveRules.getAllRules(project, UsageViewSettings.getInstance(), supportsNonCodeRule(), supportsScopesRule(), supportsModuleRule());
   }
 

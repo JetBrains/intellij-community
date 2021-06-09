@@ -275,7 +275,8 @@
       <add-to-group group-id="CopyFileReference"/>
     </action>
 
-    <action id="Git.Show.Stage" class="git4idea.index.actions.GitShowStagingAreaAction" use-shortcut-of="CheckinProject" icon="AllIcons.Actions.Commit">
+    <action id="Git.Show.Stage" class="git4idea.index.actions.GitShowStagingAreaAction"/>
+    <action id="Git.Commit.Stage" class="git4idea.index.actions.GitCommitWithStagingAreaAction" use-shortcut-of="CheckinProject" icon="AllIcons.Actions.Commit">
       <add-to-group group-id="Git.MainMenu" anchor="after" relative-to-action="CheckinProject"/>
       <add-to-group group-id="VcsToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
       <add-to-group group-id="VcsNavBarToolbarActions" anchor="after" relative-to-action="CheckinProject"/>
@@ -470,9 +471,6 @@
     <registryKey key="git.show.full.branch.name.instead.current.selected"
                  description="Show full branch names instead of Current/Selected"
                  defaultValue="false"/>
-    <registryKey key="git.auto.commit.on.revert"
-                 description="If false, show modal commit dialog before producing revert commit"
-                 defaultValue="true"/>
 
     <search.projectOptionsTopHitProvider implementation="git4idea.config.GitOptionsTopHitProvider"/>
     <vcs name="Git" vcsClass="git4idea.GitVcs" displayName="Git" administrativeAreaName=".git"/>

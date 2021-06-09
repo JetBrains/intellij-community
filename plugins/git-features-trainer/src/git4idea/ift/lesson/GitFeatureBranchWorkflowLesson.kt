@@ -8,7 +8,6 @@ import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -34,6 +33,7 @@ import git4idea.index.actions.runProcess
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import training.dsl.*
+import training.project.ProjectUtils
 import java.io.File
 import javax.swing.JDialog
 
@@ -129,8 +129,8 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
 
     task("Vcs.UpdateProject") {
-      text(GitLessonsBundle.message("git.feature.branch.open.update.dialog", strong(main), action(it)))
       val updateProjectDialogTitle = VcsBundle.message("action.display.name.update.scope", VcsBundle.message("update.project.scope.name"))
+      text(GitLessonsBundle.message("git.feature.branch.open.update.dialog", strong(main), action(it), strong(updateProjectDialogTitle)))
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
         ui.title?.contains(updateProjectDialogTitle) == true
       }
@@ -176,15 +176,16 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
       }
     }
 
+    val pushText = DvcsBundle.message("action.push").dropMnemonic()
     task("Vcs.Push") {
-      text(GitLessonsBundle.message("git.feature.branch.open.push.dialog", strong(branchName), action(it)))
+      text(GitLessonsBundle.message("git.feature.branch.open.push.dialog", strong(branchName), action(it), strong(pushText)))
       triggerByUiComponentAndHighlight(false, false) { _: PushLog -> true }
     }
 
     val forcePushText = DvcsBundle.message("action.force.push").dropMnemonic()
     task {
       text(GitLessonsBundle.message("git.feature.branch.choose.force.push",
-                                    strong(branchName), strong(forcePushText), strong(DvcsBundle.message("action.push").dropMnemonic())))
+                                    strong(branchName), strong(forcePushText), strong(pushText)))
       triggerByUiComponentAndHighlight(usePulsation = true) { _: BasicOptionButtonUI.ArrowButton -> true }
       val forcePushDialogTitle = DvcsBundle.message("force.push.dialog.title")
       triggerByUiComponentAndHighlight(false, false) { ui: JDialog ->
@@ -211,7 +212,7 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   }
 
   private fun TaskRuntimeContext.reCreateRemoteProjectDir(): File {
-    val learnProjectPath = ProjectRootManager.getInstance(project).contentRoots[0].toNioPath()
+    val learnProjectPath = ProjectUtils.getProjectRoot(project).toNioPath()
     val learnProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(learnProjectPath)
                            ?: error("Learning project not found")
     val projectsRoot = learnProjectRoot.parent.toNioPath().toFile()
