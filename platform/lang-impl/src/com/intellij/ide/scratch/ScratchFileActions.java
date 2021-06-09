@@ -26,7 +26,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.LayeredIcon;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Consumer;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.*;
 
@@ -242,7 +245,7 @@ public final class ScratchFileActions {
       }
       Set<Language> languages = files
         .filter(isScratch)
-        .map(fileLanguage(project))
+        .map(o -> fileLanguage(project, o))
         .filter(notNull())
         .addAllTo(new LinkedHashSet<>());
       String langName = languages.size() == 1 ? languages.iterator().next().getDisplayName()
@@ -284,12 +287,10 @@ public final class ScratchFileActions {
       return file -> !file.isDirectory() && ScratchRootType.getInstance().containsFile(file);
     }
 
-    @NotNull
-    protected Function<VirtualFile, Language> fileLanguage(@NotNull Project project) {
-      return file -> {
-        Language lang = ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
-        return lang != null ? lang : LanguageUtil.getLanguageForPsi(project, file);
-      };
+    protected @Nullable Language fileLanguage(@NotNull Project project,
+                                             @NotNull VirtualFile file) {
+      Language lang = ScratchFileService.getInstance().getScratchesMapping().getMapping(file);
+      return lang != null ? lang : LanguageUtil.getLanguageForPsi(project, file);
     }
 
     protected void actionPerformedImpl(@NotNull AnActionEvent e,
