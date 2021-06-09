@@ -63,9 +63,9 @@ class ChangeTo(typo: String, element: PsiElement, private val range: TextRange) 
       val myText = myEditor.document.getText(myRange)
       if (myText != typo) return
 
-      myEditor.document.replaceString(myRange.startOffset, myRange.endOffset, suggestion)
-
       UpdateHighlightersUtil.removeHighlightersWithRange(myEditor.document, project, myRange)
+
+      myEditor.document.replaceString(myRange.startOffset, myRange.endOffset, suggestion)
     }
 
     override fun getFileModifierForPreview(target: PsiFile): FileModifier? {
