@@ -40,6 +40,7 @@ import com.intellij.openapi.fileTypes.FileTypeListener;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
+import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.*;
 import com.intellij.openapi.project.impl.ProjectImpl;
@@ -773,7 +774,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
       EditorWindow[] windows = splitters.getWindows();
       for (EditorWindow window : windows) {
         if (isFileOpenInWindow(file, window)) {
-          return window;
+          if (AdvancedSettings.getBoolean("editor.open.inactive.splitter")) {
+            return window;
+          }
+
+          // return a window from here so that we don't look for it again in getOrCreateCurrentWindow
+          return activeCurrentWindow;
         }
       }
     }
