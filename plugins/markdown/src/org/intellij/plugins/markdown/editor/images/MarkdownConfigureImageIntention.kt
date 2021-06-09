@@ -6,9 +6,11 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.parentOfType
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImageImpl
 
 internal class MarkdownConfigureImageIntention: PsiElementBaseIntentionAction() {
@@ -27,6 +29,10 @@ internal class MarkdownConfigureImageIntention: PsiElementBaseIntentionAction() 
 
   override fun isAvailable(project: Project, editor: Editor?, element: PsiElement): Boolean {
     return findElementAndProvider(element) != null
+  }
+
+  override fun checkFile(file: PsiFile?): Boolean {
+    return super.checkFile(file) && file?.viewProvider?.baseLanguage == MarkdownLanguage.INSTANCE
   }
 
   companion object {
