@@ -94,9 +94,7 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
   }
 
   @Override
-  protected @Nullable PsiDirectory getDirectory(IdeView view) {
-    PsiDirectory directory = super.getDirectory(view);
-    if (directory == null) return null;
+  protected @Nullable PsiDirectory adjustDirectory(@NotNull PsiDirectory directory) {
     ProjectFileIndex index = ProjectRootManager.getInstance(directory.getProject()).getFileIndex();
     if (!index.isUnderSourceRootOfType(directory.getVirtualFile(), mySourceRootTypes)) {
       Module module = ModuleUtilCore.findModuleForPsiElement(directory);
