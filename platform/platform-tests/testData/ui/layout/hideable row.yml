@@ -17,13 +17,18 @@ rowConstraints:
   - align: &id005 {horizontal: false, unit: -1, value: 0.0}
   - align: *id005
   - align: *id005
-  count: 3
+    gapAfter:
+      max: &id006 {horizontal: true, unit: 0, value: 0.0}
+      min: *id006
+      preferred: *id006
+  - {}
+  count: 4
 columnConstraints:
   constraints:
   - gapAfter:
-      max: &id006 {horizontal: true, value: 6.0}
-      min: *id006
-      preferred: *id006
+      max: &id007 {horizontal: true, value: 6.0}
+      min: *id007
+      preferred: *id007
     grow: 0.0
   - {}
   count: 2
@@ -42,8 +47,8 @@ componentConstrains:
     hideMode: 3
     horizontal:
       gapBefore:
-        min: &id007 {horizontal: true, value: 20.0}
-        preferred: *id007
+        min: &id008 {horizontal: true, value: 20.0}
+        preferred: *id008
       grow: 100.0
     spanX: INF
     wrap: true
