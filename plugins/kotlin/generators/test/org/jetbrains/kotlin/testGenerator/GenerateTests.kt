@@ -1237,6 +1237,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractHLIntentionTest> {
             val pattern = Patterns.forRegex("^([\\w\\-_]+)\\.(kt|kts)$")
+            model("intentions/addPropertyAccessors", pattern = pattern)
             model("intentions/specifyTypeExplicitly", pattern = pattern)
         }
 
