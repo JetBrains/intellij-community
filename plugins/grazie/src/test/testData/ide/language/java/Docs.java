@@ -5,6 +5,11 @@
  *
  * This is thought to be a great news, e.g. a new invention.
  *
+ * A code example:
+ * <code>
+ *   Item item = env.generateData(Generator.sampledFrom(sys.currentItems), "working on %s item");
+ * </code>
+ *
  * @param T the type of member in this group.
  */
 class ExampleClassWithNoTypos<T> {

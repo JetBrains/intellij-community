@@ -4,6 +4,7 @@ import com.intellij.grazie.text.TextContent;
 import com.intellij.grazie.text.TextContentBuilder;
 import com.intellij.grazie.text.TextExtractor;
 import com.intellij.grazie.utils.PsiUtilsKt;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.impl.source.javadoc.PsiDocTagImpl;
@@ -14,9 +15,12 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.grazie.text.TextContent.TextDomain.*;
 import static com.intellij.psi.JavaDocTokenType.*;
@@ -30,15 +34,17 @@ public class JavaTextExtractor extends TextExtractor {
     .withUnknown(e -> e instanceof PsiInlineDocTag)
     .excluding(e -> EXCLUDED.contains(PsiUtilCore.getElementType(e)))
     .removingIndents(" \t");
+  private static final Pattern anyTag = Pattern.compile("</?\\w+[^>]*>");
+  private static final Pattern closingTag = Pattern.compile("</\\w+[^>]*>");
 
   @Override
   public TextContent buildTextContent(@NotNull PsiElement root, @NotNull Set<TextContent.TextDomain> allowedDomains) {
     if (allowedDomains.contains(DOCUMENTATION)) {
       if (root instanceof PsiDocComment) {
-        return javadocBuilder.excluding(e -> e instanceof PsiDocTagImpl).build(root, DOCUMENTATION);
+        return removeHtml(javadocBuilder.excluding(e -> e instanceof PsiDocTagImpl).build(root, DOCUMENTATION));
       }
       if (root instanceof PsiDocTagImpl) {
-        return javadocBuilder.build(root, DOCUMENTATION);
+        return removeHtml(javadocBuilder.build(root, DOCUMENTATION));
       }
     }
 
@@ -58,4 +64,28 @@ public class JavaTextExtractor extends TextExtractor {
     return null;
   }
 
+  private static TextContent removeHtml(@Nullable TextContent content) {
+    if (content == null) return null;
+
+    while (true) {
+      Matcher matcher = closingTag.matcher(content);
+      if (!matcher.find()) break;
+
+      String text = content.toString();
+      String tagName = text.substring(matcher.start() + 2, matcher.end() - 1);
+      int openingTag = text.lastIndexOf("<" + tagName, matcher.start());
+      if (openingTag < 0) break;
+
+      content = content.markUnknown(new TextRange(openingTag, matcher.end()));
+    }
+    
+    while (true) {
+      Matcher matcher = anyTag.matcher(content);
+      if (!matcher.find()) break;
+
+      content = content.markUnknown(new TextRange(matcher.start(), matcher.end()));
+    }
+
+    return content;
+  }
 }
