@@ -121,8 +121,10 @@ public abstract class HistoryDialogModel {
 
       @Override
       public void visit(StructuralChange c) {
-        c.revertOn(root, false);
-        path = c.revertPath(path);
+        if (c.affectsPath(path)) {
+          c.revertOn(root, false);
+          path = c.revertPath(path);
+        }
       }
     });
   }
