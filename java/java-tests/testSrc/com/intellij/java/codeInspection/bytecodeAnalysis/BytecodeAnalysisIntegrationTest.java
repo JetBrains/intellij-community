@@ -79,7 +79,7 @@ public class BytecodeAnalysisIntegrationTest extends LightJavaCodeInsightFixture
         });
 
         sdk = PsiTestUtil.addRootsToJdk(sdk, AnnotationOrderRootType.getInstance(), annotationsRoot);
-        ProjectJdkTable.getInstance().addJdk(sdk);
+        ProjectJdkTable.getInstance().addJdk(sdk, module.getProject());
         model.setSdk(sdk);
       }
 
