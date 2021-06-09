@@ -268,7 +268,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
           h1(SECTION_INDEXING_INFO_TITLE)
           table(className = "two-columns") {
             thead {
-              tr { th("Name"); th("Time") }
+              tr { th("Name"); th("Data") }
             }
             tbody {
               val fileCount = projectIndexingHistory.fileCount
@@ -296,11 +296,14 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               }
 
               val times = projectIndexingHistory.times
-              tr { td("Total updating time"); td(times.totalUpdatingTime.presentableDuration()) }
-              tr { td("Interrupted"); td(times.wasInterrupted.toString()) }
               tr { td("Started at"); td(times.updatingStart.presentableLocalDateTime()) }
+              if (times.indexingReason != null) {
+                tr { td("Reason"); td(times.indexingReason) }
+              }
               tr { td("Finished at"); td(times.updatingEnd.presentableLocalDateTime()) }
+              tr { td("Cancelled?"); td(times.wasInterrupted.toString()) }
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
+              tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
               tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
               tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
               tr { td("Content loading time"); td(times.contentLoadingTime.presentableDuration()) }
