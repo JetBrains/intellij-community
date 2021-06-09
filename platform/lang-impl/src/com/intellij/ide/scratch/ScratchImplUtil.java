@@ -22,7 +22,7 @@ import java.io.IOException;
 /**
  * @author gregsh
  */
-public final class ScratchImplUtil {
+final class ScratchImplUtil {
   private ScratchImplUtil() {
   }
 
