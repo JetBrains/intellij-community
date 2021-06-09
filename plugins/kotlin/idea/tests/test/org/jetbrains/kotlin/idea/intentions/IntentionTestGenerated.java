@@ -2020,6 +2020,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/addPropertyAccessors/both/delegate.kt");
             }
 
+            @TestMetadata("expect.kt")
+            public void testExpect() throws Exception {
+                runTest("idea/testData/intentions/addPropertyAccessors/both/expect.kt");
+            }
+
             @TestMetadata("hasAccessor.kt")
             public void testHasAccessor() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/both/hasAccessor.kt");
@@ -2083,9 +2088,19 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
                 runTest("testData/intentions/addPropertyAccessors/getter/abstract.kt");
             }
 
+            @TestMetadata("const.kt")
+            public void testConst() throws Exception {
+                runTest("idea/testData/intentions/addPropertyAccessors/getter/const.kt");
+            }
+
             @TestMetadata("delegate.kt")
             public void testDelegate() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/getter/delegate.kt");
+            }
+
+            @TestMetadata("expect.kt")
+            public void testExpect() throws Exception {
+                runTest("idea/testData/intentions/addPropertyAccessors/getter/expect.kt");
             }
 
             @TestMetadata("hasAccessor.kt")
@@ -2101,11 +2116,6 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("hasSetter.kt")
             public void testHasSetter() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/getter/hasSetter.kt");
-            }
-
-            @TestMetadata("header.kt")
-            public void testHeader() throws Exception {
-                runTest("testData/intentions/addPropertyAccessors/getter/header.kt");
             }
 
             @TestMetadata("jvmField.kt")
@@ -2159,6 +2169,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             @TestMetadata("delegate.kt")
             public void testDelegate() throws Exception {
                 runTest("testData/intentions/addPropertyAccessors/setter/delegate.kt");
+            }
+
+            @TestMetadata("expect.kt")
+            public void testExpect() throws Exception {
+                runTest("idea/testData/intentions/addPropertyAccessors/setter/expect.kt");
             }
 
             @TestMetadata("hasAccessor.kt")
