@@ -33,6 +33,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.*
 import java.util.concurrent.*
 import java.util.function.Function
+import java.util.function.Supplier
 
 @CompileStatic
 final class BuildTasksImpl extends BuildTasks {
@@ -433,40 +434,47 @@ idea.fatal.error.notification=disabled
     logFreeDiskSpace("before compilation")
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution()
     logFreeDiskSpace("after compilation")
-    def mavenArtifacts = buildContext.productProperties.mavenArtifacts
+    MavenArtifactsProperties mavenArtifacts = buildContext.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
-      buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP) {
-        MavenArtifactsBuilder mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
-        List<String> moduleNames = new ArrayList<>()
-        if (mavenArtifacts.forIdeModules) {
-          Set<String> bundledPlugins = Set.copyOf(buildContext.productProperties.productLayout.bundledPluginModules)
-          moduleNames.addAll(distributionJARsBuilder.platformModules)
-          moduleNames.addAll(buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins))
+      buildContext.executeStep("Generate Maven artifacts", BuildOptions.MAVEN_ARTIFACTS_STEP, new Runnable() {
+        @Override
+        void run() {
+          MavenArtifactsBuilder mavenArtifactsBuilder = new MavenArtifactsBuilder(buildContext)
+          List<String> moduleNames = new ArrayList<>()
+          if (mavenArtifacts.forIdeModules) {
+            Set<String> bundledPlugins = Set.copyOf(buildContext.productProperties.productLayout.bundledPluginModules)
+            moduleNames.addAll(distributionJARsBuilder.platformModules)
+            moduleNames.addAll(buildContext.productProperties.productLayout.getIncludedPluginModules(bundledPlugins))
+          }
+          moduleNames.addAll(mavenArtifacts.additionalModules)
+          if (!moduleNames.isEmpty()) {
+            mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
+          }
+          if (!mavenArtifacts.proprietaryModules.isEmpty()) {
+            mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, 'proprietary-maven-artifacts')
+          }
         }
-        moduleNames.addAll(mavenArtifacts.additionalModules)
-        if (!moduleNames.isEmpty()) {
-          mavenArtifactsBuilder.generateMavenArtifacts(moduleNames, 'maven-artifacts')
-        }
-        if (!mavenArtifacts.proprietaryModules.isEmpty()) {
-          mavenArtifactsBuilder.generateMavenArtifacts(mavenArtifacts.proprietaryModules, 'proprietary-maven-artifacts')
-        }
-      }
+      })
     }
 
-    buildContext.messages.block("Build platform and plugin JARs") {
-      if (buildContext.shouldBuildDistributions()) {
-        distributionJARsBuilder.buildJARs()
-        DistributionJARsBuilder.buildAdditionalArtifacts(buildContext, distributionJARsBuilder.projectStructureMapping)
-        scramble(buildContext)
-        DistributionJARsBuilder.reorderJars(buildContext)
+    buildContext.messages.block("Build platform and plugin JARs", new Supplier<Void>() {
+      @Override
+      Void get() {
+        if (buildContext.shouldBuildDistributions()) {
+           distributionJARsBuilder.buildJARs()
+           DistributionJARsBuilder.buildAdditionalArtifacts(buildContext, distributionJARsBuilder.projectStructureMapping)
+           scramble(buildContext)
+           DistributionJARsBuilder.reorderJars(buildContext)
+         }
+         else {
+           buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
+           DistributionJARsBuilder.reorderJars(buildContext)
+           DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
+           distributionJARsBuilder.buildNonBundledPlugins(true)
+         }
+        return null
       }
-      else {
-        buildContext.messages.info("Skipped building product distributions because 'intellij.build.target.os' property is set to '$BuildOptions.OS_NONE'")
-        DistributionJARsBuilder.reorderJars(buildContext)
-        DistributionJARsBuilder.createBuildSearchableOptionsTask(distributionJARsBuilder.getModulesForPluginsToPublish()).execute(buildContext)
-        distributionJARsBuilder.buildNonBundledPlugins(true)
-      }
-    }
+    })
 
     if (buildContext.shouldBuildDistributions()) {
       setupJBre()
