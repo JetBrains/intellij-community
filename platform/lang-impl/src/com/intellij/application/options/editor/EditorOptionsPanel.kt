@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.editor
 
 import com.intellij.application.options.editor.EditorCaretStopPolicyItem.*
@@ -196,14 +196,6 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
               row { radioButton(message("editor.options.prefer.moving.caret.line.to.minimize.editor.scrolling"), value = true) }
             }
           }
-        }
-      }
-      titledRow(message("group.limits")) {
-        row(message("editbox.recent.files.limit")) {
-          intTextField(uiSettings::recentFilesLimit, range = 1..500, columns = 4)
-        }
-        row(message("editbox.recent.locations.limit")) {
-          intTextField(uiSettings::recentLocationsLimit, range = 1..100, columns = 4)
         }
       }
       titledRow(message("group.richcopy")) {
