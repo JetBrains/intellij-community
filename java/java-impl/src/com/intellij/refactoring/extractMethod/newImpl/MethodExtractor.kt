@@ -269,10 +269,10 @@ class MethodExtractor {
       )
     method.body?.replace(codeBlock)
 
-    val parameters = dependencies.inputParameters.map { it.references.first() }.joinToString { it.text }
-    val methodCall = findExtractQualifier(dependencies) + "(" + parameters + ")"
+    val parameters = dependencies.inputParameters.map { it.references.first() }
 
-    val callBuilder = CallBuilder(dependencies.project, dependencies.elements.first().context)
+    val callBuilder = CallBuilder(dependencies.project, dependencies.elements.first())
+    val methodCall = callBuilder.createMethodCall(method, parameters).text
     val expressionElement = (dependencies.elements.singleOrNull() as? PsiExpression)
     val callElements = if (expressionElement != null) {
       callBuilder.buildExpressionCall(methodCall, dependencies.dataOutput)
@@ -331,20 +331,5 @@ class MethodExtractor {
       val publisher = project.messageBus.syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
       publisher.refactoringStarted(refactoringId, data)
     }
-  }
-}
-
-private fun findExtractQualifier(options: ExtractOptions): String {
-  val callText = options.methodName + "(" + options.inputParameters.map { it.references.first() }.joinToString { it.text } + ")"
-  val factory = PsiElementFactory.getInstance(options.project)
-  val callElement = factory.createExpressionFromText(callText, options.elements.first().context) as PsiMethodCallExpression
-  val targetClassName = options.anchor.containingClass?.name
-  val member = findClassMember(options.elements.first())
-  if (member == options.anchor) return options.methodName
-  return if (callElement.resolveMethod() != null && !options.isConstructor) {
-    if (options.isStatic) "$targetClassName.${options.methodName}" else "$targetClassName.this.${options.methodName}"
-  }
-  else {
-    options.methodName
   }
 }
