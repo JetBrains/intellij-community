@@ -185,6 +185,10 @@ Includes the following features:</p>
     <registryKey key="markdown.structure.view.list.visibility"
                  defaultValue="false"
                  description="Determines whether lists are visible in the document structure view"/>
+
+    <registryKey key="markdown.google.docs.import.paste.link.enable"
+                 defaultValue="false"
+                 description="Temporarily disabling the ability to import documents from Google by inserting a link"/>
   </extensions>
 
   <applicationListeners>
