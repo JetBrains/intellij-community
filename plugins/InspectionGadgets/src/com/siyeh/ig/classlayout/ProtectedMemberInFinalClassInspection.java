@@ -22,9 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
-import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.ConflictsDialog;
@@ -44,14 +42,9 @@ import static com.intellij.psi.PsiModifier.PRIVATE;
 public class ProtectedMemberInFinalClassInspection extends BaseInspection {
 
   @Override
-  public InspectionGadgetsFix buildFix(Object... infos) {
-    return new RemoveModifierFix((String)infos[0]);
-  }
-
-  @Override
   protected InspectionGadgetsFix @NotNull [] buildFixes(Object... infos) {
     return new InspectionGadgetsFix[] {
-      new RemoveModifierFix((String)infos[0]),
+      new RemoveModifierFix(PsiModifier.PROTECTED),
       new MakePrivateFix()
     };
   }
@@ -99,25 +92,6 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
         return;
       }
       final MultiMap<PsiElement, String> conflicts = new MultiMap<>();
-      if (member instanceof PsiMethod) {
-        final PsiMethod method = (PsiMethod)member;
-        SuperMethodsSearch.search(method, method.getContainingClass(), true, false).forEach(
-          methodSignature -> {
-            final PsiMethod superMethod = methodSignature.getMethod();
-              conflicts.putValue(superMethod, InspectionGadgetsBundle.message(
-                "0.will.have.incompatible.access.privileges.with.super.1",
-                RefactoringUIUtil.getDescription(method, false),
-                RefactoringUIUtil.getDescription(superMethod, true)));
-            return true;
-          });
-        OverridingMethodsSearch.search(method).forEach(overridingMethod -> {
-          conflicts.putValue(overridingMethod, InspectionGadgetsBundle.message(
-            "0.will.no.longer.be.visible.from.overriding.1",
-            RefactoringUIUtil.getDescription(method, false),
-            RefactoringUIUtil.getDescription(overridingMethod, true)));
-          return false;
-        });
-      }
       final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
       modifierListCopy.setModifierProperty(PRIVATE, true);
       final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
@@ -166,7 +140,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
           !PsiSuperMethodImplUtil.getHierarchicalMethodSignature((PsiMethod)member).getSuperSignatures().isEmpty()) {
         return;
       }
-      registerModifierError(PsiModifier.PROTECTED, member, PsiModifier.PROTECTED);
+      registerModifierError(PsiModifier.PROTECTED, member);
     }
 
     @Override
