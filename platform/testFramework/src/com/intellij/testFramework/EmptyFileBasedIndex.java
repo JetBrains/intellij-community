@@ -151,6 +151,12 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
   }
 
   @Override
+  public @Nullable IdFilter extractIdFilter(@Nullable GlobalSearchScope scope,
+                                            @Nullable Project project) {
+    return null;
+  }
+
+  @Override
   public IdFilter projectIndexableFiles(@Nullable Project project) {
     return null;
   }

@@ -25,6 +25,9 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   @Test
   fun `test small set`() {
     val size = 5
+
+    assertTrue(size < CompactVirtualFileSet.INT_SET_LIMIT)
+    assertTrue(size < CompactVirtualFileSet.BIT_SET_LIMIT)
     doSimpleAddTest(size)
   }
 
@@ -59,6 +62,35 @@ class CompactVirtualFileSetTest : BareTestFixtureTestCase() {
   @Test
   fun `test big addAll()`() {
     doSimpleAddAllTest(sliceSize = 777)
+  }
+
+  @Test
+  fun `test retainAll() of standard collection`() {
+
+  }
+
+  @Test
+  fun `test retainAll() of small CVFSet`() {
+    val size = 5
+    assertTrue(size < CompactVirtualFileSet.INT_SET_LIMIT)
+    assertTrue(size < CompactVirtualFileSet.BIT_SET_LIMIT)
+
+  }
+
+  @Test
+  fun `test retainAll() of reasonable CVFSet`() {
+    val size = 50
+
+    assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
+    assertTrue(size < CompactVirtualFileSet.BIT_SET_LIMIT)
+  }
+
+  @Test
+  fun `test retainAll() of big CVFSet`() {
+    val size = 2000
+
+    assertTrue(size > CompactVirtualFileSet.INT_SET_LIMIT)
+    assertTrue(size > CompactVirtualFileSet.BIT_SET_LIMIT)
   }
 
   private fun doSimpleAddAllTest(sliceSize: Int) {

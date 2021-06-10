@@ -30,7 +30,7 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
   @Override
   public void processNames(@NotNull Processor<? super String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     if (!StubIndex.getInstance().processAllKeys(PyClassNameIndex.KEY, processor, scope, filter)) return;
-    if (!FileBasedIndex.getInstance().processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter)) return;
+    FileBasedIndex.getInstance().processAllKeys(PyModuleNameIndex.NAME, processor, scope, filter);
   }
 
   @Override
@@ -42,11 +42,11 @@ public class PyGotoClassContributor implements GotoClassContributor, ChooseByNam
     IdFilter filter = parameters.getIdFilter();
     PsiManager psiManager = PsiManager.getInstance(project);
     if (!StubIndex.getInstance().processElements(PyClassNameIndex.KEY, name, project, scope, filter, PyClass.class, processor)) return;
-    if (!FileBasedIndex.getInstance().getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
+    FileBasedIndex.getInstance().getFilesWithKey(PyModuleNameIndex.NAME, Collections.singleton(name), file -> {
       if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
       PsiFile psiFile = psiManager.findFile(file);
       return !(psiFile instanceof PyFile) || processor.process(psiFile);
-    }, scope)) return;
+    }, scope);
   }
 
   @Nullable
