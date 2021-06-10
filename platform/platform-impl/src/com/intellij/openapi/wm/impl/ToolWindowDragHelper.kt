@@ -18,10 +18,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import java.awt.Dimension
-import java.awt.Graphics
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
 import java.awt.image.BufferedImage
@@ -47,8 +44,8 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   private var mySourceIsHeader = false
 
   companion object {
-    val THUMB_SIZE = 220
-    val THUMB_OPACITY = .85f
+    const val THUMB_SIZE = 220
+    const val THUMB_OPACITY = .85f
   }
 
   override fun isDragOut(event: MouseEvent, dragToScreenPoint: Point, startScreenPoint: Point): Boolean {
@@ -131,8 +128,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     val width: Double = image.getWidth(null).toDouble()
     val height: Double = image.getHeight(null).toDouble()
     if (width <= THUMB_SIZE && height <= THUMB_SIZE) return image
-    val ratio: Double
-    ratio = if (width > height) {
+    val ratio: Double = if (width > height) {
       THUMB_SIZE / width
     }
     else {
@@ -322,7 +318,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
     }
     myHighlighter.isVisible = stripe != null
     if (stripe != null && myInitialButton != null) {
-      //if (myLastStripe != stripe) {
+      //if (myLastStripe != stripe) {//attempt to rotate thumb image on fly to show actual button view if user drops it right here
       //  val button = object : StripeButton(myPane, toolWindow) {
       //    override fun getAnchor(): ToolWindowAnchor {
       //      return stripe.anchor
@@ -416,7 +412,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
 
     fun updateIcon(image: BufferedImage) {
       with(contentPane as JLabel) {
-        icon = IconUtil.createImageIcon(image)
+        icon = IconUtil.createImageIcon(image as Image)
         revalidate()
         pack()
         repaint()
