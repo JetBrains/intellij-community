@@ -134,7 +134,7 @@ class LanguageToolChecker : TextChecker() {
               }
             }
 
-            if (it.corrections.any { correction -> correction.isNullOrBlank().not() }) {
+            if (it.corrections.isNotEmpty()) {
               tr {
                 td {
                   valign = "top"

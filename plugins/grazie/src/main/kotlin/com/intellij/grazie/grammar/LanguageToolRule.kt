@@ -27,55 +27,34 @@ internal class LanguageToolRule(
       cellspacing = "0"
       style = "width:100%;"
 
-      ltRule.incorrectExamples?.let { examples ->
-        if (examples.isNotEmpty()) {
-          val accepted = ArrayList<IncorrectExample>()
-          // remove very similar examples
-          examples.forEach { example ->
-            if (accepted.none { it.text.isSimilarTo(example.text) }) {
-              accepted.add(example)
-            }
+      ltRule.incorrectExamples.forEach { example ->
+        tr {
+          td {
+            valign = "top"
+            style = "padding-bottom: 5px; padding-right: 5px; color: gray;"
+            +GrazieBundle.message("grazie.settings.grammar.rule.incorrect")
           }
+          td {
+            style = "padding-bottom: 5px; width: 100%;"
+            toIncorrectHtml(example)
+          }
+        }
 
-          accepted.forEach { example ->
-            tr {
-              td {
-                valign = "top"
-                style = "padding-bottom: 5px; padding-right: 5px; color: gray;"
-                +GrazieBundle.message("grazie.settings.grammar.rule.incorrect")
-              }
-              td {
-                style = "padding-bottom: 5px; width: 100%;"
-                toIncorrectHtml(example)
-              }
+        if (example.corrections.any { it.isNotBlank() }) {
+          tr {
+            td {
+              valign = "top"
+              style = "padding-bottom: 10px; padding-right: 5px; color: gray;"
+              +GrazieBundle.message("grazie.settings.grammar.rule.correct")
             }
-
-            if (example.corrections.any { it.isNotBlank() }) {
-              tr {
-                td {
-                  valign = "top"
-                  style = "padding-bottom: 10px; padding-right: 5px; color: gray;"
-                  +GrazieBundle.message("grazie.settings.grammar.rule.correct")
-                }
-                td {
-                  style = "padding-bottom: 10px; width: 100%;"
-                  toCorrectHtml(example)
-                }
-              }
+            td {
+              style = "padding-bottom: 10px; width: 100%;"
+              toCorrectHtml(example)
             }
           }
         }
       }
     }
     +GrazieBundle.message("grazie.tooltip.powered-by-language-tool")
-  }
-
-  companion object {
-    private const val MINIMUM_EXAMPLE_SIMILARITY = 0.2
-    private val levenshtein = LevenshteinDistance()
-
-    private fun CharSequence.isSimilarTo(sequence: CharSequence): Boolean {
-      return levenshtein.apply(this, sequence).toDouble() / length < MINIMUM_EXAMPLE_SIMILARITY
-    }
   }
 }
