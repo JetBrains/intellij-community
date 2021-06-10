@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.history;
 
 import com.intellij.openapi.application.ReadAction;
@@ -119,7 +119,7 @@ public final class GitLogUtil {
     h.addParameters(STDIN);
     h.endOptions();
 
-    sendHashesToStdin(vcs, hashes, h);
+    sendHashesToStdin(hashes, h);
 
     GitLogOutputSplitter<GitLogRecord> outputHandler = new GitLogOutputSplitter<>(h, parser, (record) -> {
       List<Hash> parents = new SmartList<>();
@@ -240,7 +240,7 @@ public final class GitLogUtil {
                                         record.getCommitterName(), record.getCommitterEmail(), record.getAuthorTimeStamp());
   }
 
-  static void sendHashesToStdin(@NotNull GitVcs vcs, @NotNull Collection<String> hashes, @NotNull GitHandler handler) {
+  static void sendHashesToStdin(@NotNull Collection<String> hashes, @NotNull GitHandler handler) {
     // if we close this stream, RunnerMediator won't be able to send ctrl+c to the process in order to softly kill it
     // see RunnerMediator.sendCtrlEventThroughStream
     handler.setInputProcessor(GitHandlerInputProcessorUtil.writeLines(hashes,
