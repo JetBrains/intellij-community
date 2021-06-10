@@ -120,12 +120,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testBuildMainProject() {
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(
-      mainRoot,
-      apiMainRoot,
-      apiJar,
-      implMainRoot,
-      implJar);
+    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(apiJar, implJar);
 
     assertThat(generatedFiles).containsOnly(
       Map.entry(mainRoot, Set.of("my/pack/App.class", "my/pack/Other.class")),
@@ -148,13 +143,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testBuildTestProject() {
     compileModules("project.test");
 
-    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(
-      mainRoot,
-      testRoot,
-      apiMainRoot,
-      apiJar,
-      implMainRoot,
-      implJar);
+    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(apiJar, implJar);
 
     assertThat(generatedFiles)
       .containsOnly(
@@ -183,7 +172,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(mainRoot);
+    assertThat(dirtyOutputRoots).isEmpty();
     assertThat(generatedFiles)
       .containsOnly(Map.entry(mainRoot, Set.of("my/pack/App.class")));
   }
@@ -236,10 +225,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder(
-      implMainRoot,
-      implJar
-    );
+    assertThat(dirtyOutputRoots).as("Dirty output roots").containsOnly(implJar);
 
     // note that the "implJar" is not marked as a generated file
     // this is jar itself is marked as dirty root
@@ -255,7 +241,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.test");
 
-    assertThat(dirtyOutputRoots).containsExactlyInAnyOrder(testRoot);
+    assertThat(dirtyOutputRoots).isEmpty();
     assertThat(generatedFiles).as("Generated files").containsOnly(
       Map.entry(testRoot, Set.of("my/pack/AppTest.class"))
     );
@@ -284,7 +270,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).containsExactly(mainRoot);
+    assertThat(dirtyOutputRoots).isEmpty();
     assertThat(generatedFiles).containsOnly(Map.entry(mainRoot, Set.of("my/pack/App.class")));
   }
 
@@ -297,7 +283,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).containsExactly("build/resources/main");
+    assertThat(dirtyOutputRoots).isEmpty();
     assertThat(generatedFiles).containsOnly(Map.entry("build/resources/main", Set.of("runtime.properties")));
   }
 
