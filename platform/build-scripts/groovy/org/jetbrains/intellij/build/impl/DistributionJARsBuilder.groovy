@@ -655,7 +655,7 @@ final class DistributionJARsBuilder {
       @Override
       Object get() {
         buildPlugins(layoutBuilder, List.of(helpPlugin), pluginsToPublishDir, null)
-        BuildHelper.zip(buildContext, destFile, List.of(pluginsToPublishDir.resolve(directory)), directory)
+        BuildHelper.zipWithPrefix(buildContext, destFile, List.of(pluginsToPublishDir.resolve(directory)), directory)
         return null
       }
     })

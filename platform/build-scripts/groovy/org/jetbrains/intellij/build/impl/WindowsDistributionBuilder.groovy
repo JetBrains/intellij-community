@@ -282,7 +282,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
       String zipPrefix = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
       List<Path> dirs = [Paths.get(buildContext.paths.distAll), winDistPath, productJsonDir] + jreDirectoryPaths
-      BuildHelper.zip(buildContext, targetFile, dirs, zipPrefix)
+      BuildHelper.zipWithPrefix(buildContext, targetFile, dirs, zipPrefix)
       ProductInfoValidator.checkInArchive(buildContext, targetFile.toString(), zipPrefix)
       buildContext.notifyArtifactWasBuilt(targetFile)
       return targetFile
