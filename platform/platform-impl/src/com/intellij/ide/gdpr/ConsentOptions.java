@@ -29,6 +29,7 @@ public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
+  private static final String EAP_MARKETING_ID_PREFIX = "eap.";
   private final boolean myIsEAP;
 
   private static final class InstanceHolder {
@@ -105,7 +106,8 @@ public final class ConsentOptions {
     return myIsEAP;
   }
 
-  public @Nullable Consent getUsageStatsConsent() {
+  @Nullable
+  public Consent getUsageStatsConsent() {
     return loadDefaultConsents().get(STATISTICS_OPTION_ID);
   }
 
@@ -114,8 +116,7 @@ public final class ConsentOptions {
    * Statistics sending for JetBrains EAP builds is managed by a separate flag.
    */
   public Permission isSendingUsageStatsAllowed() {
-    final ConfirmedConsent confirmedConsent = getConfirmedConsent(STATISTICS_OPTION_ID);
-    return confirmedConsent == null? Permission.UNDEFINED : confirmedConsent.isAccepted()? Permission.YES : Permission.NO;
+    return getPermission(STATISTICS_OPTION_ID);
   }
 
   /**
@@ -123,7 +124,25 @@ public final class ConsentOptions {
    * Statistics sending for JetBrains EAP builds is managed by a separate flag.
    */
   public boolean setSendingUsageStatsAllowed(boolean allowed) {
-    final Consent defConsent = loadDefaultConsents().get(STATISTICS_OPTION_ID);
+    return setPermission(STATISTICS_OPTION_ID, allowed);
+  }
+
+  public Permission isEAPMarketingAllowed(String productCode) {
+    return getPermission(EAP_MARKETING_ID_PREFIX + productCode.toLowerCase(Locale.ENGLISH));
+  }
+
+  public boolean setEAPMarketingAllowed(String productCode, boolean allowed) {
+    return setPermission(EAP_MARKETING_ID_PREFIX + productCode.toLowerCase(Locale.ENGLISH), allowed);
+  }
+
+  @NotNull
+  private Permission getPermission(final String consentId) {
+    final ConfirmedConsent confirmedConsent = getConfirmedConsent(consentId);
+    return confirmedConsent == null? Permission.UNDEFINED : confirmedConsent.isAccepted()? Permission.YES : Permission.NO;
+  }
+
+  private boolean setPermission(final String consentId, boolean allowed) {
+    final Consent defConsent = loadDefaultConsents().get(consentId);
     if (defConsent != null && !defConsent.isDeleted()) {
       saveConfirmedConsents(Collections.singleton(new ConfirmedConsent(defConsent.getId(), defConsent.getVersion(), allowed, 0L)));
       return true;
@@ -230,6 +249,21 @@ public final class ConsentOptions {
         LOG.info(e);
       }
     }
+  }
+
+  public boolean needsReconfirm(Consent consent) {
+    if (consent == null || consent.isDeleted() || myIsEAP && STATISTICS_OPTION_ID.equals(consent.getId())) {
+      // for EA builds there is a different option for statistics sending management
+      return false;
+    }
+    final ConfirmedConsent confirmedConsent = loadConfirmedConsents().get(consent.getId());
+    if (confirmedConsent == null) {
+      return true;
+    }
+    final Version confirmedVersion = confirmedConsent.getVersion();
+    final Version defaultVersion = consent.getVersion();
+    // consider only major version differences
+    return confirmedVersion.isOlder(defaultVersion) && confirmedVersion.getMajor() != defaultVersion.getMajor();
   }
 
   private static boolean needReconfirm(Map<String, Consent> defaults, Map<String, ConfirmedConsent> confirmed) {

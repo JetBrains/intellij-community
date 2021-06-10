@@ -68,19 +68,19 @@ private fun applyUserAgreement(ui: AgreementUi, agreement: EndUserAgreement.Docu
 }
 
 private fun applyDataSharing(ui: AgreementUi, bundle: ResourceBundle): AgreementUi {
-  val dataSharingConsent = ConsentOptions.getInstance().consents.first[0] // todo: select consent by its ID and don't take just the first one
-  ui.setText(prepareConsentsHtmlText(dataSharingConsent, bundle))
+  val options = ConsentOptions.getInstance()
+  val usageConsentId = options.usageStatsConsent?.id
+  val dataSharingConsent = options.consents.first.find { it.id.equals(usageConsentId) }
+  ui.setText(prepareConsentsHtmlText(dataSharingConsent!!, bundle))
     .setTitle(bundle.getString("dataSharing.dialog.title"))
     .clearBottomPanel()
     .focusToText()
     .setAcceptButton(bundle.getString("dataSharing.dialog.accept")) {
-      val consentToSave = dataSharingConsent.derive(true)
-      AppUIUtil.saveConsents(listOf(consentToSave))
+      AppUIUtil.saveConsents(listOf(dataSharingConsent.derive(true)))
       it.close(DialogWrapper.OK_EXIT_CODE)
     }
     .setDeclineButton(bundle.getString("dataSharing.dialog.decline")) {
-      val consentToSave = dataSharingConsent.derive(false)
-      AppUIUtil.saveConsents(listOf(consentToSave))
+      AppUIUtil.saveConsents(listOf(dataSharingConsent.derive(false)))
       it.close(DialogWrapper.CANCEL_EXIT_CODE)
     }
   return ui
