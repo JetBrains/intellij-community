@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.rmi.ssl;
 
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -232,7 +232,7 @@ final class DerParser {
 
   public final static int UTC_TIME = 0x17;
 
-  protected InputStream in;
+  private InputStream in;
 
   /**
    * Create a new DER decoder from an input stream.
@@ -332,10 +332,10 @@ final class DerParser {
  */
 final class Asn1Object {
 
-  protected final int type;
-  protected final int length;
-  protected final byte[] value;
-  protected final int tag;
+  private final int type;
+  private final int length;
+  private final byte[] value;
+  private final int tag;
 
   /**
    * Construct a ASN.1 TLV. The TLV could be either a

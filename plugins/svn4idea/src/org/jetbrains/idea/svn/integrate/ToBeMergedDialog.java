@@ -491,7 +491,7 @@ public class ToBeMergedDialog extends DialogWrapper {
       }));
     }
 
-    protected void customizeCellRenderer(JTable table, Object value, boolean selected) {
+    private void customizeCellRenderer(JTable table, Object value, boolean selected) {
       myPanel.removeAll();
       myPanel.setBackground(null);
       myRenderer.clear();

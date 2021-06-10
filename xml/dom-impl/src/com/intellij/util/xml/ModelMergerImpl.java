@@ -385,7 +385,7 @@ public final class ModelMergerImpl implements ModelMerger {
     return results;
   }
 
-  protected Object mergeImplementations(final Class returnType, final List<Object> implementations) {
+  private Object mergeImplementations(final Class returnType, final List<Object> implementations) {
     for (int i = myMergingStrategies.size() - 1; i >= 0; i--) {
       if (ReflectionUtil.isAssignable(myMergingStrategyClasses.get(i), returnType)) {
         final Object o = myMergingStrategies.get(i).mergeChildren(returnType, implementations);

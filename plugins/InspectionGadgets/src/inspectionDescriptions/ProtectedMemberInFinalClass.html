@@ -2,6 +2,28 @@
 <body>
 Reports <code>protected</code> members in <code>final</code>classes.
 <p>It is better to declare such members <code>private</code> or package-visible instead.</p>
+Reports <code>protected</code> members in the <code>final</code>classes.
+As the <code>final</code> classes are closed to inheritance marking the method as <code>protected</code>
+is confusing. It's better to declare such members as <code>private</code> or package-visible instead.
+<p><b>Example:</b></p>
+<pre><code>record Bar(int a, int b) {
+  protected sum() { 
+     return a + b;
+  }
+}
+</code>
+</pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>record Bar(int a, int b) {
+  sum() { 
+     return a + b;
+  }
+}
+</code></pre>
+
+As shown in the example, class may be explicitly or implicitly <code>final</code> e.g., <code>enum</code> or <code>record</code>.
+
 <!-- tooltip end -->
+<p>
 </body>
 </html>

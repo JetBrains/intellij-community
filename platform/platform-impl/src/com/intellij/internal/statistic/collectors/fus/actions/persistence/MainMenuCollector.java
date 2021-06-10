@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.internal.statistic.utils.PluginInfo;
@@ -51,7 +51,7 @@ public final class MainMenuCollector {
     }
   }
 
-  protected String getPathFromMenuSelectionManager(@NotNull AnAction action) {
+  private String getPathFromMenuSelectionManager(@NotNull AnAction action) {
     List<String> groups = Arrays.stream(MenuSelectionManager.defaultManager().getSelectedPath())
       .filter(o -> o instanceof ActionMenu)
       .map(o -> ((ActionMenu)o).getAnAction().getTemplateText())
@@ -78,7 +78,7 @@ public final class MainMenuCollector {
   }
 
   @NotNull
-  protected String getPathFromMenuItem(AWTEvent e, AnAction action) {
+  private String getPathFromMenuItem(AWTEvent e, AnAction action) {
     Object src = e.getSource();
     ArrayList<String> items = new ArrayList<>();
     while (src instanceof MenuItem) {

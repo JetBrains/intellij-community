@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.facet.impl.ui;
 
 import com.intellij.facet.ui.FacetEditor;
@@ -152,7 +152,7 @@ public class MultipleFacetEditorHelperImpl implements MultipleFacetEditorHelper 
       myCommon.getDocument().addDocumentListener(myListener);
     }
 
-    protected void textChanged() {
+    private void textChanged() {
       String value = myCommon.getText();
       for (int i = 0; i < myTextFields.size(); i++) {
         myTextFields.get(i).setText(value.length() == 0 ? myInitialValues.get(i) : value);
