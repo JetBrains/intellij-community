@@ -16,6 +16,7 @@ import com.intellij.ui.awt.RelativePoint
 import java.awt.Point
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import kotlin.properties.Delegates
 
 internal class FloatingToolbar(val editor: Editor) : Disposable {
   companion object {
@@ -27,6 +28,7 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
   private val mouseMotionListener = MouseMotionListener()
 
   private var hint: LightweightHint? = null
+  private var buttonSize: Int by Delegates.notNull()
   private var lastSelection: String? = null
 
 
@@ -47,6 +49,7 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
     val toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.EDITOR_TOOLBAR, leftGroup, true)
     toolbar.setTargetComponent(editor.contentComponent)
     toolbar.setReservePlaceAutoPopupIcon(false)
+    buttonSize = toolbar.maxButtonHeight
 
     val newHint = LightweightHint(toolbar.component)
     newHint.setForceShowAsPopup(true)
@@ -90,7 +93,9 @@ internal class FloatingToolbar(val editor: Editor) : Disposable {
     val hintPos = HintManagerImpl.getInstanceImpl().getHintPosition(hint, editor, HintManager.DEFAULT)
     // because of `hint.setForceShowAsPopup(true)`, HintManager.ABOVE does not place the hint above
     // the hint remains on the line, so we need to move it up ourselves
-    hintPos.translate(0, -(hint.component.preferredSize.height + verticalGap))
+    val dy = -(hint.component.preferredSize.height + verticalGap)
+    val dx = buttonSize * -2
+    hintPos.translate(dx, dy)
     return hintPos
   }
 
