@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -11,8 +11,6 @@ import com.intellij.compiler.chainsSearch.context.ChainCompletionContext;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.compiler.*;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
@@ -48,31 +46,15 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
           closeReaderIfNeeded(IndexCloseReason.COMPILATION_STARTED);
         }
       }
-    });
-
-    connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
-      @Override
-      public void compilationFinished(boolean aborted, int errors, int warnings, @NotNull CompileContext compileContext) {
-        compilationFinished(compileContext);
-      }
 
       @Override
-      public void automakeCompilationFinished(int errors, int warnings, @NotNull CompileContext compileContext) {
-        compilationFinished(compileContext);
-      }
-
-      private void compilationFinished(@NotNull CompileContext context) {
-        if (!(context instanceof DummyCompileContext) && context.getProject() == myProject) {
-          Runnable compilationFinished = () -> {
-            final Module[] compilationModules = ReadAction.compute(() -> {
-              if (myProject.isDisposed()) return null;
-              CompileScope scope = context.getCompileScope();
-              return scope == null ? null : scope.getAffectedModules();
-            });
-            if (compilationModules == null) return;
-            openReaderIfNeeded(IndexOpenReason.COMPILATION_FINISHED);
-          };
-          executeOnBuildThread(compilationFinished);
+      public void buildFinished(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {
+        if (project == myProject) {
+          executeOnBuildThread(() -> {
+            if (!ReadAction.compute(() -> myProject.isDisposed())) {
+              openReaderIfNeeded(IndexOpenReason.COMPILATION_FINISHED);
+            }
+          });
         }
       }
     });
