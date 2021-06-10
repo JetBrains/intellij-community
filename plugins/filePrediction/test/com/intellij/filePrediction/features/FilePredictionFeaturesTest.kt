@@ -101,8 +101,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
       "similarity_path_prefix",
       "similarity_relative_path_prefix",
       "history_size",
-      "history_uni_mle",
-      "history_bi_mle"
+      "history_tri_mle"
     )
   }
 

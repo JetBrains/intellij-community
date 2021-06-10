@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 
 internal class FileNavigationLogger : CounterUsagesCollector() {
   companion object {
-    private val GROUP = EventLogGroup("file.prediction", 12)
+    private val GROUP = EventLogGroup("file.prediction", 13)
 
     private var session: IntEventField = EventFields.Int("session")
     private var performance: LongListEventField = EventFields.LongList("performance")
