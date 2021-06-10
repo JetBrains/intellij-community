@@ -95,17 +95,22 @@ private val CLASS_NAMES = ReferenceOpenHashSet(arrayOf(
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val EXTRA_STRINGS = Arrays.asList(
-  "id", "order", "os", PluginManagerCore.VENDOR_JETBRAINS,
+  "id", "order", "os", PluginManagerCore.VENDOR_JETBRAINS, PluginManagerCore.VENDOR_JETBRAINS_SRO,
   "com.intellij.applicationService",
   "com.intellij.projectService",
   "com.intellij.moduleService",
   "com.intellij.postStartupActivity",
   "com.intellij",
+  "com.intellij.java",
+  "com.intellij.modules.java",
+  "Docker",
+  "intellij.clouds.docker.file",
+  "intellij.clouds.docker.remoteRun",
 )
 
 private class MyXmlInterner : XmlInterner {
   @Suppress("SSBasedInspection")
-  private val strings = ObjectOpenHashSet<String>(CLASS_NAMES.size + EXTRA_STRINGS.size)
+  private val strings = ObjectOpenHashSet<String>(256)
 
   @JvmField val visitedFiles = ArrayList<String>(3)
 

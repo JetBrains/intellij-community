@@ -137,6 +137,16 @@ class ClassLoaderConfigurator(
         log.error(PluginLoadingError.formatErrorMessage(plugin, "requires missing class loader for $p"))
       }
       else if (loader !== coreLoader) {
+        // e.g. `.env` plugin in an old format and doesn't explicitly specify dependency on a new extracted modules
+        if (!plugin.isBundled && dependency.pluginId.idString == "Docker") {
+          pluginSet.findEnabledModule("intellij.clouds.docker.file")?.classLoader?.let {
+            loaders.add(it)
+          }
+          pluginSet.findEnabledModule("intellij.clouds.docker.remoteRun")?.classLoader?.let {
+            loaders.add(it)
+          }
+        }
+        // must be after adding implicit module class loaders
         loaders.add(loader)
       }
 
