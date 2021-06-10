@@ -55,6 +55,13 @@ class SimplifiableCallChainInspection : AbstractCallChainChecker() {
                     val parent = expression.parent
                     if (parent !is KtPostfixExpression || parent.operationToken != KtTokens.EXCLEXCL) return@check false
                 }
+                if (conversion.firstName == "map" && conversion.secondName == "sum" && conversion.replacement == "sumOf") {
+                    val type = firstResolvedCall.lastFunctionalArgumentReturnType(context) ?: return@check false
+                    if (!KotlinBuiltIns.isInt(type) && !KotlinBuiltIns.isLong(type) &&
+                        !KotlinBuiltIns.isUInt(type) && !KotlinBuiltIns.isULong(type) &&
+                        !KotlinBuiltIns.isDouble(type)
+                    ) return@check false
+                }
                 return@check conversion.enableSuspendFunctionCall || !containsSuspendFunctionCall(firstResolvedCall, context)
             } ?: return
 

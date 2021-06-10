@@ -1944,6 +1944,36 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSum2.kt");
             }
 
+            @TestMetadata("mapSumWithDouble.kt")
+            public void testMapSumWithDouble() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithDouble.kt");
+            }
+
+            @TestMetadata("mapSumWithFloat.kt")
+            public void testMapSumWithFloat() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithFloat.kt");
+            }
+
+            @TestMetadata("mapSumWithInt.kt")
+            public void testMapSumWithInt() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithInt.kt");
+            }
+
+            @TestMetadata("mapSumWithLong.kt")
+            public void testMapSumWithLong() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithLong.kt");
+            }
+
+            @TestMetadata("mapSumWithUInt.kt")
+            public void testMapSumWithUInt() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithUInt.kt");
+            }
+
+            @TestMetadata("mapSumWithULong.kt")
+            public void testMapSumWithULong() throws Exception {
+                runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapSumWithULong.kt");
+            }
+
             @TestMetadata("mapToMap.kt")
             public void testMapToMap() throws Exception {
                 runTest("testData/inspectionsLocal/collections/simplifiableCallChain/mapToMap.kt");
