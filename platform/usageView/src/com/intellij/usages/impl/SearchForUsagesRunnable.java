@@ -344,7 +344,7 @@ final class SearchForUsagesRunnable implements Runnable {
     searchUsages(findUsagesStartedShown);
     endSearchForUsages(findUsagesStartedShown);
 
-    snapshot.logResponsivenessSinceCreation("Find Usages");
+    snapshot.logResponsivenessSinceCreation("Find Usages in " + myProject.getName());
   }
 
   private void searchUsages(@NotNull final AtomicBoolean findStartedBalloonShown) {

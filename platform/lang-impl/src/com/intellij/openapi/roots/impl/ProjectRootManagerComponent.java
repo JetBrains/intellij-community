@@ -324,16 +324,15 @@ public class ProjectRootManagerComponent extends ProjectRootManagerImpl implemen
     if (!myStartupActivityPerformed) return;
 
     if (changeType == RootsChangeType.ROOTS_REMOVED) {
-      logRootChanges("some project roots were removed");
+      logRootChanges("Project roots of " + myProject.getName() + " were removed");
       return;
     }
 
-    String reason = "Project roots have changed";
-    logRootChanges(reason);
+    logRootChanges("Project roots of " + myProject.getName() + " have changed");
 
     DumbServiceImpl dumbService = DumbServiceImpl.getInstance(myProject);
     if (FileBasedIndex.getInstance() instanceof FileBasedIndexImpl) {
-      dumbService.queueTask(new UnindexedFilesUpdater(myProject, reason));
+      dumbService.queueTask(new UnindexedFilesUpdater(myProject, "Project roots have changed"));
     }
   }
 
