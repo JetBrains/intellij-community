@@ -14,45 +14,37 @@ class ConvertStringTemplateToBuildStringIntention : SelfTargetingIntention<KtStr
     KotlinBundle.lazyMessage("convert.string.template.to.build.string"),
 ), LowPriorityAction {
     override fun isApplicableTo(element: KtStringTemplateExpression, caretOffset: Int): Boolean {
-        return canBeConvertedToBuildStringCall(element)
+        return !element.text.startsWith("\"\"\"")
     }
 
     override fun applyTo(element: KtStringTemplateExpression, editor: Editor?) {
-        convertToBuildStringCall(element, listOf(element))
-    }
-
-    companion object {
-        fun canBeConvertedToBuildStringCall(expression: KtStringTemplateExpression): Boolean = !expression.text.startsWith("\"\"\"")
-
-        fun convertToBuildStringCall(expressionToBeConverted: KtExpression, stringTemplateExpressions: List<KtStringTemplateExpression>) {
-            val entries: MutableList<MutableList<KtStringTemplateEntry>> = mutableListOf()
-            var lastEntry: KtStringTemplateEntry? = null
-            stringTemplateExpressions.flatMap { it.entries.toList() }.forEachIndexed { index, entry ->
-                if (index == 0 || entry is KtStringTemplateEntryWithExpression || lastEntry is KtStringTemplateEntryWithExpression) {
-                    entries.add(mutableListOf(entry))
-                } else {
-                    entries.last().add(entry)
-                }
-                lastEntry = entry
+        val entries: MutableList<MutableList<KtStringTemplateEntry>> = mutableListOf()
+        var lastEntry: KtStringTemplateEntry? = null
+        element.entries.forEachIndexed { index, entry ->
+            if (index == 0 || entry is KtStringTemplateEntryWithExpression || lastEntry is KtStringTemplateEntryWithExpression) {
+                entries.add(mutableListOf(entry))
+            } else {
+                entries.last().add(entry)
             }
-            val buildStringCall = KtPsiFactory(expressionToBeConverted).buildExpression {
-                appendFixedText("kotlin.text.buildString {\n")
-                entries.forEach {
-                    val singleEntry = it.singleOrNull()
-                    appendFixedText("append(")
-                    if (singleEntry is KtStringTemplateEntryWithExpression) {
-                        appendExpression(singleEntry.expression)
-                    } else {
-                        appendFixedText("\"")
-                        it.forEach { entry -> appendFixedText(entry.text) }
-                        appendFixedText("\"")
-                    }
-                    appendFixedText(")\n")
-                }
-                appendFixedText("}")
-            }
-            val replaced = expressionToBeConverted.replaced(buildStringCall)
-            ShortenReferences.DEFAULT.process(replaced)
+            lastEntry = entry
         }
+        val buildStringCall = KtPsiFactory(element).buildExpression {
+            appendFixedText("kotlin.text.buildString {\n")
+            entries.forEach {
+                val singleEntry = it.singleOrNull()
+                appendFixedText("append(")
+                if (singleEntry is KtStringTemplateEntryWithExpression) {
+                    appendExpression(singleEntry.expression)
+                } else {
+                    appendFixedText("\"")
+                    it.forEach { entry -> appendFixedText(entry.text) }
+                    appendFixedText("\"")
+                }
+                appendFixedText(")\n")
+            }
+            appendFixedText("}")
+        }
+        val replaced = element.replaced(buildStringCall)
+        ShortenReferences.DEFAULT.process(replaced)
     }
 }
