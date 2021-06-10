@@ -2,7 +2,7 @@ package com.intellij.filePrediction.features
 
 import com.intellij.filePrediction.FileReferencesComputationResult
 import com.intellij.filePrediction.candidates.FilePredictionCandidateSource.OPEN
-import com.intellij.filePrediction.features.history.ngram.FilePredictionNGramFeatures
+import com.intellij.filePrediction.features.history.FilePredictionNGramFeatures
 import com.intellij.filePrediction.predictor.FilePredictionCandidate
 import com.intellij.filePrediction.predictor.FilePredictionCompressedCandidatesHolder
 import com.intellij.filePrediction.references.FilePredictionReferencesHelper
