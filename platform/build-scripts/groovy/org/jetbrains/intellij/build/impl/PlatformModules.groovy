@@ -8,9 +8,6 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.library.JpsLibrary
-import org.jetbrains.jps.model.module.JpsModule
-import org.jetbrains.jps.model.module.JpsModuleSourceRoot
-import org.jetbrains.jps.util.JpsPathUtil
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 
@@ -250,12 +247,14 @@ final class PlatformModules {
 
   private static @Nullable List<String> getProductPluginContentModules(@NotNull BuildContext buildContext,
                                                                        @NotNull String productPluginSourceModuleName) {
-    JpsModule productPluginSourceModule = buildContext.findRequiredModule(productPluginSourceModuleName)
-
-    Path file = findProductPluginDescriptorFile(productPluginSourceModule, buildContext)
+    Path file = buildContext.findFileInModuleSources(productPluginSourceModuleName, "META-INF/plugin.xml")
     if (file == null) {
-      buildContext.messages.warning("Cannot find product plugin descriptor in '$productPluginSourceModule.name' module")
-      return null
+      file = buildContext.findFileInModuleSources(productPluginSourceModuleName,
+                                                  "META-INF/" + buildContext.productProperties.platformPrefix + "Plugin.xml")
+      if (file == null) {
+        buildContext.messages.warning("Cannot find product plugin descriptor in '$productPluginSourceModuleName' module")
+        return null
+      }
     }
 
     Files.newInputStream(file).withCloseable {
@@ -272,21 +271,5 @@ final class PlatformModules {
       }
       return null
     }
-  }
-
-  private static @Nullable Path findProductPluginDescriptorFile(JpsModule productPluginSourceModule, BuildContext buildContext) {
-    for (JpsModuleSourceRoot sourceRoot : productPluginSourceModule.sourceRoots) {
-      Path metaInfDir = Path.of(JpsPathUtil.urlToPath(sourceRoot.getUrl()), "META-INF")
-      Path file = metaInfDir.resolve("plugin.xml")
-      if (Files.exists(file)) {
-        return file
-      }
-
-      file = metaInfDir.resolve(buildContext.productProperties.platformPrefix + "Plugin.xml")
-      if (Files.exists(file)) {
-        return file
-      }
-    }
-    return null
   }
 }
