@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -32,10 +32,10 @@ public interface CompilerReferenceService {
    * @return a scope where given element has no references in code. This scope might be not a strict scope where element is not occurred.
    */
   @Nullable
-  GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element);
+  GlobalSearchScope getScopeWithCodeReferences(@NotNull PsiElement element);
 
   @Nullable
-  GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement aClass);
+  GlobalSearchScope getScopeWithImplicitToStringCodeReferences(@NotNull PsiElement aClass);
 
   /**
    * @return a hierarchy of direct inheritors built on compilation time.

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.search.refIndex
 
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.ScopeWithReferencesOnCompilation
 import com.intellij.compiler.backwardRefs.DirtyScopeHolder
 import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.BuildManagerListener
@@ -19,13 +20,11 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.openapi.vfs.VirtualFileWithId
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
@@ -280,15 +279,6 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
             getInstanceIfEnable(project)
         }
     }
-}
-
-private class ScopeWithReferencesOnCompilation(
-    private val referentFiles: Set<VirtualFile>,
-    private val index: ProjectFileIndex,
-) : GlobalSearchScope() {
-    override fun contains(file: VirtualFile): Boolean = file is VirtualFileWithId && index.isInSourceContent(file) && file in referentFiles
-    override fun isSearchInModuleContent(aModule: Module): Boolean = true
-    override fun isSearchInLibraries(): Boolean = false
 }
 
 private fun executeOnBuildThread(compilationFinished: () -> Unit): Unit =

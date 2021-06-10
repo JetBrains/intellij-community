@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -39,10 +39,10 @@ public final class ImplicitToStringSearcher extends QueryExecutorBase<PsiExpress
     Map<VirtualFile, int[]> fileOffsets = new HashMap<>();
     dumbService.runReadActionInSmartMode(() -> {
       CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstanceIfEnabled(project);
-      GlobalSearchScope scopeWithoutToString = compilerReferenceService == null ? null : compilerReferenceService.getScopeWithoutImplicitToStringCodeReferences(aClass);
-      GlobalSearchScope filter = GlobalSearchScopeUtil.toGlobalSearchScope(scopeWithoutToString == null
+      GlobalSearchScope scopeWithToString = compilerReferenceService == null ? null : compilerReferenceService.getScopeWithImplicitToStringCodeReferences(aClass);
+      GlobalSearchScope filter = GlobalSearchScopeUtil.toGlobalSearchScope(scopeWithToString == null
                                                                            ? parameters.getSearchScope()
-                                                                           : GlobalSearchScope.notScope(scopeWithoutToString).intersectWith(parameters.getSearchScope()), project);
+                                                                           : scopeWithToString.intersectWith(parameters.getSearchScope()), project);
       FileBasedIndex.getInstance().processValues(JavaBinaryPlusExpressionIndex.INDEX_ID, Boolean.TRUE, null,
                                                  (file, value) -> {
                                                    ProgressManager.checkCanceled();

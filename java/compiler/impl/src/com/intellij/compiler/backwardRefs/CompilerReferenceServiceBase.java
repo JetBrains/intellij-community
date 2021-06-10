@@ -138,14 +138,14 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   @Nullable
   @Override
-  public GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element) {
+  public GlobalSearchScope getScopeWithCodeReferences(@NotNull PsiElement element) {
     if (!isServiceEnabledFor(element)) return null;
 
     try {
       return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(buildScopeWithoutReferences(getReferentFiles(element)),
-                                                  PsiModificationTracker.MODIFICATION_COUNT,
-                                                  this));
+                                                () -> CachedValueProvider.Result.create(buildScopeWithReferences(getReferentFiles(element)),
+                                                                                        PsiModificationTracker.MODIFICATION_COUNT,
+                                                                                        this));
     }
     catch (RuntimeException e1) {
       return onException(e1, "scope without code references");
@@ -154,13 +154,13 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
   @Nullable
   @Override
-  public GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement aClass) {
+  public GlobalSearchScope getScopeWithImplicitToStringCodeReferences(@NotNull PsiElement aClass) {
     if (!isServiceEnabledFor(aClass)) return null;
 
     try {
       return CachedValuesManager.getCachedValue(aClass,
                                                 () -> CachedValueProvider.Result.create(
-                                                  buildScopeWithoutReferences(getReferentFileIdsViaImplicitToString(aClass)),
+                                                  buildScopeWithReferences(getReferentFileIdsViaImplicitToString(aClass)),
                                                   PsiModificationTracker.MODIFICATION_COUNT,
                                                   this));
     }
@@ -306,12 +306,16 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   @Nullable
-  private GlobalSearchScope buildScopeWithoutReferences(@Nullable Set<VirtualFile> referentFiles) {
+  private GlobalSearchScope buildScopeWithReferences(@Nullable Set<VirtualFile> referentFiles) {
     if (referentFiles == null) return null;
 
-    return getScopeRestrictedByFileTypes(new ScopeWithoutReferencesOnCompilation(referentFiles, myProjectFileIndex).intersectWith(notScope(
-      myDirtyScopeHolder.getDirtyScope())),
-                                         myFileTypes.toArray(FileType.EMPTY_ARRAY));
+    ScopeWithReferencesOnCompilation scopeWithReferences = new ScopeWithReferencesOnCompilation(referentFiles, myProjectFileIndex);
+
+    GlobalSearchScope knownDirtyScope = myDirtyScopeHolder.getDirtyScope();
+    GlobalSearchScope wholeClearScope = notScope(knownDirtyScope);
+    GlobalSearchScope knownCleanScope = getScopeRestrictedByFileTypes(wholeClearScope, myFileTypes.toArray(FileType.EMPTY_ARRAY));
+    GlobalSearchScope wholeDirtyScope = notScope(knownCleanScope);
+    return scopeWithReferences.uniteWith(wholeDirtyScope);
   }
 
   @VisibleForTesting
@@ -493,18 +497,18 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
   }
 
-  protected static final class ScopeWithoutReferencesOnCompilation extends GlobalSearchScope {
+  public static final class ScopeWithReferencesOnCompilation extends GlobalSearchScope {
     private final Set<VirtualFile> myReferentFiles;
     private final ProjectFileIndex myIndex;
 
-    public ScopeWithoutReferencesOnCompilation(Set<VirtualFile> files, ProjectFileIndex index) {
+    public ScopeWithReferencesOnCompilation(Set<VirtualFile> files, ProjectFileIndex index) {
       myReferentFiles = files;
       myIndex = index;
     }
 
     @Override
     public boolean contains(@NotNull VirtualFile file) {
-      return file instanceof VirtualFileWithId && myIndex.isInSourceContent(file) && !myReferentFiles.contains(file);
+      return file instanceof VirtualFileWithId && myIndex.isInSourceContent(file) && myReferentFiles.contains(file);
     }
 
     @Override
