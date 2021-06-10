@@ -114,9 +114,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testBuildMainProject() {
     compileModules("project.main");
 
-    List<String> expected = newArrayList(mainRoot,
-                                         apiMainRoot, apiJar,
-                                         implMainRoot);
+    List<String> expected = newArrayList(apiJar);
 
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);
@@ -151,11 +149,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
   public void testBuildTestProject() {
     compileModules("project.test");
 
-    List<String> expected = newArrayList(mainRoot,
-                                         testRoot,
-                                         apiMainRoot,
-                                         apiJar,
-                                         implMainRoot);
+    List<String> expected = newArrayList(apiJar);
 
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);
@@ -197,12 +191,12 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    List<String> expected = newArrayList(mainRoot);
     if (isGradleNewerOrSameAs("7.1")) {
-      expected.add("build/tmp/compileJava/previous-compilation-data.bin");
+      assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder("build/tmp/compileJava/previous-compilation-data.bin");
+    } else {
+      assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
     }
 
-    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles)
       .containsOnly(Map.entry(mainRoot, Set.of("my/pack/App.class")));
   }
@@ -255,7 +249,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    List<String> expected = newArrayList(implMainRoot);
+    List<String> expected = new ArrayList<>();
 
     if (isGradleOlderThan("3.5")) {
       expected.add(implJar);
@@ -280,11 +274,12 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.test");
 
-    List<String> expected = newArrayList(testRoot);
+    List<String> expected = new ArrayList<>();
     if (isGradleNewerOrSameAs("7.1")) {
-      expected.add("build/tmp/compileTestJava/previous-compilation-data.bin");
+      assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder("build/tmp/compileTestJava/previous-compilation-data.bin");
+    } else {
+      assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
     }
-    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles).as("Generated files").containsOnly(
       Map.entry(testRoot, Set.of("my/pack/AppTest.class"))
     );
@@ -313,12 +308,11 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    List<String> expected = newArrayList(mainRoot);
     if (isGradleNewerOrSameAs("7.1")) {
-      expected.add("build/tmp/compileJava/previous-compilation-data.bin");
+      assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrder("build/tmp/compileJava/previous-compilation-data.bin");
+    } else {
+      assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
     }
-
-    assertThat(dirtyOutputRoots).as("Dirty output roots").containsExactlyInAnyOrderElementsOf(expected);
     assertThat(generatedFiles).containsOnly(Map.entry(mainRoot, Set.of("my/pack/App.class")));
   }
 
@@ -331,7 +325,7 @@ public class GradleImprovedHotswapDetectionTest extends GradleDelegatedBuildTest
     clearOutputs();
     compileModules("project.main");
 
-    assertThat(dirtyOutputRoots).containsExactly("build/resources/main");
+    assertThat(dirtyOutputRoots).as("Dirty output roots").isEmpty();
     assertThat(generatedFiles).containsOnly(Map.entry("build/resources/main", Set.of("runtime.properties")));
   }
 
