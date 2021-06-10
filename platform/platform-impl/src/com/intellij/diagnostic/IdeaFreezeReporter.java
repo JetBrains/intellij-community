@@ -11,6 +11,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.openapi.extensions.ExtensionNotApplicableException;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -28,6 +29,8 @@ import java.util.*;
 import java.util.function.Function;
 
 final class IdeaFreezeReporter implements IdePerformanceListener {
+  private static final ExtensionPointName<FreezeProfiler> EP_NAME = new ExtensionPointName<>("com.intellij.diagnostic.freezeProfiler");
+
   private static final int FREEZE_THRESHOLD = ApplicationManager.getApplication().isInternal() ? 15 : 25; // seconds
   private static final String REPORT_PREFIX = "report";
   private static final String DUMP_PREFIX = "dump";
@@ -96,7 +99,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
               addDumpsAttachments(dumps, Function.identity(), attachments);
 
-              FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(dir)));
+              EP_NAME.forEachExtensionSafe(p -> attachments.addAll(p.getAttachments(dir)));
 
               if (message != null && throwable != null && !attachments.isEmpty()) {
                 IdeaLoggingEvent event = LogMessage.createEvent(throwable, message, attachments.toArray(Attachment.EMPTY_ARRAY));
@@ -158,10 +161,10 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
         @Override
         public void stop() {
           super.stop();
-          FreezeProfiler.EP_NAME.forEachExtensionSafe(FreezeProfiler::stop);
+          EP_NAME.forEachExtensionSafe(FreezeProfiler::stop);
         }
       };
-      FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> p.start(reportDir));
+      EP_NAME.forEachExtensionSafe(p -> p.start(reportDir));
     }
   }
 
@@ -215,7 +218,7 @@ final class IdeaFreezeReporter implements IdePerformanceListener {
 
     List<Attachment> extraAttachments = new ArrayList<>();
     if (reportDir != null) {
-      FreezeProfiler.EP_NAME.forEachExtensionSafe(p -> extraAttachments.addAll(p.getAttachments(reportDir)));
+      EP_NAME.forEachExtensionSafe(p -> extraAttachments.addAll(p.getAttachments(reportDir)));
     }
 
     cleanup(reportDir);

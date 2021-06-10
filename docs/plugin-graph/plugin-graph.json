@@ -439,6 +439,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "rq",
+    "name": "intellij.go.profiler",
+    "n": "i.go.profiler",
+    "package": "com.goide.profiler",
+    "sourceModule": "intellij.go.profiler",
+    "descriptor": "goland/intellij-go/profiler/resources/intellij.go.profiler.xml",
+    "parent": "cae",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "hz",
     "name": "intellij.go.sharedIndexes.bundled",
     "n": "i.go.sharedIndexes.bundled",
@@ -1794,6 +1806,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cLR",
+    "n": "com.intellij.spring.boot"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "LR",
     "name": "intellij.spring.boot.core",
     "n": "i.spring.boot.core",
@@ -1801,7 +1819,20 @@
     "sourceModule": "intellij.spring.boot.core",
     "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.spring.boot",
-    "type": 1
+    "parent": "cLR",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "b8",
+    "name": "intellij.spring.boot.core/jsp",
+    "n": "i.spring.boot.core/jsp",
+    "package": "com.intellij.spring.boot.model.autoconfigure.jam.el",
+    "sourceModule": "intellij.spring.boot.core",
+    "descriptor": "plugins/spring/spring-boot/spring-boot-core/resources/intellij.spring.boot.core.jsp.xml",
+    "parent": "cLR",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2640,6 +2671,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "ae_rq",
+    "source": "ae",
+    "target": "rq",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "FJ_QD",
     "source": "FJ",
     "target": "QD",
@@ -3048,6 +3087,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "LR_b8",
+    "source": "LR",
+    "target": "b8",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "2Z_6z",
     "source": "2Z",
     "target": "6z",
@@ -3320,6 +3367,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "rq_TN",
+    "source": "rq",
+    "target": "TN",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "QD_Se",
     "source": "QD",
     "target": "Se",
@@ -3408,17 +3463,25 @@
 }, {
   "group": "edges",
   "data": {
-    "id": "Se_S9",
+    "id": "Se_TN",
     "source": "Se",
-    "target": "S9",
+    "target": "TN",
     "type": 0
   }
 }, {
   "group": "edges",
   "data": {
-    "id": "Se_TN",
+    "id": "Se_ZS",
     "source": "Se",
-    "target": "TN",
+    "target": "ZS",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Se_S9",
+    "source": "Se",
+    "target": "S9",
     "type": 0
   }
 }, {
@@ -4051,6 +4114,22 @@
     "id": "QO_wC",
     "source": "QO",
     "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "b8_wC",
+    "source": "b8",
+    "target": "wC",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "b8_RM",
+    "source": "b8",
+    "target": "RM",
     "type": 0
   }
 }, {
