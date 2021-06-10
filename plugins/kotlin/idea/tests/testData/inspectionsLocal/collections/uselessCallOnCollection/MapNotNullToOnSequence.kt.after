@@ -1,0 +1,3 @@
+// WITH_RUNTIME
+
+val x = sequenceOf("1").mapTo(mutableSetOf()) { it.toInt() }
