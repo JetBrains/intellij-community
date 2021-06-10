@@ -51,7 +51,7 @@ class GrazieAddExceptionQuickFix(
 
     action.redo()
 
-    UpdateHighlightersUtil.removeHighlightersWithRange(file.viewProvider.document, project, underlineRange.range)
+    underlineRange.range?.let { UpdateHighlightersUtil.removeHighlightersWithRange(file.viewProvider.document, project, it) }
 
     UndoManager.getInstance(project).undoableActionPerformed(action)
   }

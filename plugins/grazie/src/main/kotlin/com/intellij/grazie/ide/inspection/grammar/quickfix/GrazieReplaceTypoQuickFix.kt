@@ -53,7 +53,7 @@ internal class GrazieReplaceTypoQuickFix(
       val replacementRange = this@GrazieReplaceTypoQuickFix.replacementRange.range ?: return
       val document = file.viewProvider.document ?: return
 
-      UpdateHighlightersUtil.removeHighlightersWithRange(document, project, underlineRange.range)
+      underlineRange.range?.let { UpdateHighlightersUtil.removeHighlightersWithRange(document, project, it) }
 
       document.replaceString(replacementRange.startOffset, replacementRange.endOffset, suggestion)
     }

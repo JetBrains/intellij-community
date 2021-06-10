@@ -545,13 +545,17 @@ public final class UpdateHighlightersUtil {
   }
 
   /**
-   * Remove all highlighters with the given range from {@link DocumentMarkupModel}.
+   * Remove all highlighters with exactly the given range from {@link DocumentMarkupModel}.
    * This might be useful in quick fixes and intention actions to provide immediate feedback.
+   * Note that all highlighters at the given range are removed, not only the ones produced by your inspection,
+   * but most likely that will look fine:
+   * they'll be restored when the new highlighting pass is finished.
+   * This method currently works in O(highlighter_count) time.
    */
-  public static void removeHighlightersWithRange(@Nullable Document document, @NotNull Project project, @Nullable Segment range) {
-    if (document == null || range == null) return;
-
+  public static void removeHighlightersWithRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
     var model = DocumentMarkupModel.forDocument(document, project, false);
+    if (model == null) return;
+
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
       if (range.getStartOffset() == highlighter.getStartOffset() && range.getEndOffset() == highlighter.getEndOffset()) {
         model.removeHighlighter(highlighter);
