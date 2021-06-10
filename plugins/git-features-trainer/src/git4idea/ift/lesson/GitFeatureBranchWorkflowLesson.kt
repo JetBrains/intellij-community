@@ -8,13 +8,13 @@ import com.intellij.dvcs.push.ui.PushLog
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.Balloon
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsConfiguration
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
-import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.status.TextPanel
@@ -25,15 +25,14 @@ import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 import git4idea.i18n.GitBundle
 import git4idea.ift.GitLessonsBundle
+import git4idea.ift.GitLessonsUtil.checkoutBranch
 import git4idea.ift.GitLessonsUtil.highlightLatestCommitsFromBranch
 import git4idea.ift.GitLessonsUtil.resetGitLogWindow
 import git4idea.ift.GitLessonsUtil.triggerOnNotification
 import git4idea.ift.GitProjectUtil
-import git4idea.index.actions.runProcess
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import training.dsl.*
-import training.project.ProjectUtils
 import java.io.File
 import javax.swing.JDialog
 
@@ -43,7 +42,6 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
   private val branchName = "feature"
   private val main = "main"
   private lateinit var repository: GitRepository
-  private val remoteProjectName = "RemoteLearningProject"
 
   private val firstFileAddition = """
     |
@@ -63,20 +61,10 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
 
   override val lessonContent: LessonContext.() -> Unit = {
     prepareRuntimeTask {
-      val remoteProjectRoot = reCreateRemoteProjectDir()
-      GitProjectUtil.copyGitProject(File(remoteProjectRoot.path))
-      runProcess(project, "", false) {
-        val git = Git.getInstance()
-        repository = GitRepositoryManager.getInstance(project).repositories.first()
-        git.addRemote(repository, remoteName, remoteProjectRoot.path).throwOnError()
-        repository.update()
-        git.fetch(repository, repository.remotes.first(), emptyList())
-        git.checkout(repository, branchName, null, false, false).throwOnError()
-        git.setUpstream(repository, "$remoteName/$main", main)
-        repository.update()
-      }
-      modifyRemoteProject(remoteProjectRoot)
+      repository = GitRepositoryManager.getInstance(project).repositories.first()
     }
+
+    checkoutBranch(branchName)
 
     task("ActivateVersionControlToolWindow") {
       text(GitLessonsBundle.message("git.feature.branch.introduction.1", strong(branchName), strong(main), action(it)))
@@ -203,6 +191,12 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
   }
 
+  override fun prepare(project: Project) {
+    super.prepare(project)
+    val remoteProjectRoot = GitProjectUtil.createRemoteProject(remoteName, project)
+    modifyRemoteProject(remoteProjectRoot)
+  }
+
   private fun TaskContext.triggerOnBranchesPopupShown() {
     triggerByUiComponentAndHighlight(false, false) { ui: EngravedLabel ->
       val branchesInRepoText = DvcsBundle.message("branch.popup.vcs.name.branches.in.repo", GitBundle.message("git4idea.vcs.name"),
@@ -211,24 +205,12 @@ class GitFeatureBranchWorkflowLesson : GitLesson("Git.BasicWorkflow", GitLessons
     }
   }
 
-  private fun TaskRuntimeContext.reCreateRemoteProjectDir(): File {
-    val learnProjectPath = ProjectUtils.getProjectRoot(project).toNioPath()
-    val learnProjectRoot = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(learnProjectPath)
-                           ?: error("Learning project not found")
-    val projectsRoot = learnProjectRoot.parent.toNioPath().toFile()
-    val remoteProjectRoot = projectsRoot.listFiles()?.find { it.name == remoteProjectName }.let {
-      it?.apply { deleteRecursively() } ?: File(projectsRoot.absolutePath + File.separator + remoteProjectName)
-    }
-    remoteProjectRoot.mkdir()
-    return remoteProjectRoot
-  }
-
   private fun modifyRemoteProject(remoteProjectRoot: File) {
     val files = mutableListOf<File>()
     FileUtil.processFilesRecursively(remoteProjectRoot, files::add)
     val firstFile = files.find { it.name == "sphinx_cat.yml" }
     val secondFile = files.find { it.name == "puss_in_boots.yml" }
-    if(firstFile != null && secondFile != null) {
+    if (firstFile != null && secondFile != null) {
       gitChange(remoteProjectRoot, "user.name", "JonnyCatsville")
       gitChange(remoteProjectRoot, "user.email", "jonny.catsville@meow.com")
       createOneFileCommit(remoteProjectRoot, firstFile, "Add new fact about sphinx's behaviour") {
