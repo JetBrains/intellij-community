@@ -1,11 +1,11 @@
 <html>
 <body>
 Reports <code>public</code> constructors.
-Some coding standards discourage <code>public</code> constructors, preferring to use
-<code>static</code> factory methods.
+<p>Some coding standards discourage the use of <code>public</code> constructors and recommend
+<code>static</code> factory methods instead.
 This way the implementation can be swapped out without affecting the call sites.
-<p>Example:</p>
-<pre>
+<p><b>Example:</b></p>
+<pre><code>
   class Test {
     private String name;
 
@@ -21,9 +21,9 @@ This way the implementation can be swapped out without affecting the call sites.
         new Test("str").test();
     }
   }
-</pre>
-<p>After quick-fix is applied, the result will be:</p>
-<pre>
+</code></pre>
+<p>After quick-fix is applied:</p>
+<pre><code>
   class Test {
     private String name;
 
@@ -43,8 +43,7 @@ This way the implementation can be swapped out without affecting the call sites.
         getInstance("str").test();
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>
