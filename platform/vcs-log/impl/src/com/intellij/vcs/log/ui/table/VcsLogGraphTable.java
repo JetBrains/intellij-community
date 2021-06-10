@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.google.common.primitives.Ints;
@@ -153,6 +153,10 @@ public class VcsLogGraphTable extends TableWithProgress implements DataProvider,
         return VcsLogGraphTable.this.isSpeedSearchEnabled() && super.isSpeedSearchEnabled();
       }
     };
+  }
+
+  public @NotNull @NonNls String getId() {
+    return myId;
   }
 
   @Override

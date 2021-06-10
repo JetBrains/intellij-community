@@ -7,7 +7,7 @@ import com.intellij.vcs.log.ui.table.column.VcsLogCustomColumn
 import git4idea.i18n.GitBundle.message
 import javax.swing.table.TableCellRenderer
 
-internal class GitCommitSignatureLogColumn : VcsLogCustomColumn<Any> {
+internal class GitCommitSignatureLogColumn : VcsLogCustomColumn<GitCommitSignature> {
   override val id: String get() = "Git.CommitSignature"
   override val localizedName: String get() = message("column.name.commit.signature")
 
@@ -16,9 +16,18 @@ internal class GitCommitSignatureLogColumn : VcsLogCustomColumn<Any> {
 
   override val isResizable: Boolean get() = false
 
-  override fun getValue(model: GraphTableModel, row: Int): Any = ""
-  override fun getStubValue(model: GraphTableModel): Any = ""
+  override fun getValue(model: GraphTableModel, row: Int): GitCommitSignature {
+    val trackerService = GitCommitSignatureTrackerService.getInstance(model.logData.project)
 
-  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer =
-    GitCommitSignatureLogCellRenderer()
+    return trackerService.getCommitSignature(model, row) ?: GitCommitSignature.NoSignature
+  }
+
+  override fun getStubValue(model: GraphTableModel): GitCommitSignature = GitCommitSignature.NoSignature
+
+  override fun createTableCellRenderer(table: VcsLogGraphTable): TableCellRenderer {
+    val trackerService = GitCommitSignatureTrackerService.getInstance(table.logData.project)
+    trackerService.ensureTracking(table, this)
+
+    return GitCommitSignatureLogCellRenderer()
+  }
 }
