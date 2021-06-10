@@ -136,7 +136,7 @@ private class AlertDialog(project: Project?,
   private val myRootLayout = RootLayout()
   private val myIconComponent = JLabel(myIcon)
   private var myTitleComponent: JComponent? = null
-  private val mySouthPanel = JPanel(BorderLayout(0, JBUI.scale(20)))
+  private val mySouthPanel = JPanel(BorderLayout())
   private val myButtonsPanel = JPanel()
   private val myCloseButton: JComponent?
   private val myButtons = ArrayList<JButton>()
@@ -280,13 +280,14 @@ private class AlertDialog(project: Project?,
 
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
       val titleComponent = createTextComponent(myTitle)
-      titleComponent.font = JBFont.create(titleComponent.font).biggerOn(3f).asBold()
+      titleComponent.font = JBFont.h3().asBold()
       myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
     }
 
     if (!StringUtil.isEmpty(myMessage)) {
       val messageComponent = createTextComponent(myMessage)
+      messageComponent.font = JBFont.medium()
       val lines = myMessage!!.length / 100
       val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
       if (scrollPane is JScrollPane) {
@@ -305,21 +306,22 @@ private class AlertDialog(project: Project?,
 
     createSouthPanel()
 
+    val buttonInsets = if (myButtons.size > 0) myButtons[0].insets else Insets(0, 0, 0, 0)
+
     if (myCheckBoxDoNotShowDialog == null || !myCheckBoxDoNotShowDialog.isVisible) {
-      myButtonsPanel.border = JBUI.Borders.emptyTop(12)
+      // vertical gap 22 between text message and visual part of buttons
+      myButtonsPanel.border = JBUI.Borders.emptyTop(14 - buttonInsets.top) // +8 from textPanel layout vGap
     }
     else {
       val wrapper = Wrapper(myCheckBoxDoNotShowDialog)
-      wrapper.border = JBUI.Borders.empty(8, 0)
+      // vertical gap 12 between text message and check box
+      wrapper.border = JBUI.Borders.emptyTop(4) // +8 from textPanel layout vGap
+      // vertical gap 22 between check box and visual part of buttons
+      (mySouthPanel.layout as BorderLayout).vgap = JBUI.scale(22 - buttonInsets.top)
       mySouthPanel.add(wrapper, BorderLayout.NORTH)
     }
 
-    var gap = 12
-    if (myButtons.size > 1) {
-      val insets = myButtons[0].insets
-      gap -= insets.left + insets.right
-    }
-    myButtonsPanel.layout = HorizontalLayout(JBUI.scale(gap))
+    myButtonsPanel.layout = HorizontalLayout(JBUI.scale(12 - buttonInsets.left - buttonInsets.right))
 
     for (button in myButtons) {
       button.parent.remove(button)
@@ -348,7 +350,10 @@ private class AlertDialog(project: Project?,
     return component
   }
 
-  override fun createContentPaneBorder(): Border = if (myIsTitleComponent) JBUI.Borders.empty(20) else JBUI.Borders.empty(14, 20, 20, 20)
+  override fun createContentPaneBorder(): Border {
+    val insets = JButton().insets
+    return JBUI.Borders.empty(if (myIsTitleComponent) 20 else 14, 20, 18 - insets.bottom, 20 - insets.right)
+  }
 
   override fun createActions(): Array<Action> {
     val actions: MutableList<Action> = ArrayList()
@@ -375,10 +380,12 @@ private class AlertDialog(project: Project?,
     return actions.toTypedArray()
   }
 
-  override fun createJButtonForAction(action: Action?): JButton {
+  override fun createJButtonForAction(action: Action): JButton {
     val button = super.createJButtonForAction(action)
     val size = button.preferredSize
-    val width100 = JBUI.scale(100)
+    val insets = button.insets
+
+    val width100 = JBUI.scale(100) + insets.left + insets.right
     if (size.width < width100) {
       size.width = width100
     }
@@ -388,11 +395,15 @@ private class AlertDialog(project: Project?,
         size.width += 2 * diffWidth
       }
     }
-    val insets = button.insets
-    size.width += insets.left + insets.right
-    size.height += insets.top + insets.bottom
+
+    val height28 = JBUI.scale(28) + insets.top + insets.bottom
+    if (size.height < height28) {
+      size.height = height28
+    }
+
     button.preferredSize = size
     myButtons.add(button)
+
     return button
   }
 
