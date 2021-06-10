@@ -84,7 +84,7 @@ public final class DfaControlTransferValue extends DfaValue {
     /** 
      * @return next instruction states assuming no traps 
      */
-    default @NotNull List<DfaInstructionState> dispatch(DfaMemoryState state, DataFlowInterpreter interpreter) {
+    default @NotNull List<@NotNull DfaInstructionState> dispatch(@NotNull DfaMemoryState state, @NotNull DataFlowInterpreter interpreter) {
       return Collections.emptyList();
     }
   }

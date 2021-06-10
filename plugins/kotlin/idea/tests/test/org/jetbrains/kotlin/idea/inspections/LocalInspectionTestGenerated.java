@@ -4561,6 +4561,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicRange.kt");
         }
 
+        @TestMetadata("booleanBoxed.kt")
+        public void testBooleanBoxed() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/booleanBoxed.kt");
+        }
+
         @TestMetadata("booleanNot.kt")
         public void testBooleanNot() throws Exception {
             runTest("testData/inspectionsLocal/dfa/booleanNot.kt");
@@ -4581,9 +4586,19 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/boxing3.kt");
         }
 
+        @TestMetadata("breakLoop.kt")
+        public void testBreakLoop() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/breakLoop.kt");
+        }
+
         @TestMetadata("changeLocalInLambda.kt")
         public void testChangeLocalInLambda() throws Exception {
             runTest("testData/inspectionsLocal/dfa/changeLocalInLambda.kt");
+        }
+
+        @TestMetadata("continueLoop.kt")
+        public void testContinueLoop() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/continueLoop.kt");
         }
 
         @TestMetadata("declaration.kt")
@@ -4614,6 +4629,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("elvisSimple.kt")
         public void testElvisSimple() throws Exception {
             runTest("testData/inspectionsLocal/dfa/elvisSimple.kt");
+        }
+
+        @TestMetadata("intBoxed.kt")
+        public void testIntBoxed() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/intBoxed.kt");
         }
 
         @TestMetadata("orRange.kt")

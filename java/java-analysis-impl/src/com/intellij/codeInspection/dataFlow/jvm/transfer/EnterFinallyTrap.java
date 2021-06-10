@@ -30,6 +30,7 @@ public abstract class EnterFinallyTrap implements DfaControlTransferValue.Trap {
     return myBackLinks;
   }
 
+  @Override
   public void link(DfaControlTransferValue instruction) {
     myBackLinks.add(instruction);
   }

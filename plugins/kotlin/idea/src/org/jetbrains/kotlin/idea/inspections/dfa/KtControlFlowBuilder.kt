@@ -2,11 +2,14 @@
 package org.jetbrains.kotlin.idea.inspections.dfa
 
 import com.intellij.codeInspection.dataFlow.TypeConstraints
+import com.intellij.codeInspection.dataFlow.interpreter.DataFlowInterpreter
 import com.intellij.codeInspection.dataFlow.java.inst.*
 import com.intellij.codeInspection.dataFlow.jvm.SpecialField
 import com.intellij.codeInspection.dataFlow.jvm.transfer.ExceptionTransfer
+import com.intellij.codeInspection.dataFlow.jvm.transfer.InstructionTransfer
 import com.intellij.codeInspection.dataFlow.lang.ir.*
 import com.intellij.codeInspection.dataFlow.lang.ir.ControlFlow.DeferredOffset
+import com.intellij.codeInspection.dataFlow.memory.DfaMemoryState
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeBinOp
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet
 import com.intellij.codeInspection.dataFlow.types.DfBooleanType
@@ -14,16 +17,17 @@ import com.intellij.codeInspection.dataFlow.types.DfIntegralType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue
+import com.intellij.codeInspection.dataFlow.value.DfaControlTransferValue.Trap
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory
 import com.intellij.codeInspection.dataFlow.value.RelationType
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiPrimitiveType
+import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.tree.TokenSet
+import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.containers.FList
 import com.intellij.util.containers.FactoryMap
+import org.jetbrains.kotlin.idea.intentions.loopToCallChain.targetLoop
 import org.jetbrains.kotlin.idea.refactoring.move.moveMethod.type
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
@@ -31,6 +35,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.typeUtil.isDouble
 import org.jetbrains.kotlin.types.typeUtil.isFloat
 import org.jetbrains.kotlin.types.typeUtil.isLong
+import org.jetbrains.kotlin.types.typeUtil.makeNotNullable
 import java.util.concurrent.atomic.AtomicInteger
 
 class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpression) {
@@ -63,31 +68,36 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         return flow
     }
 
-    private fun processExpression(expr: KtExpression?) : Unit = when (expr) {
-        null -> pushUnknown()
-        is KtBlockExpression -> processBlock(expr)
-        is KtParenthesizedExpression -> processExpression(expr.expression)
-        is KtBinaryExpression -> processBinaryExpression(expr)
-        is KtPrefixExpression -> processPrefixExpression(expr)
-        is KtCallExpression -> processCallExpression(expr)
-        is KtConstantExpression -> processConstantExpression(expr)
-        is KtSimpleNameExpression -> processReferenceExpression(expr)
-        is KtDotQualifiedExpression -> processQualifiedReferenceExpression(expr)
-        is KtSafeQualifiedExpression -> processQualifiedReferenceExpression(expr)
-        is KtReturnExpression -> processReturnExpression(expr)
-        is KtThrowExpression -> processThrowExpression(expr)
-        is KtIfExpression -> processIfExpression(expr)
-        is KtWhileExpression -> processWhileExpression(expr)
-        is KtDoWhileExpression -> processDoWhileExpression(expr)
-        is KtForExpression -> processForExpression(expr)
-        is KtProperty -> processDeclaration(expr)
-        is KtLambdaExpression -> processLambda(expr)
-        // break, continue, for, when, try, anonymous classes, local functions
-        // as, as?, is, is?, in
-        else -> {
-            // unsupported construct
-            broken = true
+    private fun processExpression(expr: KtExpression?) {
+        when (expr) {
+            null -> pushUnknown()
+            is KtBlockExpression -> processBlock(expr)
+            is KtParenthesizedExpression -> processExpression(expr.expression)
+            is KtBinaryExpression -> processBinaryExpression(expr)
+            is KtPrefixExpression -> processPrefixExpression(expr)
+            is KtCallExpression -> processCallExpression(expr)
+            is KtConstantExpression -> processConstantExpression(expr)
+            is KtSimpleNameExpression -> processReferenceExpression(expr)
+            is KtDotQualifiedExpression -> processQualifiedReferenceExpression(expr)
+            is KtSafeQualifiedExpression -> processQualifiedReferenceExpression(expr)
+            is KtReturnExpression -> processReturnExpression(expr)
+            is KtContinueExpression -> processLabeledJumpExpression(expr)
+            is KtBreakExpression -> processLabeledJumpExpression(expr)
+            is KtThrowExpression -> processThrowExpression(expr)
+            is KtIfExpression -> processIfExpression(expr)
+            is KtWhileExpression -> processWhileExpression(expr)
+            is KtDoWhileExpression -> processDoWhileExpression(expr)
+            is KtForExpression -> processForExpression(expr)
+            is KtProperty -> processDeclaration(expr)
+            is KtLambdaExpression -> processLambda(expr)
+            // break, continue, for, when, try, anonymous classes, local functions
+            // as, as?, is, is?, in
+            else -> {
+                // unsupported construct
+                broken = true
+            }
         }
+        flow.finishElement(expr)
     }
 
     private fun processLambda(expr: KtLambdaExpression) {
@@ -171,6 +181,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(PopInstruction())
         processExpression(expr.condition)
         addInstruction(ConditionalGotoInstruction(offset, DfTypes.TRUE))
+        flow.finishElement(expr)
         pushUnknown()
         addInstruction(FinishElementInstruction(expr))
     }
@@ -185,6 +196,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(PopInstruction())
         addInstruction(GotoInstruction(startOffset))
         setOffset(endOffset)
+        flow.finishElement(expr)
         pushUnknown()
         addInstruction(FinishElementInstruction(expr))
     }
@@ -210,8 +222,9 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         addInstruction(PopInstruction())
         addInstruction(GotoInstruction(startOffset))
         setOffset(endOffset)
-        addInstruction(FinishElementInstruction(expr))
+        flow.finishElement(expr)
         pushUnknown()
+        addInstruction(FinishElementInstruction(expr))
     }
 
     private fun processBlock(expr: KtBlockExpression) {
@@ -250,6 +263,34 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         }
         processExpression(expr.returnedExpression)
         addInstruction(ReturnInstruction(factory, traps, expr))
+        pushUnknown()
+    }
+
+    private fun getTrapsInsideElement(element: PsiElement): FList<Trap> {
+        return FList.createFromReversed(traps.filter { trap -> PsiTreeUtil.isAncestor(element, trap.anchor, true) }.asReversed())
+    }
+
+    private fun createTransfer(exitedStatement: PsiElement, blockToFlush: PsiElement): InstructionTransfer {
+        val varsToFlush = PsiTreeUtil.findChildrenOfType(
+            blockToFlush,
+            KtProperty::class.java
+        ).map { property -> KtLocalVariableDescriptor(property) }
+        return object : InstructionTransfer(flow.getEndOffset(exitedStatement), varsToFlush) {
+            override fun dispatch(state: DfaMemoryState, interpreter: DataFlowInterpreter): MutableList<DfaInstructionState> {
+                state.push(factory.unknown)
+                return super.dispatch(state, interpreter)
+            }
+        }
+    }
+
+    private fun processLabeledJumpExpression(expr: KtExpressionWithLabel) {
+        val targetLoop = expr.targetLoop()
+        if (targetLoop == null || !PsiTreeUtil.isAncestor(context, targetLoop, false)) {
+            addInstruction(ControlTransferInstruction(factory.controlTransfer(DfaControlTransferValue.RETURN_TRANSFER, traps)))
+        } else {
+            val body = if (expr is KtBreakExpression) targetLoop else targetLoop.body!!
+            addInstruction(ControlTransferInstruction(factory.controlTransfer(createTransfer(body, body), getTrapsInsideElement(body))))
+        }
     }
 
     private fun processThrowExpression(expr: KtThrowExpression) {
@@ -437,7 +478,20 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     ) {
         val left = expr.left
         val right = expr.right
-        val balancedType = balanceType(left?.getKotlinType(), right?.getKotlinType())
+        val leftType = left?.getKotlinType()
+        val rightType = right?.getKotlinType()
+        val balancedType: KotlinType?
+        if (forceEqualityByContent && leftType != null && rightType != null) {
+            if (leftType.isMarkedNullable && !rightType.isMarkedNullable && leftType.makeNotNullable() == rightType) {
+                balancedType = leftType
+            } else if (rightType.isMarkedNullable && !leftType.isMarkedNullable && rightType.makeNotNullable() == leftType) {
+                balancedType = rightType
+            } else {
+                balancedType = null
+            }
+        } else {
+            balancedType = balanceType(leftType, rightType)
+        }
         processExpression(left)
         addImplicitConversion(left, balancedType)
         processExpression(right)
@@ -453,6 +507,12 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun balanceType(left: KotlinType?, right: KotlinType?): KotlinType? {
         if (left == null || right == null) return null
+        if (left.isMarkedNullable && !right.isMarkedNullable) {
+            return balanceType(left.makeNotNullable(), right)
+        }
+        if (!left.isMarkedNullable && right.isMarkedNullable) {
+            return balanceType(left, right.makeNotNullable())
+        }
         if (left.isDouble()) return left
         if (right.isDouble()) return right
         if (left.isFloat()) return left
