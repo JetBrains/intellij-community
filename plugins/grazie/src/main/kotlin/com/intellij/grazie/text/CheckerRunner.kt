@@ -133,8 +133,13 @@ internal class CheckerRunner(val text: TextContent) {
     return result.toTypedArray()
   }
 
-  private fun toFileRange(range: TextRange) =
-    TextRange(text.textOffsetToFile(range.startOffset), text.textOffsetToFile(range.endOffset))
+  private fun toFileRange(range: TextRange): TextRange {
+    require(range.startOffset <= range.endOffset) { range }
+    val start = text.textOffsetToFile(range.startOffset)
+    val end = text.textOffsetToFile(range.endOffset)
+    require(start <= end) { "Language: ${text.commonParent.language}, text ranges: ${text.rangesInFile}" }
+    return TextRange(start, end)
+  }
 
   private fun defaultSuppressionPattern(problem: TextProblem, sentenceText: String?): SuppressionPattern {
     val text = problem.text
