@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.fileActions.importFrom.docx.MarkdownImportDocxDialog
@@ -38,7 +39,8 @@ class GoogleDocsImportPasteProvider : PasteProvider {
 
   override fun isPastePossible(dataContext: DataContext): Boolean = true
 
-  override fun isPasteEnabled(dataContext: DataContext): Boolean = LangDataKeys.IDE_VIEW.getData(dataContext) != null
+  override fun isPasteEnabled(dataContext: DataContext): Boolean =
+    Registry.`is`("markdown.google.docs.import.paste.link.enable") && LangDataKeys.IDE_VIEW.getData (dataContext) != null
 
   private inner class GoogleDocsImportTask(project: Project, private val credential: Credential, private val docsId: String)
     : Task.Modal(project, MarkdownBundle.message("markdown.google.load.file.progress.title"), true) {
