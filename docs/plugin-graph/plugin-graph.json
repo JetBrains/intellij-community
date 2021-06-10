@@ -932,6 +932,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cX0",
+    "n": "com.jetbrains.restWebServices"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "X0",
     "name": "intellij.javaee.jax.rs",
     "n": "i.javaee.jax.rs",
@@ -939,7 +945,44 @@
     "sourceModule": "intellij.javaee.jax.rs",
     "descriptor": "plugins/javaee/web-services/rs/resources/META-INF/plugin.xml",
     "pluginId": "com.jetbrains.restWebServices",
-    "type": 1
+    "parent": "cX0",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "g2",
+    "name": "intellij.javaee.jax.rs/cdi",
+    "n": "i.javaee.jax.rs/cdi",
+    "package": "com.intellij.ws.rest.cdi",
+    "sourceModule": "intellij.javaee.jax.rs",
+    "descriptor": "plugins/javaee/web-services/rs/resources/intellij.javaee.jax.rs.cdi.xml",
+    "parent": "cX0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "ZC",
+    "name": "intellij.javaee.jax.rs/http-client",
+    "n": "i.javaee.jax.rs/http-client",
+    "package": "com.intellij.ws.rest.providers.httpClient",
+    "sourceModule": "intellij.javaee.jax.rs",
+    "descriptor": "plugins/javaee/web-services/rs/resources/intellij.javaee.jax.rs.http-client.xml",
+    "parent": "cX0",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "c5",
+    "name": "intellij.javaee.jax.rs/intellijLang",
+    "n": "i.javaee.jax.rs/intellijLang",
+    "package": "com.intellij.ws.rest.intelliLang",
+    "sourceModule": "intellij.javaee.jax.rs",
+    "descriptor": "plugins/javaee/web-services/rs/resources/intellij.javaee.jax.rs.intellijLang.xml",
+    "parent": "cX0",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2484,6 +2527,53 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "J7",
+    "name": "com.intellij.modules.microservices",
+    "n": "c.i.m.microservices",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "1s",
+    "name": "intellij.microservices.uast",
+    "n": "i.microservices.uast",
+    "package": null,
+    "sourceModule": "intellij.microservices.uast",
+    "descriptor": "plugins/microservices/microservices-uast/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.microservices.uast",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Yg1",
+    "name": "intellij.restClient",
+    "n": "i.restClient",
+    "package": null,
+    "sourceModule": "intellij.restClient",
+    "descriptor": "plugins/restClient/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.restClient",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "HN",
+    "name": "intellij.platform.langInjection",
+    "n": "i.platform.langInjection",
+    "package": null,
+    "sourceModule": "intellij.platform.langInjection",
+    "descriptor": "community/plugins/IntelliLang/src/META-INF/plugin.xml",
+    "pluginId": "org.intellij.intelliLang",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "JM",
     "name": "intellij.jboss",
     "n": "i.jboss",
@@ -2528,17 +2618,6 @@
     "descriptor": "community/plugins/testng/resources/META-INF/plugin.xml",
     "pluginId": "TestNG-J",
     "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "J7",
-    "name": "com.intellij.modules.microservices",
-    "n": "c.i.m.microservices",
-    "package": null,
-    "sourceModule": "",
-    "descriptor": "",
-    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2603,18 +2682,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "1s",
-    "name": "intellij.microservices.uast",
-    "n": "i.microservices.uast",
-    "package": null,
-    "sourceModule": "intellij.microservices.uast",
-    "descriptor": "plugins/microservices/microservices-uast/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.microservices.uast",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "Fa",
     "name": "com.intellij.modules.database",
     "n": "c.i.m.database",
@@ -2633,18 +2700,6 @@
     "sourceModule": "intellij.gherkin",
     "descriptor": "contrib/cucumber/resources/META-INF/plugin.xml",
     "pluginId": "gherkin",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "HN",
-    "name": "intellij.platform.langInjection",
-    "n": "i.platform.langInjection",
-    "package": null,
-    "sourceModule": "intellij.platform.langInjection",
-    "descriptor": "community/plugins/IntelliLang/src/META-INF/plugin.xml",
-    "pluginId": "org.intellij.intelliLang",
     "type": 1
   }
 }, {
@@ -3003,6 +3058,30 @@
     "id": "i7_1U",
     "source": "i7",
     "target": "1U",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_g2",
+    "source": "X0",
+    "target": "g2",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_ZC",
+    "source": "X0",
+    "target": "ZC",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_c5",
+    "source": "X0",
+    "target": "c5",
     "type": 1
   }
 }, {
@@ -3819,6 +3898,70 @@
     "id": "1U_Se",
     "source": "1U",
     "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_wo",
+    "source": "X0",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_S9",
+    "source": "X0",
+    "target": "S9",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_s7",
+    "source": "X0",
+    "target": "s7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_J7",
+    "source": "X0",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "X0_1s",
+    "source": "X0",
+    "target": "1s",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "g2_ck",
+    "source": "g2",
+    "target": "ck",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ZC_Yg1",
+    "source": "ZC",
+    "target": "Yg1",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "c5_HN",
+    "source": "c5",
+    "target": "HN",
     "type": 0
   }
 }, {
