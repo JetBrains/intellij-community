@@ -21,7 +21,6 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
   var extractOptions: ExtractOptions? = null
 
   override fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
-
     val copiedFile = targetClass.containingFile.copy() as PsiFile
     val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
     val copiedElements = elements.map { PsiTreeUtil.findSameElementInCopy(it, copiedFile) }
@@ -58,7 +57,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val finder = duplicatesFinder ?: return
     val calls = callsToReplace ?: return
     val options = extractOptions ?: return
-    val duplicates = finder.findDuplicates(file).filterNot { textRangeOf(it.candidate) in method.textRange }
+    val duplicates = finder.findDuplicates(method.containingClass ?: file).filterNot { textRangeOf(it.candidate) in method.textRange }
 
     duplicates.forEach { duplicate ->
       printDuplicate(project, duplicate)
@@ -68,11 +67,13 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
       val duplicateParameters = allParameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
 
       val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = allParameters, methodName = method.name))
-      val duplicateToReplace = MethodExtractor().prepareRefactoringElements(duplicateOptions.copy(inputParameters = duplicateParameters, methodName = method.name))
+      val builder = CallBuilder(duplicateOptions.project, duplicateOptions.elements.first())
       runWriteAction {
         MethodExtractor().replace(calls, elementsToReplace.callElements)
-        method.replace(elementsToReplace.method) as PsiMethod
-        MethodExtractor().replace(duplicate.candidate, duplicateToReplace.callElements)
+        val replacedMethod = method.replace(elementsToReplace.method) as PsiMethod
+        val call = builder.createMethodCall(replacedMethod, duplicateParameters.map { it.references.first() }).text
+        val callElements = builder.buildCall(call, duplicateOptions.flowOutput, duplicateOptions.dataOutput, duplicateOptions.exposedLocalVariables)
+        MethodExtractor().replace(duplicate.candidate, callElements)
       }
     }
   }
@@ -91,9 +92,5 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     duplicate.changedExpressions.forEach { (pattern, candidate) ->
       println("${pattern.text} ::: ${candidate.text}")
     }
-  }
-
-  private fun createCall(method: PsiMethod){
-
   }
 }
