@@ -752,7 +752,10 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
             module("published-lib-consumer.iosMain") {
                 moduleDependency("published-lib-consumer.commonMain", DependencyScope.COMPILE)
                 libraryDependency("Gradle: com.h0tk3y.mpp.demo:lib:commonMain:1.0", DependencyScope.COMPILE)
-                libraryDependency("Gradle: com.h0tk3y.mpp.demo:lib:iosMain:1.0", DependencyScope.COMPILE)
+                libraryDependency(
+                    "Gradle: com.h0tk3y.mpp.demo:lib:iosMain:1.0", DependencyScope.COMPILE,
+                    isOptional = !HostManager.hostIsMac
+                )
             }
 
             module("published-lib-consumer.iosTest") {
@@ -760,7 +763,10 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
                 moduleDependency("published-lib-consumer.commonTest", DependencyScope.TEST)
                 moduleDependency("published-lib-consumer.iosMain", DependencyScope.TEST)
                 libraryDependency("Gradle: com.h0tk3y.mpp.demo:lib:commonMain:1.0", DependencyScope.TEST)
-                libraryDependency("Gradle: com.h0tk3y.mpp.demo:lib:iosMain:1.0", DependencyScope.TEST)
+                libraryDependency(
+                    "Gradle: com.h0tk3y.mpp.demo:lib:iosMain:1.0", DependencyScope.TEST,
+                    isOptional = !HostManager.hostIsMac
+                )
             }
 
             module("published-lib-consumer.iosX64Main") {
@@ -848,5 +854,5 @@ class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImportingTestC
         importProject()
     }
 
-    override fun printOutput(stream: PrintStream, text: String)  = stream.println(text)
+    override fun printOutput(stream: PrintStream, text: String) = stream.println(text)
 }
