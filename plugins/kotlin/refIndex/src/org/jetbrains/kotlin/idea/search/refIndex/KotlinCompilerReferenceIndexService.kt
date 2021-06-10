@@ -8,7 +8,7 @@ import com.intellij.compiler.server.CustomBuilderMessageHandler
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.compiler.*
+import com.intellij.openapi.compiler.CompilerManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.Logger
@@ -134,26 +134,11 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
                     compilationStarted()
                 }
             }
-        })
 
-        connection.subscribe(CompilerTopics.COMPILATION_STATUS, object : CompilationStatusListener {
-            override fun compilationFinished(
-                aborted: Boolean,
-                errors: Int,
-                warnings: Int,
-                compileContext: CompileContext,
-            ) = compilationFinished(compileContext)
-
-            override fun automakeCompilationFinished(
-                errors: Int,
-                warnings: Int,
-                compileContext: CompileContext,
-            ) = compilationFinished(compileContext)
-
-            private fun compilationFinished(context: CompileContext) {
-                if (context !is DummyCompileContext && context.project === project) {
+            override fun buildFinished(project: Project, sessionId: UUID, isAutomake: Boolean) {
+                if (project === this@KotlinCompilerReferenceIndexService.project) {
                     executeOnBuildThread {
-                        if (runReadAction { context.takeUnless { project.isDisposed }?.compileScope?.affectedModules } != null) {
+                        if (!runReadAction { this@KotlinCompilerReferenceIndexService.project.isDisposed }) {
                             compilationFinished()
                         }
                     }
