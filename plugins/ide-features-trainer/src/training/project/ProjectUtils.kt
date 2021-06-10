@@ -46,6 +46,9 @@ object ProjectUtils {
   private const val FEATURE_TRAINER_VERSION = "feature-trainer-version.txt"
   private val LOG = logger<ProjectUtils>()
 
+  val learningProjectsPath: Path
+    get() = Paths.get(PathManager.getSystemPath(), "demo")
+
   /**
    * For example:
    * @projectPath = "/learnProjects/SimpleProject"
@@ -75,11 +78,8 @@ object ProjectUtils {
   }
 
   private fun getLearningProjectInstallationPath(langSupport: LangSupport): Path? {
-    val systemPath = PathManager.getSystemPath()
-
     val path = LangManager.getInstance().getLearningProjectPath(langSupport)
-    val defaultDirectoryName = langSupport.defaultProjectName
-    val canonicalPlace = Paths.get(systemPath, "demo", defaultDirectoryName)
+    val canonicalPlace = learningProjectsPath.resolve(langSupport.defaultProjectName)
 
     var useCanonical = true
 
