@@ -15,7 +15,7 @@ public abstract class BackspaceHandlerDelegate {
 
   /**
    * @return true iff this delegate handled the character removal, and no further backspace handler should be invoked.
-   * @see com.intellij.codeInsight.editorActions.BackspaceHandler#handleBackspace(com.intellij.openapi.editor.Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext, boolean)
+   * @see com.intellij.codeInsight.editorActions.BackspaceHandler#handleBackspace(Editor, com.intellij.openapi.editor.Caret, com.intellij.openapi.actionSystem.DataContext, boolean)
    */
   public abstract boolean charDeleted(char c, @NotNull PsiFile file, @NotNull Editor editor);
 }

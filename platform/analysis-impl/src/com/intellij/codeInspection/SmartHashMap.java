@@ -12,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 /**
- * @deprecated Use {@link java.util.HashMap}
+ * @deprecated Use {@link HashMap}
  */
 @Deprecated
 public class SmartHashMap<K,V> extends THashMap<K,V> {

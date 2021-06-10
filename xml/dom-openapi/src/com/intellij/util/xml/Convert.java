@@ -15,15 +15,15 @@
  */
 package com.intellij.util.xml;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
-import java.lang.annotation.ElementType;
 
 /**
- * All DOM methods that return something nontrivial, not String, Integer, Boolean, PsiClass, PsiType, or {@link com.intellij.util.xml.GenericValue}
+ * All DOM methods that return something nontrivial, not String, Integer, Boolean, PsiClass, PsiType, or {@link GenericValue}
  * parameterized with all these elements, should be annotated with this annotation. The {@link #value()} parameter should
- * specify {@link com.intellij.util.xml.Converter} class able to convert this custom type to and from {@link String}.
+ * specify {@link Converter} class able to convert this custom type to and from {@link String}.
  * Also DOM interfaces can be annotated, which will mean that all tag value methods inside will have the specified converter. 
  *
  * @author peter

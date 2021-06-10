@@ -21,7 +21,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.function.Consumer;
 
 /**
- * @see com.intellij.util.containers.CollectionFactory
+ * @see CollectionFactory
  * @see com.intellij.concurrency.ConcurrentCollectionFactory
  */
 

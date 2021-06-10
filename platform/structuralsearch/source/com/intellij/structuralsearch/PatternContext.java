@@ -23,7 +23,7 @@ public final class PatternContext {
   }
 
   /**
-   * @deprecated Use {@link com.intellij.structuralsearch.PatternContext#PatternContext(java.lang.String, java.util.function.Supplier)} instead.
+   * @deprecated Use {@link PatternContext#PatternContext(String, Supplier)} instead.
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")

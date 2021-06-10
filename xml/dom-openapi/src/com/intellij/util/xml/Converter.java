@@ -22,10 +22,10 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * Base DOM class to convert objects of a definite type into {@link String} and back. Most often used with
- * {@link com.intellij.util.xml.Convert} annotation with methods returning {@link com.intellij.util.xml.GenericDomValue}&lt;T&gt;.
+ * {@link Convert} annotation with methods returning {@link GenericDomValue}&lt;T&gt;.
  *
- * @see com.intellij.util.xml.ResolvingConverter
- * @see com.intellij.util.xml.CustomReferenceConverter
+ * @see ResolvingConverter
+ * @see CustomReferenceConverter
  *
  * @param <T> Type to convert from/to.
  *

@@ -22,8 +22,8 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Converter which resolves {@link com.intellij.util.xml.DomElement}s by name in a defined scope. The scope is taken
- * from corresponding {@link com.intellij.util.xml.DomFileDescription#getResolveScope(GenericDomValue)}.
+ * Converter which resolves {@link DomElement}s by name in a defined scope. The scope is taken
+ * from corresponding {@link DomFileDescription#getResolveScope(GenericDomValue)}.
  *
  * @author peter
  */

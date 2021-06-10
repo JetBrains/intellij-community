@@ -34,9 +34,9 @@ public abstract class DomElementAnnotationsManager {
   public abstract DomHighlightingHelper getHighlightingHelper();
 
   /**
-   * Calls {@link com.intellij.util.xml.highlighting.DomElementsInspection#checkFileElement(com.intellij.util.xml.DomFileElement, DomElementAnnotationHolder)}
-   * with appropriate parameters if needed, saves the collected problems to {@link com.intellij.util.xml.highlighting.DomElementsProblemsHolder}, which
-   * can then be obtained from {@link #getProblemHolder(com.intellij.util.xml.DomElement)} method, and returns them.
+   * Calls {@link DomElementsInspection#checkFileElement(DomFileElement, DomElementAnnotationHolder)}
+   * with appropriate parameters if needed, saves the collected problems to {@link DomElementsProblemsHolder}, which
+   * can then be obtained from {@link #getProblemHolder(DomElement)} method, and returns them.
    *
    * @param element file element being checked
    * @param inspection inspection to run on the given file element
@@ -54,7 +54,7 @@ public abstract class DomElementAnnotationsManager {
 
     /**
      * Called each time when an annotator or inspection has finished error-highlighting of a particular
-     * {@link com.intellij.util.xml.DomFileElement}
+     * {@link DomFileElement}
      * @param element file element whose highlighting has been finished
      */
     void highlightingFinished(@NotNull DomFileElement element);

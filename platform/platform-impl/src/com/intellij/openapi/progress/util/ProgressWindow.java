@@ -198,7 +198,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   }
 
   /**
-   * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link com.intellij.openapi.progress.ProgressManager}
+   * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link ProgressManager}
    */
   @Deprecated
   public void startBlocking(@NotNull Runnable init) {

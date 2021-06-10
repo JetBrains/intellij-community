@@ -66,8 +66,8 @@ public final class Disposer {
    * This overrides parent disposable for {@code child}, i.e. if {@code child} is already registered with {@code oldParent},
    * it's unregistered from {@code oldParent} before registering with {@code parent}.
    *
-   * @throws com.intellij.util.IncorrectOperationException If {@code child} has been registered with {@code parent} before;
-   *                                                       if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
+   * @throws IncorrectOperationException If {@code child} has been registered with {@code parent} before;
+   *                                     if {@code parent} is being disposed or already disposed ({@link #isDisposed(Disposable)}.
    */
   public static void register(@NotNull Disposable parent, @NotNull Disposable child) throws IncorrectOperationException {
     RuntimeException e = ourTree.register(parent, child);

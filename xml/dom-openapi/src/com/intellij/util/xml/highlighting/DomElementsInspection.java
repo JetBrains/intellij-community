@@ -38,7 +38,7 @@ import java.util.Set;
 
 /**
  * @author Dmitry Avdeev
- * @see com.intellij.util.xml.highlighting.BasicDomElementsInspection
+ * @see BasicDomElementsInspection
  */
 public abstract class DomElementsInspection<T extends DomElement> extends XmlSuppressableInspectionTool {
   private static final Logger LOG = Logger.getInstance(DomElementsInspection.class);
@@ -51,9 +51,9 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   }
 
   /**
-   * This method is called internally in {@link DomElementAnnotationsManager#checkFileElement(com.intellij.util.xml.DomFileElement, DomElementsInspection, boolean)}
+   * This method is called internally in {@link DomElementAnnotationsManager#checkFileElement(DomFileElement, DomElementsInspection, boolean)}
    * it should add some problems to the annotation holder. The default implementation performs recursive tree traversal, and calls
-   * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} for each element. 
+   * {@link #checkDomElement(DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} for each element.
    * @param domFileElement file element to check
    * @param holder the place to store problems
    */
@@ -104,8 +104,8 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
 
   /**
    * Not intended to be overridden or called by implementors.
-   * Override {@link #checkFileElement(com.intellij.util.xml.DomFileElement, DomElementAnnotationHolder)} (which is preferred) or
-   * {@link #checkDomElement(com.intellij.util.xml.DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} instead.
+   * Override {@link #checkFileElement(DomFileElement, DomElementAnnotationHolder)} (which is preferred) or
+   * {@link #checkDomElement(DomElement, DomElementAnnotationHolder, DomHighlightingHelper)} instead.
    */
   @Override
   public ProblemDescriptor @Nullable [] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
@@ -151,7 +151,7 @@ public abstract class DomElementsInspection<T extends DomElement> extends XmlSup
   /**
    * Check particular DOM element for problems. The inspection implementor should focus on this method.
    * The default implementation throws {@link UnsupportedOperationException}.
-   * See {@link com.intellij.util.xml.highlighting.BasicDomElementsInspection}
+   * See {@link BasicDomElementsInspection}
    * @param element element to check
    * @param holder a place to add problems to
    * @param helper helper object

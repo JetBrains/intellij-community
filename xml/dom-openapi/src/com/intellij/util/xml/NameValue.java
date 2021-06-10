@@ -19,8 +19,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
 /**
- * Annotate a method returning either {@link String} or {@link com.intellij.util.xml.GenericValue} with @NameValue,
- * and {@link com.intellij.util.xml.ElementPresentationManager#getElementName(Object)} will return the resulting String
+ * Annotate a method returning either {@link String} or {@link GenericValue} with @NameValue,
+ * and {@link ElementPresentationManager#getElementName(Object)} will return the resulting String
  * or {@link GenericValue#getStringValue()}.
  *
  * @author peter
@@ -28,13 +28,13 @@ import java.lang.annotation.RetentionPolicy;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface NameValue {
   /**
-   * @return whether the element's name should be unique in some scope ({@link com.intellij.util.xml.DomFileDescription#getIdentityScope(DomElement)}).
+   * @return whether the element's name should be unique in some scope ({@link DomFileDescription#getIdentityScope(DomElement)}).
    * If true, then duplicate values will be highlighted as errors.
    */
   boolean unique() default true;
 
   /**
-   * @return Only usable if the annotated method returns {@link com.intellij.util.xml.GenericDomValue}<Something>.
+   * @return Only usable if the annotated method returns {@link GenericDomValue}<Something>.
    * Then this flag controls, whether a reference should be created from the @NameValue child XML element to
    * the XML element of the annotated DOM element. Such reference is useful in rename refactoring to act as
    * an element's declaration.

@@ -9,7 +9,7 @@ import java.util.Set;
 
 public interface WatchedRootsProvider {
   /**
-   * @return paths which should be monitored via {@link LocalFileSystem#addRootToWatch(java.lang.String, boolean)}.
+   * @return paths which should be monitored via {@link LocalFileSystem#addRootToWatch(String, boolean)}.
    * @see LocalFileSystem
    */
   @NotNull Set<String> getRootsToWatch(@NotNull Project project);
