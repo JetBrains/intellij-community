@@ -76,7 +76,7 @@ class MainKtQuickFixRegistrar : KtQuickFixRegistrar() {
         )
         registerApplicators(InitializePropertyQuickFixFactories.initializePropertyFactory)
         registerApplicator(AddLateInitFactory.addLateInitFactory)
-        registerApplicator(AddAccessorsFactories.addAccessorsToUninitializedProperty)
+        registerApplicators(AddAccessorsFactories.addAccessorsToUninitializedProperty)
     }
 
     private val overrides = KtQuickFixesListBuilder.registerPsiQuickFix {
