@@ -6,6 +6,8 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.PotemkinProgress;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.NlsSafe;
@@ -455,17 +457,20 @@ public abstract class GitHandler {
     executionEnvironment.putAll(VcsLocaleHelper.getDefaultLocaleEnvironmentVars("git"));
     executionEnvironment.putAll(myCustomEnv);
 
-    GitVcs gitVcs = myProject != null ? GitVcs.getInstance(myProject) : null;
-    VirtualFile root = VfsUtil.findFileByIoFile(myCommandLine.getWorkDirectory(), true);
-    VcsEnvCustomizer.ExecutableType executableType = myExecutable instanceof GitExecutable.Wsl
-                                                     ? VcsEnvCustomizer.ExecutableType.WSL
-                                                     : VcsEnvCustomizer.ExecutableType.LOCAL;
-    VcsExecutableContext context = new VcsExecutableContext(gitVcs, root, executableType);
-    VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
-      customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, context);
-    });
+    // customizers take read locks, which could not be acquired under potemkin progress
+    if (!(ProgressManager.getInstance().getProgressIndicator() instanceof PotemkinProgress)) {
+      GitVcs gitVcs = myProject != null ? GitVcs.getInstance(myProject) : null;
+      VirtualFile root = VfsUtil.findFileByIoFile(myCommandLine.getWorkDirectory(), true);
+      VcsEnvCustomizer.ExecutableType executableType = myExecutable instanceof GitExecutable.Wsl
+                                                       ? VcsEnvCustomizer.ExecutableType.WSL
+                                                       : VcsEnvCustomizer.ExecutableType.LOCAL;
+      VcsExecutableContext context = new VcsExecutableContext(gitVcs, root, executableType);
+      VcsEnvCustomizer.EP_NAME.forEachExtensionSafe(customizer -> {
+        customizer.customizeCommandAndEnvironment(myProject, executionEnvironment, context);
+      });
 
-    executionEnvironment.remove("PS1"); // ensure we won't get detected as interactive shell because of faulty customizer
+      executionEnvironment.remove("PS1"); // ensure we won't get detected as interactive shell because of faulty customizer
+    }
   }
 
   protected abstract Process startProcess() throws ExecutionException;
