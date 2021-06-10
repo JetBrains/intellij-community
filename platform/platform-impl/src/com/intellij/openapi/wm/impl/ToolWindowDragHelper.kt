@@ -37,7 +37,12 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
   private var myLastStripe = null as Stripe?
 
   private var myDialog = null as MyDialog?
-  private val myHighlighter = MyAreaHighlighter()
+  private val myHighlighter = object:NonOpaquePanel() {
+    override fun paint(g: Graphics) {
+      g.color = JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57)
+      g.fillRect(0, 0, width, height)
+    }
+  }
   private val myInitialOffset = Point()
   private var mySourceIsHeader = false
 
@@ -414,13 +419,6 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
         pack()
         repaint()
       }
-    }
-  }
-
-  class MyAreaHighlighter : NonOpaquePanel() {
-    override fun paint(g: Graphics) {
-      g.color = JBColor.namedColor("DragAndDrop.areaBackground", 0x3d7dcc, 0x404a57)
-      g.fillRect(0, 0, width, height)
     }
   }
 }
