@@ -20,6 +20,7 @@ import com.intellij.core.JavaPsiBundle;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSuperMethodImplUtil;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
@@ -35,7 +36,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.RemoveModifierFix;
-import com.siyeh.ig.psiutils.MethodUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,7 +162,8 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
           !containingClass.hasModifierProperty(PsiModifier.FINAL)) {
         return;
       }
-      if (member instanceof PsiMethod && MethodUtils.hasSuper((PsiMethod)member)) {
+      if (member instanceof PsiMethod && !((PsiMethod)member).isConstructor() &&
+          !PsiSuperMethodImplUtil.getHierarchicalMethodSignature((PsiMethod)member).getSuperSignatures().isEmpty()) {
         return;
       }
       registerModifierError(PsiModifier.PROTECTED, member, PsiModifier.PROTECTED);

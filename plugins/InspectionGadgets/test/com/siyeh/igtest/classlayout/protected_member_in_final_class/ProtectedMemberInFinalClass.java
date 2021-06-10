@@ -7,7 +7,9 @@ final class ProtectedMemberInFinalClass {
 }
 class X {
   void foo() {}
+  protected static void m() {} 
 }
 final class Y extends X{
   protected void foo() {}
+  protected static void m() {}
 }
