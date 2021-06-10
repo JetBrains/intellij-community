@@ -41,7 +41,7 @@ public class FinalMethodInFinalClassInspection extends BaseInspection {
 
   @Override
   public InspectionGadgetsFix buildFix(Object... infos) {
-    return new RemoveModifierFix((String)infos[0]);
+    return new RemoveModifierFix(PsiModifier.FINAL);
   }
 
   private static class FinalMethodInFinalClassVisitor extends BaseInspectionVisitor {
@@ -67,7 +67,7 @@ public class FinalMethodInFinalClassInspection extends BaseInspection {
       for (final PsiElement child : children) {
         final String text = child.getText();
         if (PsiModifier.FINAL.equals(text)) {
-          registerError(child, ProblemHighlightType.LIKE_UNUSED_SYMBOL, PsiModifier.FINAL);
+          registerError(child, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
         }
       }
     }
