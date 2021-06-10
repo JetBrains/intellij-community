@@ -761,7 +761,7 @@ class FacetEntity(
 
   companion object {
     val moduleDelegate = ManyToOne.NotNull<ModuleEntity, FacetEntity>(ModuleEntity::class.java)
-    val facetDelegate = OneToOneChild.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java, true)
+    val facetDelegate = ManyToOne.Nullable<FacetEntity, FacetEntity>(FacetEntity::class.java)
   }
 
   override fun persistentId(): FacetId = FacetId(name, facetType, moduleId)
