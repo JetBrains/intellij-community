@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public final class BreadcrumbsInitializingActivity implements StartupActivity.DumbAware {
   @Override
   public void runActivity(@NotNull Project project) {
-    if (project.isDefault() || ApplicationManager.getApplication().isUnitTestMode() || project.isDisposed()) {
+    if (project.isDefault() || ApplicationManager.getApplication().isHeadlessEnvironment() || project.isDisposed()) {
       return;
     }
 

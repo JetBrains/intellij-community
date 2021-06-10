@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.problems.FileStateUpdater;
 import com.intellij.codeInsight.hints.InlayHintsPassFactory;
 import com.intellij.codeInsight.hints.InlayHintsSettings;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.DocumentEx;
@@ -210,6 +211,11 @@ final class ProjectProblemFileSelectionListener extends PsiTreeChangeAdapter imp
   public static class MyStartupActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()
+          && !ApplicationManager.getApplication().isUnitTestMode()) {
+        return;
+      }
+
       ProjectProblemFileSelectionListener listener = new ProjectProblemFileSelectionListener(project);
       MessageBusConnection connection = project.getMessageBus().connect();
       connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, listener);

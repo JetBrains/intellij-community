@@ -72,7 +72,7 @@ open class HeapDumpAnalysisSupport {
 
 internal class AnalyzePendingSnapshotActivity: StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
-    if (ApplicationManager.getApplication().isUnitTestMode) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
       return
     }
 

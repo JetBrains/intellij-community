@@ -1845,7 +1845,7 @@ public final class BuildManager implements Disposable {
   static final class BuildManagerStartupActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
-      if (ApplicationManager.getApplication().isUnitTestMode()) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
         return;
       }
 

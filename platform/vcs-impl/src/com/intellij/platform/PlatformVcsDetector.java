@@ -22,7 +22,7 @@ import static java.util.Collections.singletonList;
 
 final class PlatformVcsDetector implements StartupActivity.DumbAware {
   PlatformVcsDetector() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw ExtensionNotApplicableException.INSTANCE;
     }
   }

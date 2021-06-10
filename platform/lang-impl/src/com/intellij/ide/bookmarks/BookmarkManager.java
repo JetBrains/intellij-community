@@ -87,6 +87,10 @@ public final class BookmarkManager implements PersistentStateComponent<Element> 
   static final class MyStartupActivity implements StartupActivity.DumbAware {
     @Override
     public void runActivity(@NotNull Project project) {
+      if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+        return;
+      }
+
       project.getMessageBus().connect().subscribe(PsiDocumentListener.TOPIC, MyStartupActivity::documentCreated);
 
       BookmarkManager bookmarkManager = getInstance(project);
