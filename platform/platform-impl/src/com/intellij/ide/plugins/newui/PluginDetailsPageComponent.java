@@ -210,8 +210,8 @@ public class PluginDetailsPageComponent extends MultiPanel {
       }
     };
 
-    ErrorComponent.convertToLabel(editorPane);
-    editorPane.setEditorKit(UIUtil.getHTMLEditorKit());
+    UIUtil.convertToLabel(editorPane);
+    editorPane.setCaret(EmptyCaret.INSTANCE);
 
     Font font = editorPane.getFont();
     if (font != null) {

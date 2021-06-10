@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins.newui;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -21,21 +21,19 @@ import javax.swing.text.html.StyleSheet;
 /**
  * @author Alexander Lobas
  */
-public final class ErrorComponent {
+final class ErrorComponent {
   private static final String KEY = "EnableCallback";
 
-  @NotNull
-  public static JComponent create(@NotNull JPanel panel, @Nullable Object constraints) {
+  static @NotNull JComponent create(@NotNull JPanel panel, @Nullable Object constraints) {
     JEditorPane editorPane = new JEditorPane();
     panel.add(editorPane, constraints);
 
-    convertToLabel(editorPane);
+    UIUtil.convertToLabel(editorPane);
+    editorPane.setCaret(EmptyCaret.INSTANCE);
 
-    HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
-    StyleSheet sheet = kit.getStyleSheet();
+    StyleSheet sheet = ((HTMLEditorKit)editorPane.getEditorKit()).getStyleSheet();
     sheet.addRule("span {color: " + ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR) + "}");
     sheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}");
-    editorPane.setEditorKit(kit);
 
     editorPane.addHyperlinkListener(new HyperlinkAdapter() {
       @Override
@@ -50,19 +48,10 @@ public final class ErrorComponent {
     return editorPane;
   }
 
-  public static void convertToLabel(@NotNull JEditorPane editorPane) {
-    editorPane.setEditable(false);
-    editorPane.setFocusable(false);
-    editorPane.setOpaque(false);
-    editorPane.setBorder(null);
-    editorPane.setContentType("text/html");
-    editorPane.setCaret(EmptyCaret.INSTANCE);
-  }
-
-  public static void show(@NotNull JComponent errorComponent,
-                          @NotNull @Nls String message,
-                          @Nullable @Nls String action,
-                          @Nullable Runnable enableCallback) {
+  static void show(@NotNull JComponent errorComponent,
+                   @NotNull @Nls String message,
+                   @Nullable @Nls String action,
+                   @Nullable Runnable enableCallback) {
     JEditorPane editorPane = (JEditorPane)errorComponent;
 
     HtmlChunk.Element html = HtmlChunk.html().children(HtmlChunk.span().addText(message));
@@ -74,13 +63,12 @@ public final class ErrorComponent {
     editorPane.putClientProperty(KEY, enableCallback);
   }
 
-  @NotNull
-  public static JComponent show(@NotNull JPanel panel,
-                                @Nullable Object constraints,
-                                @Nullable JComponent errorComponent,
-                                @NotNull @Nls String message,
-                                @Nullable @Nls String action,
-                                @Nullable Runnable enableCallback) {
+  static @NotNull JComponent show(@NotNull JPanel panel,
+                                  @Nullable Object constraints,
+                                  @Nullable JComponent errorComponent,
+                                  @NotNull @Nls String message,
+                                  @Nullable @Nls String action,
+                                  @Nullable Runnable enableCallback) {
     JComponent component = errorComponent == null ? create(panel, constraints) : errorComponent;
     show(component, message, action, enableCallback);
     return component;
