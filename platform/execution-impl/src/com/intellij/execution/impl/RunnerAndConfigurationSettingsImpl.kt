@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.configurationStore.SerializableScheme
@@ -13,7 +13,7 @@ import com.intellij.execution.configurations.*
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.runners.ProgramRunner
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.components.PathMacroManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
@@ -27,7 +27,6 @@ import com.intellij.util.getAttributeBooleanValue
 import com.intellij.util.text.nullize
 import org.jdom.Element
 import org.jetbrains.jps.model.serialization.PathMacroUtil
-import java.util.*
 
 private const val RUNNER_ID = "RunnerId"
 
@@ -327,12 +326,19 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
 
   override fun checkSettings(executor: Executor?) {
     val configuration = configuration
-    var warning: RuntimeConfigurationWarning?
+    var warning: RuntimeConfigurationException? = null
 
-    warning = doCheck { runReadAction { configuration.checkConfiguration() } }
+    ReadAction.nonBlocking {
+      try {
+        configuration.checkConfiguration()
+      }
+      catch (e: RuntimeConfigurationException) {
+        warning = e
+      }
+    }.executeSynchronously()
     if (configuration !is RunConfigurationBase<*>) {
       if (warning != null) {
-        throw warning
+        throw warning as RuntimeConfigurationException
       }
       return
     }
@@ -367,7 +373,7 @@ class RunnerAndConfigurationSettingsImpl @JvmOverloads constructor(
     }
 
     if (warning != null) {
-      throw warning
+      throw warning as RuntimeConfigurationException
     }
   }
 
