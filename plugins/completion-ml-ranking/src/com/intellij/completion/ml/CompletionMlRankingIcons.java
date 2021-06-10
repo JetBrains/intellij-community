@@ -1,4 +1,4 @@
-package icons;
+package com.intellij.completion.ml;
 
 import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;

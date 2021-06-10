@@ -153,7 +153,7 @@ internal class PluginModelValidator {
       if (child.name != "module") {
         if (child.name == "plugin") {
           // todo check that the referenced plugin exists
-          val id = child.getAttributeValue("id")
+          var id = child.getAttributeValue("id")
           if (id == null) {
             errors.add(PluginValidationError("Id is not specified for dependency on plugin", getErrorInfo()))
             continue
@@ -173,7 +173,7 @@ internal class PluginModelValidator {
             continue
           }
 
-          val ref = Reference(id, isPlugin = true,
+          val ref = Reference(name = id, isPlugin = true,
                               moduleInfo = dependency ?: ModuleInfo(null, id, "", emptyPath, null,
                                                                     XmlElement("", Collections.emptyMap(), Collections.emptyList(), null)))
           assert(!referencingModuleInfo.dependencies.contains(ref))

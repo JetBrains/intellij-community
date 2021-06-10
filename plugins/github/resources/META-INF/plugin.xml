@@ -17,10 +17,14 @@
 
   <resource-bundle>messages.GithubBundle</resource-bundle>
 
-  <depends>com.intellij.modules.lang</depends>
-  <depends>Git4Idea</depends>
-  <depends>org.intellij.plugins.markdown</depends>
-  <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
+  <content>
+    <module name="intellij.vcs.github/tracker"/>
+  </content>
+  <dependencies>
+    <plugin id="com.intellij.modules.lang"/>
+    <plugin id="Git4Idea"/>
+    <plugin id="org.intellij.plugins.markdown"/>
+  </dependencies>
 
   <extensions defaultExtensionNs="com.intellij">
     <httpRequestHandler implementation="org.jetbrains.plugins.github.authentication.GHOAuthCallbackHandler"/>

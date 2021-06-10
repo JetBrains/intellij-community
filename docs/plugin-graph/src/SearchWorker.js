@@ -4,6 +4,10 @@ import MiniSearch from "minisearch"
 
 const index = new MiniSearch({
   fields: ["name", "pluginId", "sourceModule", "package"],
+  searchOptions: {
+    boost: {name: 4, pluginId: 3, sourceModule: 2},
+    prefix: true,
+  },
 })
 
 expose({

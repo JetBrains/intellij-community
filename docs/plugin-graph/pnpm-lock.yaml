@@ -111,8 +111,8 @@ packages:
       lodash.debounce: 4.0.8
     dev: false
 
-  /esbuild/0.12.7:
-    resolution: {integrity: sha512-vxENKWBo928ErLiT/uUv8Sl2EoC5cF3cZzCTc8hDEh9ZAZ75xblJCr72NeJo74lxWaGopIePZPIWq1qDpLUHQQ==}
+  /esbuild/0.12.8:
+    resolution: {integrity: sha512-sx/LwlP/SWTGsd9G4RlOPrXnIihAJ2xwBUmzoqe2nWwbXORMQWtAGNJNYLBJJqa3e9PWvVzxdrtyFZJcr7D87g==}
     hasBin: true
     requiresBuild: true
     dev: true
@@ -220,8 +220,8 @@ packages:
     engines: {node: '>=8.6'}
     dev: true
 
-  /postcss/8.3.0:
-    resolution: {integrity: sha512-+ogXpdAjWGa+fdYY5BQ96V/6tAo+TdSSIMP5huJBIygdWwKtVoB5JWZ7yUd4xZ8r+8Kvvx4nyg/PQ071H4UtcQ==}
+  /postcss/8.3.1:
+    resolution: {integrity: sha512-9qH0MGjsSm+fjxOi3GnwViL1otfi7qkj+l/WX5gcRGmZNGsIcqc+A5fBkE6PUobEQK4APqYVaES+B3Uti98TCw==}
     engines: {node: ^10 || ^12 || >=14}
     dependencies:
       colorette: 1.2.2
@@ -282,8 +282,8 @@ packages:
     engines: {node: '>=12.0.0'}
     hasBin: true
     dependencies:
-      esbuild: 0.12.7
-      postcss: 8.3.0
+      esbuild: 0.12.8
+      postcss: 8.3.1
       resolve: 1.20.0
       rollup: 2.51.1
     optionalDependencies:

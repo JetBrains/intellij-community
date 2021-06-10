@@ -185,6 +185,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "ZY",
+    "name": "intellij.completionMlRanking",
+    "n": "i.completionMlRanking",
+    "package": "com.intellij.completion.ml",
+    "sourceModule": "intellij.completionMlRanking",
+    "descriptor": "community/plugins/completion-ml-ranking/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.completion.ml.ranking",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "w4",
     "name": "intellij.configurationScript",
     "n": "i.configurationScript",
@@ -755,6 +767,18 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "M4",
+    "name": "intellij.indexing.shared.ultimate.plugin.bundled",
+    "n": "i.indexing.shared.ultimate.plugin.bundled",
+    "package": "com.intellij.indexing.shared.ultimate.license",
+    "sourceModule": "intellij.indexing.shared.ultimate.plugin.bundled",
+    "descriptor": "plugins/shared-indexes/ultimate.plugin.bundled/resources/META-INF/plugin.xml",
+    "pluginId": "intellij.indexing.shared",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "AL",
     "name": "intellij.jade",
     "n": "i.jade",
@@ -980,6 +1004,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cn5",
+    "n": "com.intellij.jboss.arquillian"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "n5",
     "name": "intellij.jboss.arquillian",
     "n": "i.jboss.arquillian",
@@ -987,7 +1017,32 @@
     "sourceModule": "intellij.jboss.arquillian",
     "descriptor": "plugins/frameworks/jboss/arquillian/arquillian-core/src/META-INF/plugin.xml",
     "pluginId": "com.intellij.jboss.arquillian",
-    "type": 1
+    "parent": "cn5",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "wD",
+    "name": "intellij.jboss.arquillian.junit",
+    "n": "i.jboss.arquillian.junit",
+    "package": "com.intellij.plugins.jboss.arquillian.junit",
+    "sourceModule": "intellij.jboss.arquillian.junit",
+    "descriptor": "plugins/frameworks/jboss/arquillian/arquillian-junit/src/intellij.jboss.arquillian.junit.xml",
+    "parent": "cn5",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "rq1",
+    "name": "intellij.jboss.arquillian.testng",
+    "n": "i.jboss.arquillian.testng",
+    "package": "com.intellij.plugins.jboss.arquillian.testng",
+    "sourceModule": "intellij.jboss.arquillian.testng",
+    "descriptor": "plugins/frameworks/jboss/arquillian/arquillian-testng/src/intellij.jboss.arquillian.testng.xml",
+    "parent": "cn5",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -1059,6 +1114,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cs0",
+    "n": "com.intellij.microservices.ui"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "s0",
     "name": "intellij.microservices.ui",
     "n": "i.microservices.ui",
@@ -1066,7 +1127,20 @@
     "sourceModule": "intellij.microservices.ui",
     "descriptor": "plugins/microservices/microservices-ui/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.microservices.ui",
-    "type": 1
+    "parent": "cs0",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "mH",
+    "name": "intellij.microservices.ui/diagram",
+    "n": "i.microservices.ui/diagram",
+    "package": "com.intellij.microservices.ui.diagrams",
+    "sourceModule": "intellij.microservices.ui",
+    "descriptor": "plugins/microservices/microservices-ui/resources/intellij.microservices.ui.diagram.xml",
+    "parent": "cs0",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2076,6 +2150,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cIV",
+    "n": "org.jetbrains.plugins.github"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "IV",
     "name": "intellij.vcs.github",
     "n": "i.vcs.github",
@@ -2083,7 +2163,20 @@
     "sourceModule": "intellij.vcs.github",
     "descriptor": "community/plugins/github/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.github",
-    "type": 1
+    "parent": "cIV",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "4t",
+    "name": "intellij.vcs.github/tracker",
+    "n": "i.vcs.github/tracker",
+    "package": "org.jetbrains.plugins.github.tasks",
+    "sourceModule": "intellij.vcs.github",
+    "descriptor": "community/plugins/github/resources/intellij.vcs.github.tracker.xml",
+    "parent": "cIV",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2251,30 +2344,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "ZY",
-    "name": "intellij.completionMlRanking",
-    "n": "i.completionMlRanking",
-    "package": null,
-    "sourceModule": "intellij.completionMlRanking",
-    "descriptor": "community/plugins/completion-ml-ranking/resources/META-INF/plugin.xml",
-    "pluginId": "com.intellij.completion.ml.ranking",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "M4",
-    "name": "intellij.indexing.shared.ultimate.plugin.bundled",
-    "n": "i.indexing.shared.ultimate.plugin.bundled",
-    "package": null,
-    "sourceModule": "intellij.indexing.shared.ultimate.plugin.bundled",
-    "descriptor": "plugins/shared-indexes/ultimate.plugin.bundled/resources/META-INF/plugin.xml",
-    "pluginId": "intellij.indexing.shared",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "87",
     "name": "intellij.gradle.java",
     "n": "i.gradle.java",
@@ -2322,6 +2391,77 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "1t",
+    "name": "intellij.indexing.shared",
+    "n": "i.indexing.shared",
+    "package": null,
+    "sourceModule": "intellij.indexing.shared",
+    "descriptor": "plugins/shared-indexes/core/resources/META-INF/plugin.xml",
+    "pluginId": "intellij.indexing.shared.core",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "JM",
+    "name": "intellij.jboss",
+    "n": "i.jboss",
+    "package": null,
+    "sourceModule": "intellij.jboss",
+    "descriptor": "plugins/frameworks/jboss/jboss-core/src/META-INF/plugin.xml",
+    "pluginId": "com.intellij.jboss.core",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Up",
+    "name": "intellij.maven",
+    "n": "i.maven",
+    "package": null,
+    "sourceModule": "intellij.maven",
+    "descriptor": "community/plugins/maven/src/main/resources/META-INF/plugin.xml",
+    "pluginId": "org.jetbrains.idea.maven",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "w3",
+    "name": "intellij.junit",
+    "n": "i.junit",
+    "package": null,
+    "sourceModule": "intellij.junit",
+    "descriptor": "community/plugins/junit/src/META-INF/plugin.xml",
+    "pluginId": "JUnit",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "4Y",
+    "name": "intellij.testng",
+    "n": "i.testng",
+    "package": null,
+    "sourceModule": "intellij.testng",
+    "descriptor": "community/plugins/testng/resources/META-INF/plugin.xml",
+    "pluginId": "TestNG-J",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "J7",
+    "name": "com.intellij.modules.microservices",
+    "n": "c.i.m.microservices",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "xc",
     "name": "intellij.webDeployment",
     "n": "i.webDeployment",
@@ -2358,18 +2498,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "Up",
-    "name": "intellij.maven",
-    "n": "i.maven",
-    "package": null,
-    "sourceModule": "intellij.maven",
-    "descriptor": "community/plugins/maven/src/main/resources/META-INF/plugin.xml",
-    "pluginId": "org.jetbrains.idea.maven",
-    "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "Rm",
     "name": "intellij.php.impl",
     "n": "i.php.impl",
@@ -2390,17 +2518,6 @@
     "descriptor": "phpstorm/phpstorm-remote-interpreter/resources/META-INF/plugin.xml",
     "pluginId": "org.jetbrains.plugins.phpstorm-remote-interpreter",
     "type": 1
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "J7",
-    "name": "com.intellij.modules.microservices",
-    "n": "c.i.m.microservices",
-    "package": null,
-    "sourceModule": "",
-    "descriptor": "",
-    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2464,6 +2581,17 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "KQ",
+    "name": "com.intellij.modules.vcs",
+    "n": "c.i.m.vcs",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "43",
     "name": "com.intellij.modules.python",
     "n": "c.i.m.python",
@@ -2506,6 +2634,18 @@
     "sourceModule": "intellij.hibernate",
     "descriptor": "plugins/frameworks/hibernate/hibernate-core/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.hibernate",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "MW",
+    "name": "intellij.tasks.core",
+    "n": "i.tasks.core",
+    "package": null,
+    "sourceModule": "intellij.tasks.core",
+    "descriptor": "community/plugins/tasks/tasks-core/resources/META-INF/plugin.xml",
+    "pluginId": "com.intellij.tasks",
     "type": 1
   }
 }, {
@@ -2799,9 +2939,33 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "n5_wD",
+    "source": "n5",
+    "target": "wD",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "n5_rq1",
+    "source": "n5",
+    "target": "rq1",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "2z_wG",
     "source": "2z",
     "target": "wG",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s0_mH",
+    "source": "s0",
+    "target": "mH",
     "type": 1
   }
 }, {
@@ -3143,6 +3307,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "IV_4t",
+    "source": "IV",
+    "target": "4t",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "YE_Bv",
     "source": "YE",
     "target": "Bv",
@@ -3255,6 +3427,14 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "ZY_Dx",
+    "source": "ZY",
+    "target": "Dx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "HS_S9",
     "source": "HS",
     "target": "S9",
@@ -3274,6 +3454,14 @@
     "id": "xq_JP",
     "source": "xq",
     "target": "JP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "vW_ae",
+    "source": "vW",
+    "target": "ae",
     "type": 0
   }
 }, {
@@ -3487,6 +3675,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "M4_1t",
+    "source": "M4",
+    "target": "1t",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "M4_wo",
+    "source": "M4",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "NV_Se",
     "source": "NV",
     "target": "Se",
@@ -3511,9 +3715,89 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "n5_wo",
+    "source": "n5",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "n5_JM",
+    "source": "n5",
+    "target": "JM",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "n5_Up",
+    "source": "n5",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wD_w3",
+    "source": "wD",
+    "target": "w3",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "wD_Up",
+    "source": "wD",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "rq1_4Y",
+    "source": "rq1",
+    "target": "4Y",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "rq1_Up",
+    "source": "rq1",
+    "target": "Up",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "wG_Se",
     "source": "wG",
     "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s0_J7",
+    "source": "s0",
+    "target": "J7",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "s0_wo",
+    "source": "s0",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "mH_Bv",
+    "source": "mH",
+    "target": "Bv",
     "type": 0
   }
 }, {
@@ -3602,6 +3886,22 @@
     "id": "j0_Se",
     "source": "j0",
     "target": "Se",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "kP_87",
+    "source": "kP",
+    "target": "87",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "kP_T4",
+    "source": "kP",
+    "target": "T4",
     "type": 0
   }
 }, {
@@ -4031,6 +4331,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "YP_KQ",
+    "source": "YP",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "YP_JP",
+    "source": "YP",
+    "target": "JP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "Ha_S9",
     "source": "Ha",
     "target": "S9",
@@ -4202,6 +4518,38 @@
     "id": "kf_s0",
     "source": "kf",
     "target": "s0",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IV_Dx",
+    "source": "IV",
+    "target": "Dx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IV_JP",
+    "source": "IV",
+    "target": "JP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "IV_Rt",
+    "source": "IV",
+    "target": "Rt",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "4t_MW",
+    "source": "4t",
+    "target": "MW",
     "type": 0
   }
 }, {
