@@ -10,6 +10,7 @@ import com.intellij.idea.ActionsBundle;
 import com.intellij.lang.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UnexpectedUndoException;
 import com.intellij.openapi.editor.Caret;
@@ -106,6 +107,10 @@ public final class ScratchFileActions {
         }
         doCreateNewScratch(project, context);
       };
+      if (selectionItem != null && ApplicationManager.getApplication().isUnitTestMode()) {
+        consumer.consume(selectionItem);
+        return;
+      }
       LRUPopupBuilder<LanguageItem> builder = ScratchImplUtil.buildLanguagesPopup(
         project, ActionsBundle.message("action.NewScratchFile.text.with.new"));
       if (selectionItem != null) {
