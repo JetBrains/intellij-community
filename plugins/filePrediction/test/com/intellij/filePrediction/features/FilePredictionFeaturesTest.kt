@@ -32,7 +32,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
 
     val features = actual.value.keys
     for (expected in expectedFeatures) {
-      assertTrue(features.contains(expected))
+      assertTrue("Cannot find $expected feature", features.contains(expected))
     }
   }
 
@@ -100,8 +100,7 @@ class FilePredictionFeaturesTest : CodeInsightFixtureTestCase<ModuleFixtureBuild
       "similarity_name_prefix",
       "similarity_path_prefix",
       "similarity_relative_path_prefix",
-      "history_size",
-      "history_tri_mle"
+      "history_size"
     )
   }
 
