@@ -37,26 +37,27 @@ internal class SearchEverywhereMlSessionService {
     }
   }
 
-  fun onSearchRestart(tabId: String,
+  fun onSearchRestart(project: Project?,
+                      tabId: String,
                       reason: SearchRestartReason,
                       keysTyped: Int,
                       backspacesTyped: Int,
                       textLength: Int,
                       previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (experiment.isAllowed) {
-      getCurrentSession()?.onSearchRestart(previousElementsProvider, reason, tabId, keysTyped, backspacesTyped, textLength)
+      getCurrentSession()?.onSearchRestart(project, previousElementsProvider, reason, tabId, keysTyped, backspacesTyped, textLength)
     }
   }
 
-  fun onItemSelected(indexes: IntArray, closePopup: Boolean, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+  fun onItemSelected(project: Project?, indexes: IntArray, closePopup: Boolean, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (experiment.isAllowed) {
-      getCurrentSession()?.onItemSelected(experiment, indexes, closePopup, elementsProvider)
+      getCurrentSession()?.onItemSelected(project, experiment, indexes, closePopup, elementsProvider)
     }
   }
 
-  fun onSearchFinished(elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
+  fun onSearchFinished(project: Project?, elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     if (experiment.isAllowed) {
-      getCurrentSession()?.onSearchFinished(experiment, elementsProvider)
+      getCurrentSession()?.onSearchFinished(project, experiment, elementsProvider)
     }
   }
 

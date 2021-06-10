@@ -460,7 +460,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
 
     String tabId = myHeader.getSelectedTab().getID();
     SearchEverywhereMlSessionService.getInstance().onSearchRestart(
-      tabId, reason,
+      myProject, tabId, reason,
       mySearchTypingListener.mySymbolKeysTyped, mySearchTypingListener.myBackspacesTyped, mySearchField.getText().length(),
       () -> myListModel.getFoundElementsInfo()
     );
@@ -792,7 +792,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
     }
 
     SearchEverywhereMlSessionService.getInstance().onItemSelected(
-      indexes, closePopup, () -> myListModel.getFoundElementsInfo()
+      myProject, indexes, closePopup, () -> myListModel.getFoundElementsInfo()
     );
 
     if (closePopup) {
@@ -844,7 +844,7 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
   private void sendStatisticsAndClose() {
     if (isShowing()) {
       SearchEverywhereMlSessionService.getInstance().onSearchFinished(
-        () -> myListModel.getFoundElementsInfo()
+        myProject, () -> myListModel.getFoundElementsInfo()
       );
     }
     closePopup();

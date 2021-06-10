@@ -7,13 +7,14 @@ import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.StatisticsEventLogProviderUtil
 import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.project.Project
 import com.intellij.util.concurrency.NonUrgentExecutor
 import kotlin.math.round
 
 internal class SearchEverywhereMLStatisticsCollector {
   private val loggerProvider = StatisticsEventLogProviderUtil.getEventLogProvider(RECORDER_CODE)
 
-  fun onItemSelected(seSessionId: Int, searchIndex: Int,
+  fun onItemSelected(project: Project?, seSessionId: Int, searchIndex: Int,
                      experimentGroup: Int, orderByMl: Boolean,
                      elementIdProvider: SearchEverywhereMlItemIdProvider,
                      context: SearchEverywhereMLContextInfo,
@@ -26,10 +27,10 @@ internal class SearchEverywhereMLStatisticsCollector {
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
-    reportElements(SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, data, selectedIndices, elementsProvider)
+    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, data, selectedIndices, elementsProvider)
   }
 
-  fun onSearchFinished(seSessionId: Int, searchIndex: Int,
+  fun onSearchFinished(project: Project?, seSessionId: Int, searchIndex: Int,
                        experimentGroup: Int, orderByMl: Boolean,
                        elementIdProvider: SearchEverywhereMlItemIdProvider,
                        context: SearchEverywhereMLContextInfo,
@@ -40,18 +41,18 @@ internal class SearchEverywhereMLStatisticsCollector {
       EXPERIMENT_GROUP to experimentGroup,
       ORDER_BY_ML_GROUP to orderByMl
     )
-    reportElements(SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, additional, EMPTY_ARRAY, elementsProvider)
+    reportElements(project, SESSION_FINISHED, seSessionId, searchIndex, elementIdProvider, context, cache, additional, EMPTY_ARRAY, elementsProvider)
   }
 
-  fun onSearchRestarted(seSessionId: Int, searchIndex: Int,
+  fun onSearchRestarted(project: Project?, seSessionId: Int, searchIndex: Int,
                         elementIdProvider: SearchEverywhereMlItemIdProvider,
                         context: SearchEverywhereMLContextInfo,
                         cache: SearchEverywhereMlSearchState,
                         elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
-    reportElements(SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, emptyList(), EMPTY_ARRAY, elementsProvider)
+    reportElements(project, SEARCH_RESTARTED, seSessionId, searchIndex, elementIdProvider, context, cache, emptyList(), EMPTY_ARRAY, elementsProvider)
   }
 
-  private fun reportElements(eventId: String,
+  private fun reportElements(project: Project?, eventId: String,
                              seSessionId: Int, searchIndex: Int,
                              elementIdProvider: SearchEverywhereMlItemIdProvider,
                              context: SearchEverywhereMLContextInfo,
@@ -62,6 +63,7 @@ internal class SearchEverywhereMLStatisticsCollector {
     val elements = elementsProvider.invoke()
     NonUrgentExecutor.getInstance().execute {
       val data = hashMapOf<String, Any>()
+      data[PROJECT_OPENED_KEY] = project != null
       data[SESSION_ID_LOG_DATA_KEY] = seSessionId
       data[SEARCH_INDEX_DATA_KEY] = searchIndex
       data[TOTAL_NUMBER_OF_ITEMS_DATA_KEY] = elements.size
@@ -120,7 +122,7 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 2)
+    private val GROUP = EventLogGroup("mlse.log", 3)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 
@@ -132,6 +134,7 @@ internal class SearchEverywhereMLStatisticsCollector {
     private const val EXPERIMENT_GROUP = "experimentGroup"
 
     // context fields
+    private const val PROJECT_OPENED_KEY = "projectOpened"
     private const val SE_TAB_ID_KEY = "seTabId"
     private const val CLOSE_POPUP_KEY = "closePopup"
     private const val SEARCH_START_TIME_KEY = "startTime"

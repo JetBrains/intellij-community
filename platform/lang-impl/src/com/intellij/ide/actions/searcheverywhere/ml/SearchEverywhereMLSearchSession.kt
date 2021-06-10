@@ -27,7 +27,7 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
   private val currentSearchState: AtomicReference<SearchEverywhereMlSearchState?> = AtomicReference<SearchEverywhereMlSearchState?>()
   private val logger: SearchEverywhereMLStatisticsCollector = SearchEverywhereMLStatisticsCollector()
 
-  fun onSearchRestart(previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
+  fun onSearchRestart(project: Project?, previousElementsProvider: () -> List<SearchEverywhereFoundElementInfo>,
                       reason: SearchRestartReason,
                       tabId: String,
                       keysTyped: Int,
@@ -41,18 +41,18 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     }
 
     if (prevState != null && isActionsTab(prevState.tabId)) {
-      logger.onSearchRestarted(sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState, previousElementsProvider)
+      logger.onSearchRestarted(project, sessionId, prevState.searchIndex, itemIdProvider, cachedContextInfo, prevState, previousElementsProvider)
     }
   }
 
-  fun onItemSelected(experimentStrategy: SearchEverywhereMlExperiment,
+  fun onItemSelected(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
                      indexes: IntArray, closePopup: Boolean,
                      elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = currentSearchState.get()
     if (state != null && isActionsTab(state.tabId)) {
       val orderByMl = orderedByMl(experimentStrategy, state.tabId)
       logger.onItemSelected(
-        sessionId, state.searchIndex,
+        project, sessionId, state.searchIndex,
         experimentStrategy.experimentGroup, orderByMl,
         itemIdProvider, cachedContextInfo, state,
         indexes, closePopup, elementsProvider
@@ -60,13 +60,13 @@ internal class SearchEverywhereMLSearchSession(project: Project?, private val se
     }
   }
 
-  fun onSearchFinished(experimentStrategy: SearchEverywhereMlExperiment,
+  fun onSearchFinished(project: Project?, experimentStrategy: SearchEverywhereMlExperiment,
                        elementsProvider: () -> List<SearchEverywhereFoundElementInfo>) {
     val state = currentSearchState.get()
     if (state != null && isActionsTab(state.tabId)) {
       val orderByMl = orderedByMl(experimentStrategy, state.tabId)
       logger.onSearchFinished(
-        sessionId, state.searchIndex,
+        project, sessionId, state.searchIndex,
         experimentStrategy.experimentGroup, orderByMl,
         itemIdProvider, cachedContextInfo, state,
         elementsProvider
