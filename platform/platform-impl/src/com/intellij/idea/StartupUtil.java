@@ -12,7 +12,6 @@ import com.intellij.ide.CliResult;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog;
 import com.intellij.ide.gdpr.Agreements;
-import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -571,7 +570,7 @@ public final class StartupUtil {
     if (document != null) {
       Agreements.showEndUserAndDataSharingAgreements(document);
     }
-    else if (ConsentOptions.getInstance().getConsents().getSecond()) {
+    else if (AppUIUtil.needToShowConsentsAgreement()){
       Agreements.showDataSharingAgreement();
     }
     activity.end();

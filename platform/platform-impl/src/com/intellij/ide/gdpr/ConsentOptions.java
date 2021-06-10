@@ -29,8 +29,11 @@ public final class ConsentOptions {
   private static final Logger LOG = Logger.getInstance(ConsentOptions.class);
   private static final String CONSENTS_CONFIRMATION_PROPERTY = "jb.consents.confirmation.enabled";
   private static final String STATISTICS_OPTION_ID = "rsch.send.usage.stat";
-  private static final String EAP_MARKETING_ID_PREFIX = "eap.";
+  private static final String EAP_MARKETING_OPTION_ID = "eap";
+  private static final Set<String> PER_PRODUCT_CONSENTS = Set.of(EAP_MARKETING_OPTION_ID);
   private final boolean myIsEAP;
+  @Nullable
+  private String myProductCodeSuffix;
 
   private static final class InstanceHolder {
     static final ConsentOptions ourInstance;
@@ -47,12 +50,14 @@ public final class ConsentOptions {
         }
 
         @Override
-        public @NotNull String readDefaultConsents() throws IOException {
+        @NotNull
+        public String readDefaultConsents() throws IOException {
           return loadText(new FileInputStream(DEFAULT_CONSENTS_FILE));
         }
 
         @Override
-        public @NotNull String readBundledConsents() {
+        @NotNull
+        public String readBundledConsents() {
           return loadText(ConsentOptions.class.getClassLoader().getResourceAsStream(BUNDLED_CONSENTS_PATH));
         }
 
@@ -62,11 +67,13 @@ public final class ConsentOptions {
         }
 
         @Override
-        public @NotNull String readConfirmedConsents() throws IOException {
+        @NotNull
+        public String readConfirmedConsents() throws IOException {
           return loadText(new FileInputStream(CONFIRMED_CONSENTS_FILE));
         }
 
-        private @NotNull String loadText(InputStream stream) {
+        @NotNull
+        private String loadText(InputStream stream) {
           if (stream != null) {
             try (InputStream inputStream = CharsetToolkit.inputStreamSkippingBOM(stream)) {
               return new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
@@ -80,7 +87,8 @@ public final class ConsentOptions {
       }, appInfo.isEAP() && appInfo.isVendorJetBrains());
     }
 
-    private static @NotNull @NonNls String getBundledResourcePath() {
+    @NotNull @NonNls
+    private static String getBundledResourcePath() {
       final ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
       return appInfo.isVendorJetBrains() ? "consents.json" : "consents-" + appInfo.getShortCompanyName() + ".json";
     }
@@ -106,9 +114,18 @@ public final class ConsentOptions {
     return myIsEAP;
   }
 
+  public void setProductCode(String code) {
+    myProductCodeSuffix = code != null? "." + code.toLowerCase(Locale.ENGLISH) : null;
+  }
+
   @Nullable
   public Consent getUsageStatsConsent() {
-    return loadDefaultConsents().get(STATISTICS_OPTION_ID);
+    return getDefaultConsent(STATISTICS_OPTION_ID);
+  }
+
+  @Nullable
+  public Consent getEapMarketingConsent() {
+    return getDefaultConsent(EAP_MARKETING_OPTION_ID);
   }
 
   /**
@@ -127,12 +144,12 @@ public final class ConsentOptions {
     return setPermission(STATISTICS_OPTION_ID, allowed);
   }
 
-  public Permission isEAPMarketingAllowed(String productCode) {
-    return getPermission(EAP_MARKETING_ID_PREFIX + productCode.toLowerCase(Locale.ENGLISH));
+  public Permission isEAPMarketingAllowed() {
+    return getPermission(EAP_MARKETING_OPTION_ID);
   }
 
-  public boolean setEAPMarketingAllowed(String productCode, boolean allowed) {
-    return setPermission(EAP_MARKETING_ID_PREFIX + productCode.toLowerCase(Locale.ENGLISH), allowed);
+  public boolean setEAPMarketingAllowed(boolean allowed) {
+    return setPermission(EAP_MARKETING_OPTION_ID, allowed);
   }
 
   @NotNull
@@ -142,12 +159,17 @@ public final class ConsentOptions {
   }
 
   private boolean setPermission(final String consentId, boolean allowed) {
-    final Consent defConsent = loadDefaultConsents().get(consentId);
+    final Consent defConsent = getDefaultConsent(consentId);
     if (defConsent != null && !defConsent.isDeleted()) {
       saveConfirmedConsents(Collections.singleton(new ConfirmedConsent(defConsent.getId(), defConsent.getVersion(), allowed, 0L)));
       return true;
     }
     return false;
+  }
+
+  private String lookupConsentID(String consentId) {
+    final String suffix = myProductCodeSuffix;
+    return suffix != null && PER_PRODUCT_CONSENTS.contains(consentId)? consentId + suffix : consentId;
   }
 
   public @Nullable String getConfirmedConsentsString() {
@@ -226,12 +248,17 @@ public final class ConsentOptions {
   }
 
   @Nullable
+  private Consent getDefaultConsent(String consentId) {
+    return loadDefaultConsents().get(lookupConsentID(consentId));
+  }
+
+  @Nullable
   private ConfirmedConsent getConfirmedConsent(String consentId) {
-    final Consent defConsent = loadDefaultConsents().get(consentId);
+    final Consent defConsent = getDefaultConsent(consentId);
     if (defConsent != null && defConsent.isDeleted()) {
       return null;
     }
-    return loadConfirmedConsents().get(consentId);
+    return loadConfirmedConsents().get(defConsent != null? defConsent.getId() : lookupConsentID(consentId));
   }
 
   private void saveConfirmedConsents(@NotNull Collection<ConfirmedConsent> updates) {
@@ -313,10 +340,14 @@ public final class ConsentOptions {
     return changes;
   }
 
-  private static @NotNull Collection<ConsentAttributes> fromJson(@Nullable String json) {
+  @NotNull
+  private Collection<ConsentAttributes> fromJson(@Nullable String json) {
     try {
       ConsentAttributes[] data = StringUtilRt.isEmptyOrSpaces(json) ? null : new GsonBuilder().disableHtmlEscaping().create().fromJson(json, ConsentAttributes[].class);
       if (data != null) {
+        for (ConsentAttributes attributes : data) {
+          attributes.consentId = lookupConsentID(attributes.consentId);
+        }
         return Arrays.asList(data);
       }
     }
@@ -327,9 +358,16 @@ public final class ConsentOptions {
   }
 
   @NotNull
-  private static String consentsToJson(@NotNull Stream<Consent> consents) {
+  private String consentsToJson(@NotNull Stream<Consent> consents) {
     Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-    return gson.toJson(consents.map(Consent::toConsentAttributes).toArray());
+    final String suffix = myProductCodeSuffix;
+    return gson.toJson(consents.map(consent -> {
+      final ConsentAttributes attribs = consent.toConsentAttributes();
+      if (suffix != null && attribs.consentId.endsWith(suffix)) {
+        attribs.consentId = attribs.consentId.substring(0, attribs.consentId.length() - suffix.length());
+      }
+      return attribs;
+    }).toArray());
   }
 
   @NotNull

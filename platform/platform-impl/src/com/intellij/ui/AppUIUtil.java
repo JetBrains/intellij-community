@@ -313,7 +313,8 @@ public final class AppUIUtil {
   }
 
   public static boolean needToShowConsentsAgreement() {
-    return ConsentOptions.getInstance().getConsents().getSecond();
+    final ConsentOptions options = ConsentOptions.getInstance();
+    return options.needsReconfirm(options.getUsageStatsConsent());
   }
 
   public static boolean showConsentsAgreementIfNeeded(@NotNull Executor edtExecutor) {
