@@ -102,11 +102,11 @@ public final class FileBasedIndexProjectHandler {
       Collection<VirtualFile> files = fileBasedIndex.getFilesToUpdate(myProject);
       refreshedFilesCalcDuration = System.nanoTime() - refreshedFilesCalcDuration;
 
-      LOG.info("Reindexing refreshed files: " + files.size() + " to update, calculated in " + TimeUnit.NANOSECONDS.toMillis(refreshedFilesCalcDuration) + "ms");
+      LOG.info("Reindexing refreshed files of " + myProject.getName() + " : " + files.size() + " to update, calculated in " + TimeUnit.NANOSECONDS.toMillis(refreshedFilesCalcDuration) + "ms");
       if (!files.isEmpty()) {
         PerformanceWatcher.Snapshot snapshot = PerformanceWatcher.takeSnapshot();
         indexChangedFiles(files, indicator, fileBasedIndex, myProject, refreshedFilesCalcDuration);
-        snapshot.logResponsivenessSinceCreation("Reindexing refreshed files");
+        snapshot.logResponsivenessSinceCreation("Reindexing refreshed files of " + myProject.getName());
       }
     }
 
