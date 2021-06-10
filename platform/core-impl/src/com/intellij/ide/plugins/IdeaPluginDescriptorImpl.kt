@@ -177,19 +177,21 @@ class IdeaPluginDescriptorImpl(raw: RawPluginDescriptor,
       version = context.defaultVersion
     }
 
-    if (context.isPluginDisabled(id)) {
-      markAsIncomplete(context, null, null)
-    }
-    else {
-      for (pluginDependency in dependencies.plugins) {
-        if (context.isPluginDisabled(pluginDependency.id)) {
-          markAsIncomplete(context, pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
-        }
-        else if (context.result.isBroken(pluginDependency.id)) {
-          markAsIncomplete(context = context,
-                           disabledDependency = null,
-                           shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
-                           pluginId = pluginDependency.id)
+    if (!isSub) {
+      if (context.isPluginDisabled(id)) {
+        markAsIncomplete(context, disabledDependency = null, shortMessage = null)
+      }
+      else {
+        for (pluginDependency in dependencies.plugins) {
+          if (context.isPluginDisabled(pluginDependency.id)) {
+            markAsIncomplete(context, pluginDependency.id, shortMessage = "plugin.loading.error.short.depends.on.disabled.plugin")
+          }
+          else if (context.result.isBroken(pluginDependency.id)) {
+            markAsIncomplete(context = context,
+                             disabledDependency = null,
+                             shortMessage = "plugin.loading.error.short.depends.on.broken.plugin",
+                             pluginId = pluginDependency.id)
+          }
         }
       }
     }
