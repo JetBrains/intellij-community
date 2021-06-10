@@ -25,7 +25,8 @@ import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 
 internal open class FirCallableCompletionContributor(
     basicContext: FirBasicCompletionContext,
-) : FirContextCompletionContributorBase<FirNameReferencePositionContext>(basicContext) {
+    priority: Int,
+) : FirCompletionContributorBase<FirNameReferencePositionContext>(basicContext, priority) {
     private val typeNamesProvider = TypeNamesProvider(indexHelper)
 
     protected open fun KtAnalysisSession.getInsertionStrategy(symbol: KtCallableSymbol): CallableInsertionStrategy = when (symbol) {
@@ -213,8 +214,9 @@ internal open class FirCallableCompletionContributor(
 }
 
 internal class FirCallableReferenceCompletionContributor(
-    basicContext: FirBasicCompletionContext
-) : FirCallableCompletionContributor(basicContext) {
+    basicContext: FirBasicCompletionContext,
+    priority: Int
+) : FirCallableCompletionContributor(basicContext, priority) {
 
     override fun KtAnalysisSession.getInsertionStrategy(symbol: KtCallableSymbol): CallableInsertionStrategy =
         CallableInsertionStrategy.AsIdentifier
@@ -254,8 +256,9 @@ internal class FirCallableReferenceCompletionContributor(
 }
 
 internal class FirInfixCallableCompletionContributor(
-    basicContext: FirBasicCompletionContext
-) : FirCallableCompletionContributor(basicContext) {
+    basicContext: FirBasicCompletionContext,
+    priority: Int
+) : FirCallableCompletionContributor(basicContext, priority) {
     override fun KtAnalysisSession.getInsertionStrategy(symbol: KtCallableSymbol): CallableInsertionStrategy =
         insertionStrategy
 
