@@ -1,18 +1,17 @@
 <html>
 <body>
 Reports all fields, methods or classes, found in the specified inspection
-scope, that may have their access modifier narrowed down.
+scope that may have their access modifier narrowed down.
 <p>Example:</p>
-<pre>
+<pre><code>
   class Sample {
     void foo() {
         bar("foo", "foo");
     }
     void bar(String x, String y) { } // can be private
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-Use check boxes in the inspection options below, to define rules for the modifier change suggestions.
+<p>Use the inspection's options to define the rules for the modifier change suggestions.</p>
 </body>
 </html>

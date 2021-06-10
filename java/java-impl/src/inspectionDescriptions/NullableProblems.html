@@ -3,7 +3,7 @@
 Reports problems related to nullability annotations.
 <p><b>Examples:</b></p>
 <ul>
-  <li>Overriding methods not annotated:
+  <li>Overriding methods are not annotated:
     <pre><code>
 abstract class A {
   @NotNull abstract String m();
@@ -24,8 +24,8 @@ void testList(List&lt;@Nullable String> nullableList) {
   </li>
 </ul>
 <!-- tooltip end -->
-<p>Use the button below to configure nullability annotations and the checkboxes to fine-tune where the inspection should provide warnings.</p>
+<p>Use the <b>Configure Annotations</b> button to specify nullability annotations and the checkboxes to fine-tune where the inspection should provide warnings.</p>
 <p>This inspection only reports if the language level of the project or module is 5 or higher, 
-  and nullability annotations are available on the classpath</p>
+  and nullability annotations are available on the classpath.</p>
 </body>
 </html>

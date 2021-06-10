@@ -1,15 +1,16 @@
 <html>
 <body>
-Reports collectors which could be simplified. In particular some cascaded <code>groupingBy</code> collectors could be expressed with
-simpler <code>toMap</code> collector which also will likely be more performant.
+Reports collectors that can be simplified.
+<p>In particular, some cascaded <code>groupingBy</code> collectors can be expressed by using a
+  simpler <code>toMap</code> collector, which is also likely to be more performant.</p>
 <p>Example:</p>
-<pre>
+<pre><code>
   Collectors.groupingByConcurrent(String::length, Collectors.collectingAndThen(Collectors.maxBy(String::compareTo), Optional::get));
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   Collectors.toConcurrentMap(String::length, Function.identity(), BinaryOperator.maxBy(String::compareTo));
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>This inspection only reports if the language level of the project or module is 8 or higher.</p>
 <p><small>New in 2017.1</small></p>
