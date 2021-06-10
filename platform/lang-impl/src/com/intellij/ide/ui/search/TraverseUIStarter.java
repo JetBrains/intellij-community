@@ -169,12 +169,12 @@ public final class TraverseUIStarter implements ApplicationStarter {
       String module = entry.getKey();
       Path output;
       if (module.isEmpty()) {
-        output = outputPath.resolve(SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML);
+        output = outputPath.resolve(SearchableOptionsRegistrar.getSearchableOptionsXmlName());
       }
       else {
         Path moduleDir = outputPath.resolve(module);
         Files.deleteIfExists(moduleDir.resolve("classpath.index"));
-        output = moduleDir.resolve("search/" + module + '.' + SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML);
+        output = moduleDir.resolve("search/" + module + '.' + SearchableOptionsRegistrar.getSearchableOptionsXmlName());
       }
       JDOMUtil.write(entry.getValue(), output);
     }

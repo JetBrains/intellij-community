@@ -30,7 +30,7 @@ internal class MySearchableOptionProcessor(private val stopWords: Set<String>) :
   }
 
   fun computeHighlightOptionToSynonym(): Map<Pair<String, String>, MutableSet<String>> {
-    val fileNameFilter = { it: String -> it.endsWith(SearchableOptionsRegistrar.SEARCHABLE_OPTIONS_XML) }
+    val fileNameFilter = { it: String -> it.endsWith(SearchableOptionsRegistrar.getSearchableOptionsXmlName())}
     SearchableOptionsRegistrarImpl.processSearchableOptions(fileNameFilter) { _, root ->
       for (configurable in root.getChildren("configurable")) {
         val id = configurable.getAttributeValue("id") ?: continue
