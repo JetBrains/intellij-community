@@ -459,6 +459,7 @@ public class LongRangeSetTest {
     assertEquals(range(0, 31), all().bitwiseAnd(range(16, 24)));
     assertEquals("{Long.MIN_VALUE..9223372036854775804}: divisible by 4", all().bitwiseAnd(point(~1)).bitwiseAnd(point(~2)).toString());
     assertEquals("{Long.MIN_VALUE..9223372036854775802}: <0, 2> mod 8", all().mul(point(6), INT64).bitwiseAnd(point(~4)).toString());
+    assertEquals("{0}", all().shiftLeft(point(4), INT64).bitwiseAnd(point(15)).toString());
 
     checkBitwiseAnd(range(0, 3), range(4, 7), "{0..3}");
     checkBitwiseAnd(range(3, 4), range(3, 4), "{0..7}"); // 0,3,4,7 actually
