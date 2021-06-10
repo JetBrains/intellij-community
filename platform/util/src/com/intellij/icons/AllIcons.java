@@ -519,6 +519,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Warning = load("general/warning.svg", -4939622142106744579L, 2);
     /** 16x16 */ public static final @NotNull Icon WarningDecorator = load("general/warningDecorator.svg", 2405998040705208001L, 2);
     /** 32x32 */ public static final @NotNull Icon WarningDialog = load("general/warningDialog.svg", 6423980923993992189L, 0);
+    /** 32x32 */ public static final @NotNull Icon SuccessDialog = load("general/successDialog.svg", 6423980923993992189L, 0);
     /** 16x16 */ public static final @NotNull Icon Web = load("general/web.svg", -2049562750565831010L, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomIn = load("general/zoomIn.svg", -7507719754184865831L, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomOut = load("general/zoomOut.svg", -1556237764441501987L, 2);
