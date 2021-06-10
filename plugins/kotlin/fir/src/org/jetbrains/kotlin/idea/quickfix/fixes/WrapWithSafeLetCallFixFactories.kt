@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.quickfix.fixes
 
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPsiElementPointer
@@ -177,7 +176,7 @@ object WrapWithSafeLetCallFixFactories {
     private fun KtAnalysisSession.createWrapWithSafeLetCallInputForNullableExpressionIfMoreThanImmediateParentIsWrapped(
         nullableExpression: KtExpression?,
         isImplicitInvokeCallToMemberProperty: Boolean = false,
-    ): List<IntentionAction> {
+    ): List<HLQuickFix<KtExpression, Input>> {
         val surroundingExpression = nullableExpression?.surroundingExpression
         if (
             surroundingExpression == null ||
@@ -202,7 +201,7 @@ object WrapWithSafeLetCallFixFactories {
         isImplicitInvokeCallToMemberProperty: Boolean = false,
         surroundingExpression: KtExpression? = findParentExpressionAtNullablePosition(nullableExpression)
             ?: nullableExpression?.surroundingExpression
-    ): List<IntentionAction> {
+    ): List<HLQuickFix<KtExpression, Input>> {
         if (nullableExpression == null || surroundingExpression == null) return emptyList()
         val existingNames =
             nullableExpression.containingKtFile.getScopeContextForPosition(nullableExpression).scopes.getPossibleCallableNames()
