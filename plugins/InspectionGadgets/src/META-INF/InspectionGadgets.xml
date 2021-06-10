@@ -426,7 +426,7 @@
                      level="WARNING" implementationClass="com.siyeh.ig.classlayout.FinalClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FinalMethodInFinalClass" bundle="messages.InspectionGadgetsBundle"
                      key="final.method.in.final.class.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.declaration.redundancy" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.classlayout.FinalMethodInFinalClassInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="FinalMethod" bundle="messages.InspectionGadgetsBundle" key="final.method.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.class.structure" enabledByDefault="false"
