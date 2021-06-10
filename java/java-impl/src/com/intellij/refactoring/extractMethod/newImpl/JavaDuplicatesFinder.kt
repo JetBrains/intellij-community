@@ -17,7 +17,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
 
   private val pattern: List<PsiElement> = pattern.filterNot(::isNoise)
 
-  fun findDuplicates(file: PsiFile): List<Duplicate> {
+  fun findDuplicates(scope: PsiElement): List<Duplicate> {
     val duplicates = mutableListOf<Duplicate>()
     val visitor = object: JavaRecursiveElementWalkingVisitor() {
       override fun visitStatement(statement: PsiStatement) {
@@ -30,7 +30,7 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
         }
       }
     }
-    file.accept(visitor)
+    scope.accept(visitor)
 
     return duplicates
   }
