@@ -14,12 +14,12 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("gradle/gradle-idea")
+@TestRoot("gradle/gradle-idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 public abstract class GradleConfigureProjectByChangingFileTestGenerated extends AbstractGradleConfigureProjectByChangingFileTest {
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/configuration/gradle")
+    @TestMetadata("../../../idea/tests/testData/configuration/gradle")
     public static class Gradle extends AbstractGradleConfigureProjectByChangingFileTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestGradle, this, testDataFilePath);
@@ -27,52 +27,52 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
 
         @TestMetadata("default")
         public void testDefault() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gradle/default/");
+            runTest("../../../idea/tests/testData/configuration/gradle/default/");
         }
 
         @TestMetadata("eapVersion")
         public void testEapVersion() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gradle/eapVersion/");
+            runTest("../../../idea/tests/testData/configuration/gradle/eapVersion/");
         }
 
         @TestMetadata("jreLib")
         public void testJreLib() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gradle/jreLib/");
+            runTest("../../../idea/tests/testData/configuration/gradle/jreLib/");
         }
 
         @TestMetadata("js")
         public void testJs() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gradle/js/");
+            runTest("../../../idea/tests/testData/configuration/gradle/js/");
         }
 
         @TestMetadata("m04Version")
         public void testM04Version() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gradle/m04Version/");
+            runTest("../../../idea/tests/testData/configuration/gradle/m04Version/");
         }
 
         @TestMetadata("missedLibrary")
         public void testMissedLibrary() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gradle/missedLibrary/");
+            runTest("../../../idea/tests/testData/configuration/gradle/missedLibrary/");
         }
 
         @TestMetadata("plugin_present")
         public void testPlugin_present() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gradle/plugin_present/");
+            runTest("../../../idea/tests/testData/configuration/gradle/plugin_present/");
         }
 
         @TestMetadata("rcVersion")
         public void testRcVersion() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gradle/rcVersion/");
+            runTest("../../../idea/tests/testData/configuration/gradle/rcVersion/");
         }
 
         @TestMetadata("withJava9ModuleInfo")
         public void testWithJava9ModuleInfo() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gradle/withJava9ModuleInfo/");
+            runTest("../../../idea/tests/testData/configuration/gradle/withJava9ModuleInfo/");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("../../idea/tests/testData/configuration/gsk")
+    @TestMetadata("../../../idea/tests/testData/configuration/gsk")
     public static class Gsk extends AbstractGradleConfigureProjectByChangingFileTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestGradle, this, testDataFilePath);
@@ -80,27 +80,27 @@ public abstract class GradleConfigureProjectByChangingFileTestGenerated extends 
 
         @TestMetadata("eap11Version")
         public void testEap11Version() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gsk/eap11Version/");
+            runTest("../../../idea/tests/testData/configuration/gsk/eap11Version/");
         }
 
         @TestMetadata("eapVersion")
         public void testEapVersion() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gsk/eapVersion/");
+            runTest("../../../idea/tests/testData/configuration/gsk/eapVersion/");
         }
 
         @TestMetadata("helloWorld")
         public void testHelloWorld() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gsk/helloWorld/");
+            runTest("../../../idea/tests/testData/configuration/gsk/helloWorld/");
         }
 
         @TestMetadata("missedLibrary")
         public void testMissedLibrary() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gsk/missedLibrary/");
+            runTest("../../../idea/tests/testData/configuration/gsk/missedLibrary/");
         }
 
         @TestMetadata("pluginPresent")
         public void testPluginPresent() throws Exception {
-            runTest("../../idea/tests/testData/configuration/gsk/pluginPresent/");
+            runTest("../../../idea/tests/testData/configuration/gsk/pluginPresent/");
         }
     }
 }

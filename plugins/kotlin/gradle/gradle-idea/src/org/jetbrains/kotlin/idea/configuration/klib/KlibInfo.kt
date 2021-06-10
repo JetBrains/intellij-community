@@ -2,9 +2,11 @@
 
 package org.jetbrains.kotlin.idea.configuration.klib
 
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import java.io.File
 
-internal data class KlibInfo(
+@KotlinPluginInternalApi
+data class KlibInfo(
     val path: File,
     val sourcePaths: Collection<File>,
     val libraryName: String,

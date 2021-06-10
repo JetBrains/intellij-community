@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.scripting.gradle
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.FileAttribute
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import org.jetbrains.kotlin.idea.core.script.scriptingErrorLog
 import org.jetbrains.kotlin.idea.core.util.readNullable
 import org.jetbrains.kotlin.idea.core.util.readStringList
@@ -79,7 +80,8 @@ class LastModifiedFiles(
             }
         }
 
-        internal fun readLastModifiedFiles(it: DataInputStream) = it.readNullable {
+        @KotlinPluginInternalApi
+        fun readLastModifiedFiles(it: DataInputStream) = it.readNullable {
             LastModifiedFiles(readSCF(it), readSCF(it))
         }
 
@@ -97,7 +99,8 @@ class LastModifiedFiles(
             }
         }
 
-        internal fun writeLastModifiedFiles(it: DataOutputStream, data: LastModifiedFiles?) {
+        @KotlinPluginInternalApi
+        fun writeLastModifiedFiles(it: DataOutputStream, data: LastModifiedFiles?) {
             it.writeNullable(data) { data ->
                 writeSCF(data.last)
                 writeSCF(data.previous)

@@ -5,6 +5,7 @@ import com.google.common.graph.*
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
 import org.jetbrains.kotlin.gradle.KotlinPlatform
 import org.jetbrains.kotlin.gradle.KotlinSourceSet
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 
 internal fun createSourceSetVisibilityGraph(model: KotlinMPPGradleModel): ImmutableGraph<KotlinSourceSet> {
     val graph = createSourceSetDependsOnGraph(model)
@@ -16,7 +17,8 @@ internal fun createSourceSetDependsOnGraph(model: KotlinMPPGradleModel): Mutable
     return createSourceSetDependsOnGraph(model.sourceSetsByName)
 }
 
-internal fun createSourceSetDependsOnGraph(
+@KotlinPluginInternalApi
+fun createSourceSetDependsOnGraph(
     sourceSetsByName: Map<String, KotlinSourceSet>
 ): MutableGraph<KotlinSourceSet> {
     val graph = GraphBuilder.directed().build<KotlinSourceSet>()
@@ -34,7 +36,8 @@ internal fun createSourceSetDependsOnGraph(
     return graph
 }
 
-internal fun MutableGraph<KotlinSourceSet>.putInferredTestToProductionEdges() {
+@KotlinPluginInternalApi
+fun MutableGraph<KotlinSourceSet>.putInferredTestToProductionEdges() {
     val sourceSets = this.nodes()
     for (sourceSet in sourceSets) {
         if (sourceSet.isTestModule) {

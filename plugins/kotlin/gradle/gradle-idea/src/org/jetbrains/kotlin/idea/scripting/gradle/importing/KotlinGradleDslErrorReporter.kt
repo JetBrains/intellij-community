@@ -12,6 +12,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemEventDispatcher
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import java.io.File
 
 private const val gradle_build_script_errors_group = "Kotlin Build Script Errors"
@@ -61,7 +62,8 @@ class KotlinGradleDslErrorReporter(
     }
 
     companion object {
-        internal val build_script_errors_group: String
+        @KotlinPluginInternalApi
+        val build_script_errors_group: String
             @TestOnly
             get() = gradle_build_script_errors_group
     }

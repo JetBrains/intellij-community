@@ -8,6 +8,7 @@ import com.intellij.openapi.util.Key
 import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.gradle.KotlinDependency
 import org.jetbrains.kotlin.gradle.KotlinMPPGradleModel
+import org.jetbrains.kotlin.idea.KotlinPluginInternalApi
 import org.jetbrains.kotlin.idea.configuration.buildClasspathData
 import org.jetbrains.kotlin.idea.configuration.mpp.KotlinDependenciesPreprocessor
 import org.jetbrains.kotlin.idea.inspections.gradle.findKotlinPluginVersion
@@ -138,7 +139,8 @@ private sealed class DependencySubstitute {
 /**
  * Library Name formatted for the IDE.
  */
-internal fun KlibInfo.ideName(kotlinVersion: String? = null): String = buildString {
+@KotlinPluginInternalApi
+fun KlibInfo.ideName(kotlinVersion: String? = null): String = buildString {
     if (isFromNativeDistribution) {
         append(KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX)
         if (kotlinVersion != null) append(" $kotlinVersion - ") else append(" ")
