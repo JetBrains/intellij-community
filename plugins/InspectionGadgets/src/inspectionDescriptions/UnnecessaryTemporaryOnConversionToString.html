@@ -1,12 +1,12 @@
 <html>
 <body>
 Reports unnecessary creation of temporary objects when converting
-from a primitive type to a <code>String</code>.
-<p>Example:</p>
+from a primitive type to <code>String</code>.
+<p><b>Example:</b></p>
 <pre>
   String foo = new Integer(3).toString();
 </pre>
-<p>After the quick-fix is applied, the result looks like this:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   String foo = Integer.toString(3);
 </pre>
