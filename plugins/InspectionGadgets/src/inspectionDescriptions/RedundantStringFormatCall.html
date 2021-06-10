@@ -1,11 +1,11 @@
 <html>
 <body>
-Reports redundant calls to the methods like <code>format()</code> and <code>printf()</code> when they can be safely removed or simplified.
-<p>Example:</p>
+Reports calls to methods like <code>format()</code> and <code>printf()</code> that can be safely removed or simplified.
+<p><b>Example:</b></p>
 <pre>
   System.out.println(String.format("Total count: %d", 42));
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   System.out.printf("Total count: %d%n", 42);
 </pre>

@@ -1,19 +1,17 @@
 <html>
 <body>
-Reports <code>Collection.addAll()</code> and <code>Map.putAll()</code> calls immediately after instantiation of a collection using a constructor call without arguments.
-<p>Such constructs can be replaced with a single call to a parametrized constructor which simplifies code. Also, for some collections the replacement
+Reports <code>Collection.addAll()</code> and <code>Map.putAll()</code> calls immediately after instantiation of a collection using the no-arg constructor.
+<p>Such constructs can be replaced with a single call to a parametrized constructor, which simplifies code. Also, for some collections the replacement
   might be more performant.</p>
-<p>Example:</p>
-<pre><code>
-  Set&lt;String&gt; set = new HashSet&lt;&gt;();
+<p><b>Example:</b></p>
+<pre><code>  Set&lt;String&gt; set = new HashSet&lt;&gt;();
   set.addAll(Arrays.asList("alpha", "beta", "gamma"));
 </code></pre>
 <p>Can be replaced with:</p>
-<pre><code>
-  Set&lt;String&gt; set = new HashSet&lt;&gt;(Arrays.asList("alpha", "beta", "gamma"));
+<pre><code>  Set&lt;String&gt; set = new HashSet&lt;&gt;(Arrays.asList("alpha", "beta", "gamma"));
 </code></pre>
 <!-- tooltip end -->
 <p>
-Standard JDK collection classes are supported by default. Additionally, you can specify other classes in the <b>Classes to check</b> area.
+Standard JDK collection classes are supported by default. Additionally, you can specify other classes in the inspection options.
 </body>
 </html>
