@@ -27,7 +27,7 @@ internal fun execute(workingDir: Path?, vararg command: String, withTimer: Boole
       .redirectError(errOutputFile)
       .apply {
         environment()["LANG"] = "en_US.UTF-8"
-        if (environment()["GIT_SSH_COMMAND"].isNullOrEmpty()) {
+        if (environment()["GIT_SSH_COMMAND"].isNullOrEmpty() && environment()["GIT_SSH"].isNullOrEmpty()) {
           environment()["GIT_SSH_COMMAND"] = "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no"
         }
       }.start()
