@@ -44,7 +44,7 @@ public enum LanguageLevel {
   JDK_17_PREVIEW(JavaPsiBundle.messagePointer("jdk.17.preview.language.level.description"), 17),
   JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 18);
 
-  public static final LanguageLevel HIGHEST = JDK_16;
+  public static final LanguageLevel HIGHEST = JDK_17;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
   private final Supplier<@Nls String> myPresentableText;
@@ -109,6 +109,18 @@ public enum LanguageLevel {
         return sdkVersion.getMaxLanguageLevel();
       }
     }
+    return null;
+  }
+
+  public @Nullable LanguageLevel getNextLanguageLevel(boolean skipPreviewLevels) {
+    final LanguageLevel[] levels = values();
+    for (int i = ordinal() + 1; i < levels.length; i++) {
+      final LanguageLevel level = levels[i];
+      if (!level.isPreview() || !skipPreviewLevels) {
+        return level;
+      }
+    }
+
     return null;
   }
 }

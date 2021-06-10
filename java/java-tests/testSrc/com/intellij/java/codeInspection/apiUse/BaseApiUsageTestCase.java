@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInspection.apiUse;
 
 import com.intellij.JavaTestUtil;
@@ -22,10 +22,13 @@ import org.jetbrains.annotations.NotNull;
  * In order to add a new test case:
  * <ol>
  * <li>Go to "inspection/api_usage/data"</li>
- * <li>Add a new file(s) to "inspection/api_usage/data/src" that contains new API. It's better to describe the new API as native methods.</li>
+ * <li>Add a new file(s) to "inspection/api_usage/data/src" that contains new API. It's better to define the new API as native methods.</li>
  * <li>Set <code>JAVA_HOME</code> to jdk 1.8. In this case it's possible to redefine JDK's own classes like <code>String</code> or <code>Class</code></li>
  * <li>Invoke "inspection/api_usage/compile.sh". The new class(es) will appear in "inspection/api_usage/data/classes"</li>
- * <li>Add a new junit test class for that that inherits this class</li>
+ * <li>
+ *   Add a new junit test class for that that inherits this class.
+ *   Don't forget to correctly redefine {@link LightJavaCodeInsightFixtureTestCase#getTestDataPath()} in the test class.
+ * </li>
  * </ol>
  */
 public abstract class BaseApiUsageTestCase extends LightJavaCodeInsightFixtureTestCase {
