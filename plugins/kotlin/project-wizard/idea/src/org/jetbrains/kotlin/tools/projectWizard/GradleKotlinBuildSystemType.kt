@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 import org.jetbrains.plugins.gradle.util.GradleBundle
@@ -9,7 +10,7 @@ import org.jetbrains.plugins.gradle.util.GradleBundle
 class GradleKotlinBuildSystemType : KotlinBuildSystemType<GradleKotlinBuildSystemSettings>("Gradle") {
     override var settingsFactory = { GradleKotlinBuildSystemSettings() }
 
-    override fun setupProject(languageSettings: KotlinSettings, settings: GradleKotlinBuildSystemSettings) {
+    override fun setupProject(project: Project, languageSettings: KotlinSettings, settings: GradleKotlinBuildSystemSettings) {
         TODO("Not yet implemented")
     }
 

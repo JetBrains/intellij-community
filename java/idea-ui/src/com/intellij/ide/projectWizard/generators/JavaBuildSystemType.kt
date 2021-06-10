@@ -4,6 +4,7 @@ package com.intellij.ide.projectWizard.generators
 import com.intellij.ide.wizard.BuildSystemType
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.UIBundle
 import com.intellij.ui.layout.*
@@ -46,7 +47,7 @@ class IntelliJJavaBuildSystemType : JavaBuildSystemType<IntelliJBuildSystemSetti
       }
     }
 
-  override fun setupProject(languageSettings: JavaSettings, settings: IntelliJBuildSystemSettings) {
+  override fun setupProject(project: Project, languageSettings: JavaSettings, settings: IntelliJBuildSystemSettings) {
     TODO("Not yet implemented")
   }
 }

@@ -48,8 +48,8 @@ class JavaNewProjectWizard : NewProjectWizard<JavaSettings> {
     ).plus(settings.buildSystemButtons.value.map { LabelAndComponent(component = it.advancedSettings()) })
   }
 
-  override fun setupProject(project: Project?, settings: JavaSettings, context: WizardContext) {
-    settings.buildSystemProperty.get().setupProject(settings)
+  override fun setupProject(project: Project, settings: JavaSettings, context: WizardContext) {
+    settings.buildSystemProperty.get().setupProject(project, settings)
   }
 }
 

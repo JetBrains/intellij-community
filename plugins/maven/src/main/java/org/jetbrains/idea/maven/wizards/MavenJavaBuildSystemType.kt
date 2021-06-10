@@ -4,13 +4,14 @@ package org.jetbrains.idea.maven.wizards
 import com.intellij.ide.projectWizard.generators.JavaBuildSystemType
 import com.intellij.ide.projectWizard.generators.JavaSettings
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.layout.*
 
 class MavenJavaBuildSystemType : JavaBuildSystemType<MavenJavaBuildSystemSettings>("Maven") {
   override var settingsFactory = { MavenJavaBuildSystemSettings() }
 
-  override fun setupProject(languageSettings: JavaSettings, settings: MavenJavaBuildSystemSettings) {
+  override fun setupProject(project: Project, languageSettings: JavaSettings, settings: MavenJavaBuildSystemSettings) {
     TODO("Not yet implemented")
   }
 

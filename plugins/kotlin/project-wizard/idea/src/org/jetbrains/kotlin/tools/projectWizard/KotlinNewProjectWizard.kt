@@ -48,8 +48,8 @@ class KotlinNewProjectWizard : NewProjectWizard<KotlinSettings> {
       ).plus(settings.buildSystems.value.map { LabelAndComponent(component = it.advancedSettings()) })
   }
 
-  override fun setupProject(project: Project?, settings: KotlinSettings, context: WizardContext) {
-    settings.buildSystemProperty.get().setupProject(settings)
+  override fun setupProject(project: Project, settings: KotlinSettings, context: WizardContext) {
+    settings.buildSystemProperty.get().setupProject(project, settings)
   }
 }
 
