@@ -264,6 +264,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cuY",
+    "n": "com.intellij.plugins.watcher"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "uY",
     "name": "intellij.fileWatcher",
     "n": "i.fileWatcher",
@@ -271,7 +277,20 @@
     "sourceModule": "intellij.fileWatcher",
     "descriptor": "plugins/fileWatcher/resources/META-INF/plugin.xml",
     "pluginId": "com.intellij.plugins.watcher",
-    "type": 1
+    "parent": "cuY",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Wz",
+    "name": "intellij.fileWatcher/webDeployment",
+    "n": "i.fileWatcher/webDeployment",
+    "package": "com.intellij.plugins.watcher.deployment",
+    "sourceModule": "intellij.fileWatcher",
+    "descriptor": "plugins/fileWatcher/resources/intellij.fileWatcher.webDeployment.xml",
+    "parent": "cuY",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -1782,6 +1801,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cv41",
+    "n": "com.jetbrains.sh"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "v41",
     "name": "intellij.sh",
     "n": "i.sh",
@@ -1789,7 +1814,32 @@
     "sourceModule": "intellij.sh",
     "descriptor": "community/plugins/sh/resources/META-INF/plugin.xml",
     "pluginId": "com.jetbrains.sh",
-    "type": 1
+    "parent": "cv41",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "Ae",
+    "name": "intellij.sh/terminal",
+    "n": "i.sh/terminal",
+    "package": "com.intellij.sh.run.terminal",
+    "sourceModule": "intellij.sh",
+    "descriptor": "community/plugins/sh/resources/intellij.sh.terminal.xml",
+    "parent": "cv41",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "XQ",
+    "name": "intellij.sh/copyright",
+    "n": "i.sh/copyright",
+    "package": "com.intellij.sh.copyright",
+    "sourceModule": "intellij.sh",
+    "descriptor": "community/plugins/sh/resources/intellij.sh.copyright.xml",
+    "parent": "cv41",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2138,6 +2188,12 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "cJP",
+    "n": "Git4Idea"
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "JP",
     "name": "intellij.vcs.git",
     "n": "i.vcs.git",
@@ -2145,7 +2201,20 @@
     "sourceModule": "intellij.vcs.git",
     "descriptor": "community/plugins/git4idea/resources/META-INF/plugin.xml",
     "pluginId": "Git4Idea",
-    "type": 1
+    "parent": "cJP",
+    "type": 2
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "TO",
+    "name": "intellij.vcs.git/terminal",
+    "n": "i.vcs.git/terminal",
+    "package": "git4idea.terminal",
+    "sourceModule": "intellij.vcs.git",
+    "descriptor": "community/plugins/git4idea/resources/intellij.vcs.git.terminal.xml",
+    "parent": "cJP",
+    "type": 0
   }
 }, {
   "group": "nodes",
@@ -2297,6 +2366,29 @@
 }, {
   "group": "nodes",
   "data": {
+    "id": "It",
+    "name": "com.intellij.modules.xml",
+    "n": "c.i.m.xml",
+    "package": null,
+    "sourceModule": "",
+    "descriptor": "",
+    "type": 0
+  }
+}, {
+  "group": "nodes",
+  "data": {
+    "id": "xc",
+    "name": "intellij.webDeployment",
+    "n": "i.webDeployment",
+    "package": null,
+    "sourceModule": "intellij.webDeployment",
+    "descriptor": "plugins/webDeployment/resources/META-INF/plugin.xml",
+    "pluginId": "com.jetbrains.plugins.webDeployment",
+    "type": 1
+  }
+}, {
+  "group": "nodes",
+  "data": {
     "id": "6X",
     "name": "intellij.terminal",
     "n": "i.terminal",
@@ -2380,17 +2472,6 @@
 }, {
   "group": "nodes",
   "data": {
-    "id": "It",
-    "name": "com.intellij.modules.xml",
-    "n": "c.i.m.xml",
-    "package": null,
-    "sourceModule": "",
-    "descriptor": "",
-    "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
     "id": "1t",
     "name": "intellij.indexing.shared",
     "n": "i.indexing.shared",
@@ -2458,18 +2539,6 @@
     "sourceModule": "",
     "descriptor": "",
     "type": 0
-  }
-}, {
-  "group": "nodes",
-  "data": {
-    "id": "xc",
-    "name": "intellij.webDeployment",
-    "n": "i.webDeployment",
-    "package": null,
-    "sourceModule": "intellij.webDeployment",
-    "descriptor": "plugins/webDeployment/resources/META-INF/plugin.xml",
-    "pluginId": "com.jetbrains.plugins.webDeployment",
-    "type": 1
   }
 }, {
   "group": "nodes",
@@ -2718,6 +2787,14 @@
     "id": "HS_xq",
     "source": "HS",
     "target": "xq",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "uY_Wz",
+    "source": "uY",
+    "target": "Wz",
     "type": 1
   }
 }, {
@@ -3227,6 +3304,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "v41_Ae",
+    "source": "v41",
+    "target": "Ae",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "v41_XQ",
+    "source": "v41",
+    "target": "XQ",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "mA_wI",
     "source": "mA",
     "target": "wI",
@@ -3302,6 +3395,14 @@
     "id": "nC_kf",
     "source": "nC",
     "target": "kf",
+    "type": 1
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "JP_TO",
+    "source": "JP",
+    "target": "TO",
     "type": 1
   }
 }, {
@@ -3454,6 +3555,22 @@
     "id": "xq_JP",
     "source": "xq",
     "target": "JP",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "uY_It",
+    "source": "uY",
+    "target": "It",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Wz_xc",
+    "source": "Wz",
+    "target": "xc",
     "type": 0
   }
 }, {
@@ -4115,6 +4232,30 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "xs_wo",
+    "source": "xs",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xs_xc",
+    "source": "xs",
+    "target": "xc",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "xs_6X",
+    "source": "xs",
+    "target": "6X",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "uu_xs",
     "source": "uu",
     "target": "xs",
@@ -4403,6 +4544,30 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "v41_Dx",
+    "source": "v41",
+    "target": "Dx",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "Ae_6X",
+    "source": "Ae",
+    "target": "6X",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "XQ_EG",
+    "source": "XQ",
+    "target": "EG",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "wI_RP1",
     "source": "wI",
     "target": "RP1",
@@ -4523,6 +4688,22 @@
 }, {
   "group": "edges",
   "data": {
+    "id": "JP_KQ",
+    "source": "JP",
+    "target": "KQ",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "TO_6X",
+    "source": "TO",
+    "target": "6X",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
     "id": "IV_Dx",
     "source": "IV",
     "target": "Dx",
@@ -4550,6 +4731,22 @@
     "id": "4t_MW",
     "source": "4t",
     "target": "MW",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ZR_wo",
+    "source": "ZR",
+    "target": "wo",
+    "type": 0
+  }
+}, {
+  "group": "edges",
+  "data": {
+    "id": "ZR_xs",
+    "source": "ZR",
+    "target": "xs",
     "type": 0
   }
 }, {

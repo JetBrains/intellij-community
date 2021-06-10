@@ -17,8 +17,12 @@
 
   <resource-bundle>messages.GitBundle</resource-bundle>
 
-  <depends>com.intellij.modules.vcs</depends>
-  <depends optional="true" config-file="git-terminal.xml">org.jetbrains.plugins.terminal</depends>
+  <content>
+    <module name="intellij.vcs.git/terminal"/>
+  </content>
+  <dependencies>
+    <plugin id="com.intellij.modules.vcs"/>
+  </dependencies>
 
   <actions>
     <action id="Git.Init" class="git4idea.actions.GitInit">
