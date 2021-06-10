@@ -21,19 +21,21 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
   var extractOptions: ExtractOptions? = null
 
   override fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
-    val copiedFile = targetClass.containingFile.copy() as PsiFile
+    val file = targetClass.containingFile
+    val copiedFile = file.copy() as PsiFile
     val copiedClass = PsiTreeUtil.findSameElementInCopy(targetClass, copiedFile)
     val copiedElements = elements.map { PsiTreeUtil.findSameElementInCopy(it, copiedFile) }
     val extractOptions = findExtractOptions(copiedClass, copiedElements, methodName, makeStatic)
-    this.extractOptions = extractOptions
+    val anchor = PsiTreeUtil.findSameElementInCopy(extractOptions.anchor, file)
 
-    duplicatesFinder = JavaDuplicatesFinder(copiedElements)
+    this.duplicatesFinder = JavaDuplicatesFinder(copiedElements)
+    this.extractOptions = extractOptions
 
     val elementsToReplace = MethodExtractor().prepareRefactoringElements(extractOptions)
     val calls = MethodExtractor().replace(elements, elementsToReplace.callElements)
-    val method = targetClass.add(elementsToReplace.method) as PsiMethod
+    val method = targetClass.addAfter(elementsToReplace.method, anchor) as PsiMethod
 
-    callsToReplace = calls
+    this.callsToReplace = calls
     val callExpression = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java, false)!!
     return Pair(method, callExpression)
   }
@@ -57,7 +59,8 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val finder = duplicatesFinder ?: return
     val calls = callsToReplace ?: return
     val options = extractOptions ?: return
-    val duplicates = finder.findDuplicates(method.containingClass ?: file).filterNot { textRangeOf(it.candidate) in method.textRange }
+    val duplicates = finder.findDuplicates(method.containingClass ?: file)
+      .filterNot { findParentMethod(it.candidate.first()) == method }
 
     duplicates.forEach { duplicate ->
       printDuplicate(project, duplicate)
@@ -93,4 +96,6 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
       println("${pattern.text} ::: ${candidate.text}")
     }
   }
+
+  private fun findParentMethod(element: PsiElement) = PsiTreeUtil.getParentOfType(element, PsiMethod::class.java)
 }
