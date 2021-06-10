@@ -147,20 +147,17 @@ public class PluginUpdateDialog extends DialogWrapper {
     for (ListPluginComponent plugin : myGroup.ui.plugins) {
       if (plugin.getChooseUpdateButton().isSelected()) {
         count++;
-        try {
-          total += Long.parseLong(((PluginNode)plugin.getPluginDescriptor()).getSize());
-        }
-        catch (NumberFormatException ignore) {
+
+        IdeaPluginDescriptor descriptor = plugin.getPluginDescriptor();
+        if (descriptor instanceof PluginNode) {
+          total += ((PluginNode)descriptor).getIntegerSize();
         }
       }
     }
 
-    String text = null;
-    if (total > 0) {
-      text = IdeBundle.message("plugin.update.dialog.total.label", StringUtilRt.formatFileSize(total).toUpperCase(Locale.ENGLISH));
-    }
-
-    myTotalLabel.setText(text);
+    myTotalLabel.setText(IdeBundle.message("plugin.update.dialog.total.label",
+                                           StringUtilRt.formatFileSize(total).toUpperCase(Locale.ENGLISH)));
+    myTotalLabel.setVisible(total > 0);
     getOKAction().setEnabled(count > 0);
   }
 

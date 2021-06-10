@@ -39,7 +39,6 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.RelativeFont;
@@ -59,7 +58,6 @@ import org.jetbrains.annotations.*;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.text.DecimalFormat;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -93,8 +91,6 @@ public final class PluginManagerConfigurable
   public static final int ITEMS_PER_GROUP = 9;
 
   public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("MMM dd, yyyy");
-  private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
-  private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
 
   private TabbedPaneHeaderComponent myTabHeaderComponent;
   private MultiPanel myCardPanel;
@@ -1264,89 +1260,12 @@ public final class PluginManagerConfigurable
     return tags;
   }
 
-  @NotNull
-  public static <T extends Component> T setTinyFont(@NotNull T component) {
+  public static <T extends Component> @NotNull T setTinyFont(@NotNull T component) {
     return SystemInfo.isMac ? RelativeFont.TINY.install(component) : component;
   }
 
   public static int offset5() {
     return JBUIScale.scale(5);
-  }
-
-  @Nullable
-  public static synchronized @NlsSafe String getDownloads(@NotNull IdeaPluginDescriptor plugin) {
-    String downloads = null;
-    if (plugin instanceof PluginNode) {
-      downloads = ((PluginNode)plugin).getDownloads();
-    }
-    return getFormatLength(downloads);
-  }
-
-  @Nullable
-  static synchronized String getFormatLength(@Nullable String len) {
-    if (!StringUtil.isEmptyOrSpaces(len)) {
-      try {
-        long value = Long.parseLong(len);
-        if (value > 1000) {
-          return value < 1000000 ? K_FORMAT.format(value / 1000D) : M_FORMAT.format(value / 1000000D);
-        }
-        return Long.toString(value);
-      }
-      catch (NumberFormatException ignore) {
-      }
-    }
-
-    return null;
-  }
-
-  @Nullable
-  public static synchronized @NlsSafe String getLastUpdatedDate(@NotNull IdeaPluginDescriptor plugin) {
-    long date = 0;
-    if (plugin instanceof PluginNode) {
-      date = ((PluginNode)plugin).getDate();
-    }
-    return date > 0 && date != Long.MAX_VALUE ? DATE_FORMAT.format(new Date(date)) : null;
-  }
-
-  @Nullable
-  public static @NlsSafe String getRating(@NotNull IdeaPluginDescriptor plugin) {
-    String rating = null;
-    if (plugin instanceof PluginNode) {
-      rating = ((PluginNode)plugin).getRating();
-    }
-    if (rating != null) {
-      try {
-        if (Double.valueOf(rating) > 0) {
-          return StringUtil.trimEnd(rating, ".0");
-        }
-      }
-      catch (NumberFormatException ignore) {
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  public static synchronized @NlsSafe String getSize(@NotNull IdeaPluginDescriptor plugin) {
-    String size = null;
-    if (plugin instanceof PluginNode) {
-      size = ((PluginNode)plugin).getSize();
-    }
-    if (!StringUtil.isEmptyOrSpaces(size)) {
-      try {
-        return StringUtilRt.formatFileSize(Long.parseLong(size)).toUpperCase(Locale.ENGLISH);
-      }
-      catch (NumberFormatException ignore) {
-      }
-    }
-    return null;
-  }
-
-  public static @NlsSafe @NotNull String getVersion(@NotNull IdeaPluginDescriptor oldPlugin, @NotNull IdeaPluginDescriptor newPlugin) {
-    String[] strings = {StringUtil.defaultIfEmpty(oldPlugin.getVersion(), "unknown"),
-      UIUtil.rightArrow(),
-      StringUtil.defaultIfEmpty(newPlugin.getVersion(), "unknown")};
-    return StringUtil.join(strings, " ");
   }
 
   @Messages.YesNoResult

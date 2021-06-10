@@ -22,15 +22,15 @@ import com.intellij.openapi.ui.MessageDialogBuilder;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.updateSettings.impl.UpdateChecker;
 import com.intellij.openapi.updateSettings.impl.UpdateSettings;
-import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -46,26 +46,8 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public final class PluginManagerMain {
-  private static final String TEXT_SUFFIX = "</body></html>";
-  private static final String HTML_PREFIX = "<a href=\"";
-  private static final String HTML_SUFFIX = "</a>";
 
   private PluginManagerMain() {
-  }
-
-  private static @NlsSafe String getTextPrefix() {
-    int fontSize = JBUIScale.scale(12);
-    int m1 = JBUIScale.scale(2);
-    int m2 = JBUIScale.scale(5);
-    return String.format(
-      "<html><head>" +
-      "    <style type=\"text/css\">" +
-      "        p {" +
-      "            font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx" +
-      "        }" +
-      "    </style>" +
-      "</head><body style=\"font-family: Arial,serif; font-size: %dpt; margin: %dpx %dpx;\">",
-      fontSize, m1, m1, fontSize, m2, m2);
   }
 
   /**
@@ -155,76 +137,6 @@ public final class PluginManagerMain {
         throw e;
       }
     }
-  }
-
-  public static @Nls String pluginInfoUpdate(@NotNull IdeaPluginDescriptor plugin) {
-    StringBuilder sb = new StringBuilder(getTextPrefix());
-    String description = plugin.getDescription();
-    if (!Strings.isEmptyOrSpaces(description)) {
-      sb.append(description);
-    }
-
-    String changeNotes = plugin.getChangeNotes();
-    if (!Strings.isEmptyOrSpaces(changeNotes)) {
-      sb.append("<h4>Change Notes</h4>");
-      sb.append(changeNotes);
-    }
-
-    if (!plugin.isBundled()) {
-      String vendor = plugin.getVendor();
-      String vendorEmail = plugin.getVendorEmail();
-      String vendorUrl = plugin.getVendorUrl();
-      if (!Strings.isEmptyOrSpaces(vendor) || !Strings.isEmptyOrSpaces(vendorEmail) || !Strings.isEmptyOrSpaces(vendorUrl)) {
-        sb.append("<h4>Vendor</h4>");
-
-        if (!Strings.isEmptyOrSpaces(vendor)) {
-          sb.append(vendor);
-        }
-        if (!Strings.isEmptyOrSpaces(vendorUrl)) {
-          sb.append("<br>").append(composeHref(vendorUrl));
-        }
-        if (!Strings.isEmptyOrSpaces(vendorEmail)) {
-          sb.append("<br>")
-            .append(HTML_PREFIX)
-            .append("mailto:").append(vendorEmail)
-            .append("\">").append(vendorEmail).append(HTML_SUFFIX);
-        }
-      }
-
-      String pluginDescriptorUrl = plugin.getUrl();
-      PluginInfoProvider provider = PluginInfoProvider.getInstance();
-      Set<PluginId> marketplacePlugins = provider.loadCachedPlugins();
-      if (marketplacePlugins == null ||
-          marketplacePlugins.contains(plugin.getPluginId())) {
-        if (!Strings.isEmptyOrSpaces(pluginDescriptorUrl)) {
-          sb.append("<h4>Plugin homepage</h4>").append(composeHref(pluginDescriptorUrl));
-        }
-
-        if (marketplacePlugins == null) {
-          // will get the marketplace plugins ids next time
-          provider.loadPlugins();
-        }
-      }
-
-      String size = plugin instanceof PluginNode ? ((PluginNode)plugin).getSize() : null;
-      if (!Strings.isEmptyOrSpaces(size)) {
-        sb.append("<h4>Size</h4>").append(getFormattedSize(size));
-      }
-    }
-
-    @SuppressWarnings("HardCodedStringLiteral") String result = sb.append(TEXT_SUFFIX).toString();
-    return result.trim();
-  }
-
-  private static String composeHref(String vendorUrl) {
-    return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFFIX;
-  }
-
-  private static String getFormattedSize(String size) {
-    if (size.equals("-1")) {
-      return IdeBundle.message("plugin.info.unknown");
-    }
-    return StringUtil.formatFileSize(Long.parseLong(size));
   }
 
   public static class MyHyperlinkListener implements HyperlinkListener {

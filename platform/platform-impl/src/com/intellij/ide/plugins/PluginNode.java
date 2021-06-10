@@ -1,18 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
 
 public final class PluginNode implements IdeaPluginDescriptor {
+
+  private static final DecimalFormat K_FORMAT = new DecimalFormat("###.#K");
+  private static final DecimalFormat M_FORMAT = new DecimalFormat("###.#M");
+
   public enum Status {
     UNKNOWN, INSTALLED, DOWNLOADED, DELETED
   }
@@ -239,12 +246,48 @@ public final class PluginNode implements IdeaPluginDescriptor {
     this.downloads = downloads;
   }
 
+  public @Nullable @NlsSafe String getPresentableDownloads() {
+    String downloads = getDownloads();
+
+    if (!StringUtil.isEmptyOrSpaces(downloads)) {
+      try {
+        long value = Long.parseLong(downloads);
+        return value <= 1000 ?
+               Long.toString(value) :
+               value < 1000000 ?
+               K_FORMAT.format(value / 1000D) :
+               M_FORMAT.format(value / 1000000D);
+      }
+      catch (NumberFormatException ignore) {
+      }
+    }
+
+    return null;
+  }
+
   public String getSize() {
     return size;
   }
 
   public void setSize(String size) {
     this.size = size;
+  }
+
+  public long getIntegerSize() {
+    try {
+      return Long.parseLong(size);
+    }
+    catch (NumberFormatException e) {
+      return 0;
+    }
+  }
+
+  public @Nullable @NlsSafe String getPresentableSize() {
+    long size = getIntegerSize();
+
+    return size >= 0 ?
+           StringUtil.formatFileSize(size).toUpperCase(Locale.ENGLISH) :
+           null;
   }
 
   @Override
@@ -277,12 +320,21 @@ public final class PluginNode implements IdeaPluginDescriptor {
   public void setDate(String date) {
     this.date = Long.valueOf(date);
   }
+
   public void setDate(Long date) {
     this.date = date;
   }
 
   public long getDate() {
     return date;
+  }
+
+  public @Nullable @NlsSafe String getPresentableDate() {
+    long date = getDate();
+
+    return date > 0 && date != Long.MAX_VALUE ?
+           PluginManagerConfigurable.DATE_FORMAT.format(new Date(date)) :
+           null;
   }
 
   /**
@@ -423,6 +475,21 @@ public final class PluginNode implements IdeaPluginDescriptor {
     myRating = rating;
   }
 
+  public @Nullable @NlsSafe String getPresentableRating() {
+    String rating = getRating();
+
+    if (!StringUtil.isEmptyOrSpaces(rating)) {
+      try {
+        if (Double.valueOf(rating) > 0) {
+          return StringUtil.trimEnd(rating, ".0");
+        }
+      }
+      catch (NumberFormatException ignore) {
+      }
+    }
+    return null;
+  }
+
   public boolean isIncomplete() {
     return myIncomplete;
   }
@@ -452,16 +519,16 @@ public final class PluginNode implements IdeaPluginDescriptor {
   }
 
   private static class PluginNodeDependency implements IdeaPluginDependency {
-    private final PluginId myPluginId;
+    private final @NotNull PluginId myPluginId;
     private final boolean myOptional;
 
-    private PluginNodeDependency(PluginId id, boolean optional) {
+    private PluginNodeDependency(@NotNull PluginId id, boolean optional) {
       myPluginId = id;
       myOptional = optional;
     }
 
     @Override
-    public PluginId getPluginId() {
+    public @NotNull PluginId getPluginId() {
       return myPluginId;
     }
 

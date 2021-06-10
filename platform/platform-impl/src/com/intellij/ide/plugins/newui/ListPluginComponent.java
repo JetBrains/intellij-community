@@ -265,12 +265,15 @@ public class ListPluginComponent extends JPanel {
     myLayout.addLineComponent(myMetricsPanel);
 
     if (myMarketplace) {
-      String downloads = PluginManagerConfigurable.getDownloads(myPlugin);
+      assert myPlugin instanceof PluginNode;
+      PluginNode pluginNode = (PluginNode)myPlugin;
+
+      String downloads = pluginNode.getPresentableDownloads();
       if (downloads != null) {
         myDownloads = createRatingLabel(myMetricsPanel, downloads, AllIcons.Plugins.Downloads);
       }
 
-      String rating = PluginManagerConfigurable.getRating(myPlugin);
+      String rating = pluginNode.getPresentableRating();
       if (rating != null) {
         myRating = createRatingLabel(myMetricsPanel, rating, AllIcons.Plugins.Rating);
       }
@@ -363,12 +366,16 @@ public class ListPluginComponent extends JPanel {
         myMetricsPanel.remove(myVendor);
       }
 
-      String version = PluginManagerConfigurable.getVersion(descriptor, myPlugin);
-      String size = PluginManagerConfigurable.getSize(myPlugin);
-      if (!StringUtil.isEmpty(size)) {
-        version += " | " + size;
-      }
-      myVersion = createRatingLabel(myMetricsPanel, null, version, null, null, false);
+      String version = NewUiUtil.getVersion(descriptor, myPlugin);
+      String size = myPlugin instanceof PluginNode ?
+                    ((PluginNode)myPlugin).getPresentableSize() :
+                    null;
+      myVersion = createRatingLabel(myMetricsPanel,
+                                    null,
+                                    size != null ? version + " | " + size : version,
+                                    null,
+                                    null,
+                                    false);
     }
 
     updateColors(EventHandler.SelectionType.NONE);
@@ -405,7 +412,7 @@ public class ListPluginComponent extends JPanel {
     }
     else {
       if (myVersion != null) {
-        myVersion.setText(PluginManagerConfigurable.getVersion(myPlugin, descriptor));
+        myVersion.setText(NewUiUtil.getVersion(myPlugin, descriptor));
       }
       if (myPlugin.getProductCode() == null && descriptor.getProductCode() != null &&
           !myPlugin.isBundled() && !LicensePanel.isEA2Product(descriptor.getProductCode())) {

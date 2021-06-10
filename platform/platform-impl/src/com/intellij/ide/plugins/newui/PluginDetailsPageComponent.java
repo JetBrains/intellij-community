@@ -65,7 +65,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   private JBPanelWithEmptyText myEmptyPanel;
 
-
   private OpaquePanel myPanel;
   private JLabel myIconLabel;
   private final JEditorPane myNameComponent = createNameComponent();
@@ -523,13 +522,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     updateButtons();
 
-    boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
     String version = myPlugin.getVersion();
-    if (bundled) {
+    if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate()) {
       version = IdeBundle.message("plugin.version.bundled") + (StringUtil.isEmptyOrSpaces(version) ? "" : " " + version);
     }
     if (myUpdateDescriptor != null) {
-      version = PluginManagerConfigurable.getVersion(myPlugin, myUpdateDescriptor);
+      version = NewUiUtil.getVersion(myPlugin, myUpdateDescriptor);
     }
 
     myVersion.setText(version);
@@ -543,17 +541,20 @@ public class PluginDetailsPageComponent extends MultiPanel {
     myTagPanel.setTags(PluginManagerConfigurable.getTags(myPlugin));
 
     if (myMarketplace) {
-      String rating = PluginManagerConfigurable.getRating(myPlugin);
+      assert myPlugin instanceof PluginNode;
+      PluginNode pluginNode = (PluginNode)myPlugin;
+
+      String rating = pluginNode.getPresentableRating();
       myRating.setText(rating);
       myRating.setVisible(rating != null);
 
-      String downloads = PluginManagerConfigurable.getDownloads(myPlugin);
+      String downloads = pluginNode.getPresentableDownloads();
       myDownloads.setText(downloads);
       myDownloads.setVisible(downloads != null);
 
-      String size = PluginManagerConfigurable.getSize(myPlugin);
+      String size = pluginNode.getPresentableSize();
       mySize.setText(IdeBundle.message("plugins.configurable.size.0", size));
-      mySize.setVisible(!StringUtil.isEmptyOrSpaces(size));
+      mySize.setVisible(size != null);
     }
     else {
       updateEnabledForProject();
@@ -578,17 +579,20 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     showLicensePanel();
 
-    if (bundled || !isPluginFromMarketplace()) {
+    if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate() || !isPluginFromMarketplace()) {
       myHomePage.hide();
     }
     else {
       myHomePage.show(IdeBundle.message(
-        "plugins.configurable.plugin.homepage.link"),
+                        "plugins.configurable.plugin.homepage.link"),
                       () -> BrowserUtil.browse(MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString()))
       );
     }
 
-    String date = PluginManagerConfigurable.getLastUpdatedDate(myUpdateDescriptor == null ? myPlugin : myUpdateDescriptor);
+    IdeaPluginDescriptor pluginNode = myUpdateDescriptor != null ? myUpdateDescriptor : myPlugin;
+    String date = pluginNode instanceof PluginNode ?
+                  ((PluginNode)pluginNode).getPresentableDate() :
+                  null;
     myDate.setText(date);
     myDate.setVisible(date != null);
 
