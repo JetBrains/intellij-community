@@ -4646,6 +4646,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/plusRange.kt");
         }
 
+        @TestMetadata("postfixDecrement.kt")
+        public void testPostfixDecrement() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/postfixDecrement.kt");
+        }
+
         @TestMetadata("prefixDecrement.kt")
         public void testPrefixDecrement() throws Exception {
             runTest("testData/inspectionsLocal/dfa/prefixDecrement.kt");

@@ -75,6 +75,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtParenthesizedExpression -> processExpression(expr.expression)
             is KtBinaryExpression -> processBinaryExpression(expr)
             is KtPrefixExpression -> processPrefixExpression(expr)
+            is KtPostfixExpression -> processPostfixExpression(expr)
             is KtCallExpression -> processCallExpression(expr)
             is KtConstantExpression -> processConstantExpression(expr)
             is KtSimpleNameExpression -> processReferenceExpression(expr)
@@ -173,6 +174,34 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             }
         }
         addInstruction(EvalUnknownInstruction(anchor, 1))
+    }
+
+    private fun processPostfixExpression(expr: KtPostfixExpression) {
+        val operand = expr.baseExpression
+        processExpression(operand)
+        val anchor = KotlinExpressionAnchor(expr)
+        val ref = expr.operationReference.text
+        if (ref == "++" || ref == "--") {
+            if (operand != null) {
+                val dfType = operand.getKotlinType().toDfType(expr)
+                val descriptor = KtLocalVariableDescriptor.create(operand)
+                if (descriptor != null) {
+                    if (dfType is DfIntegralType) {
+                        addInstruction(DupInstruction())
+                        addInstruction(PushValueInstruction(dfType.meetRange(LongRangeSet.point(1))))
+                        addInstruction(NumericBinaryInstruction(if (ref == "++") LongRangeBinOp.PLUS else LongRangeBinOp.MINUS, null))
+                        addInstruction(SimpleAssignmentInstruction(anchor, factory.varFactory.createVariableValue(descriptor)))
+                        addInstruction(PopInstruction())
+                    } else {
+                        // Custom inc/dec may update the variable
+                        addInstruction(FlushVariableInstruction(factory.varFactory.createVariableValue(descriptor)))
+                    }
+                }
+            }
+        } else {
+            // TODO: process !!
+            addInstruction(EvalUnknownInstruction(anchor, 1))
+        }
     }
 
     private fun processDoWhileExpression(expr: KtDoWhileExpression) {

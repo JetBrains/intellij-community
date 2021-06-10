@@ -3,7 +3,7 @@
 fun test() {
     var x = 0
     while (true) {
-        ++x
+        x++
         if (x > 5) break
     }
     if (<caret>x < 6) {
