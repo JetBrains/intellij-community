@@ -173,15 +173,15 @@ class FileEncodingConfigurable extends PerFileConfigurableBase<Charset> {
     myTablePanel.add(super.createComponent(), BorderLayout.CENTER);
     final class PropertiesCharsetValue implements Value<Charset> {
       @Override
-      public final void commit() {}
+      public void commit() {}
 
       @Override
-      public final Charset get() {
+      public Charset get() {
         return myPropsCharset;
       }
 
       @Override
-      public final void set(Charset value) {
+      public void set(Charset value) {
         myPropsCharset = adjustChosenValue(null, value);
       }
     }

@@ -43,8 +43,7 @@ final class ObjectTree {
     }
   }
 
-  @Nullable
-  final RuntimeException register(@NotNull Disposable parent, @NotNull Disposable child) {
+  @Nullable RuntimeException register(@NotNull Disposable parent, @NotNull Disposable child) {
     if (parent == child) return new IllegalArgumentException("Cannot register to itself: "+parent);
     synchronized (treeLock) {
       Object wasDisposed = getDisposalInfo(parent);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.DynamicBundle;
@@ -337,7 +337,7 @@ public final class Presentation implements Cloneable {
     fireBooleanPropertyChange(PROP_ENABLED, oldEnabled, myEnabled);
   }
 
-  public final void setEnabledAndVisible(boolean enabled) {
+  public void setEnabledAndVisible(boolean enabled) {
     setEnabled(enabled);
     setVisible(enabled);
   }

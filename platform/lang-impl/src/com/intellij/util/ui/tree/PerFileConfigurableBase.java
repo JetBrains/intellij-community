@@ -875,18 +875,18 @@ public abstract class PerFileConfigurableBase<T> implements SearchableConfigurab
     }
 
     @Override
-    public final void update(@NotNull AnActionEvent e) {
+    public void update(@NotNull AnActionEvent e) {
       updateText(getTemplatePresentation());
     }
 
     @NotNull
     @Override
-    protected final DefaultActionGroup createPopupActionGroup(JComponent button) {
+    protected DefaultActionGroup createPopupActionGroup(JComponent button) {
       throw new UnsupportedOperationException();
     }
 
     @Override
-    protected final @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
+    protected @NotNull ComboBoxButton createComboBoxButton(@NotNull Presentation presentation) {
       return new ComboBoxButton(presentation) {
         @Override
         protected @NotNull JBPopup createPopup(Runnable onDispose) {

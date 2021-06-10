@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.util.containers;
 
@@ -111,7 +111,7 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
 
   // Some AbstractMap functions finished
 
-  public final void cacheObject(int key, T x) {
+  public void cacheObject(int key, T x) {
     int deletedKey = 0;
     Object deletedValue = null;
 
@@ -148,7 +148,7 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
     }
   }
 
-  public final T tryKey(int key) {
+  public T tryKey(int key) {
     ++myAttempts;
     final int index = searchForCacheEntry(key);
     if (index == 0) {
@@ -175,7 +175,7 @@ public final class IntObjectCache<T> extends ObjectCacheBase implements Iterable
     return cacheEntry.value;
   }
 
-  public final boolean isCached(int key) {
+  public boolean isCached(int key) {
     return searchForCacheEntry(key) != 0;
   }
 

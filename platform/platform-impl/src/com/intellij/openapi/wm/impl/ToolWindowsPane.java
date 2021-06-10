@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.RemoteDesktopService;
@@ -231,7 +231,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
    * @param dirtyMode if {@code true} then JRootPane will not be validated and repainted after adding
    *                  the decorator. Moreover in this (dirty) mode animation doesn't work.
    */
-  final void addDecorator(@NotNull JComponent decorator, @NotNull WindowInfo info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
+  void addDecorator(@NotNull JComponent decorator, @NotNull WindowInfo info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
       WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
@@ -288,7 +288,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
   }
 
-  public final @NotNull JComponent getLayeredPane() {
+  public @NotNull JComponent getLayeredPane() {
     return layeredPane;
   }
 
@@ -1037,11 +1037,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       add(splitter, JLayeredPane.DEFAULT_LAYER);
     }
 
-    final Image getBottomImage() {
+    Image getBottomImage() {
       return myBottomImageCache.get(ScaleContext.create(this));
     }
 
-    final Image getTopImage() {
+    Image getTopImage() {
       return myTopImageCache.get(ScaleContext.create(this));
     }
 
@@ -1081,7 +1081,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       }
     }
 
-    final void setBoundsInPaletteLayer(@NotNull Component component, @NotNull ToolWindowAnchor anchor, float weight) {
+    void setBoundsInPaletteLayer(@NotNull Component component, @NotNull ToolWindowAnchor anchor, float weight) {
       if (weight < .0f) {
         weight = WindowInfoImpl.DEFAULT_WEIGHT;
       }

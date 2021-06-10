@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.table;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,7 +62,7 @@ public final class GraphTableModel extends AbstractTableModel {
   }
 
   @Override
-  public final int getColumnCount() {
+  public int getColumnCount() {
     return VcsLogColumnManager.getInstance().getModelColumnsCount();
   }
 
@@ -73,12 +73,12 @@ public final class GraphTableModel extends AbstractTableModel {
 
   @NotNull
   @Override
-  public final Object getValueAt(int rowIndex, int columnIndex) {
+  public Object getValueAt(int rowIndex, int columnIndex) {
     return getValueAt(rowIndex, getColumn(columnIndex));
   }
 
   @NotNull
-  public final <T> T getValueAt(int rowIndex, @NotNull VcsLogColumn<T> column) {
+  public <T> T getValueAt(int rowIndex, @NotNull VcsLogColumn<T> column) {
     if (rowIndex >= getRowCount() - 1 && canRequestMore()) {
       requestToLoadMore(EmptyRunnable.INSTANCE);
     }

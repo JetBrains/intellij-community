@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.core.CoreBundle;
@@ -1012,13 +1012,13 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public final int getLineStartOffset(final int line) {
+  public int getLineStartOffset(final int line) {
     if (line == 0) return 0; // otherwise it crashed for zero-length document
     return getLineSet().getLineStart(line);
   }
 
   @Override
-  public final int getLineEndOffset(int line) {
+  public int getLineEndOffset(int line) {
     if (getTextLength() == 0 && line == 0) return 0;
     int result = getLineSet().getLineEnd(line) - getLineSeparatorLength(line);
     assert result >= 0;
@@ -1026,14 +1026,14 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public final int getLineSeparatorLength(int line) {
+  public int getLineSeparatorLength(int line) {
     int separatorLength = getLineSet().getSeparatorLength(line);
     assert separatorLength >= 0;
     return separatorLength;
   }
 
   @Override
-  public final int getLineCount() {
+  public int getLineCount() {
     int lineCount = getLineSet().getLineCount();
     assert lineCount >= 0;
     return lineCount;
@@ -1090,12 +1090,12 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
   }
 
   @Override
-  public final boolean isInBulkUpdate() {
+  public boolean isInBulkUpdate() {
     return myDoingBulkUpdate;
   }
 
   @Override
-  public final void setInBulkUpdate(boolean value) {
+  public void setInBulkUpdate(boolean value) {
     if (myAssertThreading) {
       ApplicationManager.getApplication().assertIsWriteThread();
     }

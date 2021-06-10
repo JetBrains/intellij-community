@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -44,7 +44,7 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
   /**
    * @return PsiMethod or PsiClass or JspFile
    */
-  public final PsiMember getEnclosingElement() {
+  public PsiMember getEnclosingElement() {
     PsiElement element = getPsiElement();
     return element == null ? null : getEnclosingElement(element);
   }
@@ -53,24 +53,24 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     return PsiTreeUtil.getNonStrictParentOfType(element, PsiField.class, PsiMethod.class, PsiClass.class);
   }
 
-  public final void incrementUsageCount(){
+  public void incrementUsageCount(){
     myUsageCount++;
   }
 
   /**
    * Element for OpenFileDescriptor
    */
-  public final PsiElement getTargetElement(){
+  public PsiElement getTargetElement(){
     return getPsiElement();
   }
 
   @Override
-  public final boolean isValid(){
+  public boolean isValid(){
     return getEnclosingElement() != null;
   }
 
   @Override
-  public final boolean update() {
+  public boolean update() {
     CompositeAppearance oldText = myHighlightedText;
     Icon oldIcon = getIcon();
 

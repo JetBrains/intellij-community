@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml.reflect;
 
 import com.intellij.util.ParameterizedTypeImpl;
@@ -41,7 +41,7 @@ public final class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar 
   }
 
   @NotNull
-  public final DomExtension registerFixedNumberChildrenExtension(@NotNull final XmlName name, @NotNull final Type type, final int count) {
+  public DomExtension registerFixedNumberChildrenExtension(@NotNull final XmlName name, @NotNull final Type type, final int count) {
     assert count > 0;
     return addExtension(myFixeds, name, type).setCount(count);
   }
@@ -102,7 +102,7 @@ public final class DomExtensionsRegistrarImpl implements DomExtensionsRegistrar 
     return extension;
   }
 
-  public final void addDependencies(Object[] deps) {
+  public void addDependencies(Object[] deps) {
     ContainerUtil.addAll(myDependencies, deps);
   }
 

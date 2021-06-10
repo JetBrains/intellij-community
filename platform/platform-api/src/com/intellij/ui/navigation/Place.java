@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.navigation;
 
 import com.intellij.openapi.util.ActionCallback;
@@ -14,17 +14,17 @@ public final class Place implements ComparableObject {
   private LinkedHashMap<String, Object> myPath = new LinkedHashMap<>();
 
   @Override
-  public final Object @NotNull [] getEqualityObjects() {
+  public Object @NotNull [] getEqualityObjects() {
     return new Object[] {myPath};
   }
 
   @Override
-  public final boolean equals(final Object obj) {
+  public boolean equals(final Object obj) {
     return ComparableObjectCheck.equals(this, obj);
   }
 
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return ComparableObjectCheck.hashCode(this, super.hashCode());
   }
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.projectRoots;
 
 import com.intellij.icons.AllIcons;
@@ -22,7 +22,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.impl.compiled.ClsParsingUtil;
 import com.intellij.util.ArrayUtilRt;
-import icons.DevkitIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -112,7 +111,7 @@ public final class IdeaJdk extends JavaDependentSdkType implements JavaSdkType {
 
   @Override
   @Nullable
-  public final String getVersionString(@NotNull final Sdk sdk) {
+  public String getVersionString(@NotNull final Sdk sdk) {
     final Sdk internalJavaSdk = getInternalJavaSdk(sdk);
     return internalJavaSdk != null ? internalJavaSdk.getVersionString() : null;
   }

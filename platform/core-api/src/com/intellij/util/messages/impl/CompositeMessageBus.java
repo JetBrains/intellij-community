@@ -96,7 +96,7 @@ class CompositeMessageBus extends MessageBusImpl implements MessageBusEx {
     }
 
     @Override
-    final boolean publish(@NotNull Method method, Object[] args, @Nullable MessageQueue jobQueue) {
+    boolean publish(@NotNull Method method, Object[] args, @Nullable MessageQueue jobQueue) {
       List<Throwable> exceptions = null;
       boolean hasHandlers = false;
 

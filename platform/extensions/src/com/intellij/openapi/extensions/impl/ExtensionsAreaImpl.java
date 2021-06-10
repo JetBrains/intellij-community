@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
@@ -30,7 +30,7 @@ public final class ExtensionsAreaImpl implements ExtensionsArea {
   }
 
   @TestOnly
-  public final void notifyAreaReplaced(@Nullable ExtensionsAreaImpl newArea) {
+  public void notifyAreaReplaced(@Nullable ExtensionsAreaImpl newArea) {
     Set<String> processedEPs = new HashSet<>(extensionPoints.size());
     for (ExtensionPointImpl<?> point : extensionPoints.values()) {
       point.notifyAreaReplaced(this);

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xml.impl.schema;
 
 import com.intellij.openapi.project.DumbService;
@@ -50,18 +50,18 @@ public class ComplexTypeDescriptor extends TypeDescriptor {
   private static final FieldCache<XmlAttributeDescriptor[], ComplexTypeDescriptor, Object, XmlElement> myAttributeDescriptorsCache =
     new FieldCache<>() {
       @Override
-      protected final XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
+      protected XmlAttributeDescriptor[] compute(final ComplexTypeDescriptor complexTypeDescriptor, XmlElement p) {
         return complexTypeDescriptor.doCollectAttributes();
       }
 
       @Override
-      protected final XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, Object o) {
+      protected XmlAttributeDescriptor[] getValue(final ComplexTypeDescriptor complexTypeDescriptor, Object o) {
         return complexTypeDescriptor.myAttributeDescriptors;
       }
 
       @Override
-      protected final void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
-                                    final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
+      protected void putValue(final XmlAttributeDescriptor[] xmlAttributeDescriptors,
+                              final ComplexTypeDescriptor complexTypeDescriptor, final Object p) {
         complexTypeDescriptor.myAttributeDescriptors = xmlAttributeDescriptors;
       }
     };

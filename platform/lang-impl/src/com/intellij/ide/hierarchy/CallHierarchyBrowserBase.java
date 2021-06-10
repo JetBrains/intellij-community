@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy;
 
 import com.intellij.icons.AllIcons;
@@ -80,12 +80,12 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final boolean isSelected(@NotNull AnActionEvent event) {
+    public boolean isSelected(@NotNull AnActionEvent event) {
       return myTypeName.equals(getCurrentViewType());
     }
 
     @Override
-    public final void setSelected(@NotNull AnActionEvent event, boolean flag) {
+    public void setSelected(@NotNull AnActionEvent event, boolean flag) {
       if (flag) {
         // invokeLater is called to update state of button before long tree building operation
         ApplicationManager.getApplication().invokeLater(() -> changeView(myTypeName));
@@ -93,7 +93,7 @@ public abstract class CallHierarchyBrowserBase extends HierarchyBrowserBaseEx {
     }
 
     @Override
-    public final void update(@NotNull AnActionEvent event) {
+    public void update(@NotNull AnActionEvent event) {
       super.update(event);
       setEnabled(isValidBase());
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.execution.ExecutionBundle;
@@ -195,7 +195,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   @Override
-  public final JComponent createComponent() {
+  public JComponent createComponent() {
     myComponent.myNameText.setEnabled(!myBrokenConfiguration);
     JComponent result = myComponent.getWholePanel();
     DataManager.registerDataProvider(result, dataId -> {
@@ -218,7 +218,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     return result;
   }
 
-  final JComponent getValidationComponent() {
+  JComponent getValidationComponent() {
     return myComponent.myValidationPanel;
   }
 
@@ -304,12 +304,12 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
   }
 
   @Override
-  public final void disposeUIResources() {
+  public void disposeUIResources() {
     super.disposeUIResources();
     myComponent = null;
   }
 
-  public final String getNameText() {
+  public String getNameText() {
     try {
       return myNameDocument.getText(0, myNameDocument.getLength());
     }
@@ -319,17 +319,17 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
   }
 
-  public final void addNameListener(DocumentListener listener) {
+  public void addNameListener(DocumentListener listener) {
     myNameDocument.addDocumentListener(listener);
   }
 
-  public final void addSharedListener(ActionListener listener) {
+  public void addSharedListener(ActionListener listener) {
     if (myComponent.myRCStorageUi != null) {
       myComponent.myRCStorageUi.addStoreAsFileCheckBoxListener(listener);
     }
   }
 
-  public final void setNameText(final String name) {
+  public void setNameText(final String name) {
     myChangingNameFromCode = true;
     try {
       try {
@@ -346,7 +346,7 @@ public final class SingleConfigurationConfigurable<Config extends RunConfigurati
     }
   }
 
-  public final JTextField getNameTextField() {
+  public JTextField getNameTextField() {
     return myComponent.myNameText;
   }
 

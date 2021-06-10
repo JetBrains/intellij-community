@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -29,7 +29,7 @@ final class TypeIconEP implements PluginAware {
   });
 
   @Override
-  public final void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
+  public void setPluginDescriptor(@NotNull PluginDescriptor pluginDescriptor) {
     this.pluginDescriptor = pluginDescriptor;
   }
 }

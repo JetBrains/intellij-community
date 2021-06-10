@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.customize;
 
 import com.intellij.ide.IdeBundle;
@@ -43,7 +43,7 @@ public final class PluginGroupDescription {
   }
 
   @Override
-  public final boolean equals(Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
@@ -52,7 +52,7 @@ public final class PluginGroupDescription {
   }
 
   @Override
-  public final int hashCode() {
+  public int hashCode() {
     return getPluginId().hashCode();
   }
 
@@ -60,7 +60,7 @@ public final class PluginGroupDescription {
    * TODO regenerate after {@link PluginGroups#parseString(String)} removal.
    */
   @Override
-  public final String toString() {
+  public String toString() {
     return StringUtil.join(new String[]{getCategory(), getDescription(), getPluginId().getIdString()}, ":");
   }
 

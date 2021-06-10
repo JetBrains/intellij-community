@@ -18,12 +18,12 @@ public final class AsciiStringDataType implements KeyableDataType<AsciiString> {
     }
 
     @Override
-    public final AsciiString[] createStorage(int size) {
+    public AsciiString[] createStorage(int size) {
         return new AsciiString[size];
     }
 
     @Override
-    public final int compare(AsciiString a, AsciiString b) {
+    public int compare(AsciiString a, AsciiString b) {
         return a.compareTo(b);
     }
 

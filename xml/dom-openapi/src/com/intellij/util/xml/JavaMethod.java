@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xml;
 
 import com.intellij.util.SmartFMap;
@@ -31,16 +31,16 @@ public final class JavaMethod implements AnnotatedElement {
     myDeclaringClass = myMethod.getDeclaringClass();
   }
 
-  public final Class<?> getDeclaringClass() {
+  public Class<?> getDeclaringClass() {
     return myDeclaringClass;
   }
 
-  public final JavaMethodSignature getSignature() {
+  public JavaMethodSignature getSignature() {
     return mySignature;
   }
 
   @NotNull
-  public final List<Method> getHierarchy() {
+  public List<Method> getHierarchy() {
     List<Method> hierarchy = myHierarchy;
     if (hierarchy == null) {
       hierarchy = Collections.unmodifiableList(mySignature.getAllMethods(myDeclaringClass));
@@ -53,15 +53,15 @@ public final class JavaMethod implements AnnotatedElement {
     return mySignature.getMethodName();
   }
 
-  public final Method getMethod() {
+  public Method getMethod() {
     return myMethod;
   }
 
-  public final Type[] getGenericParameterTypes() {
+  public Type[] getGenericParameterTypes() {
     return myMethod.getGenericParameterTypes();
   }
 
-  public final Type getGenericReturnType() {
+  public Type getGenericReturnType() {
     return myMethod.getGenericReturnType();
   }
 
@@ -73,7 +73,7 @@ public final class JavaMethod implements AnnotatedElement {
     return getMethod(declaringClass, new JavaMethodSignature(method));
   }
 
-  public final Object invoke(final Object o, final Object... args) {
+  public Object invoke(final Object o, final Object... args) {
     return DomReflectionUtil.invokeMethod(myMethod, o, args);
   }
 
@@ -82,12 +82,12 @@ public final class JavaMethod implements AnnotatedElement {
   }
 
   @NonNls
-  public final String getName() {
+  public String getName() {
     return myMethod.getName();
   }
 
   @Override
-  public final <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
+  public <T extends Annotation> T getAnnotation(Class<T> annotationClass) {
     Object annotation = myAnnotationsMap.get(annotationClass);
     if (annotation == null) {
       myAnnotationsMap = myAnnotationsMap.plus(annotationClass, annotation = findAnnotation(annotationClass));
@@ -127,7 +127,7 @@ public final class JavaMethod implements AnnotatedElement {
     return result;
   }
 
-  public final Class getReturnType() {
+  public Class getReturnType() {
     return myMethod.getReturnType();
   }
 

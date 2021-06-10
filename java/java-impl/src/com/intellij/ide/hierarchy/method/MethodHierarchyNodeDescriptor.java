@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.hierarchy.method;
 
 import com.intellij.icons.AllIcons;
@@ -34,7 +34,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     myTreeStructure = treeStructure;
   }
 
-  public final void setTreeStructure(MethodHierarchyTreeStructure treeStructure) {
+  public void setTreeStructure(MethodHierarchyTreeStructure treeStructure) {
     myTreeStructure = treeStructure;
   }
 
@@ -48,14 +48,14 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
     }
   }
 
-  public final PsiElement getPsiClass() {
+  public PsiElement getPsiClass() {
     return getPsiElement();
   }
 
   /**
    * Element for OpenFileDescriptor
    */
-  public final PsiElement getTargetElement() {
+  public PsiElement getTargetElement() {
     PsiElement element = getPsiClass();
     if (!(element instanceof PsiClass)) return element;
     PsiClass aClass = (PsiClass)getPsiClass();
@@ -66,7 +66,7 @@ public final class MethodHierarchyNodeDescriptor extends HierarchyNodeDescriptor
   }
 
   @Override
-  public final boolean update() {
+  public boolean update() {
     int flags = Iconable.ICON_FLAG_VISIBILITY;
     if (isMarkReadOnly()){
       flags |= Iconable.ICON_FLAG_READ_STATUS;

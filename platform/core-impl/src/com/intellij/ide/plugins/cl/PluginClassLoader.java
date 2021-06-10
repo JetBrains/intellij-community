@@ -211,43 +211,43 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @Override
-  public final @Nullable String getPackagePrefix() {
+  public @Nullable String getPackagePrefix() {
     return packagePrefix;
   }
 
   @Override
   @ApiStatus.Internal
-  public final int getState() {
+  public int getState() {
     return state;
   }
 
   @ApiStatus.Internal
-  public final void setState(int state) {
+  public void setState(int state) {
     this.state = state;
   }
 
   @Override
-  public final int getInstanceId() {
+  public int getInstanceId() {
     return instanceId;
   }
 
   @Override
-  public final long getEdtTime() {
+  public long getEdtTime() {
     return edtTime.get();
   }
 
   @Override
-  public final long getBackgroundTime() {
+  public long getBackgroundTime() {
     return backgroundTime.get();
   }
 
   @Override
-  public final long getLoadedClassCount() {
+  public long getLoadedClassCount() {
     return loadedClassCounter.get();
   }
 
   @Override
-  public final Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
+  public Class<?> loadClass(@NotNull String name, boolean resolve) throws ClassNotFoundException {
     Class<?> c = tryLoadingClass(name, false);
     if (c == null) {
       flushDebugLog();
@@ -260,7 +260,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
    * See https://stackoverflow.com/a/5428795 about resolve flag.
    */
   @Override
-  public final @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader)
+  public @Nullable Class<?> tryLoadingClass(@NotNull String name, boolean forceLoadFromSubPluginClassloader)
     throws ClassNotFoundException {
     if (mustBeLoadedByPlatform(name)) {
       return coreLoader.loadClass(name);
@@ -364,7 +364,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
     this.dependencies = null;
   }
 
-  public final void clearParentListCache() {
+  public void clearParentListCache() {
     allParents = null;
   }
 
@@ -433,12 +433,12 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @Override
-  public final @Nullable URL findResource(@NotNull String name) {
+  public @Nullable URL findResource(@NotNull String name) {
     return findResource(name, Resource::getURL, ClassLoader::getResource);
   }
 
   @Override
-  public final @Nullable InputStream getResourceAsStream(@NotNull String name) {
+  public @Nullable InputStream getResourceAsStream(@NotNull String name) {
     Function<Resource, InputStream> f1 = resource -> {
       try {
         return resource.getInputStream();
@@ -496,7 +496,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @Override
-  public final @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
+  public @NotNull Enumeration<URL> findResources(@NotNull String name) throws IOException {
     List<Enumeration<URL>> resources = new ArrayList<>();
     resources.add(classPath.getResources(name));
     for (ClassLoader classloader : getAllParents()) {
@@ -514,12 +514,12 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public final void addLibDirectories(@NotNull Collection<String> libDirectories) {
+  public void addLibDirectories(@NotNull Collection<String> libDirectories) {
     this.libDirectories.addAll(libDirectories);
   }
 
   @Override
-  protected final String findLibrary(String libName) {
+  protected String findLibrary(String libName) {
     if (!libDirectories.isEmpty()) {
       String libFileName = System.mapLibraryName(libName);
       ListIterator<String> i = libDirectories.listIterator(libDirectories.size());
@@ -534,17 +534,17 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @Override
-  public final @NotNull PluginId getPluginId() {
+  public @NotNull PluginId getPluginId() {
     return pluginId;
   }
 
   @Override
-  public final @NotNull PluginDescriptor getPluginDescriptor() {
+  public @NotNull PluginDescriptor getPluginDescriptor() {
     return pluginDescriptor;
   }
 
   @Override
-  public final String toString() {
+  public String toString() {
     return getClass().getSimpleName() + "(plugin=" + pluginDescriptor +
            ", packagePrefix=" + packagePrefix +
            ", instanceId=" + instanceId +
@@ -583,13 +583,13 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   @TestOnly
   @ApiStatus.Internal
-  public final @NotNull List<ClassLoader> _getParents() {
+  public @NotNull List<ClassLoader> _getParents() {
     //noinspection SSBasedInspection
     return Collections.unmodifiableList(Arrays.asList(parents));
   }
 
   @ApiStatus.Internal
-  public final void attachParent(@NotNull ClassLoader classLoader) {
+  public void attachParent(@NotNull ClassLoader classLoader) {
     if (parents == null) {
       initParents();
     }
@@ -605,7 +605,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
    * You must clear allParents cache for all loaded plugins.
    */
   @ApiStatus.Internal
-  public final boolean detachParent(@NotNull ClassLoader classLoader) {
+  public boolean detachParent(@NotNull ClassLoader classLoader) {
     if (parents == null) {
       initParents();
     }
@@ -627,7 +627,7 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
   }
 
   @Override
-  protected final ProtectionDomain getProtectionDomain() {
+  protected ProtectionDomain getProtectionDomain() {
     return PROTECTION_DOMAIN;
   }
 

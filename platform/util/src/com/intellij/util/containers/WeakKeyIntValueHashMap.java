@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.reference.SoftReference;
@@ -56,49 +56,49 @@ final class WeakKeyIntValueHashMap<K> implements ObjectIntMap<K> {
   }
 
   @Override
-  public final int get(@NotNull K key) {
+  public int get(@NotNull K key) {
     MyReference<K> ref = new MyReference<>(key, null);
     return myMap.getInt(ref);
   }
 
   @Override
-  public final int put(@NotNull K key, int value) {
+  public int put(@NotNull K key, int value) {
     processQueue();
     MyReference<K> ref = new MyReference<>(key, myQueue);
     return myMap.put(ref, value);
   }
 
   @Override
-  public final int remove(@NotNull K key) {
+  public int remove(@NotNull K key) {
     processQueue();
     MyReference<K> ref = new MyReference<>(key, myQueue);
     return myMap.removeInt(ref);
   }
 
   @Override
-  public final void clear() {
+  public void clear() {
     myMap.clear();
     processQueue();
   }
 
   @Override
-  public final int size() {
+  public int size() {
     return myMap.size();
   }
 
   @Override
-  public final boolean isEmpty() {
+  public boolean isEmpty() {
     return myMap.isEmpty();
   }
 
   @Override
-  public final boolean containsKey(@NotNull K key) {
+  public boolean containsKey(@NotNull K key) {
     MyReference<K> ref = new MyReference<>(key, null);
     return myMap.containsKey(ref);
   }
 
   @Override
-  public final int @NotNull [] values() {
+  public int @NotNull [] values() {
     throw new IncorrectOperationException("values() makes no sense for weak/soft key map because GC can clear the key any moment now");
   }
 

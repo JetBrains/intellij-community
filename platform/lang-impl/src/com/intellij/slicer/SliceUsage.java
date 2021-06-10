@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.slicer;
 
 import com.intellij.analysis.AnalysisScope;
@@ -55,12 +55,12 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
 
     final HashingStrategy<SliceUsage> strategy = new HashingStrategy<>() {
       @Override
-      public final int hashCode(SliceUsage object) {
+      public int hashCode(SliceUsage object) {
         return object.getUsageInfo().hashCode();
       }
 
       @Override
-      public final boolean equals(SliceUsage o1, SliceUsage o2) {
+      public boolean equals(SliceUsage o1, SliceUsage o2) {
         return o1.getUsageInfo().equals(o2.getUsageInfo());
       }
     };
@@ -71,7 +71,7 @@ public abstract class SliceUsage extends UsageInfo2UsageAdapter {
       }
 
       @Override
-      public final boolean process(SliceUsage usage) {
+      public boolean process(SliceUsage usage) {
         SliceValueFilter filter = usage.params.valueFilter;
         if (filter != null) {
           PsiElement psiElement = usage.getElement();

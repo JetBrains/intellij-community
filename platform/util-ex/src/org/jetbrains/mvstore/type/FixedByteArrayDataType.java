@@ -32,7 +32,7 @@ public final class FixedByteArrayDataType implements KeyableDataType<byte[]> {
   }
 
   @Override
-  public final byte[][] createStorage(int size) {
+  public byte[][] createStorage(int size) {
     return new byte[size][];
   }
 

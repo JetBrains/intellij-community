@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.DataManager;
@@ -55,7 +55,7 @@ public final class WindowWatcher implements PropertyChangeListener {
    * @throws IllegalArgumentException if property name isn't {@code focusedWindow}.
    */
   @Override
-  public final void propertyChange(@NotNull PropertyChangeEvent e) {
+  public void propertyChange(@NotNull PropertyChangeEvent e) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: propertyChange(" + e + ")");
     }
@@ -98,7 +98,7 @@ public final class WindowWatcher implements PropertyChangeListener {
     }
   }
 
-  final void dispatchComponentEvent(final ComponentEvent e) {
+  void dispatchComponentEvent(final ComponentEvent e) {
     int id = e.getID();
     if (WindowEvent.WINDOW_CLOSED == id ||
         (ComponentEvent.COMPONENT_HIDDEN == id && e.getSource() instanceof Window)) {
@@ -161,13 +161,13 @@ public final class WindowWatcher implements PropertyChangeListener {
     }
   }
 
-  public final @Nullable Window getFocusedWindow() {
+  public @Nullable Window getFocusedWindow() {
     synchronized (myLock) {
       return myFocusedWindow;
     }
   }
 
-  public final @Nullable Component getFocusedComponent(@Nullable Project project) {
+  public @Nullable Component getFocusedComponent(@Nullable Project project) {
     synchronized (myLock) {
       Window window = getFocusedWindowForProject(project);
       if (window == null) {
@@ -177,7 +177,7 @@ public final class WindowWatcher implements PropertyChangeListener {
     }
   }
 
-  public final @Nullable Component getFocusedComponent(@NotNull Window window) {
+  public @Nullable Component getFocusedComponent(@NotNull Window window) {
     synchronized (myLock) {
       WindowInfo info = windowToInfo.get(window);
       if (info == null) { // it means that we don't manage this window, so just return standard focus owner
@@ -214,7 +214,7 @@ public final class WindowWatcher implements PropertyChangeListener {
   /**
    * @param project may be null (for example, if no projects are opened)
    */
-  public final @Nullable Window suggestParentWindow(@Nullable Project project, @NotNull WindowManagerEx windowManager) {
+  public @Nullable Window suggestParentWindow(@Nullable Project project, @NotNull WindowManagerEx windowManager) {
     synchronized (myLock) {
       Window window = getFocusedWindowForProject(project);
       if (window == null) {
@@ -268,7 +268,7 @@ public final class WindowWatcher implements PropertyChangeListener {
     }
   }
 
-  public final void doNotSuggestAsParent(final Window window) {
+  public void doNotSuggestAsParent(final Window window) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: doNotSuggestAsParent(" + window + ")");
     }

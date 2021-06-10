@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.dataFlow.DfaUtil;
@@ -21,14 +21,14 @@ final class ELattice<T extends Enum<T>> {
     this.top = top;
   }
 
-  final T join(T x, T y) {
+  T join(T x, T y) {
     if (x == bot) return y;
     if (y == bot) return x;
     if (x == y) return x;
     return top;
   }
 
-  final T meet(T x, T y) {
+  T meet(T x, T y) {
     if (x == top) return y;
     if (y == top) return x;
     if (x == y) return x;

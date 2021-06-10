@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.unscramble;
 
@@ -144,7 +144,7 @@ public final class AnalyzeStacktraceUtil {
       return myEditor;
     }
 
-    public final void setText(final @NotNull String text) {
+    public void setText(final @NotNull String text) {
       Runnable runnable = () -> ApplicationManager.getApplication().runWriteAction(() -> {
         final Document document = myEditor.getDocument();
         document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));

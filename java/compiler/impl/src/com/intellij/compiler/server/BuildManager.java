@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.DynamicBundle;
@@ -106,8 +106,7 @@ import org.jetbrains.jps.incremental.storage.ProjectStamps;
 import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -432,11 +431,11 @@ public final class BuildManager implements Disposable {
     }, listenerTimeout);
   }
 
-  public final void postponeBackgroundTasks() {
+  public void postponeBackgroundTasks() {
     mySuspendBackgroundTasksCounter.incrementAndGet();
   }
 
-  public final void allowBackgroundTasks() {
+  public void allowBackgroundTasks() {
     mySuspendBackgroundTasksCounter.decrementAndGet();
   }
 

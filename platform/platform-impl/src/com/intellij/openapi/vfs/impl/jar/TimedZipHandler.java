@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -132,7 +132,7 @@ public class TimedZipHandler extends ZipHandlerBase {
     }
 
     @Override
-    public final void close() {
+    public void close() {
       assert myLock.isLocked();
       ScheduledFuture<?> invalidationRequest;
       try {
@@ -148,7 +148,7 @@ public class TimedZipHandler extends ZipHandlerBase {
     }
 
     @Override
-    public final @NotNull ZipFile get() {
+    public @NotNull ZipFile get() {
       assert myLock.isLocked();
       return myFile;
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.hint.TooltipController;
@@ -560,7 +560,7 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
   private final class MyEscListener implements ActionListener {
     @Override
-    public final void actionPerformed(final ActionEvent e) {
+    public void actionPerformed(final ActionEvent e) {
       hide();
     }
   }

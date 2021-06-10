@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util;
 
 import com.github.benmanes.caffeine.cache.Cache;
@@ -1071,7 +1071,7 @@ public final class IconLoader {
     }
 
     @Override
-    public final @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
+    public @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
       Pair<String, ClassLoader> patchedPath = transform.patchPath(originalPath, classLoader);
       if (patchedPath == null) {
         return null;
@@ -1093,12 +1093,12 @@ public final class IconLoader {
     }
 
     @Override
-    public final boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
+    public boolean isMyClassLoader(@NotNull ClassLoader classLoader) {
       return classLoader == this.classLoader;
     }
 
     @Override
-    public final String toString() {
+    public String toString() {
       return "ResolvedImageDataResolver{" +
              ", url=" + url +
              '}';
