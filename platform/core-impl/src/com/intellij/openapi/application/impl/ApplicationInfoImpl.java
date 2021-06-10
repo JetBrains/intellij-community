@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -69,9 +69,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   private Calendar myBuildDate;
   private Calendar myMajorReleaseBuildDate;
-  private String myPackageCode;
   private boolean myShowLicensee = true;
-  private String myCustomizeIDEWizardStepsProvider;
   private String myWelcomeScreenDialog;
   private UpdateUrls myUpdateUrls;
   private String myDocumentationUrl;
@@ -199,11 +197,6 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
         case "icon-eap": {
           mySvgEapIconUrl = child.getAttributeValue("svg");
           mySmallSvgEapIconUrl = child.getAttributeValue("svg-small");
-        }
-        break;
-
-        case "package": {
-          myPackageCode = child.getAttributeValue("code");
         }
         break;
 
@@ -601,7 +594,7 @@ public final class ApplicationInfoImpl extends ApplicationInfoEx {
 
   @Override
   public String getPackageCode() {
-    return myPackageCode;
+    return null;
   }
 
   @Override
