@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.idea.fir.low.level.api.diagnostic.compiler.based
 
+import org.jetbrains.kotlin.idea.artifacts.AdditionalKotlinArtifacts
 import org.jetbrains.kotlin.idea.fir.low.level.api.compiler.based.AbstractCompilerBasedTest
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.runners.baseFirDiagnosticTestConfiguration
@@ -14,8 +15,8 @@ import org.jetbrains.kotlin.test.runners.baseFirSpecDiagnosticTestConfiguration
 
 abstract class AbstractDiagnosisCompilerTestDataSpecTest : AbstractCompilerBasedTest() {
     override fun TestConfigurationBuilder.configureTest() {
-        baseFirDiagnosticTestConfiguration()
-        baseFirSpecDiagnosticTestConfiguration()
+        baseFirDiagnosticTestConfiguration(baseDir = AdditionalKotlinArtifacts.compilerTestDataDir.canonicalPath)
+        baseFirSpecDiagnosticTestConfiguration(baseDir = AdditionalKotlinArtifacts.compilerTestDataDir.canonicalPath)
         addIdeTestIgnoreHandler()
     }
 }
