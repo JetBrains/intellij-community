@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -392,7 +392,10 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
         VirtualFile manifestFile = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
         if (manifestFile != null) {
           try (final InputStream inputStream = manifestFile.getInputStream()) {
-            return new Manifest(inputStream).getMainAttributes().getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+            Attributes mainAttributes = new Manifest(inputStream).getMainAttributes();
+            if ("junit.org".equals(mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VENDOR))) {
+              return mainAttributes.getValue(Attributes.Name.IMPLEMENTATION_VERSION);
+            }
           }
           catch (IOException ignored) { }
         }
