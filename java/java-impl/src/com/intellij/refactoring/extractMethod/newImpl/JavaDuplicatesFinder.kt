@@ -18,14 +18,15 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
   private val pattern: List<PsiElement> = pattern.filterNot(::isNoise)
 
   fun findDuplicates(scope: PsiElement): List<Duplicate> {
+    val ignoredElements = pattern.toSet()
     val duplicates = mutableListOf<Duplicate>()
     val visitor = object: JavaRecursiveElementWalkingVisitor() {
       override fun visitStatement(statement: PsiStatement) {
         super.visitStatement(statement)
-        if (statement.containingFile == pattern.firstOrNull()?.containingFile && statement.textOffset in textRangeOf(pattern)) return
+        if (statement in ignoredElements) return
         val siblings = siblingsOf(statement).take(pattern.size).toList()
         val duplicate = createDuplicate(pattern, siblings)
-        if (duplicate != null) {
+        if (duplicate != null && ! isOvercomplicated(duplicate)) {
           duplicates += duplicate
         }
       }
@@ -107,6 +108,13 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
   private fun PsiType?.isAssignableFrom(candidate: PsiType?): Boolean {
     if (this == null || candidate == null) return false
     return isAssignableFrom(candidate)
+  }
+
+  private fun isOvercomplicated(duplicate: Duplicate): Boolean {
+    val singleChangedExpression = duplicate.changedExpressions.singleOrNull()?.pattern ?: return false
+    val singleDeclaration = duplicate.pattern.singleOrNull() as? PsiDeclarationStatement
+    val variable = singleDeclaration?.declaredElements?.singleOrNull() as? PsiVariable
+    return variable?.initializer == singleChangedExpression
   }
 
 }
