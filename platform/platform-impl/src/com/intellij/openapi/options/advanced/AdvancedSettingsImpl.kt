@@ -140,7 +140,7 @@ class AdvancedSettingBean : PluginAware {
   }
 }
 
-@State(name = "AdvancedSettings", storages = [Storage(value = "ide.general.xml")])
+@State(name = "AdvancedSettings", storages = [Storage("advancedSettings.xml"), Storage(value = "ide.general.xml", deprecated = true)])
 class AdvancedSettingsImpl : AdvancedSettings(), PersistentStateComponentWithModificationTracker<AdvancedSettingsImpl.AdvancedSettingsState>, Disposable {
   class AdvancedSettingsState {
     var settings = mutableMapOf<String, String>()
