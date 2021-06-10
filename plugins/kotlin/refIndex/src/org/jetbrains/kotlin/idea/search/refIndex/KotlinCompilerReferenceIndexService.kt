@@ -5,6 +5,7 @@ import com.intellij.compiler.backwardRefs.DirtyScopeHolder
 import com.intellij.compiler.server.BuildManager
 import com.intellij.compiler.server.BuildManagerListener
 import com.intellij.compiler.server.CustomBuilderMessageHandler
+import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.lang.injection.InjectedLanguageManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.compiler.*
@@ -25,6 +26,7 @@ import com.intellij.openapi.util.ModificationTracker
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.GlobalSearchScope
@@ -35,6 +37,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.refactoring.fqName.getKotlinFqName
 import org.jetbrains.kotlin.idea.search.not
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
@@ -63,7 +66,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     private var activeBuildCount = 0
     private val compilationCounter = LongAdder()
     private val projectFileIndex = ProjectRootManager.getInstance(project).fileIndex
-    private val supportedFileTypes: Set<FileType> = setOf(KotlinFileType.INSTANCE)
+    private val supportedFileTypes: Set<FileType> = setOf(KotlinFileType.INSTANCE, JavaFileType.INSTANCE)
     private val dirtyScopeHolder = DirtyScopeHolder(
         project,
         supportedFileTypes,
@@ -219,7 +222,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     private fun referentFiles(element: PsiElement): Set<VirtualFile>? = tryWithReadLock(fun(): Set<VirtualFile>? {
         val storage = storage ?: return null
         val fqName = when (element) {
-            is KtClassOrObject -> element.fqName
+            is KtClassOrObject, is PsiClass -> element.getKotlinFqName()
             else -> null
         } ?: return null
 
