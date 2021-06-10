@@ -19,8 +19,6 @@ import java.util.Objects;
 public interface StartUpPerformanceService {
   void lastOptionTopHitProviderFinishedForProject(@NotNull Project project);
 
-  void reportStatistics(@NotNull Project project);
-
   @NotNull
   Map<String, Object2LongMap<String>> getPluginCostMap();
 

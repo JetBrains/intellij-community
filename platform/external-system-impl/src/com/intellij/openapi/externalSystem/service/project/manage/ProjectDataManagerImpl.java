@@ -4,7 +4,6 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.diagnostic.Activity;
 import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.diagnostic.StartUpPerformanceService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.*;
@@ -154,7 +153,6 @@ public class ProjectDataManagerImpl implements ProjectDataManager {
       }
     }
     runFinalTasks(project, synchronous, onSuccessImportTasks);
-    StartUpPerformanceService.getInstance().reportStatistics(project);
   }
 
   private static void runFinalTasks(@NotNull Project project, boolean synchronous, List<? extends Runnable> tasks) {

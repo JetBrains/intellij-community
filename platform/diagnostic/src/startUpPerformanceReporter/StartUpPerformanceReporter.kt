@@ -211,19 +211,11 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
     reportIfAnotherAlreadySet(project.name)
   }
 
-  override fun reportStatistics(project: Project) {
-    NonUrgentExecutor.getInstance().execute {
-      logStats(project.name)
-    }
-  }
-
   private fun reportIfAnotherAlreadySet(projectName: String) {
     // or StartUpPerformanceReporter activity will be finished first, or OptionsTopHitProvider.Activity
     if (startUpFinishedCounter.incrementAndGet() == 2) {
       startUpFinishedCounter.set(0)
       StartUpMeasurer.stopPluginCostMeasurement()
-      // Don't report statistic from here if we want to measure project import duration
-      if (SystemProperties.getBooleanProperty("idea.collect.project.import.performance", false)) return
       // even if this activity executed in a pooled thread, better if it will not affect start-up in any way
       NonUrgentExecutor.getInstance().execute {
         logStats(projectName)
