@@ -247,8 +247,8 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
 
     try {
       // Stage partial changes
-      Pair<Runnable, List<CommitChange>> partialAddResult = addPartialChangesToIndex(repository, changes);
-      Runnable callback = partialAddResult.first;
+      Pair<List<PartialCommitHelper>, List<CommitChange>> partialAddResult = addPartialChangesToIndex(repository, changes);
+      List<PartialCommitHelper> partialCommitHelpers = partialAddResult.first;
       Set<CommitChange> changedWithIndex = new HashSet<>(partialAddResult.second);
 
       // Stage case-only renames
@@ -260,7 +260,7 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
                          messageFile -> exceptions.addAll(commitUsingIndex(repository, changes, changedWithIndex, messageFile)));
       if (!exceptions.isEmpty()) return exceptions;
 
-      callback.run();
+      applyPartialChanges(partialCommitHelpers);
 
       getRepositoryManager(myProject).updateRepository(root);
       if (isSubmodule(repository)) {
@@ -355,10 +355,10 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
   }
 
   @NotNull
-  private Pair<Runnable, List<CommitChange>> addPartialChangesToIndex(@NotNull GitRepository repository,
-                                                                      @NotNull Collection<? extends CommitChange> changes) throws VcsException {
+  private Pair<List<PartialCommitHelper>, List<CommitChange>>
+  addPartialChangesToIndex(@NotNull GitRepository repository, @NotNull Collection<? extends CommitChange> changes) throws VcsException {
     Set<String> changelistIds = map2SetNotNull(changes, change -> change.changelistId);
-    if (changelistIds.isEmpty()) return Pair.create(EmptyRunnable.INSTANCE, emptyList());
+    if (changelistIds.isEmpty()) return Pair.create(emptyList(), emptyList());
     if (changelistIds.size() != 1) throw new VcsException(GitBundle.message("error.commit.cant.commit.multiple.changelists"));
     String changelistId = changelistIds.iterator().next();
 
@@ -422,9 +422,12 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
       GitIndexUtil.write(repository, path, fileContent, isExecutable);
     }
 
+    return Pair.create(helpers, partialChanges);
+  }
 
-    Runnable callback = () -> ApplicationManager.getApplication().invokeLater(() -> {
-      for (PartialCommitHelper helper : helpers) {
+  private static void applyPartialChanges(@NotNull List<PartialCommitHelper> partialCommitHelpers) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      for (PartialCommitHelper helper : partialCommitHelpers) {
         try {
           helper.applyChanges();
         }
@@ -433,8 +436,6 @@ public final class GitCheckinEnvironment implements CheckinEnvironment, AmendCom
         }
       }
     });
-
-    return Pair.create(callback, partialChanges);
   }
 
   private static byte @NotNull [] convertDocumentContentToBytes(@NotNull GitRepository repository,
