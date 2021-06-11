@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.tools.projectWizard.core.service
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.ProjectKind
 
-class KotlinVersionProviderServiceImpl : KotlinVersionProviderService(), IdeaIndependentWizardService {
+class CoreKotlinVersionProviderService : KotlinVersionProviderService(), IdeaIndependentWizardService {
     override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
         val version = when (projectKind) {
             ProjectKind.COMPOSE -> Versions.KOTLIN_VERSION_FOR_COMPOSE
