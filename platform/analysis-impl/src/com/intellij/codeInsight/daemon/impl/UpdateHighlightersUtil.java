@@ -557,7 +557,7 @@ public final class UpdateHighlightersUtil {
     if (model == null) return;
 
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
-      if (range.getStartOffset() == highlighter.getStartOffset() && range.getEndOffset() == highlighter.getEndOffset()) {
+      if (TextRange.areSegmentsEqual(range, highlighter)) {
         model.removeHighlighter(highlighter);
       }
     }

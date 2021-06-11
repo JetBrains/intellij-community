@@ -285,7 +285,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @VisibleForTesting
   @NotNull
   List<ConflictingFileTypeMappingTracker.ResolveConflictResult> initStandardFileTypes() {
-    List<ConflictingFileTypeMappingTracker.ResolveConflictResult> notificationsShown = new ArrayList<>();
     instantiatePendingFileTypes();
 
     for (Map.Entry<String, StandardFileType> entry : myStandardFileTypes.entrySet()) {
@@ -328,9 +327,12 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       }
     });
 
+    List<ConflictingFileTypeMappingTracker.ResolveConflictResult> notificationsShown = new ArrayList<>();
     for (StandardFileType pair : myStandardFileTypes.values()) {
       if (mySchemeManager.findSchemeByName(pair.fileType.getName()) == null) {
-        notificationsShown.addAll(registerFileTypeWithoutNotification(pair.fileType, pair.pluginDescriptor, pair.matchers, true));
+        List<ConflictingFileTypeMappingTracker.ResolveConflictResult> conflicts =
+          registerFileTypeWithoutNotification(pair.fileType, pair.pluginDescriptor, pair.matchers, true);
+        notificationsShown.addAll(conflicts);
       }
     }
 

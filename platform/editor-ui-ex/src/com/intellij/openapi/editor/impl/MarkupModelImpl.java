@@ -83,9 +83,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
 
     int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
     HighlighterTargetArea area = HighlighterTargetArea.LINES_IN_RANGE;
-    Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> {
-      ex.setTextAttributes(textAttributes);
-    };
+    Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> ex.setTextAttributes(textAttributes);
     return addRangeHighlighterAndChangeAttributes(textAttributesKey, offset, offset, layer, area, false, changeAction);
   }
 
@@ -106,21 +104,16 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                           @Nullable TextAttributes textAttributes,
                                                           int lineNumber,
                                                           int layer) {
-
     if (isNotValidLine(lineNumber)) {
       return null;
     }
-
     int offset = DocumentUtil.getFirstNonSpaceCharOffset(getDocument(), lineNumber);
 
-    Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> {
-      ex.setTextAttributes(textAttributes);
-    };
+    Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> ex.setTextAttributes(textAttributes);
 
-    return addRangeHighlighter(
-      PersistentRangeHighlighterImpl.create(
-        this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false),
-      changeAction);
+    PersistentRangeHighlighterImpl rangeHighlighter = PersistentRangeHighlighterImpl.create(
+      this, offset, layer, HighlighterTargetArea.LINES_IN_RANGE, textAttributesKey, false);
+    return addRangeHighlighter(rangeHighlighter, changeAction);
   }
 
   private boolean isNotValidLine(int lineNumber) {
@@ -152,11 +145,10 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                                    @NotNull HighlighterTargetArea targetArea,
                                                                    boolean isPersistent,
                                                                    @Nullable Consumer<? super RangeHighlighterEx> changeAttributesAction) {
-    return addRangeHighlighter(isPersistent
-                               ? PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea,
-                                                                       textAttributesKey, true)
-                               : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributesKey, false,
-                                                          false), changeAttributesAction);
+    RangeHighlighterImpl rangeHighlighter = isPersistent ?
+      PersistentRangeHighlighterImpl.create(this, startOffset, layer, targetArea, textAttributesKey, true)
+      : new RangeHighlighterImpl(this, startOffset, endOffset, layer, targetArea, textAttributesKey, false, false);
+    return addRangeHighlighter(rangeHighlighter, changeAttributesAction);
   }
 
   @NotNull
@@ -216,9 +208,7 @@ public class MarkupModelImpl extends UserDataHolderBase implements MarkupModelEx
                                                        int layer,
                                                        @Nullable TextAttributes textAttributes,
                                                        @NotNull HighlighterTargetArea targetArea) {
-    Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> {
-      ex.setTextAttributes(textAttributes);
-    };
+    Consumer<RangeHighlighterEx> changeAction = textAttributes == null ? null : ex -> ex.setTextAttributes(textAttributes);
     return addRangeHighlighterAndChangeAttributes(null, startOffset, endOffset, layer, targetArea, false, changeAction);
   }
 
