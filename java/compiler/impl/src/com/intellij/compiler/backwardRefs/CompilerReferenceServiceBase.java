@@ -84,6 +84,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   private int myActiveBuilds = 0;
 
   protected volatile Reader myReader;
+  private final ThreadLocal<Boolean> myIsInsideHierarchy = ThreadLocal.withInitial(() -> false);
 
   public CompilerReferenceServiceBase(Project project,
                                       CompilerReferenceReaderFactory<? extends Reader> readerFactory,
@@ -139,7 +140,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   @Nullable
   @Override
   public GlobalSearchScope getScopeWithCodeReferences(@NotNull PsiElement element) {
-    if (!isServiceEnabledFor(element)) return null;
+    if (!isServiceEnabledFor(element) || myIsInsideHierarchy.get()) return null;
 
     try {
       return CachedValuesManager.getCachedValue(element,
@@ -380,18 +381,24 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
       final CompilerRef ref = adapter.asCompilerRef(psiElement, myReader.getNameEnumerator());
       if (ref == null) return null;
       if (place == ElementPlace.LIB && buildHierarchyForLibraryElements) {
-        final List<CompilerRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
-                                                                                        psiElement,
-                                                                                        myReader.getNameEnumerator(),
-                                                                                        LibraryScopeCache.getInstance(myProject)
-                                                                                       .getLibrariesOnlyScope());
-        final CompilerRef[] fullHierarchy = new CompilerRef[elements.size() + 1];
-        fullHierarchy[0] = ref;
-        int i = 1;
-        for (CompilerRef element : elements) {
-          fullHierarchy[i++] = element;
+        myIsInsideHierarchy.set(true);
+        try {
+          final List<CompilerRef> elements = adapter.getHierarchyRestrictedToLibraryScope(ref,
+                                                                                          psiElement,
+                                                                                          myReader.getNameEnumerator(),
+                                                                                          LibraryScopeCache.getInstance(myProject)
+                                                                                            .getLibrariesOnlyScope());
+          final CompilerRef[] fullHierarchy = new CompilerRef[elements.size() + 1];
+          fullHierarchy[0] = ref;
+          int i = 1;
+          for (CompilerRef element : elements) {
+            fullHierarchy[i++] = element;
+          }
+          return new CompilerElementInfo(place, fullHierarchy);
         }
-        return new CompilerElementInfo(place, fullHierarchy);
+        finally {
+          myIsInsideHierarchy.set(false);
+        }
       }
       else {
         return new CompilerElementInfo(place, ref);
