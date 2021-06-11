@@ -112,7 +112,7 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   @NotNull
   @Override
   public PsiPolyVariantReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull

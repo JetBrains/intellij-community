@@ -72,10 +72,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyModuleType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -1246,8 +1243,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
       if (parentDef == null) {
         return null;
       }
+      final var context = TypeEvalContext.codeInsightFallback(file.getProject());
       List<? extends RatedResolveResult> results =
-        parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext());
+        parentDef.resolveMember(name, null, AccessDirection.READ, PyResolveContext.defaultContext(context));
       if (results != null && !results.isEmpty()) {
         return XDebuggerUtil.getInstance().createPositionByElement(results.get(0).getElement());
       }

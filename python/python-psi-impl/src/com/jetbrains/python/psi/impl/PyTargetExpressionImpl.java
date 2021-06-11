@@ -573,7 +573,7 @@ public class PyTargetExpressionImpl extends PyBaseElementImpl<PyTargetExpression
   @NotNull
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull

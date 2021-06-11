@@ -56,7 +56,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public PsiReference getReference() {
-    return getReference(PyResolveContext.defaultContext());
+    return getReference(PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(getProject())));
   }
 
   @NotNull

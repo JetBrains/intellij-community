@@ -54,7 +54,7 @@ public class PyStaticCallHierarchyUtil {
         super.visitPyCallExpression(node);
 
         StreamEx
-          .of(node.multiResolveCalleeFunction(PyResolveContext.implicitContext()))
+          .of(node.multiResolveCalleeFunction(PyResolveContext.implicitContext(TypeEvalContext.codeInsightFallback(node.getProject()))))
           .select(PyFunction.class)
           .forEach(callees::add);
       }
