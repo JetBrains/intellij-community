@@ -105,6 +105,12 @@ class PureKotlinCodeBlockModificationListener(project: Project) : Disposable {
             if (KtPsiUtil.isLocal(blockDeclaration))
                 return null
 
+            PsiTreeUtil.collectParents(element, KtStringTemplateExpression::class.java, true) {
+                it == blockDeclaration
+            }.lastOrNull()?.let {
+                return BlockModificationScopeElement(blockDeclaration, it)
+            }
+
             when (blockDeclaration) {
                 is KtNamedFunction -> {
                     //                    if (blockDeclaration.visibilityModifierType()?.toVisibility() == Visibilities.PRIVATE) {
