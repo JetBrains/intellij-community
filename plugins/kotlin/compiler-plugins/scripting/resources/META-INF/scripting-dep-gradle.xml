@@ -1,0 +1,5 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="org.jetbrains.kotlin">
+    <gradleProjectImportHandler implementation="org.jetbrains.kotlin.scripting.idea.plugin.ScriptingGradleProjectImportHandler"/>
+  </extensions>
+</idea-plugin>
