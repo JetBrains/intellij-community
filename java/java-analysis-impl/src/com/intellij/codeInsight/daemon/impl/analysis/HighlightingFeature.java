@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -85,7 +85,8 @@ public enum HighlightingFeature {
       return LanguageLevel.JDK_16;
     }
   },
-  INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics");
+  INNER_STATICS(LanguageLevel.JDK_16, "feature.inner.statics"),
+  PATTERN_MATCHING_FOR_SWITCH(LanguageLevel.JDK_17_PREVIEW, "pattern.matching.for.switch");
 
   public static final @NonNls String JDK_INTERNAL_PREVIEW_FEATURE = "jdk.internal.PreviewFeature";
   public static final @NonNls String JDK_INTERNAL_JAVAC_PREVIEW_FEATURE = "jdk.internal.javac.PreviewFeature";
