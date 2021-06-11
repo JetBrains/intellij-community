@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.inspections.dfa
 
+import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.codeInspection.dataFlow.interpreter.RunnerResult
 import com.intellij.codeInspection.dataFlow.interpreter.StandardDataFlowInterpreter
@@ -62,7 +63,10 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
             if (cv != ConstantValue.UNKNOWN) {
                 val key = if (cv == ConstantValue.TRUE) "inspection.message.condition.always.true" 
                 else "inspection.message.condition.always.false"
-                holder.registerProblem(expr, KotlinBundle.message(key))
+                val highlightType =
+                    if (expr is KtSimpleNameExpression || expr is KtQualifiedExpression) ProblemHighlightType.WEAK_WARNING
+                    else ProblemHighlightType.GENERIC_ERROR_OR_WARNING
+                holder.registerProblem(expr, KotlinBundle.message(key), highlightType)
             }
         }
     })
