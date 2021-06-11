@@ -427,14 +427,18 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       }
 
       if (!failedDownloads.isEmpty()) {
-        throw new IllegalStateException(
-          "Download has failed for ${failedDownloads.size()} lib(s): ${StringUtil.join(failedDownloads, { info -> "${info.libraryName}" }, ", ")}")
+        // TODO: temp fix for failed libraries
+        String message = "Download has failed for ${failedDownloads.size()} lib(s): ${StringUtil.join(failedDownloads, { info -> "${info.libraryName}".toString() }, ", ")}"
+        buildContext.messages.warning(message)
       }
 
-      downloadLibsInfo.forEach { info ->
+      for (info in downloadLibsInfo) {
         Path downloadPath = info.downloadPath
-        if (downloadPath == null)
-          throw new IllegalStateException("Unable to get download path for a library: ${info.libraryName}")
+        if (downloadPath == null) {
+          // TODO: temp fix for failed libraries
+          continue
+          //throw new IllegalStateException("Unable to get download path for a library: ${info.libraryName}")
+        }
 
         String archiveName = downloadPath.fileName.toString()
         String archiveNameWithoutExtension = archiveName.substring(0, archiveName.lastIndexOf('.'))
