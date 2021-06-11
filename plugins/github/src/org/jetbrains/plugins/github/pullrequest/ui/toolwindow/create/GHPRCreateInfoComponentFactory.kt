@@ -4,18 +4,11 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
 import com.intellij.collaboration.ui.ListenableProgressIndicator
-import com.intellij.dvcs.DvcsUtil
-import com.intellij.dvcs.push.PushSpec
-import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.ui.messages.MessagesService
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.IdeBorderFactory
@@ -31,19 +24,12 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitLocalBranch
 import git4idea.GitRemoteBranch
-import git4idea.GitStandardRemoteBranch
-import git4idea.GitVcs
-import git4idea.push.GitPushOperation
-import git4idea.push.GitPushSource
-import git4idea.push.GitPushSupport
-import git4idea.push.GitPushTarget
-import git4idea.repo.GitRemote
-import git4idea.repo.GitRepository
 import git4idea.ui.branch.CreateDirectionComponentFactory
 import git4idea.ui.branch.CreateDirectionModel
 import git4idea.ui.branch.GitRemoteAndRepository
+import git4idea.util.BranchNameInputDialogMessages
+import git4idea.util.findOrPushRemoteBranch
 import git4idea.util.findPushTarget
-import git4idea.validators.GitRefNameValidator
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
@@ -262,10 +248,17 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         CompletableFuture.completedFuture(headBranch)
       }
       else {
-        findOrPushRemoteBranch(progressIndicator,
+        val dialogMessages = BranchNameInputDialogMessages(
+          GithubBundle.message("pull.request.create.input.remote.branch.title"),
+          GithubBundle.message("pull.request.create.input.remote.branch.name"),
+          GithubBundle.message("pull.request.create.input.remote.branch.comment", (headBranch as GitLocalBranch).name,
+                               headRepo.gitRemote.remote.name))
+        findOrPushRemoteBranch(project,
+                               progressIndicator,
                                headRepo.gitRemote.repository,
                                headRepo.gitRemote.remote,
-                               headBranch as GitLocalBranch)
+                               headBranch,
+                               dialogMessages)
       }.thenCompose { remoteHeadBranch ->
         dataContext.creationService
           .createPullRequest(progressIndicator, baseBranch, headRepo, remoteHeadBranch,
@@ -284,65 +277,6 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
       }
     }
 
-    private fun findOrPushRemoteBranch(progressIndicator: ProgressIndicator,
-                                       repository: GitRepository,
-                                       remote: GitRemote,
-                                       localBranch: GitLocalBranch): CompletableFuture<GitRemoteBranch> {
-
-      val gitPushSupport = DvcsUtil.getPushSupport(GitVcs.getInstance(project)) as? GitPushSupport
-                           ?: return CompletableFuture.failedFuture(ProcessCanceledException())
-
-      val existingPushTarget = findPushTarget(repository, remote, localBranch)
-      if (existingPushTarget != null) {
-        val localHash = repository.branches.getHash(localBranch)
-        val remoteHash = repository.branches.getHash(existingPushTarget.branch)
-        if (localHash == remoteHash) return CompletableFuture.completedFuture(existingPushTarget.branch)
-      }
-
-      val pushTarget = existingPushTarget
-                       ?: inputPushTarget(repository, remote, localBranch)
-                       ?: return CompletableFuture.failedFuture(ProcessCanceledException())
-
-      val future = CompletableFuture<GitRemoteBranch>()
-      ProgressManager.getInstance().runProcessWithProgressAsynchronously(
-        object : Task.Backgroundable(repository.project, DvcsBundle.message("push.process.pushing"), true) {
-
-          override fun run(indicator: ProgressIndicator) {
-            indicator.text = DvcsBundle.message("push.process.pushing")
-            val pushSpec = PushSpec(GitPushSource.create(localBranch), pushTarget)
-            val pushResult = GitPushOperation(repository.project, gitPushSupport, mapOf(repository to pushSpec), null, false, false)
-                               .execute().results[repository] ?: error("Missing push result")
-            check(pushResult.error == null) {
-              GithubBundle.message("pull.request.create.push.failed", pushResult.error.orEmpty())
-            }
-          }
-
-          override fun onSuccess() {
-            future.complete(pushTarget.branch)
-          }
-
-          override fun onThrowable(error: Throwable) {
-            future.completeExceptionally(error)
-          }
-
-          override fun onCancel() {
-            future.completeExceptionally(ProcessCanceledException())
-          }
-        }, progressIndicator)
-      return future
-    }
-
-    private fun inputPushTarget(repository: GitRepository, remote: GitRemote, localBranch: GitLocalBranch): GitPushTarget? {
-      val branchName = MessagesService.getInstance().showInputDialog(repository.project, null,
-                                                                     GithubBundle.message("pull.request.create.input.remote.branch.name"),
-                                                                     GithubBundle.message("pull.request.create.input.remote.branch.title"),
-                                                                     null, localBranch.name, null, null,
-                                                                     GithubBundle.message("pull.request.create.input.remote.branch.comment",
-                                                                                          localBranch.name, remote.name))
-                       ?: return null
-      //always set tracking
-      return GitPushTarget(GitStandardRemoteBranch(remote, GitRefNameValidator.getInstance().cleanUpBranchName(branchName)), true)
-    }
 
     private fun adjustReviewers(pullRequest: GHPullRequestShort, reviewers: List<GHPullRequestRequestedReviewer>)
       : CompletableFuture<GHPullRequestShort> {
