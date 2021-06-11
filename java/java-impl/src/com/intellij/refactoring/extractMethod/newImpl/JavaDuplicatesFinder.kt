@@ -20,18 +20,36 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
   fun findDuplicates(scope: PsiElement): List<Duplicate> {
     val ignoredElements = pattern.toSet()
     val duplicates = mutableListOf<Duplicate>()
-    val visitor = object: JavaRecursiveElementWalkingVisitor() {
-      override fun visitStatement(statement: PsiStatement) {
-        super.visitStatement(statement)
-        if (statement in ignoredElements) return
-        val siblings = siblingsOf(statement).take(pattern.size).toList()
-        val duplicate = createDuplicate(pattern, siblings)
-        if (duplicate != null && ! isOvercomplicated(duplicate)) {
-          duplicates += duplicate
+
+    val patternExpression = pattern.singleOrNull() as? PsiExpression
+    if (patternExpression != null) {
+      val expressionVisitor = object : JavaRecursiveElementWalkingVisitor(){
+        override fun visitExpression(expression: PsiExpression) {
+          if (expression in ignoredElements) return
+          val duplicate = createDuplicate(childrenOf(patternExpression), childrenOf(expression))
+          if (duplicate != null && ! isOvercomplicated(duplicate)) {
+            duplicates += duplicate.copy(pattern = listOf(patternExpression), candidate = listOf(expression))
+          } else {
+            super.visitExpression(expression)
+          }
         }
       }
+      scope.accept(expressionVisitor)
+    } else {
+      val visitor = object: JavaRecursiveElementWalkingVisitor() {
+        override fun visitStatement(statement: PsiStatement) {
+          if (statement in ignoredElements) return
+          val siblings = siblingsOf(statement).take(pattern.size).toList()
+          val duplicate = createDuplicate(pattern, siblings)
+          if (duplicate != null && ! isOvercomplicated(duplicate)) {
+            duplicates += duplicate
+          } else {
+            super.visitStatement(statement)
+          }
+        }
+      }
+      scope.accept(visitor)
     }
-    scope.accept(visitor)
 
     return duplicates
   }
@@ -48,6 +66,11 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
 
   private fun childrenOf(element: PsiElement?): List<PsiElement> {
     return siblingsOf(element?.firstChild).toList()
+  }
+
+  fun createExpressionDuplicate(pattern: PsiExpression, candidate: PsiExpression): Duplicate? {
+    return createDuplicate(childrenOf(pattern), childrenOf(candidate))
+      ?.copy(pattern = listOf(pattern), candidate = listOf(candidate))
   }
 
   fun createDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
