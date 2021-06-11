@@ -2475,6 +2475,12 @@ public final class ContainerUtil {
     return createConcurrentList();
   }
 
+  /**
+   * @see #createLockFreeCopyOnWriteList()
+   * @return thread-safe copy-on-write List.
+   * <b>Warning!</b> {@code c} collection must have correct {@link Collection#toArray()} method implementation
+   * which doesn't leak the underlying array to avoid accidental modification in-place.
+   */
   @Contract(value = "_ -> new", pure = true)
   public static @NotNull <T> List<T> createLockFreeCopyOnWriteList(@NotNull Collection<? extends T> c) {
     return new LockFreeCopyOnWriteArrayList<>(c);
@@ -2621,9 +2627,15 @@ public final class ContainerUtil {
     return new LockFreeCopyOnWriteArrayList<>();
   }
 
+  /**
+   * @return thread-safe copy-on-write List.
+   * <b>Warning!</b> {@code c} collection must have correct {@link Collection#toArray()} method implementation
+   * which doesn't leak the underlying array to avoid accidental modification in-place.
+   * @see #createLockFreeCopyOnWriteList()
+   */
   @Contract(value = "_ -> new", pure = true)
-  public static @NotNull <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> collection) {
-    return new LockFreeCopyOnWriteArrayList<>(collection);
+  public static @NotNull <T> ConcurrentList<T> createConcurrentList(@NotNull Collection <? extends T> c) {
+    return new LockFreeCopyOnWriteArrayList<>(c);
   }
 
   /**
