@@ -1,12 +1,15 @@
 <html>
 <body>
-Reports on any call to <code>wait()</code>, <code>notify()</code> or <code>notifyAll()</code> not made inside a corresponding synchronized
-statement or synchronized method. Calling them on an object
-without holding a lock on that object causes <code>IllegalMonitorStateException</code>.
-Such a construct is not necessarily an error, as the necessary lock may be acquired before
-the containing method is called, but it's worth looking at.
-<p>Example:</p>
-<pre>
+Reports calls to <code>wait()</code>, <code>notify()</code>, and <code>notifyAll()</code>
+that are not made inside a corresponding synchronized statement or synchronized method.
+<p>
+  Calling these methods on an object
+  without holding a lock on that object causes <code>IllegalMonitorStateException</code>.
+  Such a construct is not necessarily an error, as the necessary lock may be acquired before
+  the containing method is called, but it's worth looking at.
+</p>
+<p><b>Example:</b></p>
+<pre><code>
   class Sync {
     private final Object lock = new Object();
 
@@ -16,8 +19,7 @@ the containing method is called, but it's worth looking at.
       }
     }
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
 </body>
 </html>
