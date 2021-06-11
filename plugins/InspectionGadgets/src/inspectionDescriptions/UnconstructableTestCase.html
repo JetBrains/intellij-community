@@ -1,9 +1,10 @@
 <html>
 <body>
-Reports non-<code>abstract</code> JUnit test cases which do not
-expose a public no-arg constructor or a public constructor which takes a single string
-as an argument. Such test cases will not be runnable by most JUnit test runners.
-<p>Example:
+<p>Reports JUnit test cases that are not <code>abstract</code> and do not
+  expose a public <code>no-arg</code> constructor or a public constructor that takes a single string
+  as an argument. </p>
+<p>Such test cases cannot be run by most JUnit test runners.</p>
+<p><b>Example:</b></p>
 <pre><code>
 public class MyTest {
 
@@ -16,7 +17,5 @@ public class MyTest {
 }
 </code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

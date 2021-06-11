@@ -1,9 +1,9 @@
 <html>
 <body>
-Reports division by zero or remainder by zero.
-In this case user will get <code>Nan</code> for doubles/floats and <code>ArithmeticException</code> for integers.
-Note, that the divisor is not necessarily zero literal, but expression which statically known to be evaluated as zero.
-The fix will suggest replacing division expression with <code>NaN</code> constant for floating point types.
+<p>Reports division by zero or remainder by zero.</p>
+<p>In this case, users will get <code>Nan</code> for doubles or floats, and <code>ArithmeticException</code> for integers.
+  Note, that the divisor is not necessarily a zero literal, but the expression that is statically known to be evaluated as zero.
+  The fix suggests replacing division expression with the <code>NaN</code> constant for floating-point types.</p>
 <!-- tooltip end -->
 <p>
 

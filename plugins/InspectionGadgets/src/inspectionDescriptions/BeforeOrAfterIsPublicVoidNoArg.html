@@ -1,15 +1,15 @@
 <html>
 <body>
-Reports JUnit 4 <code>@Before</code> or <code>@After</code> methods which are not declared <code>public</code>, do not return
-<code>void</code>, or take arguments, and suggests fixing the method signature. Such methods are easy to create inadvertently, but will not
-be executed by JUnit tests runners.
-<p>Example:</p>
-<pre>
+<p>Reports JUnit 4 <code>@Before</code> or <code>@After</code> methods that are not declared <code>public</code>, do not return
+  <code>void</code>, or take arguments. Such methods are easy to create inadvertently, but they will not be executed by JUnit tests runners.</p>
+<p>The inspection provides fixes for method signatures.</p>
+<p><b>Example:</b></p>
+<pre><code>
   @Before private int foo(int arg) { ... }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied:</p>
+<pre><code>
   @Before public void foo() { ... }
-</pre>
+</code></pre>
 </body>
 </html>

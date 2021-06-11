@@ -1,25 +1,23 @@
 <html>
 <body>
-Reports octal integer literals. Some coding standards prohibit the
-use of octal literals, as they may be easily confused with decimal literals.
-<p>Example:
-<pre>
+<p>Reports octal integer literals. Some coding standards prohibit the
+  use of octal literals, as they may be easily confused with decimal literals.</p>
+<p>Example:</p>
+<pre><code>
   int i = 015;
   int j = 0_777;
-</pre>
-<p>This inspection has two different quick fixes which may applied.
-After the "Convert octal literal to decimal literal" quick fix is applied the result looks like:
-<pre>
+</code></pre>
+<p>This inspection has two different quick-fixes.
+  After the <b>Convert octal literal to decimal literal</b> quick-fix is applied, the code changes to:</p>
+<pre><code>
   int i = 13;
   int j = 511;
-</pre>
-Or after the "Remove leading zero to make decimal" quick fix is applied the result looks like:
-<pre>
+</code></pre>
+<p>After the <b>Remove leading zero to make decimal</b> quick-fix is applied, the code changes to:</p>
+<pre><code>
   int i = 15;
   int j = 777;
-</pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-
 </body>
 </html>

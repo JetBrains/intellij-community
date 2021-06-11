@@ -1,33 +1,33 @@
 <html>
 <body>
-Reports integer multiplications or left shifts which are implicitly cast to long.
-<p>Example:</p>
-<pre>
+<p>Reports integer multiplications or left shifts that are implicitly cast to long.</p>
+<p><b>Example:</b></p>
+<pre><code>
   void f(int i) {
     long val = 65536 * i;
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied, the code changes to:</p>
+<pre><code>
   void x(int i) {
     long val = 65536<b>L</b> * i;
   }
-</pre>
-<p>Example:</p>
-<pre>
+</code></pre>
+<p><b>Example:</b></p>
+<pre><code>
   void f(int i) {
     long value = i &lt;&lt; 24;
   }
-</pre>
-<p>After the quick-fix is applied the result looks like:</p>
-<pre>
+</code></pre>
+<p>After the quick-fix is applied, the code changes to:</p>
+<pre><code>
   void f(int i) {
     long value = (long) i &lt;&lt; 24;
   }
-</pre>
+</code></pre>
 <!-- tooltip end -->
 <p>
-  Such multiplication is often a mistake, as overflow truncation may occur unexpectedly.
+  Such multiplications are often a mistake, as overflow truncation may occur unexpectedly.
   Converting an <code>int</code> literal to a <code>long</code> literal (<code>65536<b>L</b></code>) fixes the problem.
 </p>
 

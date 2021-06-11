@@ -1,21 +1,15 @@
 <html>
 <body>
-Reports parameterized tests which have malformed sources:
+<p>Reports parameterized tests that have malformed sources:</p>
 <ul>
-  <li>
-    <code>MethodSource</code> has an unknown target or the method is not static, no-arg.
-  </li>
-  <li>
-    <code>ValueSource</code> / <code>EnumSource</code> types are not convertible to method parameters.
-  </li>
-  <li>
-    No sources are defined.
-  </li>
+  <li><code>MethodSource</code> has an unknown target or the method is not static, <code>no-arg</code>.</li>
+  <li><code>ValueSource</code> and <code>EnumSource</code> types cannot be converted to method parameters.</li>
+  <li>No sources are defined.</li>
 </ul>
 <p>Example:</p>
 <pre><code>
   class Test {
-    @MethodSource("parameters")
+    @MethodSource(""parameters"")
     @ParameterizedTest
     void foo(String param) {}
   }
@@ -27,13 +21,11 @@ Reports parameterized tests which have malformed sources:
         return Stream.empty();
     }
 
-    @MethodSource("parameters")
+    @MethodSource(""parameters"")
     @ParameterizedTest
     void foo(String param) {}
   }
-  </code></pre>
+</code></pre>
 <!-- tooltip end -->
-<p>
-  <small>New in 2017.2</small>
 </body>
 </html>
