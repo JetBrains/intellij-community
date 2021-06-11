@@ -4,7 +4,11 @@ package org.jetbrains.kotlin.tools.projectWizard.cli
 
 import java.nio.file.Path
 
-data class DefaultTestParameters(val runForMaven: Boolean = false, val runForGradleGroovy: Boolean = true) : TestParameters {
+data class DefaultTestParameters(
+    val runForMaven: Boolean = false,
+    val runForGradleGroovy: Boolean = true,
+    val keepKotlinVersion: Boolean = false
+) : TestParameters {
     companion object {
         fun fromTestDataOrDefault(directory: Path): DefaultTestParameters =
             TestParameters.fromTestDataOrDefault(directory, PARAMETERS_FILE_NAME)

@@ -3,7 +3,7 @@
 package org.jetbrains.kotlin.tools.projectWizard.wizard.services
 
 import com.intellij.openapi.project.Project
-import org.jetbrains.kotlin.tools.projectWizard.cli.KotlinVersionProviderTestWizardService
+import org.jetbrains.kotlin.tools.projectWizard.wizard.service.IdeaKotlinVersionProviderService
 import org.jetbrains.kotlin.tools.projectWizard.cli.TestWizardService
 
 object TestWizardServices {
@@ -13,6 +13,6 @@ object TestWizardServices {
 
     val PROJECT_INDEPENDENT = listOf(
         FormattingTestWizardService(),
-        KotlinVersionProviderTestWizardService()
+        IdeaKotlinVersionProviderService()
     )
 }

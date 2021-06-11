@@ -3,10 +3,11 @@
 package org.jetbrains.kotlin.tools.projectWizard.cli
 
 import com.intellij.testFramework.UsefulTestCase
-import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.div
 import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
 import org.jetbrains.kotlin.tools.projectWizard.phases.GenerationPhase
+import org.jetbrains.kotlin.tools.projectWizard.plugins.kotlin.KotlinPlugin
+import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.BintrayRepository
 import org.jetbrains.kotlin.tools.projectWizard.settings.buildsystem.Repositories
 import org.jetbrains.kotlin.tools.projectWizard.wizard.Wizard
 import java.nio.file.Files
@@ -28,11 +29,11 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
         )
 
         for (buildSystem in buildSystemsToRunFor) {
-            doTest(directory, buildSystem)
+            doTest(directory, buildSystem, testParameters)
         }
     }
 
-    private fun doTest(directory: Path, buildSystem: BuildSystem) {
+    private fun doTest(directory: Path, buildSystem: BuildSystem, testParameters: DefaultTestParameters) {
         val tempDirectory = Files.createTempDirectory(null)
         val wizard = createWizard(directory, buildSystem, tempDirectory)
         val result = wizard.apply(Services.IDEA_INDEPENDENT_SERVICES, GenerationPhase.ALL)
@@ -45,19 +46,17 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
             tempDirectory.allBuildFiles(buildSystem), tempDirectory
         ) { path ->
             val fileContent = path.readFile()
-            fileContent.replace(
-                KotlinVersionProviderTestWizardService.TEST_KOTLIN_VERSION.toString(),
-                KOTLIN_VERSION_PLACEHOLDER
-            ).replaceAllTo(
-                listOf(
-                    Repositories.JETBRAINS_KOTLIN_DEV.url,
-                    KotlinVersionProviderTestWizardService.KOTLIN_DEV_BINTRAY_WITH_CACHE_REDIRECTOR.url,
-                ),
+            if (testParameters.keepKotlinVersion) {
+                fileContent
+            } else {
+                val pluginVersion = wizard.context.read { KotlinPlugin.version.propertyValue.version.toString() }
+                fileContent.replace(pluginVersion, KOTLIN_VERSION_PLACEHOLDER)
+            }.also { it.replaceAllTo(
+                listOf(Repositories.JETBRAINS_KOTLIN_DEV.url, KOTLIN_DEV_BINTRAY_WITH_CACHE_REDIRECTOR.url),
                 KOTLIN_REPO_PLACEHOLDER
-            )
+            ) }
         }
     }
-
 
     private fun Path.allBuildFiles(buildSystem: BuildSystem) =
         listFiles { it.fileName.toString() in buildSystem.allBuildFileNames }
@@ -69,6 +68,9 @@ abstract class AbstractBuildFileGenerationTest : UsefulTestCase() {
         private const val EXPECTED_DIRECTORY_NAME = "expected"
         private const val KOTLIN_VERSION_PLACEHOLDER = "KOTLIN_VERSION"
         private const val KOTLIN_REPO_PLACEHOLDER = "KOTLIN_REPO"
+
+        private const val CACHE_REDIRECTOR_JETBRAINS_SPACE_URL = "https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space"
+        val KOTLIN_DEV_BINTRAY_WITH_CACHE_REDIRECTOR = BintrayRepository("kotlin/p/kotlin/dev", CACHE_REDIRECTOR_JETBRAINS_SPACE_URL)
     }
 }
 

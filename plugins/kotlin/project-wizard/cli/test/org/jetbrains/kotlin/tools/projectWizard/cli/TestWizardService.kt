@@ -6,16 +6,10 @@ import org.jetbrains.kotlin.tools.projectWizard.core.service.Services
 import org.jetbrains.kotlin.tools.projectWizard.core.service.ServicesManager
 import org.jetbrains.kotlin.tools.projectWizard.core.service.WizardService
 
-interface TestWizardService : WizardService {
-    companion object {
-        val SERVICES = listOf(
-            KotlinVersionProviderTestWizardService()
-        )
-    }
-}
+interface TestWizardService : WizardService
 
 val CLI_WIZARD_TEST_SERVICES_MANAGER = ServicesManager(
-    Services.IDEA_INDEPENDENT_SERVICES + TestWizardService.SERVICES
+    Services.IDEA_INDEPENDENT_SERVICES
 ) { services ->
     services.firstOrNull { it is TestWizardService } ?: services.firstOrNull()
 }
