@@ -107,6 +107,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processStringTemplate(expr: KtStringTemplateExpression) {
         var first = true
         val entries = expr.entries
+        if (entries.isEmpty()) {
+            addInstruction(PushValueInstruction(DfTypes.constant("", stringType)))
+            return
+        }
         val lastEntry = entries.last()
         for (entry in entries) {
             when (entry) {
@@ -404,7 +408,8 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             addImplicitConversion(expr, declaredType, exprType)
             return
         }
-        broken = true
+        addInstruction(FlushFieldsInstruction())
+        pushUnknown()
     }
 
     private fun processConstantExpression(expr: KtConstantExpression) {
@@ -600,6 +605,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
 
     private fun balanceType(left: KotlinType?, right: KotlinType?): KotlinType? {
         if (left == null || right == null) return null
+        if (left == right) return left
         if (left.isMarkedNullable && !right.isMarkedNullable) {
             return balanceType(left.makeNotNullable(), right)
         }
@@ -612,7 +618,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         if (right.isFloat()) return right
         if (left.isLong()) return left
         if (right.isLong()) return right
-        // null means no balancing is necessary
+        // The 'null' means no balancing is necessary
         return null
     }
 
