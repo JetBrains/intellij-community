@@ -1190,7 +1190,20 @@ skip_ipr:
   Call OMWriteRegStr
 !insertmacro MUI_STARTMENU_WRITE_END
 
+  ; enabling Java assistive technologies if a screen reader is active (0x0046 = SPI_GETSCREENREADER)
+  System::Call "User32::SystemParametersInfo(i 0x0046, i 0, *i .r1, i 0) i .r0"
+  ${LogText} "SystemParametersInfo(SPI_GETSCREENREADER): $0, value=$1"
+  ${If} $0 <> 0
+  ${AndIf} $1 == 1
+  ${AndIf} ${FileExists} "$INSTDIR\jbr\bin\jabswitch.exe"
+    ${LogText} "Executing '$\"$INSTDIR\jbr\bin\jabswitch.exe$\" /enable'"
+    ExecDos::exec /DETAILED '"$INSTDIR\jbr\bin\jabswitch.exe" /enable'
+    Pop $0
+    ${LogText} "Exit code: $0"
+  ${EndIf}
+
   Call customPostInstallActions
+
   SetRegView 32
   StrCpy $0 $baseRegKey
   StrCpy $1 "Software\${MANUFACTURER}\${PRODUCT_REG_VER}"
