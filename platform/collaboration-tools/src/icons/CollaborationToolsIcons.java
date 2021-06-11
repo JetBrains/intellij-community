@@ -13,6 +13,7 @@ public final class CollaborationToolsIcons {
   private static @NotNull Icon load(@NotNull String path, long cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, CollaborationToolsIcons.class.getClassLoader(), cacheKey, flags);
   }
+  /** 16x16 */ public static final @NotNull Icon Branch = load("icons/branch.svg", 7013179854221709094L, 2);
   /** 16x16 */ public static final @NotNull Icon Comment = load("icons/comment.svg", -3056595990209732615L, 0);
   /** 16x16 */ public static final @NotNull Icon CommentHovered = load("icons/commentHovered.svg", 7093337652238115394L, 0);
   /** 16x16 */ public static final @NotNull Icon Delete = load("icons/delete.svg", -7096832826219323469L, 0);
