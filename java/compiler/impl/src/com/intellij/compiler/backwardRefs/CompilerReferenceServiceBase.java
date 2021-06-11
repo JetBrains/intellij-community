@@ -144,9 +144,10 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
 
     try {
       return CachedValuesManager.getCachedValue(element,
-                                                () -> CachedValueProvider.Result.create(buildScopeWithReferences(getReferentFiles(element)),
-                                                                                        PsiModificationTracker.MODIFICATION_COUNT,
-                                                                                        this));
+                                                () -> CachedValueProvider.Result.create(
+                                                  buildScopeWithReferences(getReferentFiles(element), element),
+                                                  PsiModificationTracker.MODIFICATION_COUNT,
+                                                  this));
     }
     catch (RuntimeException e1) {
       return onException(e1, "scope without code references");
@@ -161,7 +162,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     try {
       return CachedValuesManager.getCachedValue(aClass,
                                                 () -> CachedValueProvider.Result.create(
-                                                  buildScopeWithReferences(getReferentFileIdsViaImplicitToString(aClass)),
+                                                  buildScopeWithReferences(getReferentFileIdsViaImplicitToString(aClass), aClass),
                                                   PsiModificationTracker.MODIFICATION_COUNT,
                                                   this));
     }
@@ -307,16 +308,27 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   @Nullable
-  private GlobalSearchScope buildScopeWithReferences(@Nullable Set<VirtualFile> referentFiles) {
+  private GlobalSearchScope buildScopeWithReferences(@Nullable Set<VirtualFile> referentFiles, @NotNull PsiElement element) {
     if (referentFiles == null) return null;
 
-    ScopeWithReferencesOnCompilation scopeWithReferences = new ScopeWithReferencesOnCompilation(referentFiles, myProjectFileIndex);
+    ScopeWithReferencesOnCompilation referencesScope = new ScopeWithReferencesOnCompilation(referentFiles, myProjectFileIndex);
 
     GlobalSearchScope knownDirtyScope = myDirtyScopeHolder.getDirtyScope();
     GlobalSearchScope wholeClearScope = notScope(knownDirtyScope);
     GlobalSearchScope knownCleanScope = getScopeRestrictedByFileTypes(wholeClearScope, myFileTypes.toArray(FileType.EMPTY_ARRAY));
     GlobalSearchScope wholeDirtyScope = notScope(knownCleanScope);
-    return scopeWithReferences.uniteWith(wholeDirtyScope);
+    GlobalSearchScope mayContainReferencesScope = referencesScope.uniteWith(wholeDirtyScope);
+    return scopeWithLibraryIfNeeded(myProject, myProjectFileIndex, mayContainReferencesScope, element);
+  }
+
+  @NotNull
+  public static GlobalSearchScope scopeWithLibraryIfNeeded(@NotNull Project project,
+                                                           @NotNull ProjectFileIndex fileIndex,
+                                                           @NotNull GlobalSearchScope baseScope,
+                                                           @NotNull PsiElement element) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(element);
+    if (file == null || !fileIndex.isInLibrary(file)) return baseScope;
+    return baseScope.uniteWith(LibraryScopeCache.getInstance(project).getLibrariesOnlyScope());
   }
 
   @VisibleForTesting
