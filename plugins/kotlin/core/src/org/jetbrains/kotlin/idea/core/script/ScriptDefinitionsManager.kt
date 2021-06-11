@@ -239,8 +239,13 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         val fileTypeManager = FileTypeManager.getInstance()
 
-        val newExtensions = getKnownFilenameExtensions().filter {
-            fileTypeManager.getFileTypeByExtension(it) != KotlinFileType.INSTANCE
+        val newExtensions = getKnownFilenameExtensions().toSet().filter {
+            val fileTypeByExtension = fileTypeManager.getFileTypeByExtension(it)
+            val notKnown = fileTypeByExtension != KotlinFileType.INSTANCE
+            if (!notKnown) {
+                scriptingWarnLog("extension $it file type [${fileTypeByExtension.name}] is not registered as ${KotlinFileType.INSTANCE.name}")
+            }
+            notKnown
         }.toSet()
 
         clearCache()
@@ -252,6 +257,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     private data class UpdateDefinitionsResult(val project: Project, val newExtensions: Set<String>) {
         fun apply() {
             if (newExtensions.isNotEmpty()) {
+                scriptingWarnLog("extensions ${newExtensions} is about to be registered as ${KotlinFileType.INSTANCE.name}")
                 // Register new file extensions
                 ApplicationManager.getApplication().invokeLater {
                     val fileTypeManager = FileTypeManager.getInstance()
