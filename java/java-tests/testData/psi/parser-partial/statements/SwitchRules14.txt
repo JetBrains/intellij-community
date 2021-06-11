@@ -3,7 +3,7 @@ PsiJavaFile:SwitchRules14.java
     PsiKeyword:case('case')
     PsiWhiteSpace(' ')
     PsiCaseLabelElementList
-      PsiDefaultElement
+      PsiDefaultLabelElement
         PsiKeyword:default('default')
     PsiWhiteSpace(' ')
     PsiJavaToken:ARROW('->')

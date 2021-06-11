@@ -6,15 +6,15 @@ import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class PsiDefaultElementImpl extends CompositePsiElement implements PsiDefaultElement, Constants {
-  public PsiDefaultElementImpl() {
-    super(DEFAULT_ELEMENT);
+public class PsiDefaultLabelElementImpl extends CompositePsiElement implements PsiDefaultCaseLabelElement, Constants {
+  public PsiDefaultLabelElementImpl() {
+    super(DEFAULT_CASE_LABEL_ELEMENT);
   }
 
   @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
-      ((JavaElementVisitor)visitor).visitDefaultElement(this);
+      ((JavaElementVisitor)visitor).visitDefaultCaseLabelElement(this);
     }
     else {
       visitor.visitElement(this);
@@ -23,7 +23,7 @@ public class PsiDefaultElementImpl extends CompositePsiElement implements PsiDef
 
   @Override
   public String toString() {
-    return "PsiDefaultElement";
+    return "PsiDefaultLabelElement";
   }
 }
 

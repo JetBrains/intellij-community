@@ -4,5 +4,5 @@ package com.intellij.psi;
 /**
  * Represents {@code case default } in {@link PsiSwitchLabelStatementBase}
  */
-public interface PsiDefaultElement extends PsiCaseLabelElement {
+public interface PsiDefaultCaseLabelElement extends PsiCaseLabelElement {
 }

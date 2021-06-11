@@ -440,7 +440,7 @@ public abstract class JavaElementVisitor extends PsiElementVisitor {
     visitPattern(pattern);
   }
 
-  public void visitDefaultElement(PsiDefaultElement element) {
+  public void visitDefaultCaseLabelElement(PsiDefaultCaseLabelElement element) {
     visitElement(element);
   }
 

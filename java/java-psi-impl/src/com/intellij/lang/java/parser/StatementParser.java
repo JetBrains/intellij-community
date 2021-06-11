@@ -440,7 +440,7 @@ public class StatementParser {
       if (builder.getTokenType() == JavaTokenType.DEFAULT_KEYWORD) {
         PsiBuilder.Marker defaultElement = builder.mark();
         builder.advanceLexer();
-        done(defaultElement, JavaElementType.DEFAULT_ELEMENT);
+        done(defaultElement, JavaElementType.DEFAULT_CASE_LABEL_ELEMENT);
         return Pair.create(defaultElement, false);
       }
       if (myParser.getPatternParser().isPattern(builder)) {
