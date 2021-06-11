@@ -567,7 +567,7 @@ public final class PerformanceWatcher implements Disposable {
 
     private long getDuration(long current,
                              @NotNull TimeUnit unit) {
-      return TimeUnit.NANOSECONDS.convert(current - myTaskStart, unit);
+      return unit.convert(current - myTaskStart, TimeUnit.NANOSECONDS);
     }
 
     void stop() {
@@ -623,8 +623,9 @@ public final class PerformanceWatcher implements Disposable {
                                       threadDump.getRawDump());
               if (file != null) {
                 try {
+                  long duration = getDuration(System.nanoTime(), TimeUnit.SECONDS);
                   FileUtil.writeToFile(new File(file.getParentFile(), DURATION_FILE_NAME),
-                                       Long.toString(getDuration(System.nanoTime(), TimeUnit.SECONDS)));
+                                       Long.toString(duration));
                   publisher.dumpedThreads(file, threadDump);
                 }
                 catch (IOException e) {
