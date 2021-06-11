@@ -14,15 +14,14 @@ abstract class StorageBufferingHandler {
 
   boolean runUpdate(boolean transientInMemoryIndices, @NotNull Computable<Boolean> update) {
     ProgressManager.checkCanceled();
-    return ProgressManager.getInstance().computeInNonCancelableSection(() -> {
-      StorageGuard.StorageModeExitHandler storageModeExitHandler = myStorageLock.enter(transientInMemoryIndices);
-      try {
-        ensureBufferingState(transientInMemoryIndices);
-        return update.compute();
-      } finally {
-        storageModeExitHandler.leave();
-      }
-    });
+    StorageGuard.StorageModeExitHandler storageModeExitHandler = myStorageLock.enter(transientInMemoryIndices);
+    try {
+      ensureBufferingState(transientInMemoryIndices);
+      return update.compute();
+    }
+    finally {
+      storageModeExitHandler.leave();
+    }
   }
 
   private void ensureBufferingState(boolean transientInMemoryIndices) {

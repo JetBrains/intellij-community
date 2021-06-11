@@ -1073,7 +1073,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
           markFileIndexed(vFile, newFc);
           try {
-            getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc).compute();
+            ProgressManager.getInstance().executeNonCancelableSection(() -> {
+              getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, newFc).compute();
+            });
           }
           finally {
             unmarkBeingIndexed();
@@ -1081,7 +1083,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
           }
         }
         else { // effectively wipe the data from the indices
-          getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, null).compute();
+          ProgressManager.getInstance().executeNonCancelableSection(() -> {
+            getIndex(requestedIndexId).mapInputAndPrepareUpdate(inputId, null).compute();
+          });
         }
       }
 
@@ -1135,7 +1139,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   public void runCleanupAction(@NotNull Runnable cleanupAction) {
     Computable<Boolean> updateComputable = () -> {
-      cleanupAction.run();
+      ProgressManager.getInstance().executeNonCancelableSection(cleanupAction);
       return true;
     };
     runUpdateForPersistentData(updateComputable);
@@ -1565,7 +1569,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   boolean runUpdateForPersistentData(Computable<Boolean> storageUpdate) {
-    return myStorageBufferingHandler.runUpdate(false, storageUpdate);
+    return myStorageBufferingHandler.runUpdate(false, () -> {
+      return ProgressManager.getInstance().computeInNonCancelableSection(() -> storageUpdate.compute());
+    });
   }
 
   static void setIndexedState(UpdatableIndex<?, ?, FileContent> index,
