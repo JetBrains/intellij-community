@@ -9,7 +9,7 @@
 <p>Example:</p>
 <pre><code>
   class Test {
-    @MethodSource(""parameters"")
+    @MethodSource("parameters")
     @ParameterizedTest
     void foo(String param) {}
   }
@@ -21,7 +21,7 @@
         return Stream.empty();
     }
 
-    @MethodSource(""parameters"")
+    @MethodSource("parameters")
     @ParameterizedTest
     void foo(String param) {}
   }
