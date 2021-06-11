@@ -3,11 +3,13 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * @deprecated Use {@link JavaFileCodeStyleFacade} for per-file code-style-settings. Note: project settings
  * may not be applicable to a particular file.
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @Deprecated
 public abstract class JavaCodeStyleSettingsFacade {
 

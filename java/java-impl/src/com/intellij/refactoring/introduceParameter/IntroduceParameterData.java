@@ -9,6 +9,7 @@ import gnu.trove.TIntArrayList;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.intellij.lang.annotations.MagicConstant;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,6 +43,7 @@ public interface IntroduceParameterData {
    * @deprecated Implement {@link #getParameterListToRemove()}
    */
   @NotNull
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   default TIntArrayList getParametersToRemove() {
     throw new AbstractMethodError("Implement getParameterListToRemove");

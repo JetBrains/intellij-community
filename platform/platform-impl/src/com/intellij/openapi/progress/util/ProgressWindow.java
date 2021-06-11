@@ -32,6 +32,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.TimerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -200,6 +201,7 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
   /**
    * @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link ProgressManager}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public void startBlocking(@NotNull Runnable init) {
     DeprecatedMethodException.report("Use ProgressManager.run*() instead");

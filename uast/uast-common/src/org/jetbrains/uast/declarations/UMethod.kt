@@ -90,6 +90,8 @@ interface UMethod : UDeclaration, PsiMethod {
 }
 
 interface UAnnotationMethod : UMethod, PsiAnnotationMethod {
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiAnnotationMethod
 

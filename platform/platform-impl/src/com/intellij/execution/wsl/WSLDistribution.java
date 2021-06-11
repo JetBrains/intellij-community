@@ -607,6 +607,7 @@ public class WSLDistribution {
   }
 
   /** @deprecated use {@link WSLDistribution#getUNCRootPath()} instead */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @NotNull File getUNCRoot() {
     return new File(UNC_PREFIX + myDescriptor.getMsId());

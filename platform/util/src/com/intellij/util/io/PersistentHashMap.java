@@ -135,8 +135,8 @@ public class PersistentHashMap<Key, Value> implements AppendablePersistentMap<Ke
   /**
    * @deprecated please use {@link AppendablePersistentMap.ValueDataAppender}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
-  @ApiStatus.Experimental
   @SuppressWarnings("DeprecatedIsStillUsed")
   public interface ValueDataAppender extends AppendablePersistentMap.ValueDataAppender {
   }

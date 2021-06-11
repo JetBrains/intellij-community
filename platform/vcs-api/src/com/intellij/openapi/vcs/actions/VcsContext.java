@@ -42,6 +42,7 @@ import static java.util.Collections.emptyList;
  * @see com.intellij.openapi.vcs.actions.VcsContextUtil
  * @deprecated Prefer explicit {@link com.intellij.openapi.actionSystem.DataContext} state caching when needed.
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 @Deprecated
 public interface VcsContext extends PlaceProvider {
   @Nullable Project getProject();

@@ -486,6 +486,7 @@ public final class MavenServerManager implements Disposable {
   /**
    * @deprecated use {@link MavenServerManager#createIndexer(Project)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
   public MavenIndexerWrapper createIndexer() {
     return createIndexer(ProjectManager.getInstance().getDefaultProject());

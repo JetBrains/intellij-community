@@ -10,10 +10,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.awt.*;
@@ -24,6 +21,7 @@ import java.awt.event.InputEvent;
  * @see <a href="https://jetbrains.github.io/ui/controls/link/">IJ Platform UI Guidelines | Link</a>
  * @deprecated use {@link com.intellij.ui.components.AnActionLink} instead
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 @Deprecated
 public class ActionLink extends LinkLabel<Object> implements DataProvider {
   private static final EmptyIcon ICON = JBUIScale.scaleIcon(EmptyIcon.create(0, 12));

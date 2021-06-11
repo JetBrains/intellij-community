@@ -2,11 +2,13 @@
 package com.intellij.codeInspection.unused;
 
 import com.intellij.lang.properties.psi.Property;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @deprecated Use {@link com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider}
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
 @Deprecated
 public abstract class ImplicitPropertyUsageProvider implements com.intellij.lang.properties.codeInspection.unused.ImplicitPropertyUsageProvider {
   @Override
