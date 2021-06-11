@@ -7,7 +7,7 @@ import com.intellij.psi.util.PsiTreeUtil
 
 data class ChangedExpression(val pattern: PsiExpression, val candidate: PsiExpression)
 
-class Duplicate(val pattern: List<PsiElement>, val candidate: List<PsiElement>, val changedExpressions: List<ChangedExpression>)
+data class Duplicate(val pattern: List<PsiElement>, val candidate: List<PsiElement>, val changedExpressions: List<ChangedExpression>)
 
 class JavaDuplicatesFinder(pattern: List<PsiElement>) {
 
@@ -53,26 +53,23 @@ class JavaDuplicatesFinder(pattern: List<PsiElement>) {
   fun createDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>): Duplicate? {
     val changedExpressions = ArrayList<ChangedExpression>()
     if ( !canBeDuplicate(pattern, candidate, changedExpressions)) return null
-    val patternDeclarations = pattern.flatMap { PsiTreeUtil.findChildrenOfType(it, PsiVariable::class.java) }
-    val candidateDeclarations = candidate.flatMap { PsiTreeUtil.findChildrenOfType(it, PsiVariable::class.java) }
+    return removeInternalReferences(Duplicate(pattern, candidate, changedExpressions))
+  }
+
+  private fun removeInternalReferences(duplicate: Duplicate): Duplicate? {
+    val patternDeclarations = duplicate.pattern.flatMap { PsiTreeUtil.findChildrenOfType(it, PsiVariable::class.java) }
+    val candidateDeclarations = duplicate.candidate.flatMap { PsiTreeUtil.findChildrenOfType(it, PsiVariable::class.java) }
     val declarationsMapping = patternDeclarations.zip(candidateDeclarations).toMap()
 
-    val result = ArrayList<ChangedExpression>()
-    changedExpressions.forEach { (pattern, candidate) ->
-      if (pattern is PsiReferenceExpression && candidate is PsiReferenceExpression){
-        val variable = pattern.resolve()
-        val pairedVariable = declarationsMapping[variable]
-        if (pairedVariable == null) {
-          result += ChangedExpression(pattern, candidate)
-        } else if (pairedVariable != candidate.resolve()) {
-          return null
-        }
-      } else {
-        result += ChangedExpression(pattern, candidate)
-      }
+    val changedExpressions = duplicate.changedExpressions.filterNot { (pattern, candidate) ->
+      val patternVariable = (pattern as? PsiReferenceExpression)?.resolve()
+      val candidateVariable = (candidate as? PsiReferenceExpression)?.resolve()
+      if (patternVariable !in declarationsMapping.keys && candidateVariable !in declarationsMapping.values) return@filterNot false
+      if (declarationsMapping[patternVariable] != candidateVariable) return null
+      return@filterNot true
     }
 
-    return Duplicate(pattern, candidate, result)
+    return duplicate.copy(changedExpressions = changedExpressions)
   }
 
   fun canBeDuplicate(pattern: List<PsiElement>, candidate: List<PsiElement>, changedExpressions: MutableList<ChangedExpression>): Boolean {
