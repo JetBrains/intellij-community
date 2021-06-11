@@ -4676,6 +4676,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/shiftLeft.kt");
         }
 
+        @TestMetadata("stringConcat.kt")
+        public void testStringConcat() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/stringConcat.kt");
+        }
+
+        @TestMetadata("stringTemplate.kt")
+        public void testStringTemplate() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/stringTemplate.kt");
+        }
+
         @TestMetadata("unaryMinus.kt")
         public void testUnaryMinus() throws Exception {
             runTest("testData/inspectionsLocal/dfa/unaryMinus.kt");
