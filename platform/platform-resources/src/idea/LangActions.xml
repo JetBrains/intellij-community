@@ -423,6 +423,8 @@
 
       <separator/>
       <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
+      <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>
+      <separator/>
       <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
       <action id="Unwrap" class="com.intellij.codeInsight.unwrap.UnwrapAction"/>
       <separator/>
@@ -555,8 +557,6 @@
 
     <!-- Tools -->
     <group id="ToolsBasicGroup">
-      <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>
-      <separator/>
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
 
