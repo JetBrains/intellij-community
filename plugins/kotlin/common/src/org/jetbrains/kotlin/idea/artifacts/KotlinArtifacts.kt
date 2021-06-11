@@ -25,7 +25,6 @@ abstract class KotlinArtifacts(val kotlincDirectory: File) {
 
     val jetbrainsAnnotations = File(kotlincLibDirectory, KotlinArtifactNames.JETBRAINS_ANNOTATIONS)
     val kotlinStdlib = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB)
-    val kotlinStdlibMinimalForTests = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_MINIMAL_FOR_TESTS)
     val kotlinStdlibSources = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_SOURCES)
     val kotlinStdlibJdk7 = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK7)
     val kotlinStdlibJdk8 = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB_JDK8)
