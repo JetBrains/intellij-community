@@ -1325,6 +1325,16 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
     }
   }
 
+  @Override
+  public void visitCaseLabelElementList(PsiCaseLabelElementList element) {
+    if (myChild1.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_AFTER_COMMA);
+    }
+    else if (myChild2.getElementType() == JavaTokenType.COMMA) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_COMMA);
+    }
+  }
+
   private void createSpaceWithLinefeedIfListWrapped(@NotNull PsiExpressionList list, boolean space) {
     PsiExpression[] expressions = list.getExpressions();
     int length = expressions.length;

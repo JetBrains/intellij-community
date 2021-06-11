@@ -196,7 +196,7 @@ public class UnqualifiedStaticUsageInspection extends BaseInspection implements 
       final PsiMember member = (PsiMember)element;
       if (member instanceof PsiEnumConstant) {
         PsiElement parent = expression.getParent();
-        if (parent instanceof PsiExpressionList && parent.getParent() instanceof PsiSwitchLabelStatementBase) {
+        if (parent instanceof PsiCaseLabelElementList && parent.getParent() instanceof PsiSwitchLabelStatementBase) {
           return false;
         }
       }

@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.dataFlow;
 
@@ -340,8 +340,8 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       PsiSwitchBlock statement = labelStatement.getEnclosingSwitchBlock();
       if (statement == null || !canRemoveUnreachableBranches(labelStatement, statement)) continue;
       if (!StreamEx.iterate(labelStatement, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiSwitchLabelStatementBase.class))
-        .skip(1).map(PsiSwitchLabelStatementBase::getCaseValues)
-        .nonNull().flatArray(PsiExpressionList::getExpressions)
+        .skip(1).map(PsiSwitchLabelStatementBase::getCaseLabelElementList)
+        .nonNull().flatArray(PsiCaseLabelElementList::getElements)
         .append(StreamEx.iterate(label, Objects::nonNull, l -> PsiTreeUtil.getPrevSiblingOfType(l, PsiExpression.class)).skip(1))
         .allMatch(l -> labelReachability.get(l) == ThreeState.NO)) {
         continue;

@@ -693,7 +693,7 @@ public final class PsiImplUtil {
   @Nullable
   public static PsiSwitchLabelStatementBase getSwitchLabel(@NotNull PsiExpression expression) {
     PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
-    if (parent instanceof PsiExpressionList) {
+    if (parent instanceof PsiCaseLabelElementList) {
       PsiElement grand = parent.getParent();
       if (grand instanceof PsiSwitchLabelStatementBase) {
         return (PsiSwitchLabelStatementBase)grand;
