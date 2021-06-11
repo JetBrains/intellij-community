@@ -8,17 +8,18 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.JavaDuplicatesFinder.Companion.textRangeOf
+import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
 import org.jetbrains.annotations.Nullable
 
 class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
 
-  var duplicatesFinder: JavaDuplicatesFinder? = null
+  private var duplicatesFinder: JavaDuplicatesFinder? = null
 
-  var callsToReplace: List<PsiElement>? = null
+  private var callsToReplace: List<SmartPsiElementPointer<PsiElement>>? = null
 
-  var extractOptions: ExtractOptions? = null
+  private var extractOptions: ExtractOptions? = null
 
   override fun extract(targetClass: PsiClass, elements: List<PsiElement>, methodName: String, makeStatic: Boolean): Pair<PsiMethod, PsiMethodCallExpression> {
     val file = targetClass.containingFile
@@ -35,7 +36,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val calls = MethodExtractor().replace(elements, elementsToReplace.callElements)
     val method = targetClass.addAfter(elementsToReplace.method, anchor) as PsiMethod
 
-    this.callsToReplace = calls
+    this.callsToReplace = calls.map(SmartPointerManager::createPointer)
     val callExpression = PsiTreeUtil.findChildOfType(calls.first(), PsiMethodCallExpression::class.java, false)!!
     return Pair(method, callExpression)
   }
@@ -57,7 +58,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val project = editor.project ?: return
     val file = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
     val finder = duplicatesFinder ?: return
-    val calls = callsToReplace ?: return
+    val calls = callsToReplace?.map { it.element!! } ?: return
     val options = extractOptions ?: return
     val duplicates = finder.findDuplicates(method.containingClass ?: file)
       .filterNot { findParentMethod(it.candidate.first()) == method }
@@ -75,7 +76,11 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
         MethodExtractor().replace(calls, elementsToReplace.callElements)
         val replacedMethod = method.replace(elementsToReplace.method) as PsiMethod
         val call = builder.createMethodCall(replacedMethod, duplicateParameters.map { it.references.first() }).text
-        val callElements = builder.buildCall(call, duplicateOptions.flowOutput, duplicateOptions.dataOutput, duplicateOptions.exposedLocalVariables)
+        val callElements = if (options.dataOutput is DataOutput.ExpressionOutput) {
+          builder.buildExpressionCall(call, duplicateOptions.dataOutput)
+        } else {
+          builder.buildCall(call, duplicateOptions.flowOutput, duplicateOptions.dataOutput, duplicateOptions.exposedLocalVariables)
+        }
         MethodExtractor().replace(duplicate.candidate, callElements)
       }
     }
