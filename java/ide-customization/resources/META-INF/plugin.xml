@@ -87,9 +87,10 @@
             icon="AllIcons.RunConfigurations.RerunFailedTests"/>
 
     <group>
+      <separator/>
       <action id="SaveProjectAsTemplate" class="com.intellij.platform.templates.SaveProjectAsTemplateAction"/>
       <action id="ManageProjectTemplates" class="com.intellij.platform.templates.ManageProjectTemplatesAction"/>
-      <add-to-group group-id="ToolsBasicGroup" anchor="after" relative-to-action="SaveFileAsTemplate"/>
+      <add-to-group group-id="FileOtherSettingsGroup" anchor="last"/>
     </group>
 
     <action id="ConsoleView.FoldLinesLikeThis" class="com.intellij.execution.console.FoldLinesLikeThis">
