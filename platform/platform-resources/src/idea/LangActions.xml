@@ -94,6 +94,11 @@
       <add-to-group group-id="FileMenu" anchor="after" relative-to-action="PrintExportGroup"/>
     </reference>
 
+    <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction">
+      <add-to-group group-id="FileMenu" anchor="after" relative-to-action="FileOtherSettingsGroup"/>
+    </action>
+
+
     <action id="ChangeTemplateDataLanguage" class="com.intellij.psi.templateLanguages.ChangeTemplateDataLanguageAction">
       <add-to-group group-id="FilePropertiesGroup" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
       <add-to-group group-id="EditorPopupMenu" anchor="before" relative-to-action="ToggleReadOnlyAttribute"/>
@@ -551,7 +556,6 @@
     <!-- Tools -->
     <group id="ToolsBasicGroup">
       <action id="SaveAsTemplate" class="com.intellij.codeInsight.template.actions.SaveAsTemplateAction"/>
-      <action id="SaveFileAsTemplate" class="com.intellij.ide.actions.SaveFileAsTemplateAction"/>
       <separator/>
 
       <add-to-group group-id="ToolsMenu" anchor="first"/>
