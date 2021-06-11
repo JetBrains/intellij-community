@@ -28,7 +28,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.util.*;
@@ -239,11 +238,6 @@ public class ProjectJdkTableImpl extends ProjectJdkTable implements ExportableCo
       }
     }
     return result;
-  }
-
-  @TestOnly
-  public void removeTestJdk(@NotNull Sdk jdk) {
-    WriteAction.runAndWait(()-> mySdks.remove(jdk));
   }
 
   @Override
