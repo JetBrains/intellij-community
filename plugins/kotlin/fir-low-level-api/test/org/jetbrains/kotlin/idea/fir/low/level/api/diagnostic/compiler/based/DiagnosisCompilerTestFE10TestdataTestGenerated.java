@@ -23394,6 +23394,11 @@ public abstract class DiagnosisCompilerTestFE10TestdataTestGenerated extends Abs
                 runTest(compilerTestData("compiler/testData/diagnostics/tests/subtyping/kt3159.kt"));
             }
 
+            @TestMetadata("kt47148.kt")
+            public void testKt47148() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/subtyping/kt47148.kt");
+            }
+
             @TestMetadata("kt-1457.kt")
             public void testKt_1457() throws Exception {
                 runTest(compilerTestData("compiler/testData/diagnostics/tests/subtyping/kt-1457.kt"));
