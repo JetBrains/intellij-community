@@ -18,8 +18,10 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
 
   /**
    * Returns the constants associated with the {@code case} block,
-   * or {@code null} if the statement is incomplete, the element represents a {@code default} section or it is a pattern rule.
+   * or {@code null} if the statement is incomplete.
+   * @deprecated use {@link #getCaseLabelElementList()}
    */
+  @Deprecated
   @Nullable PsiExpressionList getCaseValues();
 
   /** @deprecated doesn't support enhanced "switch" statements; use {@link #getCaseValues()} instead */
@@ -50,7 +52,7 @@ public interface PsiSwitchLabelStatementBase extends PsiStatement {
   }
 
   /**
-   * @return list of case labels or null if it is old style constant list or it is incomplete
+   * @return list of case labels or null if it is incomplete
    */
   @Nullable PsiCaseLabelElementList getCaseLabelElementList();
 }
