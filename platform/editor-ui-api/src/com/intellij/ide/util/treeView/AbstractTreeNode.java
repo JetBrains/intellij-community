@@ -276,7 +276,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
       return null;
     }
     PsiElement element = (PsiElement)value;
-    return FilePresentationService.getInstance((element).getProject()).getFileBackgroundColor(element);
+    return FilePresentationService.getInstance(element.getProject()).getFileBackgroundColor(element);
   }
 
   private @Nullable VirtualFile extractFileFromValue() {
