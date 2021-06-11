@@ -4,8 +4,9 @@ package org.jetbrains.kotlin.test.utils
 
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils
-import org.junit.Assert
 import org.jetbrains.kotlin.idea.test.testFramework.KtUsefulTestCase
+import org.junit.Assert
+import org.slf4j.LoggerFactory
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -95,7 +96,11 @@ object IgnoreTests {
         } catch (e: Throwable) {
             if (testIsEnabled) {
                 if (directive is EnableOrDisableTestDirective.Disable) {
-                    handleTestWithWrongDirective(testPasses = false, testFile, directive, directivePosition, additionalFiles)
+                    try {
+                        handleTestWithWrongDirective(testPasses = false, testFile, directive, directivePosition, additionalFiles)
+                    } catch (e: AssertionError) {
+                        LoggerFactory.getLogger("test").info(e.message)
+                    }
                 }
                 throw e
             }
