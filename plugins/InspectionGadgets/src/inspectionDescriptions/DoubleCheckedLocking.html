@@ -1,12 +1,15 @@
 <html>
 <body>
 Reports <a href="https://www.cs.umd.edu/~pugh/java/memoryModel/DoubleCheckedLocking.html">double-checked locking</a>.
-Double-checked locking tries to initialize a field on demand and in a thread-safe manner, while avoiding the cost of synchronization.
-Unfortunately it is not thread safe when used on a field that is not declared <code>volatile</code>.
-When using Java 1.4 or older, double-checked locking doesn't work even with a <code>volatile</code> field.
-Read the article linked above for an explanation of the problem.
 <p>
-Example of incorrect double checked locking:
+  Double-checked locking tries to initialize a field on demand and in a thread-safe manner while avoiding the cost of synchronization.
+  Unfortunately it is not thread-safe when used on a field that is not declared <code>volatile</code>.
+  When using Java 1.4 or later, double-checked locking doesn't work even with <code>volatile</code> fields.
+  Read the article linked above for the detailed explanation of the problem.
+</p>
+<p>
+  Example of an incorrect double-checked locking:
+</p>
 <pre><code>
   class Foo {
     private Helper helper = null;

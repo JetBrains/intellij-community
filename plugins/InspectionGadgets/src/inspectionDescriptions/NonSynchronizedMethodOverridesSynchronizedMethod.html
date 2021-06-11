@@ -1,10 +1,11 @@
 <html>
 <body>
 Reports non-<code>synchronized</code> methods overriding <code>synchronized</code> methods.
-The overridden method will not be automatically synchronized if superclass method 
-is declared as <code>synchronized</code>. This may result in unexpected race conditions
-when using the subclass.
-<p>Example:</p>
+<p>
+  The overridden method will not be automatically synchronized if the superclass method
+  is declared as <code>synchronized</code>. This may result in unexpected race conditions when using the subclass.
+</p>
+<p><b>Example:</b></p>
 <pre><code>
   class Super {
     synchronized void process() {}

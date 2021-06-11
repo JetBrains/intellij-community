@@ -1,9 +1,12 @@
 <html>
 <body>
-Reports non-final fields which are accessed in both <code>synchronized</code> and
-non-<code>synchronized</code> contexts. <code>volatile</code> fields and accesses in constructors and initializers are ignored by this
-inspection. Such "partially synchronized" access is often the result of a coding oversight, and may
-result in unexpectedly inconsistent data structures.
+Reports non-final fields that are accessed in both <code>synchronized</code> and
+non-<code>synchronized</code> contexts.
+<code>volatile</code> fields as well as accesses in constructors and initializers are ignored by this inspection.
+<p>
+  Such "partially synchronized" access is often the result of a coding oversight
+  and may lead to unexpectedly inconsistent data structures.
+</p>
 <p><b>Example:</b></p>
 <pre><code>
   public class Program {
@@ -21,7 +24,7 @@ result in unexpectedly inconsistent data structures.
 </pre>
 <!-- tooltip end -->
 <p>
-Use the checkbox below to specify if simple getters and setters are counted as accesses too.
+  Use the option to specify if simple getters and setters are counted as accesses too.
 <p>
 
 </body>
