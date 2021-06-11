@@ -161,7 +161,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
 
   private static boolean isVarHandleAccessMethod(PsiMethodCallExpression methodCall) {
     final String methodName = methodCall.getMethodExpression().getReferenceName();
-    if (VAR_HANDLE_ARGUMENT_COUNTS.containsKey(methodName)) {
+    if (methodName != null && VAR_HANDLE_ARGUMENT_COUNTS.containsKey(methodName)) {
       final PsiMethod method = methodCall.resolveMethod();
       return method != null && isClassWithName(method.getContainingClass(), JAVA_LANG_INVOKE_VAR_HANDLE);
     }
@@ -170,7 +170,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
 
   private static int getVarHandleArgumentCount(@NotNull PsiMethodCallExpression accessCall, int coordinateArguments) {
     final String name = accessCall.getMethodExpression().getReferenceName();
-    final int count = VAR_HANDLE_ARGUMENT_COUNTS.get(name);
+    final int count = name == null ? -1 : VAR_HANDLE_ARGUMENT_COUNTS.get(name);
     return count >= 0 ? count + coordinateArguments : -1;
   }
 
