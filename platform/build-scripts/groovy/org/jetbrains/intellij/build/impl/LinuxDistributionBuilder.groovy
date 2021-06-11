@@ -237,10 +237,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
 
       String unixSnapDistPath = "$buildContext.paths.buildOutputRoot/dist.unix.snap"
       buildContext.ant.copy(todir: unixSnapDistPath) {
-        fileset(dir: unixDistPath.toString()) {
-          exclude(name: "bin/fsnotifier")
-          exclude(name: "bin/libyjpagent-linux.so")
-        }
+        fileset(dir: unixDistPath.toString())
       }
 
       def desktopTemplate = "${buildContext.paths.communityHome}/platform/platform-resources/src/entry.desktop"
