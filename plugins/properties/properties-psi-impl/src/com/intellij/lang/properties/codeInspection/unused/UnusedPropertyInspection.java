@@ -155,8 +155,8 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
   /**
    * Extract the properties that are being committed. If no commit is in progress, return null.
-   * The {@link com.intellij.openapi.vcs.impl.CodeSmellDetectorImpl#runMainPasses} method puts
-   * a closure that accepts a class and returns all the {@link PsiElement}s being committed into the {@link PsiFile}'s user data.
+   * The {@link com.intellij.openapi.vcs.checkin.CodeAnalysisBeforeCheckinHandler#getBeforeCheckinConfigurationPanel} method puts
+   * into the {@link PsiFile}'s user data a closure that accepts a class and returns all the {@link PsiElement}s being committed.
    * @param file the properties file that is supposed to contain the closure to extract properties that are being committed
    * @return a {@link Set} of properties that are being committed or null if no commit is in progress.
    */
