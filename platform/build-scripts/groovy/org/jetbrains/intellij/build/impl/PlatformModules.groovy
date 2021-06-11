@@ -73,7 +73,7 @@ final class PlatformModules {
     "intellij.platform.inspect",
     "intellij.platform.lang.impl",
     "intellij.platform.workspaceModel.storage",
-    "intellij.platform.workspaceModel.ide",
+    "intellij.platform.workspaceModel.jps",
     "intellij.platform.lvcs.impl",
     "intellij.platform.ide.impl",
     "intellij.platform.projectModel.impl",
