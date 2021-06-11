@@ -41,10 +41,7 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IntRef;
-import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
@@ -100,6 +97,7 @@ import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
 public class ShowUsagesAction extends AnAction implements PopupAction, HintManagerImpl.ActionToIgnore {
   public static final String ID = "ShowUsages";
+  private static final String DIMENSION_SERVICE_KEY = "ShowUsagesActions.dimensionServiceKey";
 
   private static int ourPopupDelayTimeout = 300;
 
@@ -387,7 +385,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
       showUsagesInMaximalScopeRunnable(parameters, actionHandler)
     );
 
-    JBPopup popup = createUsagePopup(
+    AbstractPopup popup = createUsagePopup(
       usageView, table, itemChosenCallback, statusPanel,
       parameters, actionHandler
     );
@@ -629,7 +627,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   @NotNull
-  private static JBPopup createUsagePopup(@NotNull UsageViewImpl usageView,
+  private static AbstractPopup createUsagePopup(@NotNull UsageViewImpl usageView,
                                           @NotNull JTable table,
                                           @NotNull Runnable itemChoseCallback,
                                           @NotNull TitlePanel statusPanel,
@@ -640,11 +638,13 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     PopupChooserBuilder<?> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(table);
     String title = actionHandler.getPresentation().getSearchString();
-    builder.setTitle(XmlStringUtil.wrapInHtml("<body><nobr>" + title + "</nobr></body>"));
-    builder.setAdText(getSecondInvocationHint(actionHandler));
+    builder.setTitle(XmlStringUtil.wrapInHtml("<body><nobr>" + title + "</nobr></body>")).
+      setAdText(getSecondInvocationHint(actionHandler)).
+      setMovable(true).
+      setResizable(true).
+      setItemChoosenCallback(itemChoseCallback).
+      setDimensionServiceKey(DIMENSION_SERVICE_KEY);
 
-    builder.setMovable(true).setResizable(true);
-    builder.setItemChoosenCallback(itemChoseCallback);
     AtomicReference<AbstractPopup> popupRef = new AtomicReference<>();
 
     KeyboardShortcut shortcut = UsageViewImpl.getShowUsagesWithSettingsShortcut();
@@ -739,7 +739,9 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     // Set title text alignment
     CaptionPanel caption = popupRef.get().getTitle();
     if (caption instanceof TitlePanel) {
-      ((TitlePanel)caption).getLabel().setHorizontalAlignment(SwingConstants.LEFT);
+      TitlePanel titlePanel = (TitlePanel)caption;
+      titlePanel.getLabel().setHorizontalAlignment(SwingConstants.LEFT);
+      titlePanel.obeyPreferredWidth(WindowStateService.getInstance().getSize(DIMENSION_SERVICE_KEY) == null);
     }
 
     parameters.minWidth.set(-1);
@@ -897,7 +899,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   private static void rebuildTable(@NotNull UsageViewImpl usageView,
                                    @NotNull List<UsageNode> data,
                                    @NotNull ShowUsagesTable table,
-                                   @Nullable JBPopup popup,
+                                   @Nullable AbstractPopup popup,
                                    @NotNull RelativePoint popupPosition,
                                    @NotNull IntRef minWidth) {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -948,7 +950,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   }
 
   private static void setSizeAndDimensions(@NotNull JTable table,
-                                           @NotNull JBPopup popup,
+                                           @NotNull AbstractPopup popup,
                                            @NotNull RelativePoint popupPosition,
                                            @NotNull IntRef minWidth,
                                            @NotNull List<? extends UsageNode> data) {
@@ -959,10 +961,12 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     Window window = SwingUtilities.windowForComponent(content);
     Dimension d = window.getSize();
 
-    int width = calcMaxWidth(table);
-    width = (int)Math.max(d.getWidth(), width);
-    Dimension headerSize = ((AbstractPopup)popup).getHeaderPreferredSize();
-    width = Math.max((int)headerSize.getWidth(), width);
+    Component toolbarComponent = ((BorderLayout)popup.getContent().getLayout()).getLayoutComponent(BorderLayout.NORTH);
+    Dimension toolbarSize = toolbarComponent != null ? toolbarComponent.getPreferredSize() : JBUI.emptySize();
+    Dimension headerSize = popup.getHeaderPreferredSize();
+
+    int width = Math.max(d.width, calcMaxWidth(table));
+    width = Math.max(Math.max(headerSize.width, width), toolbarSize.width);
     width = Math.max(minWidth.get(), width);
 
     int delta = minWidth.get() == -1 ? 0 : width - minWidth.get();
@@ -970,21 +974,22 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
 
     minWidth.set(newWidth);
 
-    Dimension footerSize = ((AbstractPopup)popup).getFooterPreferredSize();
+    Dimension footerSize = popup.getFooterPreferredSize();
 
     int footer = footerSize.height;
     int footerBorder = footer == 0 ? 0 : 1;
-    Insets insets = ((AbstractPopup)popup).getPopupBorder().getBorderInsets(content);
-    int minHeight = headerSize.height + footer + footerBorder + insets.top + insets.bottom;
+    Insets insets = popup.getPopupBorder().getBorderInsets(content);
+    int minHeight = headerSize.height + toolbarSize.height + footer + footerBorder + insets.top + insets.bottom;
 
     Rectangle rectangle = getPreferredBounds(table, popupPosition.getScreenPoint(), newWidth, minHeight, data.size());
     table.setSize(rectangle.width, rectangle.height - minHeight);
     if (!data.isEmpty()) ScrollingUtil.ensureSelectionExists(table);
 
-    Dimension newDim = rectangle.getSize();
-    window.setBounds(rectangle);
-    window.setMinimumSize(newDim);
-    window.setMaximumSize(newDim);
+    if (WindowStateService.getInstance().getSize(DIMENSION_SERVICE_KEY) == null) {
+      Dimension newDim = rectangle.getSize();
+      window.setBounds(rectangle);
+      window.setMaximumSize(newDim);
+    }
 
     window.validate();
     window.repaint();
@@ -998,7 +1003,7 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
   @NotNull
   private static Rectangle getPreferredBounds(@NotNull JTable table, @NotNull Point point, int width, int minHeight, int modelRows) {
     boolean addExtraSpace = Registry.is("ide.preferred.scrollable.viewport.extra.space");
-    int visibleRows = Math.min(30, modelRows);
+    int visibleRows = Math.min(20, modelRows);
     int rowHeight = table.getRowHeight();
     int space = addExtraSpace && visibleRows < modelRows ? rowHeight / 2 : 0;
     int height = visibleRows * rowHeight + minHeight + space;

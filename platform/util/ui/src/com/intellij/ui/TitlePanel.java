@@ -5,6 +5,7 @@ package com.intellij.ui;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,8 +17,7 @@ public class TitlePanel extends CaptionPanel {
   private final JLabel myLabel;
   private final Icon myRegular;
   private final Icon myInactive;
-
-  private boolean myHtml;
+  private boolean obeyPreferredWidth;
 
   public TitlePanel() {
     this(null, null);
@@ -46,7 +46,7 @@ public class TitlePanel extends CaptionPanel {
   }
 
   public void setText(@Nls String titleText) {
-    myHtml = BasicHTML.isHTMLString(titleText);
+    obeyPreferredWidth = BasicHTML.isHTMLString(titleText);
     myLabel.setText(titleText);
   }
 
@@ -65,7 +65,7 @@ public class TitlePanel extends CaptionPanel {
     final Dimension preferredSize = super.getPreferredSize();
     preferredSize.height = JBUI.CurrentTheme.Popup.headerHeight(containsSettingsControls());
     int maxWidth = JBUIScale.scale(350);
-    if (!myHtml && preferredSize.width > maxWidth) { // do not allow caption to extend parent container
+    if (!obeyPreferredWidth && preferredSize.width > maxWidth) { // do not allow caption to extend parent container
       return new Dimension(maxWidth, preferredSize.height);
     }
 
@@ -75,6 +75,11 @@ public class TitlePanel extends CaptionPanel {
   @NotNull
   public JLabel getLabel() {
     return myLabel;
+  }
+
+  @ApiStatus.Internal
+  public void obeyPreferredWidth(boolean obeyWidth) {
+    obeyPreferredWidth = obeyWidth;
   }
 }
 
