@@ -3,7 +3,6 @@ package com.intellij.ide
 
 import com.google.common.collect.ArrayListMultimap
 import com.google.common.collect.Multimap
-import com.intellij.ide.impl.NewProjectUtil
 import com.intellij.ide.impl.NewProjectUtil.setCompilerOutputPath
 import com.intellij.ide.impl.ProjectViewSelectInTarget
 import com.intellij.ide.projectView.impl.ProjectViewPane
@@ -15,7 +14,6 @@ import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.util.projectWizard.importSources.impl.ProjectFromSourcesBuilderImpl
 import com.intellij.notification.*
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.module.JavaModuleType
@@ -25,20 +23,17 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
-import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService
-import com.intellij.openapi.roots.ui.configuration.SdkLookup
-import com.intellij.openapi.roots.ui.configuration.SdkLookupDecision
+import com.intellij.openapi.roots.ui.configuration.findAndSetupSdk
 import com.intellij.openapi.startup.StartupActivity
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
-import com.intellij.util.ThrowableRunnable
 import java.io.File
-import java.util.concurrent.CompletableFuture
 import javax.swing.event.HyperlinkEvent
 
 private val NOTIFICATION_GROUP = NotificationGroup("Build Script Found", NotificationDisplayType.STICKY_BALLOON, true)
@@ -182,39 +177,13 @@ internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
 
     val modules = ModuleManager.getInstance(project).modules
     if (modules.any { it is JavaModuleType }) {
-      findAndSetupJdk(project, indicator)
+      findAndSetupSdk(project, indicator, JavaSdk.getInstance()) {
+        JavaSdkUtil.applyJdkToProject(project, it)
+      }
     }
 
     if (roots.size > MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE) {
       notifyAboutAutomaticProjectStructure(project)
-    }
-  }
-
-  private fun findAndSetupJdk(project: Project, indicator: ProgressIndicator) {
-    val future = CompletableFuture<Sdk>()
-    SdkLookup.newLookupBuilder()
-      .withProgressIndicator(indicator)
-      .withSdkType(JavaSdk.getInstance())
-      .withVersionFilter { true }
-      .withProject(project)
-      .onDownloadableSdkSuggested { SdkLookupDecision.STOP }
-      .onSdkResolved {
-        future.complete(it)
-      }
-      .executeLookup()
-
-    try {
-      val sdk = future.get()
-      if (sdk != null) {
-        WriteAction.runAndWait(
-          ThrowableRunnable<Throwable> {
-            NewProjectUtil.applyJdkToProject(project, sdk)
-          }
-        )
-      }
-    }
-    catch (t: Throwable) {
-      LOG.warn("Couldn't lookup for a JDK", t)
     }
   }
 

@@ -1,7 +1,6 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.wizards;
 
-import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
@@ -13,6 +12,7 @@ import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
+import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -138,7 +138,7 @@ public final class MavenProjectBuilder extends ProjectImportBuilder<MavenProject
       ApplicationManager.getApplication().runWriteAction(() -> {
         Sdk projectSdk = suggestProjectSdk(project);
         if (projectSdk == null) return;
-        NewProjectUtil.applyJdkToProject(project, projectSdk);
+        JavaSdkUtil.applyJdkToProject(project, projectSdk);
       });
     }
   }
