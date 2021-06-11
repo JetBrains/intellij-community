@@ -1,3 +1,4 @@
+// IGNORE_BACKEND: JVM_WITH_IR_EVALUATOR, JVM_IR_WITH_IR_EVALUATOR
 LineBreakpoint created at coroutineScopeReceiver.kt:18
 Run Java
 Connected to the target VM
@@ -12,4 +13,3 @@ Compile bytecode for kotlinx.coroutines.runBlocking(
 Disconnected from the target VM
 
 Process finished with exit code 0
-
