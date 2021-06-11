@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.search.refIndex
 
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.ScopeWithReferencesOnCompilation
 import com.intellij.compiler.backwardRefs.DirtyScopeHolder
 import com.intellij.compiler.server.BuildManager
@@ -196,7 +197,7 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
     fun scopeWithCodeReferences(element: PsiElement): GlobalSearchScope? = element.takeIf(this::isServiceEnabledFor)?.let {
         CachedValuesManager.getCachedValue(element) {
             CachedValueProvider.Result.create(
-                buildScopeWithReferences(referentFiles(element)),
+                buildScopeWithReferences(referentFiles(element), element),
                 PsiModificationTracker.MODIFICATION_COUNT,
                 this,
             )
@@ -224,13 +225,13 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
                 ?.let(InjectedLanguageManager.getInstance(project)::isInjectedFragment)
                 ?.not() == true
 
-    private fun buildScopeWithReferences(virtualFiles: Set<VirtualFile>?): GlobalSearchScope? {
+    private fun buildScopeWithReferences(virtualFiles: Set<VirtualFile>?, element: PsiElement): GlobalSearchScope? {
         if (virtualFiles == null) return null
 
         LOG.warn("build scope from ${virtualFiles.joinToString(prefix = "[", postfix = "]") { it.nameSequence }}")
 
         // knows everything
-        val scopeWithReferences = ScopeWithReferencesOnCompilation(virtualFiles, projectFileIndex)
+        val referencesScope = ScopeWithReferencesOnCompilation(virtualFiles, projectFileIndex)
 
         /***
          * can contain all languages, but depends on [supportedFileTypes]
@@ -260,7 +261,8 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
          *   [wholeDirtyScope] contains m1[1, 2, 3], m2[4], m3[5, 7]
          */
 
-        return scopeWithReferences.uniteWith(wholeDirtyScope)
+        val mayContainReferencesScope = referencesScope.uniteWith(wholeDirtyScope)
+        return CompilerReferenceServiceBase.scopeWithLibraryIfNeeded(project, projectFileIndex, mayContainReferencesScope, element)
     }
 
     override fun dispose(): Unit = withWriteLock { closeStorage() }
