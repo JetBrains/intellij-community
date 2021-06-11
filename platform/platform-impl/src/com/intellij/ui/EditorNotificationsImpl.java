@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.NonBlockingReadActionImpl;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
@@ -123,7 +122,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       }
 
       List<FileEditor> editors = ContainerUtil.filter(getEditors(file), fileEditor -> {
-        boolean visible = EditorActivityManager.getInstance().isVisible(fileEditor);
+        boolean visible = UIUtil.isShowing(fileEditor.getComponent());
         if (!visible) {
           fileEditor.putUserData(PENDING_UPDATE, Boolean.TRUE);
         }

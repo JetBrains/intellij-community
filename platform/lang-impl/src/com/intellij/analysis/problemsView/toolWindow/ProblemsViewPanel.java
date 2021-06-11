@@ -9,7 +9,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
@@ -375,7 +374,7 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     Editor editor = myPreview.preview(isNotNullAndSelected(getShowPreview()));
     if (editor != null) {
       invokeLater(() -> {
-        if (EditorActivityManager.getInstance().isVisible(editor)) {
+        if (UIUtil.isShowing(editor.getContentComponent())) {
           Node node = getSelectedNode();
           OpenFileDescriptor descriptor = node == null ? null : node.getDescriptor();
           if (descriptor != null) {

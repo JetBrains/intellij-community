@@ -88,6 +88,8 @@ public final class UIUtil {
 
   public static final Key<Boolean> LAF_WITH_THEME_KEY = Key.create("Laf.with.ui.theme");
   public static final Key<String> PLUGGABLE_LAF_KEY = Key.create("Pluggable.laf.name");
+  private static final Key<Boolean> IS_SHOWING = Key.create("Component.isShowing");
+  private static final Key<Boolean> HAS_FOCUS = Key.create("Component.hasFocus");
 
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
@@ -1774,14 +1776,49 @@ public final class UIUtil {
 
   /**
    * @param component to check whether it has focus within its component hierarchy
-   * @return {@code true} if component or one of its children has focus
+   * @return {@code true} if component or one of its parents has focus in a more general sense than UI focuses,
+   * sometimes useful to limit various activities by checking the focus of the real UI,
+   * but it could be unneeded in headless mode or in other scenarios.
    * @see Component#isFocusOwner()
    */
   public static boolean isFocusAncestor(@NotNull Component component) {
     Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
     if (owner == null) return false;
-    if (owner == component) return true;
-    return SwingUtilities.isDescendingFrom(owner, component);
+    if (SwingUtilities.isDescendingFrom(owner, component)) return true;
+
+    while (component != null) {
+      if (hasFocus(component)) return true;
+      component = component.getParent();
+    }
+    return false;
+  }
+
+  /**
+   * Checks if a component is focused in a more general sense than UI focuses,
+   * sometimes useful to limit various activities by checking the focus of real UI,
+   * but it could be unneeded in headless mode or in other scenarios.
+   * @see UIUtil#isShowing(Component)
+   */
+  @ApiStatus.Experimental
+  public static boolean hasFocus(@NotNull Component component) {
+    if (component.hasFocus() || GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
+
+    JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
+    return jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(HAS_FOCUS));
+  }
+
+  /**
+   * Marks a component as focused
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void markAsFocused(@NotNull JComponent component, boolean value) {
+    if (GraphicsEnvironment.isHeadless()) {
+      return;
+    }
+    component.putClientProperty(HAS_FOCUS, value ? Boolean.TRUE : null);
   }
 
   public static boolean isCloseClick(@NotNull MouseEvent e) {
@@ -3364,6 +3401,41 @@ public final class UIUtil {
       }
     }
     editor.scrollToReference(reference);
+  }
+
+  /**
+   * Checks if a component is showing in a more general sense than UI visibility,
+   * sometimes it's useful to limit various activities by checking the visibility of the real UI,
+   * but it could be unneeded in headless mode or in other scenarios.
+   * @see UIUtil#hasFocus(Component)
+   */
+  @ApiStatus.Experimental
+  public static boolean isShowing(@NotNull Component component) {
+    if (component.isShowing() || GraphicsEnvironment.isHeadless()) {
+      return true;
+    }
+
+    while (component != null) {
+      JComponent jComponent = component instanceof JComponent ? (JComponent)component : null;
+      if (jComponent != null && Boolean.TRUE.equals(jComponent.getClientProperty(IS_SHOWING))) {
+        return true;
+      }
+      component = component.getParent();
+    }
+
+    return false;
+  }
+
+  /**
+   * Marks a component as showing
+   */
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public static void markAsShowing(@NotNull JComponent component, boolean value) {
+    if (GraphicsEnvironment.isHeadless()) {
+      return;
+    }
+    component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);
   }
 
   public static void runWhenFocused(@NotNull Component component, @NotNull Runnable runnable) {

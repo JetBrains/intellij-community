@@ -28,7 +28,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorActivityManager;
 import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.colors.FontPreferences;
@@ -55,6 +54,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.Advertiser;
 import com.intellij.util.ui.EDT;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.Activatable;
@@ -677,7 +677,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) return true;
 
-    if (!EditorActivityManager.getInstance().isVisible(myEditor)) {
+    if (!UIUtil.isShowing(myEditor.getContentComponent())) {
       hideLookup(false);
       return false;
     }
