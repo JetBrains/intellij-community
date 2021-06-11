@@ -12,7 +12,6 @@ SetCompressor lzma
 !include "version.nsi"
 !include WinVer.nsh
 !include x64.nsh
-!define JAVA_REQUIREMENT 1.8
 ;admin users
 ;!define Environment '"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
 ;users
@@ -439,9 +438,9 @@ Page custom uninstallOldVersionDialog
 !insertmacro MUI_PAGE_DIRECTORY
 
 Page custom ConfirmDesktopShortcut
-  !define MUI_PAGE_HEADER_TEXT "$(choose_start_menu_folder)"
-  !define MUI_STARTMENUPAGE_NODISABLE
-  !define MUI_STARTMENUPAGE_DEFAULTFOLDER "JetBrains"
+!define MUI_PAGE_HEADER_TEXT "$(choose_start_menu_folder)"
+!define MUI_STARTMENUPAGE_NODISABLE
+!define MUI_STARTMENUPAGE_DEFAULTFOLDER "JetBrains"
 
 !insertmacro MUI_PAGE_STARTMENU Application $STARTMENU_FOLDER
 !define MUI_ABORTWARNING
@@ -1138,8 +1137,8 @@ next_association:
 done:
   StrCmp ${IPR} "false" skip_ipr
 
-; back up old value of .ipr
-!define Index "Line${__LINE__}"
+  ; back up old value of .ipr
+  !define Index "Line${__LINE__}"
   ReadRegStr $1 HKCR ".ipr" ""
   StrCmp $1 "" "${Index}-NoBackup"
     StrCmp $1 "IntelliJIdeaProjectFile" "${Index}-NoBackup"
@@ -1157,7 +1156,7 @@ done:
 !undef Index
 
 skip_ipr:
-; readonly section
+  ; readonly section
   ${LogText} ""
   ${LogText} "Copy files to $INSTDIR"
   SectionIn RO
@@ -1167,11 +1166,12 @@ skip_ipr:
   File "${PRODUCT_PROPERTIES_FILE}"
   File "${PRODUCT_VM_OPTIONS_FILE}"
 
-; registration application to be presented in Open With list
+  ; registration application to be presented in Open With list
   call ProductRegistration
-!insertmacro MUI_STARTMENU_WRITE_BEGIN Application
-; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
-; save it name in the "MenuFolder" RegValue
+
+  !insertmacro MUI_STARTMENU_WRITE_BEGIN Application
+  ; $STARTMENU_FOLDER stores name of IDEA folder in Start Menu,
+  ; save it name in the "MenuFolder" RegValue
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\${INSTALL_DIR_AND_SHORTCUT_NAME}.lnk" \
                  "$productLauncher" "" "" "" SW_SHOWNORMAL
@@ -1188,7 +1188,7 @@ skip_ipr:
   StrCpy $2 "MenuFolder"
   StrCpy $3 "$STARTMENU_FOLDER"
   Call OMWriteRegStr
-!insertmacro MUI_STARTMENU_WRITE_END
+  !insertmacro MUI_STARTMENU_WRITE_END
 
   ; enabling Java assistive technologies if a screen reader is active (0x0046 = SPI_GETSCREENREADER)
   System::Call "User32::SystemParametersInfo(i 0x0046, i 0, *i .r1, i 0) i .r0"
@@ -1214,7 +1214,7 @@ skip_ipr:
   StrCpy $3 ${VER_BUILD}
   Call OMWriteRegStr
 
-; write uninstaller & add it to add/remove programs in control panel
+  ; write uninstaller & add it to add/remove programs in control panel
   WriteUninstaller "$INSTDIR\bin\Uninstall.exe"
   WriteRegStr SHCTX "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_WITH_VER}" \
             "DisplayName" "${INSTALL_DIR_AND_SHORTCUT_NAME}"
@@ -1238,7 +1238,7 @@ skip_ipr:
               "NoRepair" 1
 
   SetOutPath $INSTDIR\bin
-; set the current time for installation files under $INSTDIR\bin
+  ; set the current time for installation files under $INSTDIR\bin
   ExecDos::exec 'copy "$INSTDIR\bin\*.*s" +,,'
   call winVersion
   ${If} $0 == "1"
@@ -1248,7 +1248,7 @@ skip_ipr:
       "$INSTDIR\bin\${PRODUCT_EXE_FILE}.vmoptions" "(S-1-5-32-545)" "GenericRead + GenericWrite"
   ${EndIf}
 
-; reset icon cache
+  ; reset icon cache
   ${LogText} "Reset icon cache"
   System::Call 'shell32.dll::SHChangeNotify(i, i, i, i) v (0x08000000, 0, 0, 0)'
 SectionEnd
