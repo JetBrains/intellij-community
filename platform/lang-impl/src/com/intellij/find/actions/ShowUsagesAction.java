@@ -696,21 +696,24 @@ public class ShowUsagesAction extends AnAction implements PopupAction, HintManag
     toolbarComponent.setOpaque(false);
     northPanel.add(toolbarComponent, gc.next());
 
-    ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo(project, false, false, actionHandler.getSelectedScope().getDisplayName());
-    var scopeComboBox = scopeChooserCombo.getComboBox();
-    scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
-    scopeComboBox.addItemListener(event -> {
-      if (event.getStateChange() == ItemEvent.SELECTED) {
-        SearchScope scope = scopeChooserCombo.getSelectedScope();
-        if (scope != null) {
-          cancel(popupRef.get());
-          showElementUsages(parameters, actionHandler.withScope(scope));
+    if (Registry.is("ide.inline.scope.in.show.usages")) {
+      ScopeChooserCombo scopeChooserCombo = new ScopeChooserCombo(project, false, false, actionHandler.getSelectedScope().getDisplayName());
+      var scopeComboBox = scopeChooserCombo.getComboBox();
+      scopeComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(200));
+      scopeComboBox.addItemListener(event -> {
+        if (event.getStateChange() == ItemEvent.SELECTED) {
+          SearchScope scope = scopeChooserCombo.getSelectedScope();
+          if (scope != null) {
+            cancel(popupRef.get());
+            showElementUsages(parameters, actionHandler.withScope(scope));
+          }
         }
-      }
-    });
-    scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
-    scopeChooserCombo.setButtonVisible(false);
-    northPanel.add(scopeChooserCombo, gc.next());
+      });
+      scopeComboBox.putClientProperty("JComboBox.isBorderless", Boolean.TRUE);
+      scopeChooserCombo.setButtonVisible(false);
+      northPanel.add(scopeChooserCombo, gc.next());
+    }
+
     northPanel.add(new Box.Filler(JBUI.size(10, 0), JBUI.size(10, 0), JBUI.size(Short.MAX_VALUE, 0)), gc.next().weightx(1.0).fillCellHorizontally());
 
     DefaultActionGroup settingsGroup = new DefaultActionGroup(
