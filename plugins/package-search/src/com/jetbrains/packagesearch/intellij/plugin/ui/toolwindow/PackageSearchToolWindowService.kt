@@ -1,3 +1,5 @@
+@file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED", "EXPERIMENTAL_API_USAGE")
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow
 
 import com.intellij.ProjectTopics
@@ -7,7 +9,6 @@ import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.project.DumbUnawareHider
 import com.intellij.openapi.project.ModuleListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
@@ -20,7 +21,6 @@ import com.intellij.ui.content.ContentManager
 import com.intellij.ui.content.ContentManagerEvent
 import com.intellij.ui.content.ContentManagerListener
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.HasToolWindowActions
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleToolWindowWithToolWindowActionsPanel
@@ -28,18 +28,25 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.SimpleTo
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.PackageManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.repositories.RepositoryManagementPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.FeatureFlags
-import com.jetbrains.packagesearch.intellij.plugin.util.dataService
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchModulesChangesFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
-import javax.swing.JLabel
+import kotlin.time.ExperimentalTime
 
 internal class PackageSearchToolWindowService(val project: Project) : Disposable {
 
     private lateinit var toolWindow: ToolWindow
     private var toolWindowContentsCreated = false
-    private var wasAvailable = false
 
     private val panels = mutableListOf<PackageSearchPanelBase>()
     private val contentFactory = ContentFactory.SERVICE.getInstance()
@@ -62,72 +69,56 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun initialize(toolWindow: ToolWindow) {
         this.toolWindow = toolWindow
 
-        setAvailabilityBasedOnProjectModules(project)
+        setAvailabilityBasedOnProjectModules()
         startMonitoring()
+
+        project.packageSearchModulesChangesFlow
+            .debounce(500)
+            .flowOn(Dispatchers.Main)
+            .onEach { toolWindow.isAvailable = it.isNotEmpty() }
+            .flowOn(Dispatchers.AppUI)
+            .launchIn(project.lifecycleScope)
     }
 
-    private fun setAvailabilityBasedOnProjectModules(project: Project) {
+    private fun setAvailabilityBasedOnProjectModules() {
         if (!::toolWindow.isInitialized) return
 
-        val isAvailable = ProjectModuleProvider.obtainAllProjectModulesFor(project).any()
-        if (wasAvailable != isAvailable || !toolWindowContentsCreated) {
-            createToolWindowContents(toolWindow, isAvailable)
+        if (!toolWindowContentsCreated) {
+            createToolWindowContents(toolWindow)
         }
     }
 
-    private fun createToolWindowContents(toolWindow: ToolWindow, isAvailable: Boolean) {
+    private fun createToolWindowContents(toolWindow: ToolWindow) {
         toolWindowContentsCreated = true
-        wasAvailable = isAvailable
 
         toolWindow.title = PackageSearchBundle.message("packagesearch.ui.toolwindow.title")
 
         val contentManager = checkNotNull(contentManagerOrNull) { "The ContentManager is not available when creating the toolwindow" }
 
-        if (!isAvailable) {
-            contentManager.removeAllContents(false)
-            renderUnavailableUi(contentManager)
-            return
-        }
-
         contentManager.addContentManagerListener(contentManagerListener)
         initializeUi(contentManager)
-    }
-
-    private fun renderUnavailableUi(contentManager: ContentManager) {
-        contentManager.addContent(
-            contentFactory.createContent(
-                DumbUnawareHider(JLabel()).apply {
-                    setContentVisible(false)
-                    emptyText.text = PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.noModules")
-                },
-                PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title"), false
-            ).apply {
-                isCloseable = false
-            }
-        )
     }
 
     private fun initializeUi(contentManager: ContentManager) {
         contentManager.removeAllContents(true)
         panels.clear()
 
-        val rootModel = project.dataService()
+        val rootModel = project.packageSearchDataService
         panels += PackageManagementPanel(
             rootDataModelProvider = rootModel,
             selectedPackageSetter = rootModel,
             targetModuleSetter = rootModel,
             searchClient = rootModel,
-            operationExecutor = rootModel,
-            lifetimeProvider = rootModel
+            operationExecutor = rootModel
         )
 
         if (FeatureFlags.showRepositoriesTab) {
             panels += RepositoryManagementPanel(
-                rootDataModelProvider = rootModel,
-                lifetimeProvider = rootModel
+                rootDataModelProvider = rootModel
             )
         }
 
@@ -195,7 +186,7 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
             ProjectTopics.PROJECT_ROOTS,
             object : ModuleRootListener {
                 override fun rootsChanged(event: ModuleRootEvent) {
-                    setAvailabilityBasedOnProjectModules(project)
+                    setAvailabilityBasedOnProjectModules()
                 }
             }
         )
@@ -204,11 +195,11 @@ internal class PackageSearchToolWindowService(val project: Project) : Disposable
             ProjectTopics.MODULES,
             object : ModuleListener {
                 override fun moduleAdded(p: Project, module: Module) {
-                    setAvailabilityBasedOnProjectModules(project)
+                    setAvailabilityBasedOnProjectModules()
                 }
 
                 override fun moduleRemoved(p: Project, module: Module) {
-                    setAvailabilityBasedOnProjectModules(project)
+                    setAvailabilityBasedOnProjectModules()
                 }
             }
         )

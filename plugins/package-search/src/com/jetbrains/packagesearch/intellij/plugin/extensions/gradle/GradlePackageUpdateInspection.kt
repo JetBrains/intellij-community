@@ -13,6 +13,6 @@ internal class GradlePackageUpdateInspection : PackageUpdateInspection() {
     override fun getVersionPsiElement(file: PsiFile, dependency: UnifiedDependency): PsiElement? {
         val groupId = dependency.coordinates.groupId ?: return null
         val artifactId = dependency.coordinates.artifactId ?: return null
-        return GradleProjectModuleProvider.findDependencyElement(file, groupId, artifactId)
+        return GradleModuleTransformer.findDependencyElement(file, groupId, artifactId)
     }
 }

@@ -33,7 +33,7 @@ internal class PackageUsagesPanel : HtmlEditorPane() {
         chunks += HtmlChunk.ul().children(
             packageModel.usageInfo.mapIndexed { index, usageInfo ->
                 val anchor = "#$index"
-                linkActionsMap[anchor] = usageInfo.projectModule.getNavigatableDependency(
+                linkActionsMap[anchor] = usageInfo.projectModule.navigatableDependency(
                     packageModel.groupId,
                     packageModel.artifactId,
                     usageInfo.version

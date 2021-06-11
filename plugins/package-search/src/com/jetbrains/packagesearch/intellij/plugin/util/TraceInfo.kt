@@ -22,10 +22,12 @@ internal data class TraceInfo(
         TARGET_MODULES_KEYPRESS,
         TARGET_MODULES_SELECTION_CHANGE,
         STATUS_CHANGES,
-        EXECUTE_OPS
+        EXECUTE_OPS,
+        DATA_CHANGED
     }
 
     companion object {
+
         val EMPTY = TraceInfo(TraceSource.EMPTY_VALUE, -1)
     }
 }

@@ -1,7 +1,8 @@
+@file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
+
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.ide.CopyProvider
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.project.Project
@@ -13,7 +14,6 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
@@ -27,57 +27,44 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.manageme
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.ScopeColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns.VersionColumn
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.autosizeColumnsAt
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.debounce
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.rd.util.reactive.IPropertyView
-import com.jetbrains.rd.util.reactive.Property
-import kotlinx.coroutines.CoroutineName
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.consumeAsFlow
-import kotlinx.coroutines.flow.launchIn
-import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.FlowPreview
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.event.ComponentAdapter
 import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
-import java.util.concurrent.CancellationException
 import javax.swing.ListSelectionModel
+import javax.swing.event.ListSelectionEvent
+import javax.swing.event.ListSelectionListener
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 import javax.swing.table.TableColumn
 import kotlin.math.roundToInt
 
-@Suppress("MagicNumber") // Swing dimension constants
-internal class PackagesTable(
-    private val project: Project,
-    private val operationExecutor: OperationExecutor,
-    operationFactory: PackageSearchOperationFactory
-) : JBTable(), DataProvider, CopyProvider, Disposable, CoroutineScope {
+internal typealias SelectedPackageModelListener = (SelectedPackageModel<*>?) -> Unit
 
-    override val coroutineContext = SupervisorJob() + CoroutineName("PackagesTable")
+@Suppress("MagicNumber") // Swing dimension constants
+@OptIn(FlowPreview::class)
+internal class PackagesTable(
+    project: Project,
+    private val operationExecutor: OperationExecutor,
+    operationFactory: PackageSearchOperationFactory,
+    private val onItemSelectionChanged: SelectedPackageModelListener
+) : JBTable(), DataProvider, CopyProvider {
 
     private val operationFactory = PackageSearchOperationFactory()
-
-    private val dataChangedChannel = Channel<DisplayDataModel>()
 
     private val tableModel: PackagesTableModel
         get() = model as PackagesTableModel
 
-    private val _selectedPackage = Property<SelectedPackageModel<*>?>(null)
-    val selectedPackage: IPropertyView<SelectedPackageModel<*>?> = _selectedPackage
+    private var selectedPackage: SelectedPackageModel<*>? = null
 
     var transferFocusUp: () -> Unit = { transferFocusBackward() }
 
@@ -109,6 +96,18 @@ internal class PackagesTable(
     private var latestTargetModules: TargetModules = TargetModules.None
     private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
     private var allKnownRepositories = KnownRepositories.All.EMPTY
+
+    private val listSelectionListener = ListSelectionListener {
+        val item = getSelectedTableItem()
+        if (selectedIndex >= 0 && item != null) {
+            TableUtil.scrollSelectionToVisible(this)
+            updateAndRepaint()
+            selectedPackage = item.toSelectedPackageModule()
+            onItemSelectionChanged(selectedPackage)
+        } else {
+            selectedPackage = null
+        }
+    }
 
     init {
         require(columnWeights.sum() == 1.0f) { "The column weights must sum to 1.0" }
@@ -174,16 +173,7 @@ internal class PackagesTable(
             transferFocusUp()
         }
 
-        selectionModel.addListSelectionListener {
-            val item = getSelectedTableItem()
-            if (selectedIndex >= 0 && item != null) {
-                TableUtil.scrollSelectionToVisible(this)
-                updateAndRepaint()
-                _selectedPackage.set(item.toSelectedPackageModule())
-            } else {
-                _selectedPackage.set(null)
-            }
-        }
+        selectionModel.addListSelectionListener(listSelectionListener)
 
         addFocusListener(object : FocusAdapter() {
             override fun focusGained(e: FocusEvent?) {
@@ -230,12 +220,6 @@ internal class PackagesTable(
                 }
             }
         )
-
-        dataChangedChannel.consumeAsFlow()
-            .debounce(100)
-            .onEach { displayData(it.packages, it.onlyStable, it.targetModules, it.traceInfo) }
-            .launchIn(this)
-
     }
 
     override fun getCellRenderer(row: Int, column: Int): TableCellRenderer =
@@ -244,159 +228,62 @@ internal class PackagesTable(
     override fun getCellEditor(row: Int, column: Int): TableCellEditor? =
         tableModel.columns[column].getEditor(tableModel.items[row])
 
-    private data class DisplayDataModel(
-        val packages: List<PackageModel>,
-        val onlyStable: Boolean,
-        val targetModules: TargetModules,
-        val traceInfo: TraceInfo
-    )
-
     fun display(
-        packages: List<PackageModel>,
+        displayItems: List<PackagesTableItem<*>>,
         onlyStable: Boolean,
         targetModules: TargetModules,
         knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
         allKnownRepositories: KnownRepositories.All,
         traceInfo: TraceInfo
     ) {
-        logDebug(traceInfo, "PackagesTable#display()") { "Got data, ${packages.size} package(s)" }
-
         this.knownRepositoriesInTargetModules = knownRepositoriesInTargetModules
         this.allKnownRepositories = allKnownRepositories
 
-        dataChangedChannel.offer(DisplayDataModel(packages, onlyStable, targetModules, traceInfo))
-
-    }
-
-    private suspend fun displayData(
-        packageModels: List<PackageModel>,
-        onlyStable: Boolean,
-        targetModules: TargetModules,
-        traceInfo: TraceInfo
-    ) {
-        val displayItems = computeDisplayItems(packageModels, onlyStable, targetModules, traceInfo)
-
         logDebug(traceInfo, "PackagesTable#displayData()") { "Displaying ${displayItems.size} item(s)" }
 
-        withContext(Dispatchers.AppUI) {
-            // We need to update those immediately before setting the items, on EDT, to avoid timing issues
-            // where the target modules or only stable flags get updated after the items data change, thus
-            // causing issues when Swing tries to render things (e.g., targetModules doesn't match packages' usages)
-            versionColumn.updateData(onlyStable, targetModules)
-            actionsColumn.updateData(onlyStable, targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
-            latestTargetModules = targetModules
+        // We need to update those immediately before setting the items, on EDT, to avoid timing issues
+        // where the target modules or only stable flags get updated after the items data change, thus
+        // causing issues when Swing tries to render things (e.g., targetModules doesn't match packages' usages)
+        versionColumn.updateData(onlyStable, targetModules)
+        actionsColumn.updateData(onlyStable, targetModules, knownRepositoriesInTargetModules, allKnownRepositories)
+        latestTargetModules = targetModules
 
-            val currentSelectedPackage = _selectedPackage.value
-            tableModel.items = displayItems
-            if (displayItems.isEmpty()) {
-                clearSelection()
-                return@withContext
-            }
+        selectionModel.removeListSelectionListener(listSelectionListener)
+        tableModel.items = displayItems
 
-            autosizeColumnsAt(autosizingColumnsIndices)
+        if (displayItems.isEmpty()) {
+            clearSelection()
+            selectionModel.addListSelectionListener(listSelectionListener)
 
-            if (currentSelectedPackage == null) return@withContext
-
-            val indexToSelect = withContext(Dispatchers.Default) {
-                var indexToSelect: Int? = null
-                for ((index, item) in displayItems.withIndex()) {
-                    if (item.packageModel.identifier == currentSelectedPackage.packageModel.identifier) {
-                        logDebug(traceInfo, "PackagesTable#displayData()") { "Found previously selected package at index $index" }
-                        indexToSelect = index
-                    }
-                }
-                indexToSelect
-            }
-
-            if (indexToSelect != null) {
-                selectedIndex = indexToSelect
-            } else {
-                logDebug(traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
-                clearSelection()
-            }
-
-            updateAndRepaint()
-        }
-    }
-
-    private fun computeDisplayItems(
-        packages: List<PackageModel>,
-        onlyStable: Boolean,
-        targetModules: TargetModules,
-        traceInfo: TraceInfo
-    ): List<PackagesTableItem<*>> {
-        logDebug(traceInfo, "PackagesTable#computeDisplayItems()") { "Creating item models for ${packages.size} item(s)" }
-
-        if (targetModules is TargetModules.None) {
-            logDebug(traceInfo, "PackagesTable#computeDisplayItems()") {
-                "Current target modules is None, no items models to compute"
-            }
-            return emptyList()
-        }
-        logDebug(traceInfo, "PackagesTable#computeDisplayItems()") {
-            "Current target modules value: ${targetModules.javaClass.simpleName} " +
-                "${targetModules.modules.map { it.projectModule.name }}"
+            return
         }
 
-        val modules = targetModules.modules
+        autosizeColumnsAt(autosizingColumnsIndices)
 
-        val availableScopes = modules.flatMap { it.projectModule.moduleType.scopes(project) }
-            .map { rawScope -> PackageScope.from(rawScope) }
+        if (selectedPackage == null) {
+            selectionModel.addListSelectionListener(listSelectionListener)
+            return
+        }
 
-        val mixedBuildSystems = targetModules.isMixedBuildSystems
-        val defaultScope = if (!mixedBuildSystems) {
-            PackageScope.from(modules.first().projectModule.moduleType.defaultScope(project))
+        var indexToSelect: Int? = null
+
+        // TODO factor out with a lambda
+        for ((index, item) in displayItems.withIndex()) {
+            if (item.packageModel.identifier == selectedPackage?.packageModel?.identifier) {
+                logDebug(traceInfo, "PackagesTable#displayData()") { "Found previously selected package at index $index" }
+                indexToSelect = index
+            }
+        }
+
+        if (indexToSelect != null) {
+            selectedIndex = indexToSelect
         } else {
-            PackageScope.Missing
+            logDebug(traceInfo, "PackagesTable#displayData()") { "Previous selection not available anymore, clearing..." }
+            clearSelection()
         }
-
-        return packages.map { packageModel ->
-            when (packageModel) {
-                is PackageModel.Installed -> {
-                    val installedScopes = packageModel.declaredScopes(modules)
-                    val selectedPackageModel = packageModel.toSelectedPackageModel(installedScopes, defaultScope, mixedBuildSystems)
-                    PackagesTableItem.InstalledPackage(selectedPackageModel, installedScopes, defaultScope)
-                }
-                is PackageModel.SearchResult -> {
-                    val selectedPackageModel = packageModel.toSelectedPackageModel(onlyStable, defaultScope, mixedBuildSystems)
-                    PackagesTableItem.InstallablePackage(selectedPackageModel, availableScopes, defaultScope)
-                }
-            }
-        }
+        selectionModel.addListSelectionListener(listSelectionListener)
+        updateAndRepaint()
     }
-
-    private fun PackageModel.Installed.declaredScopes(modules: List<ModuleModel>): List<PackageScope> =
-        if (modules.isNotEmpty()) {
-            findUsagesIn(modules).map { it.scope }
-        } else {
-            usageInfo.map { it.scope }
-        }
-            .distinct()
-            .sorted()
-
-    private fun PackageModel.Installed.toSelectedPackageModel(
-        installedScopes: List<PackageScope>,
-        defaultScope: PackageScope,
-        mixedBuildSystems: Boolean
-    ): SelectedPackageModel<PackageModel.Installed> =
-        SelectedPackageModel(
-            packageModel = this,
-            selectedVersion = getLatestInstalledVersion(),
-            selectedScope = installedScopes.firstOrNull() ?: defaultScope,
-            mixedBuildSystemTargets = mixedBuildSystems
-        )
-
-    private fun PackageModel.SearchResult.toSelectedPackageModel(
-        onlyStable: Boolean,
-        defaultScope: PackageScope,
-        mixedBuildSystems: Boolean
-    ): SelectedPackageModel<PackageModel.SearchResult> =
-        SelectedPackageModel(
-            packageModel = this,
-            selectedVersion = getLatestAvailableVersion(onlyStable) ?: PackageVersion.Missing,
-            selectedScope = defaultScope,
-            mixedBuildSystemTargets = mixedBuildSystems
-        )
 
     val hasInstalledItems: Boolean
         get() = tableModel.items.any { it is PackagesTableItem.InstalledPackage }
@@ -535,10 +422,4 @@ internal class PackagesTable(
             column.preferredWidth = (weights[column.modelIndex] * tW).roundToInt()
         }
     }
-
-    override fun dispose() {
-        logDebug("PackagesTable#dispose()") { "Disposing PackagesTable..." }
-        coroutineContext.cancel(CancellationException("Disposing"))
-    }
-
 }

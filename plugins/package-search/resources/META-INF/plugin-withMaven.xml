@@ -1,5 +1,6 @@
 <idea-plugin>
     <extensions defaultExtensionNs="com.intellij">
+        <!--suppress PluginXmlCapitalization -->
         <localInspection
                 bundle="messages.packageSearchBundle"
                 enabledByDefault="true"
@@ -12,11 +13,11 @@
 
         <packagesearch.projectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleOperationProvider"/>
-        <packagesearch.projectModuleProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenProjectModuleProvider"/>
+        <packagesearch.moduleTransformer
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenModuleTransformer"/>
 
         <packagesearch.moduleChangesSignalProvider
-                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenModuleChangesSignalProvider"/>
+                implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenSyncSignalProvider"/>
 
         <packagesearch.configurableContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.extensions.maven.configuration.ui.MavenConfigurableContributor"/>

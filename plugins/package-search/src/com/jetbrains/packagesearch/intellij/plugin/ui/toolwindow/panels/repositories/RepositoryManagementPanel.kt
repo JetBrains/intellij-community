@@ -7,23 +7,24 @@ import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.actions.ShowSettingsAction
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.LifetimeProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.RootDataModelProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.PackageSearchPanelBase
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
-import com.jetbrains.rd.util.reactive.map
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import javax.swing.JScrollPane
 
 internal class RepositoryManagementPanel(
-    private val rootDataModelProvider: RootDataModelProvider,
-    lifetimeProvider: LifetimeProvider
+    private val rootDataModelProvider: RootDataModelProvider
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.repositories.title")) {
 
-    private val repositoriesTree = RepositoryTree(
-        project = rootDataModelProvider.project,
-        allKnownRepositories = rootDataModelProvider.dataModelProperty.map { it.allKnownRepositories },
-        lifetime = lifetimeProvider.lifetime
-    )
+    private val repositoriesTree = RepositoryTree(rootDataModelProvider.project)
 
     private val autoScrollToSourceHandler = object : AutoScrollToSourceHandler() {
         override fun isAutoScrollMode(): Boolean {
@@ -42,6 +43,18 @@ internal class RepositoryManagementPanel(
 
             UIUtil.putClientProperty(verticalScrollBar, JBScrollPane.IGNORE_SCROLLBAR_IN_INSETS, true)
         }
+
+    init {
+        rootDataModelProvider.dataModelFlow
+            .map { it.allKnownRepositories }
+            .distinctUntilChanged()
+            .onEach {
+                withContext(Dispatchers.AppUI) {
+                    repositoriesTree.display(it)
+                }
+            }
+            .launchIn(rootDataModelProvider.project.lifecycleScope)
+    }
 
     override fun build() = mainSplitter
 

@@ -1,13 +1,10 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
-import com.intellij.application.subscribe
 import com.intellij.ide.ui.LafManagerListener
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBPanelWithEmptyText
@@ -18,7 +15,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.ComponentActionWrapper
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.FilterOptions
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.LifetimeProvider
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.SearchClient
@@ -32,10 +28,19 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import com.jetbrains.rd.util.reactive.Property
-import com.jetbrains.rd.util.reactive.Signal
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.consumeAsFlow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import net.miginfocom.swing.MigLayout
 import java.awt.BorderLayout
 import java.awt.Dimension
@@ -51,18 +56,18 @@ import javax.swing.event.DocumentEvent
 internal class PackagesListPanel(
     private val project: Project,
     private val searchClient: SearchClient,
-    private val lifetimeProvider: LifetimeProvider,
     operationFactory: PackageSearchOperationFactory,
-    operationExecutor: OperationExecutor
-) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")), Disposable {
+    operationExecutor: OperationExecutor,
+    onItemSelectionChanged: SelectedPackageModelListener
+) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")) {
 
-    val selectedPackage = Property<SelectedPackageModel<*>?>(null)
+    val selectedPackage = MutableStateFlow<SelectedPackageModel<*>?>(null)
 
-    private val searchFieldFocus = Signal.Void()
+    private val searchFieldFocus = Channel<Unit>()
 
-    private val packagesTable = PackagesTable(project, operationExecutor, operationFactory)
+    private val packagesTable = PackagesTable(project, operationExecutor, operationFactory, onItemSelectionChanged)
 
-    private val searchTextField = PackagesSmartSearchField(searchFieldFocus, lifetimeProvider.lifetime)
+    private val searchTextField = PackagesSmartSearchField(searchFieldFocus.consumeAsFlow(), project)
         .apply {
             goToTable = {
                 if (packagesTable.hasInstalledItems) {
@@ -167,12 +172,18 @@ internal class PackagesListPanel(
 
         registerForUiEvents()
 
-        // Keep LAF in sync
-        val lafListener = LafManagerListener { updateLaf() }
-        LafManagerListener.TOPIC.subscribe(
-            lifetimeProvider.parentDisposable,
-            lafListener
-        )
+        callbackFlow {
+            val conn = project.messageBus.simpleConnect()
+            conn.subscribe(
+                LafManagerListener.TOPIC,
+                LafManagerListener { offer(Unit) }
+            )
+            awaitClose { conn.disconnect() }
+        }.onEach {
+            withContext(Dispatchers.AppUI) {
+                updateLaf()
+            }
+        }.launchIn(project.lifecycleScope)
 
         updateLaf()
     }
@@ -192,6 +203,7 @@ internal class PackagesListPanel(
         knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
         allKnownRepositories: KnownRepositories.All,
         filterOptions: FilterOptions,
+        tableData: List<PackagesTableItem<*>>,
         traceInfo: TraceInfo
     ) {
         onlyStableCheckBox.isSelected = filterOptions.onlyStable
@@ -206,6 +218,7 @@ internal class PackagesListPanel(
             targetModules = targetModules,
             knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,
             allKnownRepositories = allKnownRepositories,
+            tableData = tableData,
             traceInfo = traceInfo
         )
     }
@@ -239,6 +252,7 @@ internal class PackagesListPanel(
         targetModules: TargetModules,
         knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
         allKnownRepositories: KnownRepositories.All,
+        tableData: List<PackagesTableItem<*>>,
         traceInfo: TraceInfo
     ) {
         logDebug(traceInfo, "PackagesListPanel#display()") { "PackagesListPanel#display() — Got new data" }
@@ -250,7 +264,7 @@ internal class PackagesListPanel(
             headerData.updateOperations
         )
 
-        packagesTable.display(packageModels, onlyStable, targetModules, knownRepositoriesInTargetModules, allKnownRepositories, traceInfo)
+        packagesTable.display(tableData, onlyStable, targetModules, knownRepositoriesInTargetModules, allKnownRepositories, traceInfo)
         tableScrollPane.isVisible = packageModels.isNotEmpty()
         listPanel.updateAndRepaint()
 
@@ -276,17 +290,6 @@ internal class PackagesListPanel(
         onlyKotlinMpCheckBox.addItemListener { e ->
             searchClient.setOnlyKotlinMultiplatform(e.stateChange == ItemEvent.SELECTED)
         }
-
-        packagesTable.selectedPackage.advise(lifetimeProvider.lifetime) {
-            logDebug("PackagesListPanel#selectedPackage.advise()") {
-                if (it != null) {
-                    "User selected a package: ${it.packageModel.identifier}"
-                } else {
-                    "Package selection cleared"
-                }
-            }
-            selectedPackage.set(it)
-        }
     }
 
     private fun updateLaf() {
@@ -307,10 +310,5 @@ internal class PackagesListPanel(
 
         @Suppress("MagicNumber") // Dimension constants
         minimumSize = Dimension(200.scaled(), minimumSize.height)
-    }
-
-    override fun dispose() {
-        logDebug("PackagesListPanel#dispose()") { "Disposing PackagesListPanel..." }
-        Disposer.dispose(packagesTable)
     }
 }

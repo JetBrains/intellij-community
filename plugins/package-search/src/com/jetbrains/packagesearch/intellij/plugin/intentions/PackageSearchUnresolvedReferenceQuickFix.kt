@@ -9,7 +9,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
-import com.jetbrains.packagesearch.intellij.plugin.util.dataService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import icons.PackageSearchIcons
 import java.util.regex.Pattern
 
@@ -20,7 +20,7 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         PackageSearchToolWindowFactory.activateToolWindow(project) {
-            project.dataService()
+            project.packageSearchDataService
                 .setSearchQuery(ref.canonicalText)
         }
     }

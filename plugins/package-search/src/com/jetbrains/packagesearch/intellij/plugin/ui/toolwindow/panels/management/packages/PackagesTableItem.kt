@@ -96,7 +96,7 @@ internal sealed class PackagesTableItem<T : PackageModel> : DataProvider, CopyPr
                     val usageInfo = packageModel.usageInfo.find { it.projectModule == projectModule }
                         ?: return null
 
-                    usageInfo.projectModule.getNavigatableDependency(packageModel.groupId, packageModel.artifactId, usageInfo.version)
+                    usageInfo.projectModule.navigatableDependency(packageModel.groupId, packageModel.artifactId, usageInfo.version)
                         ?.let { arrayOf(it) } ?: emptyArray<Navigatable>()
                 }
                 else -> getData(dataId)

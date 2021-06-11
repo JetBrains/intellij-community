@@ -1,9 +1,20 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+
 internal sealed class TargetModules(
     open val modules: List<ModuleModel>,
     open val isMixedBuildSystems: Boolean
 ) : Collection<ModuleModel> by modules {
+
+    fun refreshWith(modules: List<ProjectModule>): TargetModules {
+        val availableModules = filter { it.projectModule in modules }
+        return when (availableModules.size) {
+            0 -> None
+            1 -> One(availableModules.first())
+            else -> all(availableModules)
+        }
+    }
 
     fun declaredKnownRepositories(installedKnownRepositories: List<RepositoryModel>): List<RepositoryModel> {
         val declaredReposInTargetModules = modules.flatMap { it.declaredRepositories }

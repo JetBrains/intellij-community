@@ -16,11 +16,6 @@ Supports Maven and Gradle projects.
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider"
                         dynamic="true"/>
 
-        <extensionPoint qualifiedName="com.intellij.packagesearch.projectModuleProvider"
-                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleProvider"
-                        area="IDEA_PROJECT"
-                        dynamic="true"/>
-
         <extensionPoint qualifiedName="com.intellij.packagesearch.configurableContributor"
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor"
                         area="IDEA_PROJECT"
@@ -30,6 +25,12 @@ Supports Maven and Gradle projects.
                         interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleChangesSignalProvider"
                         area="IDEA_PROJECT"
                         dynamic="true"/>
+
+        <extensionPoint qualifiedName="com.intellij.packagesearch.moduleTransformer"
+                        interface="com.jetbrains.packagesearch.intellij.plugin.extensibility.ModuleTransformer"
+                        area="IDEA_PROJECT"
+                        dynamic="true"/>
+
     </extensionPoints>
 
     <depends>com.intellij.modules.java</depends>
@@ -51,6 +52,7 @@ Supports Maven and Gradle projects.
         <projectConfigurable groupId="build" key="packagesearch.configuration.title" bundle="messages.packageSearchBundle"
                              id="preferences.packagesearch.PackageSearchGeneralConfigurable"
                              instance="com.jetbrains.packagesearch.intellij.plugin.configuration.ui.PackageSearchGeneralConfigurable"/>
+
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration"/>
 
@@ -59,6 +61,9 @@ Supports Maven and Gradle projects.
 
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageSearchDataService"/>
+
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService"/>
 
         <toolWindow id="Packages" anchor="bottom" secondary="false"
                     icon="/icons/artifactSmall.svg"

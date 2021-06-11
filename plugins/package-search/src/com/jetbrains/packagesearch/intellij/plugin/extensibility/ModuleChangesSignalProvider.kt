@@ -2,20 +2,18 @@ package com.jetbrains.packagesearch.intellij.plugin.extensibility
 
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.rd.createNestedDisposable
-import com.intellij.util.messages.MessageBus
-import com.intellij.util.messages.MessageBusConnection
-import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleModuleChangesSignalProvider
-import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenModuleChangesSignalProvider
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IVoidSource
-import com.jetbrains.rd.util.reactive.Signal
-import com.jetbrains.rd.util.reactive.flowInto
-import kotlin.streams.asSequence
+import com.jetbrains.packagesearch.intellij.plugin.extensions.AbstractMessageBusModuleChangesSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.GradleSyncSignalProvider
+import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.MavenSyncSignalProvider
+import kotlinx.coroutines.channels.awaitClose
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.callbackFlow
+import java.util.function.Supplier
+import kotlin.streams.toList
 
 /**
- * Provider interface that allows to listen to module changes. See [GradleModuleChangesSignalProvider]
- * and [MavenModuleChangesSignalProvider] for implementation examples.
+ * Extension point that allows to listen to module changes. See [GradleSyncSignalProvider]
+ * and [MavenSyncSignalProvider] for implementation examples.
  */
 interface ModuleChangesSignalProvider {
 
@@ -25,28 +23,38 @@ interface ModuleChangesSignalProvider {
             ExtensionPointName.create("com.intellij.packagesearch.moduleChangesSignalProvider")
 
         /**
-         * Used to obtains an [IVoidSource] that emits every time any registered module in the project
-         * signals a change. Useful to listen for project changes and refresh data.
+         * Returns a [Flow] of signals combining all registered [ModuleChangesSignalProvider].
          */
-        fun obtainModuleChangesSignalFor(project: Project, lifetime: Lifetime): IVoidSource =
-            extensionPointName.extensions(project)
-                .asSequence()
-                .map { it.listenToModuleChanges(project, lifetime) }
-                .combine(lifetime)
-
-
-        private fun Sequence<IVoidSource>.combine(lifetime: Lifetime): IVoidSource {
-            val combined = Signal.Void()
-            forEach { it.flowInto(lifetime, combined) }
-            return combined
+        internal fun listenToModuleChanges(project: Project): Flow<Unit> = callbackFlow {
+            val subs = extensionPointName.extensions(project).toList().map {
+                it.registerModuleChangesListener(project) { offer(Unit) }
+            }
+            awaitClose { subs.unsubscribeAll() }
         }
     }
 
     /**
-     * Used to obtains an [IVoidSource] that emits every time this module in the project
-     * signals a change. Useful to listen for project changes and refresh data.
+     * Register a [listener] that is invoked every time the implemented build systems signals a change
+     * in the module structure. See [AbstractMessageBusModuleChangesSignalProvider] and its implementations
+     * for examples on how to register module changes.
      */
-    fun listenToModuleChanges(project: Project, lifetime: Lifetime): IVoidSource
+    fun registerModuleChangesListener(project: Project, listener: Supplier<Unit>): Subscription
 }
 
-fun MessageBus.connect(lifetime: Lifetime): MessageBusConnection = connect(lifetime.createNestedDisposable())
+internal operator fun <T> Supplier<T>.invoke() = get()
+
+/**
+ * Functional interface used to unsubscribe listeners for [ModuleChangesSignalProvider].
+ */
+fun interface Subscription {
+
+    /**
+     * Stops the listeners that generated this subscription.
+     */
+    fun unsubscribe()
+}
+
+/**
+ * Unsubscribe all the [Subscription]s in this collection.
+ */
+fun Iterable<Subscription>.unsubscribeAll() = forEach { it.unsubscribe() }

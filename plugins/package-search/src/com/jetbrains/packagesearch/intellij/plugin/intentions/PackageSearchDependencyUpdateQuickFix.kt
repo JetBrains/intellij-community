@@ -11,7 +11,7 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
-import com.jetbrains.packagesearch.intellij.plugin.util.dataService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 
 internal class PackageSearchDependencyUpdateQuickFix(
     element: PsiElement,
@@ -34,7 +34,7 @@ internal class PackageSearchDependencyUpdateQuickFix(
 
     override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
         checkNotNull(unifiedDependency.coordinates.version) { "The dependency ${unifiedDependency.coordinates.displayName} has no set version" }
-        val dataModel = project.dataService().dataModelProperty.value
+        val dataModel = project.packageSearchDataService.dataModelFlow.value
         val selectedVersion = PackageVersion.from(unifiedDependency.coordinates.version)
 
         val repoToInstall = dataModel.knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
@@ -49,6 +49,6 @@ internal class PackageSearchDependencyUpdateQuickFix(
             repoToInstall = repoToInstall,
         )
 
-        project.dataService().executeOperations(operations)
+        project.packageSearchDataService.executeOperations(operations)
     }
 }

@@ -16,7 +16,7 @@ import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
-import com.jetbrains.packagesearch.intellij.plugin.util.dataService
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import icons.PackageSearchIcons
 
 class AddDependencyAction : AnAction(
@@ -37,8 +37,8 @@ class AddDependencyAction : AnAction(
                 return@run false
             }
 
-            val rootModel = project.dataService()
-            val modules = rootModel.dataModelProperty.value.projectModules
+            val rootModel = project.packageSearchDataService
+            val modules = rootModel.dataModelFlow.value.moduleModels
             findSelectedModule(e, modules) != null
         }
     }
@@ -46,8 +46,8 @@ class AddDependencyAction : AnAction(
     override fun actionPerformed(e: AnActionEvent) {
         val project = e.project ?: return
 
-        val rootModel = project.dataService()
-        val modules = rootModel.dataModelProperty.value.projectModules
+        val rootModel = project.packageSearchDataService
+        val modules = rootModel.dataModelFlow.value.moduleModels
         if (modules.isEmpty()) return
 
         val selectedModule = findSelectedModule(e, modules) ?: return

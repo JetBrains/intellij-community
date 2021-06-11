@@ -1,18 +1,23 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.project.Project
 import com.intellij.ui.SearchTextField
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.rd.util.lifetime.Lifetime
-import com.jetbrains.rd.util.reactive.IVoidSignal
+import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
+import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.withContext
 import java.awt.Dimension
 import java.awt.event.KeyEvent
 
 class PackagesSmartSearchField(
-    searchFieldFocus: IVoidSignal,
-    lifetime: Lifetime
+    searchFieldFocus: Flow<Unit>,
+    project: Project
 ) : SearchTextField(false) {
 
     init {
@@ -27,7 +32,10 @@ class PackagesSmartSearchField(
 
         PackageSearchUI.overrideKeyStroke(textEditor, "shift ENTER", this::transferFocusBackward)
 
-        searchFieldFocus.advise(lifetime) { ApplicationManager.getApplication().invokeLater { requestFocus() } }
+        searchFieldFocus
+            .onEach { withContext(Dispatchers.AppUI){ requestFocus() } }
+            .launchIn(project.lifecycleScope)
+
     }
 
     /**
