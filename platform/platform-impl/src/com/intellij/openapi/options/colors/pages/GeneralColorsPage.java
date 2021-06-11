@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.colors.pages;
 
 import com.intellij.application.options.colors.InspectionColorSettingsPage;
@@ -28,6 +28,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.DisplayPriority;
 import com.intellij.psi.codeStyle.DisplayPrioritySortable;
 import com.intellij.ui.EditorCustomization;
+import com.intellij.ui.components.ScrollBarPainter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -129,9 +130,9 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.selection.foreground"),
                         EditorColors.SELECTION_FOREGROUND_COLOR, ColorDescriptor.Kind.FOREGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.scrollbar.thumb.while.scrolling"),
-                        EditorColors.SCROLLBAR_THUMB_WHILE_SCROLLING_COLOR, ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
-    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.scrollbar.thumb"), EditorColors.SCROLLBAR_THUMB_COLOR,
-                        ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
+                        ScrollBarPainter.THUMB_OPAQUE_HOVERED_BACKGROUND, ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
+    new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.scrollbar.thumb"),
+                        ScrollBarPainter.THUMB_OPAQUE_BACKGROUND, ColorDescriptor.Kind.BACKGROUND_WITH_TRANSPARENCY),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs.selected.underline"), EditorColors.TAB_UNDERLINE,
                         ColorDescriptor.Kind.BACKGROUND),
     new ColorDescriptor(OptionsBundle.message("options.general.color.descriptor.tabs.selected.underline.inactive"),
