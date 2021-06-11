@@ -1,17 +1,48 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection
 
-import com.intellij.codeInspection.tests.JUnitMalformedInspectionTestBaseKt
+import com.intellij.execution.junit.codeInsight.JUnit5MalformedParameterizedInspection
 import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil
 import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil
+import com.intellij.pom.java.LanguageLevel
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder
+import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
 
-class KotlinJUnit5MalformedParameterizedUsageTestKt : JUnitMalformedInspectionTestBaseKt() {
+class KotlinJUnit5MalformedParameterizedTest : JavaCodeInsightFixtureTestCase() {
+
+  override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8)
+  }
 
   override fun setUp() {
     super.setUp()
+    myFixture.enableInspections(inspection)
+
+    myFixture.addFileToProject("kotlin/jvm/JvmStatic.kt",
+                               "package kotlin.jvm public annotation class JvmStatic")
+
+    myFixture.addClass("""
+    package java.util.stream;
+    public interface Stream {}
+    """.trimIndent())
     JUnit5TestFrameworkSetupUtil.setupJUnit5Library(myFixture)
   }
 
-  override fun getBasePath() = JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/junit5malformed"
+  override fun tearDown() {
+    try {
+      myFixture.disableInspections(inspection)
+    }
+    finally {
+      super.tearDown()
+    }
+  }
+
+  companion object {
+    private val inspection = JUnit5MalformedParameterizedInspection()
+  }
+
+  override fun getBasePath() =
+    "${JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH}/codeInspection/junit5malformed"
 
   fun `test CantResolveTarget`() {
     myFixture.testHighlighting("CantResolveTarget.kt")

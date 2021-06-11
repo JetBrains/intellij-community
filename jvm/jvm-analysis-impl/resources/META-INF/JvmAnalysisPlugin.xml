@@ -52,10 +52,6 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspection.test.failed.line.display.name"
                      implementationClass="com.intellij.codeInspection.TestFailedLineInspection"/>
-    <localInspection language="UAST" enabledByDefault="true" level="WARNING" shortName="Junit5MalformedParameterized"
-                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
-                     groupKey="jvm.inspections.group.name" key="jvm.inspections.junit5.malformed.parameterized.display.name"
-                     implementationClass="com.intellij.codeInspection.JUnit5MalformedParameterizedInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON"/>
   </extensions>
   <extensions defaultExtensionNs="com.intellij.codeInsight">

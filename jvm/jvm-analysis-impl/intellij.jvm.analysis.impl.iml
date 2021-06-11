@@ -16,6 +16,5 @@
     <orderEntry type="module" module-name="intellij.platform.debugger" />
     <orderEntry type="library" name="StreamEx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
-    <orderEntry type="module" module-name="intellij.junit" />
   </component>
 </module>

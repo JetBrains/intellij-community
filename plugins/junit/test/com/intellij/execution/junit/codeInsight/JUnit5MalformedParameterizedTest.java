@@ -1,13 +1,14 @@
-package com.intellij.codeInspection;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.execution.junit.codeInsight;
 
-import com.intellij.execution.junit.codeInsight.JUnit5TestFrameworkSetupUtil;
-import com.intellij.jvm.analysis.JvmAnalysisKtTestsUtil;
+import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightJavaInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JUnit5MalformedParameterizedTest extends LightJavaInspectionTestCase {
+
   @Nullable
   @Override
   protected InspectionProfileEntry getInspection() {
@@ -29,7 +30,7 @@ public class JUnit5MalformedParameterizedTest extends LightJavaInspectionTestCas
 
   @Override
   protected String getBasePath() {
-    return JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/junit5malformed";
+    return "/plugins/junit/testData/codeInsight/junit5malformed";
   }
 
   @NotNull
