@@ -10,7 +10,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.SpellCheckerManager;
@@ -105,7 +104,7 @@ public class SaveTo implements SpellCheckerQuickFix, LowPriorityAction {
     SpellCheckerManager.getInstance(project).acceptWordAsCorrect(word, file.getViewProvider().getVirtualFile(), project, level);
 
     TextRange range = descriptor.getTextRangeInElement().shiftRight(psi.getTextRange().getStartOffset());
-    UpdateHighlightersUtil.removeHighlightersWithRange(file.getViewProvider().getDocument(), project, range);
+    UpdateHighlightersUtil.removeHighlightersWithExactRange(file.getViewProvider().getDocument(), project, range);
   }
 
   public static SaveTo getSaveToLevelFix(DictionaryLevel level) {

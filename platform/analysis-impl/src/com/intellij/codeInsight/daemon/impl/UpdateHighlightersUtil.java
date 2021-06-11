@@ -550,10 +550,10 @@ public final class UpdateHighlightersUtil {
    * Note that all highlighters at the given range are removed, not only the ones produced by your inspection,
    * but most likely that will look fine:
    * they'll be restored when the new highlighting pass is finished.
-   * This method currently works in O(highlighter_count) time.
+   * This method currently works in O(total highlighter count in file) time.
    */
-  public static void removeHighlightersWithRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
-    var model = DocumentMarkupModel.forDocument(document, project, false);
+  public static void removeHighlightersWithExactRange(@NotNull Document document, @NotNull Project project, @NotNull Segment range) {
+    MarkupModel model = DocumentMarkupModel.forDocument(document, project, false);
     if (model == null) return;
 
     for (RangeHighlighter highlighter : model.getAllHighlighters()) {
