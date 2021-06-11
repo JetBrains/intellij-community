@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.types.KtClassType
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.idea.completion.contributors.helpers.FirClassifierProvider.getAvailableClassifiersCurrentScope
+import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
 
 internal open class FirClassifierCompletionContributor(
     basicContext: FirBasicCompletionContext,
@@ -79,7 +80,7 @@ internal class FirAnnotationCompletionContributor(
             }
         }
         is KtTypeAliasSymbol -> {
-            val expendedClass = (classifierSymbol.expandedType as? KtClassType)?.classSymbol
+            val expendedClass = (classifierSymbol.expandedType as? KtNonErrorClassType)?.classSymbol
             expendedClass?.let { filterClassifiers(it) } == true
         }
     }
