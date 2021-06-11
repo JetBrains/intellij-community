@@ -111,16 +111,4 @@ public enum LanguageLevel {
     }
     return null;
   }
-
-  public @Nullable LanguageLevel getNextLanguageLevel(boolean skipPreviewLevels) {
-    final LanguageLevel[] levels = values();
-    for (int i = ordinal() + 1; i < levels.length; i++) {
-      final LanguageLevel level = levels[i];
-      if (!level.isPreview() || !skipPreviewLevels) {
-        return level;
-      }
-    }
-
-    return null;
-  }
 }

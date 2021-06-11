@@ -416,7 +416,8 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
     private void registerError(PsiElement reference, LanguageLevel api) {
       if (reference == null || !isInProject(reference)) return;
 
-      final LanguageLevel targetLanguageLevel = api.getNextLanguageLevel(true);
+      final LanguageLevel targetLanguageLevel = getNextLanguageLevel(api);
+
       if (targetLanguageLevel == null) {
         LOGGER.error("Unable to get the next language level for " + api);
         return;
@@ -434,6 +435,19 @@ public class Java15APIUsageInspection extends AbstractBaseJavaLocalInspectionToo
 
       myHolder.registerProblem(reference, message, fix);
     }
+
+  }
+
+  private static @Nullable LanguageLevel getNextLanguageLevel(@NotNull LanguageLevel api) {
+    final LanguageLevel[] levels = LanguageLevel.values();
+    final int currentLevelId = api.ordinal();
+    for (int i = currentLevelId + 1; i < levels.length; i++) {
+      final LanguageLevel level = levels[i];
+      if (!level.isPreview()) {
+        return level;
+      }
+    }
+    return null;
   }
 
   private static String getJdkName(LanguageLevel languageLevel) {
