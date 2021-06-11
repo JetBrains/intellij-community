@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.settingsRepository
 
 import com.intellij.configurationStore.StreamProvider
@@ -27,13 +27,11 @@ import org.jetbrains.settingsRepository.git.GitRepositoryService
 import org.jetbrains.settingsRepository.git.processChildren
 import java.io.InputStream
 import java.nio.file.Path
-import java.nio.file.Paths
-import kotlin.properties.Delegates
 
 internal val LOG = logger<IcsManager>()
 
 internal val icsManager by lazy(LazyThreadSafetyMode.NONE) {
-  ApplicationLoadListener.EP_NAME.findExtensionOrFail(IcsApplicationLoadListener::class.java).icsManager
+  ApplicationLoadListener.EP_NAME.findExtensionOrFail(IcsApplicationLoadListener::class.java).icsManager!!
 }
 
 class IcsManager @JvmOverloads constructor(dir: Path,
@@ -157,7 +155,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
     override fun processChildren(path: String, roamingType: RoamingType, filter: (name: String) -> Boolean, processor: (name: String, input: InputStream, readOnly: Boolean) -> Boolean): Boolean {
       val fullPath = toRepositoryPath(path, roamingType)
 
-      // first of all we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
+      // first we must load read-only schemes - scheme could be overridden if bundled or read-only, so, such schemes must be loaded first
       for (repository in readOnlySourcesManager.repositories) {
         repository.processChildren(fullPath, filter) { name, input -> processor(name, input, true) }
       }
@@ -210,7 +208,7 @@ class IcsManager @JvmOverloads constructor(dir: Path,
 }
 
 internal class IcsApplicationLoadListener : ApplicationLoadListener {
-  var icsManager: IcsManager by Delegates.notNull()
+  var icsManager: IcsManager? = null
     private set
 
   override fun beforeApplicationLoaded(application: Application, configPath: Path) {
@@ -219,9 +217,10 @@ internal class IcsApplicationLoadListener : ApplicationLoadListener {
     }
 
     val customPath = System.getProperty("ics.settingsRepository")
-    val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Paths.get(FileUtil.expandUserHome(customPath))
+    val pluginSystemDir = if (customPath == null) configPath.resolve("settingsRepository") else Path.of(FileUtil.expandUserHome(customPath))
     @Suppress("IncorrectParentDisposable") // this plugin is special and can't be dynamic anyway
-    icsManager = IcsManager(pluginSystemDir, application)
+    val icsManager = IcsManager(pluginSystemDir, application)
+    this.icsManager = icsManager
 
     val repositoryManager = icsManager.repositoryManager
     if (repositoryManager.isRepositoryExists() && repositoryManager is GitRepositoryManager) {

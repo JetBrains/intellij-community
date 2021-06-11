@@ -284,7 +284,8 @@ private fun loadDescriptorFromDirAndNormalize(file: Path,
  */
 private fun putMoreLikelyPluginJarsFirst(pluginDir: Path, filesInLibUnderPluginDir: MutableList<Path>) {
   val pluginDirName = pluginDir.fileName.toString()
-  filesInLibUnderPluginDir.sortWith(Comparator { o1: Path, o2: Path ->
+  // don't use kotlin sortWith to avoid loading of CollectionsKt
+  Collections.sort(filesInLibUnderPluginDir, Comparator { o1: Path, o2: Path ->
     val o2Name = o2.fileName.toString()
     val o1Name = o1.fileName.toString()
     val o2StartsWithResources = o2Name.startsWith("resources")

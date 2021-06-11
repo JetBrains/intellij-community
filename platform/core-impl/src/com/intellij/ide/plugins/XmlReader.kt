@@ -155,11 +155,12 @@ private fun readRootAttributes(reader: XMLStreamReader2, descriptor: RawPluginDe
 /**
  * Keep in sync with KotlinPluginUtil.KNOWN_KOTLIN_PLUGIN_IDS
  */
-private val KNOWN_KOTLIN_PLUGIN_IDS = setOf(
+@Suppress("ReplaceJavaStaticMethodWithKotlinAnalog", "SSBasedInspection")
+private val KNOWN_KOTLIN_PLUGIN_IDS = HashSet(Arrays.asList(
   "org.jetbrains.kotlin",
   "com.intellij.appcode.kmm",
   "org.jetbrains.kotlin.native.appcode"
-)
+))
 
 private fun readRootElementChild(reader: XMLStreamReader2,
                                  descriptor: RawPluginDescriptor,
@@ -175,7 +176,7 @@ private fun readRootElementChild(reader: XMLStreamReader2,
       }
       else if (!KNOWN_KOTLIN_PLUGIN_IDS.contains(descriptor.id)) {
         // no warn and no redefinition for kotlin - compiler.xml is a known issue
-        LOG.warn("id redefinition (${reader.locationInfo})")
+        LOG.warn("id redefinition (${reader.locationInfo.location})")
         descriptor.id = getNullifiedContent(reader)
       }
       else {
@@ -675,8 +676,7 @@ private fun readContent(reader: XMLStreamReader2,
           configFile = "${name.substring(0, index)}.${name.substring(index + 1)}.xml"
         }
 
-        items.add(PluginContentDescriptor.ModuleItem(name = name,
-                                                     configFile = configFile))
+        items.add(PluginContentDescriptor.ModuleItem(name = name, configFile = configFile))
       }
       else -> throw RuntimeException("Unknown content item type: $elementName")
     }

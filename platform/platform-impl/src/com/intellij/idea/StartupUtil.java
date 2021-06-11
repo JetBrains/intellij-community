@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -78,6 +78,7 @@ import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+@SuppressWarnings("LoggerInitializedWithForeignClass")
 @ApiStatus.Internal
 public final class StartupUtil {
   @SuppressWarnings("StaticNonFinalField")
@@ -376,7 +377,7 @@ public final class StartupUtil {
     default void importFinished(@NotNull Path newConfigDir) {}
   }
 
-  private static void runPreAppClass(@NotNull Logger log, @NotNull String[] args) {
+  private static void runPreAppClass(@NotNull Logger log, String @NotNull [] args) {
     String classBeforeAppProperty = System.getProperty(IDEA_CLASS_BEFORE_APPLICATION_PROPERTY);
     if (classBeforeAppProperty != null) {
       Activity activity = StartUpMeasurer.startActivity("pre app class running");
@@ -549,7 +550,7 @@ public final class StartupUtil {
 
   private static void loadSystemFontsAndDnDCursors() {
     Activity activity = StartUpMeasurer.startActivity("system fonts loading");
-    // This forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
+    // this forces loading of all system fonts, the following statement itself might not do it (see JBR-1825)
     new Font("N0nEx1st5ntF0nt", Font.PLAIN, 1).getFamily();
     // This caches available font family names (for the default locale) to make corresponding call
     // during editors reopening (in ComplementaryFontsRegistry's initialization code) instantaneous
@@ -808,7 +809,7 @@ public final class StartupUtil {
     if (Boolean.parseBoolean(System.getProperty("intellij.log.stdout", "true"))) {
       System.setOut(new PrintStreamLogger("STDOUT", System.out));
       System.setErr(new PrintStreamLogger("STDERR", System.err));
-      // Disabling output to System.err seems to be the only way to avoid deadlock (https://youtrack.jetbrains.com/issue/IDEA-243708)
+      // Disabling output to `System.err` seems to be the only way to avoid deadlock (https://youtrack.jetbrains.com/issue/IDEA-243708)
       // with Log4j 1.x if an internal error happens during logging (e.g. a disk space issue).
       // Should be revisited in case of migration to Log4j 2.
       LogLog.setQuietMode(true);

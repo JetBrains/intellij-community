@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
@@ -165,7 +165,7 @@ public final class SocketLock {
 
       String token = UUID.randomUUID().toString();
       Path[] lockedPaths = {myConfigPath, mySystemPath};
-      BuiltInServer server = BuiltInServer.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token));
+      BuiltInServer server = BuiltInServer.Companion.start(6942, 50, false, () -> new MyChannelInboundHandler(lockedPaths, myCommandProcessorRef, token));
       try {
         byte[] portBytes = Integer.toString(server.getPort()).getBytes(StandardCharsets.UTF_8);
         Files.write(myConfigPath.resolve(PORT_FILE), portBytes);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("ApplicationLoader")
 @file:ApiStatus.Internal
 package com.intellij.idea
@@ -43,6 +43,7 @@ import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.*
 import java.util.concurrent.*
 import java.util.function.BiFunction
 import javax.swing.UIManager
@@ -343,7 +344,7 @@ fun initConfigurationStore(app: ApplicationImpl) {
 @Suppress("SpellCheckingInspection")
 private fun processProgramArguments(args: List<String>): List<String> {
   if (args.isEmpty()) {
-    return emptyList()
+    return Collections.emptyList()
   }
 
   val arguments = mutableListOf<String>()

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.io
 
 import com.intellij.openapi.Disposable
@@ -54,8 +54,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       }
     }
 
-    @JvmStatic
-    fun start(firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: (Supplier<ChannelHandler>)? = null): BuiltInServer {
+    fun start(firstPort: Int, portsCount: Int, tryAnyPort: Boolean, handler: Supplier<ChannelHandler>? = null): BuiltInServer {
       val eventLoopGroup = multiThreadEventLoopGroup(if (PlatformUtils.isIdeaCommunity()) 2 else 3, BuiltInServerThreadFactory())
       return start(eventLoopGroup, true, firstPort, portsCount, tryAnyPort = tryAnyPort, handler = handler)
     }
@@ -65,7 +64,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
               firstPort: Int,
               portsCount: Int,
               tryAnyPort: Boolean,
-              handler: (Supplier<ChannelHandler>)? = null): BuiltInServer {
+              handler: Supplier<ChannelHandler>? = null): BuiltInServer {
       val channelRegistrar = ChannelRegistrar()
       val bootstrap = serverBootstrap(eventLoopGroup)
       configureChildHandler(bootstrap, channelRegistrar, handler)
@@ -73,7 +72,6 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       return BuiltInServer(eventLoopGroup, port, channelRegistrar)
     }
 
-    @JvmStatic
     fun configureChildHandler(bootstrap: ServerBootstrap, channelRegistrar: ChannelRegistrar, channelHandler: (Supplier<ChannelHandler>)?) {
       val portUnificationServerHandler = if (channelHandler == null) PortUnificationServerHandler() else null
       bootstrap.childHandler(object : ChannelInitializer<Channel>(), ChannelHandler {
@@ -92,7 +90,7 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       val address = InetAddress.getLoopbackAddress()
       val maxPort = (firstPort + portsCount) - 1
       for (port in firstPort..maxPort) {
-        // some antiviral software detect viruses by the fact of accessing these ports so we should not touch them to appear innocent
+        // some antiviral software detect viruses by the fact of accessing these ports, so we should not touch them to appear innocent
         if (port == 6953 || port == 6969 || port == 6970) {
           continue
         }
@@ -116,7 +114,6 @@ class BuiltInServer private constructor(val eventLoopGroup: EventLoopGroup,
       throw future.cause()
     }
 
-    @JvmStatic
     fun replaceDefaultHandler(context: ChannelHandlerContext, channelHandler: ChannelHandler) {
       context.pipeline().replace(DelegatingHttpRequestHandler::class.java, "replacedDefaultHandler", channelHandler)
     }
