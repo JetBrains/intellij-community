@@ -167,7 +167,7 @@ class WorkspaceCacheTest {
     @ClassRule
     val appRule = ApplicationRule()
 
-    private val testProjectBase = "platform/workspaceModel/ide/tests/testData/serialization/loadingFromCache"
+    private val testProjectBase = "platform/workspaceModel/jps/tests/testData/serialization/loadingFromCache"
     private val dirBasedProject = "$testProjectBase/directoryBased"
 
     private fun projectFile(path: String): File {
