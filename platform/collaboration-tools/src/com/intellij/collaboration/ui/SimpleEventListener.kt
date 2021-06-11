@@ -12,36 +12,20 @@ fun interface SimpleEventListener : EventListener {
   companion object {
 
     fun addDisposableListener(dispatcher: EventDispatcher<SimpleEventListener>, disposable: Disposable, listener: () -> Unit) {
-      dispatcher.addListener(object : SimpleEventListener {
-        override fun eventOccurred() {
-          listener()
-        }
-      }, disposable)
+      dispatcher.addListener(SimpleEventListener { listener() }, disposable)
     }
 
     fun addListener(dispatcher: EventDispatcher<SimpleEventListener>, listener: () -> Unit) {
-      dispatcher.addListener(object : SimpleEventListener {
-        override fun eventOccurred() {
-          listener()
-        }
-      })
+      dispatcher.addListener(SimpleEventListener { listener() })
     }
 
     fun addAndInvokeListener(dispatcher: EventDispatcher<SimpleEventListener>, listener: () -> Unit) {
-      dispatcher.addListener(object : SimpleEventListener {
-        override fun eventOccurred() {
-          listener()
-        }
-      })
+      dispatcher.addListener(SimpleEventListener { listener() })
       listener()
     }
 
     fun addAndInvokeListener(dispatcher: EventDispatcher<SimpleEventListener>, disposable: Disposable, listener: () -> Unit) {
-      dispatcher.addListener(object : SimpleEventListener {
-        override fun eventOccurred() {
-          listener()
-        }
-      }, disposable)
+      dispatcher.addListener(SimpleEventListener { listener() }, disposable)
       if (!Disposer.isDisposed(disposable)) listener()
     }
   }
