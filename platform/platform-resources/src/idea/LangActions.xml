@@ -688,14 +688,15 @@
       <reference ref="ExternalToolsGroup"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuSettingsGroup"/>
-      <group id="RemoveBom.Group">
-        <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
-        <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
-      </group>
-      <group id="AddBom.Group">
-        <action id="AddBom" class="com.intellij.openapi.editor.actions.AddBomAction"/>
-        <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="RemoveBom"/>
-      </group>
+    </group>
+
+    <group id="RemoveBom.Group">
+      <action id="RemoveBom" class="com.intellij.openapi.editor.actions.RemoveBomAction"/>
+      <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="ChangeFileEncodingAction"/>
+    </group>
+    <group id="AddBom.Group">
+      <action id="AddBom" class="com.intellij.openapi.editor.actions.AddBomAction"/>
+      <add-to-group group-id="FilePropertiesGroup" anchor="after" relative-to-action="RemoveBom.Group"/>
     </group>
 
     <group id="EncodingPanelActions">
