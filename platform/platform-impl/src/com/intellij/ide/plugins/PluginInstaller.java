@@ -276,7 +276,7 @@ public final class PluginInstaller {
                                                             installedPlugin != null ? installedPlugin.getVersion() : null);
 
       if (Registry.is("marketplace.certificate.signature.check")) {
-        if (!PluginSignatureChecker.verifyPluginByAllCertificates(pluginDescriptor, file, true)) {
+        if (!PluginSignatureChecker.verify(pluginDescriptor, file, true)) {
           return false;
         }
       }

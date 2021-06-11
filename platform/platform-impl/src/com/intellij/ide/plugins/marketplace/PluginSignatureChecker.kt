@@ -46,34 +46,13 @@ internal object PluginSignatureChecker {
   }
 
   @JvmStatic
-  fun verifyPluginByAllCertificates(descriptor: IdeaPluginDescriptor, pluginFile: File, showAcceptDialog: Boolean = true): Boolean {
+  fun verify(descriptor: IdeaPluginDescriptor, pluginFile: File, showAcceptDialog: Boolean = true): Boolean {
     val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates.orEmpty()
     return if (showAcceptDialog) {
       isSignedInWithAcceptDialog(descriptor, pluginFile, certificates)
     }
     else {
       isSignedInBackground(descriptor, pluginFile, certificates)
-    }
-  }
-
-  @JvmStatic
-  fun verifyPluginByCustomCertificates(descriptor: IdeaPluginDescriptor, pluginFile: File, showAcceptDialog: Boolean = true): Boolean {
-    val certificates = PluginCertificateStore.getInstance().customTrustManager.certificates
-    if (certificates.isEmpty()) return true
-    return isSignedBy(descriptor, pluginFile, showAcceptDialog, *certificates.toTypedArray())
-  }
-
-  @JvmStatic
-  fun verifyPluginByJetBrains(
-    descriptor: IdeaPluginDescriptor,
-    pluginFile: File,
-    showAcceptDialog: Boolean = true
-  ): Boolean {
-    return if (showAcceptDialog) {
-      isSignedInWithAcceptDialog(descriptor, pluginFile)
-    }
-    else {
-      isSignedInBackground(descriptor, pluginFile)
     }
   }
 
