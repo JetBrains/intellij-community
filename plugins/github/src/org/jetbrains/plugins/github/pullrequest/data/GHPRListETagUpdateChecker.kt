@@ -12,7 +12,7 @@ import org.jetbrains.plugins.github.api.GHRepositoryPath
 import org.jetbrains.plugins.github.api.GithubApiRequestExecutor
 import org.jetbrains.plugins.github.api.GithubApiRequests
 import org.jetbrains.plugins.github.api.GithubServerPath
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 import org.jetbrains.plugins.github.util.NonReusableEmptyProgressIndicator
 import java.util.concurrent.ScheduledFuture

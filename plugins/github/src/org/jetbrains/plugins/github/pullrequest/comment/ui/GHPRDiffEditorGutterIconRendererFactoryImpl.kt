@@ -12,7 +12,7 @@ import com.intellij.collaboration.ui.codereview.diff.AddCommentGutterIconRendere
 import com.intellij.collaboration.ui.codereview.diff.DiffEditorGutterIconRendererFactory
 import com.intellij.collaboration.ui.codereview.diff.EditorComponentInlaysManager
 import org.jetbrains.plugins.github.i18n.GithubBundle
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.ui.util.GHUIUtil
 import javax.swing.JComponent
 

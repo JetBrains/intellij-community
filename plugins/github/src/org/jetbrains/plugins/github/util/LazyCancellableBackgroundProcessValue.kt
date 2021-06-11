@@ -13,7 +13,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.util.EventDispatcher
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import java.util.*
 import java.util.concurrent.CompletableFuture
 import java.util.function.BiFunction

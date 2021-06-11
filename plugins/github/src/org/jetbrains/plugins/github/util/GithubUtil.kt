@@ -16,7 +16,7 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.plugins.github.authentication.GithubAuthenticationManager
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import java.io.IOException
 import java.net.UnknownHostException
 import java.util.concurrent.ScheduledFuture

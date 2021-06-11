@@ -26,7 +26,7 @@ import org.jetbrains.plugins.github.api.GithubServerPath
 import org.jetbrains.plugins.github.authentication.accounts.GHAccountManager
 import org.jetbrains.plugins.github.authentication.accounts.GithubAccount
 import org.jetbrains.plugins.github.pullrequest.GHPRStatisticsCollector
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil.Delegates.observableField
 
 @Service

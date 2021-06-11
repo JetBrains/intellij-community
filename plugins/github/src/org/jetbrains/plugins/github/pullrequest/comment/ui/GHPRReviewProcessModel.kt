@@ -2,7 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.comment.ui
 
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestPendingReview
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 
 interface GHPRReviewProcessModel {
   val pendingReview: GHPullRequestPendingReview?

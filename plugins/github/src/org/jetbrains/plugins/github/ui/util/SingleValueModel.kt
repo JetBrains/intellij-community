@@ -4,7 +4,7 @@ package org.jetbrains.plugins.github.ui.util
 import com.intellij.openapi.Disposable
 import com.intellij.util.EventDispatcher
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import org.jetbrains.plugins.github.pullrequest.ui.SimpleEventListener
+import com.intellij.collaboration.ui.SimpleEventListener
 import org.jetbrains.plugins.github.util.GithubUtil
 
 class SingleValueModel<T>(initialValue: T) : com.intellij.collaboration.ui.codereview.SingleValueModel<T> {

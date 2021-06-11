@@ -3,17 +3,15 @@ package org.jetbrains.plugins.github.pullrequest.ui.toolwindow.create
 
 import com.intellij.CommonBundle
 import com.intellij.collaboration.async.CompletableFutureUtil.successOnEdt
-import git4idea.util.findPushTarget
-import git4idea.ui.branch.CreateDirectionComponentFactory
-import git4idea.ui.branch.CreateDirectionModel
-import git4idea.ui.branch.GitRemoteAndRepository
+import com.intellij.collaboration.ui.ListenableProgressIndicator
 import com.intellij.dvcs.DvcsUtil
 import com.intellij.dvcs.push.PushSpec
 import com.intellij.dvcs.ui.DvcsBundle
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.progress.*
-import com.intellij.openapi.progress.util.AbstractProgressIndicatorExBase
+import com.intellij.openapi.progress.ProcessCanceledException
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
 import com.intellij.openapi.progress.util.ProgressWrapper
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Messages
@@ -29,7 +27,6 @@ import com.intellij.ui.components.JBTextArea
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import git4idea.GitLocalBranch
@@ -42,6 +39,10 @@ import git4idea.push.GitPushSupport
 import git4idea.push.GitPushTarget
 import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
+import git4idea.ui.branch.CreateDirectionComponentFactory
+import git4idea.ui.branch.CreateDirectionModel
+import git4idea.ui.branch.GitRemoteAndRepository
+import git4idea.util.findPushTarget
 import git4idea.validators.GitRefNameValidator
 import net.miginfocom.layout.CC
 import net.miginfocom.layout.LC
@@ -54,7 +55,10 @@ import org.jetbrains.plugins.github.i18n.GithubBundle
 import org.jetbrains.plugins.github.pullrequest.config.GithubPullRequestsProjectUISettings
 import org.jetbrains.plugins.github.pullrequest.data.GHPRDataContext
 import org.jetbrains.plugins.github.pullrequest.data.GHPRIdentifier
-import org.jetbrains.plugins.github.pullrequest.ui.*
+import org.jetbrains.plugins.github.pullrequest.ui.GHCompletableFutureLoadingModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHIOExecutorLoadingModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHLoadingModel
+import org.jetbrains.plugins.github.pullrequest.ui.GHSimpleLoadingModel
 import org.jetbrains.plugins.github.pullrequest.ui.details.GHPRMetadataPanelFactory
 import org.jetbrains.plugins.github.pullrequest.ui.toolwindow.GHPRToolWindowTabComponentController
 import org.jetbrains.plugins.github.ui.util.DisableableDocument
@@ -445,16 +449,6 @@ internal class GHPRCreateInfoComponentFactory(private val project: Project,
         label.text = progressIndicator.text
       }
       return label
-    }
-
-    private class ListenableProgressIndicator : AbstractProgressIndicatorExBase(), StandardProgressIndicator {
-      private val eventDispatcher = EventDispatcher.create(SimpleEventListener::class.java)
-
-      override fun isReuseable() = true
-      override fun onProgressChange() = invokeAndWaitIfNeeded { eventDispatcher.multicaster.eventOccurred() }
-      fun addAndInvokeListener(listener: () -> Unit) = SimpleEventListener.addAndInvokeListener(eventDispatcher, listener)
-      override fun cancel() = super.cancel()
-      override fun isCanceled() = super.isCanceled()
     }
   }
 }
