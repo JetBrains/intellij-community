@@ -412,8 +412,6 @@
                               Otherwise only the affected files will be refreshed.
                               Affects only a subset of Git operations.
                               The option is needed to debug possible &quot;incomplete VFS refresh&quot; reports, if they appear."/>
-    <registryKey key="git.force.commit.using.staging.area" defaultValue="true"
-                 description="When enabled, perform all git commits by updating staging area. If disabled, use 'git commit --only' when possible."/>
     <registryKey key="git.clone.recurse.submodules" defaultValue="true"
                  description="When enabled, Checkout from Git calls 'git clone --recurse-submodules', i.e. clones the main repository with all submodules if there are any."/>
     <registryKey key="git.read.content.with.textconv" defaultValue="false"
