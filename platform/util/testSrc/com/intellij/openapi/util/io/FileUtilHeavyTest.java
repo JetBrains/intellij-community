@@ -439,15 +439,6 @@ public class FileUtilHeavyTest {
     NioFiles.createDirectories(nonExisting);
     assertThat(nonExisting).isDirectory();
 
-    try {
-      // Trying to create already created directories with the predecessor and with the successor function.
-      Files.createDirectories(nonExisting);
-      NioFiles.createDirectories(nonExisting);
-    }
-    catch (FileAlreadyExistsException ignored) {
-      fail("FileAlreadyExistsException shouldn't has been thrown");
-    }
-
     Path existingFile = tempDir.newFile("file").toPath();
     try {
       NioFiles.createDirectories(existingFile);

@@ -24,21 +24,23 @@ public final class NioFiles {
    * I.e. this method accepts "/path/.../dir_link" (where "dir_link" is a symlink to a directory), while the original fails.
    */
   public static @NotNull Path createDirectories(@NotNull Path path) throws IOException {
-    if (!Files.isDirectory(path)) {
-      if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
-        throw new FileAlreadyExistsException(path.toString(), null, "already exists");
-      }
-      else {
-        Path parent = path.getParent();
-        if (parent != null) {
-          createDirectories(parent);
+    try {
+      if (!Files.isDirectory(path)) {
+        if (Files.exists(path, LinkOption.NOFOLLOW_LINKS)) {
+          throw new FileAlreadyExistsException(path.toString(), null, "already exists");
         }
-        try {
+        else {
+          Path parent = path.getParent();
+          if (parent != null) {
+            createDirectories(parent);
+          }
           Files.createDirectory(path);
         }
-        catch (FileAlreadyExistsException ignored) {
-          // Ignored.
-        }
+      }
+    }
+    catch (FileAlreadyExistsException err) {
+      if (!Files.isDirectory(path)) {
+        throw err;
       }
     }
     return path;
