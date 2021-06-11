@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.tools.projectWizard.core.service
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser.parseString
 import org.jetbrains.annotations.NonNls
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.tools.projectWizard.Versions
 import org.jetbrains.kotlin.tools.projectWizard.core.TaskResult
 import org.jetbrains.kotlin.tools.projectWizard.core.asNullable
@@ -38,7 +39,6 @@ abstract class KotlinVersionProviderService : WizardService {
         getBuildSystemPluginRepository(getKotlinVersionKind(version), getDevVersionRepository()),
     )
 
-
     private fun getKotlinVersionRepository(versionKind: KotlinVersionKind): Repository = when (versionKind) {
         KotlinVersionKind.STABLE, KotlinVersionKind.EAP, KotlinVersionKind.M -> DefaultRepository.MAVEN_CENTRAL
         KotlinVersionKind.DEV -> getDevVersionRepository()
@@ -61,6 +61,14 @@ abstract class KotlinVersionProviderService : WizardService {
     }
 
     companion object {
+        @NonNls
+        const val SNAPSHOT_TAG = "snapshot"
+
+        fun getKotlinVersionFromCompiler() =
+            KotlinCompilerVersion.getVersion()
+                ?.takeUnless { it.contains(SNAPSHOT_TAG, ignoreCase = true) }
+                ?.let { Version.fromString(it.substringBefore("-release")) }
+
         fun getBuildSystemPluginRepository(
             versionKind: KotlinVersionKind,
             devRepository: Repository
@@ -80,8 +88,13 @@ abstract class KotlinVersionProviderService : WizardService {
 
 
 class KotlinVersionProviderServiceImpl : KotlinVersionProviderService(), IdeaIndependentWizardService {
-    override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion =
-        kotlinVersionWithDefaultValues(Versions.KOTLIN)
+    override fun getKotlinVersion(projectKind: ProjectKind): WizardKotlinVersion {
+        val version = when (projectKind) {
+            ProjectKind.COMPOSE -> Versions.KOTLIN_VERSION_FOR_COMPOSE
+            else -> getKotlinVersionFromCompiler() ?: Versions.KOTLIN
+        }
+        return kotlinVersionWithDefaultValues(version)
+    }
 }
 
 
