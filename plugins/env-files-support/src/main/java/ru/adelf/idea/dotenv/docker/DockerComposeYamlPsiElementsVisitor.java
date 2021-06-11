@@ -1,3 +1,4 @@
+/*
 package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.psi.PsiElement;
@@ -48,12 +49,14 @@ class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
         }
     }
 
-    /**
+    */
+/**
      * FOO:
      * - foobar
      * <p>
      * FOO: [foobar]
-     */
+     *//*
+
     @NotNull
     private Collection<YAMLSequenceItem> getSequenceItems(@NotNull YAMLKeyValue yamlKeyValue) {
         PsiElement yamlSequence = yamlKeyValue.getLastChild();
@@ -65,10 +68,12 @@ class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
         return Collections.emptyList();
     }
 
-    /**
+    */
+/**
      * FOO:
      *   bar: true
-     */
+     *//*
+
     @NotNull
     private Collection<YAMLKeyValue> getMappingItems(@NotNull YAMLKeyValue yamlKeyValue) {
         PsiElement yamlMapping = yamlKeyValue.getLastChild();
@@ -80,3 +85,4 @@ class DockerComposeYamlPsiElementsVisitor extends PsiRecursiveElementVisitor {
         return Collections.emptyList();
     }
 }
+*/

@@ -1,3 +1,4 @@
+/*
 package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.openapi.vfs.VirtualFile;
@@ -37,3 +38,4 @@ public class DockerComposeYamlVariablesProvider implements EnvironmentVariablesP
         return Collections.emptyList();
     }
 }
+*/

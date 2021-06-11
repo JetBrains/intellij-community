@@ -1,3 +1,4 @@
+/*
 package ru.adelf.idea.dotenv.js;
 
 import com.intellij.lang.javascript.psi.JSReferenceExpression;
@@ -31,3 +32,4 @@ class JsEnvironmentCallsVisitor extends PsiRecursiveElementVisitor {
         return collectedItems;
     }
 }
+*/

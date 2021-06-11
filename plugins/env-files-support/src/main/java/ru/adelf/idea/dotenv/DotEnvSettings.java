@@ -1,7 +1,6 @@
 package ru.adelf.idea.dotenv;
 
 import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.project.Project;
@@ -26,6 +25,6 @@ public class DotEnvSettings implements PersistentStateComponent<DotEnvSettings> 
     }
 
     public static DotEnvSettings getInstance(Project project) {
-        return ServiceManager.getService(project, DotEnvSettings.class);
+        return project.getService(DotEnvSettings.class);
     }
 }

@@ -5,7 +5,13 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.4.9"
+    id "org.jetbrains.intellij" version "0.7.3"
+}
+
+repositories {
+    maven {
+        url "https://plugins.gradle.org/m2/"
+    }
 }
 
 sourceSets {
@@ -24,15 +30,15 @@ apply plugin: 'org.jetbrains.intellij'
 apply plugin: 'java'
 
 intellij {
-    version 'IU-193.6015.39'
+    version 'IU-212.4037.9-EAP-SNAPSHOT'
     plugins = [
-            'com.jetbrains.php:193.6015.48',
-            'JavaScriptLanguage',
+            'com.jetbrains.php:212.4037.57',
+            //'JavaScriptLanguage',
             'yaml',
-            'org.jetbrains.plugins.go:193.5662.53.103',
+            'org.jetbrains.plugins.go:212.4037.9',
             'Docker',
-            'pythonid:193.6015.28',
-            'org.jetbrains.plugins.ruby:193.6015.9',
+            'pythonid:212.4037.9',
+            'org.jetbrains.plugins.ruby:212.4037.9',
             'Kotlin',
             'coverage',
             'CSS',
@@ -44,7 +50,7 @@ intellij {
 }
 
 patchPluginXml {
-    sinceBuild '193'
+    sinceBuild '212'
     untilBuild '212.*'
 }
 
@@ -53,5 +59,6 @@ buildSearchableOptions {
 }
 
 group 'ru.adelf'
-version '2021.2' // Plugin version
-sourceCompatibility = 1.8
+version '2021.2.212' // Plugin version
+sourceCompatibility = 11
+targetCompatibility = 11

@@ -1,3 +1,4 @@
+/*
 package ru.adelf.idea.dotenv.js;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -57,4 +58,4 @@ public class JsEnvCompletionProvider extends BaseEnvCompletionProvider implement
     public String getActionText(@NotNull DataContext dataContext) {
         return null;
     }
-}
+}*/

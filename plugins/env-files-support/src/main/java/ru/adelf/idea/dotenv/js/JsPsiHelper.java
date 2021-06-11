@@ -1,3 +1,4 @@
+/*
 package ru.adelf.idea.dotenv.js;
 
 import com.intellij.lang.javascript.psi.JSReferenceExpression;
@@ -9,10 +10,6 @@ import org.jetbrains.annotations.Nullable;
 
 class JsPsiHelper {
 
-    /**
-     * @param psiElement checking element
-     * @return true if this is process.env.*** variable
-     */
     static boolean checkPsiElement(@NotNull PsiElement psiElement) {
         if(!(psiElement instanceof LeafPsiElement)) {
             return false;
@@ -31,11 +28,6 @@ class JsPsiHelper {
         return ((JSReferenceExpression) parent).getCanonicalText().startsWith("process.env");
     }
 
-    /**
-     * Checks whole process.env.SOME_KEY reference element
-     * @param referenceExpression checking expression
-     * @return null or Environment key
-     */
     @Nullable
     static String checkReferenceExpression(@NotNull JSReferenceExpression referenceExpression) {
         String text = referenceExpression.getCanonicalText();
@@ -47,3 +39,4 @@ class JsPsiHelper {
         return text.substring(12);
     }
 }
+*/

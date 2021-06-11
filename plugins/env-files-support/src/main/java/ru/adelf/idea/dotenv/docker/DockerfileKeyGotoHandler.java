@@ -1,9 +1,10 @@
+/*
 package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
+import com.intellij.docker.dockerFile.parser.psi.DockerFileEnvRegularDeclaration;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.plugins.docker.dockerFile.parser.psi.DockerFileEnvRegularDeclaration;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,3 +40,4 @@ public class DockerfileKeyGotoHandler implements GotoDeclarationHandler {
         return null;
     }
 }
+*/

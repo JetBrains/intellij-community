@@ -1,3 +1,4 @@
+/*
 package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationHandler;
@@ -77,3 +78,4 @@ public class DockerComposeKeyGotoHandler implements GotoDeclarationHandler {
         return null;
     }
 }
+*/

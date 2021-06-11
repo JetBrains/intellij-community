@@ -1,3 +1,4 @@
+/*
 package ru.adelf.idea.dotenv.js;
 
 import com.intellij.lang.javascript.JavaScriptFileType;
@@ -32,3 +33,4 @@ public class JsEnvironmentVariablesUsagesProvider implements EnvironmentVariable
         return Collections.emptyList();
     }
 }
+*/

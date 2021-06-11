@@ -1,6 +1,7 @@
+/*
 package ru.adelf.idea.dotenv.docker;
 
-import com.intellij.plugins.docker.dockerFile.parser.psi.DockerFileEnvRegularDeclaration;
+import com.intellij.docker.dockerFile.parser.psi.DockerFileEnvRegularDeclaration;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiRecursiveElementVisitor;
 import org.apache.commons.lang.StringUtils;
@@ -34,3 +35,4 @@ class DockerfilePsiElementsVisitor extends PsiRecursiveElementVisitor {
         return collectedItems;
     }
 }
+*/

@@ -1,3 +1,4 @@
+/*
 package ru.adelf.idea.dotenv.docker;
 
 import com.intellij.docker.dockerFile.DockerFileType;
@@ -32,3 +33,4 @@ public class DockerfileVariablesProvider implements EnvironmentVariablesProvider
         return Collections.emptyList();
     }
 }
+*/
