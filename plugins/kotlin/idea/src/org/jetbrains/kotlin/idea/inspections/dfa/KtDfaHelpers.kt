@@ -25,11 +25,12 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluat
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isNullabilityFlexible
 import org.jetbrains.kotlin.types.typeUtil.*
 
 internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
     if (this == null) return DfType.TOP
-    if (isMarkedNullable) {
+    if (isMarkedNullable || isNullabilityFlexible()) {
         var notNullableType = makeNotNullable().toDfType(context)
         if (notNullableType is DfPrimitiveType) {
             notNullableType = SpecialField.UNBOX.asDfType(notNullableType)
