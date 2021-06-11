@@ -477,10 +477,6 @@
       <action id="RenameElement" class="com.intellij.refactoring.actions.RenameElementAction"/>
       <action id="ChangeSignature" class="com.intellij.refactoring.actions.ChangeSignatureAction"/>
       <separator/>
-      <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
-      <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
-      <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
-      <separator/>
       <group id="IntroduceActionsGroup" popup="true" class="com.intellij.ide.actions.PopupInMainMenuActionGroup">
         <action id="IntroduceVariable" class="com.intellij.refactoring.actions.IntroduceVariableAction"/>
         <action id="IntroduceConstant" class="com.intellij.refactoring.actions.IntroduceConstantAction"/>
@@ -497,10 +493,14 @@
         <action id="ExtractSuperclass" class="com.intellij.refactoring.actions.ExtractSuperclassAction"/>
         <action id="ExtractModule" class="com.intellij.refactoring.actions.ExtractModuleAction"/>
       </group>
-
       <action id="Inline" class="com.intellij.refactoring.actions.InlineAction"/>
       <action id="InvertBoolean" class="com.intellij.refactoring.actions.InvertBooleanAction"/>
       <separator/>
+      <action id="Move" class="com.intellij.refactoring.actions.MoveAction"/>
+      <action id="CopyElement" class="com.intellij.ide.actions.CopyElementAction"/>
+      <action id="SafeDelete" class="com.intellij.refactoring.actions.SafeDeleteAction"/>
+      <separator/>
+
       <action id="MembersPullUp" class="com.intellij.refactoring.actions.PullUpAction"/>
       <action id="MemberPushDown" class="com.intellij.refactoring.actions.PushDownAction"/>
       <add-to-group group-id="MainMenu" anchor="after" relative-to-action="CodeMenu"/>
