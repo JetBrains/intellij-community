@@ -87,10 +87,12 @@ public abstract class ActionOnSaveBackedByOwnConfigurable<Conf extends UnnamedCo
     setActionOnSaveEnabled(configurable, isActionOnSaveEnabledAccordingToStoredState());
   }
 
+  /**
+   * Normally, {@link ActionOnSaveBackedByOwnConfigurable} implementations don't need to do anything on <code>apply()</code> method because
+   * all changes are applied when Platform calls <code>myConfigurableWithInitializedUiComponent.apply()</code>.
+   */
   @Override
-  protected final void apply() {
-    // All changes will be applied when Platform calls myConfigurableWithInitializedUiComponent.apply()
-  }
+  protected void apply() { }
 
   @Override
   protected final boolean isModified() {
