@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.artifacts
 object KotlinArtifactNames {
     const val JETBRAINS_ANNOTATIONS = "annotations-13.0.jar"
     const val KOTLIN_STDLIB = "kotlin-stdlib.jar"
+    const val KOTLIN_STDLIB_MINIMAL_FOR_TESTS = "kotlin-stdlib-minimal-for-test.jar"
     const val KOTLIN_STDLIB_SOURCES = "kotlin-stdlib-sources.jar"
     const val KOTLIN_STDLIB_JDK7 = "kotlin-stdlib-jdk7.jar"
     const val KOTLIN_STDLIB_JDK8 = "kotlin-stdlib-jdk8.jar"

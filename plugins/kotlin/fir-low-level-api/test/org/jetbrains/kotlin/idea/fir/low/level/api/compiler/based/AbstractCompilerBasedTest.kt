@@ -204,7 +204,7 @@ abstract class AbstractCompilerBasedTest : KotlinLightCodeInsightFixtureTestCase
             files.add(KotlinArtifacts.instance.kotlinTest)
         } else if (configurationKind.withMockRuntime) {
             //KotlinArtifacts.instance.kotlinStdlib
-            files.add(KotlinArtifacts.instance.kotlinStdlib)
+            files.add(KotlinArtifacts.instance.kotlinStdlibMinimalForTests)
             files.add(KotlinArtifacts.instance.kotlinScriptRuntime)
         }
         if (configurationKind.withReflection) {
