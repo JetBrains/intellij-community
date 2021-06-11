@@ -384,6 +384,38 @@
         <action id="HippieBackwardCompletion" class="com.intellij.codeInsight.completion.actions.HippieBackwardCompletionAction"/>
       </group>
 
+      <group id="InspectCodeInCodeMenuGroup">
+        <separator/>
+        <group id="InspectCodeGroup">
+          <action id="InspectCode" class="com.intellij.codeInspection.actions.CodeInspectionAction"/>
+          <action id="CodeCleanup" class="com.intellij.codeInspection.actions.CodeCleanupAction"/>
+
+          <group id="AnalyzePlatformMenu">
+            <action id="Unscramble" class="com.intellij.unscramble.AnalyzeStacktraceAction">
+              <override-text place="EditorPopup"/>
+            </action>
+          </group>
+        </group>
+
+        <group id="AnalyzeActionsPopup" popup="true">
+          <group id="AnalyzeActions">
+            <action id="SilentCodeCleanup" class="com.intellij.codeInspection.actions.SilentCodeCleanupAction" />
+            <action id="RunInspection" class="com.intellij.codeInspection.actions.RunInspectionAction" />
+            <action id="PopupHector" class="com.intellij.codeInsight.daemon.impl.ConfigureHighlightingLevelAction"/>
+            <action id="ViewOfflineInspection" class="com.intellij.codeInspection.actions.ViewOfflineResultsAction"/>
+            <separator/>
+            <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction">
+              <override-text place="MainMenu"/>
+              <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+            </action>
+            <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction">
+              <override-text place="MainMenu"/>
+              <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
+            </action>
+          </group>
+        </group>
+      </group>
+
       <separator/>
       <action id="InsertLiveTemplate" class="com.intellij.codeInsight.template.impl.actions.ListTemplatesAction"/>
       <action id="SurroundWith" class="com.intellij.codeInsight.generation.actions.SurroundWithAction"/>
@@ -460,16 +492,6 @@
     </group>
 
     <action id="ToggleInlayHintsGloballyAction" class="com.intellij.codeInsight.hints.ToggleInlayHintsGloballyAction"/>
-
-    <!-- Analyze -->
-    <action id="SliceBackward" class="com.intellij.slicer.SliceBackwardAction">
-      <override-text place="MainMenu"/>
-      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-    </action>
-    <action id="SliceForward" class="com.intellij.slicer.SliceForwardAction">
-      <override-text place="MainMenu"/>
-      <override-text place="EditorPopup" use-text-of-place="MainMenu"/>
-    </action>
 
     <!-- Refactor -->
     <group id="RefactoringMenu" popup="true">
