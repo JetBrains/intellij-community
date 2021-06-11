@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.ColorHexUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -293,7 +294,8 @@ public class RegistryValue {
     return myKey + "=" + asString();
   }
 
-  void resetCache() {
+  @ApiStatus.Internal
+  public void resetCache() {
     myStringCachedValue = null;
     myIntCachedValue = null;
     myDoubleCachedValue = Double.NaN;
