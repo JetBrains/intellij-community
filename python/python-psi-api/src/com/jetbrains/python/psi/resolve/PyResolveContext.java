@@ -14,10 +14,6 @@ public final class PyResolveContext {
   @NotNull
   private final TypeEvalContext myTypeEvalContext;
 
-  private PyResolveContext(boolean allowImplicits, boolean allowProperties) {
-    this(allowImplicits, allowProperties, false, TypeEvalContext.codeInsightFallback(null));
-  }
-
   private PyResolveContext(boolean allowImplicits, boolean allowProperties, boolean allowRemote, @NotNull TypeEvalContext typeEvalContext) {
     myAllowImplicits = allowImplicits;
     myAllowProperties = allowProperties;
@@ -37,10 +33,6 @@ public final class PyResolveContext {
     return myAllowRemote;
   }
 
-  private static final PyResolveContext ourDefaultContext = new PyResolveContext(false, true);
-  private static final PyResolveContext ourImplicitsContext = new PyResolveContext(true, true);
-  private static final PyResolveContext ourNoPropertiesContext = new PyResolveContext(false, false);
-
   /**
    * @deprecated Please use {@link PyResolveContext#defaultContext(TypeEvalContext)}
    * to explicitly specify type evaluation context.
@@ -49,12 +41,12 @@ public final class PyResolveContext {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static PyResolveContext defaultContext() {
-    return ourDefaultContext;
+    return new PyResolveContext(false, true, false, TypeEvalContext.codeInsightFallback(null));
   }
 
   @NotNull
   public static PyResolveContext defaultContext(@NotNull TypeEvalContext context) {
-    return ourDefaultContext.withTypeEvalContext(context);
+    return new PyResolveContext(false, true, false, context);
   }
 
   /**
@@ -65,7 +57,7 @@ public final class PyResolveContext {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static PyResolveContext implicitContext() {
-    return ourImplicitsContext;
+    return new PyResolveContext(true, true, false, TypeEvalContext.codeInsightFallback(null));
   }
 
   /**
@@ -75,7 +67,7 @@ public final class PyResolveContext {
    */
   @NotNull
   public static PyResolveContext implicitContext(@NotNull TypeEvalContext context) {
-    return ourImplicitsContext.withTypeEvalContext(context);
+    return new PyResolveContext(true, true, false, context);
   }
 
   /**
@@ -86,12 +78,12 @@ public final class PyResolveContext {
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static PyResolveContext noProperties() {
-    return ourNoPropertiesContext;
+    return new PyResolveContext(false, false, false, TypeEvalContext.codeInsightFallback(null));
   }
 
   @NotNull
   public static PyResolveContext noProperties(@NotNull TypeEvalContext context) {
-    return ourNoPropertiesContext.withTypeEvalContext(context);
+    return new PyResolveContext(false, false, false, context);
   }
 
   @NotNull
