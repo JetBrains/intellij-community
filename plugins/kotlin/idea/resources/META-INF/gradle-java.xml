@@ -3,6 +3,7 @@
     <xi:include href="scripting-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <xi:include href="allopen-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
     <xi:include href="noarg-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
+    <xi:include href="sam-with-receiver-dep-gradle.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
     <extensions defaultExtensionNs="org.jetbrains.plugins.gradle">
         <testTasksProvider implementation="org.jetbrains.kotlin.idea.run.KotlinMPPGradleTestTasksProvider"/>
@@ -21,7 +22,6 @@
         <projectResolve implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleProjectResolverExtension" order="first"/>
         <projectResolve implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleCoroutineDebugProjectResolver" order="last"/>
         <projectResolve implementation="org.jetbrains.kotlin.kapt.idea.KaptProjectResolverExtension" order="last"/>
-        <projectResolve implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.samWithReceiver.SamWithReceiverProjectResolverExtension" order="last"/>
     </extensions>
 
     <extensions defaultExtensionNs="com.intellij">
@@ -48,7 +48,6 @@
 
     <extensions defaultExtensionNs="org.jetbrains.kotlin">
         <gradleProjectImportHandler implementation="org.jetbrains.kotlin.kapt.idea.KaptGradleProjectImportHandler"/>
-        <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.samWithReceiver.SamWithReceiverGradleProjectImportHandler"/>
         <gradleProjectImportHandler implementation="org.jetbrains.kotlin.idea.gradle.compilerPlugin.kotlinxSerialization.KotlinSerializationGradleImportHandler"/>
 
         <projectConfigurator implementation="org.jetbrains.kotlin.idea.configuration.KotlinGradleModuleConfigurator"/>
