@@ -3,10 +3,12 @@ package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.LocalInspectionTool;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -24,6 +26,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
   private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
   private Project myProject;
   private Module myModule;
+  private final Disposable mySdkParentDisposable = Disposer.newDisposable("sdk for project in light test fixture");
 
   public LightIdeaTestFixtureImpl(@NotNull LightProjectDescriptor projectDescriptor) {
     myProjectDescriptor = projectDescriptor;
@@ -34,7 +37,8 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
     super.setUp();
 
     TestApplicationManager application = TestApplicationManager.getInstance();
-    Pair<Project, Module> setup = LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable());
+    Pair<Project, Module> setup = LightPlatformTestCase.doSetup(myProjectDescriptor, LocalInspectionTool.EMPTY_ARRAY, getTestRootDisposable(),
+                                                                mySdkParentDisposable);
     myProject = setup.getFirst();
     myModule = setup.getSecond();
     InjectedLanguageManagerImpl.pushInjectors(getProject());
@@ -74,6 +78,7 @@ public final class LightIdeaTestFixtureImpl extends BaseFixture implements Light
         }
       },
       () -> LightPlatformTestCase.checkEditorsReleased(),
+      () -> Disposer.dispose(mySdkParentDisposable),
       () -> {
         SdkLeakTracker oldSdks = myOldSdks;
         if (oldSdks != null) {

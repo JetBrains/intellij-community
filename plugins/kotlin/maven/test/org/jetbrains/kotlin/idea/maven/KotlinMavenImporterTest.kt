@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.application.options.CodeStyle
 import com.intellij.openapi.projectRoots.JavaSdk
+import com.intellij.openapi.projectRoots.ProjectJdkTable
 import com.intellij.openapi.roots.CompilerModuleExtension
 import com.intellij.openapi.roots.LibraryOrderEntry
 import com.intellij.openapi.roots.ModuleRootManager
@@ -25,7 +26,9 @@ import org.jetbrains.kotlin.idea.caches.project.testSourceInfo
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeAndGetResult
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.idea.formatter.*
+import org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle
+import org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle
+import org.jetbrains.kotlin.idea.formatter.kotlinCodeStyleDefaults
 import org.jetbrains.kotlin.idea.framework.CommonLibraryKind
 import org.jetbrains.kotlin.idea.framework.JSLibraryKind
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
@@ -2527,7 +2530,10 @@ class KotlinMavenImporterTest : KotlinMavenImportingTestCase() {
 
     fun testJDKImport() {
         val mockJdk = IdeaTestUtil.getMockJdk18()
-        runWriteAction(ThrowableRunnable { ProjectRootManager.getInstance(myProject).projectSdk = mockJdk })
+        runWriteAction(ThrowableRunnable {
+            ProjectJdkTable.getInstance().addJdk(mockJdk, myTestFixture.testRootDisposable)
+            ProjectRootManager.getInstance(myProject).projectSdk = mockJdk
+        })
 
         try {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
