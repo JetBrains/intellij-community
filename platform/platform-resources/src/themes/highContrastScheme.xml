@@ -16,6 +16,7 @@
     <option name="CONSOLE_BACKGROUND_KEY" value="0" />
     <option name="DELETED_LINES_COLOR" value="ffa14f" />
     <option name="DOCUMENTATION_COLOR" value="281a33" />
+    <option name="LOOKUP_COLOR" value="281a33" />
     <option name="ERROR_HINT" value="800002" />
     <option name="FILESTATUS_ADDED" value="62cc47" />
     <option name="FILESTATUS_COPIED" value="62cc47" />
