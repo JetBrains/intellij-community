@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.idea.frontend.api.scopes.KtCompositeScope
 import org.jetbrains.kotlin.idea.frontend.api.scopes.KtScope
 import org.jetbrains.kotlin.idea.frontend.api.symbols.*
 import org.jetbrains.kotlin.idea.frontend.api.types.KtClassType
+import org.jetbrains.kotlin.idea.frontend.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.idea.frontend.api.types.KtType
 import org.jetbrains.kotlin.psi.KtExpression
 
@@ -166,7 +167,7 @@ internal class FirCallableCompletionContributor(
 
 private class TypeNamesProvider(private val indexHelper: IndexHelper) {
     fun KtAnalysisSession.findAllNames(type: KtType): Set<String> {
-        if (type !is KtClassType) return emptySet()
+        if (type !is KtNonErrorClassType) return emptySet()
 
         val typeName = type.classId.shortClassName.let {
             if (it.isSpecial) return emptySet()
