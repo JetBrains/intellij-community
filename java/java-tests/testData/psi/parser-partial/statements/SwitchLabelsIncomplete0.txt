@@ -1,7 +1,7 @@
 PsiJavaFile:SwitchLabelsIncomplete0.java
   PsiSwitchLabelStatement
     PsiKeyword:case('case')
-    PsiExpressionList
+    PsiCaseLabelElementList
       PsiErrorElement:Expression, pattern, 'default' or 'null' expected
         <empty list>
     PsiErrorElement:':' expected
