@@ -4,7 +4,6 @@ package com.intellij.openapi.actionSystem.impl;
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -64,7 +63,7 @@ public final class Utils {
 
   public static @NotNull DataContext wrapToAsyncDataContext(@NotNull DataContext dataContext) {
     Component component = dataContext.getData(PlatformDataKeys.CONTEXT_COMPONENT);
-    if (dataContext instanceof DataManagerImpl.MyDataContext) {
+    if (dataContext instanceof EdtDataContext) {
       return new PreCachedDataContext(component);
     }
     else if (dataContext instanceof SimpleDataContext && component != null) {

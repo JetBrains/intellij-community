@@ -7,12 +7,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.KeyboardAwareFocusOwner;
-import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
+import com.intellij.openapi.actionSystem.impl.EdtDataContext;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.*;
@@ -665,8 +665,8 @@ public final class IdeKeyEventDispatcher {
       processor.onUpdatePassed(e, action, actionEvent);
 
       int eventCount = IdeEventQueue.getInstance().getEventCount();
-      if (context instanceof DataManagerImpl.MyDataContext) { // this is not true for test data contexts
-        ((DataManagerImpl.MyDataContext)context).setEventCount(eventCount);
+      if (context instanceof EdtDataContext) { // this is not true for test data contexts
+        ((EdtDataContext)context).setEventCount(eventCount);
       }
       ActionUtil.performDumbAwareWithCallbacks(action, actionEvent, () -> {
         if (e.getID() == KeyEvent.KEY_PRESSED) {
