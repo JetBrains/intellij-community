@@ -9,10 +9,11 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -103,6 +104,16 @@ public class TextExtractionTest extends BasePlatformTestCase {
 
     //nothing in HTML <code> tag
     assertNull(extractText("a.html", "<code>abc</code>", 7));
+  }
+
+  public void testBuildingPerformance() {
+    String text = "<a/>b".repeat(10_000);
+    String expected = "b".repeat(10_000);
+    PsiFile file = myFixture.configureByText("a.xml", text);
+    TextContentBuilder builder = TextContentBuilder.FromPsi.excluding(e -> e instanceof XmlTag);
+    PlatformTestUtil.startPerformanceTest("TextContent building", 200, () -> {
+      assertEquals(expected, builder.build(file, TextContent.TextDomain.PLAIN_TEXT).toString());
+    }).assertTiming();
   }
 
   private TextContent extractText(String fileName, String fileText, int offset) {

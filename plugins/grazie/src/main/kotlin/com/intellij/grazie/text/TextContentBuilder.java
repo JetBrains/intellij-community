@@ -72,32 +72,48 @@ public class TextContentBuilder {
   @Nullable
   TextContent build(PsiElement root, TextContent.TextDomain domain, TextRange valueRange) {
     int rootStart = root.getTextRange().getStartOffset();
-    var visitor = new PsiRecursiveElementWalkingVisitor() {
-      TextContent content = TextContent.psiFragment(domain, root, valueRange);
-      int deleted = 0;
+    String rootText = root.getText();
+    TextContent content = new PsiRecursiveElementWalkingVisitor() {
+      final List<TextContentImpl.TokenInfo> tokens = new ArrayList<>();
+      int currentStart = valueRange.getStartOffset();
+
       @Override
       public void visitElement(@NotNull PsiElement element) {
         TextRange range = element.getTextRange().shiftLeft(rootStart).intersection(valueRange);
         if (range == null) return;
 
         if (unknown.test(element)) {
-          content = content.markUnknown(range.shiftLeft(valueRange.getStartOffset() + deleted));
-          deleted += range.getLength();
+          exclusionStarted(range);
+          tokens.add(new TextContentImpl.PsiToken("", root, TextRange.from(range.getStartOffset(), 0), true));
         }
         else if (excluded.test(element)) {
-          content = content.excludeRange(range.shiftLeft(valueRange.getStartOffset() + deleted));
-          deleted += range.getLength();
-        } else {
+          exclusionStarted(range);
+        }
+        else {
           super.visitElement(element);
         }
       }
-    };
-    root.accept(visitor);
+
+      private void exclusionStarted(TextRange range) {
+        if (range.getStartOffset() != currentStart) {
+          TextRange tokenRange = new TextRange(currentStart, range.getStartOffset());
+          tokens.add(new TextContentImpl.PsiToken(tokenRange.substring(rootText), root, tokenRange, false));
+        }
+        currentStart = range.getEndOffset();
+      }
+
+      @Nullable TextContent walkPsiTree() {
+        root.accept(this);
+        exclusionStarted(TextRange.from(valueRange.getEndOffset(), 0));
+        return tokens.isEmpty() ? null : new TextContentImpl(domain, tokens);
+      }
+    }.walkPsiTree();
+    if (content == null) return null;
 
     TextContent noIndents =
       indentChars.isEmpty()
-      ? visitor.content
-      : excludeRanges(visitor.content, StrategyUtils.INSTANCE.indentIndexes(visitor.content, indentChars));
+      ? content
+      : excludeRanges(content, StrategyUtils.INSTANCE.indentIndexes(content, indentChars));
     return noIndents.trimWhitespace();
   }
 
