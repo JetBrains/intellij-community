@@ -2,7 +2,6 @@
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
@@ -25,7 +24,6 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.*;
 import com.intellij.ui.border.CustomLineBorder;
@@ -158,7 +156,6 @@ public abstract class DialogWrapper {
   private final boolean myCreateSouthSection;
   private final List<JBOptionButton> myOptionsButtons = new ArrayList<>();
   private final Alarm myValidationAlarm = new Alarm(getValidationThreadToUse(), myDisposable);
-  private final Alarm myErrorTextAlarm = new Alarm(myRoot, myDisposable);
 
   private JComponent centerPanel;
   private boolean myClosed;
@@ -185,8 +182,6 @@ public abstract class DialogWrapper {
   private ErrorText myErrorText;
   private int myValidationDelay = 300;
   private boolean myValidationStarted;
-  private final ErrorPainter myErrorPainter = new ErrorPainter();
-  private boolean myErrorPainterInstalled;
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -391,23 +386,11 @@ public abstract class DialogWrapper {
     myValidationDelay = delay;
   }
 
-  private void installErrorPainter() {
-    if (myErrorPainterInstalled) return;
-    myErrorPainterInstalled = true;
-    IdeGlassPaneUtil.installPainter(getContentPanel(), myErrorPainter, myDisposable);
-  }
-
   protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
-    boolean updateNeeded = isInplaceValidationToolTipEnabled() ? !myInfo.equals(info) : !myErrorText.isTextSet(info);
-    if (updateNeeded) {
+    if (!myInfo.equals(info)) {
       SwingUtilities.invokeLater(() -> {
         if (myDisposed) return;
-        if (!info.isEmpty()) {
-          installErrorPainter();
-        }
-        myErrorPainter.setValidationInfo(info);
         setErrorInfoAll(info);
-        myPeer.getRootPane().getGlassPane().repaint();
         getOKAction().setEnabled(ContainerUtil.all(info, info1 -> info1.okEnabled));
       });
     }
@@ -914,7 +897,6 @@ public abstract class DialogWrapper {
    */
   protected void dispose() {
     ensureEventDispatchThread();
-    myErrorTextAlarm.cancelAllRequests();
     myValidationAlarm.cancelAllRequests();
     myDisposed = true;
 
@@ -1842,9 +1824,7 @@ public abstract class DialogWrapper {
         if (info.component != null && info.component.isVisible()) {
           IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
-        if (!isInplaceValidationToolTipEnabled()) {
-          DialogEarthquakeShaker.shake(getPeer().getWindow());
-        }
+
         updateErrorInfo(infoList);
         startTrackingValidation();
         if (ContainerUtil.exists(infoList, info1 -> !info1.okEnabled)) {
@@ -1939,7 +1919,6 @@ public abstract class DialogWrapper {
     Application application = ApplicationManager.getApplication();
     boolean headless = application != null && application.isHeadlessEnvironment();
 
-    myErrorTextAlarm.cancelAllRequests();
     Runnable clearErrorRunnable = () -> {
       if (myErrorText != null) {
         myErrorText.clearError(ContainerUtil.all(info, i -> StringUtil.isEmpty(i.message)));
@@ -1952,48 +1931,35 @@ public abstract class DialogWrapper {
       SwingUtilities.invokeLater(clearErrorRunnable);
     }
 
-    if (isInplaceValidationToolTipEnabled()) {
-      myInfo.stream()
-        .filter(vi -> !info.contains(vi))
-        .filter(vi -> vi.component != null)
-        .map(vi -> ComponentValidator.getInstance(vi.component))
-        .forEach(c -> c.ifPresent(vi -> vi.updateInfo(null)));
-    }
+    // clear current component errors
+    myInfo.stream()
+      .filter(vi -> !info.contains(vi))
+      .filter(vi -> vi.component != null)
+      .map(vi -> ComponentValidator.getInstance(vi.component))
+      .forEach(c -> c.ifPresent(vi -> vi.updateInfo(null)));
 
+    //update current errors
     myInfo = info;
 
-    if (isInplaceValidationToolTipEnabled() && !myInfo.isEmpty()) {
-      myInfo.forEach(vi -> {
-        if (vi.component != null) {
-          ComponentValidator v = ComponentValidator.getInstance(vi.component).
-            orElseGet(() -> new ComponentValidator(getDisposable()).installOn(vi.component));
+    // show current errors
+    myInfo.forEach(vi -> {
+      // use ComponentValidator for component errors
+      if (vi.component != null) {
+        ComponentValidator v = ComponentValidator.getInstance(vi.component)
+          .orElseGet(() -> new ComponentValidator(getDisposable()).installOn(vi.component));
 
-          if (v != null) {
-            v.updateInfo(vi);
-            return;
-          }
+        // not really possible, simplify?
+        if (v != null) {
+          v.updateInfo(vi);
+          return;
         }
-
-        if (StringUtil.isNotEmpty(vi.message)) SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
-      });
-    }
-    else if (!myInfo.isEmpty()) {
-      Runnable updateErrorTextRunnable = () -> {
-        for (ValidationInfo vi: myInfo) {
-          if (StringUtil.isNotEmpty(vi.message)) myErrorText.appendError(vi);
-        }
-      };
-      if (headless) {
-        updateErrorTextRunnable.run();
       }
-      else {
-        myErrorTextAlarm.addRequest(updateErrorTextRunnable, 300, null);
-      }
-    }
-  }
 
-  private static boolean isInplaceValidationToolTipEnabled() {
-    return Registry.is("ide.inplace.validation.tooltip", true);
+      // show text in a panel for non-component errors
+      if (StringUtil.isNotEmpty(vi.message)) {
+        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
+      }
+    });
   }
 
   /**
@@ -2114,30 +2080,6 @@ public abstract class DialogWrapper {
   public void disposeIfNeeded() {
     if (isDisposed()) return;
     Disposer.dispose(getDisposable());
-  }
-
-  private static class ErrorPainter extends AbstractPainter {
-    private List<ValidationInfo> info;
-
-    @Override
-    public void executePaint(Component component, Graphics2D g) {
-      for (ValidationInfo i : info) {
-        if (i.component != null && !Registry.is("ide.inplace.errors.outline", true)) {
-          int w = i.component.getWidth();
-          Point p = SwingUtilities.convertPoint(i.component, w, 0, component);
-          AllIcons.General.Error.paintIcon(component, g, p.x - 8, p.y - 8);
-        }
-      }
-    }
-
-    @Override
-    public boolean needsRepaint() {
-      return true;
-    }
-
-    private void setValidationInfo(@NotNull List<ValidationInfo> info) {
-      this.info = info;
-    }
   }
 
   private static void clearOwnFields(@Nullable Object object, @NotNull Condition<? super Field> selectCondition) {
