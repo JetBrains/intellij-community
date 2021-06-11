@@ -42,12 +42,10 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
     override val top: Int
       get() = textMetricsStorage.getFontMetrics(true).offsetFromTop()
   }
-  private val INLAY_REFERENCE_HYPERLINK_COLOR = let {
-    val key = TextAttributesKey.createTextAttributesKey("INLAY_CTRL_CLICKABLE")
+  init {
     val attributes = editor.colorsScheme.getAttributes(REFERENCE_HYPERLINK_COLOR) ?: TextAttributes()
     attributes.effectType = null
-    editor.colorsScheme.setAttributes(key, attributes)
-    key
+    editor.colorsScheme.setAttributes(DefaultLanguageHighlighterColors.INLAY_REFERENCE_HYPERLINK_COLOR, attributes)
   }
 
   @Contract(pure = true)
@@ -306,7 +304,7 @@ class PresentationFactory(private val editor: EditorImpl) : InlayPresentationFac
   }
 
   fun withReferenceAttributes(noHighlightReference: InlayPresentation): WithAttributesPresentation {
-    return attributes(noHighlightReference, INLAY_REFERENCE_HYPERLINK_COLOR)
+    return attributes(noHighlightReference, DefaultLanguageHighlighterColors.INLAY_REFERENCE_HYPERLINK_COLOR)
   }
 
   @Contract(pure = true)
