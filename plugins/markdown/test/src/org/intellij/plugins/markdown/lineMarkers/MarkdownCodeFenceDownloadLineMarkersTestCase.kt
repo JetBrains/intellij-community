@@ -7,6 +7,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl
+import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
@@ -54,11 +55,11 @@ abstract class MarkdownCodeFenceDownloadLineMarkersTestCase: BasePlatformTestCas
   }
 
   protected fun mermaidPredicate(markerInfo: LineMarkerInfo<*>): Boolean {
-    return markerInfo.lineMarkerTooltip == "Install Mermaid.js"
+    return markerInfo.lineMarkerTooltip == MarkdownBundle.message("markdown.extensions.mermaid.download.line.marker.text")
   }
 
   protected fun plantumlPredicate(markerInfo: LineMarkerInfo<*>): Boolean {
-    return markerInfo.lineMarkerTooltip == "Install PlantUML"
+    return markerInfo.lineMarkerTooltip == MarkdownBundle.message("markdown.extensions.plantuml.download.line.marker.text")
   }
 
   protected open fun configureContent() {
