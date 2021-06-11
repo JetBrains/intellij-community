@@ -12,22 +12,24 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.ui.BrowserHyperlinkListener
-import com.intellij.ui.InplaceButton
-import com.intellij.ui.MouseDragHelper
-import com.intellij.ui.PopupBorder
+import com.intellij.ui.*
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.mac.MacMessages
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.UIUtil.JBWordWrapHtmlEditorKit
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
 import java.awt.event.MouseEvent
+import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.border.Border
+import javax.swing.plaf.basic.BasicHTML
+import javax.swing.text.View
+import kotlin.math.min
 
 /**
  * @author Alexander Lobas
@@ -102,23 +104,25 @@ class AlertMessagesManager : MacMessages() {
     dialog.show()
     return dialog.exitCode
   }
+
+  private fun getIcon(icon: Icon?): Icon {
+    if (icon == UIUtil.getInformationIcon() || icon == null) {
+      return AllIcons.General.InformationDialog
+    }
+    if (icon == UIUtil.getQuestionIcon()) {
+      return AllIcons.General.QuestionDialog
+    }
+    if (icon == UIUtil.getWarningIcon()) {
+      return AllIcons.General.WarningDialog
+    }
+    if (icon == UIUtil.getErrorIcon()) {
+      return AllIcons.General.ErrorDialog
+    }
+    return icon
+  }
 }
 
-private fun getIcon(icon: Icon?): Icon {
-  if (icon == UIUtil.getInformationIcon() || icon == null) {
-    return AllIcons.General.InformationDialog
-  }
-  if (icon == UIUtil.getQuestionIcon()) {
-    return AllIcons.General.QuestionDialog
-  }
-  if (icon == UIUtil.getWarningIcon()) {
-    return AllIcons.General.WarningDialog
-  }
-  if (icon == UIUtil.getErrorIcon()) {
-    return AllIcons.General.ErrorDialog
-  }
-  return icon
-}
+private const val PARENT_WIDTH_KEY = "parent.width"
 
 private class AlertDialog(project: Project?,
                           parentComponent: Component?,
@@ -136,6 +140,7 @@ private class AlertDialog(project: Project?,
   private val myRootLayout = RootLayout()
   private val myIconComponent = JLabel(myIcon)
   private var myTitleComponent: JComponent? = null
+  private var myMessageComponent: JComponent? = null
   private val mySouthPanel = JPanel(BorderLayout())
   private val myButtonsPanel = JPanel()
   private val myCloseButton: JComponent?
@@ -220,14 +225,48 @@ private class AlertDialog(project: Project?,
     }
   }
 
-  override fun getInitialSize(): Dimension = Dimension(
-    JBUI.scale(if (StringUtil.length(myMessage) < 130 || myButtonsPanel.preferredSize.width < JBUI.scale(300)) 370 else 440),
-    preferredSize.height)
+  override fun getInitialSize(): Dimension {
+    val buttonsWidth = myButtonsPanel.preferredSize.width
+
+    if (buttonsWidth > JBUI.scale(348)) {
+      configureMessageWidth(min(buttonsWidth, JBUI.scale(450)))
+      return preferredSize
+    }
+
+    val width = JBUI.scale(if (buttonsWidth <= JBUI.scale(278) && StringUtil.length(myMessage) <= 130) 370 else 440)
+
+    configureMessageWidth(width - myRootLayout.getWidthWithoutMessageComponent())
+
+    return Dimension(width, preferredSize.height)
+  }
+
+  private fun configureMessageWidth(width: Int) {
+    val messageComponent = myMessageComponent!!
+    val messageParent = messageComponent.parent
+
+    if (messageParent is JScrollPane) {
+      messageParent.preferredSize = Dimension(width, messageParent.preferredSize.height)
+    }
+    else {
+      messageComponent.putClientProperty(PARENT_WIDTH_KEY, width)
+    }
+  }
+
+  override fun createContentPaneBorder(): Border {
+    val insets = JButton().insets
+    return JBUI.Borders.empty(if (myIsTitleComponent) 20 else 14, 20, 18 - insets.bottom, 20 - insets.right)
+  }
 
   override fun createRootLayout(): LayoutManager = myRootLayout
 
   private inner class RootLayout : BorderLayout() {
     private var myParent: Container? = null
+
+    fun getWidthWithoutMessageComponent(): Int {
+      val insets = myParent!!.insets
+      val layout = myIconComponent.parent.parent.layout as BorderLayout
+      return insets.left + myIconComponent.preferredSize.width + layout.hgap + insets.right
+    }
 
     fun addAdditionalComponent(component: Component) {
       myParent!!.add(component, 0)
@@ -279,15 +318,28 @@ private class AlertDialog(project: Project?,
     dialogPanel.add(textPanel)
 
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
-      val titleComponent = createTextComponent(myTitle)
+      val titleComponent = createTextComponent(JTextPane(), myTitle)
       titleComponent.font = JBFont.h3().asBold()
       myTitleComponent = titleComponent
       textPanel.add(titleComponent, BorderLayout.NORTH)
     }
 
     if (!StringUtil.isEmpty(myMessage)) {
-      val messageComponent = createTextComponent(myMessage)
+      val messageComponent = createTextComponent(object : JTextPane() {
+        override fun getPreferredSize(): Dimension {
+          val parentWidth = getClientProperty(PARENT_WIDTH_KEY)
+          if (parentWidth is Int) {
+            val view = getUI().getRootView(this)
+            view.setSize(parentWidth.toFloat(), Int.MAX_VALUE.toFloat())
+            return Dimension(parentWidth, view.getPreferredSpan(View.Y_AXIS).toInt())
+          }
+          return super.getPreferredSize()
+        }
+      }, myMessage)
+
       messageComponent.font = JBFont.medium()
+      myMessageComponent = messageComponent
+
       val lines = myMessage!!.length / 100
       val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
       if (scrollPane is JScrollPane) {
@@ -296,8 +348,7 @@ private class AlertDialog(project: Project?,
       }
       textPanel.add(object : Wrapper(scrollPane) {
         override fun setBounds(x: Int, y: Int, width: Int, height: Int) {
-          val maxWidth = JBUI.scale(450)
-          super.setBounds(x, y, if (width > maxWidth) maxWidth else width, height)
+          super.setBounds(x, y, min(width, JBUI.scale(450)), height)
         }
       })
     }
@@ -333,26 +384,31 @@ private class AlertDialog(project: Project?,
     return dialogPanel
   }
 
-  private fun createTextComponent(message: @Nls String?): JTextPane {
-    val component = JTextPane()
+  private fun createTextComponent(component: JTextPane, message: @Nls String?): JTextPane {
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     component.contentType = "text/html"
     component.isOpaque = false
     component.isFocusable = false
     component.border = null
-    component.editorKit = UIUtil.getHTMLEditorKit()
+
+    val kit = JBWordWrapHtmlEditorKit()
+    kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")
+    component.editorKit = kit
     component.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
+
+    if (BasicHTML.isHTMLString(message)) {
+      component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
+                                  StringUtil.unescapeXmlEntities(StringUtil.stripHtml(message!!, " ")))
+    }
+
     component.text = message
+
     component.isEditable = false
     if (component.caret != null) {
       component.caretPosition = 0
     }
-    return component
-  }
 
-  override fun createContentPaneBorder(): Border {
-    val insets = JButton().insets
-    return JBUI.Borders.empty(if (myIsTitleComponent) 20 else 14, 20, 18 - insets.bottom, 20 - insets.right)
+    return component
   }
 
   override fun createActions(): Array<Action> {
