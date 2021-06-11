@@ -99,7 +99,9 @@ class GrazieConfig : PersistentStateComponent<GrazieConfig.State> {
 
     @VisibleForTesting
     fun migrateLTRuleIds(state: State): State {
-      val ltRules: List<Rule> by lazy { state.enabledLanguages.flatMap { LanguageToolChecker.getRules(it, state) } }
+      val ltRules: List<Rule> by lazy {
+        state.enabledLanguages.filter { it.jLanguage != null }.flatMap { LanguageToolChecker.getRules(it, state) }
+      }
 
       fun convert(ids: Set<String>): Set<String> =
         ids.flatMap { id ->
