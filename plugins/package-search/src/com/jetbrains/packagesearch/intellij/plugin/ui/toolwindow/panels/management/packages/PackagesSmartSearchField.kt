@@ -33,9 +33,8 @@ class PackagesSmartSearchField(
         PackageSearchUI.overrideKeyStroke(textEditor, "shift ENTER", this::transferFocusBackward)
 
         searchFieldFocus
-            .onEach { withContext(Dispatchers.AppUI){ requestFocus() } }
+            .onEach { withContext(Dispatchers.AppUI) { requestFocus() } }
             .launchIn(project.lifecycleScope)
-
     }
 
     /**
@@ -43,6 +42,8 @@ class PackagesSmartSearchField(
      * @return true in case of success; false if the list is empty
      */
     var goToTable: () -> Boolean = { false }
+
+    var fieldClearedListener: (() -> Unit)? = null
 
     override fun preprocessEventForTextField(e: KeyEvent?): Boolean {
         if (e?.keyCode == KeyEvent.VK_DOWN || e?.keyCode == KeyEvent.VK_PAGE_DOWN) {
@@ -58,5 +59,10 @@ class PackagesSmartSearchField(
     override fun onFocusLost() {
         super.onFocusLost()
         addCurrentTextToHistory()
+    }
+
+    override fun onFieldCleared() {
+        super.onFieldCleared()
+        fieldClearedListener?.invoke()
     }
 }

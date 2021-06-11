@@ -81,6 +81,11 @@ Supports Maven and Gradle projects.
                      defaultValue="false"
                      description="Display the Repositories tab in the Package Search toolwindow. It may not work correctly, or at all."
                      restartRequired="true"/>
+
+        <statistics.counterUsagesCollector
+                implementationClass="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger"/>
+        <statistics.validation.customValidationRule
+                implementation="com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsValidationRule"/>
     </extensions>
 
     <actions>

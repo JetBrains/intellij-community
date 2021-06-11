@@ -6,6 +6,8 @@ import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 
 class TogglePackageDetailsAction(
     private val project: Project,
@@ -21,5 +23,6 @@ class TogglePackageDetailsAction(
     override fun setSelected(e: AnActionEvent, state: Boolean) {
         PackageSearchGeneralConfiguration.getInstance(project).packageDetailsVisible = state
         selectedCallback.invoke(state)
+        PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.PackageDetails, state)
     }
 }

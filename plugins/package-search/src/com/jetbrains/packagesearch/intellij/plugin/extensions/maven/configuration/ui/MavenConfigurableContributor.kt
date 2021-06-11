@@ -10,6 +10,8 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableCon
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributorDriver
 import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.configuration.PackageSearchMavenConfigurationDefaults
 import com.jetbrains.packagesearch.intellij.plugin.extensions.maven.configuration.packageSearchMavenConfigurationForProject
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.logPreferencesChanged
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesDefaultMavenScopeField
 import javax.swing.JLabel
 import javax.swing.JTextField
 import javax.swing.event.DocumentEvent
@@ -68,5 +70,9 @@ class MavenConfigurableContributorDriver(project: Project) : ConfigurableContrib
 
     override fun apply() {
         configuration.defaultMavenScope = mavenScopeEditor.text
+
+        logPreferencesChanged(
+            preferencesDefaultMavenScopeField.with(configuration.defaultMavenScope),
+        )
     }
 }

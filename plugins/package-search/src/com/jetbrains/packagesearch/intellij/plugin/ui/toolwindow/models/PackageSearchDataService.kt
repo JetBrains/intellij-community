@@ -45,7 +45,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -127,8 +126,6 @@ internal class PackageSearchDataService(
         .onEach { rerunHighlightingOnOpenBuildFiles() }
         .catch {
             logError(contextName = "dataModelFlow", throwable = it) { "Error while processing latest model change." }
-            delay(1.seconds)
-            dataChangeChannel.send(Unit)
         }
         .stateIn(this, SharingStarted.Lazily, RootDataModel.EMPTY)
 
@@ -178,7 +175,6 @@ internal class PackageSearchDataService(
 
         withTimeout(apiTimeout) { dataProvider.doSearch(query, filterOptionsState.value) }
             .onFailure {
-                PackageSearchEventsLogger.onSearchFailed(project, query)
                 logError(traceInfo, "performSearch()") { "Search failed for query '$query': ${it.message}" }
                 showErrorNotification(
                     it.message,
@@ -186,7 +182,6 @@ internal class PackageSearchDataService(
                 )
             }
             .onSuccess {
-                PackageSearchEventsLogger.onSearchResponse(project, query, items = it.packages)
                 logDebug(traceInfo, "PKGSDataService#performSearch()") {
                     "Searching for '$query' completed, yielded ${it.packages.size} results in ${it.repositories.size} repositories"
                 }
@@ -574,7 +569,7 @@ internal class PackageSearchDataService(
     override fun setSearchQuery(query: String) {
         val normalizedQuery = StringUtils.normalizeSpace(query).trim()
         logDebug("PKGSDataService#setSearchQuery()") { "Search query changed: '$normalizedQuery'" }
-        PackageSearchEventsLogger.onSearchRequest(project, normalizedQuery)
+        PackageSearchEventsLogger.logSearchRequest(normalizedQuery)
         launch { searchQueryState.emit(normalizedQuery) }
     }
 

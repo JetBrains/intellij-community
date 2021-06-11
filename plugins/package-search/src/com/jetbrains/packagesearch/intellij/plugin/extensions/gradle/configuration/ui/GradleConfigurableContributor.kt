@@ -10,6 +10,10 @@ import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableCon
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributorDriver
 import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.PackageSearchGradleConfigurationDefaults
 import com.jetbrains.packagesearch.intellij.plugin.extensions.gradle.configuration.packageSearchGradleConfigurationForProject
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.logPreferencesChanged
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesDefaultGradleScopeField
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesGradleScopesField
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger.Companion.preferencesUpdateScopesOnUsageField
 import javax.swing.JCheckBox
 import javax.swing.JLabel
 import javax.swing.JTextField
@@ -96,5 +100,11 @@ class GradleConfigurableContributorDriver(project: Project) : ConfigurableContri
         configuration.gradleScopes = gradleScopesEditor.text.replace(", ", ",")
         configuration.updateScopesOnUsage = updateScopesOnUsageEditor.isSelected
         configuration.defaultGradleScope = gradleScopeEditor.text
+
+        logPreferencesChanged(
+            preferencesGradleScopesField.with(configuration.gradleScopes),
+            preferencesUpdateScopesOnUsageField.with(configuration.updateScopesOnUsage.toString()),
+            preferencesDefaultGradleScopeField.with(configuration.defaultGradleScope),
+        )
     }
 }

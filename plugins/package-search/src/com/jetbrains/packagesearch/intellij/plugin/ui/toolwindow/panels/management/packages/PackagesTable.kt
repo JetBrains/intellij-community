@@ -1,5 +1,3 @@
-@file:Suppress("EXPERIMENTAL_IS_NOT_ENABLED")
-
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages
 
 import com.intellij.ide.CopyProvider
@@ -12,6 +10,7 @@ import com.intellij.ui.TableUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
@@ -32,7 +31,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.onMouseMotion
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
-import kotlinx.coroutines.FlowPreview
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.event.ComponentAdapter
@@ -40,7 +38,6 @@ import java.awt.event.ComponentEvent
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import javax.swing.ListSelectionModel
-import javax.swing.event.ListSelectionEvent
 import javax.swing.event.ListSelectionListener
 import javax.swing.table.DefaultTableCellRenderer
 import javax.swing.table.TableCellEditor
@@ -51,7 +48,6 @@ import kotlin.math.roundToInt
 internal typealias SelectedPackageModelListener = (SelectedPackageModel<*>?) -> Unit
 
 @Suppress("MagicNumber") // Swing dimension constants
-@OptIn(FlowPreview::class)
 internal class PackagesTable(
     project: Project,
     private val operationExecutor: OperationExecutor,
@@ -104,6 +100,7 @@ internal class PackagesTable(
             updateAndRepaint()
             selectedPackage = item.toSelectedPackageModule()
             onItemSelectionChanged(selectedPackage)
+            PackageSearchEventsLogger.logPackageSelected(item is PackagesTableItem.InstalledPackage)
         } else {
             selectedPackage = null
         }

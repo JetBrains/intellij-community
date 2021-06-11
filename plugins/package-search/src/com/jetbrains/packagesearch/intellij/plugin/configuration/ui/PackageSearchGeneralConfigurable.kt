@@ -8,6 +8,7 @@ import com.intellij.util.ui.FormBuilder
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.JPanel
@@ -66,6 +67,7 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
         }
 
         modified = false
+        PackageSearchEventsLogger.logPreferencesReset()
     }
 
     private fun restoreDefaults() {

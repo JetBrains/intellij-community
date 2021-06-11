@@ -2,10 +2,10 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operati
 
 import com.intellij.buildsystem.model.OperationFailure
 import com.intellij.buildsystem.model.unified.UnifiedDependency
-import com.intellij.openapi.project.Project
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.DependencyOperationMetadata
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageScope
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -42,6 +42,7 @@ internal class ModuleOperationExecutor {
             module = projectModule
         ).throwIfAnyFailures()
 
+        PackageSearchEventsLogger.logPackageInstalled(operation.model, operation.projectModule)
         logTrace("ModuleOperationExecutor#installPackage()") { "Package ${operation.model.displayName} installed in ${projectModule.name}" }
     }
 
@@ -57,6 +58,7 @@ internal class ModuleOperationExecutor {
             module = projectModule
         ).throwIfAnyFailures()
 
+        PackageSearchEventsLogger.logPackageRemoved(operation.model, operation.projectModule)
         logTrace("ModuleOperationExecutor#removePackage()") { "Package ${operation.model.displayName} removed from ${projectModule.name}" }
     }
 
@@ -72,6 +74,7 @@ internal class ModuleOperationExecutor {
             module = projectModule
         ).throwIfAnyFailures()
 
+        PackageSearchEventsLogger.logPackageUpdated(operation.model, operation.projectModule)
         logTrace("ModuleOperationExecutor#changePackage()") { "Package ${operation.model.displayName} changed in ${projectModule.name}" }
     }
 
@@ -100,6 +103,7 @@ internal class ModuleOperationExecutor {
         operationProvider.addRepositoryToModule(operation.model, projectModule)
             .throwIfAnyFailures()
 
+        PackageSearchEventsLogger.logRepositoryAdded(operation.model)
         logTrace("ModuleOperationExecutor#installRepository()") { "Repository ${operation.model.displayName} installed in ${projectModule.name}" }
     }
 
@@ -113,6 +117,7 @@ internal class ModuleOperationExecutor {
         operationProvider.removeRepositoryFromModule(operation.model, projectModule)
             .throwIfAnyFailures()
 
+        PackageSearchEventsLogger.logRepositoryRemoved(operation.model)
         logTrace("ModuleOperationExecutor#removeRepository()") { "Repository ${operation.model.displayName} removed from ${projectModule.name}" }
     }
 

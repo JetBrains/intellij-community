@@ -52,7 +52,6 @@ class AddDependencyAction : AnAction(
 
         val selectedModule = findSelectedModule(e, modules) ?: return
 
-        PackageSearchEventsLogger.onProjectInfo(project, ModuleManager.getInstance(project).modules, modules)
         PackageSearchToolWindowFactory.activateToolWindow(project) {
             rootModel.setTargetModules(TargetModules.One(selectedModule))
         }

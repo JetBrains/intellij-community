@@ -8,6 +8,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
+import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFactory
@@ -50,5 +52,6 @@ internal class PackageSearchDependencyUpdateQuickFix(
         )
 
         project.packageSearchDataService.executeOperations(operations)
+        PackageSearchEventsLogger.logRunQuickFix(FUSGroupIds.QuickFixTypes.DependencyUpdate, file.fileType.name)
     }
 }

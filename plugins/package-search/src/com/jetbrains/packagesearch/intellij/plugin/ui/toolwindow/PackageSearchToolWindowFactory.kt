@@ -25,7 +25,6 @@ import kotlinx.coroutines.flow.take
 import java.util.function.Supplier
 import kotlin.time.ExperimentalTime
 
-@OptIn(ExperimentalTime::class)
 class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
 
     companion object {
@@ -35,22 +34,18 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
         private fun getToolWindow(project: Project) = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId)
 
         fun activateToolWindow(project: Project) {
-            PackageSearchEventsLogger.onToolWindowOpen(project)
             getToolWindow(project)?.activate {}
         }
 
         fun activateToolWindow(project: Project, action: () -> Unit) {
-            PackageSearchEventsLogger.onToolWindowOpen(project)
             getToolWindow(project)?.activate(action, true, true)
         }
 
         fun toggleToolWindow(project: Project) {
             getToolWindow(project)?.let {
                 if (it.isVisible) {
-                    PackageSearchEventsLogger.onToolWindowOpen(project)
                     it.hide { }
                 } else {
-                    PackageSearchEventsLogger.onToolWindowClose(project)
                     it.activate(null, true, true)
                 }
             }
@@ -67,7 +62,13 @@ class PackageSearchToolWindowFactory : ToolWindowFactory, DumbAware {
             .filter { it.isNotEmpty() }
             .take(1)
             .flowOn(Dispatchers.Default)
-            .map { RegisterToolWindowTask.closable(ToolWindowId, Supplier { PackageSearchBundle.message("toolwindow.stripe.Packages") }, PackageSearchIcons.ArtifactSmall) }
+            .map {
+                RegisterToolWindowTask.closable(
+                    ToolWindowId,
+                    Supplier { PackageSearchBundle.message("toolwindow.stripe.Packages") },
+                    PackageSearchIcons.ArtifactSmall
+                )
+            }
             .map { toolWindowTask -> ToolWindowManager.getInstance(project).registerToolWindow(toolWindowTask) }
             .onEach { toolWindow -> project.service<PackageSearchToolWindowService>().initialize(toolWindow) }
             .flowOn(Dispatchers.AppUI)

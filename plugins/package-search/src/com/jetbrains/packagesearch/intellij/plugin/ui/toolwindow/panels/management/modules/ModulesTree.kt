@@ -9,7 +9,7 @@ import com.intellij.ui.TreeUIHelper
 import com.intellij.ui.treeStructure.Tree
 import com.intellij.util.ui.tree.TreeUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.ModuleModel
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModuleSetter
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
@@ -18,7 +18,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import java.awt.datatransfer.StringSelection
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
-import javax.swing.event.TreeSelectionEvent
 import javax.swing.event.TreeSelectionListener
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
@@ -31,15 +30,19 @@ internal class ModulesTree(
 
     private var latestTargetModules: TargetModules? = null
 
-    private val onTreeItemSelected = TreeSelectionListener { event ->
+    private val onTreeItemSelected = TreeSelectionListener { _ ->
         val node = lastSelectedPathComponent as DefaultMutableTreeNode?
         if (node == null) {
             setTargetModules(TargetModules.None, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
             return@TreeSelectionListener
         }
 
-        // TODO change in safe cast and default to None
-        setTargetModules(node.userObject as TargetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
+        val targetModules = checkNotNull(node.userObject as? TargetModules) {
+            "Node '${node.path}' has invalid data: ${node.userObject}"
+        }
+        PackageSearchEventsLogger.logModuleSelected(targetModules::class.simpleName)
+
+        setTargetModules(targetModules, TraceInfo(TraceInfo.TraceSource.TARGET_MODULES_SELECTION_CHANGE))
     }
 
     init {
@@ -63,7 +66,6 @@ internal class ModulesTree(
 
         TreeUIHelper.getInstance().installTreeSpeedSearch(this)
         TreeUtil.installActions(this)
-
     }
 
     fun display(

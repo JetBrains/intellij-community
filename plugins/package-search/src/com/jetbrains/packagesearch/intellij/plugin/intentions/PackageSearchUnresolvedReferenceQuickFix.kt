@@ -8,6 +8,8 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchDataService
 import icons.PackageSearchIcons
@@ -22,6 +24,7 @@ class PackageSearchUnresolvedReferenceQuickFix(private val ref: PsiReference) : 
         PackageSearchToolWindowFactory.activateToolWindow(project) {
             project.packageSearchDataService
                 .setSearchQuery(ref.canonicalText)
+            PackageSearchEventsLogger.logRunQuickFix(FUSGroupIds.QuickFixTypes.UnresolvedReference, file?.fileType?.name)
         }
     }
 

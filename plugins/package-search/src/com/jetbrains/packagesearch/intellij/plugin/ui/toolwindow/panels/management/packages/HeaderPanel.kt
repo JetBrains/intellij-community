@@ -6,6 +6,7 @@ import com.intellij.ui.RelativeFont
 import com.intellij.util.ui.AsyncProcessIcon
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperation
 import com.jetbrains.packagesearch.intellij.plugin.ui.updateAndRepaint
@@ -73,7 +74,10 @@ internal class HeaderPanel(
             BorderLayout.EAST
         )
 
-        updateAllLink.addHyperlinkListener { onUpdateAllLinkClicked(updateAllOperations) }
+        updateAllLink.addHyperlinkListener {
+            onUpdateAllLinkClicked(updateAllOperations)
+            PackageSearchEventsLogger.logUpgradeAll()
+        }
     }
 
     fun showBusyIndicator(showIndicator: Boolean) {

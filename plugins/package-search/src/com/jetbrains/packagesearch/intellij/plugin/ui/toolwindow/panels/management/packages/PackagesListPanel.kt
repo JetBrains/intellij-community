@@ -11,6 +11,8 @@ import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.ui.JBUI
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.ComponentActionWrapper
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.FilterOptions
@@ -30,8 +32,8 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.AppUI
 import com.jetbrains.packagesearch.intellij.plugin.util.TraceInfo
-import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
+import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.awaitClose
@@ -77,6 +79,9 @@ internal class PackagesListPanel(
                 } else {
                     false
                 }
+            }
+            fieldClearedListener = {
+                PackageSearchEventsLogger.logSearchQueryClear()
             }
         }
 
@@ -284,11 +289,15 @@ internal class PackagesListPanel(
         })
 
         onlyStableCheckBox.addItemListener { e ->
-            searchClient.setOnlyStable(e.stateChange == ItemEvent.SELECTED)
+            val selected = e.stateChange == ItemEvent.SELECTED
+            searchClient.setOnlyStable(selected)
+            PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.OnlyStable, selected)
         }
 
         onlyKotlinMpCheckBox.addItemListener { e ->
-            searchClient.setOnlyKotlinMultiplatform(e.stateChange == ItemEvent.SELECTED)
+            val selected = e.stateChange == ItemEvent.SELECTED
+            searchClient.setOnlyKotlinMultiplatform(selected)
+            PackageSearchEventsLogger.logToggle(FUSGroupIds.ToggleTypes.OnlyKotlinMp, selected)
         }
     }
 

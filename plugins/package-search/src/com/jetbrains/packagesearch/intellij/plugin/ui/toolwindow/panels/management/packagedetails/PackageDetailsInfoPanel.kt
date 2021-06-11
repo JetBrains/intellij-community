@@ -2,6 +2,8 @@ package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.managem
 
 import com.jetbrains.packagesearch.api.v2.ApiStandardPackage
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.fus.FUSGroupIds
+import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageModel
@@ -229,6 +231,9 @@ internal class PackageDetailsInfoPanel : JPanel() {
                 mainLicense.displayNameCapitalized
             }
         )
+        licensesLinkLabel.urlClickedListener = {
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.License, mainLicense.url)
+        }
 
         licensesLinkLabel.isVisible = true
     }
@@ -242,6 +247,9 @@ internal class PackageDetailsInfoPanel : JPanel() {
         projectWebsiteLinkLabel.isVisible = true
         projectWebsiteLinkLabel.url = projectWebsiteLink.url
         projectWebsiteLinkLabel.setDisplayText(projectWebsiteLink.displayNameCapitalized)
+        projectWebsiteLinkLabel.urlClickedListener = {
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.ProjectWebsite, projectWebsiteLink.url)
+        }
     }
 
     private fun displayDocumentationIfAny(documentationLink: InfoLink.Documentation?) {
@@ -253,6 +261,9 @@ internal class PackageDetailsInfoPanel : JPanel() {
         documentationLinkLabel.isVisible = true
         documentationLinkLabel.url = documentationLink.url
         documentationLinkLabel.setDisplayText(documentationLink.displayNameCapitalized)
+        documentationLinkLabel.urlClickedListener = {
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.Documentation, documentationLink.url)
+        }
     }
 
     private fun displayReadmeIfAny(readmeLink: InfoLink.Readme?) {
@@ -264,6 +275,9 @@ internal class PackageDetailsInfoPanel : JPanel() {
         readmeLinkLabel.isVisible = true
         readmeLinkLabel.url = readmeLink.url
         readmeLinkLabel.setDisplayText(readmeLink.displayNameCapitalized)
+        readmeLinkLabel.urlClickedListener = {
+            PackageSearchEventsLogger.logDetailsLinkClick(FUSGroupIds.DetailsLinkTypes.Readme, readmeLink.url)
+        }
     }
 
     private fun displayKotlinPlatformsIfAny(packageDetails: ApiStandardPackage?) {
