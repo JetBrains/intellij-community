@@ -75,10 +75,10 @@ public final class PerformanceWatcher implements Disposable {
 
   private final JitWatcher myJitWatcher = new JitWatcher();
 
-  private final RegistryValue mySamplingInterval = Registry.get("performance.watcher.sampling.interval.ms");
-  private final RegistryValue myMaxAttemptsCount = Registry.get("performance.watcher.unresponsive.max.attempts.before.log");
-  private final RegistryValue myUnresponsiveInterval = Registry.get("performance.watcher.unresponsive.interval.ms");
-  private final RegistryValue myMaxDumpDuration = Registry.get("performance.watcher.dump.duration.s");
+  private RegistryValue mySamplingInterval;
+  private RegistryValue myMaxAttemptsCount;
+  private RegistryValue myUnresponsiveInterval;
+  private RegistryValue myMaxDumpDuration;
 
   @ApiStatus.Internal
   public static @Nullable PerformanceWatcher getInstanceOrNull() {
@@ -129,9 +129,12 @@ public final class PerformanceWatcher implements Disposable {
       }
     };
 
-    for (RegistryValue value : List.of(mySamplingInterval, myMaxAttemptsCount, myUnresponsiveInterval)) {
+    for (RegistryValue value : List.of(getOrInitSamplingInterval(),
+                                       getOrInitMaxAttemptsCount(),
+                                       getOrInitUnresponsiveInterval())) {
       value.addListener(cancelingListener, this);
     }
+    getOrInitMaxDumpDuration();
 
     RegistryValue ourReasonableThreadPoolSize = Registry.get("core.pooled.threads");
     AppScheduledExecutorService service = (AppScheduledExecutorService)AppExecutorUtil.getAppScheduledExecutorService();
@@ -326,24 +329,56 @@ public final class PerformanceWatcher implements Disposable {
     return trace.toString();
   }
 
+  private @NotNull RegistryValue getOrInitSamplingInterval() {
+    RegistryValue result = mySamplingInterval;
+    if (result == null) {
+      result = mySamplingInterval = Registry.get("performance.watcher.sampling.interval.ms");
+    }
+    return result;
+  }
+
   private int getSamplingInterval() {
-    return mySamplingInterval.asInteger();
+    return getOrInitSamplingInterval().asInteger();
+  }
+
+  private @NotNull RegistryValue getOrInitMaxAttemptsCount() {
+    RegistryValue result = myMaxAttemptsCount;
+    if (result == null) {
+      result = myMaxAttemptsCount = Registry.get("performance.watcher.unresponsive.max.attempts.before.log");
+    }
+    return result;
   }
 
   private int getMaxAttemptsCount() {
-    return myMaxAttemptsCount.asInteger();
+    return getOrInitMaxAttemptsCount().asInteger();
   }
 
   int getDumpInterval() {
     return getSamplingInterval() * getMaxAttemptsCount();
   }
 
+  private @NotNull RegistryValue getOrInitUnresponsiveInterval() {
+    RegistryValue result = myUnresponsiveInterval;
+    if (result == null) {
+      result = myUnresponsiveInterval = Registry.get("performance.watcher.unresponsive.interval.ms");
+    }
+    return result;
+  }
+
   int getUnresponsiveInterval() {
-    return myUnresponsiveInterval.asInteger();
+    return getOrInitUnresponsiveInterval().asInteger();
+  }
+
+  private @NotNull RegistryValue getOrInitMaxDumpDuration() {
+    RegistryValue result = myMaxDumpDuration;
+    if (result == null) {
+      result = myMaxDumpDuration = Registry.get("performance.watcher.dump.duration.s");
+    }
+    return result;
   }
 
   int getMaxDumpDuration() {
-    return myMaxDumpDuration.asInteger() * 1000;
+    return getOrInitMaxDumpDuration().asInteger() * 1000;
   }
 
   private static String buildName() {
