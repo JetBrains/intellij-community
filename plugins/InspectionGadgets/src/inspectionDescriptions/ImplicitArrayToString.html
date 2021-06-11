@@ -1,17 +1,17 @@
 <html>
 <body>
-Reports any arrays used in <code>String</code> concatenations or as parameters to <code>java.io.PrintStream</code>
-methods (such as <code>System.out.println()</code>).
+Reports arrays used in <code>String</code> concatenations or passed as parameters to <code>java.io.PrintStream</code>
+methods, such as <code>System.out.println()</code>.
 <p>
-  Usually in such cases, the content of the array is meant to be used and not the array object itself.
+  Usually, the content of the array is meant to be used and not the array object itself.
 </p>
-<p>Example:</p>
+<p><b>Example:</b></p>
 <pre>
   void print(Object[] objects) {
     System.out.println(objects);
   }
 </pre>
-<p>After the quick-fix is applied the result looks like:</p>
+<p>After the quick-fix is applied:</p>
 <pre>
   void print(Object[] objects) {
     System.out.println(Arrays.toString(objects));
