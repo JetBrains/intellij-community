@@ -13068,6 +13068,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("callArgument.kt")
+        public void testCallArgument() throws Exception {
+            runTest("idea/testData/quickfix/toString/callArgument.kt");
+        }
+
         @TestMetadata("notNullableExpectedNullable.kt")
         public void testNotNullableExpectedNullable() throws Exception {
             runTest("testData/quickfix/toString/notNullableExpectedNullable.kt");
@@ -13083,9 +13088,19 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/toString/nullableExpectedNullable.kt");
         }
 
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/quickfix/toString/simple.kt");
+        @TestMetadata("propertyInitializer.kt")
+        public void testPropertyInitializer() throws Exception {
+            runTest("idea/testData/quickfix/toString/propertyInitializer.kt");
+        }
+
+        @TestMetadata("returnStatement.kt")
+        public void testReturnStatement() throws Exception {
+            runTest("idea/testData/quickfix/toString/returnStatement.kt");
+        }
+
+        @TestMetadata("variableAssignment.kt")
+        public void testVariableAssignment() throws Exception {
+            runTest("idea/testData/quickfix/toString/variableAssignment.kt");
         }
     }
 
