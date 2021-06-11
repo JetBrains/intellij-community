@@ -779,6 +779,7 @@ public final class ShelveChangesManager implements PersistentStateComponent<Elem
     patchApplier.execute(showSuccessNotification, systemOperation);
     if (removeFilesFromShelf) {
       remainingPatches.addAll(patchApplier.getRemainingPatches());
+      remainingPatches.addAll(patchApplier.getFailedPatches());
       ModalityUiUtil.invokeLaterIfNeeded(() -> {
         updateListAfterUnshelve(changeList, remainingPatches, remainingBinaries, commitContext);
       }, ModalityState.NON_MODAL, myProject.getDisposed());
