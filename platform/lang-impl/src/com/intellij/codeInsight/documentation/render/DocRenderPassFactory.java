@@ -6,7 +6,6 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.documentation.DocumentationComponent;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.DumbAware;
@@ -77,11 +76,10 @@ public class DocRenderPassFactory implements TextEditorHighlightingPassFactoryRe
   @NotNull
   public static Items calculateItemsToRender(@NotNull Editor editor, @NotNull PsiFile psiFile) {
     boolean enabled = DocRenderManager.isDocRenderingEnabled(editor);
-    Document document = editor.getDocument();
     Items items = new Items();
     DocumentationManager.getProviderFromElement(psiFile).collectDocComments(psiFile, comment -> {
       TextRange range = comment.getTextRange();
-      if (range != null && DocRenderItem.isValidRange(document, range)) {
+      if (range != null && DocRenderItem.isValidRange(editor, range)) {
         String textToRender = enabled ? calcText(comment) : null;
         items.addItem(new Item(range, textToRender));
       }

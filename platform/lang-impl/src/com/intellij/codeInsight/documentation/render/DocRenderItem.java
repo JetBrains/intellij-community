@@ -17,6 +17,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorInlayFoldingMapper;
+import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.EditorScrollingPositionKeeper;
 import com.intellij.openapi.editor.impl.EditorImpl;
@@ -31,6 +32,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocCommentBase;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -54,6 +56,7 @@ import java.util.*;
 import java.util.function.BooleanSupplier;
 
 public final class DocRenderItem {
+  private static final Key<Boolean> OLD_BACKEND = Key.create("doc.render.old.backend");
   private static final Key<DocRenderItem> OUR_ITEM = Key.create("doc.render.item");
   private static final Key<Collection<DocRenderItem>> OUR_ITEMS = Key.create("doc.render.items");
   private static final Key<Disposable> LISTENERS_DISPOSABLE = Key.create("doc.render.listeners.disposable");
@@ -62,18 +65,38 @@ public final class DocRenderItem {
   final Editor editor;
   final RangeHighlighter highlighter;
   @Nls String textToRender;
-  private FoldRegion foldRegion;
+  FoldRegion foldRegion; // change type to CustomFoldRegion after migration to new backend
   Inlay<DocRenderer> inlay;
 
-  static boolean isValidRange(@NotNull Document document, @NotNull TextRange range) {
+  static boolean useOldBackend(@NotNull Editor editor) {
+    Boolean result = editor.getUserData(OLD_BACKEND);
+    if (result == null) {
+      editor.putUserData(OLD_BACKEND, result = Registry.is("doc.render.old.backend"));
+    }
+    return result;
+  }
+
+  boolean useOldBackend() {
+    return useOldBackend(editor);
+  }
+
+  static boolean isValidRange(@NotNull Editor editor, @NotNull TextRange range) {
+    Document document = editor.getDocument();
     CharSequence text = document.getImmutableCharSequence();
     int startOffset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     int startLine = document.getLineNumber(startOffset);
     int endLine = document.getLineNumber(endOffset);
-    return endLine < document.getLineCount() - 1 &&
-           CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(document.getLineStartOffset(startLine), startOffset)) &&
-           CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(endOffset, document.getLineEndOffset(endLine)));
+    if (!CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(document.getLineStartOffset(startLine), startOffset)) ||
+        !CharArrayUtil.containsOnlyWhiteSpaces(text.subSequence(endOffset, document.getLineEndOffset(endLine)))) {
+      return false;
+    }
+    if (useOldBackend(editor)) {
+      return endLine < document.getLineCount() - 1;
+    }
+    else {
+      return startLine < endLine || document.getLineStartOffset(startLine) < document.getLineEndOffset(endLine);
+    }
   }
 
   static void setItemsToEditor(@NotNull Editor editor, @NotNull DocRenderPassFactory.Items itemsToSet, boolean collapseNewItems) {
@@ -89,7 +112,7 @@ public final class DocRenderItem {
     keepScrollingPositionWhile(editor, () -> {
       List<Runnable> inlayTasks = new ArrayList<>();
       List<Runnable> foldingTasks = new ArrayList<>();
-      List<DocRenderItem> itemsToUpdateInlays = new ArrayList<>();
+      List<DocRenderItem> itemsToUpdateRenderers = new ArrayList<>();
       List<String> itemsToUpdateText = new ArrayList<>();
       boolean updated = false;
       for (Iterator<DocRenderItem> it = items.iterator(); it.hasNext(); ) {
@@ -100,11 +123,11 @@ public final class DocRenderItem {
           it.remove();
         }
         else if (matchingNewItem.textToRender != null && !matchingNewItem.textToRender.equals(existingItem.textToRender)) {
-          itemsToUpdateInlays.add(existingItem);
+          itemsToUpdateRenderers.add(existingItem);
           itemsToUpdateText.add(matchingNewItem.textToRender);
         }
         else {
-          existingItem.updateIcon();
+          existingItem.updateIcon(foldingTasks);
         }
       }
       Collection<DocRenderItem> newRenderItems = new ArrayList<>();
@@ -113,17 +136,17 @@ public final class DocRenderItem {
         newRenderItems.add(newItem);
         if (collapseNewItems) {
           updated |= newItem.toggle(inlayTasks, foldingTasks);
-          itemsToUpdateInlays.add(newItem);
+          itemsToUpdateRenderers.add(newItem);
           itemsToUpdateText.add(item.textToRender);
         }
       }
       editor.getInlayModel().execute(inlayTasks.size() > INLAY_BATCH_MODE_THRESHOLD, () -> inlayTasks.forEach(Runnable::run));
       editor.getFoldingModel().runBatchFoldingOperation(() -> foldingTasks.forEach(Runnable::run), true, false);
       newRenderItems.forEach(DocRenderItem::cleanup);
-      for (int i = 0; i < itemsToUpdateInlays.size(); i++) {
-        itemsToUpdateInlays.get(i).textToRender = itemsToUpdateText.get(i);
+      for (int i = 0; i < itemsToUpdateRenderers.size(); i++) {
+        itemsToUpdateRenderers.get(i).textToRender = itemsToUpdateText.get(i);
       }
-      updateInlays(itemsToUpdateInlays, true);
+      updateRenderers(editor, itemsToUpdateRenderers, true);
       items.addAll(newRenderItems);
       return updated;
     });
@@ -141,7 +164,7 @@ public final class DocRenderItem {
     else {
       if (editor.getUserData(LISTENERS_DISPOSABLE) == null) {
         MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect();
-        connection.setDefaultHandler(() -> updateInlays(editor, true));
+        connection.setDefaultHandler(() -> updateRenderers(editor, true));
         connection.subscribe(EditorColorsManager.TOPIC);
         connection.subscribe(LafManagerListener.TOPIC);
         EditorFactory.getInstance().addEditorFactoryListener(new EditorFactoryListener() {
@@ -169,7 +192,12 @@ public final class DocRenderItem {
         Disposer.register(connection, iconVisibilityController);
 
         editor.getScrollingModel().addVisibleAreaListener(new MyVisibleAreaListener(editor), connection);
-        editor.getInlayModel().addListener(new MyInlayListener(), connection);
+        if (useOldBackend(editor)) {
+          editor.getInlayModel().addListener(new MyInlayListener(), connection);
+        }
+        else {
+          ((EditorEx)editor).getFoldingModel().addListener(new MyFoldingListener(), connection);
+        }
 
         Disposer.register(connection, () -> DocRenderer.clearCachedLoadingPane(editor));
 
@@ -224,12 +252,13 @@ public final class DocRenderItem {
     Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
     if (items == null) return;
     boolean editorSetting = DocRenderManager.isDocRenderingEnabled(editor);
+    boolean oldBackend = useOldBackend(editor);
     keepScrollingPositionWhile(editor, () -> {
       List<Runnable> inlayTasks = new ArrayList<>();
       List<Runnable> foldingTasks = new ArrayList<>();
       boolean updated = false;
       for (DocRenderItem item : items) {
-        if (item.isValid() && (item.inlay == null) == editorSetting) {
+        if (item.isValid() && (oldBackend ? (item.inlay == null) : (item.foldRegion == null)) == editorSetting) {
           updated |= item.toggle(inlayTasks, foldingTasks);
         }
       }
@@ -251,13 +280,13 @@ public final class DocRenderItem {
     this.textToRender = textToRender;
     highlighter = editor.getMarkupModel()
       .addRangeHighlighter(null, textRange.getStartOffset(), textRange.getEndOffset(), 0, HighlighterTargetArea.EXACT_RANGE);
-    updateIcon();
+    updateIcon(null);
   }
 
   private boolean isValid() {
     return highlighter.isValid() &&
            highlighter.getStartOffset() < highlighter.getEndOffset() &&
-           new RelevantOffsets(highlighter).match(foldRegion, inlay);
+           new RelevantOffsets(highlighter).match(useOldBackend(), foldRegion, inlay);
   }
 
   private void cleanup() {
@@ -295,34 +324,44 @@ public final class DocRenderItem {
         return false;
       }
       RelevantOffsets offsets = new RelevantOffsets(highlighter);
-      Runnable inlayTask = () -> {
-        inlay = editor.getInlayModel().addBlockElement(offsets.inlayOffset, false, true, BlockInlayPriority.DOC_RENDER,
-                                                       new DocRenderer(this));
-      };
-      Runnable foldingTask = () -> {
-        // if this fails (setting 'foldRegion' to null), 'cleanup' method will fix the mess
-        foldRegion = foldingModel.createFoldRegion(offsets.foldStartOffset, offsets.foldEndOffset, "", null, true);
-        if (foldRegion != null) foldRegion.putUserData(OUR_ITEM, this);
-      };
-      if (inlayTasks == null || textToRender != null) {
-        inlayTask.run();
+      if (useOldBackend()) {
+        Runnable inlayTask = () -> {
+          inlay = editor.getInlayModel().addBlockElement(offsets.inlayOffset, false, true, BlockInlayPriority.DOC_RENDER,
+                                                         new DocRenderer(this));
+        };
+        Runnable foldingTask = () -> {
+          // if this fails (setting 'foldRegion' to null), 'cleanup' method will fix the mess
+          foldRegion = foldingModel.createFoldRegion(offsets.foldStartOffset, offsets.foldEndOffset, "", null, true);
+          if (foldRegion != null) foldRegion.putUserData(OUR_ITEM, this);
+        };
+        if (inlayTasks == null || textToRender != null) {
+          inlayTask.run();
+        }
+        else {
+          inlayTasks.add(inlayTask);
+        }
+        if (foldingTasks == null) {
+          foldingModel.runBatchFoldingOperation(foldingTask, true, false);
+          cleanup();
+        }
+        else {
+          foldingTasks.add(foldingTask);
+        }
       }
       else {
-        inlayTasks.add(inlayTask);
-      }
-      if (foldingTasks == null) {
-        foldingModel.runBatchFoldingOperation(foldingTask, true, false);
-        cleanup();
-      }
-      else {
-        foldingTasks.add(foldingTask);
+        Runnable foldingTask = () -> {
+          foldRegion = foldingModel.addCustomLinesFolding(offsets.foldStartLine, offsets.foldEndLine, new DocRenderer(this));
+          if (foldRegion != null) foldRegion.putUserData(OUR_ITEM, this);
+        };
+        if (foldingTasks == null) {
+          foldingModel.runBatchFoldingOperation(foldingTask, true, false);
+        }
+        else {
+          foldingTasks.add(foldingTask);
+        }
       }
     }
     else {
-      Runnable inlayTask = () -> {
-        Disposer.dispose(inlay);
-        inlay = null;
-      };
       Runnable foldingTask = () -> {
         int startOffset = foldRegion.getStartOffset();
         int endOffset = foldRegion.getEndOffset();
@@ -340,11 +379,17 @@ public final class DocRenderItem {
       else {
         foldingTasks.add(foldingTask);
       }
-      if (inlayTasks == null) {
-        inlayTask.run();
-      }
-      else {
-        inlayTasks.add(inlayTask);
+      if (useOldBackend()) {
+        Runnable inlayTask = () -> {
+          Disposer.dispose(inlay);
+          inlay = null;
+        };
+        if (inlayTasks == null) {
+          inlayTask.run();
+        }
+        else {
+          inlayTasks.add(inlayTask);
+        }
       }
       if (!DocRenderManager.isDocRenderingEnabled(editor)) {
         // the value won't be updated by DocRenderPass on document modification, so we shouldn't cache the value
@@ -376,19 +421,24 @@ public final class DocRenderItem {
     return null;
   }
 
-  private static void updateInlays(@NotNull Collection<DocRenderItem> items, boolean recreateContent) {
-    DocRenderItemUpdater.getInstance().updateInlays(ContainerUtil.mapNotNull(items, i -> i.inlay), recreateContent);
+  private static void updateRenderers(@NotNull Editor editor, @NotNull Collection<DocRenderItem> items, boolean recreateContent) {
+    if (useOldBackend(editor)) {
+      DocRenderItemUpdater.getInstance().updateInlays(ContainerUtil.mapNotNull(items, i -> i.inlay), recreateContent);
+    }
+    else {
+      DocRenderItemUpdater.getInstance().updateFoldRegions(ContainerUtil.mapNotNull(items, i -> (CustomFoldRegion)i.foldRegion), recreateContent);
+    }
   }
 
-  private static void updateInlays(@NotNull Editor editor, boolean recreateContent) {
+  private static void updateRenderers(@NotNull Editor editor, boolean recreateContent) {
     if (recreateContent) {
       DocRenderer.clearCachedLoadingPane(editor);
     }
     Collection<DocRenderItem> items = editor.getUserData(OUR_ITEMS);
-    if (items != null) updateInlays(items, recreateContent);
+    if (items != null) updateRenderers(editor, items, recreateContent);
   }
 
-  private void updateIcon() {
+  private void updateIcon(List<Runnable> foldingTasks) {
     boolean iconEnabled = DocRenderDummyLineMarkerProvider.isGutterIconEnabled();
     boolean iconExists = highlighter.getGutterIconRenderer() != null;
     if (iconEnabled != iconExists) {
@@ -398,7 +448,14 @@ public final class DocRenderItem {
       else {
         highlighter.setGutterIconRenderer(null);
       }
-      if (inlay != null) inlay.getRenderer().update(false, false);
+      if (useOldBackend()) {
+        if (inlay != null) inlay.getRenderer().update(false, false, null);
+      }
+      else {
+        if (foldRegion instanceof CustomFoldRegion) {
+          ((DocRenderer)((CustomFoldRegion)foldRegion).getRenderer()).update(false, false, foldingTasks);
+        }
+      }
     }
   }
 
@@ -413,13 +470,24 @@ public final class DocRenderItem {
       int y = editor.visualLineToY(((EditorImpl)editor).offsetToVisualLine(highlighter.getStartOffset()));
       repaintGutter(y);
     }
-    if (inlay != null) {
-      MyGutterIconRenderer inlayIconRenderer = (MyGutterIconRenderer)inlay.getGutterIconRenderer();
-      if (inlayIconRenderer != null) {
-        inlayIconRenderer.setIconVisible(visible);
-        Rectangle bounds = inlay.getBounds();
-        if (bounds != null) {
-          repaintGutter(bounds.y);
+    if (useOldBackend()) {
+      if (inlay != null) {
+        MyGutterIconRenderer inlayIconRenderer = (MyGutterIconRenderer)inlay.getGutterIconRenderer();
+        if (inlayIconRenderer != null) {
+          inlayIconRenderer.setIconVisible(visible);
+          Rectangle bounds = inlay.getBounds();
+          if (bounds != null) {
+            repaintGutter(bounds.y);
+          }
+        }
+      }
+    }
+    else {
+      if (foldRegion instanceof CustomFoldRegion) {
+        MyGutterIconRenderer inlayIconRenderer = (MyGutterIconRenderer)((CustomFoldRegion)foldRegion).getGutterIconRenderer();
+        if (inlayIconRenderer != null) {
+          inlayIconRenderer.setIconVisible(visible);
+          repaintGutter(editor.offsetToXY(foldRegion.getStartOffset()).y);
         }
       }
     }
@@ -438,21 +506,32 @@ public final class DocRenderItem {
   private static final class RelevantOffsets {
     private final int foldStartOffset;
     private final int foldEndOffset;
+    private final int foldStartLine;
+    private final int foldEndLine;
     private final int inlayOffset;
 
     private RelevantOffsets(@NotNull RangeHighlighter highlighter) {
       Document document = highlighter.getDocument();
-      int startLine = document.getLineNumber(highlighter.getStartOffset());
-      int endLine = document.getLineNumber(highlighter.getEndOffset());
-      inlayOffset = foldStartOffset = document.getLineStartOffset(startLine);
-      foldEndOffset = endLine < document.getLineCount() - 1 ? document.getLineStartOffset(endLine + 1) : document.getLineEndOffset(endLine);
+      foldStartLine = document.getLineNumber(highlighter.getStartOffset());
+      foldEndLine = document.getLineNumber(highlighter.getEndOffset());
+      inlayOffset = foldStartOffset = document.getLineStartOffset(foldStartLine);
+      foldEndOffset = foldEndLine < document.getLineCount() - 1 ? document.getLineStartOffset(foldEndLine + 1)
+                                                                : document.getLineEndOffset(foldEndLine);
     }
 
-    private boolean match(FoldRegion foldRegion, Inlay inlay) {
-      return foldRegion == null && inlay == null ||
-             foldRegion != null && foldRegion.isValid() &&
-             foldRegion.getStartOffset() == foldStartOffset && foldRegion.getEndOffset() == foldEndOffset &&
-             inlay != null && inlay.isValid() && inlay.getOffset() == inlayOffset;
+    private boolean match(boolean oldBackend, FoldRegion foldRegion, Inlay inlay) {
+      if (oldBackend) {
+        return foldRegion == null && inlay == null ||
+               foldRegion != null && foldRegion.isValid() &&
+               foldRegion.getStartOffset() == foldStartOffset && foldRegion.getEndOffset() == foldEndOffset &&
+               inlay != null && inlay.isValid() && inlay.getOffset() == inlayOffset;
+      }
+      else {
+        return inlay == null && (foldRegion == null ||
+               foldRegion instanceof CustomFoldRegion && foldRegion.isValid() &&
+               foldRegion.getStartOffset() == foldRegion.getEditor().getDocument().getLineStartOffset(foldStartLine) &&
+               foldRegion.getEndOffset() == foldRegion.getEditor().getDocument().getLineEndOffset(foldEndLine));
+      }
     }
   }
 
@@ -484,7 +563,7 @@ public final class DocRenderItem {
     private AffineTransform lastFrcTransform;
 
     private MyVisibleAreaListener(@NotNull Editor editor) {
-      lastWidth = DocRenderer.calcInlayWidth(editor);
+      lastWidth = DocRenderer.calcWidth(editor);
       lastFrcTransform = getTransform(editor);
     }
 
@@ -496,12 +575,12 @@ public final class DocRenderItem {
     public void visibleAreaChanged(@NotNull VisibleAreaEvent e) {
       if (e.getNewRectangle().isEmpty()) return; // ignore switching between tabs
       Editor editor = e.getEditor();
-      int newWidth = DocRenderer.calcInlayWidth(editor);
+      int newWidth = DocRenderer.calcWidth(editor);
       AffineTransform transform = getTransform(editor);
       if (newWidth != lastWidth || !Objects.equals(transform, lastFrcTransform)) {
         lastWidth = newWidth;
         lastFrcTransform = transform;
-        updateInlays(editor, false);
+        updateRenderers(editor, false);
       }
     }
   }
@@ -512,6 +591,18 @@ public final class DocRenderItem {
       EditorCustomElementRenderer renderer = inlay.getRenderer();
       if (renderer instanceof DocRenderer) {
         ((DocRenderer)renderer).dispose();
+      }
+    }
+  }
+
+  private static class MyFoldingListener implements FoldingListener {
+    @Override
+    public void beforeFoldRegionDisposed(@NotNull FoldRegion region) {
+      if (region instanceof CustomFoldRegion) {
+        CustomFoldRegionRenderer renderer = ((CustomFoldRegion)region).getRenderer();
+        if (renderer instanceof DocRenderer) {
+          ((DocRenderer)renderer).dispose();
+        }
       }
     }
   }
@@ -611,7 +702,7 @@ public final class DocRenderItem {
     public void actionPerformed(@NotNull AnActionEvent e) {
       Editor editor = e.getData(CommonDataKeys.EDITOR);
       if (editor != null) {
-        DocFontSizePopup.show(() -> updateInlays(editor, true), editor.getContentComponent());
+        DocFontSizePopup.show(() -> updateRenderers(editor, true), editor.getContentComponent());
       }
     }
   }
@@ -691,15 +782,31 @@ public final class DocRenderItem {
         if (highlighter.isValid() && highlighter.getStartOffset() <= searchEndOffset && highlighter.getEndOffset() >= searchStartOffset) {
           int itemStartY = 0;
           int itemEndY = 0;
-          if (item.inlay == null) {
-            itemStartY = editor.visualLineToY(((EditorImpl)editor).offsetToVisualLine(highlighter.getStartOffset()));
-            itemEndY = editor.visualLineToY(((EditorImpl)editor).offsetToVisualLine(highlighter.getEndOffset())) + editor.getLineHeight();
+          if (useOldBackend(editor)) {
+            if (item.inlay == null) {
+              itemStartY = editor.visualLineToY(((EditorImpl)editor).offsetToVisualLine(highlighter.getStartOffset()));
+              itemEndY = editor.visualLineToY(((EditorImpl)editor).offsetToVisualLine(highlighter.getEndOffset())) + editor.getLineHeight();
+            }
+            else {
+              Rectangle bounds = item.inlay.getBounds();
+              if (bounds != null) {
+                itemStartY = bounds.y;
+                itemEndY = bounds.y + bounds.height;
+              }
+            }
           }
           else {
-            Rectangle bounds = item.inlay.getBounds();
-            if (bounds != null) {
-              itemStartY = bounds.y;
-              itemEndY = bounds.y + bounds.height;
+            if (item.foldRegion == null) {
+              itemStartY = editor.visualLineToY(editor.offsetToVisualLine(highlighter.getStartOffset(), false));
+              itemEndY = editor.visualLineToY(editor.offsetToVisualLine(highlighter.getEndOffset(), true)) + editor.getLineHeight();
+            }
+            else {
+              CustomFoldRegion cfr = (CustomFoldRegion)item.foldRegion;
+              Point location = cfr.getLocation();
+              if (location != null) {
+                itemStartY = location.y;
+                itemEndY = itemStartY + cfr.getHeightInPixels();
+              }
             }
           }
           if (y >= itemStartY && y < itemEndY) return item;
@@ -716,6 +823,7 @@ public final class DocRenderItem {
     }
   }
 
+  // remove after migration to new backend
   private static class InlayFoldingMapper implements EditorInlayFoldingMapper {
     @Override
     public @Nullable FoldRegion getAssociatedFoldRegion(@NotNull Inlay<?> inlay) {

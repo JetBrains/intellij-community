@@ -1550,6 +1550,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
+  public int @NotNull [] visualLineToYRange(int visualLine) {
+    return myView.visualLineToYRange(visualLine);
+  }
+
+  @Override
   public void repaint(int startOffset, int endOffset) {
     repaint(startOffset, endOffset, true);
     myHighlighterListeners.forEach(listener -> listener.highlighterChanged(startOffset, endOffset));
@@ -1630,7 +1635,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void doRepaint(int startVisualLine, int endVisualLine) {
     Rectangle visibleArea = getScrollingModel().getVisibleArea();
     int yStart = visualLineToY(startVisualLine);
-    int height = visualLineToY(endVisualLine) + getLineHeight() + 2 - yStart;
+    int height = visualLineToYRange(endVisualLine)[1] + 2 - yStart;
     myEditorComponent.repaintEditorComponent(visibleArea.x, yStart, visibleArea.x + visibleArea.width, height);
     myGutterComponent.repaint(0, yStart, myGutterComponent.getWidth(), height);
   }
@@ -2445,7 +2450,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     if (result == null) {
       FoldRegion foldRegion = editorMouseEvent == null ? myFoldingModel.getFoldingPlaceholderAt(e.getPoint())
                                                        : editorMouseEvent.getCollapsedFoldRegion();
-      if (foldRegion != null) {
+      if (foldRegion != null && !(foldRegion instanceof CustomFoldRegion)) {
         result = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR);
       }
     }
@@ -2453,7 +2458,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   private void runMouseDraggedCommand(@NotNull final MouseEvent e) {
-    if (myCommandProcessor == null || myMousePressedEvent != null && myMousePressedEvent.isConsumed()) {
+    if (myCommandProcessor == null || e.isConsumed() || myMousePressedEvent != null && myMousePressedEvent.isConsumed()) {
       return;
     }
     myCommandProcessor.executeCommand(myProject, () -> processMouseDragged(e), "", MOUSE_DRAGGED_COMMAND_GROUP,
@@ -4108,7 +4113,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           else {
             if (e.getButton() == MouseEvent.BUTTON1
                 && (eventArea == EditorMouseEventArea.EDITING_AREA || eventArea == EditorMouseEventArea.LINE_NUMBERS_AREA)
-                && (!toggleCaret || lastPressCreatedCaret)) {
+                && (!toggleCaret || lastPressCreatedCaret)
+                && !(myMouseSelectedRegion instanceof CustomFoldRegion)) {
               switch (e.getClickCount()) {
                 case 2:
                   selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords());
@@ -4330,15 +4336,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         return;
       }
       validateMousePointer(e, null);
-      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> runMouseDraggedCommand(e));
       EditorMouseEvent event = createEditorMouseEvent(e);
-      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
-        myGutterComponent.mouseDragged(e);
-      }
-
       for (EditorMouseMotionListener listener : myMouseMotionListeners) {
         listener.mouseDragged(event);
         if (isReleased) return;
+      }
+      ((TransactionGuardImpl)TransactionGuard.getInstance()).performUserActivity(() -> runMouseDraggedCommand(e));
+      if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
+        myGutterComponent.mouseDragged(e);
       }
     }
 
@@ -4923,12 +4928,20 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     @Override
     public ActionGroup getActionGroup(@NotNull EditorMouseEvent event) {
       String contextMenuGroupId = myContextMenuGroupId;
-      Inlay<?> inlay = myInlayModel.getElementAt(event.getMouseEvent().getPoint());
+      Inlay<?> inlay = event.getInlay();
       if (inlay != null) {
         ActionGroup group = inlay.getRenderer().getContextMenuGroup(inlay);
         if (group != null) return group;
         String inlayContextMenuGroupId = inlay.getRenderer().getContextMenuGroupId(inlay);
         if (inlayContextMenuGroupId != null) contextMenuGroupId = inlayContextMenuGroupId;
+      }
+      else {
+        FoldRegion foldRegion = event.getCollapsedFoldRegion();
+        if (foldRegion instanceof CustomFoldRegion) {
+          CustomFoldRegion customFoldRegion = (CustomFoldRegion)foldRegion;
+          ActionGroup group = customFoldRegion.getRenderer().getContextMenuGroup(customFoldRegion);
+          if (group != null) return group;
+        }
       }
       return ContextMenuPopupHandler.getGroupForId(contextMenuGroupId);
     }
