@@ -2,7 +2,6 @@
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.usages.UsageView;
 import com.intellij.util.BitUtil;
 import com.intellij.util.Consumer;
 import org.intellij.lang.annotations.MagicConstant;
@@ -56,7 +55,7 @@ abstract class Node extends DefaultMutableTreeNode {
 
   /**
    * isDataXXX methods perform actual (expensive) data computation.
-   * Called from {@link #update(UsageView, Consumer)})
+   * Called from {@link #update(Consumer})
    * to be compared later with cached data stored in {@link #myCachedFlags} and {@link #myCachedTextHash}
    */
   protected abstract boolean isDataValid();
@@ -91,7 +90,7 @@ abstract class Node extends DefaultMutableTreeNode {
     return isFlagSet(EXCLUDED_MASK);
   }
 
-  final void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
+  final void update(@NotNull Consumer<? super Node> edtFireTreeNodesChangedQueue) {
     // performance: always update in background because smart pointer' isValid() can cause PSI chameleons expansion which is ridiculously expensive in cpp
     assert !ApplicationManager.getApplication().isDispatchThread();
     boolean isDataValid = isDataValid();

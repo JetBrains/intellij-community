@@ -1397,7 +1397,7 @@ public class UsageViewImpl implements UsageViewEx {
     }
 
     for (Node node = child; node != myRoot && node != null; node = (Node)node.getParent()) {
-      node.update(this, edtFireTreeNodesChangedQueue);
+      node.update(edtFireTreeNodesChangedQueue);
     }
 
     return child;
@@ -1529,7 +1529,7 @@ public class UsageViewImpl implements UsageViewEx {
       .nonBlocking(() -> {
         for (Node node : toUpdate) {
           try {
-            node.update(this, edtFireTreeNodesChangedQueue);
+            node.update(edtFireTreeNodesChangedQueue);
           }
           catch (IndexNotReadyException ignore) {
           }
