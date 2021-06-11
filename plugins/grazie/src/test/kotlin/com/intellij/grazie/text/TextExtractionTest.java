@@ -6,11 +6,13 @@ import com.intellij.lang.injection.MultiHostInjector;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.manipulators.StringLiteralManipulator;
 import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
@@ -104,8 +106,12 @@ public class TextExtractionTest extends BasePlatformTestCase {
   }
 
   private TextContent extractText(String fileName, String fileText, int offset) {
+    return extractText(fileName, fileText, offset, getProject());
+  }
+
+  public static TextContent extractText(String fileName, String fileText, int offset, Project project) {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
-    PsiFile file = PsiFileFactory.getInstance(getProject()).createFileFromText(fileName, fileType, fileText);
+    PsiFile file = PsiFileFactory.getInstance(project).createFileFromText(fileName, fileType, fileText);
     PsiElement leaf = file.findElementAt(offset);
     return TextExtractor.findTextAt(Objects.requireNonNull(leaf), TextContent.TextDomain.ALL);
   }
