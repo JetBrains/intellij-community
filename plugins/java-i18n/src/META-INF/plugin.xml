@@ -90,7 +90,6 @@
       <add-to-group group-id="RefactoringMenu" anchor="last" />
     </action>
     <action id="EditPropertyValue" class="com.intellij.codeInspection.i18n.folding.EditPropertyValueAction">
-      <add-to-group group-id="RefactoringMenu" anchor="after" relative-to-action="ChangeSignature"/>
       <keyboard-shortcut first-keystroke="alt F6" keymap="$default"/>
     </action>
   </actions>
