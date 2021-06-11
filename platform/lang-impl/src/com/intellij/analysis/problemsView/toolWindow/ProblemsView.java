@@ -1,11 +1,14 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.analysis.problemsView.toolWindow;
 
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowFactory;
@@ -20,18 +23,24 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.ContentManagerListener;
+import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.ide.actions.ToggleToolbarAction.isToolbarVisible;
+import static com.intellij.openapi.keymap.KeymapUtil.getFirstKeyboardShortcutText;
+import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.psi.util.PsiUtilCore.findFileSystemItem;
+import static com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES;
 
 public final class ProblemsView implements DumbAware, ToolWindowFactory {
   public static final String ID = "Problems View";
   private static final int CURRENT_FILE_INDEX = 0;
+  private static final List<String> ACTION_IDS = List.of("CompileDirty", "InspectCode");
 
   public static @Nullable ToolWindow getToolWindow(@Nullable Project project) {
     return project == null || project.isDisposed() ? null : ToolWindowManager.getInstance(project).getToolWindow(ID);
@@ -124,7 +133,31 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     if (isProjectErrorsEnabled()) {
       ProblemsViewPanel panel = new ProblemsViewPanel(project, state, ProblemsViewBundle.messagePointer("problems.view.project"));
       panel.getTreeModel().setRoot(new CollectorBasedRoot(panel));
-      panel.getTree().getEmptyText().setText(ProblemsViewBundle.message("problems.view.project.empty"));
+      StatusText status = panel.getTree().getEmptyText();
+      status.setText(ProblemsViewBundle.message("problems.view.project.empty"));
+      if (is("ide.problems.view.empty.status.actions")) {
+        @NlsSafe String or = ProblemsViewBundle.message("problems.view.project.empty.or");
+        int index = 0;
+        for (String id : ACTION_IDS) {
+          AnAction action = ActionUtil.getAction(id);
+          if (action == null) continue;
+          @NlsSafe String text = action.getTemplateText();
+          if (text == null || text.isBlank()) continue;
+          if (index == 0) {
+            status.appendText(".");
+            status.appendLine("");
+          }
+          else {
+            status.appendText(" ").appendText(or).appendText(" ");
+          }
+          status.appendText(text, LINK_PLAIN_ATTRIBUTES, event -> {
+            ActionUtil.invokeAction(action, panel, "ProblemsView", null, null);
+          });
+          String shortcut = getFirstKeyboardShortcutText(action);
+          if (!shortcut.isBlank()) status.appendText(" (").appendText(shortcut).appendText(")");
+          index++;
+        }
+      }
       createContent(manager, panel);
     }
     selectContent(manager, state.getSelectedIndex());
