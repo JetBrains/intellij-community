@@ -574,7 +574,7 @@ public final class PyCallExpressionHelper {
         }
       }
     }
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     return getCallType(multiResolveCallee(call, resolveContext), call, context);
   }
 
@@ -585,7 +585,7 @@ public final class PyCallExpressionHelper {
   static @Nullable PyType getCallType(@NotNull PySubscriptionExpression subscription,
                                       @NotNull TypeEvalContext context,
                                       @SuppressWarnings("unused") @NotNull TypeEvalContext.Key key) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     return getCallType(multiResolveCallee(subscription, resolveContext), subscription, context);
   }
 
@@ -817,7 +817,7 @@ public final class PyCallExpressionHelper {
     final List<PyCallableParameter> parameters = callableType.getParameters(context);
     if (parameters == null) return PyCallExpression.PyArgumentsMapping.empty(callSite);
 
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<PyExpression> arguments = callSite.getArguments(callable);
     final List<PyCallableParameter> explicitParameters = filterExplicitParameters(parameters, callable, callSite, resolveContext);
     final List<PyCallableParameter> implicitParameters = parameters.subList(0, parameters.size() - explicitParameters.size());

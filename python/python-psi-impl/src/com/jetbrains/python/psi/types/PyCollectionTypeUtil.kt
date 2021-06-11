@@ -12,7 +12,6 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.resolve.PyResolveContext
-import java.util.*
 
 object PyCollectionTypeUtil {
 
@@ -204,7 +203,7 @@ object PyCollectionTypeUtil {
     val funcName = qualifiedExpression.referencedName
     if (modificationMethods.containsKey(funcName)) {
       val referenceOwner = qualifiedExpression.qualifier as? PyReferenceOwner ?: return null
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
       if (referenceOwner.getReference(resolveContext).isReferenceTo(element)) {
         isModificationExist = true
         val function = modificationMethods[funcName]
@@ -243,7 +242,7 @@ object PyCollectionTypeUtil {
         }
       }
 
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
       val referenceOwner = node.operand as? PyReferenceOwner ?: return null
       val reference = referenceOwner.getReference(resolveContext)
       isModificationExist = if (reference.isReferenceTo(element)) true else return null

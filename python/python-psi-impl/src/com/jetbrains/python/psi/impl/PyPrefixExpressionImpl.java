@@ -83,7 +83,7 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
     }
 
     return StreamEx
-      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext().withTypeEvalContext(context)))
+      .of(PyCallExpressionHelper.mapArguments(this, PyResolveContext.defaultContext(context)))
       .map(PyCallExpression.PyArgumentsMapping::getCallableType)
       .nonNull()
       .map(callableType -> callableType.getCallType(context, this))

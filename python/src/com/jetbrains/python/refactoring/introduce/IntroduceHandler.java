@@ -233,7 +233,7 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
       .map(PyArgumentList::getCallExpression)
       .ifPresent(
         call -> StreamEx
-          .of(call.multiMapArguments(PyResolveContext.defaultContext().withTypeEvalContext(context)))
+          .of(call.multiMapArguments(PyResolveContext.defaultContext(context)))
           .map(mapping -> mapping.getMappedParameters().get(expression))
           .nonNull()
           .map(PyCallableParameter::getName)

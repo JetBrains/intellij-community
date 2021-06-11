@@ -350,7 +350,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   @Override
   public List<PyCallableParameter> getParameters(@NotNull TypeEvalContext context) {
-    final var resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final var resolveContext = PyResolveContext.defaultContext(context);
 
     return StreamEx
       .of(PyUtil.filterTopPriorityElements(PyCallExpressionHelper.resolveImplicitlyInvokedMethods(this, null, resolveContext)))

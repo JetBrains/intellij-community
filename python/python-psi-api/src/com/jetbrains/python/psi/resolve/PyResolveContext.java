@@ -45,6 +45,11 @@ public final class PyResolveContext {
     return ourDefaultContext;
   }
 
+  @NotNull
+  public static PyResolveContext defaultContext(@NotNull TypeEvalContext context) {
+    return ourDefaultContext.withTypeEvalContext(context);
+  }
+
   /**
    * Allow searching for dynamic usages based on duck typing and guesses during resolve.
    *
@@ -55,9 +60,24 @@ public final class PyResolveContext {
     return ourImplicitsContext;
   }
 
+  /**
+   * Allow searching for dynamic usages based on duck typing and guesses during resolve.
+   *
+   * Note that this resolve context is slower than the default one. Use it only for one-off user actions.
+   */
+  @NotNull
+  public static PyResolveContext implicitContext(@NotNull TypeEvalContext context) {
+    return ourImplicitsContext.withTypeEvalContext(context);
+  }
+
   @NotNull
   public static PyResolveContext noProperties() {
     return ourNoPropertiesContext;
+  }
+
+  @NotNull
+  public static PyResolveContext noProperties(@NotNull TypeEvalContext context) {
+    return ourNoPropertiesContext.withTypeEvalContext(context);
   }
 
   @NotNull

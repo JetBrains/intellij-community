@@ -165,6 +165,6 @@ public abstract class TypeIntention extends PyBaseIntentionAction {
 
   private static PyResolveContext getResolveContext(@NotNull PsiElement origin) {
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeAnalysis(origin.getProject(), origin.getContainingFile());
-    return PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+    return PyResolveContext.defaultContext(typeEvalContext);
   }
 }

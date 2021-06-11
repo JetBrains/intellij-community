@@ -50,8 +50,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
       result.addAll(
         Optional
           .ofNullable(builtinCache.getObjectType())
-          .map(type -> type.resolveMember(referencedName, element, AccessDirection.of(element),
-                                          PyResolveContext.defaultContext().withTypeEvalContext(context)))
+          .map(type -> type.resolveMember(referencedName, element, AccessDirection.of(element), PyResolveContext.defaultContext(context)))
           .orElse(Collections.emptyList())
       );
     }

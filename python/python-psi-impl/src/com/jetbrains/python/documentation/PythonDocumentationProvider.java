@@ -422,7 +422,7 @@ public class PythonDocumentationProvider implements DocumentationProvider {
       if (expression instanceof PyReferenceExpression) {
         final PyReferenceExpression referenceExpression = (PyReferenceExpression)expression;
         if (!referenceExpression.isQualified()) {
-          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
           for (ResolveResult result : referenceExpression.getReference(resolveContext).multiResolve(false)) {
             final PsiElement element = result.getElement();

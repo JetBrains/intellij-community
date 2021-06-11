@@ -86,7 +86,7 @@ public class PyStringFormatInspection extends PyInspection {
           PyLiteralExpression.class, PySubscriptionExpression.class, PyBinaryExpression.class, PyConditionalExpression.class
         };
         final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(problemTarget);
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
 
         final String s = myFormatSpec.get("1");
         if (PsiTreeUtil.instanceOf(rightExpression, SIMPLE_RHS_EXPRESSIONS)) {
@@ -247,8 +247,8 @@ public class PyStringFormatInspection extends PyInspection {
         if (addSubscriptions) {
           additionalExpressions = addSubscriptions(rightExpression.getContainingFile(),
                                                    rightExpression.getText());
-          pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(
-            PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)).getElement();
+          final var resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
+          pyElement = ((PyReferenceExpression)rightExpression).followAssignmentsChain(resolveContext).getElement();
         }
         else {
           additionalExpressions = new HashMap<>();

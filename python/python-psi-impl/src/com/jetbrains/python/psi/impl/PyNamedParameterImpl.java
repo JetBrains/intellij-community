@@ -270,7 +270,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         // Guess the type from file-local calls
         if (context.allowCallContext(this)) {
           final List<PyType> types = new ArrayList<>();
-          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
           final PyCallableParameter parameter = PyCallableParameterImpl.psi(this);
 
           processLocalCalls(
@@ -457,7 +457,7 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
             return Collections.emptyList();
           }
         }
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
         return callExpression.multiMapArguments(resolveContext)
           .stream()
           .flatMap(mapping -> mapping.getMappedParameters().entrySet().stream())

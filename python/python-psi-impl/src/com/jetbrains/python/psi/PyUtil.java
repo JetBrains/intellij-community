@@ -1513,7 +1513,7 @@ public final class PyUtil {
                                              @NotNull String memberName,
                                              @Nullable PyExpression location,
                                              @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<? extends RatedResolveResult> resolveResults = type.resolveMember(memberName, location, AccessDirection.READ,
                                                                                  resolveContext);
 

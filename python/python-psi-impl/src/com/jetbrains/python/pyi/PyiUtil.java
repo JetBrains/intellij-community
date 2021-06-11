@@ -203,7 +203,7 @@ public final class PyiUtil {
                                                            @NotNull TypeEvalContext context) {
     if (similarOwnerType == null) return null;
 
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
     final List<? extends RatedResolveResult> results =
       similarOwnerType instanceof PyClassLikeType

@@ -481,7 +481,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
       if (target.isQualified()) {
         if (pyClass != null && scopeOwner instanceof PyFunction) {
-          final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+          final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
 
           boolean isInstanceAttribute;
           if (context.maySwitchToAST(target)) {
@@ -1379,7 +1379,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
     if (expression instanceof PyReferenceExpression) {
       final List<PsiElement> results;
       if (context.maySwitchToAST(expression)) {
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
         results = PyUtil.multiResolveTopPriority(expression, resolveContext);
       }
       else {

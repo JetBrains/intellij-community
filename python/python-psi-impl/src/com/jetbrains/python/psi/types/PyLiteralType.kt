@@ -89,7 +89,7 @@ class PyLiteralType private constructor(cls: PyClass, val expression: PyExpressi
 
       if (expression is PyReferenceExpression && expression.isQualified) {
         PyUtil
-          .multiResolveTopPriority(expression, PyResolveContext.defaultContext().withTypeEvalContext(context))
+          .multiResolveTopPriority(expression, PyResolveContext.defaultContext(context))
           .asSequence()
           .filterIsInstance<PyTargetExpression>()
           .mapNotNull { ScopeUtil.getScopeOwner(it) as? PyClass }

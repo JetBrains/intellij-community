@@ -49,9 +49,8 @@ public class PyTargetElementEvaluator implements TargetElementEvaluator {
     }
 
     final PsiElement element = ref.getElement();
-    final var resolveContext = PyResolveContext
-      .defaultContext()
-      .withTypeEvalContext(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()));
+    final var resolveContext =
+      PyResolveContext.defaultContext(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()));
 
     PsiElement result = PyResolveUtil.resolveDeclaration(ref, resolveContext);
     Set<PsiElement> visited = new HashSet<>();

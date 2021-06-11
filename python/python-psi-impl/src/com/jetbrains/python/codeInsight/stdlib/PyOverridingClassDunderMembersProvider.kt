@@ -79,7 +79,7 @@ class PyOverridingClassDunderMembersProvider : PyClassMembersProviderBase(), PyO
                               direction: AccessDirection,
                               context: TypeEvalContext): List<PsiElement> {
     val objectType = PyBuiltinCache.getInstance(type.pyClass).objectType ?: return emptyList()
-    val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context)
+    val resolveContext = PyResolveContext.defaultContext(context)
     val results = objectType.resolveMember(name, location, direction, resolveContext) ?: return emptyList()
     return results.mapNotNull { it.element }
   }

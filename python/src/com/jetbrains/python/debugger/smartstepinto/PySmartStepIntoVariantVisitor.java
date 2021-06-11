@@ -141,9 +141,8 @@ public class PySmartStepIntoVariantVisitor extends PyRecursiveElementVisitor {
     int callOrder = getCallOrder();
     mySeenVariants.put(myVariantsFromPython.get(myVariantIndex).first, ++callOrder);
 
-    PsiElement resolved = expression.getReference(
-      PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.userInitiated(
-        expression.getProject(), expression.getContainingFile()))).resolve();
+    var context = TypeEvalContext.userInitiated(expression.getProject(), expression.getContainingFile());
+    PsiElement resolved = expression.getReference(PyResolveContext.defaultContext(context)).resolve();
 
     if (resolved == null || isBuiltIn(resolved) || isAlreadySeen()) return;
 

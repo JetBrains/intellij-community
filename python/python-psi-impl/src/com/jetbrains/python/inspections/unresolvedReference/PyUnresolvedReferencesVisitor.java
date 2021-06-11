@@ -127,7 +127,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
       processInjection(host);
     }
     if (node instanceof PyReferenceOwner) {
-      final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
       processReference(node, ((PyReferenceOwner)node).getReference(resolveContext));
     }
     else {
@@ -150,7 +150,7 @@ public abstract class PyUnresolvedReferencesVisitor extends PyInspectionVisitor 
           public void visitPyElement(@NotNull PyElement element) {
             super.visitPyElement(element);
             if (element instanceof PyReferenceOwner) {
-              final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext);
+              final PyResolveContext resolveContext = PyResolveContext.defaultContext(myTypeEvalContext);
               final PsiPolyVariantReference reference = ((PyReferenceOwner)element).getReference(resolveContext);
               markTargetImportsAsUsed(reference);
             }

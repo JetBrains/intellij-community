@@ -443,7 +443,7 @@ public final class PyTypeChecker {
       }
     }
 
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     return !ContainerUtil.exists(expected.getAttributeNames(), attribute -> ContainerUtil
       .isEmpty(actual.resolveMember(attribute, null, AccessDirection.READ, resolveContext)));
   }
@@ -1011,7 +1011,7 @@ public final class PyTypeChecker {
 
   @Nullable
   private static PsiElement resolveTypeMember(@NotNull PyType type, @NotNull String name, @NotNull TypeEvalContext context) {
-    final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+    final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
     final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ, resolveContext);
     return !ContainerUtil.isEmpty(results) ? results.get(0).getElement() : null;
   }

@@ -182,7 +182,7 @@ class PyDataclassInspection : PyInspection() {
     override fun visitPyCallExpression(node: PyCallExpression) {
       super.visitPyCallExpression(node)
 
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
       val callableType = node.multiResolveCallee(resolveContext).singleOrNull()
       val callee = callableType?.callable
       val calleeQName = callee?.qualifiedName

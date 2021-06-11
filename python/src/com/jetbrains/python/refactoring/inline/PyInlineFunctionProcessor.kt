@@ -131,7 +131,7 @@ class PyInlineFunctionProcessor(project: Project,
     }
 
     val typeEvalContext = TypeEvalContext.userInitiated(myProject, null)
-    val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+    val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
 
     val selfUsed = myFunction.parameterList.parameters.firstOrNull()?.let { firstParam ->
       if (!firstParam.isSelf) return@let false

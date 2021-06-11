@@ -109,7 +109,7 @@ public class PyFunctionTypeImpl implements PyFunctionType {
         qualifier = location.getQualifier();
       }
       else {
-        final PyResolveContext resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(context);
+        final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
         qualifier = ContainerUtil.getLastItem(location.followAssignmentsChain(resolveContext).getQualifiers());
       }
       if (qualifier != null) {

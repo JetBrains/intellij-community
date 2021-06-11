@@ -68,7 +68,7 @@ public abstract class PyBaseMakeFunctionTopLevelProcessor extends BaseRefactorin
     myFunction = targetFunction;
     myDestinationPath = destinationPath;
     final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated(myProject, targetFunction.getContainingFile());
-    myResolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext);
+    myResolveContext = PyResolveContext.defaultContext(typeEvalContext);
     myGenerator = PyElementGenerator.getInstance(myProject);
     mySourceFile = myFunction.getContainingFile();
   }

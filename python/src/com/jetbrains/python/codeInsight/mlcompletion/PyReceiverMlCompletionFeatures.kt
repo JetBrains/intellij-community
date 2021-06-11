@@ -41,7 +41,7 @@ object PyReceiverMlCompletionFeatures {
   }
 
   private fun getReceivers(position: PsiElement, call: PyCallExpression, typeEvalContext: TypeEvalContext): List<PsiElement> {
-    val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(typeEvalContext)
+    val resolveContext = PyResolveContext.defaultContext(typeEvalContext)
     val mapArguments = call.multiMapArguments(resolveContext)
     if (mapArguments.isEmpty()) return emptyList()
     return mapArguments.mapNotNull { entry -> entry.mappedParameters[position.parent]?.parameter }

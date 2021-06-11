@@ -205,7 +205,7 @@ class PyTypeHintsInspection : PyInspection() {
     }
 
     private fun checkTypeVarArguments(call: PyCallExpression, target: PyExpression?) {
-      val resolveContext = PyResolveContext.defaultContext().withTypeEvalContext(myTypeEvalContext)
+      val resolveContext = PyResolveContext.defaultContext(myTypeEvalContext)
       var covariant = false
       var contravariant = false
       var bound: PyExpression? = null
