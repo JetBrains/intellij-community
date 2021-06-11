@@ -2,8 +2,10 @@
 
 package com.intellij.grazie.text
 
+import com.intellij.diagnostic.PluginException
 import com.intellij.grazie.grammar.strategy.GrammarCheckingStrategy
 import com.intellij.grazie.grammar.strategy.StrategyUtils
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiCompiledElement
 import com.intellij.psi.PsiElement
@@ -51,7 +53,16 @@ internal class StrategyTextExtractor(private val strategy: GrammarCheckingStrate
                     .excluding { e -> getBehavior(e) == GrammarCheckingStrategy.ElementBehavior.STEALTH }
                     .build(root, domain, TextRange(0, root.textLength)) ?: return null
 
-    return TextContentBuilder.excludeRanges(content, strategy.getStealthyRanges(root, content))
+    val stealthyRanges = strategy.getStealthyRanges(root, content)
+    val filtered = stealthyRanges.filter { it.last < content.length }
+    if (filtered.size != stealthyRanges.size) {
+      PluginException.logPluginError(
+        logger<StrategyTextExtractor>(),
+        "$strategy produced a stealthy range out of the given text",
+        null,
+        strategy.javaClass)
+    }
+    return TextContentBuilder.excludeRanges(content, filtered)
   }
 
   internal companion object {
