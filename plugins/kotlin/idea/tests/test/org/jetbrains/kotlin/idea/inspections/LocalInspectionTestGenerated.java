@@ -4561,6 +4561,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/dfa/basicRange.kt");
         }
 
+        @TestMetadata("basicWhen.kt")
+        public void testBasicWhen() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/basicWhen.kt");
+        }
+
         @TestMetadata("booleanBoxed.kt")
         public void testBooleanBoxed() throws Exception {
             runTest("testData/inspectionsLocal/dfa/booleanBoxed.kt");
@@ -4594,6 +4599,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("changeLocalInLambda.kt")
         public void testChangeLocalInLambda() throws Exception {
             runTest("testData/inspectionsLocal/dfa/changeLocalInLambda.kt");
+        }
+
+        @TestMetadata("classParameter.kt")
+        public void testClassParameter() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/classParameter.kt");
         }
 
         @TestMetadata("continueLoop.kt")
@@ -4689,6 +4699,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         @TestMetadata("unaryMinus.kt")
         public void testUnaryMinus() throws Exception {
             runTest("testData/inspectionsLocal/dfa/unaryMinus.kt");
+        }
+
+        @TestMetadata("unusedResult.kt")
+        public void testUnusedResult() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/unusedResult.kt");
+        }
+
+        @TestMetadata("whenUnit.kt")
+        public void testWhenUnit() throws Exception {
+            runTest("testData/inspectionsLocal/dfa/whenUnit.kt");
         }
 
         @TestMetadata("whileStatement.kt")

@@ -88,6 +88,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
             is KtBreakExpression -> processLabeledJumpExpression(expr)
             is KtThrowExpression -> processThrowExpression(expr)
             is KtIfExpression -> processIfExpression(expr)
+            is KtWhenExpression -> processWhenExpression(expr)
             is KtWhileExpression -> processWhileExpression(expr)
             is KtDoWhileExpression -> processDoWhileExpression(expr)
             is KtForExpression -> processForExpression(expr)
@@ -159,7 +160,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun processQualifiedReferenceExpression(expr: KtQualifiedExpression) {
         // TODO: support qualified references as variables
         processExpression(expr.receiverExpression)
-        val specialField = findSpecialField(expr)
+        val specialField = if (expr is KtDotQualifiedExpression) findSpecialField(expr) else null
         if (specialField != null) {
             addInstruction(UnwrapDerivedVariableInstruction(specialField))
         } else {
@@ -606,10 +607,10 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
     private fun balanceType(left: KotlinType?, right: KotlinType?): KotlinType? {
         if (left == null || right == null) return null
         if (left == right) return left
-        if (left.isMarkedNullable && !right.isMarkedNullable) {
+        if (left.canBeNull() && !right.canBeNull()) {
             return balanceType(left.makeNotNullable(), right)
         }
-        if (!left.isMarkedNullable && right.isMarkedNullable) {
+        if (!left.canBeNull() && right.canBeNull()) {
             return balanceType(left, right.makeNotNullable())
         }
         if (left.isDouble()) return left
@@ -630,6 +631,46 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         offset.setOffset(flow.instructionCount)
     }
 
+    private fun processWhenExpression(expr: KtWhenExpression) {
+        if (expr.subjectExpression != null || expr.subjectVariable != null) {
+            // TODO: support subjects
+            broken = true
+            return
+        }
+        val endOffset = DeferredOffset()
+        for (entry in expr.entries) {
+            if (entry.isElse) {
+                processExpression(entry.expression)
+                addInstruction(GotoInstruction(endOffset))
+            } else {
+                val branchStart = DeferredOffset()
+                for (condition in entry.conditions) {
+                    processWhenCondition(expr, condition)
+                    addInstruction(ConditionalGotoInstruction(branchStart, DfTypes.TRUE))
+                }
+                val skipBranch = DeferredOffset()
+                addInstruction(GotoInstruction(skipBranch))
+                setOffset(branchStart)
+                processExpression(entry.expression)
+                addInstruction(GotoInstruction(endOffset))
+                setOffset(skipBranch)
+            }
+        }
+        pushUnknown()
+        setOffset(endOffset)
+        addInstruction(FinishElementInstruction(expr))
+    }
+
+    private fun processWhenCondition(expr: KtWhenExpression, condition: KtWhenCondition) {
+        when (condition) {
+            is KtWhenConditionWithExpression ->
+                // TODO: implement comparison to subject
+                processExpression(condition.expression)
+            else ->
+                broken = true // TODO: implement isPattern and inRange
+        }
+    }
+
     private fun processIfExpression(ifExpression: KtIfExpression) {
         val condition = ifExpression.condition
         processExpression(condition)
@@ -641,8 +682,7 @@ class KtControlFlowBuilder(val factory: DfaValueFactory, val context: KtExpressi
         processExpression(thenStatement)
 
         val skipElseOffset = DeferredOffset()
-        val instruction: Instruction = GotoInstruction(skipElseOffset)
-        addInstruction(instruction)
+        addInstruction(GotoInstruction(skipElseOffset))
         setOffset(skipThenOffset)
         addInstruction(FinishElementInstruction(null))
         processExpression(elseStatement)

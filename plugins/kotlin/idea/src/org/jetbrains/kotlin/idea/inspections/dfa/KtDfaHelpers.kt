@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.types.typeUtil.*
 
 internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
     if (this == null) return DfType.TOP
-    if (isMarkedNullable || isNullabilityFlexible()) {
+    if (canBeNull()) {
         var notNullableType = makeNotNullable().toDfType(context)
         if (notNullableType is DfPrimitiveType) {
             notNullableType = SpecialField.UNBOX.asDfType(notNullableType)
@@ -54,6 +54,8 @@ internal fun KotlinType?.toDfType(context: PsiElement) : DfType {
         else -> DfTypes.typedObject(toPsiType(context), Nullability.NOT_NULL)
     }
 }
+
+internal fun KotlinType.canBeNull() = isMarkedNullable || isNullabilityFlexible()
 
 internal fun getConstant(expr: KtConstantExpression): DfType {
     val bindingContext = expr.analyze(BodyResolveMode.PARTIAL)
