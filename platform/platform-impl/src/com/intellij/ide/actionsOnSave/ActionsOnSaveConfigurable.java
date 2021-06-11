@@ -152,10 +152,6 @@ public class ActionsOnSaveConfigurable implements SearchableConfigurable, Config
     return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.all.actions.on.save"), CONFIGURABLE_ID);
   }
 
-  public static @NotNull ActionLink createGoToPageInSettingsLink(@NotNull String configurableId) {
-    return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.configure"), configurableId);
-  }
-
   public static @NotNull ActionLink createGoToPageInSettingsLink(@NotNull @NlsContexts.LinkLabel String linkText,
                                                                  @NotNull String configurableId) {
     return new ActionLink(linkText, new ActionListener() {

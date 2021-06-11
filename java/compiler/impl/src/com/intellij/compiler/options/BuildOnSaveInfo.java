@@ -63,7 +63,7 @@ public class BuildOnSaveInfo extends ActionOnSaveBackedByOwnConfigurable<Compile
   @Override
   public @NotNull List<? extends ActionLink> getActionLinks() {
     String linkText = JavaCompilerBundle.message("settings.actions.on.save.page.compiler.settings.link");
-    return List.of(ActionsOnSaveConfigurable.createGoToPageInSettingsLink(linkText, CompilerConfigurable.CONFIGURABLE_ID));
+    return List.of(createGoToPageInSettingsLink(linkText, CompilerConfigurable.CONFIGURABLE_ID));
   }
 
   @Override

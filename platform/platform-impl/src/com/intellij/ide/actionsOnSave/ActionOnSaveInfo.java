@@ -17,6 +17,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.List;
 
@@ -102,17 +104,32 @@ public abstract class ActionOnSaveInfo {
 
   /**
    * {@link ActionLink}s which are visible only when the corresponding table row is hovered. One of the standard use cases is to return a
-   * <code>Configure...</code> link that leads to the corresponding page in Settings (Preferences).
+   * <code>Configure...</code> link that leads to the corresponding page in Settings (Preferences). See {@link #createGoToPageInSettingsLink(String)}.
    * <br/><br/>
    * <b>Note:</b> do not return {@link DropDownLink}s. The problem with them is that they show a popup on click, and the popup is higher
    * than the current table row. When user clicks something in this popup - the original {@link DropDownLink} is not visible anymore
    * because the mouse pointer hovers a different table row at this moment. Implement {@link #getInPlaceConfigDropDownLink()} if needed - it is visible
    * always, not ony on hover.
    *
-   * @see ActionsOnSaveConfigurable#createGoToPageInSettingsLink(String)
+   * @see #createGoToPageInSettingsLink(String)
+   * @see #createGoToPageInSettingsLink(String, String)
    * @see #getInPlaceConfigDropDownLink()
    */
   public @NotNull List<? extends ActionLink> getActionLinks() { return Collections.emptyList(); }
+
+  protected final @NotNull ActionLink createGoToPageInSettingsLink(@NotNull String configurableId) {
+    return createGoToPageInSettingsLink(IdeBundle.message("actions.on.save.link.configure"), configurableId);
+  }
+
+  protected final @NotNull ActionLink createGoToPageInSettingsLink(@NotNull @NlsContexts.LinkLabel String linkText,
+                                                                   @NotNull String configurableId) {
+    return new ActionLink(linkText, new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        getSettings().select(getSettings().find(configurableId));
+      }
+    });
+  }
 
   /**
    * Implementations may return a {@link DropDownLink} for quick in-place configuration of the corresponding 'action on save'.
