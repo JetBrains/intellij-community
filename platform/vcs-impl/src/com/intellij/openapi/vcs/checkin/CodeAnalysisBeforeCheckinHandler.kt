@@ -55,13 +55,13 @@ import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ExceptionUtil.rethrowUnchecked
 import com.intellij.util.PairConsumer
+import com.intellij.util.containers.ConcurrentFactoryMap
 import com.intellij.util.progress.DelegatingProgressIndicatorEx
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil.getWarningIcon
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.PropertyKey
-import java.util.function.Function
 import javax.swing.JComponent
 import kotlin.reflect.KMutableProperty0
 
@@ -155,14 +155,14 @@ class CodeAnalysisBeforeCheckinHandler(private val commitPanel: CheckinProjectPa
   private fun processPsiFiles(virtualFiles: Collection<VirtualFile>): List<PsiFile> {
     val files = filterOutGeneratedAndExcludedFiles(virtualFiles, project)
 
-    val analyzeOnlyChangedProperties = Registry.intValue("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", 0)
+    val analyzeOnlyChangedProperties = Registry.`is`("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", false)
     val psiFiles =
-      if (analyzeOnlyChangedProperties == 0) emptyList()
+      if (!analyzeOnlyChangedProperties) emptyList()
       else runReadAction { files.mapNotNull { PsiManager.getInstance(project).findFile(it) } }
 
     for (file in psiFiles) {
       file.putUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED,
-                       Function { getBeingCommittedPsiElements(it) })
+                       ConcurrentFactoryMap.createMap { getBeingCommittedPsiElements(it) })
     }
     return psiFiles
   }

@@ -21,7 +21,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentValidator;
 import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -39,8 +38,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
-import java.util.function.Function;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
 
@@ -129,9 +128,7 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
 
     final UnusedPropertiesSearchHelper helper = new UnusedPropertiesSearchHelper(module);
 
-    final int analyzeOnlyChangedProperties = Registry.intValue("vcs.code.analysis.before.checkin.check.unused.only.changed.properties", 0);
-
-    final Set<PsiElement> propertiesBeingCommitted = analyzeOnlyChangedProperties == 0 ? null : getBeingCommittedProperties(file);
+    final Set<PsiElement> propertiesBeingCommitted = getBeingCommittedProperties(file);
 
     return new PsiElementVisitor() {
       @Override
@@ -165,10 +162,10 @@ public final class UnusedPropertyInspection extends PropertiesInspectionBase {
    */
   @Nullable
   private static Set<PsiElement> getBeingCommittedProperties(@NotNull PsiFile file) {
-    final Function<Class<? extends PsiElement>, Set<PsiElement>> data = file.getUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED);
+    final Map<Class<? extends PsiElement>, Set<PsiElement>> data = file.getUserData(InspectionProfileWrapper.PSI_ELEMENTS_BEING_COMMITTED);
     if (data == null) return null;
 
-    return data.apply(Property.class);
+    return data.get(Property.class);
   }
 
   private static boolean isImplicitlyUsed(@NotNull Property property) {

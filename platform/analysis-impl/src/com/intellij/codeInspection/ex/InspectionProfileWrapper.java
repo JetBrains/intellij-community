@@ -14,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Function;
 
@@ -27,8 +28,7 @@ public class InspectionProfileWrapper {
    * {@link InspectionProfileWrapper} object that should be used later.
    */
   public static final Key<Function<InspectionProfileImpl, InspectionProfileWrapper>> CUSTOMIZATION_KEY = Key.create("Inspection Profile Wrapper Customization");
-  public static final Key<Boolean> COMMIT_IN_PROGRESS_KEY = Key.create("Commit in progress");
-  public static final Key<Function<Class<? extends PsiElement>, Set<PsiElement>>> PSI_ELEMENTS_BEING_COMMITTED= Key.create("PsiElements that are being committed");
+  public static final Key<Map<Class<? extends PsiElement>, Set<PsiElement>>> PSI_ELEMENTS_BEING_COMMITTED = Key.create("PsiElements that are being committed");
 
   // check whether some inspection got registered twice by accident. 've bit once.
   private static boolean alreadyChecked;
