@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -67,8 +67,7 @@ abstract class Node extends DefaultMutableTreeNode {
 
   protected void updateCachedPresentation() {}
 
-  @NotNull
-  protected abstract String getText(@NotNull UsageView view);
+  protected abstract @NotNull String getNodeText();
 
   final boolean isValid() {
     return !isFlagSet(CACHED_INVALID_MASK);
@@ -97,7 +96,7 @@ abstract class Node extends DefaultMutableTreeNode {
     assert !ApplicationManager.getApplication().isDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
-    String text = getText(view);
+    String text = getNodeText();
     updateCachedPresentation();
     doUpdate(isDataValid, isReadOnly, text, edtFireTreeNodesChangedQueue);
   }

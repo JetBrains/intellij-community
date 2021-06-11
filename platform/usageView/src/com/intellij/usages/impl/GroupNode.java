@@ -7,7 +7,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
-import com.intellij.usages.UsageView;
 import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
@@ -389,7 +388,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
   @NotNull
   @Override
-  protected String getText(@NotNull UsageView view) {
+  protected String getNodeText() {
     return getGroup().getPresentableGroupText();
   }
 
@@ -428,7 +427,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
 
     @NotNull
     @Override
-    protected String getText(@NotNull UsageView view) {
+    protected String getNodeText() {
       return "";
     }
   }

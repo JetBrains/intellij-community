@@ -1945,7 +1945,7 @@ public class UsageViewImpl implements UsageViewEx {
         @Nullable
         @Override
         public Collection<String> getTextLinesToCopy() {
-          List<String> lines = ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof Node ? ((Node)o).getText(UsageViewImpl.this) : null);
+          List<String> lines = ContainerUtil.mapNotNull(selectedNodes(), o -> o instanceof Node ? ((Node)o).getNodeText() : null);
           return lines.isEmpty() ? null : lines;
         }
       };
