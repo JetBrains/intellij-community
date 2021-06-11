@@ -133,7 +133,7 @@ public abstract class ActionOnSaveInfo {
     }
 
     JBLabel label = new JBLabel(getActivatedOnDefaultText());
-    label.setEnabled(false);
+    label.setForeground(UIUtil.getLabelDisabledForeground());
     return label;
   }
 
@@ -165,7 +165,15 @@ public abstract class ActionOnSaveInfo {
   }
 
   public static @NotNull @NlsContexts.Label String getAnySaveTextForDropDownOption() {
-    return IdeBundle.message("actions.on.save.label.activated.on.any.save.including.autosave");
+    return IdeBundle.message("actions.on.save.option.activated.on.any.save.including.autosave");
+  }
+
+  public static @NotNull @NlsContexts.Label String getAnySaveAndExternalChangeText() {
+    return IdeBundle.message("actions.on.save.label.activated.on.any.save.and.external.change");
+  }
+
+  public static @NotNull @NlsContexts.Label String getAnySaveAndExternalChangeTextForDropDownOption() {
+    return IdeBundle.message("actions.on.save.option.activated.on.any.save.and.external.change");
   }
 
   public static @NotNull @NlsContexts.Label String getExplicitSaveText() {
