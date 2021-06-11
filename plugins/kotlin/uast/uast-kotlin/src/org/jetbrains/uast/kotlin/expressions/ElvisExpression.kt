@@ -21,7 +21,7 @@ private fun createVariableReferenceExpression(variable: UVariable, containingEle
             override fun resolve(): PsiElement? = variable
             override val uastParent: UElement? = containingElement
             override val resolvedName: String? = variable.name
-            override val annotations: List<UAnnotation> = emptyList()
+            override val uAnnotations: List<UAnnotation> = emptyList()
             override val identifier: String = variable.name.orAnonymous()
             override val javaPsi: PsiElement? = null
             override val sourcePsi: PsiElement? = null
@@ -32,7 +32,7 @@ private fun createNullLiteralExpression(containingElement: UElement?) =
             override val psi: PsiElement? = null
             override val uastParent: UElement? = containingElement
             override val value: Any? = null
-            override val annotations: List<UAnnotation> = emptyList()
+            override val uAnnotations: List<UAnnotation> = emptyList()
             override val javaPsi: PsiElement? = null
             override val sourcePsi: PsiElement? = null
         }
@@ -46,7 +46,7 @@ private fun createNotEqWithNullExpression(variable: UVariable, containingElement
             override val operator: UastBinaryOperator = UastBinaryOperator.NOT_EQUALS
             override val operatorIdentifier: UIdentifier? = KotlinUIdentifier(null, this)
             override fun resolveOperator(): PsiMethod? = null
-            override val annotations: List<UAnnotation> = emptyList()
+            override val uAnnotations: List<UAnnotation> = emptyList()
             override val javaPsi: PsiElement? = null
             override val sourcePsi: PsiElement? = null
         }
@@ -70,7 +70,7 @@ private fun createElvisExpressions(
         override val thenExpression: UExpression? by lz { createVariableReferenceExpression(tempVariable, this) }
         override val elseExpression: UExpression? by lz { KotlinConverter.convertExpression(right, this, DEFAULT_EXPRESSION_TYPES_LIST) }
         override val isTernary: Boolean = false
-        override val annotations: List<UAnnotation> = emptyList()
+        override val uAnnotations: List<UAnnotation> = emptyList()
         override val ifIdentifier: UIdentifier = KotlinUIdentifier(null, this)
         override val elseIdentifier: UIdentifier? = KotlinUIdentifier(null, this)
     }
@@ -96,7 +96,7 @@ class KotlinUElvisExpression(
     override val sourcePsi: PsiElement? = elvisExpression
     override val psi: PsiElement? = sourcePsi
     override val kind = KotlinSpecialExpressionKinds.ELVIS
-    override val annotations: List<UAnnotation> = emptyList()
+    override val uAnnotations: List<UAnnotation> = emptyList()
     override val expressions: List<UExpression> by lz {
         createElvisExpressions(left, right, this, elvisExpression.parent)
     }

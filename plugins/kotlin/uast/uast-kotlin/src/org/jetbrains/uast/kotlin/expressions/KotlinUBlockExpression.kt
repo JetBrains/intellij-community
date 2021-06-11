@@ -20,7 +20,7 @@ open class KotlinUBlockExpression(
         override val psi: PsiElement? get() = null
         override val javaPsi: PsiElement? get() = null
         override val sourcePsi: PsiElement? get() = null
-        override val annotations: List<UAnnotation> = emptyList()
+        override val uAnnotations: List<UAnnotation> = emptyList()
         override val expressions by lz { expressionProducer(this) }
     }
 

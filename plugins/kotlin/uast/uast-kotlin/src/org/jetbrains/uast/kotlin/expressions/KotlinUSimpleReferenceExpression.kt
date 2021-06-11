@@ -107,7 +107,7 @@ open class KotlinUSimpleReferenceExpression(
         override val javaPsi: PsiElement? get() = null
         override val psi: PsiElement? get() = sourcePsi
 
-        override val annotations: List<UAnnotation>
+        override val uAnnotations: List<UAnnotation>
             get() = emptyList()
 
         override val receiverType by lz {

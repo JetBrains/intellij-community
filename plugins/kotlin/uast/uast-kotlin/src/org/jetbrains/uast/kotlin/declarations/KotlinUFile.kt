@@ -18,7 +18,7 @@ class KotlinUFile(
     override val packageName: String
         get() = psi.packageFqName.asString()
 
-    override val annotations: List<UAnnotation>
+    override val uAnnotations: List<UAnnotation>
         get() = psi.annotationEntries.map { KotlinUAnnotation(it, this) }
 
     override val javaPsi: PsiClassOwner? by lz {

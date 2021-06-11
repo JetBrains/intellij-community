@@ -27,7 +27,7 @@ internal class KotlinLocalFunctionUVariable(
     }
     override val typeReference: UTypeReferenceExpression? = null
     override val uastAnchor: UElement? = null
-    override val annotations: List<UAnnotation> = emptyList()
+    override val uAnnotations: List<UAnnotation> = emptyList()
     override fun getOriginalElement(): PsiElement {
         return psi.originalElement
     }

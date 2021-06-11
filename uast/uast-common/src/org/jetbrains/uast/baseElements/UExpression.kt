@@ -34,22 +34,11 @@ interface UExpression : UElement, UAnnotated {
  */
 interface UAnnotated : UElement {
 
-  @Deprecated(
-    message = "Will be removed to avoid clash with com.intellij.psi.PsiModifierListOwner#getAnnotations",
-    replaceWith = ReplaceWith(expression = "uAnnotations"),
-    level = DeprecationLevel.WARNING
-  )
-  @JvmDefault
-  val annotations: List<UAnnotation>
-    get() = uAnnotations
-
   /**
    * Returns the list of annotations applied to the current element.
    */
-  @Suppress("DEPRECATION")
   @JvmDefault
   val uAnnotations: List<UAnnotation>
-    get() = annotations
 
   /**
    * Looks up for annotation element using the annotation qualified name.
