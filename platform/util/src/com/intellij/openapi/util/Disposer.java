@@ -196,6 +196,15 @@ public final class Disposer {
     return ObjectUtils.tryCast(getTree().getDisposalInfo(disposable), Throwable.class);
   }
 
+  /**
+   * Returns stacktrace of the place where {@code disposable} was registered in {@code Disposer} or {@code null} if it's unknown. Works only
+   * if {@link #setDebugMode debug mode} was enabled when {@code disposable} was registered.
+   */
+  @TestOnly
+  public static @Nullable Throwable getRegistrationTrace(@NotNull Disposable disposable) {
+    return getTree().getRegistrationTrace(disposable);
+  }
+
   @ApiStatus.Internal
   public static void clearDisposalTraces() {
     ourTree.clearDisposedObjectTraces();
