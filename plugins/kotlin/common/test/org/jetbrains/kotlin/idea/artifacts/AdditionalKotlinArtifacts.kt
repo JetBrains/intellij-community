@@ -17,6 +17,10 @@ object AdditionalKotlinArtifacts {
         findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlin_stdlib_jdk8.xml", "org.jetbrains.kotlin", "kotlin-stdlib-common", LibraryFileKind.SOURCES)
     }
 
+    val kotlinStdlibMinimalForTest: File by lazy {
+        findLibrary(RepoLocation.MAVEN_REPOSITORY, "kotlinc_kotlin_stdlib_minimal_for_test_for_ide.xml", "org.jetbrains.kotlin", "kotlin-stdlib-minimal-for-test-for-ide")
+    }
+
     val jsr305: File by lazy {
         findLibrary(RepoLocation.MAVEN_REPOSITORY, "jsr305.xml", "com.google.code.findbugs", "jsr305")
     }
