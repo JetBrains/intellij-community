@@ -7,14 +7,15 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.inspections.KotlinUniversalQuickFix
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 
-class AddToStringFix(element: KtExpression, private val nullable: Boolean) : KotlinQuickFixAction<KtExpression>(element),
-    LowPriorityAction {
+class AddToStringFix(element: KtExpression, private val nullable: Boolean) :
+    KotlinPsiOnlyQuickFixAction<KtExpression>(element), KotlinUniversalQuickFix, LowPriorityAction {
     override fun getFamilyName() = KotlinBundle.message("fix.add.tostring.call.family")
 
     override fun getText(): String {
