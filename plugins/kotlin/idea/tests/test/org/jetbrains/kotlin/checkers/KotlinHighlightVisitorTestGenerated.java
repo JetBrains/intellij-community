@@ -225,6 +225,11 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
             runTest("testData/checker/OverridesAndGenerics.kt");
         }
 
+        @TestMetadata("PackageInExpressionPosition.kt")
+        public void testPackageInExpressionPosition() throws Exception {
+            runTest("idea/testData/checker/PackageInExpressionPosition.kt");
+        }
+
         @TestMetadata("PackageQualified.kt")
         public void testPackageQualified() throws Exception {
             runTest("testData/checker/PackageQualified.kt");
