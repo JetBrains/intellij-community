@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.BoolUtils;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -117,13 +118,8 @@ public class DuplicateConditionInspection extends BaseInspection {
     }
 
     private void collectConditionsForExpression(PsiExpression condition, Set<? super PsiExpression> conditions, IElementType wantedTokenType) {
+      condition = PsiUtil.skipParenthesizedExprDown(condition);
       if (condition == null) return;
-      if (condition instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)condition;
-        final PsiExpression contents = parenthesizedExpression.getExpression();
-        collectConditionsForExpression(contents, conditions, wantedTokenType);
-        return;
-      }
       if (condition instanceof PsiPolyadicExpression) {
         final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
         final IElementType tokenType = polyadicExpression.getOperationTokenType();
@@ -134,6 +130,11 @@ public class DuplicateConditionInspection extends BaseInspection {
           }
           return;
         }
+      }
+      while (true) {
+        PsiExpression negated = BoolUtils.getNegated(condition);
+        if (negated == null) break;
+        condition = negated;
       }
       conditions.add(condition);
     }
