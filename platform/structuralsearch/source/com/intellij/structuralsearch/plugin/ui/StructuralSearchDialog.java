@@ -74,7 +74,10 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
@@ -694,7 +697,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       new DumbAwareAction(SSRBundle.message("copy.existing.template.button")) {
         @Override
         public void actionPerformed(@NotNull AnActionEvent e) {
-          final SelectTemplateDialog dialog = new SelectTemplateDialog(getProject(), false, myReplace);
+          final SelectTemplateDialog dialog = new SelectTemplateDialog(getProject(), myFilterPanel, false, myReplace);
           if (!dialog.showAndGet()) {
             return;
           }
@@ -1404,7 +1407,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
       if (profile != null) {
         TemplateEditorUtil.setHighlighter(editor, UIUtil.getTemplateContextType(profile));
       }
-      SubstitutionShortInfoHandler.install(editor, variableName -> {
+      SubstitutionShortInfoHandler.install(editor, myFilterPanel, variableName -> {
         if (variableName.endsWith(ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX)) {
           //noinspection AssignmentToLambdaParameter
           variableName = StringUtil.trimEnd(variableName, ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX);

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui.filters;
 
 import com.intellij.openapi.editor.Document;
@@ -7,6 +7,7 @@ import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
+import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.ui.ContextHelpLabel;
@@ -14,6 +15,7 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import org.intellij.lang.regexp.RegExpFileType;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -28,6 +30,21 @@ public class TypeFilter extends FilterAction {
 
   public TypeFilter() {
     super(SSRBundle.messagePointer("type.filter.name"));
+  }
+
+  @Override
+  public @NotNull String getShortText(NamedScriptableDefinition variable) {
+    if (!(variable instanceof MatchVariableConstraint)) {
+      return "";
+    }
+    final MatchVariableConstraint constraint = (MatchVariableConstraint)variable;
+    if (constraint.getNameOfExprType().isEmpty()) {
+      return "";
+    }
+    return SSRBundle.message("exprtype.tooltip.message",
+                             constraint.isInvertExprType() ? 1 : 0,
+                             constraint.isRegexExprType() ? constraint.getNameOfExprType() : constraint.getExpressionTypes(),
+                             constraint.isExprTypeWithinHierarchy() ? 1 : 0);
   }
 
   @Override

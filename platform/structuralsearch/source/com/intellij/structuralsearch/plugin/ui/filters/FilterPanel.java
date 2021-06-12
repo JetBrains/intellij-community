@@ -40,7 +40,7 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class FilterPanel implements FilterTable {
+public class FilterPanel implements FilterTable, ShortFilterTextProvider {
 
   private final JPanel myFilterPanel;
   final JBListTable myFilterTable;
@@ -168,6 +168,19 @@ public class FilterPanel implements FilterTable {
   @Override
   public NamedScriptableDefinition getVariable() {
     return myConstraint;
+  }
+
+  @Override
+  public String getShortFilterText(NamedScriptableDefinition variable) {
+    final StringBuilder builder = new StringBuilder();
+    for (FilterAction filter : myFilters) {
+      final String text = filter.getShortText(variable);
+      if (text.length() > 0) {
+        if (builder.length() > 0) builder.append(", ");
+        builder.append(text);
+      }
+    }
+    return builder.toString();
   }
 
   @Override
