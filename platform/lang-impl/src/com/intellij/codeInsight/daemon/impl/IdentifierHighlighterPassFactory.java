@@ -34,8 +34,7 @@ public final class IdentifierHighlighterPassFactory {
   }
 
   public static boolean isEnabled() {
-    return !ApplicationManager.getApplication().isHeadlessEnvironment() || // sorry, upsource
-           ApplicationManager.getApplication().isUnitTestMode() && TestModeFlags.is(ourTestingIdentifierHighlighting);
+    return !ApplicationManager.getApplication().isUnitTestMode() || TestModeFlags.is(ourTestingIdentifierHighlighting);
   }
 
   @TestOnly
