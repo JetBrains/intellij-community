@@ -141,6 +141,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   /**
    * @deprecated Do not extend UrlClassLoader. If you cannot avoid it, use {@link #UrlClassLoader(Builder, boolean)}.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder) {
     this(builder, null, false);

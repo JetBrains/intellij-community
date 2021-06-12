@@ -19,6 +19,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.util.UserDataHolder;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 public interface ModuleConfigurationState extends UserDataHolder {
@@ -42,6 +43,7 @@ public interface ModuleConfigurationState extends UserDataHolder {
    * @deprecated use {@link #getModifiableRootModel()}} if you need to modify the model and use {@link #getCurrentRootModel()} if you just
    * need to read the current state
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   default ModifiableRootModel getRootModel() {
     return getModifiableRootModel();

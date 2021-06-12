@@ -18,6 +18,7 @@ public abstract class NotNullLazyValue<T> {
    * @deprecated Use {@link NotNullLazyValue#lazy(Supplier)}
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   protected NotNullLazyValue() {
   }

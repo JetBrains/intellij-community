@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.util.containers.DisposableWrapperList;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -114,6 +115,7 @@ public class MavenRunnerSettings implements Cloneable {
   /**
    * @deprecated use #addListener(Listener, Disposable)
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
   public void addListener(Listener l) {
     myListeners.add(l);

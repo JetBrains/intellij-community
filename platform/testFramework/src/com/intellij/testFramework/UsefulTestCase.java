@@ -1140,6 +1140,7 @@ public abstract class UsefulTestCase extends TestCase {
    * @param exceptionCase Block annotated with some exception type
    * @deprecated Use {@link #assertNoException(Class, ThrowableRunnable)} instead
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   protected <T extends Throwable> void assertNoException(@NotNull AbstractExceptionCase<T> exceptionCase) throws T {
     try {

@@ -16,18 +16,21 @@ public abstract class JavaCodeStyleSettingsFacade {
   /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#useFQClassNames()}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public abstract boolean useFQClassNames();
 
   /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#isGenerateFinalParameters()}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public abstract boolean isGenerateFinalParameters();
 
   /**
    * @deprecated Use {@link JavaFileCodeStyleFacade#forContext(PsiFile)} instead.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static JavaCodeStyleSettingsFacade getInstance(Project project) {
     return project.getService(JavaCodeStyleSettingsFacade.class);

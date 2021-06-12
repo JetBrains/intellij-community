@@ -4,6 +4,7 @@ package com.intellij.ide.ui;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.NlsContexts;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.invoke.MethodHandles;
@@ -20,6 +21,7 @@ public class PublicMethodBasedOptionDescription extends BooleanOptionDescription
   /**
    * @deprecated Use {@link #PublicMethodBasedOptionDescription(String, String, String, String, Supplier)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public PublicMethodBasedOptionDescription(@NlsContexts.Label String option, String configurableId, String getterName, String setterName) {
     super(option, configurableId);

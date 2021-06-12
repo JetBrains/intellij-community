@@ -225,6 +225,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
    * @see #setButtonVisible
    * @see #setButtonEnabled
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   public FixedSizeButton getButton() {
     return myBrowseButton;

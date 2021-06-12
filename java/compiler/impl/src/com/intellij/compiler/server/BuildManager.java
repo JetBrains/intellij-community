@@ -92,6 +92,7 @@ import io.netty.handler.codec.protobuf.ProtobufEncoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32FrameDecoder;
 import io.netty.handler.codec.protobuf.ProtobufVarint32LengthFieldPrepender;
 import io.netty.util.internal.ThreadLocalRandom;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1570,8 +1571,9 @@ public final class BuildManager implements Disposable {
   }
 
   /**
-   * @deprecated use getBuildSystemDirectory(Project)
+   * @deprecated use {@link #getBuildSystemDirectory(Project)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @NotNull
   public Path getBuildSystemDirectory() {

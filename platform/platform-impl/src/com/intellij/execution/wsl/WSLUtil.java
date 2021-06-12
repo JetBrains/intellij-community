@@ -45,6 +45,7 @@ public final class WSLUtil {
    * {@link com.intellij.execution.wsl.ui.WslDistributionComboBox}. If no WSL distributions installed,
    * it will show "No installed distributions" message.
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static boolean hasAvailableDistributions() {
     return !getAvailableDistributions().isEmpty();

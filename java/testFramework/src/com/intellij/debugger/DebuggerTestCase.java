@@ -53,6 +53,7 @@ import com.intellij.xdebugger.*;
 import com.sun.jdi.Location;
 import com.sun.jdi.Value;
 import com.sun.jdi.VirtualMachine;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -536,6 +537,7 @@ public abstract class DebuggerTestCase extends ExecutionWithDebuggerToolsTestCas
      * @deprecated
      * Use MockConfiguration(Project) instead.
      */
+    @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
     @Deprecated
     public MockConfiguration() {
       this.project = null;

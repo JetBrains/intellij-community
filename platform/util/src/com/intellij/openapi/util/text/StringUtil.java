@@ -1577,6 +1577,7 @@ public class StringUtil extends StringUtilRt {
    * @deprecated use NlsMessages#formatDurationApproximateNarrow for localized output
    */
   @Contract(pure = true)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static @NotNull @NonNls String formatDuration(long duration, @NotNull String unitSeparator) {
     return Formats.formatDuration(duration, unitSeparator);

@@ -12,6 +12,8 @@ import org.jetbrains.uast.visitor.UastVisitor
  * A variable wrapper to be used in [UastVisitor].
  */
 interface UVariable : UDeclaration, PsiVariable {
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiVariable
 
@@ -88,6 +90,8 @@ interface UParameterEx : UParameter, UDeclarationEx {
 }
 
 interface UField : UVariable, PsiField {
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiField
 
@@ -107,6 +111,8 @@ interface UFieldEx : UField, UDeclarationEx {
 }
 
 interface ULocalVariable : UVariable, PsiLocalVariable {
+  @get:ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @get:Deprecated("see the base property description")
   @Deprecated("see the base property description", ReplaceWith("javaPsi"))
   override val psi: PsiLocalVariable
 

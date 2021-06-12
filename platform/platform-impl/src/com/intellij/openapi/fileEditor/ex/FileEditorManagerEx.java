@@ -16,6 +16,7 @@ import com.intellij.openapi.util.BusyObject;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.concurrency.Promise;
@@ -50,6 +51,7 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   public abstract @NotNull Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file);
 
   /** @deprecated use {@link FileEditor#getFile()} instead */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public abstract @Nullable VirtualFile getFile(@NotNull FileEditor editor);
 

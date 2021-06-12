@@ -213,6 +213,7 @@ public class MavenGeneralSettings implements Cloneable {
   }
 
   /** @deprecated use {@link MavenUtil} or {@link MavenWslUtil} instead */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public @Nullable File getEffectiveUserSettingsIoFile() {
     return resolveWslAware(

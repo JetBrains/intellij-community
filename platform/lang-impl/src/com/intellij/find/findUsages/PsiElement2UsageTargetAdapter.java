@@ -34,6 +34,7 @@ import com.intellij.usages.ConfigurableUsageTarget;
 import com.intellij.usages.PsiElementUsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.impl.UsageViewImpl;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +73,7 @@ public class PsiElement2UsageTargetAdapter
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
    * @param element
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element, @NotNull FindUsagesOptions options) {
     this(element, options, true);
@@ -82,6 +84,7 @@ public class PsiElement2UsageTargetAdapter
    * calling {@link #update()} that could lead to freeze. {@link #update()} should be called on bg thread.
    * @param element
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated
   public PsiElement2UsageTargetAdapter(@NotNull PsiElement element) {
     this(element, true);
@@ -192,6 +195,10 @@ public class PsiElement2UsageTargetAdapter
     return virtualFile == null ? null : new VirtualFile[]{virtualFile};
   }
 
+  /**
+   * @deprecated use {@link #convert(PsiElement[], boolean)} instead
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   public static PsiElement2UsageTargetAdapter @NotNull [] convert(PsiElement @NotNull [] psiElements) {
     return convert(psiElements, true);

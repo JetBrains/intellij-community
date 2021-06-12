@@ -40,6 +40,7 @@ public final class FileBasedIndexProjectHandler {
    * @deprecated Use {@link #scheduleReindexingInDumbMode(Project)} instead.
    */
   @SuppressWarnings("DeprecatedIsStillUsed")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @Nullable
   public static DumbModeTask createChangedFilesIndexingTask(@NotNull Project project) {

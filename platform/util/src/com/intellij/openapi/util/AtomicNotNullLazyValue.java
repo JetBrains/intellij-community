@@ -13,6 +13,7 @@ public abstract class AtomicNotNullLazyValue<T> extends NotNullLazyValue<T> {
   /**
    * @deprecated Use {@link NotNullLazyValue#atomicLazy(Supplier)}
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   protected AtomicNotNullLazyValue() {
   }

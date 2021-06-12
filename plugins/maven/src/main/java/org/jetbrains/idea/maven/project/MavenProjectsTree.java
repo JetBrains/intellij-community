@@ -1276,6 +1276,7 @@ public final class MavenProjectsTree {
   /**
    * @deprecated use #addListener(Listener, Disposable)
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   @Deprecated
   public void addListener(Listener l) {
     myListeners.add(l);

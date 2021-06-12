@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.util.PlatformUtils.isIdeaUltimate
+import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 
 private const val IGNORE_ULTIMATE_EDITION = "ignoreUltimateEdition"
@@ -32,6 +33,7 @@ var isIgnoreUltimate: Boolean
   set(value) = propertiesComponent.setValue(IGNORE_ULTIMATE_EDITION, value)
 
 @JvmField
+@ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 @Deprecated("Use `notificationGroup` property")
 val NOTIFICATION_GROUP = notificationGroup
 

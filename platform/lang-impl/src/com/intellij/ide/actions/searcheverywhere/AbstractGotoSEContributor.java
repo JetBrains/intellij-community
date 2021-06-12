@@ -59,6 +59,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.indexing.FindSymbolParameters;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,6 +163,7 @@ public abstract class AbstractGotoSEContributor implements WeightedSearchEverywh
   }
 
   /** @deprecated override {@link #doGetActions(PersistentSearchEverywhereContributorFilter, ElementsChooser.StatisticsCollector, Runnable)} instead**/
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   @Deprecated
   @NotNull
   protected List<AnAction> doGetActions(@NotNull @NlsContexts.Checkbox String ignored,
