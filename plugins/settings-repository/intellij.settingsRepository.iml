@@ -11,7 +11,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module-library" exported="">
-      <library name="jgit">
+      <library name="jgit-develar">
         <ANNOTATIONS>
           <root url="file://$MODULE_DIR$/lib" />
         </ANNOTATIONS>

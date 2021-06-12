@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -396,8 +396,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5",
                        url: "https://github.com/JetBrains/java-annotations").apache(),
     new LibraryLicense(name: "jetCheck", libraryName: "jetCheck", url: "https://github.com/JetBrains/jetCheck").apache(),
-    new LibraryLicense(name: "JGit", libraryName: "jgit", version: "4.0", license: "Eclipse Distribution License 1.0",
-                       licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://eclipse.org/jgit/"),
+    new LibraryLicense(name: "JGit (develar's fork)", libraryName: "jgit-develar", version: "4.0", license: "Eclipse Distribution License 1.0",
+                       licenseUrl: "http://www.eclipse.org/org/documents/edl-v10.php", url: "https://github.com/develar/jgit"),
     new LibraryLicense(name: "JGoodies Common", libraryName: "jgoodies-common",
                        url: "http://www.jgoodies.com/freeware/libraries/looks/").simplifiedBsd(),
     new LibraryLicense(name: "JGoodies Forms", libraryName: "jgoodies-forms",
